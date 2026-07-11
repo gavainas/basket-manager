@@ -1,0 +1,32 @@
+import type { GameState, Position } from '../game/types';
+import { activePlayers } from '../game/match';
+import { PlayerCard } from './PlayerCard';
+
+const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
+
+export function RosterView({ state }: { state: GameState }) {
+  const active = [...activePlayers(state.players)].sort(
+    (a, b) => POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) || b.visibleRating - a.visibleRating
+  );
+  const gone = state.players.filter((p) => p.leftClub);
+
+  return (
+    <div>
+      <p className="muted" style={{ marginTop: 0 }}>
+        La valoración (≈) es una estimación: el rendimiento real depende del físico, la motivación, la confianza y el
+        encaje en el equipo. Nadie muestra todas sus cartas.
+      </p>
+      <div className="player-grid">
+        {active.map((p) => (
+          <PlayerCard key={p.id} player={p} />
+        ))}
+      </div>
+      {gone.length > 0 && (
+        <>
+          <h3 className="section-title">Se fueron del club</h3>
+          <div className="muted">{gone.map((p) => p.name).join(' · ')}</div>
+        </>
+      )}
+    </div>
+  );
+}
