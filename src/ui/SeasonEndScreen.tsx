@@ -12,7 +12,8 @@ interface Props {
 
 export function SeasonEndScreen({ state, dispatch }: Props) {
   const ev = computeSeasonEvaluation(state);
-  const canContinue = !ev.isGameOver && state.club.money >= BALANCE.economy.inscriptionFee;
+  const canContinue = !ev.isGameOver;
+  const shortOnMoney = state.club.money < BALANCE.economy.inscriptionFee;
 
   return (
     <div className="season-end">
@@ -81,12 +82,12 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
       <div className="confirm-bar" style={{ justifyContent: 'center' }}>
         {canContinue && (
           <button className="primary" onClick={() => dispatch({ type: 'NEW_SEASON' })}>
-            ➡ Seguir con el club: temporada {state.seasonNumber + 1}
+            ➡ Seguir con el club: pretemporada de la T{state.seasonNumber + 1}
           </button>
         )}
-        {!ev.isGameOver && !canContinue && (
-          <span className="chip bad">
-            No alcanza la caja para la inscripción (${BALANCE.economy.inscriptionFee}): el club no puede seguir.
+        {canContinue && shortOnMoney && (
+          <span className="chip warn">
+            Ojo: no alcanza para la inscripción (${BALANCE.economy.inscriptionFee}). Habrá que recaudar en la pretemporada.
           </span>
         )}
         <button className={canContinue ? '' : 'primary'} onClick={() => dispatch({ type: 'NEW_GAME' })}>

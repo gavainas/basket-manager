@@ -18,7 +18,9 @@ Sin backend, sin login, sin APIs externas. La partida se guarda automáticamente
 
 ## El ciclo del juego
 
-Cada turno es una semana (temporada de 9 semanas):
+**Pretemporada (4 semanas)**: antes de cada temporada hay que armar el plantel. Los jugadores del año anterior confirman, dudan, no responden, piden condiciones o se retiran. Hay un mercado de fichables con información imperfecta (según cuánto los conozcas), negociaciones con exigencias (becas, titularidad, pases), promesas que quedan registradas, y una fecha límite: al cierre se paga la inscripción, y si no llegás con jugadores o plata, hay consecuencias.
+
+Después, cada turno es una semana (temporada de 9 semanas):
 
 1. **Revisar** el estado del club (Resumen, Plantilla, Finanzas, Liga).
 2. **Decidir**: elegir hasta 2 acciones semanales (entrenar, asado, rifa, sponsor, becar, cobrar cuotas, reclutar…).
@@ -33,6 +35,7 @@ Al final, una evaluación multidimensional: resultado deportivo, salud financier
 
 ## Sistemas implementados
 
+- **Pretemporada y fichajes**: continuidad del plantel entre temporadas, mercado de ~30 fichables con conocimiento incompleto (5 niveles, del "muy conocido" al "desconocido"), negociación con exigencias y contraofertas, promesas registradas, becas, fecha límite de inscripción con jugadores de emergencia y aporte extraordinario si no llegás.
 - Plantel de 12 jugadores con 8 personalidades (competitivo, social, protagonista, leal, mercenario, cumplidor, veterano, talentoso informal) que afectan su comportamiento.
 - **Información imperfecta**: la valoración visible (≈) es una estimación con ruido; el rendimiento real surge de técnica + físico + motivación + confianza + química + posiciones.
 - **Rotaciones y minutos**: además del quinteto se elige la rotación (hasta 5); la fuerza del equipo, el desgaste físico y el descontento por minutos dependen de cuántos juegan y cuánto. Sin rotación, los titulares se funden.
@@ -62,10 +65,12 @@ src/
     match.ts       Simulación de partidos y evaluación de quintetos
     economy.ts     Cuotas, gastos fijos, sponsor, morosidad
     actions.ts     Las 10 acciones semanales
-    events.ts      Los 12 eventos con decisiones
+    events.ts      Los 19 eventos con decisiones
     week.ts        Nueva partida, confirmación de acciones, avance semanal
+    preseason.ts   Pretemporada: continuidad, negociaciones, cierre
+    preseasonEvents.ts  Eventos de pretemporada
     evaluation.ts  Evaluación de fin de temporada
-  data/          Datos iniciales (plantel, rivales, reclutas)
+  data/          Datos iniciales (plantel, rivales, reclutas, mercado de fichables)
   state/         Reducer del estado global
   persistence/   Guardado en LocalStorage
   ui/            Componentes React (Dashboard, Plantilla, Finanzas, Liga, Semana…)

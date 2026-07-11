@@ -89,6 +89,18 @@ export const BALANCE = {
     // de verano mejora: los jóvenes crecen más y los veteranos casi no caen.
     trainingsToCount: 3,
   },
+
+  preseason: {
+    weeks: 4,
+    gestionesPerWeek: 3, // contactos/charlas por semana
+    minPlayers: 8, // mínimo para inscribir al equipo
+    marketSize: 16, // fichables visibles por pretemporada
+    weeklyUpkeep: 40, // mantenimiento del club por semana de pretemporada
+    eventChance: 0.75,
+    emergencyPrestigeHit: 4, // por recurrir a jugadores de emergencia
+    bailoutSocialHit: 6, // aporte extraordinario de la comisión
+    bailoutSportHit: 3,
+  },
 } as const;
 
 export function clamp(value: number, min = 0, max = 100): number {

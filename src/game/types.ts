@@ -138,7 +138,118 @@ export interface ActiveEvent {
   playerId2?: string;
 }
 
-export type Phase = 'planning' | 'lineup' | 'matchResult' | 'seasonEnd' | 'gameOver';
+export type Phase = 'preseason' | 'preseasonEnd' | 'planning' | 'lineup' | 'matchResult' | 'seasonEnd' | 'gameOver';
+
+// ---------- Pretemporada y fichajes ----------
+
+/** Situación de cada jugador del plantel anterior al arrancar la pretemporada. */
+export type ContinuityStatus =
+  | 'confirmado'
+  | 'dudando'
+  | 'no_respondio'
+  | 'quiere_irse'
+  | 'retirado'
+  | 'pide_condicion';
+
+/** Qué tan bien conoce el usuario a un jugador fichable. */
+export type KnowledgeLevel = 'muy_conocido' | 'conocido' | 'referencias' | 'poco_conocido' | 'desconocido';
+
+/** Condiciones que puede pedir un jugador para venir o quedarse. */
+export type DemandType =
+  | 'fichaje_pagado' // que el club pague su pase
+  | 'beca' // no pagar cuota
+  | 'beca_parcial' // cuota reducida
+  | 'titularidad'
+  | 'minutos' // lugar asegurado en la rotación
+  | 'amigo' // que también venga un amigo
+  | 'competitivo' // quiere un equipo que pelee arriba
+  | 'ambiente' // le importa el clima social
+  | 'sin_entrenar'; // no piensa entrenar regularmente
+
+export type FeeAttitude = 'completa' | 'parcial' | 'beca';
+
+export interface MarketPlayer {
+  id: string;
+  name: string;
+  age: number;
+  height: number; // cm
+  position: Position;
+  previousTeam: string;
+  /** Atributos reales, ocultos al usuario. */
+  technique: number;
+  physical: number;
+  commitment: number;
+  social: number;
+  personality: Personality;
+  sportRep: number; // reputación deportiva 0-100
+  socialRep: number; // reputación social 0-100
+  signingCost: number; // lo que cuesta traerlo (pase/gestión)
+  feeAttitude: FeeAttitude; // qué cuota está dispuesto a pagar
+  demand: DemandType | null;
+  /** Flexibilidad oculta (0-1) para negociar su exigencia. */
+  flexibility: number;
+  knowledge: KnowledgeLevel;
+  knowledgeSource: string; // por qué lo conocés (o no)
+  availability: 'libre' | 'escuchando_ofertas';
+  status: 'disponible' | 'fichado' | 'rechazo' | 'perdido';
+  /** Estimaciones que ve el usuario (ruido según conocimiento). */
+  estTechnique: number;
+  estPhysical: number;
+  /** Ya lo contactaste: su exigencia y su cuota son conocidas. */
+  contacted: boolean;
+}
+
+/** Condición aceptada que queda registrada como promesa del club. */
+export interface ClubPromise {
+  playerId: string;
+  playerName: string;
+  type: DemandType;
+  label: string;
+  season: number;
+}
+
+export interface PreseasonSummaryData {
+  rosterNames: string[];
+  lostNames: string[];
+  signedNames: string[];
+  emergencyNames: string[];
+  moneySpent: number;
+  projectedWeeklyFees: number;
+  projectedWeeklyCosts: number;
+  scholarships: number;
+  promises: string[];
+  strengths: string[];
+  risks: string[];
+  consequences: string[];
+}
+
+export interface PreseasonEventState {
+  defId: string;
+  targetIds: string[];
+}
+
+export interface PreseasonState {
+  week: number; // 1..totalWeeks
+  totalWeeks: number;
+  gestionesLeft: number;
+  /** Situación de cada jugador del plantel anterior (por id). */
+  continuity: Record<string, ContinuityStatus>;
+  /** Condición que pide cada jugador del plantel con 'pide_condicion'. */
+  playerDemands: Record<string, DemandType>;
+  market: MarketPlayer[];
+  /** Negociación abierta en el modal (id de jugador o de fichable). */
+  negotiation: { targetId: string; isMarket: boolean } | null;
+  /** Ya usaste tu contraoferta con este id. */
+  counterUsed: Record<string, boolean>;
+  /** Desenlace de la última gestión, para mostrar en el modal. */
+  actionOutcome: string | null;
+  pendingEvent: PreseasonEventState | null;
+  eventOutcome: string | null;
+  /** Registro de todo lo que pasó en la pretemporada. */
+  log: string[];
+  moneySpent: number;
+  summary: PreseasonSummaryData | null;
+}
 
 export interface GameState {
   saveVersion: number;
@@ -181,4 +292,8 @@ export interface GameState {
   sponsorWeeks: number;
   gameOverReason: string | null;
   startingMoney: number;
+  /** Promesas hechas a jugadores (condiciones aceptadas). */
+  promises: ClubPromise[];
+  /** Estado de la pretemporada (null durante la temporada regular). */
+  preseason: PreseasonState | null;
 }

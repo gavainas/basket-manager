@@ -3,12 +3,13 @@
 Próximas etapas, en orden aproximado de valor:
 
 ## Corto plazo
+- **Promesas con consecuencias plenas**: que las promesas de pretemporada (titularidad, minutos, equipo competitivo, ambiente) se evalúen durante la temporada y los jugadores reaccionen si no se cumplen.
 - **Más eventos y personalidades**: ampliar el pool de eventos (20+), eventos encadenados y personalidades combinadas.
 - **Balance general**: ajustar dificultad económica y deportiva con datos de partidas reales; niveles de dificultad.
 
 ## Mediano plazo
 - **Simulación táctica más profunda**: estilos de juego (correr, defender, tirar de tres), matchups por posición, parciales por cuarto.
-- **Mercado de jugadores**: altas y bajas entre temporadas, jugadores que se van a rivales, fichajes que piden condiciones.
+- **Scouting en temporada**: ver jugadores rivales durante los partidos para conocerlos mejor de cara al mercado siguiente.
 - **Lesiones**: gravedad variable, recuperación progresiva, riesgo por sobrecarga de minutos.
 - **Relaciones entre jugadores**: amistades, roces e influencias (un líder que se va arrastra amigos).
 - **Sponsors y actividades sociales**: contratos con condiciones, peñas, escuela de básquet.

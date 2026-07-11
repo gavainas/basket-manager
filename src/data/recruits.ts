@@ -27,14 +27,18 @@ const RECRUIT_PERSONALITIES: Personality[] = [
 ];
 
 let recruitCounter = 0;
+let nameOffset = -1;
 
 export function createRecruit(rng: Rng, opts?: { minTechnique?: number; maxTechnique?: number }): Player {
   recruitCounter += 1;
   const technique = Math.round(rng.range(opts?.minTechnique ?? 45, opts?.maxTechnique ?? 70));
   const personality = rng.pick(RECRUIT_PERSONALITIES);
+  // Recorre la lista en orden desde un punto aleatorio: sin nombres repetidos seguidos.
+  if (nameOffset < 0) nameOffset = rng.int(0, RECRUIT_NAMES.length - 1);
+  const name = RECRUIT_NAMES[(nameOffset + recruitCounter) % RECRUIT_NAMES.length];
   return {
     id: `n${rng.int(0, 0xffffff).toString(36)}_${recruitCounter}`,
-    name: rng.pick(RECRUIT_NAMES),
+    name,
     age: rng.int(20, 33),
     position: rng.pick(POSITIONS),
     technique,

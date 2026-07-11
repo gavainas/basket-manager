@@ -9,6 +9,8 @@ import { WeekView } from './ui/WeekView';
 import { EventModal } from './ui/EventModal';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
 import { HistoryView } from './ui/HistoryView';
+import { PreseasonView } from './ui/PreseasonView';
+import { PreseasonEndScreen } from './ui/PreseasonEndScreen';
 import { formatMoney } from './ui/helpers';
 
 type Tab = 'resumen' | 'plantilla' | 'finanzas' | 'liga' | 'historia' | 'semana';
@@ -22,7 +24,15 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'semana', label: 'Semana' },
 ];
 
-function MainMenu({ onNew, onContinue }: { onNew: () => void; onContinue: () => void }) {
+function MainMenu({
+  onNew,
+  onNewPreseason,
+  onContinue,
+}: {
+  onNew: () => void;
+  onNewPreseason: () => void;
+  onContinue: () => void;
+}) {
   const [, forceRender] = useState(0);
   const saved = hasSave();
 
@@ -42,9 +52,10 @@ function MainMenu({ onNew, onContinue }: { onNew: () => void; onContinue: () => 
             ▶ Continuar partida
           </button>
         )}
-        <button className={saved ? '' : 'primary'} onClick={onNew}>
-          ✚ Nueva partida
+        <button className={saved ? '' : 'primary'} onClick={onNewPreseason}>
+          ✚ Nueva partida (armá el plantel en la pretemporada)
         </button>
+        <button onClick={onNew}>⚡ Nueva partida directa (plantel ya armado)</button>
         {saved && (
           <button
             className="danger"
@@ -87,12 +98,24 @@ export default function App() {
           if (hasSave() && !window.confirm('Hay una partida guardada. ¿Empezar de nuevo y sobrescribirla?')) return;
           dispatch({ type: 'NEW_GAME' });
         }}
+        onNewPreseason={() => {
+          if (hasSave() && !window.confirm('Hay una partida guardada. ¿Empezar de nuevo y sobrescribirla?')) return;
+          dispatch({ type: 'NEW_GAME_PRESEASON' });
+        }}
         onContinue={() => {
           const saved = loadGame();
           if (saved) dispatch({ type: 'LOAD', state: saved });
         }}
       />
     );
+  }
+
+  if (state.phase === 'preseason') {
+    return <PreseasonView state={state} dispatch={dispatch} />;
+  }
+
+  if (state.phase === 'preseasonEnd') {
+    return <PreseasonEndScreen state={state} dispatch={dispatch} />;
   }
 
   if (state.phase === 'seasonEnd' || state.phase === 'gameOver') {

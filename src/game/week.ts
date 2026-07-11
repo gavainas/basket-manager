@@ -5,12 +5,11 @@ import { getAction } from './actions';
 import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent } from './events';
 import { generateObjectives } from './objectives';
-import { computeSeasonEvaluation } from './evaluation';
-import { activePlayers, clubPosition, suggestRotation, suggestStarters } from './match';
+import { activePlayers, suggestRotation, suggestStarters } from './match';
 import { Rng } from './rng';
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);
@@ -64,117 +63,12 @@ export function createNewGame(seed: number): GameState {
     sponsorWeeks: 0,
     gameOverReason: null,
     startingMoney: money,
+    promises: [],
+    preseason: null,
   };
   state.objectives = generateObjectives(1, state.club.sportPrestige, rng);
   state.seed = rng.nextSeed();
   return state;
-}
-
-/**
- * Arranca la temporada siguiente con el mismo club: el plantel envejece,
- * la liga se reacomoda y la comisión fija objetivos más ambiciosos.
- */
-export function startNextSeason(state: GameState): GameState {
-  const rng = new Rng(state.seed);
-  const survivors = state.players.filter((p) => !p.leftClub);
-
-  const finishedRow = state.standings.find((r) => r.teamId === 'club')!;
-  const finishedSeason = {
-    season: state.seasonNumber,
-    record: `${finishedRow.wins}-${finishedRow.losses}`,
-    position: clubPosition(state),
-    outcome: computeSeasonEvaluation(state).outcomeTitle,
-    money: state.club.money,
-  };
-
-  const players = survivors.map((p) => {
-    const np = structuredClone(p);
-    np.age += 1;
-    // Evolución de la técnica: los jóvenes crecen, los veteranos declinan.
-    // Haber entrenado durante la temporada mejora el verano de todos.
-    const trained = np.seasonTrainings >= BALANCE.progression.trainingsToCount;
-    if (np.age <= 25) np.technique = clamp(np.technique + rng.int(0, 4) + (trained ? 1 : 0), 20, 92);
-    else if (np.age <= 30) np.technique = clamp(np.technique + rng.int(-1, 1) + (trained ? 1 : 0), 20, 92);
-    else np.technique = clamp(np.technique - (trained ? rng.int(0, 2) : rng.int(1, 4)), 20, 92);
-    np.visibleRating = Math.round(np.technique + rng.range(-7, 7));
-    np.seasonTrainings = 0;
-    np.techniqueGain = 0;
-    np.physical = clamp(75 - Math.max(0, np.age - 28) * 2 + rng.int(-8, 8));
-    np.motivation = clamp(rng.int(60, 78));
-    np.confidence = clamp(rng.int(45, 65));
-    np.status = 'disponible';
-    np.injuryWeeks = 0;
-    np.weeksUpset = 0;
-    np.weeksBenched = 0;
-    np.lastRating = null;
-    // Verano: las deudas se arreglaron, las becas negociadas se mantienen.
-    if (np.feeStatus === 'pendiente') {
-      np.feeStatus = 'pagada';
-      np.weeksUnpaid = 0;
-    }
-    return np;
-  });
-
-  // La liga se reacomoda un poco de temporada a temporada.
-  const rivals = state.rivals.map((r) => ({
-    ...r,
-    strength: clamp(r.strength + rng.int(-4, 4), 40, 85),
-  }));
-
-  const seasonNumber = state.seasonNumber + 1;
-  const money = state.club.money - BALANCE.economy.inscriptionFee;
-  const starters = suggestStarters(players);
-
-  const next: GameState = {
-    saveVersion: SAVE_VERSION,
-    seed: 0,
-    seasonNumber,
-    objectives: [],
-    pastSeasons: [...state.pastSeasons, finishedSeason],
-    week: 1,
-    seasonLength: BALANCE.season.weeks,
-    phase: 'planning',
-    club: {
-      ...state.club,
-      money,
-      socialClimate: clamp(Math.round(state.club.socialClimate * 0.5 + 30)),
-      organization: clamp(state.club.organization - 3),
-      sportPrestige: clamp(state.club.sportPrestige - 2),
-      socialPrestige: clamp(state.club.socialPrestige - 2),
-    },
-    players,
-    rivals,
-    schedule: SCHEDULE_ORDER,
-    standings: [
-      { teamId: 'club', wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 },
-      ...rivals.map((r) => ({ teamId: r.id, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 })),
-    ],
-    actionsChosen: [],
-    actionsLog: [],
-    actionsUsed: [],
-    pendingEvent: null,
-    eventOutcome: null,
-    starters,
-    rotation: suggestRotation(players, starters),
-    lastMatch: null,
-    history: [],
-    news: [
-      { week: 1, text: `Pagamos la inscripción ($${BALANCE.economy.inscriptionFee}) y la comisión fijó nuevos objetivos.`, tone: 'neutral' },
-      { week: 1, text: `¡Arranca la temporada ${seasonNumber} de Atlético El Parque!`, tone: 'good' },
-    ],
-    ledger: [
-      { week: 1, concept: `Caja heredada de la temporada ${state.seasonNumber}`, amount: state.club.money },
-      { week: 1, concept: 'Inscripción a la liga', amount: -BALANCE.economy.inscriptionFee },
-    ],
-    memorableMoments: [],
-    playersLeftCount: 0,
-    sponsorWeeks: 0,
-    gameOverReason: null,
-    startingMoney: money,
-  };
-  next.objectives = generateObjectives(seasonNumber, next.club.sportPrestige, rng);
-  next.seed = rng.nextSeed();
-  return next;
 }
 
 /** Aplica las acciones elegidas y pasa a la elección de quinteto. */

@@ -38,6 +38,12 @@ export function loadGame(): GameState | null {
       }
       parsed.saveVersion = 5;
     }
+    // v5 → v6: promesas y pretemporada.
+    if (parsed.saveVersion === 5) {
+      parsed.promises = parsed.promises ?? [];
+      parsed.preseason = parsed.preseason ?? null;
+      parsed.saveVersion = 6;
+    }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;
   } catch {
