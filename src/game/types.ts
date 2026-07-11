@@ -105,6 +105,15 @@ export interface Objective {
   target: number;
 }
 
+/** Resumen de una temporada ya jugada (para el palmarés del club). */
+export interface PastSeason {
+  season: number;
+  record: string;
+  position: number;
+  outcome: string;
+  money: number;
+}
+
 export type NewsTone = 'good' | 'bad' | 'neutral';
 
 export interface NewsItem {
@@ -134,6 +143,8 @@ export interface GameState {
   seasonNumber: number;
   /** Objetivos que la comisión directiva fijó para esta temporada. */
   objectives: Objective[];
+  /** Temporadas anteriores del club (carrera). */
+  pastSeasons: PastSeason[];
   week: number; // 1..seasonLength
   seasonLength: number;
   phase: Phase;

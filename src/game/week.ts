@@ -5,11 +5,12 @@ import { getAction } from './actions';
 import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent } from './events';
 import { generateObjectives } from './objectives';
-import { activePlayers, suggestStarters } from './match';
+import { computeSeasonEvaluation } from './evaluation';
+import { activePlayers, clubPosition, suggestStarters } from './match';
 import { Rng } from './rng';
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);
@@ -21,6 +22,7 @@ export function createNewGame(seed: number): GameState {
     seed: 0,
     seasonNumber: 1,
     objectives: [],
+    pastSeasons: [],
     week: 1,
     seasonLength: BALANCE.season.weeks,
     phase: 'planning',
@@ -74,6 +76,15 @@ export function startNextSeason(state: GameState): GameState {
   const rng = new Rng(state.seed);
   const survivors = state.players.filter((p) => !p.leftClub);
 
+  const finishedRow = state.standings.find((r) => r.teamId === 'club')!;
+  const finishedSeason = {
+    season: state.seasonNumber,
+    record: `${finishedRow.wins}-${finishedRow.losses}`,
+    position: clubPosition(state),
+    outcome: computeSeasonEvaluation(state).outcomeTitle,
+    money: state.club.money,
+  };
+
   const players = survivors.map((p) => {
     const np = structuredClone(p);
     np.age += 1;
@@ -112,6 +123,7 @@ export function startNextSeason(state: GameState): GameState {
     seed: 0,
     seasonNumber,
     objectives: [],
+    pastSeasons: [...state.pastSeasons, finishedSeason],
     week: 1,
     seasonLength: BALANCE.season.weeks,
     phase: 'planning',

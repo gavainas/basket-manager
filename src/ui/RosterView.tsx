@@ -18,7 +18,7 @@ export function RosterView({ state }: { state: GameState }) {
       </p>
       <div className="player-grid">
         {active.map((p) => (
-          <PlayerCard key={p.id} player={p} />
+          <PlayerCard key={p.id} player={p} mvpCount={state.history.filter((m) => m.mvpId === p.id).length} />
         ))}
       </div>
       {gone.length > 0 && (

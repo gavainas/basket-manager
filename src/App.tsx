@@ -8,15 +8,17 @@ import { LeagueView } from './ui/LeagueView';
 import { WeekView } from './ui/WeekView';
 import { EventModal } from './ui/EventModal';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
+import { HistoryView } from './ui/HistoryView';
 import { formatMoney } from './ui/helpers';
 
-type Tab = 'resumen' | 'plantilla' | 'finanzas' | 'liga' | 'semana';
+type Tab = 'resumen' | 'plantilla' | 'finanzas' | 'liga' | 'historia' | 'semana';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'resumen', label: 'Resumen' },
   { id: 'plantilla', label: 'Plantilla' },
   { id: 'finanzas', label: 'Finanzas' },
   { id: 'liga', label: 'Liga' },
+  { id: 'historia', label: 'Historia' },
   { id: 'semana', label: 'Semana' },
 ];
 
@@ -158,6 +160,7 @@ export default function App() {
       {tab === 'plantilla' && <RosterView state={state} />}
       {tab === 'finanzas' && <FinancesView state={state} />}
       {tab === 'liga' && <LeagueView state={state} />}
+      {tab === 'historia' && <HistoryView state={state} />}
       {tab === 'semana' && <WeekView state={state} dispatch={dispatch} />}
 
       <EventModal state={state} dispatch={dispatch} />

@@ -19,6 +19,11 @@ export function loadGame(): GameState | null {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as GameState;
+    // Migración liviana: v2 solo carece del palmarés.
+    if (parsed.saveVersion === 2) {
+      parsed.pastSeasons = parsed.pastSeasons ?? [];
+      parsed.saveVersion = 3;
+    }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;
   } catch {

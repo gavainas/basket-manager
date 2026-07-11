@@ -10,9 +10,11 @@ interface Props {
   dimmed?: boolean;
   onToggle?: (id: string) => void;
   compact?: boolean;
+  /** Veces que fue MVP esta temporada. */
+  mvpCount?: number;
 }
 
-export function PlayerCard({ player: p, selectable, selected, dimmed, onToggle, compact }: Props) {
+export function PlayerCard({ player: p, selectable, selected, dimmed, onToggle, compact, mvpCount }: Props) {
   const status = statusChip(p);
   const fee = feeChip(p);
   const unavailable = selectable && (p.status === 'lesionado' || p.leftClub);
@@ -54,6 +56,7 @@ export function PlayerCard({ player: p, selectable, selected, dimmed, onToggle, 
         <span className={`chip ${fee.cls}`}>{fee.label}</span>
         <span className="chip">{roleLabel(p)}</span>
         {p.lastRating !== null && <span className="chip accent">Último partido: {p.lastRating}/10</span>}
+        {(mvpCount ?? 0) > 0 && <span className="chip accent">⭐ MVP ×{mvpCount}</span>}
         {selectable && selected && <span className="chip accent">Titular</span>}
       </div>
     </div>
