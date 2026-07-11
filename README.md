@@ -23,7 +23,7 @@ Cada turno es una semana (temporada de 9 semanas):
 1. **Revisar** el estado del club (Resumen, Plantilla, Finanzas, Liga).
 2. **Decidir**: elegir hasta 2 acciones semanales (entrenar, asado, rifa, sponsor, becar, cobrar cuotas, reclutar…).
 3. **Eventos**: la mayoría de las semanas pasa algo que exige una decisión con consecuencias.
-4. **Quinteto**: elegir los 5 titulares (cuidando posiciones, físico y egos).
+4. **Quinteto y rotación**: elegir los 5 titulares y hasta 5 de rotación (cuidando posiciones, físico, minutos y egos).
 5. **Partido**: simulación con marcador, MVP, claves del resultado y notas de vestuario.
 6. **Avanzar**: se cobran cuotas, se pagan gastos, los ánimos evolucionan… y alguno puede irse.
 
@@ -35,8 +35,10 @@ Al final, una evaluación multidimensional: resultado deportivo, salud financier
 
 - Plantel de 12 jugadores con 8 personalidades (competitivo, social, protagonista, leal, mercenario, cumplidor, veterano, talentoso informal) que afectan su comportamiento.
 - **Información imperfecta**: la valoración visible (≈) es una estimación con ruido; el rendimiento real surge de técnica + físico + motivación + confianza + química + posiciones.
+- **Rotaciones y minutos**: además del quinteto se elige la rotación (hasta 5); la fuerza del equipo, el desgaste físico y el descontento por minutos dependen de cuántos juegan y cuánto. Sin rotación, los titulares se funden.
+- **Entrenamientos con progresión**: la asistencia depende del compromiso, los jóvenes crecen entrenando, los que entrenan toda la temporada evolucionan mejor en el verano y los veteranos que entrenan casi no declinan.
 - 10 acciones semanales con costos, beneficios y riesgos (máximo 2 por semana).
-- 12 eventos aleatorios con decisiones y consecuencias visibles.
+- 19 eventos aleatorios con decisiones y consecuencias visibles.
 - Economía: cuotas, morosos, becas totales/parciales, sponsor, rifas, alquiler de cancha, libro de movimientos.
 - Simulación de partidos con explicación del resultado (nivel, físico, motivación, química, posiciones, suerte).
 - Liga de 10 equipos con tabla viva (los rivales juegan entre sí).
@@ -47,7 +49,7 @@ Al final, una evaluación multidimensional: resultado deportivo, salud financier
 
 ## Sistemas pendientes
 
-Ver [ROADMAP.md](ROADMAP.md). Los principales: rotaciones y minutos por jugador, entrenamientos con progresión, mercado de pases, lesiones más profundas, relaciones entre jugadores e historias emergentes.
+Ver [ROADMAP.md](ROADMAP.md). Los principales: más eventos y personalidades, mercado de pases, lesiones más profundas, relaciones entre jugadores e historias emergentes.
 
 ## Estructura del proyecto
 

@@ -3,8 +3,6 @@
 Próximas etapas, en orden aproximado de valor:
 
 ## Corto plazo
-- **Rotaciones y minutos**: asignar minutos esperados por jugador y que la simulación los use; gestión del descontento por minutos más fina.
-- **Entrenamientos con progresión**: que la técnica evolucione (jóvenes suben, veteranos mantienen) según asistencia y compromiso.
 - **Más eventos y personalidades**: ampliar el pool de eventos (20+), eventos encadenados y personalidades combinadas.
 - **Balance general**: ajustar dificultad económica y deportiva con datos de partidas reales; niveles de dificultad.
 

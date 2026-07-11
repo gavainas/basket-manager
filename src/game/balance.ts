@@ -58,7 +58,16 @@ export const BALANCE = {
 
   actions: {
     maxPerWeek: 2,
-    training: { cost: 30, physical: 4, injuryChance: 0.08 },
+    training: {
+      cost: 30,
+      physical: 4,
+      injuryChance: 0.08,
+      lowCommitmentThreshold: 45, // debajo de esto pueden faltar
+      skipChanceLowCommitment: 0.3,
+      skipChanceInformal: 0.35, // talentoso_informal falta aunque tenga compromiso
+      youngImproveChance: 0.3, // ≤25 años y compromiso ≥ 50
+      primeImproveChance: 0.15, // 26-30 años y compromiso ≥ 70
+    },
     asado: { cost: 110, climate: 12, socialPrestige: 4, rainChance: 0.15 },
     raffle: { cost: 25, incomeMin: 60, incomeMax: 190 },
     sponsorSearch: { baseChance: 0.35, prestigeFactor: 0.005 },
@@ -73,6 +82,12 @@ export const BALANCE = {
   prestige: {
     min: 0,
     max: 100,
+  },
+
+  progression: {
+    // Con esta cantidad de entrenamientos en la temporada, la evolución
+    // de verano mejora: los jóvenes crecen más y los veteranos casi no caen.
+    trainingsToCount: 3,
   },
 } as const;
 

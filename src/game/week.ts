@@ -10,7 +10,7 @@ import { activePlayers, clubPosition, suggestRotation, suggestStarters } from '.
 import { Rng } from './rng';
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);
@@ -91,10 +91,14 @@ export function startNextSeason(state: GameState): GameState {
     const np = structuredClone(p);
     np.age += 1;
     // Evolución de la técnica: los jóvenes crecen, los veteranos declinan.
-    if (np.age <= 25) np.technique = clamp(np.technique + rng.int(0, 4), 20, 92);
-    else if (np.age <= 30) np.technique = clamp(np.technique + rng.int(-1, 1), 20, 92);
-    else np.technique = clamp(np.technique - rng.int(1, 4), 20, 92);
+    // Haber entrenado durante la temporada mejora el verano de todos.
+    const trained = np.seasonTrainings >= BALANCE.progression.trainingsToCount;
+    if (np.age <= 25) np.technique = clamp(np.technique + rng.int(0, 4) + (trained ? 1 : 0), 20, 92);
+    else if (np.age <= 30) np.technique = clamp(np.technique + rng.int(-1, 1) + (trained ? 1 : 0), 20, 92);
+    else np.technique = clamp(np.technique - (trained ? rng.int(0, 2) : rng.int(1, 4)), 20, 92);
     np.visibleRating = Math.round(np.technique + rng.range(-7, 7));
+    np.seasonTrainings = 0;
+    np.techniqueGain = 0;
     np.physical = clamp(75 - Math.max(0, np.age - 28) * 2 + rng.int(-8, 8));
     np.motivation = clamp(rng.int(60, 78));
     np.confidence = clamp(rng.int(45, 65));

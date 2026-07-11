@@ -51,28 +51,58 @@ export const ACTIONS: ActionDef[] = [
     apply: (s, rng) => {
       spend(s, 'Alquiler para entrenamiento', A.training.cost);
       s.club.organization = clamp(s.club.organization + 3);
+      const T = A.training;
       let improved = 0;
+      const skipped: string[] = [];
+      const attendees: Player[] = [];
       for (const p of actives(s)) {
         if (p.status === 'lesionado') continue;
-        p.physical = clamp(p.physical + A.training.physical);
+        // Asistencia: los informales y los de poco compromiso faltan seguido.
+        const skipChance =
+          p.personality === 'talentoso_informal'
+            ? T.skipChanceInformal
+            : p.commitment < T.lowCommitmentThreshold
+              ? T.skipChanceLowCommitment
+              : 0;
+        if (skipChance > 0 && rng.chance(skipChance)) {
+          skipped.push(p.name);
+          continue;
+        }
+        attendees.push(p);
+        p.seasonTrainings += 1;
+        p.physical = clamp(p.physical + T.physical);
         p.motivation = clamp(p.motivation + (p.personality === 'competitivo' ? 3 : 1));
-        // Los jóvenes comprometidos progresan de verdad (sin que se note en la valoración visible).
-        if (p.age <= 25 && p.commitment >= 50 && p.technique < 90 && rng.chance(0.3)) {
+        // Progresión real: jóvenes comprometidos crecen; en su plenitud, solo los muy dedicados.
+        const canGrow =
+          (p.age <= 25 && p.commitment >= 50 && rng.chance(T.youngImproveChance)) ||
+          (p.age >= 26 && p.age <= 30 && p.commitment >= 70 && rng.chance(T.primeImproveChance));
+        if (canGrow && p.technique < 90) {
           p.technique += 1;
+          p.techniqueGain += 1;
           improved += 1;
+          // Cada 2 puntos ganados, el salto se nota también en la valoración visible.
+          if (p.techniqueGain % 2 === 0) {
+            p.visibleRating += 1;
+            s.news.unshift({
+              week: s.week,
+              text: `${p.name} está dando un salto: se lo ve mejor que a principio de temporada.`,
+              tone: 'good',
+            });
+          }
         }
       }
-      const candidates = actives(s).filter((p) => p.status !== 'lesionado');
-      if (candidates.length > 0 && rng.chance(A.training.injuryChance)) {
-        const injured = rng.pick(candidates);
+      const absent =
+        skipped.length === 0 ? '' : skipped.length === 1 ? ` Faltó ${skipped[0]}.` : ` Faltaron ${skipped.join(' y ')}.`;
+      if (attendees.length > 0 && rng.chance(A.training.injuryChance)) {
+        const injured = rng.pick(attendees);
         injured.status = 'lesionado';
         injured.injuryWeeks = 1;
         s.news.unshift({ week: s.week, text: `${injured.name} se resintió en el entrenamiento. Una semana afuera.`, tone: 'bad' });
-        return `Buen entrenamiento: físico y organización mejoraron, pero ${injured.name} terminó tocado (1 semana afuera).`;
+        return `Buen entrenamiento, pero ${injured.name} terminó tocado (1 semana afuera).${absent}`;
       }
       return improved > 0
-        ? 'Entrenamiento intenso: el plantel mejoró el físico y algún joven mostró progresos que ilusionan.'
-        : 'Entrenamiento intenso: el plantel mejoró su estado físico y el club se ve más ordenado.';
+        ? `Entrenamiento intenso: el plantel mejoró el físico y algún joven mostró progresos que ilusionan.${absent}`
+        : `Entrenamiento intenso: el plantel mejoró su estado físico y el club se ve más ordenado.${absent}`;
     },
   },
   {

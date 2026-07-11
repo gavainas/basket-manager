@@ -48,6 +48,10 @@ export interface Player {
   lastRating: number | null;
   /** Semanas seguidas sin ser titular. */
   weeksBenched: number;
+  /** Entrenamientos a los que asistió esta temporada. */
+  seasonTrainings: number;
+  /** Técnica ganada esta temporada entrenando (impulsa el progreso visible). */
+  techniqueGain: number;
   leftClub: boolean;
 }
 

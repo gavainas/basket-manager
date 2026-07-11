@@ -30,6 +30,14 @@ export function loadGame(): GameState | null {
       parsed.rotation = suggestRotation(parsed.players, parsed.starters);
       parsed.saveVersion = 4;
     }
+    // v4 → v5: contadores de entrenamiento por jugador.
+    if (parsed.saveVersion === 4) {
+      for (const p of parsed.players) {
+        p.seasonTrainings = p.seasonTrainings ?? 0;
+        p.techniqueGain = p.techniqueGain ?? 0;
+      }
+      parsed.saveVersion = 5;
+    }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;
   } catch {

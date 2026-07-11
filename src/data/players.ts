@@ -210,6 +210,8 @@ export function buildPlayer(seed: PlayerSeed, id: string, rng: Rng): Player {
     weeksUpset: 0,
     lastRating: null,
     weeksBenched: 0,
+    seasonTrainings: 0,
+    techniqueGain: 0,
     leftClub: false,
   };
 }

@@ -54,6 +54,8 @@ export function createRecruit(rng: Rng, opts?: { minTechnique?: number; maxTechn
     weeksUpset: 0,
     lastRating: null,
     weeksBenched: 0,
+    seasonTrainings: 0,
+    techniqueGain: 0,
     leftClub: false,
   };
 }
