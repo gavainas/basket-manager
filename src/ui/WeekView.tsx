@@ -201,6 +201,47 @@ function MatchResultPanel({ state, dispatch }: Props) {
             <div className={`score ${m.won ? 'lose' : 'win'}`}>{m.scoreAgainst}</div>
           </div>
         </div>
+        {m.quarters.length > 0 && (
+          <div className="table-wrap" style={{ maxWidth: 420, margin: '0 auto 0.8rem' }}>
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  {m.quarters.map((_, i) => (
+                    <th className="num" key={i}>
+                      Q{i + 1}
+                    </th>
+                  ))}
+                  <th className="num">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Nosotros</td>
+                  {m.quarters.map((q, i) => (
+                    <td className="num" key={i}>
+                      {q.for}
+                    </td>
+                  ))}
+                  <td className="num" style={{ fontWeight: 700 }}>
+                    {m.scoreFor}
+                  </td>
+                </tr>
+                <tr>
+                  <td>{m.rivalName}</td>
+                  {m.quarters.map((q, i) => (
+                    <td className="num" key={i}>
+                      {q.against}
+                    </td>
+                  ))}
+                  <td className="num" style={{ fontWeight: 700 }}>
+                    {m.scoreAgainst}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
         <p style={{ textAlign: 'center', marginTop: 0 }}>{m.summary}</p>
         {m.mvpName && (
           <p style={{ textAlign: 'center' }}>
@@ -208,6 +249,17 @@ function MatchResultPanel({ state, dispatch }: Props) {
           </p>
         )}
       </div>
+
+      {m.highlights.length > 0 && (
+        <div className="card" style={{ marginTop: '1rem' }}>
+          <h3>El relato del partido</h3>
+          <ul className="reason-list">
+            {m.highlights.map((h, i) => (
+              <li key={i}>{h}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="grid cols-2" style={{ marginTop: '1rem' }}>
         <div className="card">

@@ -74,12 +74,21 @@ export interface StandingRow {
   pointsAgainst: number;
 }
 
+export interface QuarterScore {
+  for: number;
+  against: number;
+}
+
 export interface MatchResult {
   week: number;
   rivalId: string;
   rivalName: string;
   scoreFor: number;
   scoreAgainst: number;
+  /** Parciales de los 4 cuartos (vacío en forfeit). */
+  quarters: QuarterScore[];
+  /** Jugadas destacadas del relato (vacío en forfeit). */
+  highlights: string[];
   won: boolean;
   forfeit: boolean;
   mvpId: string | null;
@@ -88,6 +97,12 @@ export interface MatchResult {
   reasons: string[];
   lockerRoom: string[];
   effects: string[];
+}
+
+export interface Objective {
+  id: string;
+  label: string;
+  target: number;
 }
 
 export type NewsTone = 'good' | 'bad' | 'neutral';
@@ -115,6 +130,10 @@ export type Phase = 'planning' | 'lineup' | 'matchResult' | 'seasonEnd' | 'gameO
 export interface GameState {
   saveVersion: number;
   seed: number;
+  /** Temporada en curso (1, 2, 3…). */
+  seasonNumber: number;
+  /** Objetivos que la comisión directiva fijó para esta temporada. */
+  objectives: Objective[];
   week: number; // 1..seasonLength
   seasonLength: number;
   phase: Phase;

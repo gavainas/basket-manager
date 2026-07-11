@@ -111,7 +111,10 @@ export default function App() {
         <span className="club-name">🏀 {state.club.name}</span>
         <div className="meta">
           <span>
-            Semana <strong>{Math.min(state.week, state.seasonLength)}/{state.seasonLength}</strong>
+            T{state.seasonNumber} · Semana{' '}
+            <strong>
+              {Math.min(state.week, state.seasonLength)}/{state.seasonLength}
+            </strong>
           </span>
           <span>
             Caja <strong>{formatMoney(state.club.money)}</strong>

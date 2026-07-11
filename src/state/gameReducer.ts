@@ -1,11 +1,12 @@
 import { BALANCE } from '../game/balance';
 import { simulateMatch, isSelectable } from '../game/match';
 import { Rng, randomSeed } from '../game/rng';
-import { advanceWeek, confirmActions, createNewGame, resolveEvent } from '../game/week';
+import { advanceWeek, confirmActions, createNewGame, resolveEvent, startNextSeason } from '../game/week';
 import type { GameState } from '../game/types';
 
 export type GameAction =
   | { type: 'NEW_GAME' }
+  | { type: 'NEW_SEASON' }
   | { type: 'LOAD'; state: GameState }
   | { type: 'QUIT_TO_MENU' }
   | { type: 'TOGGLE_ACTION'; id: string }
@@ -29,6 +30,11 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
   if (!state) return state;
 
   switch (action.type) {
+    case 'NEW_SEASON': {
+      if (state.phase !== 'seasonEnd') return state;
+      if (state.club.money < BALANCE.economy.inscriptionFee) return state;
+      return startNextSeason(state);
+    }
     case 'TOGGLE_ACTION': {
       if (state.phase !== 'planning') return state;
       const chosen = state.actionsChosen.includes(action.id)

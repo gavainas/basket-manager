@@ -1,7 +1,15 @@
 import type { GameState } from '../game/types';
 import { activePlayers, clubPosition } from '../game/match';
+import { objectiveStatus, type ObjectiveStatus } from '../game/objectives';
 import { Bar } from './Bar';
 import { avgMotivation, formatMoney, rivalDifficulty } from './helpers';
+
+const OBJECTIVE_BADGE: Record<ObjectiveStatus, { icon: string; cls: string; label: string }> = {
+  cumplido: { icon: '✔', cls: 'good', label: 'cumplido' },
+  en_curso: { icon: '●', cls: 'good', label: 'en curso' },
+  en_riesgo: { icon: '▲', cls: 'warn', label: 'en riesgo' },
+  fallado: { icon: '✘', cls: 'bad', label: 'fallado' },
+};
 
 export function Dashboard({ state }: { state: GameState }) {
   const row = state.standings.find((r) => r.teamId === 'club')!;
@@ -56,6 +64,24 @@ export function Dashboard({ state }: { state: GameState }) {
         </div>
 
         <div>
+          {state.objectives.length > 0 && (
+            <div className="card">
+              <h3>Objetivos de la comisión (temporada {state.seasonNumber})</h3>
+              <ul className="news-list">
+                {state.objectives.map((obj) => {
+                  const st = objectiveStatus(state, obj, false);
+                  const badge = OBJECTIVE_BADGE[st];
+                  return (
+                    <li key={obj.id}>
+                      <span style={{ color: `var(--${badge.cls})`, minWidth: 16 }}>{badge.icon}</span>
+                      <span style={{ flex: 1 }}>{obj.label}</span>
+                      <span className={`chip ${badge.cls}`}>{badge.label}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
           {nextRival && (
             <div className="card">
               <h3>Próximo rival</h3>

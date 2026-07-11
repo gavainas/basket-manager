@@ -88,6 +88,67 @@ function buildReasons(evalTeam: TeamEval, rivalStrength: number, luck: number, w
   return top;
 }
 
+/** Reparte un marcador total en 4 cuartos con variación creíble. */
+function splitQuarters(total: number, rng: Rng): number[] {
+  const base = total / 4;
+  const qs = [0, 0, 0, 0].map(() => Math.max(4, Math.round(base + rng.range(-5, 5))));
+  let diff = total - qs.reduce((a, b) => a + b, 0);
+  let i = 0;
+  while (diff !== 0 && i < 100) {
+    const idx = i % 4;
+    const step = diff > 0 ? 1 : -1;
+    if (qs[idx] + step >= 2) {
+      qs[idx] += step;
+      diff -= step;
+    }
+    i++;
+  }
+  return qs;
+}
+
+function buildHighlights(
+  perfs: { p: Player; perf: number }[],
+  won: boolean,
+  margin: number,
+  rivalName: string,
+  rng: Rng
+): string[] {
+  const lines: string[] = [];
+  const hero = perfs[0].p;
+  const second = perfs.length > 1 ? perfs[1].p : hero;
+  const worst = perfs[perfs.length - 1].p;
+
+  lines.push(
+    rng.pick([
+      `${hero.name} arrancó encendido: dos triples seguidos en el primer cuarto.`,
+      `${hero.name} marcó el ritmo desde el arranque y contagió al resto.`,
+      `Gran primer tiempo de ${hero.name}, imposible de frenar cerca del aro.`,
+    ])
+  );
+  lines.push(
+    rng.pick([
+      `${second.name} sostuvo al equipo con defensa y rebotes cuando el partido se trabó.`,
+      `Una bandeja a tablero de ${second.name} sobre el cierre del tercer cuarto levantó al banco.`,
+      `${second.name} repartió juego y orden en los minutos calientes.`,
+    ])
+  );
+  if (won && margin <= 6) {
+    lines.push(`Final de infarto: ${hero.name} metió los libres decisivos y ${rivalName} se quedó sin nafta.`);
+  } else if (won && margin > 15) {
+    lines.push('El último cuarto fue un monólogo: hasta el banco sumó minutos y puntos.');
+  } else if (!won && margin <= 6) {
+    lines.push(`Se escapó sobre la chicharra: la última pelota no quiso entrar y ${rivalName} festejó.`);
+  } else if (!won) {
+    lines.push(
+      rng.pick([
+        `A ${worst.name} no le salió una en toda la noche, y el equipo lo sintió.`,
+        `${rivalName} castigó cada pérdida con puntos fáciles de contra.`,
+      ])
+    );
+  }
+  return lines;
+}
+
 function lockerRoomNotes(state: GameState, result: { won: boolean; margin: number }, starters: Player[], mvp: Player | null, rng: Rng): string[] {
   const notes: string[] = [];
   const benched = state.players.filter(
@@ -138,6 +199,8 @@ export function simulateMatch(state: GameState, rng: Rng): GameState {
       rivalName: rival.name,
       scoreFor: low,
       scoreAgainst: high,
+      quarters: [],
+      highlights: [],
       won: false,
       forfeit: true,
       mvpId: null,
@@ -231,12 +294,17 @@ export function simulateMatch(state: GameState, rng: Rng): GameState {
         ? `Dura derrota contra ${rival.name}. Nunca estuvimos en partido.`
         : `Derrota ajustada ante ${rival.name}. Se escapó por detalles.`;
 
+    const qFor = splitQuarters(scoreFor, rng);
+    const qAgainst = splitQuarters(scoreAgainst, rng);
+
     result = {
       week: s.week,
       rivalId,
       rivalName: rival.name,
       scoreFor,
       scoreAgainst,
+      quarters: qFor.map((f, i) => ({ for: f, against: qAgainst[i] })),
+      highlights: buildHighlights(perfs, won, margin, rival.name, rng),
       won,
       forfeit: false,
       mvpId: mvp.id,

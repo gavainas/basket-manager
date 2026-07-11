@@ -51,10 +51,16 @@ export const ACTIONS: ActionDef[] = [
     apply: (s, rng) => {
       spend(s, 'Alquiler para entrenamiento', A.training.cost);
       s.club.organization = clamp(s.club.organization + 3);
+      let improved = 0;
       for (const p of actives(s)) {
         if (p.status === 'lesionado') continue;
         p.physical = clamp(p.physical + A.training.physical);
         p.motivation = clamp(p.motivation + (p.personality === 'competitivo' ? 3 : 1));
+        // Los jóvenes comprometidos progresan de verdad (sin que se note en la valoración visible).
+        if (p.age <= 25 && p.commitment >= 50 && p.technique < 90 && rng.chance(0.3)) {
+          p.technique += 1;
+          improved += 1;
+        }
       }
       const candidates = actives(s).filter((p) => p.status !== 'lesionado');
       if (candidates.length > 0 && rng.chance(A.training.injuryChance)) {
@@ -64,7 +70,9 @@ export const ACTIONS: ActionDef[] = [
         s.news.unshift({ week: s.week, text: `${injured.name} se resintió en el entrenamiento. Una semana afuera.`, tone: 'bad' });
         return `Buen entrenamiento: físico y organización mejoraron, pero ${injured.name} terminó tocado (1 semana afuera).`;
       }
-      return 'Entrenamiento intenso: el plantel mejoró su estado físico y el club se ve más ordenado.';
+      return improved > 0
+        ? 'Entrenamiento intenso: el plantel mejoró el físico y algún joven mostró progresos que ilusionan.'
+        : 'Entrenamiento intenso: el plantel mejoró su estado físico y el club se ve más ordenado.';
     },
   },
   {
