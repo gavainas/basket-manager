@@ -2,7 +2,7 @@ import type { GameState, Position } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { ACTIONS } from '../game/actions';
 import { BALANCE } from '../game/balance';
-import { evaluateTeam, isSelectable } from '../game/match';
+import { evaluateTeam, isSelectable, minutesPlan } from '../game/match';
 import { PlayerCard } from './PlayerCard';
 import { rivalDifficulty } from './helpers';
 
@@ -91,6 +91,12 @@ function LineupPanel({ state, dispatch }: Props) {
   const canPlay = count === 5;
   const forfeitRisk = selectable.length < 5;
 
+  const rotationIds = state.rotation.filter(
+    (id) => !state.starters.includes(id) && selectable.some((p) => p.id === id)
+  );
+  const { starterMinutes, subMinutes } = minutesPlan(rotationIds.length);
+  const maxRotation = BALANCE.rotation.maxPlayers;
+
   const covered = new Set(
     state.players.filter((p) => state.starters.includes(p.id)).map((p) => p.position)
   );
@@ -126,12 +132,23 @@ function LineupPanel({ state, dispatch }: Props) {
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
           <span className={`chip ${count === 5 ? 'good' : 'warn'}`}>Titulares: {count}/5</span>
+          <span className={`chip ${rotationIds.length > 0 ? 'good' : 'warn'}`}>
+            Rotación: {rotationIds.length}/{maxRotation}
+          </span>
+          <span className="chip">
+            Minutos: titulares ~{starterMinutes}' {rotationIds.length > 0 ? `· rotación ~${subMinutes}'` : ''}
+          </span>
           {missing.length > 0 && count === 5 && (
             <span className="chip warn">Sin {missing.join(', ')} natural</span>
           )}
           {count === 5 && missing.length === 0 && <span className="chip good">Todas las posiciones cubiertas</span>}
         </div>
         {vibe && <p className="muted" style={{ marginBottom: 0 }}>{vibe}</p>}
+        {count === 5 && rotationIds.length === 0 && (
+          <p className="muted" style={{ marginBottom: 0, color: 'var(--warn)' }}>
+            Sin rotación los titulares juegan los 40 minutos: rinden menos al final y se desgastan mucho más.
+          </p>
+        )}
       </div>
 
       {forfeitRisk && (
@@ -145,7 +162,14 @@ function LineupPanel({ state, dispatch }: Props) {
       <div className="player-grid">
         {sorted.map((p) => {
           const isStarter = state.starters.includes(p.id);
+          const inRotation = rotationIds.includes(p.id);
           const lineupFull = count >= 5 && !isStarter;
+          const rotationFull = rotationIds.length >= maxRotation;
+          const onToggle = !lineupFull
+            ? (id: string) => dispatch({ type: 'TOGGLE_STARTER', id })
+            : inRotation || !rotationFull
+              ? (id: string) => dispatch({ type: 'TOGGLE_ROTATION', id })
+              : undefined;
           return (
             <PlayerCard
               key={p.id}
@@ -153,8 +177,9 @@ function LineupPanel({ state, dispatch }: Props) {
               selectable
               compact
               selected={isStarter}
-              dimmed={lineupFull}
-              onToggle={lineupFull ? undefined : (id) => dispatch({ type: 'TOGGLE_STARTER', id })}
+              inRotation={inRotation}
+              dimmed={lineupFull && rotationFull && !inRotation}
+              onToggle={onToggle}
             />
           );
         })}
@@ -170,7 +195,10 @@ function LineupPanel({ state, dispatch }: Props) {
         </button>
         {!canPlay && !forfeitRisk && <span className="hint">Elegí exactamente 5 titulares.</span>}
         {canPlay && (
-          <span className="hint">Quinteto completo. Para hacer un cambio, tocá primero a un titular y sacalo.</span>
+          <span className="hint">
+            Con el quinteto completo, tocá a los demás para sumarlos o sacarlos de la rotación (~{BALANCE.rotation.minutesPerSub}
+            &apos; cada uno). Para cambiar un titular, primero sacalo.
+          </span>
         )}
       </div>
     </div>

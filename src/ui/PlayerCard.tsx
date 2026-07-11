@@ -6,6 +6,8 @@ interface Props {
   player: Player;
   selectable?: boolean;
   selected?: boolean;
+  /** Elegido para la rotación (entra desde el banco). */
+  inRotation?: boolean;
   /** Sin lugar en el quinteto: se ve apagado y no responde al click. */
   dimmed?: boolean;
   onToggle?: (id: string) => void;
@@ -14,7 +16,7 @@ interface Props {
   mvpCount?: number;
 }
 
-export function PlayerCard({ player: p, selectable, selected, dimmed, onToggle, compact, mvpCount }: Props) {
+export function PlayerCard({ player: p, selectable, selected, inRotation, dimmed, onToggle, compact, mvpCount }: Props) {
   const status = statusChip(p);
   const fee = feeChip(p);
   const unavailable = selectable && (p.status === 'lesionado' || p.leftClub);
@@ -22,7 +24,7 @@ export function PlayerCard({ player: p, selectable, selected, dimmed, onToggle, 
 
   return (
     <div
-      className={`player-card${selected ? ' selected' : ''}${unavailable ? ' unavailable' : ''}${dimmed ? ' dimmed' : ''}`}
+      className={`player-card${selected ? ' selected' : ''}${inRotation ? ' rotation' : ''}${unavailable ? ' unavailable' : ''}${dimmed ? ' dimmed' : ''}`}
       onClick={clickable ? () => onToggle(p.id) : undefined}
       style={clickable ? { cursor: 'pointer' } : undefined}
     >
@@ -58,6 +60,7 @@ export function PlayerCard({ player: p, selectable, selected, dimmed, onToggle, 
         {p.lastRating !== null && <span className="chip accent">Último partido: {p.lastRating}/10</span>}
         {(mvpCount ?? 0) > 0 && <span className="chip accent">⭐ MVP ×{mvpCount}</span>}
         {selectable && selected && <span className="chip accent">Titular</span>}
+        {selectable && inRotation && <span className="chip rotation-chip">Rotación</span>}
       </div>
     </div>
   );

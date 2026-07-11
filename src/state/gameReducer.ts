@@ -14,6 +14,7 @@ export type GameAction =
   | { type: 'RESOLVE_EVENT'; optionIndex: number }
   | { type: 'DISMISS_EVENT_OUTCOME' }
   | { type: 'TOGGLE_STARTER'; id: string }
+  | { type: 'TOGGLE_ROTATION'; id: string }
   | { type: 'PLAY_MATCH' }
   | { type: 'NEXT_WEEK' };
 
@@ -59,7 +60,27 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
         return { ...state, starters: state.starters.filter((id) => id !== action.id) };
       }
       if (!isSelectable(player) || state.starters.length >= 5) return state;
-      return { ...state, starters: [...state.starters, action.id] };
+      return {
+        ...state,
+        starters: [...state.starters, action.id],
+        rotation: state.rotation.filter((id) => id !== action.id),
+      };
+    }
+    case 'TOGGLE_ROTATION': {
+      if (state.phase !== 'lineup') return state;
+      const player = state.players.find((p) => p.id === action.id);
+      if (!player) return state;
+      if (state.rotation.includes(action.id)) {
+        return { ...state, rotation: state.rotation.filter((id) => id !== action.id) };
+      }
+      if (
+        !isSelectable(player) ||
+        state.starters.includes(action.id) ||
+        state.rotation.length >= BALANCE.rotation.maxPlayers
+      ) {
+        return state;
+      }
+      return { ...state, rotation: [...state.rotation, action.id] };
     }
     case 'PLAY_MATCH': {
       if (state.phase !== 'lineup') return state;

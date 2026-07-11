@@ -295,6 +295,17 @@ button.danger {
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
+.player-card.rotation {
+  border-color: #4ea8de;
+  border-style: dashed;
+  box-shadow: 0 0 0 2px rgba(78, 168, 222, 0.15);
+}
+
+.chip.rotation-chip {
+  border-color: #4ea8de;
+  color: #4ea8de;
+}
+
 .player-card.unavailable {
   opacity: 0.55;
 }

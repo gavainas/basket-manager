@@ -21,10 +21,18 @@ export const BALANCE = {
     baseScore: 62,
     strengthToPoints: 0.55, // cuánto pesa la diferencia de fuerza en el marcador
     randomPoints: 10, // amplitud del azar en puntos
-    physicalWearStarter: 11,
     physicalWearBench: 3,
     positionMissingPenalty: 0.055, // penalización por posición sin cubrir
     forfeitScore: [20, 60] as [number, number],
+  },
+
+  rotation: {
+    maxPlayers: 5,
+    totalMinutes: 200, // 5 puestos × 40 minutos
+    minutesPerSub: 12, // minutos aprox. de cada jugador de rotación
+    wearPerMinute: 0.34, // desgaste físico por minuto jugado
+    overloadThreshold: 32, // por encima de estos minutos, los titulares rinden menos
+    overloadPenaltyPerMin: 0.008, // penalización de rendimiento por minuto de sobrecarga
   },
 
   weekly: {
@@ -43,6 +51,8 @@ export const BALANCE = {
     lossSportPrestige: -2,
     upsetWinBonus: 3, // extra por ganarle a un rival más fuerte
     benchedMotivationHit: -6, // protagonistas sin titularidad
+    rotationMotivationHit: -3, // esperaban ser titulares y solo rotaron
+    subMinutesBoost: 2, // suplentes contentos por sumar minutos
     mvpConfidence: 10,
   },
 

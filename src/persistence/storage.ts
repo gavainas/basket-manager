@@ -1,4 +1,5 @@
 import { SAVE_VERSION } from '../game/week';
+import { suggestRotation } from '../game/match';
 import type { GameState } from '../game/types';
 
 const KEY = 'basket-manager-save-v1';
@@ -23,6 +24,11 @@ export function loadGame(): GameState | null {
     if (parsed.saveVersion === 2) {
       parsed.pastSeasons = parsed.pastSeasons ?? [];
       parsed.saveVersion = 3;
+    }
+    // v3 → v4: se agregó la rotación elegible.
+    if (parsed.saveVersion === 3) {
+      parsed.rotation = suggestRotation(parsed.players, parsed.starters);
+      parsed.saveVersion = 4;
     }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;

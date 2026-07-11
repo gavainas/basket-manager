@@ -6,16 +6,17 @@ import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent } from './events';
 import { generateObjectives } from './objectives';
 import { computeSeasonEvaluation } from './evaluation';
-import { activePlayers, clubPosition, suggestStarters } from './match';
+import { activePlayers, clubPosition, suggestRotation, suggestStarters } from './match';
 import { Rng } from './rng';
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);
   const players = createInitialRoster(rng);
   const money = BALANCE.economy.startingMoney - BALANCE.economy.inscriptionFee;
+  const starters = suggestStarters(players);
 
   const state: GameState = {
     saveVersion: SAVE_VERSION,
@@ -46,7 +47,8 @@ export function createNewGame(seed: number): GameState {
     actionsUsed: [],
     pendingEvent: null,
     eventOutcome: null,
-    starters: suggestStarters(players),
+    starters,
+    rotation: suggestRotation(players, starters),
     lastMatch: null,
     history: [],
     news: [
@@ -117,6 +119,7 @@ export function startNextSeason(state: GameState): GameState {
 
   const seasonNumber = state.seasonNumber + 1;
   const money = state.club.money - BALANCE.economy.inscriptionFee;
+  const starters = suggestStarters(players);
 
   const next: GameState = {
     saveVersion: SAVE_VERSION,
@@ -147,7 +150,8 @@ export function startNextSeason(state: GameState): GameState {
     actionsUsed: [],
     pendingEvent: null,
     eventOutcome: null,
-    starters: suggestStarters(players),
+    starters,
+    rotation: suggestRotation(players, starters),
     lastMatch: null,
     history: [],
     news: [
@@ -186,6 +190,7 @@ export function confirmActions(state: GameState): GameState {
   }
   s.phase = 'lineup';
   s.starters = suggestStarters(s.players);
+  s.rotation = suggestRotation(s.players, s.starters);
   s.seed = rng.nextSeed();
   return s;
 }
@@ -201,6 +206,7 @@ export function resolveEvent(state: GameState, optionIndex: number): GameState {
   s.eventOutcome = outcome;
   s.pendingEvent = null;
   s.starters = suggestStarters(s.players);
+  s.rotation = suggestRotation(s.players, s.starters);
   s.seed = rng.nextSeed();
   return s;
 }
@@ -298,6 +304,7 @@ export function advanceWeek(state: GameState): GameState {
     s.phase = 'planning';
     s.pendingEvent = rollEvent(s, rng);
     s.starters = suggestStarters(s.players);
+    s.rotation = suggestRotation(s.players, s.starters);
   }
 
   s.seed = rng.nextSeed();

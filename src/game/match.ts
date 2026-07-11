@@ -20,6 +20,22 @@ export function activePlayers(players: Player[]): Player[] {
   return players.filter((p) => !p.leftClub);
 }
 
+/** Minutos estimados de titulares y rotación según cuántos suplentes entran. */
+export function minutesPlan(rotationCount: number): { starterMinutes: number; subMinutes: number } {
+  const R = BALANCE.rotation;
+  const n = Math.min(rotationCount, R.maxPlayers);
+  const subMinutes = n > 0 ? R.minutesPerSub : 0;
+  const starterMinutes = Math.round((R.totalMinutes - n * subMinutes) / 5);
+  return { starterMinutes, subMinutes };
+}
+
+/** Jugadores de la rotación que efectivamente pueden entrar (disponibles y no titulares). */
+export function rotationPlayers(state: GameState): Player[] {
+  return state.players
+    .filter((p) => isSelectable(p) && state.rotation.includes(p.id) && !state.starters.includes(p.id))
+    .slice(0, BALANCE.rotation.maxPlayers);
+}
+
 interface TeamEval {
   strength: number;
   baseSkill: number;
@@ -27,17 +43,22 @@ interface TeamEval {
   motivationAvg: number;
   missingPositions: number;
   chemistry01: number;
+  starterMinutes: number;
+  rotationCount: number;
 }
 
 export function evaluateTeam(state: GameState, starterIds: string[]): TeamEval {
   const starters = state.players.filter((p) => starterIds.includes(p.id));
-  const bench = state.players
-    .filter((p) => isSelectable(p) && !starterIds.includes(p.id))
-    .sort((a, b) => playerEffective(b) - playerEffective(a))
-    .slice(0, 3);
+  const rotation = state.players
+    .filter((p) => isSelectable(p) && state.rotation.includes(p.id) && !starterIds.includes(p.id))
+    .slice(0, BALANCE.rotation.maxPlayers);
+
+  const { starterMinutes, subMinutes } = minutesPlan(rotation.length);
+  const overload = Math.max(0, starterMinutes - BALANCE.rotation.overloadThreshold);
+  const staminaFactor = 1 - overload * BALANCE.rotation.overloadPenaltyPerMin;
 
   const starterEff = starters.map(playerEffective);
-  const benchEff = bench.map(playerEffective);
+  const rotEff = rotation.map(playerEffective);
   const avg = (arr: number[]) => (arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : 0);
 
   const baseSkill = avg(starters.map((p) => p.technique));
@@ -50,7 +71,12 @@ export function evaluateTeam(state: GameState, starterIds: string[]): TeamEval {
   const orgFactor = 0.97 + 0.06 * (state.club.organization / 100);
   const coverageFactor = 1 - missingPositions * BALANCE.match.positionMissingPenalty;
 
-  const rawStrength = avg(starterEff) * 0.8 + (benchEff.length ? avg(benchEff) : avg(starterEff) * 0.7) * 0.2;
+  // Fuerza ponderada por minutos: los titulares cargan más peso, pero jugar
+  // sin recambio los penaliza (staminaFactor) y una rotación larga los cuida.
+  const R = BALANCE.rotation;
+  const rawStrength =
+    (avg(starterEff) * staminaFactor * starterMinutes * 5 + avg(rotEff) * subMinutes * rotation.length) /
+    R.totalMinutes;
 
   return {
     strength: rawStrength * chemFactor * orgFactor * coverageFactor,
@@ -59,6 +85,8 @@ export function evaluateTeam(state: GameState, starterIds: string[]): TeamEval {
     motivationAvg: avg(starters.map((p) => p.motivation)),
     missingPositions,
     chemistry01,
+    starterMinutes,
+    rotationCount: rotation.length,
   };
 }
 
@@ -79,6 +107,10 @@ function buildReasons(evalTeam: TeamEval, rivalStrength: number, luck: number, w
     });
   if (evalTeam.chemistry01 > 0.72) reasons.push({ weight: 8, text: 'La química del grupo empujó en los momentos calientes.' });
   if (evalTeam.chemistry01 < 0.45) reasons.push({ weight: 10, text: 'El mal ambiente del vestuario se trasladó a la cancha.' });
+  if (evalTeam.starterMinutes >= 38)
+    reasons.push({ weight: 9, text: 'Sin recambio en el banco: los titulares llegaron fundidos al último cuarto.' });
+  else if (evalTeam.rotationCount >= 4)
+    reasons.push({ weight: 6, text: 'La rotación larga mantuvo piernas frescas hasta el final.' });
   if (luck > 6) reasons.push({ weight: luck, text: won ? 'La pelota entró en los momentos justos.' : 'Ni con suerte alcanzó.' });
   if (luck < -6) reasons.push({ weight: -luck, text: 'La pelota no quiso entrar; hubo mala fortuna.' });
 
@@ -152,7 +184,11 @@ function buildHighlights(
 function lockerRoomNotes(state: GameState, result: { won: boolean; margin: number }, starters: Player[], mvp: Player | null, rng: Rng): string[] {
   const notes: string[] = [];
   const benched = state.players.filter(
-    (p) => isSelectable(p) && !starters.some((s) => s.id === p.id) && p.personality === 'protagonista'
+    (p) =>
+      isSelectable(p) &&
+      !starters.some((s) => s.id === p.id) &&
+      !state.rotation.includes(p.id) &&
+      p.personality === 'protagonista'
   );
 
   if (benched.length > 0 && rng.chance(0.7)) {
@@ -233,10 +269,24 @@ export function simulateMatch(state: GameState, rng: Rng): GameState {
     const won = scoreFor > scoreAgainst;
     const margin = Math.abs(scoreFor - scoreAgainst);
 
-    // Rendimiento individual y MVP.
+    // Minutos: dependen de cuántos jugadores de rotación entran.
+    const rotation = rotationPlayers(s);
+    const { starterMinutes, subMinutes } = minutesPlan(rotation.length);
+    const wearStarter = Math.round(starterMinutes * BALANCE.rotation.wearPerMinute);
+    const wearSub = Math.round(subMinutes * BALANCE.rotation.wearPerMinute);
+
+    // Rendimiento individual y MVP (la rotación también compite, pesada por minutos).
     const perfs = starters.map((p) => ({ p, perf: playerEffective(p) * rng.range(0.78, 1.22) }));
     perfs.sort((a, b) => b.perf - a.perf);
-    const mvp = perfs[0].p;
+    const rotPerfs = rotation.map((p) => ({ p, perf: playerEffective(p) * rng.range(0.78, 1.22) }));
+    const minutesWeight = starterMinutes > 0 ? Math.sqrt(subMinutes / starterMinutes) : 0;
+    const mvpCandidates = [
+      ...perfs.map((x) => ({ p: x.p, score: x.perf })),
+      ...rotPerfs.map((x) => ({ p: x.p, score: x.perf * minutesWeight })),
+    ];
+    mvpCandidates.sort((a, b) => b.score - a.score);
+    const mvp = mvpCandidates[0].p;
+    const mvpFromBench = !starters.some((st) => st.id === mvp.id);
 
     const effects: string[] = [];
     const B = BALANCE.matchEffects;
@@ -246,18 +296,43 @@ export function simulateMatch(state: GameState, rng: Rng): GameState {
       if (p.leftClub) return p;
       const np = { ...p };
       const started = starters.some((st) => st.id === p.id);
+      const rotated = rotation.some((r) => r.id === p.id);
 
       if (started) {
         const perf = perfs.find((x) => x.p.id === p.id)!.perf;
         np.lastRating = Math.max(1, Math.min(10, Math.round(perf / 10)));
-        np.physical = clamp(np.physical - BALANCE.match.physicalWearStarter + rng.range(-3, 3));
+        np.physical = clamp(np.physical - wearStarter + rng.range(-3, 3));
         np.weeksBenched = 0;
         np.confidence = clamp(np.confidence + (np.lastRating >= 7 ? 5 : np.lastRating <= 3 ? -5 : 0));
+      } else if (rotated) {
+        const perf = rotPerfs.find((x) => x.p.id === p.id)!.perf;
+        np.lastRating = Math.max(1, Math.min(10, Math.round(perf / 10)));
+        np.physical = clamp(np.physical - wearSub + rng.range(-2, 2));
+        np.weeksBenched = 0;
+        np.confidence = clamp(np.confidence + (np.lastRating >= 7 ? 3 : np.lastRating <= 3 ? -3 : 0));
+        if (np.personality === 'protagonista' || np.expectedRole === 'titular') {
+          // Jugar desde el banco no les alcanza, pero molesta menos que no jugar.
+          np.motivation = clamp(np.motivation + B.rotationMotivationHit);
+          if (np.motivation < BALANCE.weekly.lowMotivationThreshold && np.status === 'disponible') {
+            np.status = 'molesto';
+            np.weeksUpset = 0;
+          }
+        } else if (np.expectedRole === 'suplente') {
+          np.motivation = clamp(np.motivation + B.subMinutesBoost);
+        }
       } else if (isSelectable(np)) {
         np.physical = clamp(np.physical - BALANCE.match.physicalWearBench);
         np.weeksBenched += 1;
-        if (np.personality === 'protagonista' || (np.expectedRole === 'titular' && np.weeksBenched >= 2)) {
-          np.motivation = clamp(np.motivation + B.benchedMotivationHit);
+        const wantsMinutes =
+          np.personality === 'protagonista' ||
+          (np.expectedRole === 'titular' && np.weeksBenched >= 2) ||
+          (np.expectedRole === 'rotación' && np.weeksBenched >= 3);
+        if (wantsMinutes) {
+          const hit =
+            np.expectedRole === 'rotación' && np.personality !== 'protagonista'
+              ? B.rotationMotivationHit
+              : B.benchedMotivationHit;
+          np.motivation = clamp(np.motivation + hit);
           if (np.motivation < BALANCE.weekly.lowMotivationThreshold && np.status === 'disponible') {
             np.status = 'molesto';
             np.weeksUpset = 0;
@@ -283,7 +358,10 @@ export function simulateMatch(state: GameState, rng: Rng): GameState {
 
     effects.push(`Motivación del plantel ${won ? '+' : ''}${won ? B.winMotivation : B.lossMotivation}`);
     effects.push(`Prestigio deportivo ${prestigeDelta >= 0 ? '+' : ''}${prestigeDelta}`);
-    effects.push(`Desgaste físico de los titulares (-${BALANCE.match.physicalWearStarter} aprox.)`);
+    effects.push(`Titulares: ~${starterMinutes} min en cancha (desgaste -${wearStarter} aprox.)`);
+    if (rotation.length > 0)
+      effects.push(`Rotación: ${rotation.length} jugador${rotation.length > 1 ? 'es' : ''} con ~${subMinutes} min (desgaste -${wearSub}).`);
+    else effects.push('Sin rotación: los titulares jugaron los 40 minutos y terminaron fundidos.');
     if (upset) effects.push('¡Batacazo! Ganarle a un rival superior sumó prestigio extra.');
 
     const summary = won
@@ -297,6 +375,9 @@ export function simulateMatch(state: GameState, rng: Rng): GameState {
     const qFor = splitQuarters(scoreFor, rng);
     const qAgainst = splitQuarters(scoreAgainst, rng);
 
+    const highlights = buildHighlights(perfs, won, margin, rival.name, rng);
+    if (mvpFromBench) highlights.push(`${mvp.name} entró desde el banco y cambió el partido: figura inesperada.`);
+
     result = {
       week: s.week,
       rivalId,
@@ -304,7 +385,7 @@ export function simulateMatch(state: GameState, rng: Rng): GameState {
       scoreFor,
       scoreAgainst,
       quarters: qFor.map((f, i) => ({ for: f, against: qAgainst[i] })),
-      highlights: buildHighlights(perfs, won, margin, rival.name, rng),
+      highlights,
       won,
       forfeit: false,
       mvpId: mvp.id,
@@ -381,6 +462,15 @@ export function clubPosition(state: GameState): number {
     (a, b) => b.wins - a.wins || (b.pointsFor - b.pointsAgainst) - (a.pointsFor - a.pointsAgainst)
   );
   return sorted.findIndex((r) => r.teamId === 'club') + 1;
+}
+
+/** Rotación sugerida: los mejores disponibles que no son titulares. */
+export function suggestRotation(players: Player[], starterIds: string[]): string[] {
+  return players
+    .filter((p) => isSelectable(p) && !starterIds.includes(p.id))
+    .sort((a, b) => playerEffective(b) - playerEffective(a))
+    .slice(0, BALANCE.rotation.maxPlayers)
+    .map((p) => p.id);
 }
 
 /** Quinteto sugerido: los 5 disponibles más fuertes cubriendo posiciones. */
