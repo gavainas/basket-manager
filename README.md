@@ -2,6 +2,10 @@
 
 Prototipo web jugable de un juego de gestión de un club de básquet **amateur**. Sos el manager: no alcanza con ganar partidos — el club necesita jugadores motivados que paguen la cuota, buen ambiente, organización y una caja que nunca llegue a cero.
 
+**▶ Jugar online: https://gavainas.github.io/basket-manager/**
+
+(Se deploya automáticamente a GitHub Pages con cada push a `main`.)
+
 ## Cómo instalarlo y ejecutarlo
 
 ```bash
