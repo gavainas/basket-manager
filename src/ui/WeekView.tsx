@@ -70,7 +70,7 @@ function PlanningPanel({ state, dispatch }: Props) {
       <div className="confirm-bar">
         <button className="primary" onClick={() => dispatch({ type: 'CONFIRM_ACTIONS' })}>
           {state.actionsChosen.length > 0
-            ? `Confirmar ${state.actionsChosen.length} acción${state.actionsChosen.length > 1 ? 'es' : ''} y armar quinteto →`
+            ? `Confirmar ${state.actionsChosen.length === 1 ? '1 acción' : `${state.actionsChosen.length} acciones`} y armar quinteto →`
             : 'No hacer nada esta semana y armar quinteto →'}
         </button>
         <span className="hint">
@@ -143,16 +143,21 @@ function LineupPanel({ state, dispatch }: Props) {
       )}
 
       <div className="player-grid">
-        {sorted.map((p) => (
-          <PlayerCard
-            key={p.id}
-            player={p}
-            selectable
-            compact
-            selected={state.starters.includes(p.id)}
-            onToggle={(id) => dispatch({ type: 'TOGGLE_STARTER', id })}
-          />
-        ))}
+        {sorted.map((p) => {
+          const isStarter = state.starters.includes(p.id);
+          const lineupFull = count >= 5 && !isStarter;
+          return (
+            <PlayerCard
+              key={p.id}
+              player={p}
+              selectable
+              compact
+              selected={isStarter}
+              dimmed={lineupFull}
+              onToggle={lineupFull ? undefined : (id) => dispatch({ type: 'TOGGLE_STARTER', id })}
+            />
+          );
+        })}
       </div>
 
       <div className="confirm-bar">
@@ -164,6 +169,9 @@ function LineupPanel({ state, dispatch }: Props) {
           {forfeitRisk ? 'Presentarse igual (forfeit) →' : '🏀 Jugar el partido →'}
         </button>
         {!canPlay && !forfeitRisk && <span className="hint">Elegí exactamente 5 titulares.</span>}
+        {canPlay && (
+          <span className="hint">Quinteto completo. Para hacer un cambio, tocá primero a un titular y sacalo.</span>
+        )}
       </div>
     </div>
   );

@@ -3,11 +3,14 @@ import type { GameState } from '../game/types';
 
 const KEY = 'basket-manager-save-v1';
 
-export function saveGame(state: GameState): void {
+/** Devuelve false si el guardado falló (storage bloqueado o lleno). */
+export function saveGame(state: GameState): boolean {
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
+    return true;
   } catch {
     // Sin espacio o storage bloqueado: el juego sigue sin guardar.
+    return false;
   }
 }
 

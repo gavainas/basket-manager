@@ -113,7 +113,7 @@ export function advanceWeek(state: GameState): GameState {
       if (p.injuryWeeks <= 0) {
         p.status = 'disponible';
         p.injuryWeeks = 0;
-        s.news.unshift({ week: s.week, text: `${p.name} ya está recuperado y disponible.`, tone: 'good' });
+        s.news.unshift({ week: s.week, text: `${p.name} vuelve a estar disponible.`, tone: 'good' });
       }
     } else {
       p.physical = clamp(p.physical + BALANCE.weekly.physicalRecovery);

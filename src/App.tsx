@@ -64,10 +64,11 @@ function MainMenu({ onNew, onContinue }: { onNew: () => void; onContinue: () => 
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, null);
   const [tab, setTab] = useState<Tab>('resumen');
+  const [saveFailed, setSaveFailed] = useState(false);
 
   // Guardado automático.
   useEffect(() => {
-    if (state) saveGame(state);
+    if (state) setSaveFailed(!saveGame(state));
   }, [state]);
 
   // Al cambiar de fase, llevar al usuario a la pantalla correcta.
@@ -123,8 +124,18 @@ export default function App() {
           </span>
         </div>
         <div className="spacer" />
+        {saveFailed && <span className="chip bad">⚠ No se pudo guardar</span>}
         <span className="chip accent">{phaseHint}</span>
-        <button onClick={() => dispatch({ type: 'QUIT_TO_MENU' })}>Menú</button>
+        <button
+          onClick={() => {
+            const msg = saveFailed
+              ? 'ATENCIÓN: el guardado automático está fallando (storage bloqueado o lleno). Si salís al menú, esta partida se pierde. ¿Salir igual?'
+              : '¿Volver al menú? La partida queda guardada automáticamente.';
+            if (window.confirm(msg)) dispatch({ type: 'QUIT_TO_MENU' });
+          }}
+        >
+          Menú
+        </button>
       </div>
 
       <div className="tabs">

@@ -197,6 +197,7 @@ export function simulateMatch(state: GameState, rng: Rng): GameState {
           np.motivation = clamp(np.motivation + B.benchedMotivationHit);
           if (np.motivation < BALANCE.weekly.lowMotivationThreshold && np.status === 'disponible') {
             np.status = 'molesto';
+            np.weeksUpset = 0;
           }
         }
       }

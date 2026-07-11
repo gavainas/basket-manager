@@ -56,8 +56,8 @@ export const ACTIONS: ActionDef[] = [
         p.physical = clamp(p.physical + A.training.physical);
         p.motivation = clamp(p.motivation + (p.personality === 'competitivo' ? 3 : 1));
       }
-      if (rng.chance(A.training.injuryChance)) {
-        const candidates = actives(s).filter((p) => p.status !== 'lesionado');
+      const candidates = actives(s).filter((p) => p.status !== 'lesionado');
+      if (candidates.length > 0 && rng.chance(A.training.injuryChance)) {
         const injured = rng.pick(candidates);
         injured.status = 'lesionado';
         injured.injuryWeeks = 1;
@@ -183,7 +183,10 @@ export const ACTIONS: ActionDef[] = [
         }
         const hit = p.personality === 'mercenario' || p.personality === 'talentoso_informal' ? A.collectFees.motivationHit - 2 : A.collectFees.motivationHit;
         p.motivation = clamp(p.motivation + hit);
-        if (p.motivation < BALANCE.weekly.lowMotivationThreshold && p.status === 'disponible') p.status = 'molesto';
+        if (p.motivation < BALANCE.weekly.lowMotivationThreshold && p.status === 'disponible') {
+          p.status = 'molesto';
+          p.weeksUpset = 0;
+        }
       }
       if (collected > 0) earn(s, `Cuotas atrasadas (${paidCount} jugadores)`, collected);
       const grumbled = debtors.length - paidCount;
@@ -212,7 +215,10 @@ export const ACTIONS: ActionDef[] = [
       star.feeStatus = 'beca_total';
       star.weeksUnpaid = 0;
       star.motivation = clamp(star.motivation + A.scholarship.motivationBoost);
-      if (star.status === 'molesto') star.status = 'disponible';
+      if (star.status === 'molesto') {
+        star.status = 'disponible';
+        star.weeksUpset = 0;
+      }
       s.club.socialClimate = clamp(s.club.socialClimate + A.scholarship.climateHit);
       const cumplidores = actives(s).filter((p) => p.personality === 'cumplidor');
       for (const p of cumplidores) p.motivation = clamp(p.motivation - 4);

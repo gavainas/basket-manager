@@ -8,7 +8,9 @@ export function Dashboard({ state }: { state: GameState }) {
   const position = clubPosition(state);
   const active = activePlayers(state.players);
   const morale = avgMotivation(state.players);
-  const nextRivalId = state.week <= state.seasonLength ? state.schedule[state.week - 1] : null;
+  // Tras el partido (matchResult) la semana aún no avanzó: el "próximo" es el que sigue.
+  const upcomingWeek = state.phase === 'matchResult' ? state.week + 1 : state.week;
+  const nextRivalId = upcomingWeek <= state.seasonLength ? state.schedule[upcomingWeek - 1] : null;
   const nextRival = nextRivalId ? state.rivals.find((r) => r.id === nextRivalId)! : null;
   const moneyCls = state.club.money < 100 ? 'bad' : state.club.money < 300 ? 'warn' : 'good';
 

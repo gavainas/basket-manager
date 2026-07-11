@@ -31,6 +31,22 @@ function byId(s: GameState, id: string | undefined): Player {
   return p;
 }
 
+/** Marca a un jugador como molesto sin pisar una lesión ni estados peores. */
+function upset(p: Player): void {
+  if (p.status === 'disponible' && p.motivation < BALANCE.weekly.lowMotivationThreshold) {
+    p.status = 'molesto';
+    p.weeksUpset = 0;
+  }
+}
+
+/** Calma a un jugador molesto/al borde sin curar mágicamente una lesión. */
+function calm(p: Player): void {
+  if (p.status === 'molesto' || p.status === 'al_borde') {
+    p.status = 'disponible';
+  }
+  p.weeksUpset = 0;
+}
+
 function makeLeave(s: GameState, p: Player, reason: string): void {
   p.leftClub = true;
   s.playersLeftCount += 1;
@@ -62,7 +78,7 @@ export const EVENTS: EventDef[] = [
       }
       p.motivation = clamp(p.motivation - 8);
       p.commitment = clamp(p.commitment + 3);
-      if (p.motivation < BALANCE.weekly.lowMotivationThreshold) p.status = 'molesto';
+      upset(p);
       return `${p.name} apretó los dientes. Quizás lo tome como desafío… o quizás empiece a mirar otros equipos.`;
     },
   },
@@ -98,7 +114,7 @@ export const EVENTS: EventDef[] = [
       s.club.socialClimate = clamp(s.club.socialClimate - 6);
       const worse = rng.pick([a, b]);
       worse.motivation = clamp(worse.motivation - 6);
-      if (worse.motivation < BALANCE.weekly.lowMotivationThreshold) worse.status = 'molesto';
+      upset(worse);
       return `Nadie cedió. ${worse.name} quedó especialmente caliente y el ambiente se enrareció.`;
     },
   },
@@ -133,7 +149,7 @@ export const EVENTS: EventDef[] = [
           return `${p.name} pagó $${owed} de mala gana. Plata es plata.`;
         }
         p.motivation = clamp(p.motivation - 8);
-        if (p.motivation < BALANCE.weekly.lowMotivationThreshold) p.status = 'molesto';
+        upset(p);
         return `${p.name} se ofendió: "¿Me estás cobrando como a un cliente?". Sigue debiendo y quedó molesto.`;
       }
       if (opt === 1) {
@@ -248,7 +264,6 @@ export const EVENTS: EventDef[] = [
       }
       p.motivation = clamp(p.motivation - 8);
       p.commitment = clamp(p.commitment + 4);
-      if (p.motivation < BALANCE.weekly.lowMotivationThreshold) p.status = 'molesto';
       return `${p.name} respondió seco: "Ok". Igual no viene, y encima quedó picante el asunto.`;
     },
   },
@@ -256,7 +271,7 @@ export const EVENTS: EventDef[] = [
     id: 'quiere_abandonar',
     title: 'Quiere dejar el equipo',
     weight: 10,
-    canFire: (s) => actives(s).some((p) => p.motivation < 40 && actives(s).length > 7),
+    canFire: (s) => actives(s).some((p) => p.motivation < 40) && actives(s).length > 7,
     pickTargets: (s, rng) => {
       const cands = actives(s).filter((p) => p.motivation < 40);
       return cands.length ? { playerId: rng.pick(cands).id } : null;
@@ -272,8 +287,7 @@ export const EVENTS: EventDef[] = [
       if (opt === 0) {
         if (rng.chance(0.3 + s.club.socialClimate / 180 + p.social / 300)) {
           p.motivation = clamp(p.motivation + 15);
-          p.status = 'disponible';
-          p.weeksUpset = 0;
+          calm(p);
           s.memorableMoments.push(`Semana ${s.week}: la charla que hizo que ${p.name} se quedara.`);
           return `${p.name} se emocionó con la charla: "Está bien, me quedo. Pero que esto mejore". Una para el recuerdo.`;
         }
@@ -288,7 +302,7 @@ export const EVENTS: EventDef[] = [
       p.feeStatus = 'beca_total';
       p.weeksUnpaid = 0;
       p.motivation = clamp(p.motivation + 10);
-      p.status = 'disponible';
+      calm(p);
       s.club.socialClimate = clamp(s.club.socialClimate - 2);
       return `${p.name} acepta quedarse becado. Se queda, pero la caja del club lo va a notar.`;
     },
@@ -366,7 +380,7 @@ export const EVENTS: EventDef[] = [
       s.club.socialClimate = clamp(s.club.socialClimate - 5);
       for (const p of actives(s).filter((x) => x.personality === 'cumplidor')) {
         p.motivation = clamp(p.motivation - 5);
-        if (p.motivation < BALANCE.weekly.lowMotivationThreshold) p.status = 'molesto';
+        upset(p);
       }
       return '"Siempre lo mismo", cerró el chat. Los más ordenados del grupo quedaron masticando bronca.';
     },
@@ -396,6 +410,224 @@ export const EVENTS: EventDef[] = [
       }
       s.club.socialClimate = clamp(s.club.socialClimate + 2);
       return 'Pasaste, saludaste y te fuiste. Nadie lo tomó a mal, pero tampoco sumó demasiado.';
+    },
+  },
+  {
+    id: 'oferta_rival',
+    title: 'Un rival tienta a tu figura',
+    weight: 7,
+    canFire: (s) => actives(s).some((p) => p.technique >= 68 && p.motivation < 60),
+    pickTargets: (s, rng) => {
+      const cands = actives(s).filter((p) => p.technique >= 68 && p.motivation < 60);
+      return cands.length ? { playerId: rng.pick(cands).id } : null;
+    },
+    text: (s, ev) =>
+      `Te llega el rumor: un club rival le ofreció a ${byId(s, ev.playerId).name} camiseta titular asegurada y cuota gratis. Él todavía no dijo nada.`,
+    options: () => [
+      { label: 'Encararlo y prometerle protagonismo', hint: 'Puede retenerlo… o apurarlo' },
+      { label: 'Becarlo para igualar la oferta', hint: 'Se queda, pero deja de pagar' },
+      { label: 'No hacer nada y confiar', hint: 'Depende de su lealtad' },
+    ],
+    resolve: (s, ev, opt, rng) => {
+      const p = byId(s, ev.playerId);
+      if (opt === 0) {
+        if (rng.chance(0.4 + p.social / 250 + s.club.socialPrestige / 400)) {
+          p.motivation = clamp(p.motivation + 12);
+          p.expectedRole = 'titular';
+          calm(p);
+          return `${p.name} valoró que fueras de frente: "Acá tengo amigos, me quedo". Ahora espera ser importante.`;
+        }
+        p.motivation = clamp(p.motivation - 5);
+        return `${p.name} escuchó todo con cara de póker. "Lo voy a pensar", dijo. No suena bien.`;
+      }
+      if (opt === 1) {
+        p.feeStatus = 'beca_total';
+        p.weeksUnpaid = 0;
+        p.motivation = clamp(p.motivation + 10);
+        calm(p);
+        const cumplidores = actives(s).filter((x) => x.personality === 'cumplidor' && x.id !== p.id);
+        for (const c of cumplidores) c.motivation = clamp(c.motivation - 3);
+        return `${p.name} se queda con beca total. La billetera del club y algún cumplidor lo sintieron.`;
+      }
+      if (p.personality === 'leal' || p.personality === 'veterano' || rng.chance(0.5)) {
+        p.motivation = clamp(p.motivation + 3);
+        return `${p.name} rechazó la oferta solo: "Yo de acá no me muevo". La lealtad existe.`;
+      }
+      makeLeave(s, p, 'Se fue al club rival que lo tentó.');
+      s.club.sportPrestige = clamp(s.club.sportPrestige - 3);
+      return `${p.name} se fue al rival sin siquiera avisar en persona. Golpe duro para el grupo.`;
+    },
+  },
+  {
+    id: 'cancha_ocupada',
+    title: 'Problema con la cancha',
+    weight: 6,
+    canFire: (s) => s.club.organization < 55,
+    text: () => 'Llegan a entrenar y hay otro equipo en la cancha: el dueño vendió el horario dos veces. Nadie hizo el depósito a tiempo.',
+    options: () => [
+      { label: 'Pagar una cancha alternativa', hint: 'Cuesta $60, se entrena igual' },
+      { label: 'Entrenar en la plaza', hint: 'Gratis, pero da imagen de club chico' },
+    ],
+    resolve: (s, _ev, opt) => {
+      if (opt === 0) {
+        if (s.club.money < 60) {
+          s.club.socialClimate = clamp(s.club.socialClimate - 4);
+          s.club.organization = clamp(s.club.organization - 3);
+          return 'No había plata para otra cancha: medio equipo se volvió a su casa masticando bronca.';
+        }
+        s.club.money -= 60;
+        s.ledger.push({ week: s.week, concept: 'Cancha alternativa de urgencia', amount: -60 });
+        s.club.organization = clamp(s.club.organization + 2);
+        return 'Se consiguió cancha a diez cuadras y se entrenó igual. Caro, pero el grupo valoró la reacción.';
+      }
+      s.club.socialPrestige = clamp(s.club.socialPrestige - 2);
+      s.club.socialClimate = clamp(s.club.socialClimate + 3);
+      for (const p of actives(s)) p.physical = clamp(p.physical - 2);
+      return 'Entrenamiento en la plaza, con perros cruzando la cancha. Se rieron mucho, aunque de básquet hubo poco.';
+    },
+  },
+  {
+    id: 'arbitro_polemico',
+    title: 'Bronca con el arbitraje',
+    weight: 6,
+    canFire: (s) => s.lastMatch !== null && !s.lastMatch.won && !s.lastMatch.forfeit,
+    text: () => 'El grupo sigue caliente con el árbitro del último partido: dos fallos escandalosos en el cierre. Piden que el club haga un reclamo formal a la liga.',
+    options: () => [
+      { label: 'Presentar el reclamo', hint: 'Cuesta $20; la liga puede darte la razón' },
+      { label: 'Dar vuelta la página', hint: 'Los más competitivos no lo van a entender' },
+    ],
+    resolve: (s, _ev, opt, rng) => {
+      if (opt === 0) {
+        const cost = Math.min(20, Math.max(0, s.club.money));
+        s.club.money -= cost;
+        if (cost > 0) s.ledger.push({ week: s.week, concept: 'Reclamo formal a la liga', amount: -cost });
+        if (rng.chance(0.5)) {
+          s.club.sportPrestige = clamp(s.club.sportPrestige + 3);
+          for (const p of actives(s).filter((x) => x.personality === 'competitivo')) p.motivation = clamp(p.motivation + 4);
+          return 'La liga admitió los errores y amonestó al árbitro. El plantel sintió que el club los defiende.';
+        }
+        s.club.sportPrestige = clamp(s.club.sportPrestige - 2);
+        return 'La liga desestimó el reclamo y encima quedamos como llorones. Mejor ganar los partidos.';
+      }
+      for (const p of actives(s).filter((x) => x.personality === 'competitivo')) {
+        p.motivation = clamp(p.motivation - 3);
+      }
+      return 'Decidiste no hacer olas. Los competitivos murmuraron algo sobre "un club sin sangre".';
+    },
+  },
+  {
+    id: 'cumpleanos',
+    title: 'Cumpleaños en el plantel',
+    weight: 5,
+    canFire: (s) => actives(s).length >= 2,
+    pickTargets: (s, rng) => ({ playerId: rng.pick(actives(s)).id }),
+    text: (s, ev) => `Esta semana cumple años ${byId(s, ev.playerId).name}. En el grupo ya empezaron con los memes.`,
+    options: () => [
+      { label: 'Torta y festejo después de entrenar', hint: 'Cuesta $25, suma al grupo' },
+      { label: 'Saludo en el grupo y a otra cosa', hint: 'Cumple el protocolo' },
+    ],
+    resolve: (s, ev, opt, rng) => {
+      const p = byId(s, ev.playerId);
+      if (opt === 0) {
+        const cost = Math.min(25, Math.max(0, s.club.money));
+        s.club.money -= cost;
+        if (cost > 0) s.ledger.push({ week: s.week, concept: `Festejo de cumpleaños de ${p.name}`, amount: -cost });
+        p.motivation = clamp(p.motivation + 8);
+        p.social = clamp(p.social + 4);
+        s.club.socialClimate = clamp(s.club.socialClimate + 5);
+        if (rng.chance(0.2)) {
+          s.memorableMoments.push(`Semana ${s.week}: el cumpleaños de ${p.name} terminó con torta en la cara y fotos épicas.`);
+          return `El festejo de ${p.name} se fue de las manos (para bien). Torta en la cara incluida.`;
+        }
+        return `Torta, velitas y abrazos para ${p.name}. Estas cosas hacen club.`;
+      }
+      p.motivation = clamp(p.motivation + 1);
+      return `"¡Feliz cumple crack! 🎂" y veinte emojis. ${p.name} agradeció, aunque esperaba algo más.`;
+    },
+  },
+  {
+    id: 'periodista_barrial',
+    title: 'La página del barrio quiere una nota',
+    weight: 5,
+    canFire: (s) => s.club.sportPrestige >= 50 || s.club.socialPrestige >= 55,
+    text: () => 'La página de Facebook del barrio ("Pasión Deportiva Zonal") quiere hacer una nota sobre el club. Piden fotos y una entrevista al manager.',
+    options: () => [
+      { label: 'Dar la nota con todo el plantel', hint: 'Visibilidad para el club' },
+      { label: 'Mantener perfil bajo', hint: 'Sin exposición, sin riesgos' },
+    ],
+    resolve: (s, _ev, opt, rng) => {
+      if (opt === 0) {
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 4);
+        s.club.sportPrestige = clamp(s.club.sportPrestige + 2);
+        for (const p of actives(s).filter((x) => x.personality === 'protagonista')) p.motivation = clamp(p.motivation + 4);
+        if (rng.chance(0.25)) {
+          s.memorableMoments.push(`Semana ${s.week}: la nota en "Pasión Deportiva Zonal" que compartió medio barrio.`);
+          return 'La nota explotó en el barrio: cientos de compartidos. Los protagonistas están en su salsa.';
+        }
+        return 'Salió la nota con foto grupal. El club suena en el barrio y a más de uno le gustó verse.';
+      }
+      return 'Agradeciste y dijiste que no era el momento. El periodista lo entendió… por ahora.';
+    },
+  },
+  {
+    id: 'mudanza',
+    title: 'Se muda de ciudad',
+    weight: 4,
+    canFire: (s) => actives(s).length > 8,
+    pickTargets: (s, rng) => {
+      const cands = actives(s).filter((p) => p.commitment < 70);
+      return cands.length ? { playerId: rng.pick(cands).id } : null;
+    },
+    text: (s, ev) =>
+      `${byId(s, ev.playerId).name} junta al grupo: consiguió trabajo en otra ciudad y se muda en dos semanas. Esta es su última semana en el club.`,
+    options: () => [
+      { label: 'Despedirlo con un asado', hint: 'Cuesta $40; el grupo lo va a recordar' },
+      { label: 'Desearle suerte y seguir', hint: 'La vida sigue, el fixture también' },
+    ],
+    resolve: (s, ev, opt, rng) => {
+      const p = byId(s, ev.playerId);
+      if (opt === 0) {
+        const cost = Math.min(40, Math.max(0, s.club.money));
+        s.club.money -= cost;
+        if (cost > 0) s.ledger.push({ week: s.week, concept: `Despedida de ${p.name}`, amount: -cost });
+        s.club.socialClimate = clamp(s.club.socialClimate + 6);
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 3);
+        makeLeave(s, p, 'Se mudó por trabajo, despedido como se debe.');
+        if (rng.chance(0.4)) {
+          s.memorableMoments.push(`Semana ${s.week}: la despedida de ${p.name}, con discurso y camiseta firmada por todos.`);
+        }
+        return `La despedida de ${p.name} terminó con camiseta firmada y algún lagrimón. Así se despide a los que hacen club.`;
+      }
+      makeLeave(s, p, 'Se mudó por trabajo.');
+      s.club.socialClimate = clamp(s.club.socialClimate - 3);
+      return `${p.name} se fue con un simple "suerte muchachos" en el grupo. Quedó un sabor amargo.`;
+    },
+  },
+  {
+    id: 'sobrino_socio',
+    title: 'El sobrino del vecino',
+    weight: 4,
+    canFire: (s) => actives(s).length < 14,
+    text: () =>
+      'Un vecino histórico del club pide un favor: que su sobrino de 19 años entrene con ustedes. "No es Jordan, pero tiene ganas", admite.',
+    options: () => [
+      { label: 'Darle una oportunidad', hint: 'Suma un cuerpo al plantel y buena onda en el barrio' },
+      { label: 'Decir que no hay lugar', hint: 'El vecino no lo va a olvidar' },
+    ],
+    resolve: (s, _ev, opt, rng) => {
+      if (opt === 0) {
+        const kid = createRecruit(rng, { minTechnique: 35, maxTechnique: 52 });
+        kid.age = 19;
+        kid.description = 'El sobrino del vecino. Le falta juego, pero corre todo y no falta nunca.';
+        kid.commitment = rng.int(75, 95);
+        s.players.push(kid);
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 3);
+        s.club.socialClimate = clamp(s.club.socialClimate + 2);
+        s.news.unshift({ week: s.week, text: `Se sumó ${kid.name}, el sobrino del vecino. Puro entusiasmo.`, tone: 'good' });
+        return `${kid.name} llegó con championes nuevos y ganas de comerse la cancha. El barrio habla bien del club.`;
+      }
+      s.club.socialPrestige = clamp(s.club.socialPrestige - 2);
+      return 'Le dijiste que no con diplomacia. El vecino saludó frío en la puerta. Detalle a recordar.';
     },
   },
 ];

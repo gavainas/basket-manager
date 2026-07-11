@@ -9,8 +9,8 @@ export const BALANCE = {
   economy: {
     startingMoney: 550,
     inscriptionFee: 300,
-    courtRentWeekly: 120,
-    refereeWeekly: 50,
+    courtRentWeekly: 140,
+    refereeWeekly: 60,
     feeWeekly: 30, // cuota por jugador
     partialScholarshipFactor: 0.5,
     sponsorWeekly: 70,

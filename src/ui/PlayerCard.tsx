@@ -6,20 +6,23 @@ interface Props {
   player: Player;
   selectable?: boolean;
   selected?: boolean;
+  /** Sin lugar en el quinteto: se ve apagado y no responde al click. */
+  dimmed?: boolean;
   onToggle?: (id: string) => void;
   compact?: boolean;
 }
 
-export function PlayerCard({ player: p, selectable, selected, onToggle, compact }: Props) {
+export function PlayerCard({ player: p, selectable, selected, dimmed, onToggle, compact }: Props) {
   const status = statusChip(p);
   const fee = feeChip(p);
   const unavailable = selectable && (p.status === 'lesionado' || p.leftClub);
+  const clickable = selectable && !unavailable && !dimmed && onToggle;
 
   return (
     <div
-      className={`player-card${selected ? ' selected' : ''}${unavailable ? ' unavailable' : ''}`}
-      onClick={selectable && !unavailable && onToggle ? () => onToggle(p.id) : undefined}
-      style={selectable && !unavailable ? { cursor: 'pointer' } : undefined}
+      className={`player-card${selected ? ' selected' : ''}${unavailable ? ' unavailable' : ''}${dimmed ? ' dimmed' : ''}`}
+      onClick={clickable ? () => onToggle(p.id) : undefined}
+      style={clickable ? { cursor: 'pointer' } : undefined}
     >
       <div className="player-head">
         <div className="avatar">{initials(p.name)}</div>

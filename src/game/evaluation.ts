@@ -46,7 +46,7 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
       label: 'Resultado deportivo',
       score: sportScore,
       grade: grade(sportScore),
-      detail: `${row.wins} ganados, ${row.losses} perdidos. Posición final: ${position}° de 10.`,
+      detail: `${row.wins} ${row.wins === 1 ? 'ganado' : 'ganados'}, ${row.losses} ${row.losses === 1 ? 'perdido' : 'perdidos'}. Posición final: ${position}° de 10.`,
     },
     {
       key: 'finance',
@@ -63,7 +63,9 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
       detail:
         state.playersLeftCount === 0
           ? `Nadie abandonó el club. Plantel final: ${active.length} jugadores.`
-          : `${state.playersLeftCount} jugador${state.playersLeftCount > 1 ? 'es' : ''} se fueron. Plantel final: ${active.length}.`,
+          : state.playersLeftCount === 1
+            ? `1 jugador se fue. Plantel final: ${active.length}.`
+            : `${state.playersLeftCount} jugadores se fueron. Plantel final: ${active.length}.`,
     },
     {
       key: 'sportPrestige',
