@@ -7,6 +7,7 @@ import {
   worldPlayerTeam,
 } from '../game/world';
 import { Bar } from './Bar';
+import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
 import { starsFor } from './helpers';
 
@@ -79,13 +80,26 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
             <div className="data-row">
               <span className="data-label">Liga</span>
               <span className="data-value">
-                {league ? `${league.name} · ${division?.name ?? ''}` : '—'}
+                {league ? (
+                  <>
+                    <LeagueLink id={league.id}>{league.name}</LeagueLink> · {division?.name ?? ''}
+                  </>
+                ) : (
+                  '—'
+                )}
               </span>
             </div>
             <div className="data-row">
               <span className="data-label">Libre en</span>
               <span className="data-value">
-                {freeLeagues.length > 0 ? freeLeagues.map((l) => l.name).join(' · ') : 'Ninguna liga'}
+                {freeLeagues.length > 0
+                  ? freeLeagues.map((l, i) => (
+                      <span key={l.id}>
+                        {i > 0 && ' · '}
+                        <LeagueLink id={l.id}>{l.name}</LeagueLink>
+                      </span>
+                    ))
+                  : 'Ninguna liga'}
               </span>
             </div>
             <div className="data-row">

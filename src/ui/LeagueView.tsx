@@ -1,11 +1,21 @@
+import { useContext } from 'react';
 import type { CupTier, GameState } from '../game/types';
 import { USER_TEAM_ID } from '../game/world';
+import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
+import { NavigateTabContext } from './nav';
 import { rivalStyleInfo } from './helpers';
 
-/** Nombre de un equipo por id clásico ('club' o rivalId), clickeable si es rival. */
+/** Nombre de un equipo por id clásico: rivales abren su ficha, el club lleva a la plantilla. */
 function LegacyTeamName({ state, id }: { state: GameState; id: string }) {
-  if (id === 'club') return <strong>{state.club.name}</strong>;
+  const navigate = useContext(NavigateTabContext);
+  if (id === 'club') {
+    return (
+      <span className="plink" role="button" onClick={() => navigate('plantilla')}>
+        <strong>{state.club.name}</strong>
+      </span>
+    );
+  }
   const rival = state.rivals.find((r) => r.id === id);
   return rival ? <RivalLink id={id}>{rival.name}</RivalLink> : <span>{id}</span>;
 }
@@ -60,12 +70,7 @@ export function LeagueView({ state }: { state: GameState }) {
   const sorted = [...state.standings].sort(
     (a, b) => b.wins - a.wins || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
   );
-  const teamName = (id: string) => {
-    if (id === 'club') return <strong>{state.club.name}</strong>;
-    const rival = state.rivals.find((r) => r.id === id);
-    if (!rival) return id;
-    return <RivalLink id={id}>{rival.name}</RivalLink>;
-  };
+  const teamName = (id: string) => <LegacyTeamName state={state} id={id} />;
   const styleChip = (id: string) => {
     const rival = state.rivals.find((r) => r.id === id);
     if (!rival) return null;
@@ -93,7 +98,9 @@ export function LeagueView({ state }: { state: GameState }) {
               const isOurs = l.id === userLeague.id;
               return (
                 <div className="data-row" key={l.id}>
-                  <span className="data-label">{l.name}</span>
+                  <span className="data-label">
+                    <LeagueLink id={l.id}>{l.name}</LeagueLink>
+                  </span>
                   <span className="data-value">
                     {isOurs ? (
                       <>

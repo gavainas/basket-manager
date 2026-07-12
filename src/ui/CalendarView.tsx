@@ -1,6 +1,9 @@
+import { useContext } from 'react';
 import type { GameState, WorldFixture } from '../game/types';
 import { fixturesOfWeek, teamName, USER_TEAM_ID, userFixtureOfWeek } from '../game/world';
+import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
+import { NavigateTabContext } from './nav';
 import { formatDateLong, formatDateShort, monthLabel } from './helpers';
 
 interface Props {
@@ -20,9 +23,16 @@ function statusChip(fx: WorldFixture): { label: string; cls: string } {
   }
 }
 
-/** Nombre de equipo: el del usuario en negrita, los rivales clickeables. */
+/** Nombre de equipo: los rivales abren su ficha, el del usuario lleva a la plantilla. */
 function TeamLabel({ state, teamId }: { state: GameState; teamId: string }) {
-  if (teamId === USER_TEAM_ID) return <strong>{state.club.name}</strong>;
+  const navigate = useContext(NavigateTabContext);
+  if (teamId === USER_TEAM_ID) {
+    return (
+      <span className="plink" role="button" onClick={() => navigate('plantilla')}>
+        <strong>{state.club.name}</strong>
+      </span>
+    );
+  }
   const team = state.world.teams.find((t) => t.id === teamId);
   if (team?.legacyRivalId) return <RivalLink id={team.legacyRivalId}>{team.name}</RivalLink>;
   return <span>{teamName(state.world, teamId)}</span>;
@@ -74,7 +84,7 @@ export function CalendarView({ state }: Props) {
             <div className="data-row">
               <span className="data-label">Competición</span>
               <span className="data-value">
-                {league?.name} · {division?.name}
+                {league ? <LeagueLink id={league.id}>{league.name}</LeagueLink> : '—'} · {division?.name}
                 {userFx.label && (
                   <span className="chip accent" style={{ marginLeft: '0.5rem' }}>
                     {userFx.label}

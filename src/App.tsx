@@ -15,6 +15,8 @@ import { OpenRivalContext } from './ui/RivalLink';
 import { RivalProfile } from './ui/RivalProfile';
 import { OpenWorldPlayerContext } from './ui/WorldPlayerLink';
 import { WorldPlayerProfile } from './ui/WorldPlayerProfile';
+import { OpenLeagueContext } from './ui/LeagueLink';
+import { LeagueProfile } from './ui/LeagueProfile';
 import { NavigateTabContext, type AppTab } from './ui/nav';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
 import { HistoryView } from './ui/HistoryView';
@@ -92,6 +94,7 @@ export default function App() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [rivalProfileId, setRivalProfileId] = useState<string | null>(null);
   const [worldPlayerId, setWorldPlayerId] = useState<string | null>(null);
+  const [leagueProfileId, setLeagueProfileId] = useState<string | null>(null);
 
   // Guardado automático.
   useEffect(() => {
@@ -126,16 +129,42 @@ export default function App() {
     );
   }
 
+  // Todas las pantallas comparten los providers de fichas: cualquier nombre
+  // (jugador, rival, liga) es clickeable también en pretemporada y cierres.
+  const withProviders = (screen: React.ReactNode) => (
+    <OpenProfileContext.Provider value={setProfileId}>
+    <OpenRivalContext.Provider value={setRivalProfileId}>
+    <OpenWorldPlayerContext.Provider value={setWorldPlayerId}>
+    <OpenLeagueContext.Provider value={setLeagueProfileId}>
+    <NavigateTabContext.Provider value={setTab}>
+      {screen}
+      {profileId && <PlayerProfile state={state} playerId={profileId} onClose={() => setProfileId(null)} />}
+      {rivalProfileId && (
+        <RivalProfile state={state} rivalId={rivalProfileId} onClose={() => setRivalProfileId(null)} />
+      )}
+      {worldPlayerId && (
+        <WorldPlayerProfile state={state} playerId={worldPlayerId} onClose={() => setWorldPlayerId(null)} />
+      )}
+      {leagueProfileId && (
+        <LeagueProfile state={state} leagueId={leagueProfileId} onClose={() => setLeagueProfileId(null)} />
+      )}
+    </NavigateTabContext.Provider>
+    </OpenLeagueContext.Provider>
+    </OpenWorldPlayerContext.Provider>
+    </OpenRivalContext.Provider>
+    </OpenProfileContext.Provider>
+  );
+
   if (state.phase === 'preseason') {
-    return <PreseasonView state={state} dispatch={dispatch} />;
+    return withProviders(<PreseasonView state={state} dispatch={dispatch} />);
   }
 
   if (state.phase === 'preseasonEnd') {
-    return <PreseasonEndScreen state={state} dispatch={dispatch} />;
+    return withProviders(<PreseasonEndScreen state={state} dispatch={dispatch} />);
   }
 
   if (state.phase === 'seasonEnd' || state.phase === 'gameOver') {
-    return <SeasonEndScreen state={state} dispatch={dispatch} />;
+    return withProviders(<SeasonEndScreen state={state} dispatch={dispatch} />);
   }
 
   const row = state.standings.find((r) => r.teamId === 'club')!;
@@ -150,11 +179,7 @@ export default function App() {
             ? 'Dirigí el partido cuarto a cuarto'
             : 'Mirá el resultado del partido';
 
-  return (
-    <OpenProfileContext.Provider value={setProfileId}>
-    <OpenRivalContext.Provider value={setRivalProfileId}>
-    <OpenWorldPlayerContext.Provider value={setWorldPlayerId}>
-    <NavigateTabContext.Provider value={setTab}>
+  return withProviders(
     <div className="app-shell">
       <div className="topbar">
         <span className="club-name">🏀 {state.club.name}</span>
@@ -215,17 +240,6 @@ export default function App() {
       {tab === 'semana' && <WeekView state={state} dispatch={dispatch} />}
 
       <EventModal state={state} dispatch={dispatch} />
-      {profileId && <PlayerProfile state={state} playerId={profileId} onClose={() => setProfileId(null)} />}
-      {rivalProfileId && (
-        <RivalProfile state={state} rivalId={rivalProfileId} onClose={() => setRivalProfileId(null)} />
-      )}
-      {worldPlayerId && (
-        <WorldPlayerProfile state={state} playerId={worldPlayerId} onClose={() => setWorldPlayerId(null)} />
-      )}
     </div>
-    </NavigateTabContext.Provider>
-    </OpenWorldPlayerContext.Provider>
-    </OpenRivalContext.Provider>
-    </OpenProfileContext.Provider>
   );
 }

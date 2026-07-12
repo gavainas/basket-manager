@@ -1,5 +1,6 @@
 import type { GameState } from '../game/types';
 import { divisionOfTeam, teamByLegacyRival, teamRoster, worldPlayerName } from '../game/world';
+import { LeagueLink } from './LeagueLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { initials, rivalDifficulty, rivalStyleInfo, starsFor } from './helpers';
 
@@ -71,7 +72,7 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
                 <div className="data-row">
                   <span className="data-label">Compite en</span>
                   <span className="data-value">
-                    {league?.name} · {division?.name}
+                    {league ? <LeagueLink id={league.id}>{league.name}</LeagueLink> : '—'} · {division?.name}
                     {division ? ` (${division.gameDay} ${division.gameTimes.join(' / ')})` : ''}
                   </span>
                 </div>
