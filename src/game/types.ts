@@ -355,6 +355,8 @@ export interface ClubPromise {
   type: DemandType;
   label: string;
   season: number;
+  /** Ya se rompió y el jugador reaccionó (no se vuelve a evaluar). */
+  broken?: boolean;
 }
 
 export interface PreseasonSummaryData {

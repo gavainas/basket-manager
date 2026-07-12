@@ -98,6 +98,8 @@ export default function App() {
   useEffect(() => {
     if (phase === 'callUp' || phase === 'lineup' || phase === 'match' || phase === 'matchResult') setTab('semana');
     if (phase === 'planning') setTab('resumen');
+    // Cada cambio de fase arranca desde arriba de la página.
+    window.scrollTo({ top: 0 });
   }, [phase]);
 
   if (!state) {

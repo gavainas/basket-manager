@@ -1213,6 +1213,82 @@ button.mini.blue.on {
 .legs-mini .fill.warn { background: var(--warn); }
 .legs-mini .fill.bad { background: var(--bad); }
 
+/* Resumen del jugador al pasar el mouse (partido en vivo) */
+
+.sub-row {
+  position: relative;
+}
+
+.hover-card {
+  display: none;
+  position: absolute;
+  right: calc(100% + 10px);
+  top: -8px;
+  width: 280px;
+  background: var(--panel-2);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  z-index: 70;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  cursor: default;
+}
+
+.sub-row:hover .hover-card {
+  display: block;
+}
+
+.hc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.hc-rating {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.hc-meta {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.hc-desc {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--text-dim);
+  margin: 0.35rem 0 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .hover-card {
+    display: none !important;
+  }
+}
+
+/* Arrastre en la pizarra */
+
+[draggable='true'] {
+  cursor: grab;
+}
+
+.slot-pos-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.slot-sub.oop-text {
+  color: var(--warn);
+}
+
 .quarter-log {
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--border);

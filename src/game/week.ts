@@ -7,6 +7,7 @@ import { getEvent, rollEvent } from './events';
 import { generateObjectives } from './objectives';
 import { activePlayers, clubPosition, matchAbsentIds, suggestRotation, suggestStarters } from './match';
 import { rollCallUp } from './callup';
+import { checkPromises } from './promises';
 import { logClubEvent, logPlayerEvent } from './timeline';
 import { Rng } from './rng';
 import type { GameState } from './types';
@@ -188,6 +189,10 @@ export function advanceWeek(state: GameState): GameState {
       }
     }
   }
+
+  // --- Promesas: lo que prometiste en la pretemporada se cobra acá ---
+  // (después de la evolución semanal, para que el enojo no se pise con la recuperación)
+  checkPromises(s);
 
   // --- Economía de la semana ---
   applyWeeklyEconomy(s, rng);

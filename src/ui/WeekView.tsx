@@ -218,12 +218,13 @@ function assignSlots(starters: Player[]): (Player | null)[] {
   return slots;
 }
 
+// Disposición simétrica: dos internos abajo, dos perimetrales y el base arriba.
 const SLOT_POS = [
-  { x: '50%', y: '80%' }, // Base
-  { x: '22%', y: '62%' }, // Escolta
-  { x: '78%', y: '44%' }, // Alero
-  { x: '24%', y: '28%' }, // Ala-Pívot
-  { x: '50%', y: '15%' }, // Pívot
+  { x: '50%', y: '82%' }, // Base
+  { x: '22%', y: '58%' }, // Escolta
+  { x: '78%', y: '58%' }, // Alero
+  { x: '26%', y: '27%' }, // Ala-Pívot
+  { x: '74%', y: '27%' }, // Pívot
 ];
 
 function CourtLines() {
@@ -271,6 +272,37 @@ function LineupPanel({ state, dispatch }: Props) {
   const covered = new Set(starters.map((p) => p.position));
   const missing = POSITION_ORDER.filter((pos) => !covered.has(pos));
   const slots = assignSlots(starters);
+
+  // Drag & drop: el id viaja en el dataTransfer; los guards viven en el reducer.
+  const dragStart = (id: string) => (e: React.DragEvent) => {
+    e.dataTransfer.setData('text/plain', id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  const draggedId = (e: React.DragEvent) => e.dataTransfer.getData('text/plain');
+  const allowDrop = (e: React.DragEvent) => e.preventDefault();
+
+  const dropOnSlot = (occupant: Player | null) => (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = draggedId(e);
+    if (!id || occupant?.id === id || state.starters.includes(id)) return;
+    if (occupant) dispatch({ type: 'TOGGLE_STARTER', id: occupant.id });
+    dispatch({ type: 'TOGGLE_STARTER', id });
+  };
+  const dropOnBench = (e: React.DragEvent) => {
+    e.preventDefault();
+    const id = draggedId(e);
+    if (!id) return;
+    if (state.starters.includes(id)) dispatch({ type: 'TOGGLE_STARTER', id });
+    if (!state.rotation.includes(id)) dispatch({ type: 'TOGGLE_ROTATION', id });
+  };
+  const dropOnList = (e: React.DragEvent) => {
+    e.preventDefault();
+    const id = draggedId(e);
+    if (!id) return;
+    if (state.starters.includes(id)) dispatch({ type: 'TOGGLE_STARTER', id });
+    else if (state.rotation.includes(id)) dispatch({ type: 'TOGGLE_ROTATION', id });
+  };
 
   const evalTeam = count > 0 ? evaluateTeam(state, state.starters) : null;
   const vibe =
@@ -326,7 +358,7 @@ function LineupPanel({ state, dispatch }: Props) {
       )}
 
       <div className="lineup-layout">
-        <div className="lineup-list card">
+        <div className="lineup-list card" onDragOver={allowDrop} onDrop={dropOnList}>
           <div className="lineup-toolbar">
             <h3 style={{ margin: 0 }}>Plantel</h3>
             <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -348,6 +380,8 @@ function LineupPanel({ state, dispatch }: Props) {
               <div
                 key={p.id}
                 className={`lp-row${isStarter ? ' starter' : ''}${inRotation ? ' rot' : ''}${!avail ? ' off' : ''}`}
+                draggable={avail}
+                onDragStart={avail ? dragStart(p.id) : undefined}
               >
                 <span className="lp-pos">{POS_ABBR[p.position]}</span>
                 <div className="lp-who">
@@ -408,39 +442,52 @@ function LineupPanel({ state, dispatch }: Props) {
             <CourtLines />
             {POSITION_ORDER.map((pos, i) => {
               const pl = slots[i];
+              const oop = pl ? pl.position !== pos : false;
               return (
                 <div
                   key={pos}
                   className={`slot${pl ? ' filled' : ''}`}
                   style={{ left: SLOT_POS[i].x, top: SLOT_POS[i].y }}
                   onClick={pl ? () => dispatch({ type: 'TOGGLE_STARTER', id: pl.id }) : undefined}
-                  title={pl ? `${pl.name} · click para sacarlo` : `Falta un ${pos}`}
+                  onDragOver={allowDrop}
+                  onDrop={dropOnSlot(pl)}
+                  draggable={!!pl}
+                  onDragStart={pl ? dragStart(pl.id) : undefined}
+                  title={
+                    pl
+                      ? `${pl.name}${oop ? ` (${pl.position} jugando de ${pos})` : ''} · click para sacarlo`
+                      : `Arrastrá un jugador para el puesto de ${pos}`
+                  }
                 >
-                  <div className={`slot-avatar${pl && pl.position !== pos ? ' oop' : ''}${pl ? '' : ' empty'}`}>
+                  <div className="slot-pos-label">{pos}</div>
+                  <div className={`slot-avatar${oop ? ' oop' : ''}${pl ? '' : ' empty'}`}>
                     {pl ? initials(pl.name) : '+'}
                   </div>
-                  <div className={`slot-name${pl ? '' : ' dim'}`}>{pl ? shortName(pl.name) : pos}</div>
+                  <div className={`slot-name${pl ? '' : ' dim'}`}>{pl ? shortName(pl.name) : 'Libre'}</div>
                   {pl && (
-                    <div className="slot-sub">
+                    <div className={`slot-sub${oop ? ' oop-text' : ''}`}>
                       ≈{pl.visibleRating}
-                      {pl.position !== pos ? ' · fuera de puesto' : ''}
+                      {oop ? ` · es ${pl.position}` : ''}
                     </div>
                   )}
                 </div>
               );
             })}
           </div>
-          <div className="bench">
+          <div className="bench" onDragOver={allowDrop} onDrop={dropOnBench}>
             <span className="bench-label">Banco ({rotPlayers.length}/{maxRotation}):</span>
             {rotPlayers.map((p) => (
               <div
                 key={p.id}
                 className="bench-slot"
-                title={`${p.name} · click para sacarlo`}
+                title={`${p.name} (${p.position}) · click para sacarlo`}
                 onClick={() => dispatch({ type: 'TOGGLE_ROTATION', id: p.id })}
+                draggable
+                onDragStart={dragStart(p.id)}
               >
                 <div className="slot-avatar small">{initials(p.name)}</div>
                 <div className="slot-name">{shortName(p.name)}</div>
+                <div className="slot-sub">{POS_ABBR[p.position]}</div>
               </div>
             ))}
             {Array.from({ length: Math.max(0, maxRotation - rotPlayers.length) }).map((_, i) => (
@@ -463,7 +510,8 @@ function LineupPanel({ state, dispatch }: Props) {
         {!canPlay && !forfeitRisk && <span className="hint">Elegí exactamente 5 titulares (botón T).</span>}
         {canPlay && (
           <span className="hint">
-            T = titular · R = banco. Durante el partido hacés los cambios entre cuartos. En la pizarra, click para sacar.
+            Arrastrá jugadores a los puestos de la cancha o al banco (también sirven los botones T/R). Click en la
+            pizarra para sacar.
           </span>
         )}
       </div>
@@ -533,6 +581,23 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         <span className="sub-mins">{minsOf(p.id)}&apos;</span>
         <div className="legs-mini" title={`Piernas: ${fresh}`}>
           <div className={`fill ${legsCls(fresh)}`} style={{ width: `${fresh}%` }} />
+        </div>
+        <div className="hover-card">
+          <div className="hc-head">
+            <strong>{p.name}</strong>
+            <span className="hc-rating">≈{p.visibleRating}</span>
+          </div>
+          <div className="hc-meta">
+            {p.position} · {p.age} años · {starsFor(p.visibleRating)}
+          </div>
+          <p className="hc-desc">{p.description}</p>
+          <Bar label="Físico" value={p.physical} />
+          <Bar label="Motivación" value={p.motivation} />
+          <Bar label="Compromiso" value={p.commitment} />
+          <Bar label="Afinidad social" value={p.social} />
+          <div className="hc-meta" style={{ marginTop: '0.3rem' }}>
+            Piernas ahora: {fresh} · {minsOf(p.id)}&apos; jugados
+          </div>
         </div>
       </div>
     );

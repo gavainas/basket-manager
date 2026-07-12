@@ -2,7 +2,9 @@ import { useContext } from 'react';
 import type { GameState } from '../game/types';
 import { activePlayers, clubPosition } from '../game/match';
 import { objectiveStatus, type ObjectiveStatus } from '../game/objectives';
+import { promiseHealth, type PromiseHealth } from '../game/promises';
 import { Bar } from './Bar';
+import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
 import { TIPS } from './Tip';
@@ -13,6 +15,13 @@ const OBJECTIVE_BADGE: Record<ObjectiveStatus, { icon: string; cls: string; labe
   en_curso: { icon: '●', cls: 'good', label: 'en curso' },
   en_riesgo: { icon: '▲', cls: 'warn', label: 'en riesgo' },
   fallado: { icon: '✘', cls: 'bad', label: 'fallado' },
+};
+
+const PROMISE_BADGE: Record<PromiseHealth, { cls: string; label: string }> = {
+  en_pie: { cls: 'good', label: 'en pie' },
+  en_riesgo: { cls: 'warn', label: 'en riesgo' },
+  rota: { cls: 'bad', label: 'rota' },
+  cumplida: { cls: 'accent', label: 'cumplida' },
 };
 
 export function Dashboard({ state }: { state: GameState }) {
@@ -82,6 +91,25 @@ export function Dashboard({ state }: { state: GameState }) {
                     <li key={obj.id}>
                       <span style={{ color: `var(--${badge.cls})`, minWidth: 16 }}>{badge.icon}</span>
                       <span style={{ flex: 1 }}>{obj.label}</span>
+                      <span className={`chip ${badge.cls}`}>{badge.label}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+          {state.promises.length > 0 && (
+            <div className="card">
+              <h3>Promesas del club</h3>
+              <ul className="news-list">
+                {state.promises.map((pr, i) => {
+                  const badge = PROMISE_BADGE[promiseHealth(state, pr)];
+                  return (
+                    <li key={i}>
+                      <span style={{ flex: 1 }}>
+                        <PlayerLink id={pr.playerId}>{pr.playerName}</PlayerLink>
+                        <span className="muted"> · {pr.label.replace(`${pr.playerName}: `, '')}</span>
+                      </span>
                       <span className={`chip ${badge.cls}`}>{badge.label}</span>
                     </li>
                   );

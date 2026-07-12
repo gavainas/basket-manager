@@ -41,6 +41,7 @@ function GeneralTab({ state, p }: { state: GameState; p: Player }) {
   const status = statusChip(p);
   const fee = feeChip(p);
   const absentThisWeek = state.callUp.some((c) => c.playerId === p.id && c.status === 'ausente');
+  const promises = state.promises.filter((pr) => pr.playerId === p.id && pr.season === state.seasonNumber);
   return (
     <div>
       <p className="profile-quote">“{p.description}”</p>
@@ -63,6 +64,17 @@ function GeneralTab({ state, p }: { state: GameState; p: Player }) {
           <span className={`chip ${fee.cls}`}>{fee.label}</span>
         </DataRow>
         <DataRow label="Rol esperado">{roleLabel(p)}</DataRow>
+        {promises.length > 0 && (
+          <DataRow label="Promesas">
+            {promises.map((pr, i) => (
+              <span key={i}>
+                {i > 0 && ' · '}
+                {pr.label.replace(`${p.name}: `, '')}
+                {pr.broken ? <span className="chip bad"> rota</span> : ''}
+              </span>
+            ))}
+          </DataRow>
+        )}
       </div>
     </div>
   );
