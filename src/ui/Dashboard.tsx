@@ -5,6 +5,7 @@ import { objectiveStatus, type ObjectiveStatus } from '../game/objectives';
 import { Bar } from './Bar';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
+import { TIPS } from './Tip';
 import { avgMotivation, formatMoney, rivalDifficulty, rivalStyleInfo } from './helpers';
 
 const OBJECTIVE_BADGE: Record<ObjectiveStatus, { icon: string; cls: string; label: string }> = {
@@ -58,11 +59,11 @@ export function Dashboard({ state }: { state: GameState }) {
       <div className="grid cols-2" style={{ marginTop: '1rem' }}>
         <div className="card">
           <h3>Estado del club</h3>
-          <Bar label="Moral general" value={morale} />
-          <Bar label="Ambiente social" value={state.club.socialClimate} />
-          <Bar label="Organización" value={state.club.organization} />
-          <Bar label="Prestigio deportivo" value={state.club.sportPrestige} />
-          <Bar label="Prestigio social" value={state.club.socialPrestige} />
+          <Bar label="Moral general" value={morale} hint={TIPS.moralGeneral} />
+          <Bar label="Ambiente social" value={state.club.socialClimate} hint={TIPS.ambienteSocial} />
+          <Bar label="Organización" value={state.club.organization} hint={TIPS.organizacion} />
+          <Bar label="Prestigio deportivo" value={state.club.sportPrestige} hint={TIPS.prestigioDeportivo} />
+          <Bar label="Prestigio social" value={state.club.socialPrestige} hint={TIPS.prestigioSocial} />
           <div className="muted" style={{ marginTop: '0.6rem' }}>
             Jugadores activos: <strong>{active.length}</strong>
             {state.playersLeftCount > 0 && ` · Se fueron ${state.playersLeftCount} esta temporada`}

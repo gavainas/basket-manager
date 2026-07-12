@@ -1,6 +1,7 @@
 import type { Player } from '../game/types';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
+import { Tip, TIPS } from './Tip';
 import { feeChip, initials, roleLabel, starsFor, statusChip } from './helpers';
 
 interface Props {
@@ -40,19 +41,21 @@ export function PlayerCard({ player: p, selectable, selected, inRotation, dimmed
           </div>
         </div>
         <div className="rating">
-          <div className="num">≈{p.visibleRating}</div>
+          <Tip text={TIPS.valoracion}>
+            <div className="num">≈{p.visibleRating}</div>
+          </Tip>
           <div className="approx">{starsFor(p.visibleRating)}</div>
         </div>
       </div>
 
       {!compact && <div className="player-desc">{p.description}</div>}
 
-      <Bar label="Físico" value={p.physical} />
-      <Bar label="Motivación" value={p.motivation} />
+      <Bar label="Físico" value={p.physical} hint={TIPS.fisico} />
+      <Bar label="Motivación" value={p.motivation} hint={TIPS.motivacion} />
       {!compact && (
         <>
-          <Bar label="Compromiso" value={p.commitment} />
-          <Bar label="Afinidad social" value={p.social} />
+          <Bar label="Compromiso" value={p.commitment} hint={TIPS.compromiso} />
+          <Bar label="Afinidad social" value={p.social} hint={TIPS.afinidadSocial} />
         </>
       )}
 

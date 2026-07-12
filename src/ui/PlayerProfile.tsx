@@ -4,6 +4,7 @@ import { affinity, coachAffinity, FRIEND_THRESHOLD, groupStanding, RIVALRY_THRES
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
 import { Timeline } from './Timeline';
+import { TIPS } from './Tip';
 import { feeChip, initials, roleLabel, starsFor, statusChip } from './helpers';
 
 type ProfileTab = 'general' | 'deportiva' | 'relaciones' | 'historia' | 'social';
@@ -101,14 +102,11 @@ function DeportivaTab({ p }: { p: Player }) {
   return (
     <div>
       <h4 className="profile-subtitle">Atributos</h4>
-      <Bar label="Valoración" value={p.visibleRating} />
-      <Bar label="Físico" value={p.physical} />
-      <Bar label="Motivación" value={p.motivation} />
-      <Bar label="Compromiso" value={p.commitment} />
-      <Bar label="Afinidad social" value={p.social} />
-      <p className="muted" style={{ marginTop: '0.3rem' }}>
-        La valoración es la estimación del cuerpo técnico: lo que vale de verdad se ve en la cancha.
-      </p>
+      <Bar label="Valoración" value={p.visibleRating} hint={TIPS.valoracion} />
+      <Bar label="Físico" value={p.physical} hint={TIPS.fisico} />
+      <Bar label="Motivación" value={p.motivation} hint={TIPS.motivacion} />
+      <Bar label="Compromiso" value={p.commitment} hint={TIPS.compromiso} />
+      <Bar label="Afinidad social" value={p.social} hint={TIPS.afinidadSocial} />
 
       <h4 className="profile-subtitle">Estadísticas con el club</h4>
       <div className="data-grid">
@@ -232,7 +230,7 @@ function RelacionesTab({ state, p }: { state: GameState; p: Player }) {
       ))}
 
       <h4 className="profile-subtitle">Con el entrenador (vos)</h4>
-      <Bar label="Afinidad" value={coach} />
+      <Bar label="Afinidad" value={coach} hint={TIPS.afinidadDt} />
       <p className="muted">
         {coach >= 70
           ? 'Te banca a muerte: es de los tuyos.'
@@ -261,9 +259,9 @@ function SocialTab({ state, p }: { state: GameState; p: Player }) {
         </DataRow>
       </div>
       <h4 className="profile-subtitle">Cómo está en el grupo</h4>
-      <Bar label="Moral" value={p.motivation} />
-      <Bar label="Compromiso" value={p.commitment} />
-      <Bar label="Peso en el vestuario" value={standing} />
+      <Bar label="Moral" value={p.motivation} hint={TIPS.motivacion} />
+      <Bar label="Compromiso" value={p.commitment} hint={TIPS.compromiso} />
+      <Bar label="Peso en el vestuario" value={standing} hint={TIPS.pesoVestuario} />
       <p className="muted">
         {standing >= 70
           ? 'Es de los pesados del vestuario: cuando habla, el grupo escucha.'

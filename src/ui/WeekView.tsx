@@ -7,6 +7,7 @@ import { courtFreshness, evaluateTeam, isSelectable } from '../game/match';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
+import { Tip, TIPS } from './Tip';
 import { initials, rivalDifficulty, rivalStyleInfo, starsFor } from './helpers';
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
@@ -293,10 +294,14 @@ function LineupPanel({ state, dispatch }: Props) {
           <span className="chip accent" title={style.desc}>
             {style.label}
           </span>
-          <span className={`chip ${count === 5 ? 'good' : 'warn'}`}>Titulares: {count}/5</span>
-          <span className={`chip ${rotationIds.length > 0 ? 'good' : 'warn'}`}>
-            Banco: {rotationIds.length}/{maxRotation}
-          </span>
+          <Tip text={TIPS.titulares}>
+            <span className={`chip ${count === 5 ? 'good' : 'warn'}`}>Titulares: {count}/5</span>
+          </Tip>
+          <Tip text={TIPS.banco}>
+            <span className={`chip ${rotationIds.length > 0 ? 'good' : 'warn'}`}>
+              Banco: {rotationIds.length}/{maxRotation}
+            </span>
+          </Tip>
           {missing.length > 0 && count === 5 && <span className="chip warn">Sin {missing.join(', ')} natural</span>}
           {count === 5 && missing.length === 0 && <span className="chip good">Todas las posiciones cubiertas</span>}
         </div>
@@ -695,8 +700,8 @@ function LiveMatchPanel({ state, dispatch }: Props) {
 
       <div className="card" style={{ marginBottom: '1rem' }}>
         <h3>Piernas</h3>
-        <Bar label="En cancha" value={courtFreshness(live)} />
-        <Bar label={rival.name} value={live.rivalFreshness} />
+        <Bar label="En cancha" value={courtFreshness(live)} hint={TIPS.piernas} />
+        <Bar label={rival.name} value={live.rivalFreshness} hint={TIPS.piernas} />
       </div>
 
       {played.length > 0 && (
