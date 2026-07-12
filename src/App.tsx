@@ -5,6 +5,7 @@ import { Dashboard } from './ui/Dashboard';
 import { RosterView } from './ui/RosterView';
 import { FinancesView } from './ui/FinancesView';
 import { LeagueView } from './ui/LeagueView';
+import { CalendarView } from './ui/CalendarView';
 import { RankingsView } from './ui/RankingsView';
 import { WeekView } from './ui/WeekView';
 import { EventModal } from './ui/EventModal';
@@ -28,6 +29,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'plantilla', label: 'Plantilla' },
   { id: 'finanzas', label: 'Finanzas' },
   { id: 'liga', label: 'Liga' },
+  { id: 'agenda', label: 'Agenda' },
   { id: 'rankings', label: 'Rankings' },
   { id: 'historia', label: 'Historia' },
   { id: 'semana', label: 'Semana' },
@@ -205,6 +207,7 @@ export default function App() {
       {tab === 'plantilla' && <RosterView state={state} />}
       {tab === 'finanzas' && <FinancesView state={state} />}
       {tab === 'liga' && <LeagueView state={state} />}
+      {tab === 'agenda' && <CalendarView state={state} />}
       {tab === 'rankings' && <RankingsView state={state} />}
       {tab === 'historia' && <HistoryView state={state} />}
       {tab === 'semana' && <WeekView state={state} dispatch={dispatch} />}

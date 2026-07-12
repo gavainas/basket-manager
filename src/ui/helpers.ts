@@ -68,6 +68,31 @@ export function formatMoney(amount: number): string {
   return `$${amount.toLocaleString('es-AR')}`;
 }
 
+const WEEKDAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const MONTHS = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+
+/** '2026-04-06' → 'lunes 6 de abril'. */
+export function formatDateLong(iso: string): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()} de ${MONTHS[d.getUTCMonth()]}`;
+}
+
+/** '2026-04-06' → '6/4'. */
+export function formatDateShort(iso: string): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  return `${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
+}
+
+/** '2026-04-06' → 'Abril 2026'. */
+export function monthLabel(iso: string): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  const m = MONTHS[d.getUTCMonth()];
+  return `${m[0].toUpperCase()}${m.slice(1)} ${d.getUTCFullYear()}`;
+}
+
 export function rivalStyleInfo(style: RivalStyle): { label: string; desc: string; advice: string } {
   switch (style) {
     case 'tiradores':
