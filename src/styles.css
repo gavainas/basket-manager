@@ -1137,7 +1137,7 @@ button.mini.blue.on {
 
 .sub-row {
   display: grid;
-  grid-template-columns: 30px 1fr 34px 70px;
+  grid-template-columns: 30px 1fr 48px 30px 64px;
   gap: 0.5rem;
   align-items: center;
   padding: 0.32rem 0.45rem;
@@ -1145,6 +1145,14 @@ button.mini.blue.on {
   border: 1px solid transparent;
   cursor: pointer;
   font-size: 0.88rem;
+}
+
+.sub-pts {
+  text-align: right;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
 
 .sub-row:hover:not(.off) {

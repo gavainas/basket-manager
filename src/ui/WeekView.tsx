@@ -523,6 +523,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
           {p.name}
           {live.starId === p.id && side === 'court' ? ' ⭐' : ''}
         </span>
+        <span className="sub-pts">{live.stats[p.id]?.pts ?? 0} pts</span>
         <span className="sub-mins">{minsOf(p.id)}&apos;</span>
         <div className="legs-mini" title={`Piernas: ${fresh}`}>
           <div className={`fill ${legsCls(fresh)}`} style={{ width: `${fresh}%` }} />
@@ -560,6 +561,13 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         </div>
         <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.6rem' }}>
           {scoreLine}
+          {(() => {
+            const top = [...live.squad].sort((a, b) => (live.stats[b]?.pts ?? 0) - (live.stats[a]?.pts ?? 0))[0];
+            const pts = live.stats[top]?.pts ?? 0;
+            if (pts === 0) return null;
+            const tp = state.players.find((p) => p.id === top);
+            return tp ? ` Goleador: ${tp.name} (${pts}).` : null;
+          })()}
         </p>
 
         <div className="table-wrap" style={{ maxWidth: 460, margin: '0 auto' }}>
@@ -804,6 +812,42 @@ function MatchResultPanel({ state, dispatch }: Props) {
           </p>
         )}
       </div>
+
+      {(m.box ?? []).length > 0 && (
+        <div className="card" style={{ marginTop: '1rem' }}>
+          <h3>Planilla del partido</h3>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Jugador</th>
+                  <th className="num">Min</th>
+                  <th className="num">Pts</th>
+                  <th className="num">Reb</th>
+                  <th className="num">Ast</th>
+                  <th className="num">Nota</th>
+                </tr>
+              </thead>
+              <tbody>
+                {m.box.map((line) => (
+                  <tr key={line.playerId}>
+                    <td>
+                      <PlayerLink id={line.playerId}>{line.name}</PlayerLink> {line.mvp ? '⭐' : ''}
+                    </td>
+                    <td className="num">{line.minutes}&apos;</td>
+                    <td className="num" style={{ fontWeight: 700 }}>
+                      {line.points}
+                    </td>
+                    <td className="num">{line.rebounds}</td>
+                    <td className="num">{line.assists}</td>
+                    <td className="num">{line.rating}/10</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {m.highlights.length > 0 && (
         <div className="card" style={{ marginTop: '1rem' }}>

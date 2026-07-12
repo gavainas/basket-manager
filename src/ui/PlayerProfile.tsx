@@ -74,6 +74,10 @@ function DeportivaTab({ p }: { p: Player }) {
   const avgRating = played ? (log.reduce((t, m) => t + m.rating, 0) / played).toFixed(1) : '—';
   const mvps = log.filter((m) => m.mvp).length;
   const winPct = played ? Math.round((log.filter((m) => m.won).length / played) * 100) : null;
+  const points = log.reduce((t, m) => t + (m.points ?? 0), 0);
+  const rebounds = log.reduce((t, m) => t + (m.rebounds ?? 0), 0);
+  const assists = log.reduce((t, m) => t + (m.assists ?? 0), 0);
+  const perGame = (v: number) => (played ? (v / played).toFixed(1) : '—');
 
   const last = [...log].slice(-5).reverse();
   const recent = log.slice(-3);
@@ -110,6 +114,9 @@ function DeportivaTab({ p }: { p: Player }) {
       <div className="data-grid">
         <DataRow label="Partidos">{played}</DataRow>
         <DataRow label="Minutos">{minutes}&apos;</DataRow>
+        <DataRow label="Puntos">{played ? `${points} (${perGame(points)} por partido)` : '—'}</DataRow>
+        <DataRow label="Rebotes">{played ? `${rebounds} (${perGame(rebounds)} por partido)` : '—'}</DataRow>
+        <DataRow label="Asistencias">{played ? `${assists} (${perGame(assists)} por partido)` : '—'}</DataRow>
         <DataRow label="Nota media">{avgRating}</DataRow>
         <DataRow label="Veces figura">{mvps > 0 ? `⭐ ×${mvps}` : '—'}</DataRow>
         <DataRow label="Victorias">{winPct !== null ? `${winPct}%` : '—'}</DataRow>
@@ -126,6 +133,9 @@ function DeportivaTab({ p }: { p: Player }) {
                 <th>Fecha</th>
                 <th>Rival</th>
                 <th className="num">Min</th>
+                <th className="num">Pts</th>
+                <th className="num">Reb</th>
+                <th className="num">Ast</th>
                 <th className="num">Nota</th>
                 <th>Res.</th>
               </tr>
@@ -140,6 +150,9 @@ function DeportivaTab({ p }: { p: Player }) {
                     {m.rivalName} {m.mvp ? '⭐' : ''}
                   </td>
                   <td className="num">{m.minutes}&apos;</td>
+                  <td className="num" style={{ fontWeight: 700 }}>{m.points ?? 0}</td>
+                  <td className="num">{m.rebounds ?? 0}</td>
+                  <td className="num">{m.assists ?? 0}</td>
                   <td className="num">{m.rating}/10</td>
                   <td style={{ color: m.won ? 'var(--good)' : 'var(--bad)', fontWeight: 700 }}>{m.won ? 'G' : 'P'}</td>
                 </tr>

@@ -1,6 +1,6 @@
 import { BALANCE, clamp } from './balance';
 import { logPlayerEvent } from './timeline';
-import type { GameState, MatchResult, Player, Position, Rival, TeamEval } from './types';
+import type { BoxScoreLine, GameState, MatchResult, Player, Position, Rival, TeamEval } from './types';
 import type { Rng } from './rng';
 
 const ALL_POSITIONS: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
@@ -243,6 +243,7 @@ function simulateForfeit(s: GameState, rival: Rival, rng: Rng): GameState {
     reasons: ['El club no pudo presentar un quinteto completo.'],
     lockerRoom: ['La vergüenza del forfeit golpeó al grupo entero.'],
     effects: ['Motivación general -8', 'Prestigio deportivo -5', 'Prestigio social -3'],
+    box: [],
   };
   s.players = s.players.map((p) => (p.leftClub ? p : { ...p, motivation: clamp(p.motivation - 8) }));
   s.club.sportPrestige = clamp(s.club.sportPrestige - 5);
@@ -273,10 +274,12 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
   const perfs: Record<string, number> = {};
   const playerFresh: Record<string, number> = {};
   const minutes: Record<string, number> = {};
+  const stats: Record<string, { pts: number; reb: number; ast: number }> = {};
   for (const p of squad) {
     perfs[p.id] = playerEffective(p) * rng.range(0.78, 1.22);
     playerFresh[p.id] = clamp(M.freshStartBase + M.freshStartPhysical * p.physical);
     minutes[p.id] = 0;
+    stats[p.id] = { pts: 0, reb: 0, ast: 0 };
   }
   const star = [...starters].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
 
@@ -291,6 +294,7 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     onCourt: starters.map((p) => p.id),
     playerFresh,
     minutes,
+    stats,
     pendingSubNotes: [],
     rivalFreshness: clamp(M.rivalFreshStart + rng.int(-4, 4)),
     starId: star.id,
@@ -340,6 +344,26 @@ export function courtFreshness(live: { onCourt: string[]; playerFresh: Record<st
   const vals = live.onCourt.map((id) => live.playerFresh[id] ?? 70);
   return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
 }
+
+/** Reparte un total entero entre ids según pesos (el resto se sortea). */
+function distribute(total: number, weights: { id: string; w: number }[], rng: Rng): Record<string, number> {
+  const sum = weights.reduce((t, x) => t + Math.max(0.01, x.w), 0);
+  const out: Record<string, number> = {};
+  let assigned = 0;
+  for (const x of weights) {
+    const v = Math.floor((total * Math.max(0.01, x.w)) / sum);
+    out[x.id] = v;
+    assigned += v;
+  }
+  const ids = weights.map((x) => x.id);
+  for (let rest = total - assigned; rest > 0; rest--) {
+    out[rng.pick(ids)] += 1;
+  }
+  return out;
+}
+
+const REB_POS_WEIGHT: Record<Position, number> = { Base: 0.9, Escolta: 1.1, Alero: 1.7, 'Ala-Pívot': 2.4, Pívot: 3 };
+const AST_POS_WEIGHT: Record<Position, number> = { Base: 3, Escolta: 1.8, Alero: 1.2, 'Ala-Pívot': 0.8, Pívot: 0.6 };
 
 /** Juega el próximo cuarto con las tácticas y los 5 en cancha de state.live. */
 export function playQuarter(state: GameState, rng: Rng): GameState {
@@ -438,6 +462,35 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   if (qDiff >= 6) notes.push(`Parcial demoledor: ${ourQ}-${rivalQ} en el ${Q_NAMES[qIndex]}.`);
   else if (qDiff <= -6) notes.push(`Nos pasaron por arriba: ${ourQ}-${rivalQ} en el ${Q_NAMES[qIndex]}.`);
 
+  // --- Planilla del cuarto: puntos, rebotes y asistencias ---
+  const perfOf = (id: string) => live.perfs[id] ?? 50;
+  const qPts = distribute(
+    ourQ,
+    onCourt.map((p) => ({
+      id: p.id,
+      w: perfOf(p.id) * (live.attack === 'estrella' && p.id === star.id ? M.estrellaPtsBias : 1),
+    })),
+    rng
+  );
+  const qReb = distribute(
+    rng.int(M.boxRebMin, M.boxRebMax),
+    onCourt.map((p) => ({ id: p.id, w: REB_POS_WEIGHT[p.position] * (0.6 + perfOf(p.id) / 150) })),
+    rng
+  );
+  const qAst = distribute(
+    rng.int(M.boxAstMin, M.boxAstMax) + (live.attack === 'equipo' ? M.equipoAstExtra : 0),
+    onCourt.map((p) => ({ id: p.id, w: AST_POS_WEIGHT[p.position] * (0.6 + perfOf(p.id) / 150) })),
+    rng
+  );
+  for (const p of onCourt) {
+    const st = live.stats[p.id] ?? (live.stats[p.id] = { pts: 0, reb: 0, ast: 0 });
+    st.pts += qPts[p.id] ?? 0;
+    st.reb += qReb[p.id] ?? 0;
+    st.ast += qAst[p.id] ?? 0;
+  }
+  const qTop = [...onCourt].sort((a, b) => (qPts[b.id] ?? 0) - (qPts[a.id] ?? 0))[0];
+  if ((qPts[qTop.id] ?? 0) >= 7) notes.push(`${qTop.name} metió ${qPts[qTop.id]} puntos en el ${Q_NAMES[qIndex]}.`);
+
   // --- Desgaste y minutos ---
   if (live.defense === 'hombre') live.hombreQuarters += 1;
   if (live.attack === 'estrella') live.estrellaQuarters += 1;
@@ -480,6 +533,15 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
         else rivalOT += rng.int(1, 3);
       }
       for (const id of live.onCourt) live.minutes[id] = (live.minutes[id] ?? 0) + M.otMinutes;
+      const otPts = distribute(
+        ourOT,
+        live.onCourt.map((id) => ({ id, w: perfOf(id) })),
+        rng
+      );
+      for (const id of live.onCourt) {
+        const st = live.stats[id] ?? (live.stats[id] = { pts: 0, reb: 0, ast: 0 });
+        st.pts += otPts[id] ?? 0;
+      }
       live.quarters.push({
         for: ourOT,
         against: rivalOT,
@@ -591,6 +653,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     }
 
     if (mins > 0 && np.lastRating !== null) {
+      const st = live.stats[np.id] ?? { pts: 0, reb: 0, ast: 0 };
       np.matchLog = [
         ...np.matchLog,
         {
@@ -601,6 +664,9 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
           rating: np.lastRating,
           mvp: np.id === mvp.id,
           won,
+          points: st.pts,
+          rebounds: st.reb,
+          assists: st.ast,
         },
       ];
     }
@@ -701,6 +767,20 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     lockerRoom.push(`"Para el picado nunca falta", tiró uno del grupo cuando se habló de la ausencia de ${absentOnes[0].playerName}.`);
   }
 
+  const statsOf = (id: string) => live.stats[id] ?? { pts: 0, reb: 0, ast: 0 };
+  const box: BoxScoreLine[] = played
+    .map(({ p, perf, mins }) => ({
+      playerId: p.id,
+      name: p.name,
+      minutes: mins,
+      points: statsOf(p.id).pts,
+      rebounds: statsOf(p.id).reb,
+      assists: statsOf(p.id).ast,
+      rating: Math.max(1, Math.min(10, Math.round(perf / 10))),
+      mvp: p.id === mvp.id,
+    }))
+    .sort((a, b) => b.points - a.points);
+
   const result: MatchResult = {
     week: s.week,
     rivalId: rival.id,
@@ -717,6 +797,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     reasons: buildReasons(evalTeam, rival.strength, live.luckTotal, won, extraReasons),
     lockerRoom,
     effects,
+    box,
   };
 
   if (upset) s.memorableMoments.push(`Semana ${s.week}: batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);

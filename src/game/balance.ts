@@ -72,6 +72,13 @@ export const BALANCE = {
     pushFreshCost: 5,
     pushRivalBoost: 1.05,
     hombreWearPerQuarter: 1, // desgaste físico extra post partido por cuarto en hombre
+    // Planilla: reparto de puntos/rebotes/asistencias por cuarto.
+    boxRebMin: 7,
+    boxRebMax: 12,
+    boxAstMin: 3,
+    boxAstMax: 6,
+    estrellaPtsBias: 1.8, // la figura se lleva más tiros con ataque 'estrella'
+    equipoAstExtra: 2, // mover la pelota genera más asistencias
   },
 
   rotation: {

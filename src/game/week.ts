@@ -11,7 +11,7 @@ import { logPlayerEvent } from './timeline';
 import { Rng } from './rng';
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);

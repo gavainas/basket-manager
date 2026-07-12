@@ -89,6 +89,24 @@ export function loadGame(): GameState | null {
       }
       parsed.saveVersion = 9;
     }
+    // v9 → v10: planilla de estadísticas (puntos, rebotes, asistencias).
+    if (parsed.saveVersion === 9) {
+      for (const p of parsed.players) {
+        for (const m of p.matchLog) {
+          m.points = m.points ?? 0;
+          m.rebounds = m.rebounds ?? 0;
+          m.assists = m.assists ?? 0;
+        }
+      }
+      for (const r of parsed.history) r.box = r.box ?? [];
+      if (parsed.lastMatch) parsed.lastMatch.box = parsed.lastMatch.box ?? [];
+      if (parsed.live) {
+        parsed.live.stats = parsed.live.stats ?? Object.fromEntries(
+          parsed.live.squad.map((id: string) => [id, { pts: 0, reb: 0, ast: 0 }])
+        );
+      }
+      parsed.saveVersion = 10;
+    }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;
   } catch {

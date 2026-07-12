@@ -45,6 +45,21 @@ export interface PlayerMatchEntry {
   rating: number;
   mvp: boolean;
   won: boolean;
+  points: number;
+  rebounds: number;
+  assists: number;
+}
+
+/** Renglón de la planilla de un partido. */
+export interface BoxScoreLine {
+  playerId: string;
+  name: string;
+  minutes: number;
+  points: number;
+  rebounds: number;
+  assists: number;
+  rating: number;
+  mvp: boolean;
 }
 
 export type FeeStatus = 'pagada' | 'pendiente' | 'beca_total' | 'beca_parcial';
@@ -187,6 +202,8 @@ export interface LiveMatchState {
   playerFresh: Record<string, number>;
   /** Minutos jugados por cada citado. */
   minutes: Record<string, number>;
+  /** Planilla en vivo: puntos, rebotes y asistencias por citado. */
+  stats: Record<string, { pts: number; reb: number; ast: number }>;
   /** Cambios hechos en el descanso, para el relato del próximo cuarto. */
   pendingSubNotes: string[];
   rivalFreshness: number;
@@ -222,6 +239,8 @@ export interface MatchResult {
   reasons: string[];
   lockerRoom: string[];
   effects: string[];
+  /** Planilla del partido, ordenada por puntos (vacía en forfeit). */
+  box: BoxScoreLine[];
 }
 
 export interface Objective {
