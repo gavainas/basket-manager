@@ -34,7 +34,13 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   const position = clubPosition(state);
   const active = activePlayers(state.players);
 
-  const sportScore = Math.round(winPct * 65 + ((10 - position) / 9) * 35);
+  const oroChamp = state.playoffs?.champions.oro === 'club';
+  const plataChamp = state.playoffs?.champions.plata === 'club';
+  const lostFinal = !!state.playoffs?.ties.some(
+    (t) => t.round === 'final' && t.isUserMatch && t.winnerId !== undefined && t.winnerId !== 'club'
+  );
+  const cupBonus = oroChamp ? 18 : plataChamp ? 10 : lostFinal ? 5 : 0;
+  const sportScore = Math.min(100, Math.round(winPct * 65 + ((10 - position) / 9) * 35) + cupBonus);
   const moneyRatio = state.club.money / Math.max(state.startingMoney, 1);
   const financeScore = state.club.money < 0 ? 0 : Math.round(Math.min(100, moneyRatio * 55 + (state.club.money > 0 ? 25 : 0)));
   const retentionScore = Math.max(0, 100 - state.playersLeftCount * 20);
@@ -103,12 +109,21 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   } else if (isGameOver) {
     outcomeTitle = 'Plantel desintegrado';
     outcomeText = state.gameOverReason ?? 'El club se quedó sin jugadores para competir.';
-  } else if (position === 1 && state.club.socialClimate < 40) {
+  } else if (oroChamp && state.club.socialClimate < 40) {
     outcomeTitle = 'Campeones… con el vestuario roto';
-    outcomeText = 'Ganaron la liga, pero el grupo terminó quebrado. ¿Cuántos volverán el año que viene?';
+    outcomeText = 'Se llevaron la Copa de Oro, pero el grupo terminó quebrado. ¿Cuántos volverán el año que viene?';
+  } else if (oroChamp) {
+    outcomeTitle = '¡Campeones de la Copa de Oro!';
+    outcomeText = 'Temporada soñada: el club se queda con la copa grande y el barrio habla de ustedes.';
+  } else if (plataChamp) {
+    outcomeTitle = 'Campeones de la Copa de Plata';
+    outcomeText = 'No era la copa grande, pero es una vuelta olímpica igual. El grupo la festejó como corresponde.';
+  } else if (lostFinal) {
+    outcomeTitle = 'Subcampeones: la final se escapó';
+    outcomeText = 'Llegar a la final ya fue un logro, pero la última pelota no quiso entrar. El año que viene es revancha.';
   } else if (position === 1) {
-    outcomeTitle = '¡Campeones!';
-    outcomeText = 'Temporada soñada: el club se queda con la liga y el barrio habla de ustedes.';
+    outcomeTitle = 'Los mejores de la fase regular';
+    outcomeText = 'Dominaron la temporada... hasta los playoffs. La tabla dice campeones morales; la copa dice otra cosa.';
   } else if (state.memorableMoments.length >= 3 && sportScore >= 45 && retentionScore >= 60) {
     outcomeTitle = 'Temporada inolvidable';
     outcomeText = 'Más allá de la tabla, esta temporada dejó historias que el grupo va a contar durante años.';

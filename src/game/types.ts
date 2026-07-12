@@ -533,6 +533,35 @@ export interface WorldFixture {
   scoreHome?: number;
   scoreAway?: number;
   isUserMatch: boolean;
+  /** Etiqueta especial ('Semifinal · Copa de Oro'); vacío en fase regular. */
+  label?: string;
+}
+
+// ---------- Playoffs: Copa de Oro y Copa de Plata ----------
+
+export type CupTier = 'oro' | 'plata';
+export type PlayoffRound = 'semifinal' | 'final';
+
+/** Un cruce de playoffs. Los equipos usan ids clásicos ('club' o rivalId). */
+export interface PlayoffTie {
+  id: string;
+  cup: CupTier;
+  round: PlayoffRound;
+  week: number;
+  homeId: string;
+  awayId: string;
+  scoreHome?: number;
+  scoreAway?: number;
+  winnerId?: string;
+  isUserMatch: boolean;
+}
+
+export interface PlayoffsState {
+  /** El usuario clasificó a alguna copa. */
+  qualified: boolean;
+  userCup: CupTier | null;
+  ties: PlayoffTie[];
+  champions: { oro?: string; plata?: string };
 }
 
 export interface WorldState {
@@ -602,4 +631,6 @@ export interface GameState {
   preseason: PreseasonState | null;
   /** El mundo: ligas, equipos, jugadores rivales, inscripciones y fixture. */
   world: WorldState;
+  /** Playoffs de la divisional (Copa de Oro / Copa de Plata); null en fase regular. */
+  playoffs: PlayoffsState | null;
 }

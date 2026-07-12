@@ -9,7 +9,7 @@ import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { ScoutingCard } from './ScoutingCard';
 import { Tip, TIPS } from './Tip';
-import { initials, rivalDifficulty, rivalStyleInfo, starsFor } from './helpers';
+import { initials, rivalDifficulty, rivalStyleInfo, starsFor, weekLabel } from './helpers';
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 const POS_ABBR: Record<Position, string> = {
@@ -130,7 +130,7 @@ function CallUpPanel({ state, dispatch }: Props) {
 
       <div className="card">
         <h3>
-          Pasando lista · semana {state.week} vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
+          Pasando lista · {weekLabel(state.week, state.seasonLength)} vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
         </h3>
         {outs.length === 0 && stillInjured.length === 0 ? (
           <p style={{ marginTop: 0 }}>
@@ -320,7 +320,7 @@ function LineupPanel({ state, dispatch }: Props) {
     <div>
       <div className="card" style={{ marginBottom: '1rem' }}>
         <h3>
-          Semana {state.week} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
+          {weekLabel(state.week, state.seasonLength)} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
         </h3>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
@@ -611,7 +611,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
       <div className="card" style={{ marginBottom: '1rem' }}>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
           <h3 style={{ margin: 0 }}>
-            Semana {state.week} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
+            {weekLabel(state.week, state.seasonLength)} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
           </h3>
           <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
           <span className="chip accent" title={style.desc}>
@@ -820,7 +820,14 @@ function LiveMatchPanel({ state, dispatch }: Props) {
 function MatchResultPanel({ state, dispatch }: Props) {
   const m = state.lastMatch;
   if (!m) return null;
-  const isLastWeek = state.week >= state.seasonLength;
+  const nextLabel =
+    state.week < state.seasonLength
+      ? `Avanzar a la semana ${state.week + 1} →`
+      : state.week === state.seasonLength
+        ? 'Cerrar la fase regular →'
+        : state.week === state.seasonLength + 1
+          ? 'Después de las semifinales →'
+          : 'Cerrar la temporada →';
 
   return (
     <div>
@@ -973,7 +980,7 @@ function MatchResultPanel({ state, dispatch }: Props) {
 
       <div className="confirm-bar">
         <button className="primary" onClick={() => dispatch({ type: 'NEXT_WEEK' })}>
-          {isLastWeek ? 'Cerrar la temporada →' : `Avanzar a la semana ${state.week + 1} →`}
+          {nextLabel}
         </button>
       </div>
     </div>

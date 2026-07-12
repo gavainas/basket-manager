@@ -244,6 +244,7 @@ export function createPreseasonNewGame(seed: number): GameState {
     promises: [],
     preseason: null,
     world: emptyWorld(),
+    playoffs: null,
   };
   state.preseason = buildPreseasonState(players, state.club, rng, true);
   state.seed = rng.nextSeed();
@@ -355,6 +356,7 @@ export function startPreseason(state: GameState): GameState {
     promises: [],
     preseason: null,
     world: emptyWorld(),
+    playoffs: null,
   };
   next.preseason = buildPreseasonState(players, next.club, rng, false);
   next.seed = rng.nextSeed();

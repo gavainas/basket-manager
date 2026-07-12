@@ -3,6 +3,7 @@ import type { GameAction } from '../state/gameReducer';
 import { computeSeasonEvaluation } from '../game/evaluation';
 import { objectiveStatus } from '../game/objectives';
 import { BALANCE } from '../game/balance';
+import { PlayoffsCard } from './LeagueView';
 import { formatMoney } from './helpers';
 
 interface Props {
@@ -18,7 +19,15 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
   return (
     <div className="season-end">
       <div className="outcome">
-        <div style={{ fontSize: '3rem' }}>{ev.isGameOver ? '💥' : ev.position === 1 ? '🏆' : '🏀'}</div>
+        <div style={{ fontSize: '3rem' }}>
+          {ev.isGameOver
+            ? '💥'
+            : state.playoffs?.champions.oro === 'club'
+              ? '🏆'
+              : state.playoffs?.champions.plata === 'club'
+                ? '🥈'
+                : '🏀'}
+        </div>
         <h1>{ev.outcomeTitle}</h1>
         <p>{ev.outcomeText}</p>
         <p className="muted">Temporada {state.seasonNumber}</p>
@@ -28,6 +37,8 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
           <span className={`chip ${state.club.money >= 0 ? 'good' : 'bad'}`}>Caja: {formatMoney(state.club.money)}</span>
         </p>
       </div>
+
+      <PlayoffsCard state={state} />
 
       <div className="card">
         <h3>Evaluación de la temporada</h3>

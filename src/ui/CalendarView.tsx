@@ -30,7 +30,8 @@ function TeamLabel({ state, teamId }: { state: GameState; teamId: string }) {
 
 export function CalendarView({ state }: Props) {
   const world = state.world;
-  const week = Math.min(state.week, state.seasonLength);
+  const lastFixtureWeek = world.fixtures.reduce((m, f) => Math.max(m, f.week), state.seasonLength);
+  const week = Math.min(state.week, lastFixtureWeek);
   const userFx = userFixtureOfWeek(world, week);
   const weekOthers = fixturesOfWeek(world, week).filter((f) => !f.isUserMatch);
   const division = world.divisions.find((d) => d.id === userFx?.divisionId);
@@ -74,6 +75,11 @@ export function CalendarView({ state }: Props) {
               <span className="data-label">Competición</span>
               <span className="data-value">
                 {league?.name} · {division?.name}
+                {userFx.label && (
+                  <span className="chip accent" style={{ marginLeft: '0.5rem' }}>
+                    {userFx.label}
+                  </span>
+                )}
               </span>
             </div>
             <div className="data-row">
@@ -163,6 +169,11 @@ export function CalendarView({ state }: Props) {
                         <td>
                           <TeamLabel state={state} teamId={rivalTeamId} />{' '}
                           <span className="muted">{isHome ? '(L)' : '(V)'}</span>
+                          {fx.label && (
+                            <span className="chip accent" style={{ marginLeft: '0.4rem' }}>
+                              {fx.label}
+                            </span>
+                          )}
                         </td>
                         <td className="num">
                           {played ? (

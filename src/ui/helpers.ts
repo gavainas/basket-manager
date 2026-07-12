@@ -86,6 +86,12 @@ export function formatDateShort(iso: string): string {
   return `${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
 }
 
+/** Nombre de la fecha: 'Semana 4', 'Semifinales' o 'Finales' según la etapa. */
+export function weekLabel(week: number, seasonLength: number): string {
+  if (week <= seasonLength) return `Semana ${week}`;
+  return week === seasonLength + 1 ? 'Semifinales' : 'Finales';
+}
+
 /** '2026-04-06' → 'Abril 2026'. */
 export function monthLabel(iso: string): string {
   const d = new Date(`${iso}T12:00:00Z`);

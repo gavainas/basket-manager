@@ -20,7 +20,7 @@ import { SeasonEndScreen } from './ui/SeasonEndScreen';
 import { HistoryView } from './ui/HistoryView';
 import { PreseasonView } from './ui/PreseasonView';
 import { PreseasonEndScreen } from './ui/PreseasonEndScreen';
-import { formatMoney } from './ui/helpers';
+import { formatMoney, weekLabel } from './ui/helpers';
 
 type Tab = AppTab;
 
@@ -160,9 +160,11 @@ export default function App() {
         <span className="club-name">🏀 {state.club.name}</span>
         <div className="meta">
           <span>
-            T{state.seasonNumber} · Semana{' '}
+            T{state.seasonNumber} ·{' '}
             <strong>
-              {Math.min(state.week, state.seasonLength)}/{state.seasonLength}
+              {state.week <= state.seasonLength
+                ? `Semana ${Math.min(state.week, state.seasonLength)}/${state.seasonLength}`
+                : weekLabel(state.week, state.seasonLength)}
             </strong>
           </span>
           <span>

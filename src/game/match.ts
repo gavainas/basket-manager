@@ -170,19 +170,24 @@ function lockerRoomNotes(state: GameState, result: { won: boolean; margin: numbe
 /** Tabla, partidos de los demás rivales, historial y noticias: común a todo final de partido. */
 function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
   const rivalId = result.rivalId;
-  const clubRow = s.standings.find((r) => r.teamId === 'club')!;
-  const rivalRow = s.standings.find((r) => r.teamId === rivalId)!;
-  if (result.won) {
-    clubRow.wins += 1;
-    rivalRow.losses += 1;
-  } else {
-    clubRow.losses += 1;
-    rivalRow.wins += 1;
+  // En playoffs (semana > fase regular) la tabla queda congelada: los cruces
+  // de copa no suman a la fase regular y los resuelve el módulo de playoffs.
+  const isPlayoffs = s.week > s.seasonLength;
+  if (!isPlayoffs) {
+    const clubRow = s.standings.find((r) => r.teamId === 'club')!;
+    const rivalRow = s.standings.find((r) => r.teamId === rivalId)!;
+    if (result.won) {
+      clubRow.wins += 1;
+      rivalRow.losses += 1;
+    } else {
+      clubRow.losses += 1;
+      rivalRow.wins += 1;
+    }
+    clubRow.pointsFor += result.scoreFor;
+    clubRow.pointsAgainst += result.scoreAgainst;
+    rivalRow.pointsFor += result.scoreAgainst;
+    rivalRow.pointsAgainst += result.scoreFor;
   }
-  clubRow.pointsFor += result.scoreFor;
-  clubRow.pointsAgainst += result.scoreAgainst;
-  rivalRow.pointsFor += result.scoreAgainst;
-  rivalRow.pointsAgainst += result.scoreFor;
 
   // Resultado del usuario al fixture del mundo.
   const userFx = s.world.fixtures.find((f) => f.week === s.week && f.isUserMatch);
@@ -194,7 +199,7 @@ function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
   }
 
   // Los demás partidos de la divisional salen del fixture (tabla y calendario coherentes).
-  const otherFixtures = s.world.fixtures.filter((f) => f.week === s.week && !f.isUserMatch);
+  const otherFixtures = isPlayoffs ? [] : s.world.fixtures.filter((f) => f.week === s.week && !f.isUserMatch);
   for (const fx of otherFixtures) {
     const homeRivalId = s.world.teams.find((t) => t.id === fx.homeTeamId)?.legacyRivalId;
     const awayRivalId = s.world.teams.find((t) => t.id === fx.awayTeamId)?.legacyRivalId;

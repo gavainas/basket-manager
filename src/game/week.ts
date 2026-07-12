@@ -5,15 +5,16 @@ import { getAction } from './actions';
 import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent } from './events';
 import { generateObjectives } from './objectives';
-import { activePlayers, clubPosition, matchAbsentIds, suggestRotation, suggestStarters } from './match';
+import { activePlayers, matchAbsentIds, suggestRotation, suggestStarters } from './match';
 import { rollCallUp } from './callup';
+import { advancePlayoffs } from './playoffs';
 import { checkPromises } from './promises';
 import { logClubEvent, logPlayerEvent } from './timeline';
 import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);
@@ -75,6 +76,7 @@ export function createNewGame(seed: number): GameState {
     promises: [],
     preseason: null,
     world: emptyWorld(),
+    playoffs: null,
   };
   state.objectives = generateObjectives(1, state.club.sportPrestige, rng);
   state.world = buildWorld(state, rng);
@@ -232,12 +234,14 @@ export function advanceWeek(state: GameState): GameState {
     s.gameOverReason = 'Quedaron menos de 5 jugadores en el plantel. No hay equipo para presentar: el club se retira de la liga.';
     logClubEvent(s, 'salida', 'El plantel quedó con menos de 5 jugadores: el club se retiró de la liga.', Math.min(s.week, s.seasonLength));
   } else if (s.week > s.seasonLength) {
-    s.phase = 'seasonEnd';
-    if (clubPosition(s) === 1) {
-      logClubEvent(s, 'hito', `¡Campeones de la temporada ${s.seasonNumber}!`, s.seasonLength);
-      for (const p of active) {
-        logPlayerEvent(p, s.seasonNumber, s.seasonLength, 'hito', `¡Campeón de la temporada ${s.seasonNumber} con el club!`);
-      }
+    // Fase regular terminada: arrancan (o siguen) los playoffs de las copas.
+    if (advancePlayoffs(s, rng)) {
+      s.phase = 'planning';
+      s.pendingEvent = rollEvent(s, rng);
+      s.starters = suggestStarters(s.players);
+      s.rotation = suggestRotation(s.players, s.starters);
+    } else {
+      s.phase = 'seasonEnd';
     }
   } else {
     s.phase = 'planning';

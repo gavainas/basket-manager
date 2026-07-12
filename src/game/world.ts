@@ -357,6 +357,34 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   return world;
 }
 
+/** Agrega al fixture un cruce de copa (playoffs) en la semana dada. */
+export function addCupFixture(
+  state: GameState,
+  opts: { id: string; week: number; homeLegacyId: string; awayLegacyId: string; label: string }
+): void {
+  const world = state.world;
+  const division = world.divisions.find((d) => d.id === USER_DIVISION_ID)!;
+  const homeTeam = opts.homeLegacyId === 'club' ? userTeam(world) : teamByLegacyRival(world, opts.homeLegacyId);
+  const awayTeam = opts.awayLegacyId === 'club' ? userTeam(world) : teamByLegacyRival(world, opts.awayLegacyId);
+  if (!homeTeam || !awayTeam) return;
+  const isUserMatch = opts.homeLegacyId === 'club' || opts.awayLegacyId === 'club';
+  world.fixtures.push({
+    id: opts.id,
+    seasonId: world.season.id,
+    leagueId: USER_LEAGUE_ID,
+    divisionId: USER_DIVISION_ID,
+    week: opts.week,
+    date: fixtureDate(world.season.year, opts.week, division.gameDay),
+    time: division.gameTimes[opts.week % division.gameTimes.length],
+    homeTeamId: homeTeam.id,
+    awayTeamId: awayTeam.id,
+    venueId: homeTeam.venueId,
+    status: 'programado',
+    isUserMatch,
+    label: opts.label,
+  });
+}
+
 // ---------- Disponibilidad y convocatoria rival ----------
 
 /** Probabilidad de que un jugador del mundo esté para un partido dado. */

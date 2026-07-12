@@ -1,7 +1,60 @@
-import type { GameState } from '../game/types';
+import type { CupTier, GameState } from '../game/types';
 import { USER_TEAM_ID } from '../game/world';
 import { RivalLink } from './RivalLink';
 import { rivalStyleInfo } from './helpers';
+
+/** Nombre de un equipo por id clásico ('club' o rivalId), clickeable si es rival. */
+function LegacyTeamName({ state, id }: { state: GameState; id: string }) {
+  if (id === 'club') return <strong>{state.club.name}</strong>;
+  const rival = state.rivals.find((r) => r.id === id);
+  return rival ? <RivalLink id={id}>{rival.name}</RivalLink> : <span>{id}</span>;
+}
+
+export function PlayoffsCard({ state }: { state: GameState }) {
+  const P = state.playoffs;
+  if (!P) return null;
+  return (
+    <div className="card" style={{ marginBottom: '1rem' }}>
+      <h3>Playoffs de la divisional</h3>
+      <div className="grid cols-2">
+        {(['oro', 'plata'] as CupTier[]).map((cup) => {
+          const ties = P.ties.filter((t) => t.cup === cup);
+          const champ = P.champions[cup];
+          return (
+            <div key={cup}>
+              <h4 className="profile-subtitle">
+                {cup === 'oro' ? '🥇 Copa de Oro' : '🥈 Copa de Plata'}
+                {champ && (
+                  <span className="chip accent" style={{ marginLeft: '0.5rem' }}>
+                    Campeón: {champ === 'club' ? state.club.name : state.rivals.find((r) => r.id === champ)?.name}
+                  </span>
+                )}
+              </h4>
+              <div className="data-grid">
+                {ties.map((t) => (
+                  <div className="data-row" key={t.id}>
+                    <span className="data-label">{t.round === 'semifinal' ? 'Semifinal' : 'Final'}</span>
+                    <span className="data-value">
+                      <LegacyTeamName state={state} id={t.homeId} />{' '}
+                      {t.scoreHome !== undefined ? (
+                        <strong>
+                          {t.scoreHome}-{t.scoreAway}
+                        </strong>
+                      ) : (
+                        'vs'
+                      )}{' '}
+                      <LegacyTeamName state={state} id={t.awayId} />
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function LeagueView({ state }: { state: GameState }) {
   const sorted = [...state.standings].sort(
@@ -64,6 +117,8 @@ export function LeagueView({ state }: { state: GameState }) {
         </div>
       )}
 
+      <PlayoffsCard state={state} />
+
       <div className="grid cols-2">
       <div className="card">
         <h3>
@@ -84,7 +139,14 @@ export function LeagueView({ state }: { state: GameState }) {
             <tbody>
               {sorted.map((row, i) => (
                 <tr key={row.teamId} className={row.teamId === 'club' ? 'highlight' : ''}>
-                  <td>{i + 1}</td>
+                  <td
+                    style={{
+                      color: i < 4 ? 'var(--warn)' : i < 8 ? 'var(--text-dim)' : 'var(--bad)',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {i + 1}
+                  </td>
                   <td>
                     {teamName(row.teamId)} {styleChip(row.teamId)}
                   </td>
@@ -96,6 +158,10 @@ export function LeagueView({ state }: { state: GameState }) {
             </tbody>
           </table>
         </div>
+        <p className="muted" style={{ marginBottom: 0 }}>
+          Al cierre de la fase regular: 1°-4° juegan la 🥇 Copa de Oro, 5°-8° la 🥈 Copa de Plata. Los últimos dos
+          se van a casa.
+        </p>
       </div>
 
       <div className="card">

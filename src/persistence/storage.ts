@@ -118,6 +118,11 @@ export function loadGame(): GameState | null {
       if (parsed.phase === 'match') parsed.phase = 'lineup';
       parsed.saveVersion = 12;
     }
+    // v12 → v13: playoffs (Copa de Oro / Copa de Plata).
+    if (parsed.saveVersion === 12) {
+      parsed.playoffs = parsed.playoffs ?? null;
+      parsed.saveVersion = 13;
+    }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;
   } catch {
