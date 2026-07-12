@@ -440,8 +440,14 @@ export interface SeasonInfo {
 export interface WorldClub {
   id: string;
   name: string;
+  /** Colores de la camiseta: [principal, vivo/secundario]. */
   colors: [string, string];
   crest: string;
+  /** Año de fundación (para la chapa institucional). */
+  founded: number;
+  /** Prestigio del club rival; el del usuario vive en GameState.club. */
+  sportPrestige: number;
+  socialPrestige: number;
   isUser?: boolean;
 }
 

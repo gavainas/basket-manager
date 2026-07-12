@@ -123,6 +123,21 @@ export function loadGame(): GameState | null {
       parsed.playoffs = parsed.playoffs ?? null;
       parsed.saveVersion = 13;
     }
+    // v13 → v14: ficha institucional del club (fundación y prestigio).
+    if (parsed.saveVersion === 13) {
+      for (const c of parsed.world.clubs) {
+        const rng = new Rng(seedFrom(`club_${c.id}`));
+        const rival = parsed.rivals.find((r) => `cl_${r.id}` === c.id);
+        c.founded = c.founded ?? (c.isUser ? 2026 - parsed.seasonNumber : 2025 + parsed.seasonNumber - rng.int(4, 45));
+        c.sportPrestige =
+          c.sportPrestige ??
+          (c.isUser
+            ? parsed.club.sportPrestige
+            : Math.max(15, Math.min(90, Math.round((rival?.strength ?? 50) + rng.int(-8, 8)))));
+        c.socialPrestige = c.socialPrestige ?? (c.isUser ? parsed.club.socialPrestige : rng.int(30, 80));
+      }
+      parsed.saveVersion = 14;
+    }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;
   } catch {

@@ -17,6 +17,9 @@ import { OpenWorldPlayerContext } from './ui/WorldPlayerLink';
 import { WorldPlayerProfile } from './ui/WorldPlayerProfile';
 import { OpenLeagueContext } from './ui/LeagueLink';
 import { LeagueProfile } from './ui/LeagueProfile';
+import { ClubLink, OpenClubContext } from './ui/ClubLink';
+import { ClubProfile } from './ui/ClubProfile';
+import { USER_CLUB_ID } from './game/world';
 import { NavigateTabContext, type AppTab } from './ui/nav';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
 import { HistoryView } from './ui/HistoryView';
@@ -95,6 +98,7 @@ export default function App() {
   const [rivalProfileId, setRivalProfileId] = useState<string | null>(null);
   const [worldPlayerId, setWorldPlayerId] = useState<string | null>(null);
   const [leagueProfileId, setLeagueProfileId] = useState<string | null>(null);
+  const [clubProfileId, setClubProfileId] = useState<string | null>(null);
 
   // Guardado automático.
   useEffect(() => {
@@ -136,6 +140,7 @@ export default function App() {
     <OpenRivalContext.Provider value={setRivalProfileId}>
     <OpenWorldPlayerContext.Provider value={setWorldPlayerId}>
     <OpenLeagueContext.Provider value={setLeagueProfileId}>
+    <OpenClubContext.Provider value={setClubProfileId}>
     <NavigateTabContext.Provider value={setTab}>
       {screen}
       {profileId && <PlayerProfile state={state} playerId={profileId} onClose={() => setProfileId(null)} />}
@@ -148,7 +153,11 @@ export default function App() {
       {leagueProfileId && (
         <LeagueProfile state={state} leagueId={leagueProfileId} onClose={() => setLeagueProfileId(null)} />
       )}
+      {clubProfileId && (
+        <ClubProfile state={state} clubId={clubProfileId} onClose={() => setClubProfileId(null)} />
+      )}
     </NavigateTabContext.Provider>
+    </OpenClubContext.Provider>
     </OpenLeagueContext.Provider>
     </OpenWorldPlayerContext.Provider>
     </OpenRivalContext.Provider>
@@ -182,7 +191,9 @@ export default function App() {
   return withProviders(
     <div className="app-shell">
       <div className="topbar">
-        <span className="club-name">🏀 {state.club.name}</span>
+        <span className="club-name">
+          🏀 <ClubLink id={USER_CLUB_ID}>{state.club.name}</ClubLink>
+        </span>
         <div className="meta">
           <span>
             T{state.seasonNumber} ·{' '}

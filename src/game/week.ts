@@ -14,7 +14,7 @@ import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);

@@ -1,5 +1,7 @@
 import type { GameState } from '../game/types';
 import { divisionOfTeam, teamByLegacyRival, teamRoster, worldPlayerName } from '../game/world';
+import { ClubLink } from './ClubLink';
+import { Jersey } from './ClubProfile';
 import { LeagueLink } from './LeagueLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { initials, rivalDifficulty, rivalStyleInfo, starsFor } from './helpers';
@@ -30,6 +32,7 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
   const division = team ? divisionOfTeam(state.world, team.id) : undefined;
   const league = division ? state.world.leagues.find((l) => l.id === division.leagueId) : undefined;
   const venue = team ? state.world.venues.find((v) => v.id === team.venueId) : undefined;
+  const worldClub = team ? state.world.clubs.find((c) => c.id === team.clubId) : undefined;
   const roster = team
     ? teamRoster(state.world, team.id).sort((a, b) => b.level - a.level)
     : [];
@@ -53,6 +56,7 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
               {row && <span className="chip">{position}° en la liga</span>}
             </div>
           </div>
+          {worldClub && <Jersey colors={worldClub.colors} size={42} />}
           <button className="profile-close" onClick={onClose} title="Cerrar">
             ✕
           </button>
@@ -86,6 +90,14 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
                   <span className="data-label">Delegado</span>
                   <span className="data-value">{team.delegate}</span>
                 </div>
+                {worldClub && (
+                  <div className="data-row">
+                    <span className="data-label">Institución</span>
+                    <span className="data-value">
+                      <ClubLink id={worldClub.id}>Ver la ficha del club →</ClubLink>
+                    </span>
+                  </div>
+                )}
               </div>
             </>
           )}

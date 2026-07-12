@@ -19,7 +19,7 @@ import type {
   WorldState,
 } from './types';
 
-const USER_CLUB_ID = 'cl_user';
+export const USER_CLUB_ID = 'cl_user';
 export const USER_TEAM_ID = 'tm_user';
 
 // ---------- Regla central de inscripción ----------
@@ -253,7 +253,17 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
 
   // Club y equipo del usuario.
   world.venues.push({ id: 'vn_user', name: 'Gimnasio del Parque', neighborhood: 'Parque Batlle' });
-  world.clubs.push({ id: USER_CLUB_ID, name: state.club.name, colors: CLUB_COLORS[0], crest: '🏀', isUser: true });
+  world.clubs.push({
+    id: USER_CLUB_ID,
+    name: state.club.name,
+    colors: CLUB_COLORS[0],
+    crest: '🏀',
+    founded: 2026 - (state.seasonNumber - 1) - 1,
+    // El prestigio real del usuario vive en state.club; esto es un espejo.
+    sportPrestige: state.club.sportPrestige,
+    socialPrestige: state.club.socialPrestige,
+    isUser: true,
+  });
   world.teams.push({
     id: USER_TEAM_ID,
     clubId: USER_CLUB_ID,
@@ -275,7 +285,15 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
       name: `Gimnasio de ${rival.name.split(' ').slice(-1)[0]}`,
       neighborhood: NEIGHBORHOODS[i % NEIGHBORHOODS.length],
     });
-    world.clubs.push({ id: clubId, name: rival.name, colors: CLUB_COLORS[(i + 1) % CLUB_COLORS.length], crest: CRESTS[(i + 1) % CRESTS.length] });
+    world.clubs.push({
+      id: clubId,
+      name: rival.name,
+      colors: CLUB_COLORS[(i + 1) % CLUB_COLORS.length],
+      crest: CRESTS[(i + 1) % CRESTS.length],
+      founded: year - rng.int(4, 45),
+      sportPrestige: Math.max(15, Math.min(90, Math.round(rival.strength + rng.int(-8, 8)))),
+      socialPrestige: rng.int(30, 80),
+    });
     world.teams.push({
       id: teamId,
       clubId,
