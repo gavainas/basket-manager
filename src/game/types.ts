@@ -159,8 +159,8 @@ export interface CallUpEntry {
   note: string | null;
 }
 
-export type DefenseTactic = 'hombre' | 'zona';
-export type AttackTactic = 'estrella' | 'equipo';
+export type DefenseTactic = 'hombre' | 'zona' | 'presion';
+export type AttackTactic = 'estrella' | 'equipo' | 'correr';
 
 /** Resumen del quinteto al momento de arrancar el partido. */
 export interface TeamEval {

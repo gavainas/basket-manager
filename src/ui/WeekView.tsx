@@ -568,12 +568,39 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         setOutSel(null);
       }
     };
+    // Arrastre: soltar un suplente sobre uno de la cancha (o al revés) hace el cambio.
+    const onDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      if (live.finished) return;
+      const draggedId = e.dataTransfer.getData('text/plain');
+      if (!draggedId || draggedId === p.id) return;
+      const draggedOnCourt = live.onCourt.includes(draggedId);
+      const targetOnCourt = side === 'court';
+      if (draggedOnCourt === targetOnCourt) return;
+      const outId = draggedOnCourt ? draggedId : p.id;
+      const inId = draggedOnCourt ? p.id : draggedId;
+      dispatch({ type: 'SUBSTITUTE', outId, inId });
+      setOutSel(null);
+    };
     return (
       <div
         key={p.id}
         className={`sub-row${selected ? ' sel' : ''}${clickable ? '' : ' off'}`}
         onClick={clickable ? onClick : undefined}
-        title={side === 'court' ? 'Tocá para elegir quién sale' : outSel ? 'Tocá para meterlo' : 'Primero elegí quién sale'}
+        draggable={!live.finished}
+        onDragStart={(e) => {
+          e.dataTransfer.setData('text/plain', p.id);
+          e.dataTransfer.effectAllowed = 'move';
+        }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={onDrop}
+        title={
+          side === 'court'
+            ? 'Arrastralo al banco o tocá para elegir quién sale'
+            : outSel
+              ? 'Tocá para meterlo (o arrastralo sobre uno en cancha)'
+              : 'Arrastralo sobre uno en cancha para el cambio'
+        }
       >
         <span className="lp-pos">{POS_ABBR[p.position]}</span>
         <span className="sub-name">
@@ -700,24 +727,33 @@ function LiveMatchPanel({ state, dispatch }: Props) {
             <div className="tactic-label">Defensa</div>
             <div className="segmented">
               <button
-                className={live.defense === 'hombre' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', defense: 'hombre' })}
-              >
-                Marca hombre
-              </button>
-              <button
                 className={live.defense === 'zona' ? 'on' : ''}
                 disabled={live.finished}
                 onClick={() => dispatch({ type: 'SET_TACTIC', defense: 'zona' })}
               >
                 Zona
               </button>
+              <button
+                className={live.defense === 'hombre' ? 'on' : ''}
+                disabled={live.finished}
+                onClick={() => dispatch({ type: 'SET_TACTIC', defense: 'hombre' })}
+              >
+                Hombre
+              </button>
+              <button
+                className={live.defense === 'presion' ? 'on' : ''}
+                disabled={live.finished}
+                onClick={() => dispatch({ type: 'SET_TACTIC', defense: 'presion' })}
+              >
+                Presión
+              </button>
             </div>
             <p className="tactic-hint">
-              {live.defense === 'hombre'
-                ? 'Asfixia al rival, pero quema piernas. Si el equipo está fundido, quedan pasillos.'
-                : 'Ordenada y económica: cuida el físico. Ojo con los equipos de buenos tiradores.'}
+              {live.defense === 'zona'
+                ? 'Ordenada y económica: cuida el físico. Ojo con los equipos de buenos tiradores.'
+                : live.defense === 'hombre'
+                  ? 'Asfixia al rival, pero quema piernas. Si el equipo está fundido, quedan pasillos.'
+                  : 'A toda cancha: el máximo castigo defensivo… y el máximo desgaste. Solo con piernas frescas.'}
             </p>
           </div>
           <div className="tactic-block">
@@ -737,11 +773,20 @@ function LiveMatchPanel({ state, dispatch }: Props) {
               >
                 Mover la pelota
               </button>
+              <button
+                className={live.attack === 'correr' ? 'on' : ''}
+                disabled={live.finished}
+                onClick={() => dispatch({ type: 'SET_TACTIC', attack: 'correr' })}
+              >
+                Correr la cancha
+              </button>
             </div>
             <p className="tactic-hint">
               {live.attack === 'estrella'
                 ? `Todo pasa por ${live.starName}. Si está caliente es fiesta; si no, el rival lo espera entre dos.`
-                : 'La mueven todos: menos brillo, más pases. Aprovecha la química del grupo.'}
+                : live.attack === 'equipo'
+                  ? 'La mueven todos: menos brillo, más pases. Aprovecha la química del grupo.'
+                  : 'Partido de ida y vuelta: más puntos para los dos. Gana el que tiene piernas; pierde el que se funde.'}
             </p>
           </div>
           <p className="tactic-hint" style={{ borderTop: '1px solid var(--border)', paddingTop: '0.6rem' }}>
@@ -756,7 +801,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
               ? 'Partido terminado: no hay más cambios.'
               : outSel
                 ? `Sale ${shortName(byId(outSel).name)}: tocá quién entra del banco.`
-                : 'Tocá quién sale (en cancha) y después quién entra (banco). Valen las reentradas.'}
+                : 'Arrastrá un suplente sobre uno en cancha (o tocá: sale → entra). Valen las reentradas.'}
           </p>
           <div className="sub-group-label">En cancha</div>
           {onCourtPlayers.map((p) => subRow(p, 'court'))}

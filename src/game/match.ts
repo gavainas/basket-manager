@@ -440,6 +440,10 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
     if (hot > 1.08) notes.push(`${star.name} está encendido: la pide y la mete.`);
     else if (hot < 0.92) notes.push(`${star.name} no tiene la mano y el plan de dársela siempre a él hace agua.`);
     else if (live.estrellaQuarters >= 2) notes.push(`El rival ya le tomó la mano a ${star.name}: lo esperan entre dos.`);
+  } else if (live.attack === 'correr') {
+    atkMult = M.correrBase + M.correrFreshSpan * (teamFresh / 100);
+    if (teamFresh >= 60) notes.push('Corremos cada rebote: puntos fáciles de contraataque.');
+    else notes.push('Queremos correr pero no queda nafta: las contras las hacen ellos.');
   } else {
     atkMult = M.equipoBase + M.equipoChemBonus * live.eval.chemistry01;
     if (live.eval.chemistry01 > 0.7 && rng.chance(0.5)) notes.push('La pelota se mueve sola: el equipo juega de memoria y de buen humor.');
@@ -450,7 +454,16 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
 
   // --- Defensa ---
   let defMult = 1;
-  if (live.defense === 'hombre') {
+  if (live.defense === 'presion') {
+    if (teamFresh >= M.presionTiredThreshold) {
+      defMult = M.presionRivalMult;
+      notes.push('La presión a toda cancha ahoga la salida del rival: pelotas recuperadas y bandejas.');
+    } else {
+      defMult = M.presionTiredMult;
+      notes.push('Presionamos sin piernas y nos pasan con dos pases: regalo tras regalo.');
+    }
+    if (rival.style === 'tiradores') defMult *= M.tiradoresVsHombre;
+  } else if (live.defense === 'hombre') {
     if (teamFresh >= M.hombreTiredThreshold) {
       defMult = M.hombreRivalMult;
       notes.push('La marca individual asfixia la salida del rival.');
@@ -484,7 +497,9 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   // --- Marcador del cuarto ---
   const luck = rng.range(-M.luckPerQuarter, M.luckPerQuarter);
   live.luckTotal += luck;
-  const qBase = BALANCE.match.baseScore / 4;
+  // Correr la cancha sube el ritmo: más posesiones (y puntos) para los dos.
+  const pace = live.attack === 'correr' ? M.correrPace : 0;
+  const qBase = BALANCE.match.baseScore / 4 + pace;
   const diffQ = ((atk - rivalEff) * BALANCE.match.strengthToPoints) / 4 + luck;
   const ourQ = Math.max(4, Math.round(qBase + diffQ / 2 + rng.range(-1.5, 1.5)));
   const rivalQ = Math.max(4, Math.round((qBase - diffQ / 2 + rng.range(-1.5, 1.5)) * defMult));
@@ -523,12 +538,14 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   if ((qPts[qTop.id] ?? 0) >= 7) notes.push(`${qTop.name} metió ${qPts[qTop.id]} puntos en el ${Q_NAMES[qIndex]}.`);
 
   // --- Desgaste y minutos ---
-  if (live.defense === 'hombre') live.hombreQuarters += 1;
+  if (live.defense === 'hombre' || live.defense === 'presion') live.hombreQuarters += 1;
   if (live.attack === 'estrella') live.estrellaQuarters += 1;
 
   for (const p of onCourt) {
     let drain = M.playerDrainBase;
     if (live.defense === 'hombre') drain += M.playerDrainHombre + (rival.style === 'internos' ? M.internosHombreDrain : 0);
+    if (live.defense === 'presion') drain += M.presionDrainExtra + (rival.style === 'internos' ? M.internosHombreDrain : 0);
+    if (live.attack === 'correr') drain += M.correrDrainExtra;
     drain += Math.max(0, 60 - p.physical) * M.playerDrainLowPhysical;
     live.playerFresh[p.id] = clamp(freshOf(p.id) - Math.round(drain));
     live.minutes[p.id] = (live.minutes[p.id] ?? 0) + M.quarterMinutes;
@@ -543,6 +560,8 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
 
   let rivalDrain = rival.style === 'corredores' ? M.rivalDrain - 2 : M.rivalDrain;
   if (live.defense === 'hombre') rivalDrain += M.hombreRivalDrain;
+  if (live.defense === 'presion') rivalDrain += M.presionRivalDrain;
+  if (live.attack === 'correr') rivalDrain += 2;
   // Si vinieron cortos de banco, se funden más rápido.
   if ((live.rivalSquad?.presentCount ?? 10) <= 6) rivalDrain += 2;
   live.rivalFreshness = clamp(live.rivalFreshness - rivalDrain);
@@ -611,9 +630,12 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   const won = scoreFor > scoreAgainst;
   const margin = Math.abs(scoreFor - scoreAgainst);
 
-  // Desgaste según minutos realmente jugados; la marca hombre suma cansancio extra.
+  // Desgaste según minutos realmente jugados; la defensa agresiva suma cansancio
+  // extra (la presión a toda cancha gasta el doble que la marca hombre).
   const totalMinutes = 40 + (live.quarters.some((q) => q.overtime) ? M.otMinutes : 0);
-  const extraWear = live.hombreQuarters * M.hombreWearPerQuarter;
+  const hombreQ = live.quarters.filter((q) => !q.overtime && q.defense === 'hombre').length;
+  const presionQ = live.quarters.filter((q) => !q.overtime && q.defense === 'presion').length;
+  const extraWear = hombreQ * M.hombreWearPerQuarter + presionQ * M.hombreWearPerQuarter * 2;
   const minutesOf = (id: string) => live.minutes[id] ?? 0;
   const wearFor = (mins: number) =>
     Math.round(mins * BALANCE.rotation.wearPerMinute + (extraWear * mins) / totalMinutes);
@@ -744,8 +766,12 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
         }.`
       );
   }
-  if (live.hombreQuarters > 0)
-    effects.push(`Marca hombre en ${live.hombreQuarters} cuarto${live.hombreQuarters > 1 ? 's' : ''}: desgaste extra repartido entre los que la corrieron.`);
+  if (hombreQ + presionQ > 0)
+    effects.push(
+      `Defensa agresiva (${[hombreQ > 0 ? `hombre ×${hombreQ}` : '', presionQ > 0 ? `presión ×${presionQ}` : '']
+        .filter(Boolean)
+        .join(', ')}): desgaste extra repartido entre los que la corrieron.`
+    );
   if (upset) effects.push('¡Batacazo! Ganarle a un rival superior sumó prestigio extra.');
 
   // Claves tácticas del resultado.
@@ -758,8 +784,8 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   const extraReasons: { weight: number; text: string }[] = [];
   if (live.hombreQuarters >= 3) {
     if (endFresh < 35 && !won)
-      extraReasons.push({ weight: 11, text: 'Marcar hombre todo el partido nos dejó sin piernas en el cierre.' });
-    else if (won) extraReasons.push({ weight: 8, text: 'La marca individual incomodó al rival de principio a fin.' });
+      extraReasons.push({ weight: 11, text: 'La defensa agresiva todo el partido nos dejó sin piernas en el cierre.' });
+    else if (won) extraReasons.push({ weight: 8, text: 'La presión constante incomodó al rival de principio a fin.' });
   }
   if (live.estrellaQuarters >= 3) {
     if (hot < 0.92) extraReasons.push({ weight: 10, text: `Apostamos todo a ${live.starName} y no era su noche.` });

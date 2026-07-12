@@ -63,6 +63,17 @@ export const BALANCE = {
     estrellaDecay: 0.03, // el rival le toma la mano por cada cuarto repetido
     equipoBase: 0.97, // ataque de equipo: mult = base + bonus × química
     equipoChemBonus: 0.08,
+    // Presión a toda cancha: máxima recompensa defensiva, máximo desgaste.
+    presionRivalMult: 0.84, // con piernas, ahoga al rival
+    presionTiredMult: 1.12, // sin piernas, te pasan con dos pases
+    presionTiredThreshold: 55, // exige más frescura que la marca hombre
+    presionDrainExtra: 10, // desgaste extra por cuarto presionando
+    presionRivalDrain: 6, // el rival también sufre la presión
+    // Correr la cancha: más posesiones para los dos; paga con piernas frescas.
+    correrBase: 0.9, // atkMult = base + span × piernas/100
+    correrFreshSpan: 0.33,
+    correrPace: 2, // puntos extra de ritmo para ambos por cuarto
+    correrDrainExtra: 4, // desgaste extra por cuarto corriendo
     tiradoresVsZona: 1.08, // los tiradores castigan la zona
     tiradoresVsHombre: 0.95, // y sufren la marca individual
     internosHombreDrain: 4, // marcar hombre a los grandotes desgasta extra
