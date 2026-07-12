@@ -1,11 +1,17 @@
 import type { GameState } from '../game/types';
+import { RivalLink } from './RivalLink';
 import { rivalStyleInfo } from './helpers';
 
 export function LeagueView({ state }: { state: GameState }) {
   const sorted = [...state.standings].sort(
     (a, b) => b.wins - a.wins || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
   );
-  const teamName = (id: string) => (id === 'club' ? state.club.name : state.rivals.find((r) => r.id === id)?.name ?? id);
+  const teamName = (id: string) => {
+    if (id === 'club') return <strong>{state.club.name}</strong>;
+    const rival = state.rivals.find((r) => r.id === id);
+    if (!rival) return id;
+    return <RivalLink id={id}>{rival.name}</RivalLink>;
+  };
   const styleChip = (id: string) => {
     const rival = state.rivals.find((r) => r.id === id);
     if (!rival) return null;

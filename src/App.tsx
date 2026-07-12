@@ -9,13 +9,16 @@ import { WeekView } from './ui/WeekView';
 import { EventModal } from './ui/EventModal';
 import { OpenProfileContext } from './ui/PlayerLink';
 import { PlayerProfile } from './ui/PlayerProfile';
+import { OpenRivalContext } from './ui/RivalLink';
+import { RivalProfile } from './ui/RivalProfile';
+import { NavigateTabContext, type AppTab } from './ui/nav';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
 import { HistoryView } from './ui/HistoryView';
 import { PreseasonView } from './ui/PreseasonView';
 import { PreseasonEndScreen } from './ui/PreseasonEndScreen';
 import { formatMoney } from './ui/helpers';
 
-type Tab = 'resumen' | 'plantilla' | 'finanzas' | 'liga' | 'historia' | 'semana';
+type Tab = AppTab;
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'resumen', label: 'Resumen' },
@@ -81,6 +84,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('resumen');
   const [saveFailed, setSaveFailed] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [rivalProfileId, setRivalProfileId] = useState<string | null>(null);
 
   // Guardado automático.
   useEffect(() => {
@@ -139,6 +143,8 @@ export default function App() {
 
   return (
     <OpenProfileContext.Provider value={setProfileId}>
+    <OpenRivalContext.Provider value={setRivalProfileId}>
+    <NavigateTabContext.Provider value={setTab}>
     <div className="app-shell">
       <div className="topbar">
         <span className="club-name">🏀 {state.club.name}</span>
@@ -196,7 +202,12 @@ export default function App() {
 
       <EventModal state={state} dispatch={dispatch} />
       {profileId && <PlayerProfile state={state} playerId={profileId} onClose={() => setProfileId(null)} />}
+      {rivalProfileId && (
+        <RivalProfile state={state} rivalId={rivalProfileId} onClose={() => setRivalProfileId(null)} />
+      )}
     </div>
+    </NavigateTabContext.Provider>
+    </OpenRivalContext.Provider>
     </OpenProfileContext.Provider>
   );
 }

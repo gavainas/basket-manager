@@ -1,8 +1,11 @@
+import { useContext } from 'react';
 import type { GameState } from '../game/types';
 import { activePlayers, clubPosition } from '../game/match';
 import { objectiveStatus, type ObjectiveStatus } from '../game/objectives';
 import { Bar } from './Bar';
-import { avgMotivation, formatMoney, rivalDifficulty } from './helpers';
+import { RivalLink } from './RivalLink';
+import { NavigateTabContext } from './nav';
+import { avgMotivation, formatMoney, rivalDifficulty, rivalStyleInfo } from './helpers';
 
 const OBJECTIVE_BADGE: Record<ObjectiveStatus, { icon: string; cls: string; label: string }> = {
   cumplido: { icon: '✔', cls: 'good', label: 'cumplido' },
@@ -12,6 +15,7 @@ const OBJECTIVE_BADGE: Record<ObjectiveStatus, { icon: string; cls: string; labe
 };
 
 export function Dashboard({ state }: { state: GameState }) {
+  const navigate = useContext(NavigateTabContext);
   const row = state.standings.find((r) => r.teamId === 'club')!;
   const position = clubPosition(state);
   const active = activePlayers(state.players);
@@ -25,27 +29,29 @@ export function Dashboard({ state }: { state: GameState }) {
   return (
     <div>
       <div className="grid cols-4">
-        <div className="stat-tile">
+        <div className="stat-tile clickable" onClick={() => navigate('semana')} title="Ir a la semana">
           <div className="label">Semana</div>
           <div className="value">
             {Math.min(state.week, state.seasonLength)}/{state.seasonLength}
           </div>
+          <div className="sub">ver la semana →</div>
         </div>
-        <div className="stat-tile">
+        <div className="stat-tile clickable" onClick={() => navigate('liga')} title="Ver la tabla de posiciones">
           <div className="label">Posición en la liga</div>
           <div className="value">{position}°</div>
-          <div className="sub">de 10 equipos</div>
+          <div className="sub">de 10 equipos · ver tabla →</div>
         </div>
-        <div className="stat-tile">
+        <div className="stat-tile clickable" onClick={() => navigate('historia')} title="Ver los partidos jugados">
           <div className="label">Récord</div>
           <div className="value">
             {row.wins}-{row.losses}
           </div>
-          <div className="sub">ganados-perdidos</div>
+          <div className="sub">ganados-perdidos · ver historia →</div>
         </div>
-        <div className="stat-tile">
+        <div className="stat-tile clickable" onClick={() => navigate('finanzas')} title="Ver las finanzas">
           <div className="label">Dinero</div>
           <div className={`value ${moneyCls}`}>{formatMoney(state.club.money)}</div>
+          <div className="sub">ver finanzas →</div>
         </div>
       </div>
 
@@ -85,9 +91,14 @@ export function Dashboard({ state }: { state: GameState }) {
           {nextRival && (
             <div className="card">
               <h3>Próximo rival</h3>
-              <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>{nextRival.name}</div>
-              <div style={{ marginTop: '0.3rem' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>
+                <RivalLink id={nextRival.id}>{nextRival.name}</RivalLink>
+              </div>
+              <div style={{ marginTop: '0.3rem', display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                 <span className={`chip ${rivalDifficulty(nextRival).cls}`}>{rivalDifficulty(nextRival).label}</span>
+                <span className="chip accent" title={rivalStyleInfo(nextRival.style).desc}>
+                  {rivalStyleInfo(nextRival.style).label}
+                </span>
               </div>
             </div>
           )}

@@ -68,27 +68,31 @@ export function formatMoney(amount: number): string {
   return `$${amount.toLocaleString('es-AR')}`;
 }
 
-export function rivalStyleInfo(style: RivalStyle): { label: string; desc: string } {
+export function rivalStyleInfo(style: RivalStyle): { label: string; desc: string; advice: string } {
   switch (style) {
     case 'tiradores':
       return {
         label: '🎯 Tiradores',
         desc: 'Viven del tiro externo: la zona les regala tiros abiertos; la marca hombre los incomoda.',
+        advice: 'Salí a marcarlos hombre mientras tengas piernas; la zona contra ellos es un regalo.',
       };
     case 'internos':
       return {
         label: '🏋 Juego interior',
         desc: 'Grandotes que castigan cerca del aro: marcarlos hombre desgasta el doble; la zona les cierra la pintura.',
+        advice: 'La zona les cierra la pintura sin fundirte. Si los marcás hombre, tené el banco listo.',
       };
     case 'corredores':
       return {
         label: '🏃 Corredores',
         desc: 'Corren toda la cancha los 40 minutos: si tu equipo se queda sin piernas, te pasan por arriba.',
+        advice: 'Rotá el banco temprano y llegá con piernas al último cuarto: castigan al que se cansa.',
       };
     case 'equilibrado':
       return {
         label: '⚖ Equilibrado',
         desc: 'No tienen un punto débil claro: gana el que impone su juego.',
+        advice: 'Sin ventajas de pizarrón: jugá a lo tuyo y cuidá las piernas para el cierre.',
       };
   }
 }

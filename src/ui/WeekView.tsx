@@ -6,6 +6,7 @@ import { BALANCE } from '../game/balance';
 import { courtFreshness, evaluateTeam, isSelectable } from '../game/match';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
+import { RivalLink } from './RivalLink';
 import { initials, rivalDifficulty, rivalStyleInfo, starsFor } from './helpers';
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
@@ -127,7 +128,7 @@ function CallUpPanel({ state, dispatch }: Props) {
 
       <div className="card">
         <h3>
-          Pasando lista · semana {state.week} vs {rival.name}
+          Pasando lista · semana {state.week} vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
         </h3>
         {outs.length === 0 && stillInjured.length === 0 ? (
           <p style={{ marginTop: 0 }}>
@@ -285,7 +286,7 @@ function LineupPanel({ state, dispatch }: Props) {
     <div>
       <div className="card" style={{ marginBottom: '1rem' }}>
         <h3>
-          Semana {state.week} · vs {rival.name}
+          Semana {state.week} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
         </h3>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
@@ -537,7 +538,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
       <div className="card" style={{ marginBottom: '1rem' }}>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
           <h3 style={{ margin: 0 }}>
-            Semana {state.week} · vs {rival.name}
+            Semana {state.week} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
           </h3>
           <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
           <span className="chip accent" title={style.desc}>
@@ -758,7 +759,9 @@ function MatchResultPanel({ state, dispatch }: Props) {
           </div>
           <div style={{ color: 'var(--text-dim)', fontWeight: 700 }}>vs</div>
           <div className="team">
-            <div className="tname">{m.rivalName}</div>
+            <div className="tname">
+              <RivalLink id={m.rivalId}>{m.rivalName}</RivalLink>
+            </div>
             <div className={`score ${m.won ? 'lose' : 'win'}`}>{m.scoreAgainst}</div>
           </div>
         </div>

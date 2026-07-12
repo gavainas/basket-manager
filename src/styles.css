@@ -194,6 +194,15 @@ button.danger {
   padding: 0.8rem 1rem;
 }
 
+.stat-tile.clickable {
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.stat-tile.clickable:hover {
+  border-color: var(--accent);
+}
+
 .stat-tile .label {
   color: var(--text-dim);
   font-size: 0.75rem;
