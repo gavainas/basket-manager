@@ -1,4 +1,5 @@
 import type { GameState } from '../game/types';
+import { DEBUG_FULL_SCOUTING, perceivedLevel, scoutingLevel } from '../game/scouting';
 import { divisionOfTeam, teamByLegacyRival, teamRoster, worldPlayerName } from '../game/world';
 import { ClubLink } from './ClubLink';
 import { Jersey } from './ClubProfile';
@@ -105,21 +106,28 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
           {roster.length > 0 && (
             <>
               <h4 className="profile-subtitle">Plantel {state.world.season.id.replace('s', 'temporada ')}</h4>
-              <div className="data-grid">
-                {roster.map((p) => (
-                  <div className="data-row" key={p.id}>
-                    <span className="data-label">{p.position}</span>
-                    <span className="data-value">
-                      <WorldPlayerLink id={p.id}>{worldPlayerName(p)}</WorldPlayerLink>{' '}
-                      <span className="muted">
-                        ≈{p.level} {starsFor(p.level)} · {p.age} años
-                        {p.injuryWeeks > 0 ? ' · 🚑' : ''}
-                        {p.availability.distanceKm > 50 ? ` · ${p.availability.residence}` : ''}
-                      </span>
-                    </span>
+              {(() => {
+                const knowledge = scoutingLevel(state, rival.id);
+                const knowsWell = knowledge >= 3 || DEBUG_FULL_SCOUTING;
+                return (
+                  <div className="data-grid">
+                    {roster.map((p) => (
+                      <div className="data-row" key={p.id}>
+                        <span className="data-label">{p.position}</span>
+                        <span className="data-value">
+                          <WorldPlayerLink id={p.id}>{worldPlayerName(p)}</WorldPlayerLink>{' '}
+                          <span className="muted">
+                            {perceivedLevel(state, p, knowledge)}
+                            {knowsWell ? ` ${starsFor(p.level)}` : ''} · {p.age} años
+                            {p.injuryWeeks > 0 ? ' · 🚑' : ''}
+                            {knowsWell && p.availability.distanceKm > 50 ? ` · ${p.availability.residence}` : ''}
+                          </span>
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </>
           )}
 

@@ -5,7 +5,7 @@
 
 import { CLUB_COLORS, CRESTS, DIVISIONS, LEAGUES, USER_DIVISION_ID, USER_LEAGUE_ID } from '../data/worldData';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
-import { Rng, seedFromString } from './rng';
+import { Rng } from './rng';
 import type {
   AvailabilityProfile,
   Division,
@@ -476,52 +476,5 @@ export function rollRivalMatchday(state: GameState, rivalLegacyId: string, rng: 
   return { presentIds: present.map((p) => p.id), presentCount: present.length, mod, notes };
 }
 
-// ---------- Scouting del próximo rival ----------
-
-export interface ScoutEntry {
-  playerId: string;
-  name: string;
-  position: Position;
-  detail: string;
-}
-
-export interface ScoutReport {
-  teamId: string;
-  rivalName: string;
-  probable: ScoutEntry[];
-  doubtful: ScoutEntry[];
-  out: ScoutEntry[];
-}
-
-/**
- * Informe del próximo rival con incertidumbre: es un pronóstico estable dentro
- * de la semana, pero independiente del sorteo real del día del partido.
- */
-export function scoutNextRival(state: GameState): ScoutReport | null {
-  const world = state.world;
-  if (state.week > state.seasonLength) return null;
-  const rivalId = state.schedule[state.week - 1];
-  const rival = state.rivals.find((r) => r.id === rivalId);
-  const team = teamByLegacyRival(world, rivalId);
-  const division = team ? divisionOfTeam(world, team.id) : undefined;
-  if (!rival || !team || !division) return null;
-
-  const fixture = userFixtureOfWeek(world, state.week);
-  const time = fixture?.time ?? division.gameTimes[0];
-  const rng = new Rng(seedFromString(`scout_${world.season.id}_w${state.week}`));
-  const roster = teamRoster(world, team.id).sort((a, b) => b.level - a.level);
-
-  const report: ScoutReport = { teamId: team.id, rivalName: rival.name, probable: [], doubtful: [], out: [] };
-  for (const p of roster) {
-    const entryBase = { playerId: p.id, name: worldPlayerName(p), position: p.position };
-    if (p.injuryWeeks > 0) {
-      report.out.push({ ...entryBase, detail: 'lesionado' });
-      continue;
-    }
-    const perceived = attendChance(p, division, time) + rng.range(-0.15, 0.15);
-    if (perceived >= 0.7) report.probable.push({ ...entryBase, detail: `nivel ≈${p.level}` });
-    else if (perceived >= 0.3) report.doubtful.push({ ...entryBase, detail: absenceReason(p, division) });
-    else report.out.push({ ...entryBase, detail: absenceReason(p, division) });
-  }
-  return report;
-}
+// (El scouting del próximo rival vive en src/game/scouting.ts, con niveles de
+// conocimiento e incertidumbre.)

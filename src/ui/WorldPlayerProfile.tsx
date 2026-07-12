@@ -1,4 +1,5 @@
 import type { GameState } from '../game/types';
+import { DEBUG_FULL_SCOUTING, perceivedLevel, scoutingLevel } from '../game/scouting';
 import {
   divisionOfTeam,
   findActiveRegistration,
@@ -31,6 +32,8 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
     : undefined;
   const freeLeagues = world.leagues.filter((l) => !findActiveRegistration(world, p.id, l.id, world.season.id));
   const interior = p.availability.distanceKm > 50;
+  const knowledge = team?.legacyRivalId ? scoutingLevel(state, team.legacyRivalId) : 1;
+  const knowsWell = knowledge >= 3 || DEBUG_FULL_SCOUTING;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -52,8 +55,10 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
             </div>
           </div>
           <div className="rating">
-            <div className="num">≈{p.level}</div>
-            <div className="approx">{starsFor(p.level)}</div>
+            <div className="num" style={knowsWell ? undefined : { fontSize: '0.85rem' }}>
+              {perceivedLevel(state, p, knowledge)}
+            </div>
+            {knowsWell && <div className="approx">{starsFor(p.level)}</div>}
           </div>
           <button className="profile-close" onClick={onClose} title="Cerrar">
             ✕
@@ -112,16 +117,26 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
           </div>
 
           <h4 className="profile-subtitle">Cómo es</h4>
-          <Bar label="Compromiso" value={p.commitment} />
-          <Bar label="Confiabilidad" value={p.reliability} />
-          <Bar label="Prestigio" value={p.prestige} />
-          <p className="muted" style={{ margin: '0.4rem 0 0' }}>
-            Personalidad: {p.personality.replace('_', ' ')}. El nivel (≈{p.level}) es lo que se comenta en la liga:
-            la verdad se ve en la cancha.
-          </p>
+          {knowsWell ? (
+            <>
+              <Bar label="Compromiso" value={p.commitment} />
+              <Bar label="Confiabilidad" value={p.reliability} />
+              <Bar label="Prestigio" value={p.prestige} />
+              <p className="muted" style={{ margin: '0.4rem 0 0' }}>
+                Personalidad: {p.personality.replace('_', ' ')}. Lo que se comenta en la liga; la verdad se ve en
+                la cancha.
+              </p>
+            </>
+          ) : (
+            <p className="muted" style={{ margin: 0 }}>
+              Se lo conoce poco: habría que enfrentarlo o preguntar en la liga para saber cómo es.
+            </p>
+          )}
 
           <h4 className="profile-subtitle">Disponibilidad habitual</h4>
-          {p.availability.notes.length > 0 ? (
+          {!knowsWell ? (
+            <p className="muted">Poco y nada se sabe de su disponibilidad: en esta liga, eso se aprende jugándole.</p>
+          ) : p.availability.notes.length > 0 ? (
             <ul className="reason-list">
               {p.availability.notes.map((n, i) => (
                 <li key={i}>{n}</li>
