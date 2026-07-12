@@ -3,6 +3,7 @@
 Próximas etapas, en orden aproximado de valor:
 
 ## Hecho recientemente
+- **Experiencia viva del partido (4 sistemas)**: notas por rol con frase explicativa (`rating.ts`), estado emocional postpartido (`emotions.ts`), relato con incidencias deportivas y arbitrales con decisiones del manager (`narrative.ts`), scouting progresivo por niveles de conocimiento con modo debug (`scouting.ts`) y decisiones ante ausencias en la convocatoria (`absences.ts` — 5 motivos con acciones, costos y consecuencias sociales).
 - **Identidad visual etapa 1**: design system documentado en [`design/DESIGN.md`](design/DESIGN.md) y retratos procedurales de jugadores (SVG determinístico por seed, con edad que sesga canas/calvicie/arrugas; validación en `/#retratos`). Ver [`design/AVATAR_SYSTEM.md`](design/AVATAR_SYSTEM.md).
 - **Playoffs**: la fase regular clasifica del 1° al 4° a la Copa de Oro y del 5° al 8° a la Copa de Plata (semis fecha 10, finales fecha 11); títulos, prestigio e hitos.
 - **Promesas con consecuencias**: las promesas de pretemporada (titularidad, minutos, competitivo, ambiente) se evalúan en temporada y los jugadores reaccionan.
