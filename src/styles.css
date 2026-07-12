@@ -1452,6 +1452,51 @@ button.mini.blue.on {
   }
 }
 
+/* ---------- Rankings ---------- */
+
+.ranking-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ranking-list li {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: 0.6rem;
+  align-items: baseline;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.ranking-list li:last-child {
+  border-bottom: none;
+}
+
+.ranking-list li:first-child .rk-pos {
+  color: var(--accent);
+}
+
+.rk-pos {
+  font-weight: 800;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.rk-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rk-value {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
 /* ---------- Pretemporada ---------- */
 
 .ps-list {
