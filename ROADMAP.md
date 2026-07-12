@@ -3,11 +3,13 @@
 Próximas etapas, en orden aproximado de valor:
 
 ## Hecho recientemente
+- **Identidad visual etapa 1**: design system documentado en [`design/DESIGN.md`](design/DESIGN.md) y retratos procedurales de jugadores (SVG determinístico por seed, con edad que sesga canas/calvicie/arrugas; validación en `/#retratos`). Ver [`design/AVATAR_SYSTEM.md`](design/AVATAR_SYSTEM.md).
 - **Playoffs**: la fase regular clasifica del 1° al 4° a la Copa de Oro y del 5° al 8° a la Copa de Plata (semis fecha 10, finales fecha 11); títulos, prestigio e hitos.
 - **Promesas con consecuencias**: las promesas de pretemporada (titularidad, minutos, competitivo, ambiente) se evalúan en temporada y los jugadores reaccionan.
 - **Mundo etapas 1-5**: ligas y divisionales, clubes/equipos separados, planteles rivales completos con perfiles, regla de inscripción (jugador + liga + temporada), calendario con días y horarios, disponibilidad de rivales, convocatorias rivales variables y scouting con incertidumbre.
 
 ## Corto plazo
+- **Identidad visual etapa 2**: retratos para rivales y quinteto, camiseta por club, más variantes de capas, y la familia visual de eventos sociales con participantes y reacciones ([`design/SOCIAL_UI.md`](design/SOCIAL_UI.md)).
 - **Mundo etapa 6 — expansión del club**: inscribir equipos nuevos (+35, segunda liga) con costos y requisitos; compartir jugadores entre ligas usando la regla de inscripción ya centralizada.
 - **Mundo etapa 7 — doble partido y fatiga**: jugadores que juegan dos partidos el mismo día (ligas distintas), llegadas tarde, salidas anticipadas, reprogramaciones; estados descriptivos (fresco/cansado/agotado).
 - **Fichajes con disponibilidad**: que el mercado de pretemporada muestre y negocie disponibilidad (días, horarios, interior, liga prioritaria) usando los AvailabilityProfile ya existentes.
@@ -26,3 +28,12 @@ Próximas etapas, en orden aproximado de valor:
 - **Historias emergentes**: narrativa generada a partir de los datos (rachas, rivalidades, ídolos).
 - **Versión móvil**: layout optimizado táctil (la base responsive ya existe).
 - **Reskin fútbol 5**: el motor (cuotas, ambiente, egos, canchas) es casi idéntico; cambiar posiciones y simulación de partido.
+
+## Diseño
+
+El design system vive en el repo ([`design/DESIGN.md`](design/DESIGN.md)) y tiene un espejo
+visual en el proyecto **"Basket Manager UI"** de [claude.ai/design](https://claude.ai/design),
+que sirve para explorar y comparar estilos sin tocar el código. `npm run design:sync`
+regenera las cards en `design/cards/` desde `src/styles.css`; la subida al proyecto la hace
+Claude (pedirle "sincronizá el design system" en una sesión del repo). El repositorio es
+siempre la fuente de verdad.

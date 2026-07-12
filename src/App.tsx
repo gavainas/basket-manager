@@ -26,6 +26,7 @@ import { HistoryView } from './ui/HistoryView';
 import { PreseasonView } from './ui/PreseasonView';
 import { PreseasonEndScreen } from './ui/PreseasonEndScreen';
 import { formatMoney, weekLabel } from './ui/helpers';
+import { AvatarGallery } from './ui/AvatarGallery';
 
 type Tab = AppTab;
 
@@ -92,6 +93,9 @@ function MainMenu({
 
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, null);
+
+  // Pantalla de validación de retratos, solo desarrollo (ver design/AVATAR_SYSTEM.md).
+  if (window.location.hash === '#retratos') return <AvatarGallery />;
   const [tab, setTab] = useState<Tab>('resumen');
   const [saveFailed, setSaveFailed] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);

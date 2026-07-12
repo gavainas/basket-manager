@@ -344,6 +344,13 @@ button.danger {
   font-weight: 800;
   color: var(--accent);
   font-size: 0.9rem;
+  overflow: hidden;
+}
+
+.avatar svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .player-head .who {
@@ -815,6 +822,48 @@ td.num, th.num {
   color: var(--text-dim);
   font-style: italic;
   margin-top: 0.15rem;
+}
+
+/* ---------- Galería de retratos (dev: /#retratos) ---------- */
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 0.8rem;
+}
+
+.gallery-tile {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.4rem;
+  text-align: center;
+}
+
+.gallery-tile .avatar {
+  margin: 0 auto 0.45rem;
+  width: 72px;
+  height: 72px;
+}
+
+.gallery-tile .g-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gallery-tile .g-age {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.size-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.2rem;
+  margin: 0.6rem 0 1rem;
 }
 
 .callup-confirmed {

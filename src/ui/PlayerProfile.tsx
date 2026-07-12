@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import type { GameState, Player } from '../game/types';
 import { affinity, coachAffinity, FRIEND_THRESHOLD, groupStanding, RIVALRY_THRESHOLD } from '../game/relations';
+import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
 import { Timeline } from './Timeline';
 import { TIPS } from './Tip';
-import { feeChip, initials, roleLabel, starsFor, statusChip } from './helpers';
+import { feeChip, roleLabel, starsFor, statusChip } from './helpers';
 
 type ProfileTab = 'general' | 'deportiva' | 'relaciones' | 'historia' | 'social';
 
@@ -295,7 +296,9 @@ export function PlayerProfile({ state, playerId, onClose }: Props) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="profile" onClick={(e) => e.stopPropagation()}>
         <div className="profile-head">
-          <div className="avatar profile-avatar">{initials(p.name)}</div>
+          <div className="avatar profile-avatar">
+            <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} />
+          </div>
           <div className="profile-who">
             <div className="profile-name">{p.name}</div>
             <div className="profile-chips">

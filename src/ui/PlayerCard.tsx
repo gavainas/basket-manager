@@ -1,8 +1,9 @@
 import type { Player } from '../game/types';
+import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
 import { Tip, TIPS } from './Tip';
-import { feeChip, initials, roleLabel, starsFor, statusChip } from './helpers';
+import { feeChip, roleLabel, starsFor, statusChip } from './helpers';
 
 interface Props {
   player: Player;
@@ -31,7 +32,9 @@ export function PlayerCard({ player: p, selectable, selected, inRotation, dimmed
       style={clickable ? { cursor: 'pointer' } : undefined}
     >
       <div className="player-head">
-        <div className="avatar">{initials(p.name)}</div>
+        <div className="avatar">
+          <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} />
+        </div>
         <div className="who">
           <div className="name">
             <PlayerLink id={p.id}>{p.name}</PlayerLink>
