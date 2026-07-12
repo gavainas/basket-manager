@@ -21,6 +21,7 @@ import {
 } from '../game/preseason';
 import { resolvePreseasonEvent } from '../game/preseasonEvents';
 import { Rng, randomSeed } from '../game/rng';
+import { resolveIncident } from '../game/narrative';
 import { advanceWeek, confirmActions, createNewGame, resolveEvent } from '../game/week';
 import type { AttackTactic, DefenseTactic, GameState } from '../game/types';
 
@@ -42,6 +43,7 @@ export type GameAction =
   | { type: 'START_MATCH' }
   | { type: 'SET_TACTIC'; defense?: DefenseTactic; attack?: AttackTactic }
   | { type: 'SUBSTITUTE'; outId: string; inId: string }
+  | { type: 'INCIDENT_CHOICE'; index: number }
   | { type: 'PLAY_QUARTER' }
   | { type: 'FINISH_MATCH' }
   | { type: 'NEXT_WEEK' }
@@ -192,8 +194,13 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       if (state.phase !== 'match' || !state.live || state.live.finished) return state;
       return substitute(state, action.outId, action.inId);
     }
+    case 'INCIDENT_CHOICE': {
+      if (state.phase !== 'match' || !state.live?.pendingIncident) return state;
+      const rng = new Rng(state.seed);
+      return resolveIncident({ ...state, seed: rng.nextSeed() }, action.index, rng);
+    }
     case 'PLAY_QUARTER': {
-      if (state.phase !== 'match' || !state.live || state.live.finished) return state;
+      if (state.phase !== 'match' || !state.live || state.live.finished || state.live.pendingIncident) return state;
       const rng = new Rng(state.seed);
       return playQuarter({ ...state, seed: rng.nextSeed() }, rng);
     }

@@ -1,5 +1,7 @@
 // Tipos centrales del juego. Todo el estado es serializable a JSON (LocalStorage).
 
+import type { Appearance } from './appearance';
+
 export type Position = 'Base' | 'Escolta' | 'Alero' | 'Ala-Pívot' | 'Pívot';
 
 export type Personality =
@@ -105,6 +107,8 @@ export interface Player {
   confidence: number;
   personality: Personality;
   description: string;
+  /** Retrato (design/AVATAR_SYSTEM.md). Si falta, se deriva del id del jugador. */
+  appearance?: Appearance;
   feeStatus: FeeStatus;
   /** Semanas seguidas sin pagar (solo si feeStatus = pendiente). */
   weeksUnpaid: number;
@@ -242,7 +246,22 @@ export interface LiveMatchState {
   rivalPush: boolean;
   /** Convocatoria rival del día: quiénes vinieron y cuánto pesa (opcional por compatibilidad). */
   rivalSquad?: { presentCount: number; mod: number; notes: string[] };
+  /** Tensión con los jueces (0-5): percepción del equipo, afecta concentración. */
+  refTension?: number;
+  /** El próximo cuarto sale con bronca canalizada (+intensidad). */
+  rageBoost?: boolean;
+  /** Incidencia arbitral esperando una decisión del manager. */
+  pendingIncident?: PendingRefIncident | null;
   eval: TeamEval;
+}
+
+/** Incidencia arbitral con decisión pendiente (serializable). */
+export interface PendingRefIncident {
+  kind: 'falta_dudosa' | 'tecnica' | 'criterio' | 'buen_arbitraje';
+  playerId?: string;
+  playerName?: string;
+  text: string;
+  options: { label: string; hint: string }[];
 }
 
 export interface MatchResult {

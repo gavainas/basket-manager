@@ -1,5 +1,6 @@
 import { BALANCE, clamp } from './balance';
 import { hasMinutesPromise, moodFor } from './emotions';
+import { fallbackNote, quarterFlavor, rollRefIncident } from './narrative';
 import { computeRating, type PlayerRating } from './rating';
 import { logClubEvent, logPlayerEvent } from './timeline';
 import { rollRivalMatchday, USER_TEAM_ID } from './world';
@@ -324,6 +325,9 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     stats,
     pendingSubNotes: [...rivalSquad.notes],
     rivalSquad: { presentCount: rivalSquad.presentCount, mod: rivalSquad.mod, notes: rivalSquad.notes },
+    refTension: 0,
+    rageBoost: false,
+    pendingIncident: null,
     rivalFreshness: clamp(M.rivalFreshStart + rng.int(-4, 4)),
     starId: star.id,
     starName: star.name,
@@ -452,6 +456,13 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   }
   if (missing > 0) notes.push(`Con este quinteto falta un ${ALL_POSITIONS.find((pos) => !covered.has(pos))} natural y se nota.`);
 
+  // Bronca canalizada y tensión con los jueces: pegan en la concentración.
+  if (live.rageBoost) {
+    atkMult *= 1.05;
+    live.rageBoost = false;
+  }
+  atkMult *= 1 - 0.012 * (live.refTension ?? 0);
+
   const atk = effAvg * chemFactor * orgFactor * coverageFactor * atkMult;
 
   // --- Defensa ---
@@ -539,6 +550,12 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   const qTop = [...onCourt].sort((a, b) => (qPts[b.id] ?? 0) - (qPts[a.id] ?? 0))[0];
   if ((qPts[qTop.id] ?? 0) >= 7) notes.push(`${qTop.name} metió ${qPts[qTop.id]} puntos en el ${Q_NAMES[qIndex]}.`);
 
+  // Incidencias deportivas y arbitrales del cuarto.
+  notes.push(...quarterFlavor({ qIndex, ourQ, rivalQ, onCourt, qPts, qReb, starId: star.id, live }, rng));
+  const refNote = rollRefIncident(live, onCourt, qIndex, rng);
+  if (refNote) notes.push(refNote);
+  if (notes.length === 0) notes.push(fallbackNote(rng));
+
   // --- Desgaste y minutos ---
   if (live.defense === 'hombre' || live.defense === 'presion') live.hombreQuarters += 1;
   if (live.attack === 'estrella') live.estrellaQuarters += 1;
@@ -573,7 +590,7 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
     live.rivalFreshness = clamp(live.rivalFreshness + M.halftimeRecovery);
   }
 
-  live.quarters.push({ for: ourQ, against: rivalQ, defense: live.defense, attack: live.attack, notes: notes.slice(0, 4) });
+  live.quarters.push({ for: ourQ, against: rivalQ, defense: live.defense, attack: live.attack, notes: notes.slice(0, 5) });
 
   // --- Final y suplementario ---
   if (qIndex === 3) {

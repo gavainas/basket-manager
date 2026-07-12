@@ -844,9 +844,30 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         </div>
       )}
 
+      {live.pendingIncident && (
+        <div className="card" style={{ marginBottom: '1rem', borderColor: 'var(--warn)' }}>
+          <h3>⚠ Incidencia en la cancha</h3>
+          <p style={{ marginTop: 0 }}>{live.pendingIncident.text}</p>
+          <div className="modal-like options" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {live.pendingIncident.options.map((opt, i) => (
+              <button key={i} style={{ textAlign: 'left' }} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })}>
+                {opt.label}
+                <span className="opt-hint" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                  {opt.hint}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="confirm-bar">
         {!live.finished ? (
-          <button className="primary" onClick={() => dispatch({ type: 'PLAY_QUARTER' })}>
+          <button
+            className="primary"
+            disabled={!!live.pendingIncident}
+            onClick={() => dispatch({ type: 'PLAY_QUARTER' })}
+          >
             ▶ Jugar el {Q_LABELS[regularPlayed]} cuarto
           </button>
         ) : (
@@ -854,9 +875,10 @@ function LiveMatchPanel({ state, dispatch }: Props) {
             Ver el informe del partido →
           </button>
         )}
-        {!live.finished && (
+        {!live.finished && !live.pendingIncident && (
           <span className="hint">Podés cambiar la táctica antes de cada cuarto. El rival también juega…</span>
         )}
+        {live.pendingIncident && <span className="hint">Resolvé la incidencia antes de seguir jugando.</span>}
       </div>
     </div>
   );
