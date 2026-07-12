@@ -1,7 +1,9 @@
 import { BALANCE, clamp } from './balance';
+import { hasMinutesPromise, moodFor } from './emotions';
+import { computeRating, type PlayerRating } from './rating';
 import { logClubEvent, logPlayerEvent } from './timeline';
 import { rollRivalMatchday, USER_TEAM_ID } from './world';
-import type { BoxScoreLine, GameState, MatchResult, Player, Position, Rival, TeamEval } from './types';
+import type { BoxScoreLine, GameState, MatchResult, Player, PlayerMood, Position, Rival, TeamEval } from './types';
 import type { Rng } from './rng';
 
 const ALL_POSITIONS: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
@@ -651,6 +653,24 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   const mvp = mvpCandidates.length > 0 ? mvpCandidates[0].p : starters[0];
   const mvpFromBench = !starters.some((st) => st.id === mvp.id);
 
+  // Nota del partido por jugador: producción según el rol + su día + contexto.
+  const ratings: Record<string, PlayerRating> = {};
+  for (const x of played) {
+    const st = live.stats[x.p.id] ?? { pts: 0, reb: 0, ast: 0 };
+    ratings[x.p.id] = computeRating({
+      position: x.p.position,
+      minutes: x.mins,
+      points: st.pts,
+      rebounds: st.reb,
+      assists: st.ast,
+      perf: x.perf,
+      effective: playerEffective(x.p),
+      won,
+      margin,
+      mvp: x.p.id === mvp.id,
+    });
+  }
+
   const effects: string[] = [];
   const B = BALANCE.matchEffects;
   const upset = won && rival.strength > evalTeam.baseSkill + 5;
@@ -662,15 +682,13 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
 
     if (mins >= 20) {
       // Cargó con el peso del partido.
-      const perf = played.find((x) => x.p.id === p.id)!.perf;
-      np.lastRating = Math.max(1, Math.min(10, Math.round(perf / 10)));
+      np.lastRating = ratings[p.id]?.rating ?? 5;
       np.physical = clamp(np.physical - wearFor(mins) + rng.range(-3, 3));
       np.weeksBenched = 0;
       np.confidence = clamp(np.confidence + (np.lastRating >= 7 ? 5 : np.lastRating <= 3 ? -5 : 0));
     } else if (mins > 0) {
       // Sumó minutos desde el banco.
-      const perf = played.find((x) => x.p.id === p.id)!.perf;
-      np.lastRating = Math.max(1, Math.min(10, Math.round(perf / 10)));
+      np.lastRating = ratings[p.id]?.rating ?? 5;
       np.physical = clamp(np.physical - wearFor(mins) + rng.range(-2, 2));
       np.weeksBenched = 0;
       np.confidence = clamp(np.confidence + (np.lastRating >= 7 ? 3 : np.lastRating <= 3 ? -3 : 0));
@@ -828,17 +846,35 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
 
   const statsOf = (id: string) => live.stats[id] ?? { pts: 0, reb: 0, ast: 0 };
   const box: BoxScoreLine[] = played
-    .map(({ p, perf, mins }) => ({
+    .map(({ p, mins }) => ({
       playerId: p.id,
       name: p.name,
       minutes: mins,
       points: statsOf(p.id).pts,
       rebounds: statsOf(p.id).reb,
       assists: statsOf(p.id).ast,
-      rating: Math.max(1, Math.min(10, Math.round(perf / 10))),
+      rating: ratings[p.id]?.rating ?? 5,
       mvp: p.id === mvp.id,
+      comment: ratings[p.id]?.comment,
     }))
     .sort((a, b) => b.points - a.points);
+
+  // Cómo quedó cada uno: el resultado no tapa los minutos que no jugaste.
+  const bigGame = s.week > s.seasonLength;
+  const moods: PlayerMood[] = s.players
+    .filter((p) => !p.leftClub && isSelectable(p) && !absent.has(p.id))
+    .map((p) =>
+      moodFor(p, {
+        won,
+        margin,
+        minutes: minutesOf(p.id),
+        rating: ratings[p.id]?.rating ?? null,
+        mvp: p.id === mvp.id,
+        inSquad: live.squad.includes(p.id),
+        promisedMinutes: hasMinutesPromise(s.promises, p.id, s.seasonNumber),
+        bigGame,
+      })
+    );
 
   const result: MatchResult = {
     week: s.week,
@@ -857,6 +893,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     lockerRoom,
     effects,
     box,
+    moods,
   };
 
   if (upset) {

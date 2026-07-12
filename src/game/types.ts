@@ -60,6 +60,28 @@ export interface BoxScoreLine {
   assists: number;
   rating: number;
   mvp: boolean;
+  /** Frase que explica la nota. */
+  comment?: string;
+}
+
+// ---------- Estado emocional postpartido ----------
+
+export type PlayerEmotion =
+  | 'euforico'
+  | 'orgulloso'
+  | 'contento'
+  | 'conforme'
+  | 'indiferente'
+  | 'frustrado'
+  | 'molesto_minutos'
+  | 'decepcionado';
+
+export interface PlayerMood {
+  playerId: string;
+  name: string;
+  emotion: PlayerEmotion;
+  label: string;
+  text: string;
 }
 
 export type FeeStatus = 'pagada' | 'pendiente' | 'beca_total' | 'beca_parcial';
@@ -243,6 +265,8 @@ export interface MatchResult {
   effects: string[];
   /** Planilla del partido, ordenada por puntos (vacía en forfeit). */
   box: BoxScoreLine[];
+  /** Cómo quedó cada uno del plantel al terminar (vacío en forfeit). */
+  moods?: PlayerMood[];
 }
 
 export interface Objective {

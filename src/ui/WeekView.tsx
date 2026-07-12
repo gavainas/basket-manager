@@ -973,7 +973,9 @@ function MatchResultPanel({ state, dispatch }: Props) {
                     </td>
                     <td className="num">{line.rebounds}</td>
                     <td className="num">{line.assists}</td>
-                    <td className="num">{line.rating}/10</td>
+                    <td className="num">
+                      {line.comment ? <Tip text={line.comment}>{line.rating}/10</Tip> : `${line.rating}/10`}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1020,6 +1022,35 @@ function MatchResultPanel({ state, dispatch }: Props) {
               <li key={i}>{n}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {(m.moods ?? []).length > 0 && (
+        <div className="card" style={{ marginTop: '1rem' }}>
+          <h3>Cómo quedó cada uno</h3>
+          <div className="data-grid">
+            {m.moods!.map((mood) => {
+              const cls =
+                mood.emotion === 'euforico' || mood.emotion === 'orgulloso' || mood.emotion === 'contento'
+                  ? 'good'
+                  : mood.emotion === 'molesto_minutos'
+                    ? 'bad'
+                    : mood.emotion === 'frustrado' || mood.emotion === 'decepcionado'
+                      ? 'warn'
+                      : '';
+              return (
+                <div className="data-row" key={mood.playerId}>
+                  <span className="data-label">
+                    <PlayerLink id={mood.playerId}>{mood.name}</PlayerLink>
+                  </span>
+                  <span className="data-value">
+                    <span className={`chip ${cls}`}>{mood.label}</span>{' '}
+                    <span className="muted">{mood.text}</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
