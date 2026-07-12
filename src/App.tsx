@@ -7,6 +7,8 @@ import { FinancesView } from './ui/FinancesView';
 import { LeagueView } from './ui/LeagueView';
 import { WeekView } from './ui/WeekView';
 import { EventModal } from './ui/EventModal';
+import { OpenProfileContext } from './ui/PlayerLink';
+import { PlayerProfile } from './ui/PlayerProfile';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
 import { HistoryView } from './ui/HistoryView';
 import { PreseasonView } from './ui/PreseasonView';
@@ -78,6 +80,7 @@ export default function App() {
   const [state, dispatch] = useReducer(gameReducer, null);
   const [tab, setTab] = useState<Tab>('resumen');
   const [saveFailed, setSaveFailed] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   // Guardado automático.
   useEffect(() => {
@@ -87,7 +90,7 @@ export default function App() {
   // Al cambiar de fase, llevar al usuario a la pantalla correcta.
   const phase = state?.phase;
   useEffect(() => {
-    if (phase === 'lineup' || phase === 'matchResult') setTab('semana');
+    if (phase === 'callUp' || phase === 'lineup' || phase === 'match' || phase === 'matchResult') setTab('semana');
     if (phase === 'planning') setTab('resumen');
   }, [phase]);
 
@@ -126,11 +129,16 @@ export default function App() {
   const phaseHint =
     state.phase === 'planning'
       ? 'Elegí las decisiones de la semana'
-      : state.phase === 'lineup'
-        ? 'Armá el quinteto titular'
-        : 'Mirá el resultado del partido';
+      : state.phase === 'callUp'
+        ? 'Mirá quién confirmó para el partido'
+        : state.phase === 'lineup'
+          ? 'Armá el quinteto titular'
+          : state.phase === 'match'
+            ? 'Dirigí el partido cuarto a cuarto'
+            : 'Mirá el resultado del partido';
 
   return (
+    <OpenProfileContext.Provider value={setProfileId}>
     <div className="app-shell">
       <div className="topbar">
         <span className="club-name">🏀 {state.club.name}</span>
@@ -187,6 +195,8 @@ export default function App() {
       {tab === 'semana' && <WeekView state={state} dispatch={dispatch} />}
 
       <EventModal state={state} dispatch={dispatch} />
+      {profileId && <PlayerProfile state={state} playerId={profileId} onClose={() => setProfileId(null)} />}
     </div>
+    </OpenProfileContext.Provider>
   );
 }

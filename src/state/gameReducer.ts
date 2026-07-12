@@ -1,5 +1,14 @@
 import { BALANCE } from '../game/balance';
-import { simulateMatch, isSelectable } from '../game/match';
+import {
+  availableForMatch,
+  finishLiveMatch,
+  matchAbsentIds,
+  playQuarter,
+  startLiveMatch,
+  substitute,
+  suggestRotation,
+  suggestStarters,
+} from '../game/match';
 import {
   advancePreseasonWeek,
   closePreseason,
@@ -13,7 +22,7 @@ import {
 import { resolvePreseasonEvent } from '../game/preseasonEvents';
 import { Rng, randomSeed } from '../game/rng';
 import { advanceWeek, confirmActions, createNewGame, resolveEvent } from '../game/week';
-import type { GameState } from '../game/types';
+import type { AttackTactic, DefenseTactic, GameState } from '../game/types';
 
 export type GameAction =
   | { type: 'NEW_GAME' }
@@ -25,9 +34,16 @@ export type GameAction =
   | { type: 'CONFIRM_ACTIONS' }
   | { type: 'RESOLVE_EVENT'; optionIndex: number }
   | { type: 'DISMISS_EVENT_OUTCOME' }
+  | { type: 'PROCEED_TO_LINEUP' }
   | { type: 'TOGGLE_STARTER'; id: string }
   | { type: 'TOGGLE_ROTATION'; id: string }
-  | { type: 'PLAY_MATCH' }
+  | { type: 'AUTO_LINEUP' }
+  | { type: 'CLEAR_LINEUP' }
+  | { type: 'START_MATCH' }
+  | { type: 'SET_TACTIC'; defense?: DefenseTactic; attack?: AttackTactic }
+  | { type: 'SUBSTITUTE'; outId: string; inId: string }
+  | { type: 'PLAY_QUARTER' }
+  | { type: 'FINISH_MATCH' }
   | { type: 'NEXT_WEEK' }
   | { type: 'PS_TALK'; id: string }
   | { type: 'PS_OPEN_NEGOTIATION'; id: string; isMarket: boolean }
@@ -112,6 +128,10 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       return resolveEvent(state, action.optionIndex);
     case 'DISMISS_EVENT_OUTCOME':
       return { ...state, eventOutcome: null };
+    case 'PROCEED_TO_LINEUP': {
+      if (state.phase !== 'callUp') return state;
+      return { ...state, phase: 'lineup' };
+    }
     case 'TOGGLE_STARTER': {
       if (state.phase !== 'lineup') return state;
       const player = state.players.find((p) => p.id === action.id);
@@ -119,7 +139,7 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       if (state.starters.includes(action.id)) {
         return { ...state, starters: state.starters.filter((id) => id !== action.id) };
       }
-      if (!isSelectable(player) || state.starters.length >= 5) return state;
+      if (!availableForMatch(state, player) || state.starters.length >= 5) return state;
       return {
         ...state,
         starters: [...state.starters, action.id],
@@ -134,7 +154,7 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
         return { ...state, rotation: state.rotation.filter((id) => id !== action.id) };
       }
       if (
-        !isSelectable(player) ||
+        !availableForMatch(state, player) ||
         state.starters.includes(action.id) ||
         state.rotation.length >= BALANCE.rotation.maxPlayers
       ) {
@@ -142,11 +162,45 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       }
       return { ...state, rotation: [...state.rotation, action.id] };
     }
-    case 'PLAY_MATCH': {
+    case 'AUTO_LINEUP': {
+      if (state.phase !== 'lineup') return state;
+      const absent = matchAbsentIds(state);
+      const starters = suggestStarters(state.players, absent);
+      return { ...state, starters, rotation: suggestRotation(state.players, starters, absent) };
+    }
+    case 'CLEAR_LINEUP': {
+      if (state.phase !== 'lineup') return state;
+      return { ...state, starters: [], rotation: [] };
+    }
+    case 'START_MATCH': {
       if (state.phase !== 'lineup') return state;
       const rng = new Rng(state.seed);
-      const next = simulateMatch({ ...state, seed: rng.nextSeed() }, rng);
-      return next;
+      return startLiveMatch({ ...state, seed: rng.nextSeed() }, rng);
+    }
+    case 'SET_TACTIC': {
+      if (state.phase !== 'match' || !state.live || state.live.finished) return state;
+      return {
+        ...state,
+        live: {
+          ...state.live,
+          defense: action.defense ?? state.live.defense,
+          attack: action.attack ?? state.live.attack,
+        },
+      };
+    }
+    case 'SUBSTITUTE': {
+      if (state.phase !== 'match' || !state.live || state.live.finished) return state;
+      return substitute(state, action.outId, action.inId);
+    }
+    case 'PLAY_QUARTER': {
+      if (state.phase !== 'match' || !state.live || state.live.finished) return state;
+      const rng = new Rng(state.seed);
+      return playQuarter({ ...state, seed: rng.nextSeed() }, rng);
+    }
+    case 'FINISH_MATCH': {
+      if (state.phase !== 'match' || !state.live?.finished) return state;
+      const rng = new Rng(state.seed);
+      return finishLiveMatch({ ...state, seed: rng.nextSeed() }, rng);
     }
     case 'NEXT_WEEK':
       if (state.phase !== 'matchResult') return state;

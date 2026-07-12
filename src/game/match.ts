@@ -1,8 +1,10 @@
 import { BALANCE, clamp } from './balance';
-import type { GameState, MatchResult, Player, Position } from './types';
+import { logPlayerEvent } from './timeline';
+import type { GameState, MatchResult, Player, Position, Rival, TeamEval } from './types';
 import type { Rng } from './rng';
 
 const ALL_POSITIONS: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
+const Q_NAMES = ['1er cuarto', '2do cuarto', '3er cuarto', '4to cuarto'];
 
 /** Fuerza efectiva de un jugador: técnica modulada por físico, motivación y confianza. */
 export function playerEffective(p: Player): number {
@@ -20,6 +22,16 @@ export function activePlayers(players: Player[]): Player[] {
   return players.filter((p) => !p.leftClub);
 }
 
+/** Ids de los que faltan al partido de esta semana con alguna excusa. */
+export function matchAbsentIds(state: GameState): Set<string> {
+  return new Set(state.callUp.filter((c) => c.status === 'ausente').map((c) => c.playerId));
+}
+
+/** Disponible para el partido de la semana: sano, en el club y sin excusa. */
+export function availableForMatch(state: GameState, p: Player): boolean {
+  return isSelectable(p) && !matchAbsentIds(state).has(p.id);
+}
+
 /** Minutos estimados de titulares y rotación según cuántos suplentes entran. */
 export function minutesPlan(rotationCount: number): { starterMinutes: number; subMinutes: number } {
   const R = BALANCE.rotation;
@@ -31,26 +43,21 @@ export function minutesPlan(rotationCount: number): { starterMinutes: number; su
 
 /** Jugadores de la rotación que efectivamente pueden entrar (disponibles y no titulares). */
 export function rotationPlayers(state: GameState): Player[] {
+  const absent = matchAbsentIds(state);
   return state.players
-    .filter((p) => isSelectable(p) && state.rotation.includes(p.id) && !state.starters.includes(p.id))
+    .filter(
+      (p) => isSelectable(p) && !absent.has(p.id) && state.rotation.includes(p.id) && !state.starters.includes(p.id)
+    )
     .slice(0, BALANCE.rotation.maxPlayers);
 }
 
-interface TeamEval {
-  strength: number;
-  baseSkill: number;
-  physicalAvg: number;
-  motivationAvg: number;
-  missingPositions: number;
-  chemistry01: number;
-  starterMinutes: number;
-  rotationCount: number;
-}
-
 export function evaluateTeam(state: GameState, starterIds: string[]): TeamEval {
-  const starters = state.players.filter((p) => starterIds.includes(p.id));
+  const absent = matchAbsentIds(state);
+  const starters = state.players.filter((p) => starterIds.includes(p.id) && !absent.has(p.id));
   const rotation = state.players
-    .filter((p) => isSelectable(p) && state.rotation.includes(p.id) && !starterIds.includes(p.id))
+    .filter(
+      (p) => isSelectable(p) && !absent.has(p.id) && state.rotation.includes(p.id) && !starterIds.includes(p.id)
+    )
     .slice(0, BALANCE.rotation.maxPlayers);
 
   const { starterMinutes, subMinutes } = minutesPlan(rotation.length);
@@ -90,8 +97,14 @@ export function evaluateTeam(state: GameState, starterIds: string[]): TeamEval {
   };
 }
 
-function buildReasons(evalTeam: TeamEval, rivalStrength: number, luck: number, won: boolean): string[] {
-  const reasons: { weight: number; text: string }[] = [];
+function buildReasons(
+  evalTeam: TeamEval,
+  rivalStrength: number,
+  luck: number,
+  won: boolean,
+  extra: { weight: number; text: string }[] = []
+): string[] {
+  const reasons: { weight: number; text: string }[] = [...extra];
   const gap = evalTeam.baseSkill - rivalStrength;
 
   if (gap > 7) reasons.push({ weight: gap, text: 'La diferencia de nivel estuvo a favor nuestro.' });
@@ -107,10 +120,6 @@ function buildReasons(evalTeam: TeamEval, rivalStrength: number, luck: number, w
     });
   if (evalTeam.chemistry01 > 0.72) reasons.push({ weight: 8, text: 'La química del grupo empujó en los momentos calientes.' });
   if (evalTeam.chemistry01 < 0.45) reasons.push({ weight: 10, text: 'El mal ambiente del vestuario se trasladó a la cancha.' });
-  if (evalTeam.starterMinutes >= 38)
-    reasons.push({ weight: 9, text: 'Sin recambio en el banco: los titulares llegaron fundidos al último cuarto.' });
-  else if (evalTeam.rotationCount >= 4)
-    reasons.push({ weight: 6, text: 'La rotación larga mantuvo piernas frescas hasta el final.' });
   if (luck > 6) reasons.push({ weight: luck, text: won ? 'La pelota entró en los momentos justos.' : 'Ni con suerte alcanzó.' });
   if (luck < -6) reasons.push({ weight: -luck, text: 'La pelota no quiso entrar; hubo mala fortuna.' });
 
@@ -118,67 +127,6 @@ function buildReasons(evalTeam: TeamEval, rivalStrength: number, luck: number, w
   const top = reasons.slice(0, 3).map((r) => r.text);
   if (top.length === 0) top.push(won ? 'Fue un partido parejo que se definió por detalles.' : 'Partido parejo que se escapó por detalles.');
   return top;
-}
-
-/** Reparte un marcador total en 4 cuartos con variación creíble. */
-function splitQuarters(total: number, rng: Rng): number[] {
-  const base = total / 4;
-  const qs = [0, 0, 0, 0].map(() => Math.max(4, Math.round(base + rng.range(-5, 5))));
-  let diff = total - qs.reduce((a, b) => a + b, 0);
-  let i = 0;
-  while (diff !== 0 && i < 100) {
-    const idx = i % 4;
-    const step = diff > 0 ? 1 : -1;
-    if (qs[idx] + step >= 2) {
-      qs[idx] += step;
-      diff -= step;
-    }
-    i++;
-  }
-  return qs;
-}
-
-function buildHighlights(
-  perfs: { p: Player; perf: number }[],
-  won: boolean,
-  margin: number,
-  rivalName: string,
-  rng: Rng
-): string[] {
-  const lines: string[] = [];
-  const hero = perfs[0].p;
-  const second = perfs.length > 1 ? perfs[1].p : hero;
-  const worst = perfs[perfs.length - 1].p;
-
-  lines.push(
-    rng.pick([
-      `${hero.name} arrancó encendido: dos triples seguidos en el primer cuarto.`,
-      `${hero.name} marcó el ritmo desde el arranque y contagió al resto.`,
-      `Gran primer tiempo de ${hero.name}, imposible de frenar cerca del aro.`,
-    ])
-  );
-  lines.push(
-    rng.pick([
-      `${second.name} sostuvo al equipo con defensa y rebotes cuando el partido se trabó.`,
-      `Una bandeja a tablero de ${second.name} sobre el cierre del tercer cuarto levantó al banco.`,
-      `${second.name} repartió juego y orden en los minutos calientes.`,
-    ])
-  );
-  if (won && margin <= 6) {
-    lines.push(`Final de infarto: ${hero.name} metió los libres decisivos y ${rivalName} se quedó sin nafta.`);
-  } else if (won && margin > 15) {
-    lines.push('El último cuarto fue un monólogo: hasta el banco sumó minutos y puntos.');
-  } else if (!won && margin <= 6) {
-    lines.push(`Se escapó sobre la chicharra: la última pelota no quiso entrar y ${rivalName} festejó.`);
-  } else if (!won) {
-    lines.push(
-      rng.pick([
-        `A ${worst.name} no le salió una en toda la noche, y el equipo lo sintió.`,
-        `${rivalName} castigó cada pérdida con puntos fáciles de contra.`,
-      ])
-    );
-  }
-  return lines;
 }
 
 function lockerRoomNotes(state: GameState, result: { won: boolean; margin: number }, starters: Player[], mvp: Player | null, rng: Rng): string[] {
@@ -209,198 +157,18 @@ function lockerRoomNotes(state: GameState, result: { won: boolean; margin: numbe
   }
   if (result.won && rng.chance(0.4)) {
     const socials = state.players.filter((p) => isSelectable(p) && p.personality === 'social');
-    if (socials.length > 0) notes.push(`${rng.pick(socials).name} organizó unas pizzas post partido. Sumó al ambiente.`);
+    if (socials.length > 0) {
+      const host = rng.pick(socials);
+      notes.push(`${host.name} organizó unas pizzas post partido. Sumó al ambiente.`);
+      logPlayerEvent(host, state.seasonNumber, state.week, 'social', 'Organizó las pizzas post victoria para todo el grupo.');
+    }
   }
   return notes.slice(0, 2);
 }
 
-/**
- * Simula el partido de la semana. Muta un clon del estado y lo devuelve con
- * resultado, efectos sobre jugadores/club y tabla actualizada.
- */
-export function simulateMatch(state: GameState, rng: Rng): GameState {
-  const s: GameState = structuredClone(state);
-  const rivalId = s.schedule[s.week - 1];
-  const rival = s.rivals.find((r) => r.id === rivalId)!;
-  const starters = s.players.filter((p) => s.starters.includes(p.id) && isSelectable(p));
-
-  let result: MatchResult;
-
-  if (starters.length < 5) {
-    // No hay quinteto completo: se pierde por forfeit.
-    const [low, high] = BALANCE.match.forfeitScore;
-    result = {
-      week: s.week,
-      rivalId,
-      rivalName: rival.name,
-      scoreFor: low,
-      scoreAgainst: high,
-      quarters: [],
-      highlights: [],
-      won: false,
-      forfeit: true,
-      mvpId: null,
-      mvpName: null,
-      summary: `No llegamos a juntar cinco jugadores disponibles y perdimos los puntos contra ${rival.name}.`,
-      reasons: ['El club no pudo presentar un quinteto completo.'],
-      lockerRoom: ['La vergüenza del forfeit golpeó al grupo entero.'],
-      effects: ['Motivación general -8', 'Prestigio deportivo -5', 'Prestigio social -3'],
-    };
-    s.players = s.players.map((p) =>
-      p.leftClub ? p : { ...p, motivation: clamp(p.motivation - 8) }
-    );
-    s.club.sportPrestige = clamp(s.club.sportPrestige - 5);
-    s.club.socialPrestige = clamp(s.club.socialPrestige - 3);
-  } else {
-    const evalTeam = evaluateTeam(s, s.starters);
-    const rivalEff = rival.strength * rng.range(0.92, 1.08);
-    const luck = rng.range(-BALANCE.match.randomPoints, BALANCE.match.randomPoints);
-    const diff = (evalTeam.strength - rivalEff) * BALANCE.match.strengthToPoints + luck;
-
-    let scoreFor = Math.round(BALANCE.match.baseScore + diff / 2 + rng.range(-4, 4));
-    let scoreAgainst = Math.round(BALANCE.match.baseScore - diff / 2 + rng.range(-4, 4));
-    scoreFor = Math.max(31, scoreFor);
-    scoreAgainst = Math.max(31, scoreAgainst);
-    if (scoreFor === scoreAgainst) {
-      // Suplementario: gana el que llegó mejor.
-      if (diff >= 0) scoreFor += rng.int(1, 3);
-      else scoreAgainst += rng.int(1, 3);
-    }
-    const won = scoreFor > scoreAgainst;
-    const margin = Math.abs(scoreFor - scoreAgainst);
-
-    // Minutos: dependen de cuántos jugadores de rotación entran.
-    const rotation = rotationPlayers(s);
-    const { starterMinutes, subMinutes } = minutesPlan(rotation.length);
-    const wearStarter = Math.round(starterMinutes * BALANCE.rotation.wearPerMinute);
-    const wearSub = Math.round(subMinutes * BALANCE.rotation.wearPerMinute);
-
-    // Rendimiento individual y MVP (la rotación también compite, pesada por minutos).
-    const perfs = starters.map((p) => ({ p, perf: playerEffective(p) * rng.range(0.78, 1.22) }));
-    perfs.sort((a, b) => b.perf - a.perf);
-    const rotPerfs = rotation.map((p) => ({ p, perf: playerEffective(p) * rng.range(0.78, 1.22) }));
-    const minutesWeight = starterMinutes > 0 ? Math.sqrt(subMinutes / starterMinutes) : 0;
-    const mvpCandidates = [
-      ...perfs.map((x) => ({ p: x.p, score: x.perf })),
-      ...rotPerfs.map((x) => ({ p: x.p, score: x.perf * minutesWeight })),
-    ];
-    mvpCandidates.sort((a, b) => b.score - a.score);
-    const mvp = mvpCandidates[0].p;
-    const mvpFromBench = !starters.some((st) => st.id === mvp.id);
-
-    const effects: string[] = [];
-    const B = BALANCE.matchEffects;
-    const upset = won && rival.strength > evalTeam.baseSkill + 5;
-
-    s.players = s.players.map((p) => {
-      if (p.leftClub) return p;
-      const np = { ...p };
-      const started = starters.some((st) => st.id === p.id);
-      const rotated = rotation.some((r) => r.id === p.id);
-
-      if (started) {
-        const perf = perfs.find((x) => x.p.id === p.id)!.perf;
-        np.lastRating = Math.max(1, Math.min(10, Math.round(perf / 10)));
-        np.physical = clamp(np.physical - wearStarter + rng.range(-3, 3));
-        np.weeksBenched = 0;
-        np.confidence = clamp(np.confidence + (np.lastRating >= 7 ? 5 : np.lastRating <= 3 ? -5 : 0));
-      } else if (rotated) {
-        const perf = rotPerfs.find((x) => x.p.id === p.id)!.perf;
-        np.lastRating = Math.max(1, Math.min(10, Math.round(perf / 10)));
-        np.physical = clamp(np.physical - wearSub + rng.range(-2, 2));
-        np.weeksBenched = 0;
-        np.confidence = clamp(np.confidence + (np.lastRating >= 7 ? 3 : np.lastRating <= 3 ? -3 : 0));
-        if (np.personality === 'protagonista' || np.expectedRole === 'titular') {
-          // Jugar desde el banco no les alcanza, pero molesta menos que no jugar.
-          np.motivation = clamp(np.motivation + B.rotationMotivationHit);
-          if (np.motivation < BALANCE.weekly.lowMotivationThreshold && np.status === 'disponible') {
-            np.status = 'molesto';
-            np.weeksUpset = 0;
-          }
-        } else if (np.expectedRole === 'suplente') {
-          np.motivation = clamp(np.motivation + B.subMinutesBoost);
-        }
-      } else if (isSelectable(np)) {
-        np.physical = clamp(np.physical - BALANCE.match.physicalWearBench);
-        np.weeksBenched += 1;
-        const wantsMinutes =
-          np.personality === 'protagonista' ||
-          (np.expectedRole === 'titular' && np.weeksBenched >= 2) ||
-          (np.expectedRole === 'rotación' && np.weeksBenched >= 3);
-        if (wantsMinutes) {
-          const hit =
-            np.expectedRole === 'rotación' && np.personality !== 'protagonista'
-              ? B.rotationMotivationHit
-              : B.benchedMotivationHit;
-          np.motivation = clamp(np.motivation + hit);
-          if (np.motivation < BALANCE.weekly.lowMotivationThreshold && np.status === 'disponible') {
-            np.status = 'molesto';
-            np.weeksUpset = 0;
-          }
-        }
-      }
-
-      const moraleDelta = won ? B.winMotivation : B.lossMotivation;
-      const personalityScale = np.personality === 'competitivo' ? 1.5 : np.personality === 'social' ? 0.6 : 1;
-      np.motivation = clamp(np.motivation + moraleDelta * personalityScale);
-
-      if (np.id === mvp.id) {
-        np.confidence = clamp(np.confidence + B.mvpConfidence);
-        np.motivation = clamp(np.motivation + 4);
-      }
-      return np;
-    });
-
-    const prestigeDelta = won ? B.winSportPrestige + (upset ? B.upsetWinBonus : 0) : margin > 18 ? B.lossSportPrestige - 1 : B.lossSportPrestige;
-    s.club.sportPrestige = clamp(s.club.sportPrestige + prestigeDelta);
-    if (won) s.club.socialClimate = clamp(s.club.socialClimate + 3);
-    else if (margin > 15) s.club.socialClimate = clamp(s.club.socialClimate - 4);
-
-    effects.push(`Motivación del plantel ${won ? '+' : ''}${won ? B.winMotivation : B.lossMotivation}`);
-    effects.push(`Prestigio deportivo ${prestigeDelta >= 0 ? '+' : ''}${prestigeDelta}`);
-    effects.push(`Titulares: ~${starterMinutes} min en cancha (desgaste -${wearStarter} aprox.)`);
-    if (rotation.length > 0)
-      effects.push(`Rotación: ${rotation.length} jugador${rotation.length > 1 ? 'es' : ''} con ~${subMinutes} min (desgaste -${wearSub}).`);
-    else effects.push('Sin rotación: los titulares jugaron los 40 minutos y terminaron fundidos.');
-    if (upset) effects.push('¡Batacazo! Ganarle a un rival superior sumó prestigio extra.');
-
-    const summary = won
-      ? margin > 15
-        ? `Victoria contundente ante ${rival.name}. El equipo fue superior de principio a fin.`
-        : `Triunfo trabajado contra ${rival.name}, definido en el cierre.`
-      : margin > 15
-        ? `Dura derrota contra ${rival.name}. Nunca estuvimos en partido.`
-        : `Derrota ajustada ante ${rival.name}. Se escapó por detalles.`;
-
-    const qFor = splitQuarters(scoreFor, rng);
-    const qAgainst = splitQuarters(scoreAgainst, rng);
-
-    const highlights = buildHighlights(perfs, won, margin, rival.name, rng);
-    if (mvpFromBench) highlights.push(`${mvp.name} entró desde el banco y cambió el partido: figura inesperada.`);
-
-    result = {
-      week: s.week,
-      rivalId,
-      rivalName: rival.name,
-      scoreFor,
-      scoreAgainst,
-      quarters: qFor.map((f, i) => ({ for: f, against: qAgainst[i] })),
-      highlights,
-      won,
-      forfeit: false,
-      mvpId: mvp.id,
-      mvpName: mvp.name,
-      summary,
-      reasons: buildReasons(evalTeam, rival.strength, luck, won),
-      lockerRoom: lockerRoomNotes(s, { won, margin }, starters, won ? mvp : null, rng),
-      effects,
-    };
-
-    if (upset) s.memorableMoments.push(`Semana ${s.week}: batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);
-    if (won && margin >= 25) s.memorableMoments.push(`Semana ${s.week}: paliza inolvidable a ${rival.name} por ${margin} puntos.`);
-  }
-
-  // Tabla: resultado propio.
+/** Tabla, partidos de los demás rivales, historial y noticias: común a todo final de partido. */
+function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
+  const rivalId = result.rivalId;
   const clubRow = s.standings.find((r) => r.teamId === 'club')!;
   const rivalRow = s.standings.find((r) => r.teamId === rivalId)!;
   if (result.won) {
@@ -452,7 +220,509 @@ export function simulateMatch(state: GameState, rng: Rng): GameState {
       : `${result.won ? 'Victoria' : 'Derrota'} ${result.scoreFor}-${result.scoreAgainst} vs ${result.rivalName}.`,
     tone: result.won ? 'good' : 'bad',
   });
+  s.live = null;
   s.phase = 'matchResult';
+}
+
+/** No hay quinteto completo: se pierde por forfeit. */
+function simulateForfeit(s: GameState, rival: Rival, rng: Rng): GameState {
+  const [low, high] = BALANCE.match.forfeitScore;
+  const result: MatchResult = {
+    week: s.week,
+    rivalId: rival.id,
+    rivalName: rival.name,
+    scoreFor: low,
+    scoreAgainst: high,
+    quarters: [],
+    highlights: [],
+    won: false,
+    forfeit: true,
+    mvpId: null,
+    mvpName: null,
+    summary: `No llegamos a juntar cinco jugadores disponibles y perdimos los puntos contra ${rival.name}.`,
+    reasons: ['El club no pudo presentar un quinteto completo.'],
+    lockerRoom: ['La vergüenza del forfeit golpeó al grupo entero.'],
+    effects: ['Motivación general -8', 'Prestigio deportivo -5', 'Prestigio social -3'],
+  };
+  s.players = s.players.map((p) => (p.leftClub ? p : { ...p, motivation: clamp(p.motivation - 8) }));
+  s.club.sportPrestige = clamp(s.club.sportPrestige - 5);
+  s.club.socialPrestige = clamp(s.club.socialPrestige - 3);
+  concludeMatch(s, result, rng);
+  return s;
+}
+
+/**
+ * Arranca el partido de la semana: sortea el rendimiento del día de cada
+ * jugador y deja el estado en fase 'match' para jugarlo cuarto a cuarto.
+ * Si no hay quinteto completo, resuelve el forfeit directamente.
+ */
+export function startLiveMatch(state: GameState, rng: Rng): GameState {
+  const s: GameState = structuredClone(state);
+  const rivalId = s.schedule[s.week - 1];
+  const rival = s.rivals.find((r) => r.id === rivalId)!;
+  const absent = matchAbsentIds(s);
+  const starters = s.players.filter((p) => s.starters.includes(p.id) && isSelectable(p) && !absent.has(p.id));
+
+  if (starters.length < 5) return simulateForfeit(s, rival, rng);
+
+  const M = BALANCE.liveMatch;
+  const evalTeam = evaluateTeam(s, s.starters);
+  const rotation = rotationPlayers(s);
+  const squad = [...starters, ...rotation];
+
+  const perfs: Record<string, number> = {};
+  const playerFresh: Record<string, number> = {};
+  const minutes: Record<string, number> = {};
+  for (const p of squad) {
+    perfs[p.id] = playerEffective(p) * rng.range(0.78, 1.22);
+    playerFresh[p.id] = clamp(M.freshStartBase + M.freshStartPhysical * p.physical);
+    minutes[p.id] = 0;
+  }
+  const star = [...starters].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
+
+  s.live = {
+    rivalId,
+    rivalName: rival.name,
+    quarters: [],
+    finished: false,
+    defense: 'zona',
+    attack: 'equipo',
+    squad: squad.map((p) => p.id),
+    onCourt: starters.map((p) => p.id),
+    playerFresh,
+    minutes,
+    pendingSubNotes: [],
+    rivalFreshness: clamp(M.rivalFreshStart + rng.int(-4, 4)),
+    starId: star.id,
+    starName: star.name,
+    perfs,
+    hombreQuarters: 0,
+    estrellaQuarters: 0,
+    luckTotal: 0,
+    rivalPush: false,
+    eval: evalTeam,
+  };
+  s.phase = 'match';
+  return s;
+}
+
+/**
+ * Cambio entre cuartos: sale un jugador de la cancha y entra uno del banco.
+ * Devuelve el mismo estado si el cambio no es válido. Sin azar: puro swap.
+ */
+export function substitute(state: GameState, outId: string, inId: string): GameState {
+  const live = state.live;
+  if (!live || live.finished) return state;
+  if (!live.onCourt.includes(outId) || live.onCourt.includes(inId) || !live.squad.includes(inId)) return state;
+
+  const outP = state.players.find((p) => p.id === outId);
+  const inP = state.players.find((p) => p.id === inId);
+  if (!outP || !inP || !isSelectable(inP)) return state;
+
+  const onCourt = live.onCourt.map((id) => (id === outId ? inId : id));
+  const courtPlayers = state.players.filter((p) => onCourt.includes(p.id));
+  const star = [...courtPlayers].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
+
+  return {
+    ...state,
+    live: {
+      ...live,
+      onCourt,
+      starId: star.id,
+      starName: star.name,
+      pendingSubNotes: [...live.pendingSubNotes, `Cambio: entra ${inP.name} por ${outP.name}.`],
+    },
+  };
+}
+
+/** Piernas promedio de los que están en cancha. */
+export function courtFreshness(live: { onCourt: string[]; playerFresh: Record<string, number> }): number {
+  const vals = live.onCourt.map((id) => live.playerFresh[id] ?? 70);
+  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+}
+
+/** Juega el próximo cuarto con las tácticas y los 5 en cancha de state.live. */
+export function playQuarter(state: GameState, rng: Rng): GameState {
+  const s: GameState = structuredClone(state);
+  const live = s.live;
+  if (!live || live.finished) return s;
+
+  const M = BALANCE.liveMatch;
+  const rival = s.rivals.find((r) => r.id === live.rivalId)!;
+  const qIndex = live.quarters.length; // 0..3
+  const notes: string[] = [];
+
+  // Cambios hechos en el descanso: abren el relato del cuarto.
+  notes.push(...live.pendingSubNotes);
+  live.pendingSubNotes = [];
+
+  const onCourt = live.onCourt.map((id) => s.players.find((p) => p.id === id)!);
+  const teamFresh = courtFreshness(live);
+
+  const sumFor = live.quarters.reduce((t, q) => t + q.for, 0);
+  const sumAgainst = live.quarters.reduce((t, q) => t + q.against, 0);
+
+  // Si el rival entra al último cuarto perdiendo por mucho, presiona a fondo.
+  if (qIndex === 3 && sumFor - sumAgainst >= M.pushDeficit) {
+    live.rivalPush = true;
+    for (const id of live.onCourt) live.playerFresh[id] = clamp((live.playerFresh[id] ?? 70) - M.pushFreshCost);
+    notes.push(`${rival.name} adelantó líneas y presiona a toda cancha: hay que aguantar el cierre.`);
+  }
+
+  // --- Ataque: la fuerza sale de los 5 en cancha, cada uno con sus piernas ---
+  const freshOf = (id: string) => live.playerFresh[id] ?? 70;
+  const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+  const effAvg = avg(
+    onCourt.map((p) => playerEffective(p) * (M.freshFactorMin + M.freshFactorSpan * (freshOf(p.id) / 100)))
+  );
+  const covered = new Set(onCourt.map((p) => p.position));
+  const missing = ALL_POSITIONS.filter((pos) => !covered.has(pos)).length;
+  const coverageFactor = 1 - missing * BALANCE.match.positionMissingPenalty;
+  const chemFactor = 0.94 + 0.12 * live.eval.chemistry01;
+  const orgFactor = 0.97 + 0.06 * (s.club.organization / 100);
+
+  const star = [...onCourt].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
+  const starEff = Math.max(1, playerEffective(star));
+  const hot = (live.perfs[star.id] ?? starEff) / starEff; // 0.78..1.22
+  let atkMult: number;
+  if (live.attack === 'estrella') {
+    atkMult = M.estrellaBase + M.estrellaHotSpan * (hot - 0.78) - M.estrellaDecay * live.estrellaQuarters;
+    if (hot > 1.08) notes.push(`${star.name} está encendido: la pide y la mete.`);
+    else if (hot < 0.92) notes.push(`${star.name} no tiene la mano y el plan de dársela siempre a él hace agua.`);
+    else if (live.estrellaQuarters >= 2) notes.push(`El rival ya le tomó la mano a ${star.name}: lo esperan entre dos.`);
+  } else {
+    atkMult = M.equipoBase + M.equipoChemBonus * live.eval.chemistry01;
+    if (live.eval.chemistry01 > 0.7 && rng.chance(0.5)) notes.push('La pelota se mueve sola: el equipo juega de memoria y de buen humor.');
+  }
+  if (missing > 0) notes.push(`Con este quinteto falta un ${ALL_POSITIONS.find((pos) => !covered.has(pos))} natural y se nota.`);
+
+  const atk = effAvg * chemFactor * orgFactor * coverageFactor * atkMult;
+
+  // --- Defensa ---
+  let defMult = 1;
+  if (live.defense === 'hombre') {
+    if (teamFresh >= M.hombreTiredThreshold) {
+      defMult = M.hombreRivalMult;
+      notes.push('La marca individual asfixia la salida del rival.');
+    } else {
+      defMult = M.hombreTiredMult;
+      notes.push('Queremos presionar pero las piernas no llegan: quedan pasillos por todos lados.');
+    }
+    if (rival.style === 'tiradores') defMult *= M.tiradoresVsHombre;
+    if (rival.style === 'internos') notes.push('Chocar con sus grandotes cuesta doble: cada marca es una batalla.');
+  } else {
+    if (rival.style === 'tiradores') {
+      defMult *= M.tiradoresVsZona;
+      notes.push('La zona les deja tiros abiertos y sus tiradores no perdonan.');
+    }
+    if (rival.style === 'internos') defMult *= M.internosVsZona;
+  }
+  if (rival.style === 'corredores') {
+    defMult *= 1 + M.corredoresTiredBoost * (1 - teamFresh / 100);
+    if (teamFresh < 45) notes.push('Nos corren la cancha entera y llegamos siempre tarde a las marcas.');
+  }
+  if (teamFresh < 30) notes.push('El equipo juega de memoria: no quedan piernas.');
+
+  const rivalFreshFactor = M.freshFactorMin + M.freshFactorSpan * (live.rivalFreshness / 100);
+  const rivalEff = rival.strength * rng.range(0.94, 1.06) * rivalFreshFactor * (live.rivalPush ? M.pushRivalBoost : 1);
+
+  // --- Marcador del cuarto ---
+  const luck = rng.range(-M.luckPerQuarter, M.luckPerQuarter);
+  live.luckTotal += luck;
+  const qBase = BALANCE.match.baseScore / 4;
+  const diffQ = ((atk - rivalEff) * BALANCE.match.strengthToPoints) / 4 + luck;
+  const ourQ = Math.max(4, Math.round(qBase + diffQ / 2 + rng.range(-1.5, 1.5)));
+  const rivalQ = Math.max(4, Math.round((qBase - diffQ / 2 + rng.range(-1.5, 1.5)) * defMult));
+
+  const qDiff = ourQ - rivalQ;
+  if (qDiff >= 6) notes.push(`Parcial demoledor: ${ourQ}-${rivalQ} en el ${Q_NAMES[qIndex]}.`);
+  else if (qDiff <= -6) notes.push(`Nos pasaron por arriba: ${ourQ}-${rivalQ} en el ${Q_NAMES[qIndex]}.`);
+
+  // --- Desgaste y minutos ---
+  if (live.defense === 'hombre') live.hombreQuarters += 1;
+  if (live.attack === 'estrella') live.estrellaQuarters += 1;
+
+  for (const p of onCourt) {
+    let drain = M.playerDrainBase;
+    if (live.defense === 'hombre') drain += M.playerDrainHombre + (rival.style === 'internos' ? M.internosHombreDrain : 0);
+    drain += Math.max(0, 60 - p.physical) * M.playerDrainLowPhysical;
+    live.playerFresh[p.id] = clamp(freshOf(p.id) - Math.round(drain));
+    live.minutes[p.id] = (live.minutes[p.id] ?? 0) + M.quarterMinutes;
+  }
+  for (const id of live.squad) {
+    if (!live.onCourt.includes(id)) live.playerFresh[id] = clamp((live.playerFresh[id] ?? 70) + M.benchRecovery);
+  }
+
+  // Aviso de fundidos, para invitar al cambio.
+  const gassed = onCourt.filter((p) => (live.playerFresh[p.id] ?? 70) < 30);
+  if (gassed.length > 0 && qIndex < 3) notes.push(`${gassed[0].name} está fundido y mira al banco: pide el cambio.`);
+
+  let rivalDrain = rival.style === 'corredores' ? M.rivalDrain - 2 : M.rivalDrain;
+  if (live.defense === 'hombre') rivalDrain += M.hombreRivalDrain;
+  live.rivalFreshness = clamp(live.rivalFreshness - rivalDrain);
+
+  if (qIndex === 1) {
+    for (const id of live.squad) live.playerFresh[id] = clamp((live.playerFresh[id] ?? 70) + M.halftimeRecovery);
+    live.rivalFreshness = clamp(live.rivalFreshness + M.halftimeRecovery);
+  }
+
+  live.quarters.push({ for: ourQ, against: rivalQ, defense: live.defense, attack: live.attack, notes: notes.slice(0, 4) });
+
+  // --- Final y suplementario ---
+  if (qIndex === 3) {
+    const totalFor = sumFor + ourQ;
+    const totalAgainst = sumAgainst + rivalQ;
+    if (totalFor === totalAgainst) {
+      let ourOT = rng.int(5, 10);
+      let rivalOT = rng.int(5, 10);
+      if (ourOT === rivalOT) {
+        if (atk >= rivalEff) ourOT += rng.int(1, 3);
+        else rivalOT += rng.int(1, 3);
+      }
+      for (const id of live.onCourt) live.minutes[id] = (live.minutes[id] ?? 0) + M.otMinutes;
+      live.quarters.push({
+        for: ourOT,
+        against: rivalOT,
+        defense: live.defense,
+        attack: live.attack,
+        overtime: true,
+        notes: [
+          ourOT > rivalOT
+            ? 'Suplementario de infarto: lo ganamos con carácter.'
+            : 'Suplementario de infarto: se escapó en el final.',
+        ],
+      });
+    }
+    live.finished = true;
+  }
+
+  return s;
+}
+
+/** Cierra el partido jugado: efectos sobre jugadores y club, tabla e informe. */
+export function finishLiveMatch(state: GameState, rng: Rng): GameState {
+  const s: GameState = structuredClone(state);
+  const live = s.live;
+  if (!live || !live.finished) return s;
+
+  const M = BALANCE.liveMatch;
+  const rival = s.rivals.find((r) => r.id === live.rivalId)!;
+  const absent = matchAbsentIds(s);
+  const starters = s.players.filter((p) => s.starters.includes(p.id) && isSelectable(p) && !absent.has(p.id));
+  const evalTeam = live.eval;
+
+  const scoreFor = live.quarters.reduce((t, q) => t + q.for, 0);
+  const scoreAgainst = live.quarters.reduce((t, q) => t + q.against, 0);
+  const won = scoreFor > scoreAgainst;
+  const margin = Math.abs(scoreFor - scoreAgainst);
+
+  // Desgaste según minutos realmente jugados; la marca hombre suma cansancio extra.
+  const totalMinutes = 40 + (live.quarters.some((q) => q.overtime) ? M.otMinutes : 0);
+  const extraWear = live.hombreQuarters * M.hombreWearPerQuarter;
+  const minutesOf = (id: string) => live.minutes[id] ?? 0;
+  const wearFor = (mins: number) =>
+    Math.round(mins * BALANCE.rotation.wearPerMinute + (extraWear * mins) / totalMinutes);
+
+  // Rendimiento individual y MVP: pesa el rendimiento del día por los minutos jugados.
+  const played = s.players
+    .filter((p) => live.squad.includes(p.id) && minutesOf(p.id) > 0)
+    .map((p) => ({ p, perf: live.perfs[p.id] ?? playerEffective(p), mins: minutesOf(p.id) }));
+  played.sort((a, b) => b.perf - a.perf);
+  const mvpCandidates = played
+    .map((x) => ({ p: x.p, score: x.perf * Math.sqrt(x.mins / totalMinutes) }))
+    .sort((a, b) => b.score - a.score);
+  const mvp = mvpCandidates.length > 0 ? mvpCandidates[0].p : starters[0];
+  const mvpFromBench = !starters.some((st) => st.id === mvp.id);
+
+  const effects: string[] = [];
+  const B = BALANCE.matchEffects;
+  const upset = won && rival.strength > evalTeam.baseSkill + 5;
+
+  s.players = s.players.map((p) => {
+    if (p.leftClub) return p;
+    const np = { ...p };
+    const mins = live.squad.includes(p.id) ? minutesOf(p.id) : 0;
+
+    if (mins >= 20) {
+      // Cargó con el peso del partido.
+      const perf = played.find((x) => x.p.id === p.id)!.perf;
+      np.lastRating = Math.max(1, Math.min(10, Math.round(perf / 10)));
+      np.physical = clamp(np.physical - wearFor(mins) + rng.range(-3, 3));
+      np.weeksBenched = 0;
+      np.confidence = clamp(np.confidence + (np.lastRating >= 7 ? 5 : np.lastRating <= 3 ? -5 : 0));
+    } else if (mins > 0) {
+      // Sumó minutos desde el banco.
+      const perf = played.find((x) => x.p.id === p.id)!.perf;
+      np.lastRating = Math.max(1, Math.min(10, Math.round(perf / 10)));
+      np.physical = clamp(np.physical - wearFor(mins) + rng.range(-2, 2));
+      np.weeksBenched = 0;
+      np.confidence = clamp(np.confidence + (np.lastRating >= 7 ? 3 : np.lastRating <= 3 ? -3 : 0));
+      if (np.personality === 'protagonista' || np.expectedRole === 'titular') {
+        // Jugar poco no les alcanza, pero molesta menos que no jugar.
+        np.motivation = clamp(np.motivation + B.rotationMotivationHit);
+        if (np.motivation < BALANCE.weekly.lowMotivationThreshold && np.status === 'disponible') {
+          np.status = 'molesto';
+          np.weeksUpset = 0;
+        }
+      } else if (np.expectedRole === 'suplente') {
+        np.motivation = clamp(np.motivation + B.subMinutesBoost);
+      }
+    } else if (absent.has(np.id)) {
+      // Faltó con excusa: ni desgaste ni resentimiento por banco. Se lo perdió.
+      return np;
+    } else if (isSelectable(np)) {
+      np.physical = clamp(np.physical - BALANCE.match.physicalWearBench);
+      np.weeksBenched += 1;
+      const wantsMinutes =
+        np.personality === 'protagonista' ||
+        (np.expectedRole === 'titular' && np.weeksBenched >= 2) ||
+        (np.expectedRole === 'rotación' && np.weeksBenched >= 3);
+      if (wantsMinutes) {
+        const hit =
+          np.expectedRole === 'rotación' && np.personality !== 'protagonista'
+            ? B.rotationMotivationHit
+            : B.benchedMotivationHit;
+        np.motivation = clamp(np.motivation + hit);
+        if (np.motivation < BALANCE.weekly.lowMotivationThreshold && np.status === 'disponible') {
+          np.status = 'molesto';
+          np.weeksUpset = 0;
+        }
+      }
+    }
+
+    if (mins > 0 && np.lastRating !== null) {
+      np.matchLog = [
+        ...np.matchLog,
+        {
+          season: s.seasonNumber,
+          week: s.week,
+          rivalName: rival.name,
+          minutes: mins,
+          rating: np.lastRating,
+          mvp: np.id === mvp.id,
+          won,
+        },
+      ];
+    }
+
+    const moraleDelta = won ? B.winMotivation : B.lossMotivation;
+    const personalityScale = np.personality === 'competitivo' ? 1.5 : np.personality === 'social' ? 0.6 : 1;
+    np.motivation = clamp(np.motivation + moraleDelta * personalityScale);
+
+    if (np.id === mvp.id) {
+      np.confidence = clamp(np.confidence + B.mvpConfidence);
+      np.motivation = clamp(np.motivation + 4);
+      np.timeline = [
+        ...np.timeline,
+        {
+          season: s.seasonNumber,
+          week: s.week,
+          kind: 'partido' as const,
+          text: `Figura del partido ante ${rival.name} (${won ? 'victoria' : 'derrota'} ${scoreFor}-${scoreAgainst}).`,
+        },
+      ];
+    }
+    return np;
+  });
+
+  const prestigeDelta = won ? B.winSportPrestige + (upset ? B.upsetWinBonus : 0) : margin > 18 ? B.lossSportPrestige - 1 : B.lossSportPrestige;
+  s.club.sportPrestige = clamp(s.club.sportPrestige + prestigeDelta);
+  if (won) s.club.socialClimate = clamp(s.club.socialClimate + 3);
+  else if (margin > 15) s.club.socialClimate = clamp(s.club.socialClimate - 4);
+
+  effects.push(`Motivación del plantel ${won ? '+' : ''}${won ? B.winMotivation : B.lossMotivation}`);
+  effects.push(`Prestigio deportivo ${prestigeDelta >= 0 ? '+' : ''}${prestigeDelta}`);
+  const mostUsed = [...played].sort((a, b) => b.mins - a.mins);
+  if (mostUsed.length > 0) {
+    effects.push(
+      `Minutos: ${played.length} jugador${played.length > 1 ? 'es' : ''} sumaron cancha; el más exigido, ${mostUsed[0].p.name} (${mostUsed[0].mins}', desgaste -${wearFor(mostUsed[0].mins)} aprox.).`
+    );
+    const ironmen = mostUsed.filter((x) => x.mins >= totalMinutes);
+    if (ironmen.length > 0)
+      effects.push(
+        `${ironmen.map((x) => x.p.name).join(', ')} ${
+          ironmen.length > 1 ? 'jugaron todo el partido: terminaron fundidos' : 'jugó todo el partido: terminó fundido'
+        }.`
+      );
+  }
+  if (live.hombreQuarters > 0)
+    effects.push(`Marca hombre en ${live.hombreQuarters} cuarto${live.hombreQuarters > 1 ? 's' : ''}: desgaste extra repartido entre los que la corrieron.`);
+  if (upset) effects.push('¡Batacazo! Ganarle a un rival superior sumó prestigio extra.');
+
+  // Claves tácticas del resultado.
+  const endFresh = courtFreshness(live);
+  const star = s.players.find((p) => p.id === live.starId);
+  const starEff = star ? Math.max(1, playerEffective(star)) : 1;
+  const hot = star ? (live.perfs[star.id] ?? starEff) / starEff : 1;
+  const zonaQuarters = live.quarters.filter((q) => !q.overtime && q.defense === 'zona').length;
+  const subsMade = played.filter((x) => !starters.some((st) => st.id === x.p.id)).length;
+  const extraReasons: { weight: number; text: string }[] = [];
+  if (live.hombreQuarters >= 3) {
+    if (endFresh < 35 && !won)
+      extraReasons.push({ weight: 11, text: 'Marcar hombre todo el partido nos dejó sin piernas en el cierre.' });
+    else if (won) extraReasons.push({ weight: 8, text: 'La marca individual incomodó al rival de principio a fin.' });
+  }
+  if (live.estrellaQuarters >= 3) {
+    if (hot < 0.92) extraReasons.push({ weight: 10, text: `Apostamos todo a ${live.starName} y no era su noche.` });
+    else if (hot > 1.08) extraReasons.push({ weight: 10, text: `${live.starName} cargó el equipo al hombro y respondió.` });
+  }
+  if (rival.style === 'tiradores' && zonaQuarters >= 3)
+    extraReasons.push({ weight: 9, text: 'La zona les regaló tiros abiertos a sus tiradores toda la noche.' });
+  if (rival.style === 'corredores' && endFresh < 35)
+    extraReasons.push({ weight: 9, text: 'Su ritmo de contraataque castigó nuestras piernas gastadas.' });
+  if (subsMade >= 3 && endFresh > 55)
+    extraReasons.push({ weight: 7, text: 'Los cambios mantuvieron piernas frescas hasta el final.' });
+  if (subsMade === 0 && endFresh < 35)
+    extraReasons.push({ weight: 8, text: 'Sin tocar el banco, el quinteto llegó fundido al cierre.' });
+
+  const summary = won
+    ? margin > 15
+      ? `Victoria contundente ante ${rival.name}. El equipo fue superior de principio a fin.`
+      : `Triunfo trabajado contra ${rival.name}, definido en el cierre.`
+    : margin > 15
+      ? `Dura derrota contra ${rival.name}. Nunca estuvimos en partido.`
+      : `Derrota ajustada ante ${rival.name}. Se escapó por detalles.`;
+
+  // El relato del informe sale de lo que realmente pasó cuarto a cuarto
+  // (sin repetir la misma observación de cuartos consecutivos).
+  const seenNotes = new Set<string>();
+  const highlights = live.quarters
+    .flatMap((q, i) =>
+      q.notes
+        .filter((n) => !seenNotes.has(n) && (seenNotes.add(n), true))
+        .map((n) => `${q.overtime ? 'Suplementario' : Q_NAMES[i]}: ${n}`)
+    )
+    .slice(0, 6);
+  if (mvpFromBench) highlights.push(`${mvp.name} entró desde el banco y cambió el partido: figura inesperada.`);
+
+  const lockerRoom = lockerRoomNotes(s, { won, margin }, starters, won ? mvp : null, rng);
+  const absentOnes = s.callUp.filter((c) => c.status === 'ausente');
+  if (!won && absentOnes.length > 0 && lockerRoom.length < 2) {
+    lockerRoom.push(`"Para el picado nunca falta", tiró uno del grupo cuando se habló de la ausencia de ${absentOnes[0].playerName}.`);
+  }
+
+  const result: MatchResult = {
+    week: s.week,
+    rivalId: rival.id,
+    rivalName: rival.name,
+    scoreFor,
+    scoreAgainst,
+    quarters: live.quarters.map((q) => ({ for: q.for, against: q.against })),
+    highlights,
+    won,
+    forfeit: false,
+    mvpId: mvp.id,
+    mvpName: mvp.name,
+    summary,
+    reasons: buildReasons(evalTeam, rival.strength, live.luckTotal, won, extraReasons),
+    lockerRoom,
+    effects,
+  };
+
+  if (upset) s.memorableMoments.push(`Semana ${s.week}: batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);
+  if (won && margin >= 25) s.memorableMoments.push(`Semana ${s.week}: paliza inolvidable a ${rival.name} por ${margin} puntos.`);
+
+  concludeMatch(s, result, rng);
   return s;
 }
 
@@ -465,17 +735,19 @@ export function clubPosition(state: GameState): number {
 }
 
 /** Rotación sugerida: los mejores disponibles que no son titulares. */
-export function suggestRotation(players: Player[], starterIds: string[]): string[] {
+export function suggestRotation(players: Player[], starterIds: string[], absent: Set<string> = new Set()): string[] {
   return players
-    .filter((p) => isSelectable(p) && !starterIds.includes(p.id))
+    .filter((p) => isSelectable(p) && !absent.has(p.id) && !starterIds.includes(p.id))
     .sort((a, b) => playerEffective(b) - playerEffective(a))
     .slice(0, BALANCE.rotation.maxPlayers)
     .map((p) => p.id);
 }
 
 /** Quinteto sugerido: los 5 disponibles más fuertes cubriendo posiciones. */
-export function suggestStarters(players: Player[]): string[] {
-  const selectable = players.filter(isSelectable).sort((a, b) => playerEffective(b) - playerEffective(a));
+export function suggestStarters(players: Player[], absent: Set<string> = new Set()): string[] {
+  const selectable = players
+    .filter((p) => isSelectable(p) && !absent.has(p.id))
+    .sort((a, b) => playerEffective(b) - playerEffective(a));
   const chosen: Player[] = [];
   // Primero, el mejor por posición.
   for (const pos of ALL_POSITIONS) {

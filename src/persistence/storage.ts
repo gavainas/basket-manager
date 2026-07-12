@@ -1,6 +1,19 @@
 import { SAVE_VERSION } from '../game/week';
 import { suggestRotation } from '../game/match';
+import { Rng } from '../game/rng';
+import { RIVALS } from '../data/rivals';
+import { rollBackground } from '../data/backgrounds';
 import type { GameState } from '../game/types';
+
+/** Semilla estable a partir de un string, para migraciones deterministas. */
+function seedFrom(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
 
 const KEY = 'basket-manager-save-v1';
 
@@ -43,6 +56,38 @@ export function loadGame(): GameState | null {
       parsed.promises = parsed.promises ?? [];
       parsed.preseason = parsed.preseason ?? null;
       parsed.saveVersion = 6;
+    }
+    // v6 → v7: convocatoria, partido en vivo y estilos de los rivales.
+    if (parsed.saveVersion === 6) {
+      parsed.callUp = parsed.callUp ?? [];
+      parsed.live = null;
+      for (const r of parsed.rivals) {
+        r.style = r.style ?? RIVALS.find((d) => d.id === r.id)?.style ?? 'equilibrado';
+      }
+      parsed.saveVersion = 7;
+    }
+    // v7 → v8: cambios de jugadores en el partido (el formato de live cambió).
+    if (parsed.saveVersion === 7) {
+      parsed.live = null;
+      if (parsed.phase === 'match') parsed.phase = 'lineup';
+      parsed.saveVersion = 8;
+    }
+    // v8 → v9: ficha personal del jugador (datos, historial y timeline).
+    if (parsed.saveVersion === 8) {
+      for (const p of parsed.players) {
+        const rng = new Rng(seedFrom(p.id + p.name));
+        const bg = rollBackground(p.position, rng);
+        p.height = p.height ?? bg.height;
+        p.hand = p.hand ?? bg.hand;
+        p.profession = p.profession ?? bg.profession;
+        p.previousTeam = p.previousTeam ?? bg.previousTeam;
+        p.joinedSeason = p.joinedSeason ?? 1;
+        p.matchLog = p.matchLog ?? [];
+        p.timeline = p.timeline ?? [
+          { season: p.joinedSeason, week: 0, kind: 'llegada', text: 'Llegó al club.' },
+        ];
+      }
+      parsed.saveVersion = 9;
     }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;

@@ -8,7 +8,7 @@ Próximas etapas, en orden aproximado de valor:
 - **Balance general**: ajustar dificultad económica y deportiva con datos de partidas reales; niveles de dificultad.
 
 ## Mediano plazo
-- **Simulación táctica más profunda**: estilos de juego (correr, defender, tirar de tres), matchups por posición, parciales por cuarto.
+- **Más profundidad táctica**: ya hay partido por cuartos con defensa (hombre/zona), ataque (estrella/equipo), piernas y estilos de rival; falta: cambios de jugadores entre cuartos, matchups por posición, ritmo de juego.
 - **Scouting en temporada**: ver jugadores rivales durante los partidos para conocerlos mejor de cara al mercado siguiente.
 - **Lesiones**: gravedad variable, recuperación progresiva, riesgo por sobrecarga de minutos.
 - **Relaciones entre jugadores**: amistades, roces e influencias (un líder que se va arrastra amigos).

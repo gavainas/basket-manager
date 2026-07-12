@@ -316,7 +316,7 @@ export const ACTIONS: ActionDef[] = [
       if (rng.chance(A.recruit.failChance)) {
         return 'Preguntamos por todos lados, pero esta semana no apareció nadie con ganas de sumarse.';
       }
-      const recruit = createRecruit(rng);
+      const recruit = createRecruit(rng, { season: s.seasonNumber });
       s.players.push(recruit);
       s.news.unshift({ week: s.week, text: `Se sumó ${recruit.name} (${recruit.position}) al plantel.`, tone: 'good' });
       return `Se sumó ${recruit.name}, ${recruit.position.toLowerCase()} de ${recruit.age} años. Habrá que ver cómo rinde.`;

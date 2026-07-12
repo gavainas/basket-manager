@@ -222,6 +222,8 @@ export function createPreseasonNewGame(seed: number): GameState {
     eventOutcome: null,
     starters: [],
     rotation: [],
+    callUp: [],
+    live: null,
     lastMatch: null,
     history: [],
     news: [
@@ -322,6 +324,8 @@ export function startPreseason(state: GameState): GameState {
     eventOutcome: null,
     starters: [],
     rotation: [],
+    callUp: [],
+    live: null,
     lastMatch: null,
     history: [],
     news: [
@@ -441,7 +445,7 @@ export function signMarketPlayer(
     return { ok: false, text: `No te alcanza la caja para cerrar este fichaje (necesitás $${terms.cost}).` };
   }
   if (terms.cost > 0) psSpend(s, `Fichaje de ${mp.name}`, terms.cost);
-  const player = marketToPlayer(mp, feeStatusFor(mp, terms.demandApplied), roleFor(mp, terms.demandApplied));
+  const player = marketToPlayer(mp, feeStatusFor(mp, terms.demandApplied), roleFor(mp, terms.demandApplied), s.seasonNumber, rng);
   s.players.push(player);
   p.continuity[player.id] = 'confirmado';
   mp.status = 'fichado';
@@ -451,7 +455,7 @@ export function signMarketPlayer(
     addPromise(s, player.id, player.name, terms.demandApplied, terms.promiseLabel ?? DEMAND_LABELS[terms.demandApplied]);
   }
   if (terms.demandApplied === 'amigo') {
-    const friend = createRecruit(rng, { minTechnique: 42, maxTechnique: 64 });
+    const friend = createRecruit(rng, { minTechnique: 42, maxTechnique: 64, season: s.seasonNumber });
     friend.description = `Vino porque ficharon a su amigo ${mp.name}.`;
     s.players.push(friend);
     p.continuity[friend.id] = 'confirmado';
@@ -701,7 +705,7 @@ export function closePreseason(state: GameState): GameState {
   if (roster.length < BALANCE.preseason.minPlayers) {
     const needed = BALANCE.preseason.minPlayers - roster.length;
     for (let i = 0; i < needed; i++) {
-      const emergency = createRecruit(rng, { minTechnique: 32, maxTechnique: 48 });
+      const emergency = createRecruit(rng, { minTechnique: 32, maxTechnique: 48, season: s.seasonNumber });
       emergency.description = 'Vino a dar una mano a último momento para que el club pudiera inscribirse.';
       s.players.push(emergency);
       p.continuity[emergency.id] = 'confirmado';

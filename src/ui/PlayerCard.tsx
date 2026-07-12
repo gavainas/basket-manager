@@ -1,5 +1,6 @@
 import type { Player } from '../game/types';
 import { Bar } from './Bar';
+import { PlayerLink } from './PlayerLink';
 import { feeChip, initials, roleLabel, starsFor, statusChip } from './helpers';
 
 interface Props {
@@ -31,7 +32,9 @@ export function PlayerCard({ player: p, selectable, selected, inRotation, dimmed
       <div className="player-head">
         <div className="avatar">{initials(p.name)}</div>
         <div className="who">
-          <div className="name">{p.name}</div>
+          <div className="name">
+            <PlayerLink id={p.id}>{p.name}</PlayerLink>
+          </div>
           <div className="pos">
             {p.position} · {p.age} años
           </div>

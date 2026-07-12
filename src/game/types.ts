@@ -14,6 +14,39 @@ export type Personality =
 
 export type PlayerStatus = 'disponible' | 'molesto' | 'lesionado' | 'al_borde';
 
+export type Hand = 'derecha' | 'zurda';
+
+/** Tipo de hito en una historia personal (reutilizable para club/temporadas). */
+export type TimelineKind =
+  | 'llegada'
+  | 'partido'
+  | 'lesion'
+  | 'ausencia'
+  | 'animo'
+  | 'social'
+  | 'hito'
+  | 'salida';
+
+/** Un momento en la historia de un jugador (o del club). */
+export interface TimelineEvent {
+  season: number;
+  /** Semana de la temporada (0 = pretemporada). */
+  week: number;
+  kind: TimelineKind;
+  text: string;
+}
+
+/** Línea de un partido jugado: alimenta estadísticas y tendencias. */
+export interface PlayerMatchEntry {
+  season: number;
+  week: number;
+  rivalName: string;
+  minutes: number;
+  rating: number;
+  mvp: boolean;
+  won: boolean;
+}
+
 export type FeeStatus = 'pagada' | 'pendiente' | 'beca_total' | 'beca_parcial';
 
 export type ExpectedRole = 'titular' | 'rotación' | 'suplente';
@@ -53,6 +86,17 @@ export interface Player {
   /** Técnica ganada esta temporada entrenando (impulsa el progreso visible). */
   techniqueGain: number;
   leftClub: boolean;
+  // --- Ficha personal ---
+  height: number; // cm
+  hand: Hand;
+  previousTeam: string;
+  profession: string;
+  /** Temporada en la que llegó al club. */
+  joinedSeason: number;
+  /** Partidos jugados con el club (para estadísticas y tendencias). */
+  matchLog: PlayerMatchEntry[];
+  /** Historia personal en el club. */
+  timeline: TimelineEvent[];
 }
 
 export interface Club {
@@ -64,10 +108,14 @@ export interface Club {
   socialPrestige: number; // 0-100
 }
 
+/** Estilo de juego del rival: define contra qué tácticas sufre o castiga. */
+export type RivalStyle = 'tiradores' | 'internos' | 'corredores' | 'equilibrado';
+
 export interface Rival {
   id: string;
   name: string;
   strength: number; // 0-100
+  style: RivalStyle;
 }
 
 export interface StandingRow {
@@ -81,6 +129,79 @@ export interface StandingRow {
 export interface QuarterScore {
   for: number;
   against: number;
+}
+
+// ---------- Convocatoria y partido en vivo ----------
+
+export type CallUpStatus = 'confirmado' | 'ausente' | 'lesionado';
+
+/** Respuesta de un jugador a la convocatoria del partido de la semana. */
+export interface CallUpEntry {
+  playerId: string;
+  playerName: string;
+  status: CallUpStatus;
+  /** Excusa o parte médico (null si confirmó sin drama). */
+  note: string | null;
+}
+
+export type DefenseTactic = 'hombre' | 'zona';
+export type AttackTactic = 'estrella' | 'equipo';
+
+/** Resumen del quinteto al momento de arrancar el partido. */
+export interface TeamEval {
+  strength: number;
+  baseSkill: number;
+  physicalAvg: number;
+  motivationAvg: number;
+  missingPositions: number;
+  chemistry01: number;
+  starterMinutes: number;
+  rotationCount: number;
+}
+
+export interface LiveQuarter {
+  for: number;
+  against: number;
+  defense: DefenseTactic;
+  attack: AttackTactic;
+  /** Mini relato de lo que pasó en el cuarto. */
+  notes: string[];
+  /** true si es el suplementario. */
+  overtime?: boolean;
+}
+
+/** Estado del partido en curso (fase 'match'). */
+export interface LiveMatchState {
+  rivalId: string;
+  rivalName: string;
+  quarters: LiveQuarter[];
+  finished: boolean;
+  /** Tácticas elegidas para el próximo cuarto. */
+  defense: DefenseTactic;
+  attack: AttackTactic;
+  /** Todos los citados al partido (titulares + banco). */
+  squad: string[];
+  /** Los 5 que están en cancha ahora mismo. */
+  onCourt: string[];
+  /** Piernas de cada citado (0-100): en cancha se gastan, en el banco se recuperan. */
+  playerFresh: Record<string, number>;
+  /** Minutos jugados por cada citado. */
+  minutes: Record<string, number>;
+  /** Cambios hechos en el descanso, para el relato del próximo cuarto. */
+  pendingSubNotes: string[];
+  rivalFreshness: number;
+  /** Mejor jugador en cancha: el destinatario del ataque 'estrella'. */
+  starId: string;
+  starName: string;
+  /** Rendimiento del día por jugador (se sortea al arrancar). */
+  perfs: Record<string, number>;
+  hombreQuarters: number;
+  estrellaQuarters: number;
+  /** Suerte acumulada, para explicar el resultado. */
+  luckTotal: number;
+  /** El rival metió una presión especial en el último cuarto. */
+  rivalPush: boolean;
+  eval: TeamEval;
 }
 
 export interface MatchResult {
@@ -138,7 +259,16 @@ export interface ActiveEvent {
   playerId2?: string;
 }
 
-export type Phase = 'preseason' | 'preseasonEnd' | 'planning' | 'lineup' | 'matchResult' | 'seasonEnd' | 'gameOver';
+export type Phase =
+  | 'preseason'
+  | 'preseasonEnd'
+  | 'planning'
+  | 'callUp'
+  | 'lineup'
+  | 'match'
+  | 'matchResult'
+  | 'seasonEnd'
+  | 'gameOver';
 
 // ---------- Pretemporada y fichajes ----------
 
@@ -281,6 +411,10 @@ export interface GameState {
   starters: string[]; // ids de los 5 titulares elegidos
   /** Ids de los jugadores de rotación (entran desde el banco, máx. 5). */
   rotation: string[];
+  /** Confirmación de asistencia al partido de la semana (se sortea tras las decisiones). */
+  callUp: CallUpEntry[];
+  /** Partido en curso; null fuera de la fase 'match'. */
+  live: LiveMatchState | null;
   lastMatch: MatchResult | null;
   history: MatchResult[];
   news: NewsItem[];

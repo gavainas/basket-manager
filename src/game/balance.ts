@@ -26,6 +26,54 @@ export const BALANCE = {
     forfeitScore: [20, 60] as [number, number],
   },
 
+  // Confirmación de asistencia previa al partido: los de poco compromiso fallan.
+  callUp: {
+    maxOut: 2, // nunca se caen más de 2 por semana
+    commitmentThreshold: 60, // debajo de esto un jugador puede fallar
+    excuseChanceFactor: 0.5, // prob. de excusa = (umbral - compromiso)/100 × esto
+    informalExtra: 0.08, // el talentoso informal falla aunque tenga compromiso
+    upsetExtra: 0.06, // molesto o al borde: menos ganas de venir
+    injuryChanceFactor: 0.12, // prob. de lesión jugando en otro lado
+    injuryWeeksMin: 1,
+    injuryWeeksMax: 2,
+  },
+
+  // Partido en vivo, cuarto a cuarto.
+  liveMatch: {
+    luckPerQuarter: 3, // amplitud del azar en puntos por cuarto
+    freshStartBase: 55, // piernas iniciales de cada jugador = base + físico × factor
+    freshStartPhysical: 0.45,
+    freshFactorMin: 0.88, // multiplicador de fuerza = min + span × piernas/100
+    freshFactorSpan: 0.24,
+    playerDrainBase: 11, // caída de piernas por cuarto en cancha
+    playerDrainHombre: 5, // extra por marcar hombre
+    playerDrainLowPhysical: 0.06, // extra por punto de físico debajo de 60
+    benchRecovery: 8, // recuperación por cuarto en el banco
+    halftimeRecovery: 7, // recuperación de todos en el entretiempo
+    quarterMinutes: 10, // minutos que suma cada cuarto en cancha
+    otMinutes: 5, // minutos del suplementario
+    rivalFreshStart: 82,
+    rivalDrain: 7,
+    hombreRivalMult: 0.9, // marca hombre con piernas: el rival anota menos
+    hombreTiredMult: 1.08, // marca hombre fundido: te pasan por arriba
+    hombreTiredThreshold: 45, // piernas mínimas para sostener la marca hombre
+    hombreRivalDrain: 3, // la presión también desgasta al rival
+    estrellaBase: 0.88, // ataque estrella: mult = base + span × (calentura - 0.78)
+    estrellaHotSpan: 0.6,
+    estrellaDecay: 0.03, // el rival le toma la mano por cada cuarto repetido
+    equipoBase: 0.97, // ataque de equipo: mult = base + bonus × química
+    equipoChemBonus: 0.08,
+    tiradoresVsZona: 1.08, // los tiradores castigan la zona
+    tiradoresVsHombre: 0.95, // y sufren la marca individual
+    internosHombreDrain: 4, // marcar hombre a los grandotes desgasta extra
+    internosVsZona: 0.95, // la zona les cierra la pintura
+    corredoresTiredBoost: 0.12, // los corredores castigan las piernas gastadas
+    pushDeficit: 8, // si el rival pierde por esto al entrar al último cuarto, presiona
+    pushFreshCost: 5,
+    pushRivalBoost: 1.05,
+    hombreWearPerQuarter: 1, // desgaste físico extra post partido por cuarto en hombre
+  },
+
   rotation: {
     maxPlayers: 5,
     totalMinutes: 200, // 5 puestos × 40 minutos

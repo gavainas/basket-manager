@@ -226,7 +226,7 @@ export const EVENTS: EventDef[] = [
     resolve: (s, ev, opt, rng) => {
       const inviter = byId(s, ev.playerId);
       if (opt === 0) {
-        const friend = createRecruit(rng, { minTechnique: 60, maxTechnique: 80 });
+        const friend = createRecruit(rng, { minTechnique: 60, maxTechnique: 80, season: s.seasonNumber });
         friend.description = `Amigo de ${inviter.name}. Se nota que jugó en serio, falta ver si se engancha con el grupo.`;
         s.players.push(friend);
         inviter.motivation = clamp(inviter.motivation + 5);
@@ -616,7 +616,7 @@ export const EVENTS: EventDef[] = [
     ],
     resolve: (s, _ev, opt, rng) => {
       if (opt === 0) {
-        const kid = createRecruit(rng, { minTechnique: 35, maxTechnique: 52 });
+        const kid = createRecruit(rng, { minTechnique: 35, maxTechnique: 52, season: s.seasonNumber });
         kid.age = 19;
         kid.description = 'El sobrino del vecino. Le falta juego, pero corre todo y no falta nunca.';
         kid.commitment = rng.int(75, 95);

@@ -1,5 +1,6 @@
 import type { ExpectedRole, FeeStatus, Personality, Player, Position } from '../game/types';
 import type { Rng } from '../game/rng';
+import { rollBackground } from './backgrounds';
 
 interface PlayerSeed {
   name: string;
@@ -14,6 +15,9 @@ interface PlayerSeed {
   description: string;
   feeStatus: FeeStatus;
   expectedRole: ExpectedRole;
+  /** Color opcional de la ficha; lo que falte se sortea. */
+  previousTeam?: string;
+  profession?: string;
 }
 
 const ROSTER_SEEDS: PlayerSeed[] = [
@@ -30,6 +34,7 @@ const ROSTER_SEEDS: PlayerSeed[] = [
     description: 'Fundador del equipo. Ya no corre como antes, pero ordena al grupo adentro y afuera de la cancha.',
     feeStatus: 'pagada',
     expectedRole: 'titular',
+    previousTeam: 'Fundador: acá empezó todo',
   },
   {
     name: 'Facundo Silva',
@@ -128,6 +133,7 @@ const ROSTER_SEEDS: PlayerSeed[] = [
     description: 'Jugó federado. Rinde mucho, pero deja claro que en otros clubes no le cobraban la cuota.',
     feeStatus: 'beca_parcial',
     expectedRole: 'titular',
+    previousTeam: 'Liga federada regional',
   },
   {
     name: 'Gonzalo Viera',
@@ -188,6 +194,7 @@ const ROSTER_SEEDS: PlayerSeed[] = [
 ];
 
 export function buildPlayer(seed: PlayerSeed, id: string, rng: Rng): Player {
+  const bg = rollBackground(seed.position, rng);
   return {
     id,
     name: seed.name,
@@ -213,6 +220,13 @@ export function buildPlayer(seed: PlayerSeed, id: string, rng: Rng): Player {
     seasonTrainings: 0,
     techniqueGain: 0,
     leftClub: false,
+    height: bg.height,
+    hand: bg.hand,
+    previousTeam: seed.previousTeam ?? bg.previousTeam,
+    profession: seed.profession ?? bg.profession,
+    joinedSeason: 1,
+    matchLog: [],
+    timeline: [{ season: 1, week: 0, kind: 'llegada', text: 'En el plantel desde el arranque del club.' }],
   };
 }
 

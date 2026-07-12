@@ -5,11 +5,13 @@ import { getAction } from './actions';
 import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent } from './events';
 import { generateObjectives } from './objectives';
-import { activePlayers, suggestRotation, suggestStarters } from './match';
+import { activePlayers, clubPosition, matchAbsentIds, suggestRotation, suggestStarters } from './match';
+import { rollCallUp } from './callup';
+import { logPlayerEvent } from './timeline';
 import { Rng } from './rng';
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 9;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);
@@ -48,6 +50,8 @@ export function createNewGame(seed: number): GameState {
     eventOutcome: null,
     starters,
     rotation: suggestRotation(players, starters),
+    callUp: [],
+    live: null,
     lastMatch: null,
     history: [],
     news: [
@@ -71,7 +75,7 @@ export function createNewGame(seed: number): GameState {
   return state;
 }
 
-/** Aplica las acciones elegidas y pasa a la elección de quinteto. */
+/** Aplica las acciones elegidas y pasa a la convocatoria del partido. */
 export function confirmActions(state: GameState): GameState {
   const s: GameState = structuredClone(state);
   const rng = new Rng(s.seed);
@@ -86,9 +90,12 @@ export function confirmActions(state: GameState): GameState {
     s.actionsLog.push(`${def.icon} ${def.name}: ${log}`);
     if (def.oncePerSeason) s.actionsUsed.push(def.id);
   }
-  s.phase = 'lineup';
-  s.starters = suggestStarters(s.players);
-  s.rotation = suggestRotation(s.players, s.starters);
+  // Convocatoria: se confirma quién viene al partido (y quién falla).
+  rollCallUp(s, rng);
+  s.phase = 'callUp';
+  const absent = matchAbsentIds(s);
+  s.starters = suggestStarters(s.players, absent);
+  s.rotation = suggestRotation(s.players, s.starters, absent);
   s.seed = rng.nextSeed();
   return s;
 }
@@ -103,8 +110,9 @@ export function resolveEvent(state: GameState, optionIndex: number): GameState {
   const outcome = def.resolve(s, ev, optionIndex, rng);
   s.eventOutcome = outcome;
   s.pendingEvent = null;
-  s.starters = suggestStarters(s.players);
-  s.rotation = suggestRotation(s.players, s.starters);
+  const absent = matchAbsentIds(s);
+  s.starters = suggestStarters(s.players, absent);
+  s.rotation = suggestRotation(s.players, s.starters, absent);
   s.seed = rng.nextSeed();
   return s;
 }
@@ -124,6 +132,7 @@ export function advanceWeek(state: GameState): GameState {
       if (p.injuryWeeks <= 0) {
         p.status = 'disponible';
         p.injuryWeeks = 0;
+        logPlayerEvent(p, s.seasonNumber, s.week, 'lesion', 'Recibió el alta: disponible otra vez.');
         s.news.unshift({ week: s.week, text: `${p.name} vuelve a estar disponible.`, tone: 'good' });
       }
     } else {
@@ -152,6 +161,7 @@ export function advanceWeek(state: GameState): GameState {
     if (p.status === 'disponible' && p.motivation < BALANCE.weekly.lowMotivationThreshold) {
       p.status = 'molesto';
       p.weeksUpset = 0;
+      logPlayerEvent(p, s.seasonNumber, s.week, 'animo', 'Se calentó: está molesto con cómo vienen las cosas.');
       s.news.unshift({ week: s.week, text: `${p.name} está molesto con cómo vienen las cosas.`, tone: 'bad' });
     } else if (p.status === 'molesto' || p.status === 'al_borde') {
       if (p.motivation >= 45) {
@@ -161,10 +171,12 @@ export function advanceWeek(state: GameState): GameState {
         p.weeksUpset += 1;
         if (p.status === 'molesto' && p.weeksUpset >= BALANCE.weekly.upsetWeeksToAlBorde) {
           p.status = 'al_borde';
+          logPlayerEvent(p, s.seasonNumber, s.week, 'animo', 'Al borde de dejar el club: la relación pende de un hilo.');
           s.news.unshift({ week: s.week, text: `${p.name} está al borde de dejar el club. Habría que hablarle.`, tone: 'bad' });
         } else if (p.status === 'al_borde' && (p.motivation < BALANCE.weekly.leaveThreshold || rng.chance(0.3))) {
           p.leftClub = true;
           s.playersLeftCount += 1;
+          logPlayerEvent(p, s.seasonNumber, s.week, 'salida', 'Abandonó el club a mitad de temporada. "Esto ya no es para mí".');
           s.club.socialPrestige = clamp(s.club.socialPrestige - 3);
           s.club.socialClimate = clamp(s.club.socialClimate - 4);
           s.news.unshift({ week: s.week, text: `${p.name} abandonó el club. "Esto ya no es para mí", dejó dicho.`, tone: 'bad' });
@@ -186,6 +198,8 @@ export function advanceWeek(state: GameState): GameState {
   s.actionsChosen = [];
   s.actionsLog = [];
   s.eventOutcome = null;
+  s.callUp = [];
+  s.live = null;
   s.lastMatch = state.lastMatch; // se conserva para referencia
 
   const active = activePlayers(s.players);
@@ -198,6 +212,11 @@ export function advanceWeek(state: GameState): GameState {
     s.gameOverReason = 'Quedaron menos de 5 jugadores en el plantel. No hay equipo para presentar: el club se retira de la liga.';
   } else if (s.week > s.seasonLength) {
     s.phase = 'seasonEnd';
+    if (clubPosition(s) === 1) {
+      for (const p of active) {
+        logPlayerEvent(p, s.seasonNumber, s.seasonLength, 'hito', `¡Campeón de la temporada ${s.seasonNumber} con el club!`);
+      }
+    }
   } else {
     s.phase = 'planning';
     s.pendingEvent = rollEvent(s, rng);

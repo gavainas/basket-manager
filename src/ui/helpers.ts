@@ -1,4 +1,4 @@
-import type { Player, Rival } from '../game/types';
+import type { Player, Rival, RivalStyle } from '../game/types';
 
 export function initials(name: string): string {
   const clean = name.replace(/"[^"]*"\s*/g, '').trim();
@@ -66,4 +66,29 @@ export function rivalDifficulty(rival: Rival): { label: string; cls: string } {
 
 export function formatMoney(amount: number): string {
   return `$${amount.toLocaleString('es-AR')}`;
+}
+
+export function rivalStyleInfo(style: RivalStyle): { label: string; desc: string } {
+  switch (style) {
+    case 'tiradores':
+      return {
+        label: '🎯 Tiradores',
+        desc: 'Viven del tiro externo: la zona les regala tiros abiertos; la marca hombre los incomoda.',
+      };
+    case 'internos':
+      return {
+        label: '🏋 Juego interior',
+        desc: 'Grandotes que castigan cerca del aro: marcarlos hombre desgasta el doble; la zona les cierra la pintura.',
+      };
+    case 'corredores':
+      return {
+        label: '🏃 Corredores',
+        desc: 'Corren toda la cancha los 40 minutos: si tu equipo se queda sin piernas, te pasan por arriba.',
+      };
+    case 'equilibrado':
+      return {
+        label: '⚖ Equilibrado',
+        desc: 'No tienen un punto débil claro: gana el que impone su juego.',
+      };
+  }
 }

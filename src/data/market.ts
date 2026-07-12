@@ -11,6 +11,7 @@ import type {
   Position,
 } from '../game/types';
 import type { Rng } from '../game/rng';
+import { rollBackground } from './backgrounds';
 
 interface MarketSeed {
   name: string;
@@ -294,7 +295,14 @@ export function buildMarket(rng: Rng): MarketPlayer[] {
 }
 
 /** Convierte un fichable en jugador del plantel con las condiciones pactadas. */
-export function marketToPlayer(mp: MarketPlayer, feeStatus: FeeStatus, expectedRole: ExpectedRole): Player {
+export function marketToPlayer(
+  mp: MarketPlayer,
+  feeStatus: FeeStatus,
+  expectedRole: ExpectedRole,
+  season: number,
+  rng: Rng
+): Player {
+  const bg = rollBackground(mp.position, rng);
   return {
     id: `sg_${mp.id}_${mp.name.length}`,
     name: mp.name,
@@ -321,5 +329,14 @@ export function marketToPlayer(mp: MarketPlayer, feeStatus: FeeStatus, expectedR
     seasonTrainings: 0,
     techniqueGain: 0,
     leftClub: false,
+    height: mp.height,
+    hand: bg.hand,
+    previousTeam: mp.previousTeam,
+    profession: bg.profession,
+    joinedSeason: season,
+    matchLog: [],
+    timeline: [
+      { season, week: 0, kind: 'llegada', text: `Fichó para el club llegando de ${mp.previousTeam}.` },
+    ],
   };
 }

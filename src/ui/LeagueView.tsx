@@ -1,10 +1,21 @@
 import type { GameState } from '../game/types';
+import { rivalStyleInfo } from './helpers';
 
 export function LeagueView({ state }: { state: GameState }) {
   const sorted = [...state.standings].sort(
     (a, b) => b.wins - a.wins || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
   );
   const teamName = (id: string) => (id === 'club' ? state.club.name : state.rivals.find((r) => r.id === id)?.name ?? id);
+  const styleChip = (id: string) => {
+    const rival = state.rivals.find((r) => r.id === id);
+    if (!rival) return null;
+    const info = rivalStyleInfo(rival.style);
+    return (
+      <span className="chip" title={info.desc}>
+        {info.label}
+      </span>
+    );
+  };
 
   return (
     <div className="grid cols-2">
@@ -25,7 +36,9 @@ export function LeagueView({ state }: { state: GameState }) {
               {sorted.map((row, i) => (
                 <tr key={row.teamId} className={row.teamId === 'club' ? 'highlight' : ''}>
                   <td>{i + 1}</td>
-                  <td>{teamName(row.teamId)}</td>
+                  <td>
+                    {teamName(row.teamId)} {styleChip(row.teamId)}
+                  </td>
                   <td className="num">{row.wins}</td>
                   <td className="num">{row.losses}</td>
                   <td className="num">{row.pointsFor - row.pointsAgainst}</td>
@@ -54,7 +67,9 @@ export function LeagueView({ state }: { state: GameState }) {
                 return (
                   <tr key={week} className={week === state.week ? 'highlight' : ''}>
                     <td>{week}</td>
-                    <td>{teamName(rivalId)}</td>
+                    <td>
+                      {teamName(rivalId)} {styleChip(rivalId)}
+                    </td>
                     <td>
                       {match ? (
                         <span style={{ color: match.won ? 'var(--good)' : 'var(--bad)', fontWeight: 700 }}>
