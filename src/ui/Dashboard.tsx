@@ -1,8 +1,10 @@
 import { useContext } from 'react';
 import type { GameState } from '../game/types';
 import { activePlayers, clubPosition } from '../game/match';
+import { EMOTION_EXPRESSION } from '../game/humanState';
 import { objectiveStatus, type ObjectiveStatus } from '../game/objectives';
 import { promiseHealth, type PromiseHealth } from '../game/promises';
+import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
@@ -35,6 +37,12 @@ export function Dashboard({ state }: { state: GameState }) {
   const nextRivalId = upcomingWeek <= state.seasonLength ? state.schedule[upcomingWeek - 1] : null;
   const nextRival = nextRivalId ? state.rivals.find((r) => r.id === nextRivalId)! : null;
   const moneyCls = state.club.money < 100 ? 'bad' : state.club.money < 300 ? 'warn' : 'good';
+
+  // El grupo del club: lo que se dijo después del último partido, como chat.
+  // Priorizamos a los que tienen algo para decir (ni conformes ni indiferentes).
+  const moods = state.lastMatch?.moods ?? [];
+  const opinionated = moods.filter((m) => m.emotion !== 'conforme' && m.emotion !== 'indiferente');
+  const groupChat = (opinionated.length >= 3 ? opinionated : moods).slice(0, 5);
 
   return (
     <div>
@@ -128,6 +136,37 @@ export function Dashboard({ state }: { state: GameState }) {
                 <span className="chip accent" title={rivalStyleInfo(nextRival.style).desc}>
                   {rivalStyleInfo(nextRival.style).label}
                 </span>
+              </div>
+            </div>
+          )}
+          {groupChat.length > 0 && (
+            <div className="card">
+              <h3>💬 El grupo del club</h3>
+              <div className="chat-list">
+                {groupChat.map((m) => {
+                  const pl = state.players.find((p) => p.id === m.playerId);
+                  return (
+                    <div className="chat-row" key={m.playerId}>
+                      {pl && (
+                        <div className="avatar chat-avatar">
+                          <Avatar
+                            seed={pl.id}
+                            age={pl.age}
+                            appearance={pl.appearance}
+                            expressionOverride={EMOTION_EXPRESSION[m.emotion]}
+                            title={pl.name}
+                          />
+                        </div>
+                      )}
+                      <div className="chat-bubble">
+                        <div className="chat-name">
+                          <PlayerLink id={m.playerId}>{m.name}</PlayerLink>
+                        </div>
+                        <div className="chat-text">{m.text}</div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

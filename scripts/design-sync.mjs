@@ -345,6 +345,43 @@ ${bar('Afinidad social', 66)}
 </div>`,
   },
   {
+    path: 'components/estados-humanos.html',
+    group: 'Componentes',
+    name: 'Estados humanos y el grupo',
+    extra: 'body{max-width:520px;}',
+    body: `<h2>Estados humanos</h2>
+<p class="muted">La frase contextual al lado de cada número (\`playerNotes\` en <code>src/game/humanState.ts</code>).</p>
+<div class="card">
+  <div class="human-notes" style="margin-bottom:0">
+    <div class="human-note bad"><span class="hn-icon">😠</span> Molesto: esperaba ser titular y lleva 3 semanas mirando desde el banco.</div>
+    <div class="human-note warn"><span class="hn-icon">💸</span> Cuota atrasada: dice que la semana que viene se pone al día.</div>
+    <div class="human-note warn"><span class="hn-icon">🤝</span> Le prometiste minutos: lo tiene anotado.</div>
+    <div class="human-note good"><span class="hn-icon">🔥</span> Viene de un partidazo (9/10): está en confianza.</div>
+    <div class="human-note"><span class="hn-icon">🎓</span> Juega con beca: el club lo banca para que esté.</div>
+  </div>
+</div>
+<h2>💬 El grupo del club</h2>
+<p class="muted">Lo que se dijo después del partido, como chat del vestuario (en el juego, con retratos).</p>
+<div class="card">
+  <div class="chat-list">
+    <div class="chat-row">
+      <div class="avatar chat-avatar">TR</div>
+      <div class="chat-bubble">
+        <div class="chat-name">Tomás Rivarola</div>
+        <div class="chat-text">"Noche redonda: ganamos y me salió todo. A festejarlo con una birra."</div>
+      </div>
+    </div>
+    <div class="chat-row">
+      <div class="avatar chat-avatar">JS</div>
+      <div class="chat-bubble">
+        <div class="chat-name">Julián Soto</div>
+        <div class="chat-text">"Ganamos, pero para jugar cero minutos no sé para qué vengo."</div>
+      </div>
+    </div>
+  </div>
+</div>`,
+  },
+  {
     path: 'components/noticias.html',
     group: 'Componentes',
     name: 'Lista de noticias',

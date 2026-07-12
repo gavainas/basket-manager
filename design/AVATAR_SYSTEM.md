@@ -91,10 +91,16 @@ Integrado en: `PlayerCard` (plantel), `PlayerProfile` (ficha), `WorldPlayerProfi
 pasando lista), `PreseasonView` (plantel y mercado) y `EventModal` (participantes).
 La expresión refleja el estado: molesto/al borde → malhumorado, lesionado → cansado.
 
-## Etapa 3 (pendiente)
+## Etapa 3 (hecha)
 
-- Gorra como accesorio solo en contextos sociales (eventos), nunca en la ficha.
-- Expresión ligada al ánimo fino del momento (`PlayerMood`), no solo al estado.
+- **Gorra** (`cap` en `Avatar`): solo en eventos festivos (`CAP_EVENTS` en
+  `EventModal`), nunca en la ficha deportiva; ~1 de cada 3 la usa (determinístico
+  por id). Con gorra, el pelo solo asoma por los costados.
+- **Expresión ligada a la emoción postpartido** (`EMOTION_EXPRESSION` en
+  `humanState.ts`): la cara del chat del grupo y del informe refleja el `PlayerMood`.
+
+## Etapa 4 (pendiente)
+
 - Retratos en más listas (rankings, box scores) si la lectura lo pide.
 - Ilustraciones de cuerpo entero (ahí sí entra la panza) a futuro.
 - Exportación a PNG con fondo transparente si hiciera falta fuera del juego.

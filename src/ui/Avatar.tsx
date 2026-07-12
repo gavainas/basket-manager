@@ -53,10 +53,12 @@ interface Props {
   appearance?: Appearance;
   /** Pisa la expresión base: 0 neutro · 1 sonrisa · 2 malhumorado · 3 cansado · 4 confiado. */
   expressionOverride?: number;
+  /** Gorra (solo para contextos sociales, nunca en la ficha deportiva). */
+  cap?: boolean;
   title?: string;
 }
 
-export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appearance, expressionOverride, title }: Props) {
+export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appearance, expressionOverride, cap, title }: Props) {
   const base = appearance ?? appearanceFromSeed(seed, age);
   const a = expressionOverride == null ? base : { ...base, expression: expressionOverride };
   const f = FACES[a.faceShape % FACES.length];
@@ -80,7 +82,7 @@ export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appeara
 
   // ---- Pelo: casco base parametrizado por estilo, modificado por calvicie ----
   const hair: { d: string; opacity?: number }[] = [];
-  const cap = (v: number, ff: number, fs: number) => `M ${50 - f.w - v} 42
+  const hairCapPath = (v: number, ff: number, fs: number) => `M ${50 - f.w - v} 42
     Q ${50 - f.w - v} ${f.top - v} 50 ${f.top - v}
     Q ${50 + f.w + v} ${f.top - v} ${50 + f.w + v} 42
     L ${50 + f.w - 0.5} 42
@@ -95,7 +97,10 @@ export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appeara
     );
   };
   let extraHair: React.ReactNode = null;
-  if (a.baldness === 3) {
+  if (cap) {
+    // Con gorra el pelo solo asoma por los costados, cualquiera sea el peinado.
+    if (a.baldness < 3) sidePatches(1, 34.5);
+  } else if (a.baldness === 3) {
     sidePatches(0.3, 37); // sombra de pelo al costado, casi pelado
   } else if (a.baldness === 2) {
     sidePatches(1, 32.5); // coronilla: solo los costados
@@ -116,7 +121,7 @@ export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appeara
       [5, 29.5, 34],     // afro
     ];
     const [v, ff, fs, op] = styles[a.hair % styles.length];
-    hair.push({ d: cap(v, ff, fs - recede), opacity: op });
+    hair.push({ d: hairCapPath(v, ff, fs - recede), opacity: op });
     if (a.hair === 4) {
       // rulos: bultos sobre el casco
       extraHair = (
@@ -292,9 +297,25 @@ export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appeara
     </g>
   );
 
+  // ---- Gorra (contextos sociales): tapa el pelo y anula vincha/cinta ----
+  const capArt: React.ReactNode = cap ? (
+    <g>
+      <path
+        d={`M ${50 - f.w - 1.8} 33.5 Q ${50 - f.w - 1.8} ${f.top - 5} 50 ${f.top - 5} Q ${50 + f.w + 1.8} ${f.top - 5} ${50 + f.w + 1.8} 33.5 Q 50 30.5 ${50 - f.w - 1.8} 33.5 Z`}
+        fill={jersey}
+      />
+      <path d={`M ${50 - f.w * 0.75} 33.2 Q 50 40.5 ${50 + f.w * 0.75} 33.2 Q 50 35.8 ${50 - f.w * 0.75} 33.2 Z`} fill={jersey} />
+      <path d={`M ${50 - f.w * 0.75} 33.2 Q 50 40.5 ${50 + f.w * 0.75} 33.2 Q 50 35.8 ${50 - f.w * 0.75} 33.2 Z`} fill="rgba(0,0,0,0.25)" />
+      <path d={`M ${50 - f.w - 1.8} 33.5 Q 50 30.5 ${50 + f.w + 1.8} 33.5`} stroke="rgba(0,0,0,0.3)" strokeWidth={1.2} fill="none" />
+      <circle cx={50} cy={f.top - 4.5} r={1.3} fill="rgba(0,0,0,0.28)" />
+    </g>
+  ) : null;
+
   // ---- Accesorios ----
   let accessory: React.ReactNode = null;
-  if (a.accessory === 1) {
+  if (cap && (a.accessory === 1 || a.accessory === 5)) {
+    // La gorra ocupa el lugar de la vincha o la cinta.
+  } else if (a.accessory === 1) {
     accessory = <rect x={50 - f.w - 1.2} y={30.2} width={(f.w + 1.2) * 2} height={4.4} rx={2} fill={jersey} opacity={0.92} />;
   } else if (a.accessory === 2) {
     accessory = (
@@ -339,6 +360,7 @@ export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appeara
       {nose}
       {mouth}
       {accessory}
+      {capArt}
     </svg>
   );
 }

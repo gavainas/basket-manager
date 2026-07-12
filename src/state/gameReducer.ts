@@ -131,7 +131,7 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
     case 'RESOLVE_EVENT':
       return resolveEvent(state, action.optionIndex);
     case 'DISMISS_EVENT_OUTCOME':
-      return { ...state, eventOutcome: null };
+      return { ...state, eventOutcome: null, eventOutcomePeople: undefined };
     case 'CALLUP_ACTION': {
       if (state.phase !== 'callUp') return state;
       const rng = new Rng(state.seed);

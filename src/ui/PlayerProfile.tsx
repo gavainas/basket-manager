@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { GameState, Player } from '../game/types';
 import { affinity, coachAffinity, FRIEND_THRESHOLD, groupStanding, RIVALRY_THRESHOLD } from '../game/relations';
+import { playerNotes } from '../game/humanState';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
@@ -43,9 +44,19 @@ function GeneralTab({ state, p }: { state: GameState; p: Player }) {
   const fee = feeChip(p);
   const absentThisWeek = state.callUp.some((c) => c.playerId === p.id && c.status === 'ausente');
   const promises = state.promises.filter((pr) => pr.playerId === p.id && pr.season === state.seasonNumber);
+  const notes = playerNotes(state, p);
   return (
     <div>
       <p className="profile-quote">“{p.description}”</p>
+      {notes.length > 0 && (
+        <div className="human-notes">
+          {notes.map((n, i) => (
+            <div key={i} className={`human-note ${n.tone}`}>
+              <span className="hn-icon">{n.icon}</span> {n.text}
+            </div>
+          ))}
+        </div>
+      )}
       <div className="data-grid">
         <DataRow label="Edad">{p.age} años</DataRow>
         <DataRow label="Posición">{p.position}</DataRow>

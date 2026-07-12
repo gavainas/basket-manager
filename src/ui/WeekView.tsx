@@ -11,6 +11,7 @@ import { RivalLink } from './RivalLink';
 import { ScoutingCard } from './ScoutingCard';
 import { Tip, TIPS } from './Tip';
 import { rivalDifficulty, rivalStyleInfo, starsFor, weekLabel } from './helpers';
+import { EMOTION_EXPRESSION } from '../game/humanState';
 import { Avatar } from './Avatar';
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
@@ -1029,7 +1030,7 @@ function MatchResultPanel({ state, dispatch }: Props) {
         <div className="card" style={{ marginTop: '1rem' }}>
           <h3>Planilla del partido</h3>
           <div className="table-wrap">
-            <table>
+            <table className="planilla">
               <thead>
                 <tr>
                   <th>Jugador</th>
@@ -1117,9 +1118,21 @@ function MatchResultPanel({ state, dispatch }: Props) {
                     : mood.emotion === 'frustrado' || mood.emotion === 'decepcionado'
                       ? 'warn'
                       : '';
+              const moodPlayer = state.players.find((p) => p.id === mood.playerId);
               return (
                 <div className="data-row" key={mood.playerId}>
-                  <span className="data-label">
+                  <span className="data-label mood-label">
+                    {moodPlayer && (
+                      <span className="avatar mood-avatar">
+                        <Avatar
+                          seed={moodPlayer.id}
+                          age={moodPlayer.age}
+                          appearance={moodPlayer.appearance}
+                          expressionOverride={EMOTION_EXPRESSION[mood.emotion]}
+                          title={mood.name}
+                        />
+                      </span>
+                    )}
                     <PlayerLink id={mood.playerId}>{mood.name}</PlayerLink>
                   </span>
                   <span className="data-value">

@@ -118,6 +118,13 @@ export function resolveEvent(state: GameState, optionIndex: number): GameState {
   const def = getEvent(ev.defId);
   const outcome = def.resolve(s, ev, optionIndex, rng);
   s.eventOutcome = outcome;
+  // Reacciones visibles: el desenlace muestra a los implicados, y el momento
+  // queda anotado en la historia personal de cada uno.
+  s.eventOutcomePeople = [ev.playerId, ev.playerId2].filter((id): id is string => !!id);
+  for (const id of s.eventOutcomePeople) {
+    const p = s.players.find((x) => x.id === id);
+    if (p) logPlayerEvent(p, s.seasonNumber, Math.min(s.week, s.seasonLength), 'social', `${def.title}. ${outcome}`);
+  }
   s.pendingEvent = null;
   const absent = matchAbsentIds(s);
   s.starters = suggestStarters(s.players, absent);

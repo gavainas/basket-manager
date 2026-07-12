@@ -662,6 +662,8 @@ export interface GameState {
   pendingEvent: ActiveEvent | null;
   /** Texto con el desenlace del último evento resuelto (para mostrar en el modal). */
   eventOutcome: string | null;
+  /** Ids de los implicados en ese desenlace: sus caras acompañan la reacción. */
+  eventOutcomePeople?: string[];
   starters: string[]; // ids de los 5 titulares elegidos
   /** Ids de los jugadores de rotación (entran desde el banco, máx. 5). */
   rotation: string[];

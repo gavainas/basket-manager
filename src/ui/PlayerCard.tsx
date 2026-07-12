@@ -1,4 +1,5 @@
-import type { Player } from '../game/types';
+import type { GameState, Player } from '../game/types';
+import { playerNotes } from '../game/humanState';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
@@ -7,6 +8,8 @@ import { feeChip, roleLabel, starsFor, statusChip } from './helpers';
 
 interface Props {
   player: Player;
+  /** Estado del juego para las frases contextuales (si falta, no se muestran). */
+  state?: GameState;
   selectable?: boolean;
   selected?: boolean;
   /** Elegido para la rotación (entra desde el banco). */
@@ -19,11 +22,13 @@ interface Props {
   mvpCount?: number;
 }
 
-export function PlayerCard({ player: p, selectable, selected, inRotation, dimmed, onToggle, compact, mvpCount }: Props) {
+export function PlayerCard({ player: p, state, selectable, selected, inRotation, dimmed, onToggle, compact, mvpCount }: Props) {
   const status = statusChip(p);
   const fee = feeChip(p);
   const unavailable = selectable && (p.status === 'lesionado' || p.leftClub);
   const clickable = selectable && !unavailable && !dimmed && onToggle;
+  // La frase más urgente sobre cómo está: el "por qué" al lado de los números.
+  const note = state && !compact ? playerNotes(state, p)[0] : undefined;
 
   return (
     <div
@@ -68,6 +73,12 @@ export function PlayerCard({ player: p, selectable, selected, inRotation, dimmed
           <Bar label="Compromiso" value={p.commitment} hint={TIPS.compromiso} />
           <Bar label="Afinidad social" value={p.social} hint={TIPS.afinidadSocial} />
         </>
+      )}
+
+      {note && (
+        <div className={`human-note ${note.tone}`}>
+          <span className="hn-icon">{note.icon}</span> {note.text}
+        </div>
       )}
 
       <div className="player-chips">

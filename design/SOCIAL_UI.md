@@ -19,16 +19,25 @@ El motor **ya genera** estos textos: `PlayerMood` (emoción + frase postpartido)
 `AvailabilityProfile`, timeline personal. La regla de UI es: **si el motor tiene
 una frase, la frase va al lado del número** — nunca mostrar la cifra sola.
 
-Componentes reutilizables previstos (etapa siguiente): estado de ánimo, energía,
-compromiso, relación con el DT, relación entre compañeros, disponibilidad, cuota,
-promesas, problemas personales, participación social. Base existente: `.chip`,
-`.bar-row`, `PlayerMood`, la pestaña de relaciones de `PlayerProfile`.
+**Implementado** (`src/game/humanState.ts` + `.human-note`): `playerNotes(state, p)`
+deriva frases priorizadas sobre ánimo, banco, cuota, promesas, rachas, físico y
+motivación. La card de jugador muestra la más urgente; la ficha las muestra todas.
+**💬 El grupo del club** (Dashboard, `.chat-list`): las reacciones del último
+partido como chat del vestuario, con retrato y expresión acorde a la emoción
+(`EMOTION_EXPRESSION`).
+
+Pendiente: relación con el DT y entre compañeros como notas (las afinidades ya
+existen en `relations.ts`), y participación social.
 
 ## Anatomía de un evento social
 
-`EventModal` ya implementa los puntos 1-5: ícono por familia (mapa `EVENT_ICONS`),
-título narrativo, participantes con retratos (`.event-people`, con la expresión
-que pide la situación) y opciones con hint. Faltan 6 y 7 (etapa 3).
+`EventModal` ya implementa los puntos 1-5 y parte de 6-7: ícono por familia
+(mapa `EVENT_ICONS`), título narrativo, participantes con retratos
+(`.event-people`, con la expresión que pide la situación — y **gorra** en los
+eventos festivos: `CAP_EVENTS`), opciones con hint, el **desenlace muestra a los
+implicados** y el momento queda **anotado en la historia personal** de cada uno
+(`resolveEvent` en `week.ts`). Falta: consecuencias diferidas que se comunican
+semanas después.
 
 1. **Título narrativo** — con voz propia: "¿Quién compra la carne?", no "Evento de asado".
 2. **Ilustración o ícono** — un emoji/ícono grande por familia de evento (🍖 asado,
