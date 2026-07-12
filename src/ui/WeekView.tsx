@@ -7,6 +7,7 @@ import { courtFreshness, evaluateTeam, isSelectable } from '../game/match';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
+import { ScoutingCard } from './ScoutingCard';
 import { Tip, TIPS } from './Tip';
 import { initials, rivalDifficulty, rivalStyleInfo, starsFor } from './helpers';
 
@@ -357,6 +358,8 @@ function LineupPanel({ state, dispatch }: Props) {
         </div>
       )}
 
+      <ScoutingCard state={state} />
+
       <div className="lineup-layout">
         <div className="lineup-list card" onDragOver={allowDrop} onDrop={dropOnList}>
           <div className="lineup-toolbar">
@@ -630,6 +633,11 @@ function LiveMatchPanel({ state, dispatch }: Props) {
             <div className={`score ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}>{totalAgainst}</div>
           </div>
         </div>
+        {live.rivalSquad && live.rivalSquad.notes.length > 0 && (
+          <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.4rem', fontSize: '0.82rem' }}>
+            📋 {live.rivalSquad.notes.join(' ')}
+          </p>
+        )}
         <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.6rem' }}>
           {scoreLine}
           {(() => {

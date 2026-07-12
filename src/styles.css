@@ -1528,6 +1528,17 @@ button.mini.blue.on {
   }
 }
 
+/* ---------- Scouting ---------- */
+
+.scout-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
 /* ---------- Rankings ---------- */
 
 .ranking-list {

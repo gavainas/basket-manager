@@ -218,6 +218,8 @@ export interface LiveMatchState {
   luckTotal: number;
   /** El rival metió una presión especial en el último cuarto. */
   rivalPush: boolean;
+  /** Convocatoria rival del día: quiénes vinieron y cuánto pesa (opcional por compatibilidad). */
+  rivalSquad?: { presentCount: number; mod: number; notes: string[] };
   eval: TeamEval;
 }
 

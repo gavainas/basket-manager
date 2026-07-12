@@ -1,6 +1,6 @@
 import { BALANCE, clamp } from './balance';
 import { logClubEvent, logPlayerEvent } from './timeline';
-import { USER_TEAM_ID } from './world';
+import { rollRivalMatchday, USER_TEAM_ID } from './world';
 import type { BoxScoreLine, GameState, MatchResult, Player, Position, Rival, TeamEval } from './types';
 import type { Rng } from './rng';
 
@@ -300,6 +300,9 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
   }
   const star = [...starters].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
 
+  // La convocatoria del rival se sortea recién el día del partido.
+  const rivalSquad = rollRivalMatchday(s, rivalId, rng);
+
   s.live = {
     rivalId,
     rivalName: rival.name,
@@ -312,7 +315,8 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     playerFresh,
     minutes,
     stats,
-    pendingSubNotes: [],
+    pendingSubNotes: [...rivalSquad.notes],
+    rivalSquad: { presentCount: rivalSquad.presentCount, mod: rivalSquad.mod, notes: rivalSquad.notes },
     rivalFreshness: clamp(M.rivalFreshStart + rng.int(-4, 4)),
     starId: star.id,
     starName: star.name,
@@ -465,7 +469,12 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   if (teamFresh < 30) notes.push('El equipo juega de memoria: no quedan piernas.');
 
   const rivalFreshFactor = M.freshFactorMin + M.freshFactorSpan * (live.rivalFreshness / 100);
-  const rivalEff = rival.strength * rng.range(0.94, 1.06) * rivalFreshFactor * (live.rivalPush ? M.pushRivalBoost : 1);
+  const rivalEff =
+    rival.strength *
+    (live.rivalSquad?.mod ?? 1) *
+    rng.range(0.94, 1.06) *
+    rivalFreshFactor *
+    (live.rivalPush ? M.pushRivalBoost : 1);
 
   // --- Marcador del cuarto ---
   const luck = rng.range(-M.luckPerQuarter, M.luckPerQuarter);
@@ -529,6 +538,8 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
 
   let rivalDrain = rival.style === 'corredores' ? M.rivalDrain - 2 : M.rivalDrain;
   if (live.defense === 'hombre') rivalDrain += M.hombreRivalDrain;
+  // Si vinieron cortos de banco, se funden más rápido.
+  if ((live.rivalSquad?.presentCount ?? 10) <= 6) rivalDrain += 2;
   live.rivalFreshness = clamp(live.rivalFreshness - rivalDrain);
 
   if (qIndex === 1) {
