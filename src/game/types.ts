@@ -439,6 +439,8 @@ export interface GameState {
   news: NewsItem[];
   ledger: LedgerEntry[];
   memorableMoments: string[];
+  /** Historia del club: fundación, temporadas, hazañas, fichajes y salidas. */
+  clubTimeline: TimelineEvent[];
   /** Jugadores que abandonaron el club durante la temporada. */
   playersLeftCount: number;
   /** Semanas restantes de contrato con sponsor (0 = sin sponsor). */

@@ -1,5 +1,7 @@
 import type { GameState } from '../game/types';
 import { activePlayers } from '../game/match';
+import { PlayerLink } from './PlayerLink';
+import { Timeline } from './Timeline';
 import { formatMoney } from './helpers';
 
 export function HistoryView({ state }: { state: GameState }) {
@@ -45,6 +47,14 @@ export function HistoryView({ state }: { state: GameState }) {
         </div>
       )}
 
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <h3>La historia del club</h3>
+        <Timeline
+          events={state.clubTimeline}
+          emptyText="La historia del club se está escribiendo: jugá y van a llegar los momentos."
+        />
+      </div>
+
       <div className="grid cols-2">
         <div>
           {mvpRanking.length > 0 && (
@@ -55,7 +65,9 @@ export function HistoryView({ state }: { state: GameState }) {
                   <tbody>
                     {mvpRanking.map(({ player, count }) => (
                       <tr key={player!.id}>
-                        <td>{player!.name}</td>
+                        <td>
+                          <PlayerLink id={player!.id}>{player!.name}</PlayerLink>
+                        </td>
                         <td className="num">
                           ⭐ {count} {count === 1 ? 'vez MVP' : 'veces MVP'}
                         </td>

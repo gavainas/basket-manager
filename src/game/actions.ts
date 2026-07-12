@@ -1,5 +1,6 @@
 import { BALANCE, clamp } from './balance';
 import { createRecruit } from '../data/recruits';
+import { logClubEvent } from './timeline';
 import type { GameState, Player } from './types';
 import type { Rng } from './rng';
 
@@ -318,6 +319,7 @@ export const ACTIONS: ActionDef[] = [
       }
       const recruit = createRecruit(rng, { season: s.seasonNumber });
       s.players.push(recruit);
+      logClubEvent(s, 'llegada', `Se sumó ${recruit.name} (${recruit.position}) al plantel a mitad de temporada.`);
       s.news.unshift({ week: s.week, text: `Se sumó ${recruit.name} (${recruit.position}) al plantel.`, tone: 'good' });
       return `Se sumó ${recruit.name}, ${recruit.position.toLowerCase()} de ${recruit.age} años. Habrá que ver cómo rinde.`;
     },

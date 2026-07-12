@@ -107,6 +107,18 @@ export function loadGame(): GameState | null {
       }
       parsed.saveVersion = 10;
     }
+    // v10 → v11: historia del club (sembrada con los momentos memorables).
+    if (parsed.saveVersion === 10) {
+      parsed.clubTimeline =
+        parsed.clubTimeline ??
+        parsed.memorableMoments.map((text: string) => ({
+          season: parsed.seasonNumber,
+          week: 0,
+          kind: 'partido',
+          text,
+        }));
+      parsed.saveVersion = 11;
+    }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;
   } catch {

@@ -7,11 +7,11 @@ import { getEvent, rollEvent } from './events';
 import { generateObjectives } from './objectives';
 import { activePlayers, clubPosition, matchAbsentIds, suggestRotation, suggestStarters } from './match';
 import { rollCallUp } from './callup';
-import { logPlayerEvent } from './timeline';
+import { logClubEvent, logPlayerEvent } from './timeline';
 import { Rng } from './rng';
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);
@@ -63,6 +63,9 @@ export function createNewGame(seed: number): GameState {
       { week: 1, concept: 'Inscripción a la liga', amount: -BALANCE.economy.inscriptionFee },
     ],
     memorableMoments: [],
+    clubTimeline: [
+      { season: 1, week: 0, kind: 'hito', text: 'Nace la temporada 1 de Atlético El Parque: el club se inscribe en la liga.' },
+    ],
     playersLeftCount: 0,
     sponsorWeeks: 0,
     gameOverReason: null,
@@ -177,6 +180,7 @@ export function advanceWeek(state: GameState): GameState {
           p.leftClub = true;
           s.playersLeftCount += 1;
           logPlayerEvent(p, s.seasonNumber, s.week, 'salida', 'Abandonó el club a mitad de temporada. "Esto ya no es para mí".');
+          logClubEvent(s, 'salida', `${p.name} abandonó el club a mitad de temporada.`);
           s.club.socialPrestige = clamp(s.club.socialPrestige - 3);
           s.club.socialClimate = clamp(s.club.socialClimate - 4);
           s.news.unshift({ week: s.week, text: `${p.name} abandonó el club. "Esto ya no es para mí", dejó dicho.`, tone: 'bad' });
@@ -207,12 +211,15 @@ export function advanceWeek(state: GameState): GameState {
   if (s.club.money < 0) {
     s.phase = 'gameOver';
     s.gameOverReason = 'El club se quedó sin dinero. Sin caja no hay cancha, ni árbitros, ni liga: la temporada se termina acá.';
+    logClubEvent(s, 'salida', 'La caja llegó a cero y el club no pudo seguir en la liga.', Math.min(s.week, s.seasonLength));
   } else if (active.length < 5) {
     s.phase = 'gameOver';
     s.gameOverReason = 'Quedaron menos de 5 jugadores en el plantel. No hay equipo para presentar: el club se retira de la liga.';
+    logClubEvent(s, 'salida', 'El plantel quedó con menos de 5 jugadores: el club se retiró de la liga.', Math.min(s.week, s.seasonLength));
   } else if (s.week > s.seasonLength) {
     s.phase = 'seasonEnd';
     if (clubPosition(s) === 1) {
+      logClubEvent(s, 'hito', `¡Campeones de la temporada ${s.seasonNumber}!`, s.seasonLength);
       for (const p of active) {
         logPlayerEvent(p, s.seasonNumber, s.seasonLength, 'hito', `¡Campeón de la temporada ${s.seasonNumber} con el club!`);
       }

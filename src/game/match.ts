@@ -1,5 +1,5 @@
 import { BALANCE, clamp } from './balance';
-import { logPlayerEvent } from './timeline';
+import { logClubEvent, logPlayerEvent } from './timeline';
 import type { BoxScoreLine, GameState, MatchResult, Player, Position, Rival, TeamEval } from './types';
 import type { Rng } from './rng';
 
@@ -248,6 +248,7 @@ function simulateForfeit(s: GameState, rival: Rival, rng: Rng): GameState {
   s.players = s.players.map((p) => (p.leftClub ? p : { ...p, motivation: clamp(p.motivation - 8) }));
   s.club.sportPrestige = clamp(s.club.sportPrestige - 5);
   s.club.socialPrestige = clamp(s.club.socialPrestige - 3);
+  logClubEvent(s, 'ausencia', `Papelón: perdimos por forfeit contra ${rival.name} por no juntar cinco.`);
   concludeMatch(s, result, rng);
   return s;
 }
@@ -800,8 +801,14 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     box,
   };
 
-  if (upset) s.memorableMoments.push(`Semana ${s.week}: batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);
-  if (won && margin >= 25) s.memorableMoments.push(`Semana ${s.week}: paliza inolvidable a ${rival.name} por ${margin} puntos.`);
+  if (upset) {
+    s.memorableMoments.push(`Semana ${s.week}: batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);
+    logClubEvent(s, 'partido', `Batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);
+  }
+  if (won && margin >= 25) {
+    s.memorableMoments.push(`Semana ${s.week}: paliza inolvidable a ${rival.name} por ${margin} puntos.`);
+    logClubEvent(s, 'partido', `Paliza inolvidable a ${rival.name} por ${margin} puntos.`);
+  }
 
   concludeMatch(s, result, rng);
   return s;

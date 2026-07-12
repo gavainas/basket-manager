@@ -8,6 +8,7 @@ import { generateObjectives } from './objectives';
 import { clubPosition, suggestRotation, suggestStarters } from './match';
 import { computeSeasonEvaluation } from './evaluation';
 import { rollPreseasonEvent } from './preseasonEvents';
+import { logClubEvent } from './timeline';
 import { SAVE_VERSION } from './week';
 import { Rng } from './rng';
 import type {
@@ -232,6 +233,9 @@ export function createPreseasonNewGame(seed: number): GameState {
     ],
     ledger: [{ week: 0, concept: 'Caja inicial del club', amount: BALANCE.economy.startingMoney }],
     memorableMoments: [],
+    clubTimeline: [
+      { season: 1, week: 0, kind: 'hito', text: 'Nace Atlético El Parque: hay que armar el plantel para la primera temporada.' },
+    ],
     playersLeftCount: 0,
     sponsorWeeks: 0,
     gameOverReason: null,
@@ -333,6 +337,15 @@ export function startPreseason(state: GameState): GameState {
     ],
     ledger: [{ week: 0, concept: `Caja heredada de la temporada ${state.seasonNumber}`, amount: state.club.money }],
     memorableMoments: [],
+    clubTimeline: [
+      ...state.clubTimeline,
+      {
+        season: state.seasonNumber,
+        week: state.seasonLength,
+        kind: 'hito' as const,
+        text: `Cierra la temporada ${state.seasonNumber}: ${finishedSeason.position}° con récord ${finishedSeason.record}.`,
+      },
+    ],
     playersLeftCount: 0,
     sponsorWeeks: 0,
     gameOverReason: null,
@@ -462,6 +475,7 @@ export function signMarketPlayer(
     extra = ` Y trajo a su amigo: se sumó ${friend.name} (${friend.position}).`;
   }
   psLog(s, `Fichamos a ${mp.name} (${mp.position}, ${mp.previousTeam}).`);
+  logClubEvent(s, 'llegada', `Fichaje: llegó ${mp.name} (${mp.position}) desde ${mp.previousTeam}.`, 0);
   s.news.unshift({ week: 0, text: `Se sumó ${mp.name} al plantel.`, tone: 'good' });
   return { ok: true, text: `¡${mp.name} es nuevo jugador del club!${extra}` };
 }
@@ -769,6 +783,7 @@ export function startSeasonFromPreseason(state: GameState): GameState {
     text: `¡Arranca la temporada ${s.seasonNumber}! La comisión fijó los objetivos del año.`,
     tone: 'good',
   });
+  logClubEvent(s, 'hito', `Arranca la temporada ${s.seasonNumber} con ${s.players.filter((p) => !p.leftClub).length} jugadores en el plantel.`, 0);
   s.preseason = null;
   s.seed = rng.nextSeed();
   return s;
