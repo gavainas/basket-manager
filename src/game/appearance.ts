@@ -21,32 +21,32 @@ export interface Appearance {
   hairColor: number;
   /** 0 pelo completo · 1 entradas · 2 coronilla · 3 pelado. */
   baldness: number;
-  /** 0 nada · 1 bigote · 2 candado · 3 completa · 4 desprolija · 5 chivita. */
+  /** 0 nada · 1 bigote · 2 candado · 3 completa · 4 desprolija · 5 chivita · 6 patillas · 7 bigote caído. */
   facialHair: number;
   /** 0 nada · 1 ojeras · 2 ojeras y frente · 3 arrugas. */
   ageDetail: number;
   /** 0 neutro · 1 sonrisa · 2 malhumorado · 3 cansado · 4 confiado. */
   expression: number;
-  /** 0 nada · 1 vincha · 2 lentes · 3 aro · 4 curita. */
+  /** 0 nada · 1 vincha · 2 lentes · 3 aro · 4 curita · 5 cinta fina. */
   accessory: number;
 }
 
 /** Cantidad de variantes por capa (apéndice únicamente: nunca reordenar). */
 export const APPEARANCE_VARIANTS = {
-  faceShape: 6,
+  faceShape: 8,
   skinTone: 12,
   eyes: 5,
   eyebrows: 4,
   nose: 5,
   mouth: 3,
   ears: 3,
-  hair: 8,
+  hair: 12,
   hairColor: 8, // 6 y 7 son canas (gris / blanco)
   baldness: 4,
-  facialHair: 6,
+  facialHair: 8,
   ageDetail: 4,
   expression: 5,
-  accessory: 5,
+  accessory: 6,
 } as const;
 
 /** FNV-1a de 32 bits: rápido, estable y suficiente para elegir variantes. */

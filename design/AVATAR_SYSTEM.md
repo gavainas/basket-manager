@@ -14,39 +14,43 @@ todo es SVG dibujado por código, determinístico y serializable.
 
 ## Determinismo y persistencia
 
-- La seed es el **id del jugador** (persistente en el save): misma seed → misma cara,
-  entre pantallas, sesiones y partidas.
+- La seed es el **id del jugador**: misma seed → misma cara, entre pantallas,
+  sesiones y partidas. Para los fichables del mercado la seed es el id del
+  fichable, y `marketToPlayer` la reutiliza: la cara que viste en el mercado
+  es la que llega al plantel.
 - Cada capa se elige con un **hash independiente** (`FNV-1a(seed + ':' + capa)`),
-  así agregar variantes a una capa **no** cambia las demás capas de jugadores existentes.
-- `Player.appearance` (opcional) permite guardar una apariencia fija en el perfil;
-  si falta, se deriva del id. Hoy nadie la guarda; existe como gancho para cuando
-  haga falta congelar caras ante cambios del generador.
+  así agregar variantes a una capa **no** cambia las demás capas.
+- **`Player.appearance` se guarda en el perfil** desde el save v15: se setea al
+  crear cada jugador (`buildPlayer`, `createRecruit`, `marketToPlayer`) y la
+  migración v14→v15 la completa en saves viejos. Una vez guardada, la cara queda
+  **congelada** aunque el generador gane variantes.
+- Los jugadores del mundo (`WorldPlayer`) no la guardan: se deriva del id al
+  renderizar. Si crecen las variantes, alguna cara rival puede cambiar; asumido.
 
 **Regla de oro para ampliar**: agregar variantes SIEMPRE al final de cada lista y
 nunca reordenar ni borrar — los índices derivados dependen del orden.
 
-## Capas y variantes actuales (prototipo)
+## Capas y variantes actuales
 
 | Capa | Variantes | Nota |
 | --- | --- | --- |
-| `faceShape` | 6 | ovalado, redondo, alargado, cuadrado, fino, robusto |
+| `faceShape` | 8 | ovalado, redondo, alargado, cuadrado, fino, robusto, anguloso, cachetón |
 | `skinTone` | 12 | rampa de claro a oscuro |
 | `eyes` | 5 | normal, achinados, grandes, caídos, entrecerrados |
 | `eyebrows` | 4 | rectas, arqueadas, gruesas, finas |
 | `nose` | 5 | corta, ancha, aguileña, redonda, larga |
 | `mouth` | 3 | fina, media, ancha (la curva la pone la expresión) |
 | `ears` | 3 | chicas, medias, grandes |
-| `hair` | 8 | rapado, corto, tupido, flequillo, rulos, casquete, despeinado, prolijo |
+| `hair` | 12 | rapado, corto, tupido, flequillo, rulos, casquete, despeinado, prolijo, media melena, raya al medio, erizo, afro |
 | `hairColor` | 8 | negro→rubio→colorado + **gris y blanco (canas)** |
 | `baldness` | 4 | completo, entradas, coronilla, pelado |
-| `facialHair` | 6 | nada, bigote, candado, completa, desprolija, chivita |
+| `facialHair` | 8 | nada, bigote, candado, completa, desprolija, chivita, patillas, bigote caído |
 | `ageDetail` | 4 | nada, ojeras, ojeras + frente, arrugas |
 | `expression` | 5 | neutro, sonrisa, malhumorado, cansado, confiado |
-| `accessory` | 5 | nada, vincha, lentes, aro, curita |
+| `accessory` | 6 | nada, vincha, lentes, aro, curita, cinta fina |
 
-Combinaciones teóricas: ~10^10. La meta de la etapa 2 (ver abajo) es acercarse a
-las cantidades del brief (20 caras, 35 pelos, 30 barbas, etc.) **solo cuando las
-piezas actuales empiecen a repetirse demasiado**.
+Combinaciones teóricas: ~10^11. Ampliar hacia las cantidades del brief (20 caras,
+35 pelos, 30 barbas, etc.) **solo cuando las piezas actuales se repitan demasiado**.
 
 ## Identidad amateur
 
@@ -72,15 +76,25 @@ hombros): van por atributos, descripciones y futuras ilustraciones de cuerpo ent
 ## Uso
 
 ```tsx
-<Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} />
+<Avatar
+  seed={p.id}
+  age={p.age}
+  appearance={p.appearance}   // persistida en el perfil (save v15+)
+  jersey={club?.colors[0]}    // color de camiseta; default: naranja del club
+  expressionOverride={2}      // pisa la expresión (2 malhumorado, 3 cansado)
+  title={p.name}
+/>
 ```
 
-Integrado hoy en `PlayerCard` (plantel/convocatoria) y `PlayerProfile` (ficha).
+Integrado en: `PlayerCard` (plantel), `PlayerProfile` (ficha), `WorldPlayerProfile`
+(rivales, con la camiseta de su club), `WeekView` (pizarra del quinteto, banco y
+pasando lista), `PreseasonView` (plantel y mercado) y `EventModal` (participantes).
+La expresión refleja el estado: molesto/al borde → malhumorado, lesionado → cansado.
 
-## Etapa 2 (pendiente)
+## Etapa 3 (pendiente)
 
-- Retratos para `WorldPlayer` (rivales) y quinteto (`slot-avatar` de WeekView).
-- Camiseta con el color real de cada club rival.
-- Más variantes por capa (respetando la regla de apéndice).
-- Expresión ligada al estado de ánimo del momento (hoy es fija por seed).
+- Gorra como accesorio solo en contextos sociales (eventos), nunca en la ficha.
+- Expresión ligada al ánimo fino del momento (`PlayerMood`), no solo al estado.
+- Retratos en más listas (rankings, box scores) si la lectura lo pide.
+- Ilustraciones de cuerpo entero (ahí sí entra la panza) a futuro.
 - Exportación a PNG con fondo transparente si hiciera falta fuera del juego.

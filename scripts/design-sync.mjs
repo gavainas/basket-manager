@@ -292,16 +292,25 @@ ${bar('Afinidad social', 66)}
     path: 'components/modal-evento.html',
     group: 'Componentes',
     name: 'Modal de evento',
-    extra: `.modal-backdrop{position:relative;inset:auto;min-height:380px;border-radius:var(--radius);}`,
-    body: `<h2>Modal de evento</h2>
+    extra: `.modal-backdrop{position:relative;inset:auto;min-height:440px;border-radius:var(--radius);}`,
+    body: `<h2>Modal de evento social</h2>
+<p class="muted">Ícono por familia + título narrativo + participantes con retrato (en el juego son los SVG procedurales) + contexto + opciones con pista.</p>
 <div class="modal-backdrop">
   <div class="modal">
-    <h2>El intendente quiere la cancha</h2>
-    <p class="event-text">La municipalidad ofrece alquilar el gimnasio los sábados para actos políticos. Es plata fácil, pero los socios no van a estar contentos.</p>
+    <div class="event-head">
+      <div class="event-icon">🍖</div>
+      <h2>¿Quién compra la carne?</h2>
+    </div>
+    <div class="event-people">
+      <div class="event-person"><div class="avatar">GD</div><span>Gordo Dani</span></div>
+      <div class="event-person"><div class="avatar">TR</div><span>Tomás Rivarola</span></div>
+    </div>
+    <p class="event-text">El asado está confirmado, pero todavía nadie se hizo cargo de las compras. El Gordo dice que pone la parrilla, no la carne.</p>
     <div class="options">
-      <button>Aceptar el alquiler<span class="opt-hint">+ $ 1.500 · el ánimo de los socios puede bajar</span></button>
-      <button>Negociar solo un sábado al mes<span class="opt-hint">+ $ 500 · riesgo menor</span></button>
-      <button>Rechazar la oferta<span class="opt-hint">Los socios lo van a valorar</span></button>
+      <button>Pagar parte con la caja del club<span class="opt-hint">– $ 600 de la caja · el grupo lo valora</span></button>
+      <button>Pedir una colaboración extra<span class="opt-hint">A los que deben la cuota no les va a gustar</span></button>
+      <button>Encargarle todo al capitán<span class="opt-hint">Es un favor: los favores se devuelven</span></button>
+      <button>Cancelar el asado<span class="opt-hint">Plata que se ahorra, ambiente que se enfría</span></button>
     </div>
   </div>
 </div>`,

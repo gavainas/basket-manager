@@ -618,6 +618,63 @@ td.num, th.num {
   font-size: 0.9rem;
 }
 
+/* ---------- Eventos sociales ---------- */
+
+.event-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.event-head h2 {
+  margin: 0;
+}
+
+.event-icon {
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.event-people {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.9rem;
+}
+
+.event-person {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  max-width: 76px;
+}
+
+.event-person .avatar {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 0.3rem;
+}
+
+.event-person span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.callup-avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+}
+
 /* ---------- Modal ---------- */
 
 .modal-backdrop {
@@ -1052,6 +1109,13 @@ button.mini.blue.on {
   color: var(--accent);
   font-size: 0.9rem;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.slot-avatar svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .slot-avatar.oop {

@@ -1,5 +1,6 @@
 import type { ExpectedRole, FeeStatus, Personality, Player, Position } from '../game/types';
 import type { Rng } from '../game/rng';
+import { appearanceFromSeed } from '../game/appearance';
 import { rollBackground } from './backgrounds';
 
 interface PlayerSeed {
@@ -199,6 +200,7 @@ export function buildPlayer(seed: PlayerSeed, id: string, rng: Rng): Player {
     id,
     name: seed.name,
     age: seed.age,
+    appearance: appearanceFromSeed(id, seed.age),
     position: seed.position,
     technique: seed.technique,
     visibleRating: Math.round(seed.technique + rng.range(-7, 7)),

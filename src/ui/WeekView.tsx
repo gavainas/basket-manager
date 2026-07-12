@@ -10,7 +10,8 @@ import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { ScoutingCard } from './ScoutingCard';
 import { Tip, TIPS } from './Tip';
-import { initials, rivalDifficulty, rivalStyleInfo, starsFor, weekLabel } from './helpers';
+import { rivalDifficulty, rivalStyleInfo, starsFor, weekLabel } from './helpers';
+import { Avatar } from './Avatar';
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 const POS_ABBR: Record<Position, string> = {
@@ -149,8 +150,20 @@ function CallUpPanel({ state, dispatch }: Props) {
             {outs.map((e) => {
               const reason = e.reasonId ? reasonById(e.reasonId) : undefined;
               const canAct = e.status === 'ausente' && reason && !e.resolved;
+              const pl = state.players.find((p) => p.id === e.playerId);
               return (
                 <div key={e.playerId} className="callup-row out">
+                  {pl && (
+                    <div className="avatar callup-avatar">
+                      <Avatar
+                        seed={pl.id}
+                        age={pl.age}
+                        appearance={pl.appearance}
+                        expressionOverride={e.status === 'lesionado' ? 3 : 2}
+                        title={pl.name}
+                      />
+                    </div>
+                  )}
                   <span className="callup-icon">{e.status === 'lesionado' ? '🚑' : e.lateArrival ? '🕘' : '❌'}</span>
                   <div style={{ flex: 1 }}>
                     <div className="callup-name">
@@ -200,6 +213,9 @@ function CallUpPanel({ state, dispatch }: Props) {
             })}
             {stillInjured.map((p) => (
               <div key={p.id} className="callup-row out dim">
+                <div className="avatar callup-avatar">
+                  <Avatar seed={p.id} age={p.age} appearance={p.appearance} expressionOverride={3} title={p.name} />
+                </div>
                 <span className="callup-icon">🚑</span>
                 <div>
                   <div className="callup-name">
@@ -503,7 +519,7 @@ function LineupPanel({ state, dispatch }: Props) {
                 >
                   <div className="slot-pos-label">{pos}</div>
                   <div className={`slot-avatar${oop ? ' oop' : ''}${pl ? '' : ' empty'}`}>
-                    {pl ? initials(pl.name) : '+'}
+                    {pl ? <Avatar seed={pl.id} age={pl.age} appearance={pl.appearance} title={pl.name} /> : '+'}
                   </div>
                   <div className={`slot-name${pl ? '' : ' dim'}`}>{pl ? shortName(pl.name) : 'Libre'}</div>
                   {pl && (
@@ -527,7 +543,9 @@ function LineupPanel({ state, dispatch }: Props) {
                 draggable
                 onDragStart={dragStart(p.id)}
               >
-                <div className="slot-avatar small">{initials(p.name)}</div>
+                <div className="slot-avatar small">
+                  <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} />
+                </div>
                 <div className="slot-name">{shortName(p.name)}</div>
                 <div className="slot-sub">{POS_ABBR[p.position]}</div>
               </div>

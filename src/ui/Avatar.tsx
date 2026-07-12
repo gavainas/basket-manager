@@ -28,6 +28,8 @@ const FACES = [
   { w: 18, jw: 14.5, chin: 60, top: 23 },   // cuadrado
   { w: 15, jw: 8, chin: 61, top: 23 },      // fino
   { w: 20.5, jw: 15.5, chin: 59, top: 24 }, // robusto
+  { w: 17.5, jw: 9, chin: 62, top: 22 },    // anguloso
+  { w: 19.5, jw: 15, chin: 61, top: 25 },   // cachetón
 ];
 
 const EAR_SIZES = [2.2, 2.9, 3.6];
@@ -49,11 +51,14 @@ interface Props {
   jersey?: string;
   /** Apariencia ya calculada/guardada; si falta se deriva de la seed. */
   appearance?: Appearance;
+  /** Pisa la expresión base: 0 neutro · 1 sonrisa · 2 malhumorado · 3 cansado · 4 confiado. */
+  expressionOverride?: number;
   title?: string;
 }
 
-export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appearance, title }: Props) {
-  const a = appearance ?? appearanceFromSeed(seed, age);
+export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appearance, expressionOverride, title }: Props) {
+  const base = appearance ?? appearanceFromSeed(seed, age);
+  const a = expressionOverride == null ? base : { ...base, expression: expressionOverride };
   const f = FACES[a.faceShape % FACES.length];
   const skin = SKIN_TONES[a.skinTone % SKIN_TONES.length];
   const skinDark = shade(skin, 0.72);
@@ -105,6 +110,10 @@ export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appeara
       [2, 33.5, 33.5],   // casquete
       [1.5, 30, 32.5],   // despeinado
       [1.2, 31, 32],     // prolijo
+      [2, 31, 33],       // media melena
+      [1.5, 29, 33.5],   // raya al medio
+      [1.5, 30.5, 33],   // erizo
+      [5, 29.5, 34],     // afro
     ];
     const [v, ff, fs, op] = styles[a.hair % styles.length];
     hair.push({ d: cap(v, ff, fs - recede), opacity: op });
@@ -125,6 +134,41 @@ export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appeara
           <path d={`M 41 ${f.top - 0.5} L 44 ${f.top - 7} L 47 ${f.top - 1} Z`} />
           <path d={`M 48 ${f.top - 1.5} L 51 ${f.top - 8} L 54 ${f.top - 1.5} Z`} />
           <path d={`M 55 ${f.top - 1} L 58 ${f.top - 6} L 60 ${f.top - 0.5} Z`} />
+        </g>
+      );
+    }
+    if (a.hair === 8) {
+      // media melena: cae por los costados hasta la mandíbula
+      extraHair = (
+        <g fill={hairC}>
+          <path d={`M ${50 - f.w - 2.4} 40 L ${50 - f.w - 2.4} ${f.chin - 8} Q ${50 - f.w - 2.4} ${f.chin - 5} ${50 - f.w + 1.6} ${f.chin - 5} L ${50 - f.w + 1.6} 42 Z`} />
+          <path d={`M ${50 + f.w + 2.4} 40 L ${50 + f.w + 2.4} ${f.chin - 8} Q ${50 + f.w + 2.4} ${f.chin - 5} ${50 + f.w - 1.6} ${f.chin - 5} L ${50 + f.w - 1.6} 42 Z`} />
+        </g>
+      );
+    }
+    if (a.hair === 9) {
+      // raya al medio
+      extraHair = <path d={`M 50 ${f.top - 1} L 50 30.5`} stroke={skin} strokeWidth={1.1} fill="none" />;
+    }
+    if (a.hair === 10) {
+      // erizo: púas cortas parejas
+      extraHair = (
+        <g fill={hairC}>
+          {[-12, -6, 0, 6, 12].map((x) => (
+            <path key={x} d={`M ${48 + x} ${f.top - 0.5} L ${50 + x} ${f.top - 5} L ${52 + x} ${f.top - 0.5} Z`} />
+          ))}
+        </g>
+      );
+    }
+    if (a.hair === 11) {
+      // afro: masa redondeada por encima y a los costados
+      extraHair = (
+        <g fill={hairC}>
+          <circle cx={50 - f.w - 1} cy={f.top + 3} r={5} />
+          <circle cx={50 + f.w + 1} cy={f.top + 3} r={5} />
+          <circle cx={50 - 8} cy={f.top - 3.5} r={5.5} />
+          <circle cx={50 + 8} cy={f.top - 3.5} r={5.5} />
+          <circle cx={50} cy={f.top - 5} r={5.5} />
         </g>
       );
     }
@@ -154,6 +198,17 @@ export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appeara
     beard = <path d={d} fill={beardC} opacity={a.facialHair === 4 ? 0.42 : 1} />;
   } else if (a.facialHair === 5) {
     beard = <path d={`M ${50 - 3.2} ${f.chin - 2.5} Q 50 ${f.chin - 0.5} ${50 + 3.2} ${f.chin - 2.5} Q ${50 + 3} ${f.chin + 4.2} 50 ${f.chin + 4.6} Q ${50 - 3} ${f.chin + 4.2} ${50 - 3.2} ${f.chin - 2.5} Z`} fill={beardC} />;
+  } else if (a.facialHair === 6) {
+    // patillas largas
+    beard = (
+      <g fill={beardC}>
+        <path d={`M ${50 - f.w - 0.6} 40 L ${50 - f.w - 0.6} ${f.chin - 7} L ${50 - f.w + 2.8} ${f.chin - 8} L ${50 - f.w + 2.8} 41 Z`} />
+        <path d={`M ${50 + f.w + 0.6} 40 L ${50 + f.w + 0.6} ${f.chin - 7} L ${50 + f.w - 2.8} ${f.chin - 8} L ${50 + f.w - 2.8} 41 Z`} />
+      </g>
+    );
+  } else if (a.facialHair === 7) {
+    // bigote grueso caído
+    beard = <path d={`M ${50 - 7} ${mouthY - 2} Q 50 ${mouthY - 5.6} ${50 + 7} ${mouthY - 2} L ${50 + 7.2} ${mouthY + 3.2} L ${50 + 4.9} ${mouthY + 3.2} Q ${50 + 4.5} ${mouthY - 2.4} 50 ${mouthY - 2.8} Q ${50 - 4.5} ${mouthY - 2.4} ${50 - 4.9} ${mouthY + 3.2} L ${50 - 7.2} ${mouthY + 3.2} Z`} fill={beardC} />;
   }
 
   // ---- Ojos ----
@@ -258,6 +313,8 @@ export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appeara
         <rect x={50 + dx + 0.8} y={32.3} width={2.4} height={1.4} rx={0.6} fill="#c49c78" />
       </g>
     );
+  } else if (a.accessory === 5) {
+    accessory = <rect x={50 - f.w - 1} y={31.4} width={(f.w + 1) * 2} height={2.4} rx={1.2} fill="#20242e" opacity={0.95} />;
   }
 
   return (

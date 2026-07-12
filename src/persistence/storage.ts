@@ -1,4 +1,5 @@
 import { SAVE_VERSION } from '../game/week';
+import { appearanceFromSeed } from '../game/appearance';
 import { suggestRotation } from '../game/match';
 import { buildWorld } from '../game/world';
 import { Rng, seedFromString as seedFrom } from '../game/rng';
@@ -137,6 +138,14 @@ export function loadGame(): GameState | null {
         c.socialPrestige = c.socialPrestige ?? (c.isUser ? parsed.club.socialPrestige : rng.int(30, 80));
       }
       parsed.saveVersion = 14;
+    }
+    // v14 → v15: retrato persistente por jugador (congela la cara aunque el
+    // generador gane variantes más adelante).
+    if (parsed.saveVersion === 14) {
+      for (const p of parsed.players) {
+        p.appearance = p.appearance ?? appearanceFromSeed(p.id, p.age);
+      }
+      parsed.saveVersion = 15;
     }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;

@@ -10,7 +10,8 @@ import {
 import { getPreseasonEvent } from '../game/preseasonEvents';
 import type { GameState, KnowledgeLevel, MarketPlayer, Player } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
-import { formatMoney, initials, starsFor } from './helpers';
+import { formatMoney, starsFor } from './helpers';
+import { Avatar } from './Avatar';
 
 interface Props {
   state: GameState;
@@ -134,7 +135,9 @@ function RosterSection({ state, dispatch }: Props) {
           const needsTalk = st === 'dudando' || st === 'no_respondio' || st === 'quiere_irse';
           return (
             <div key={p.id} className={`ps-row${st === 'retirado' ? ' dimmed' : ''}`}>
-              <div className="avatar">{initials(p.name)}</div>
+              <div className="avatar">
+                <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} />
+              </div>
               <div className="ps-who">
                 <div className="name">
                   {p.name} <span className="muted">· {p.position} · {p.age} años · ≈{p.visibleRating}</span>
@@ -185,7 +188,9 @@ function MarketSection({ state, dispatch }: Props) {
     return (
       <div key={mp.id} className={`player-card${active ? '' : ' dimmed'}`}>
         <div className="player-head">
-          <div className="avatar">{initials(mp.name)}</div>
+          <div className="avatar">
+            <Avatar seed={mp.id} age={mp.age} title={mp.name} />
+          </div>
           <div className="who">
             <div className="name">{mp.name}</div>
             <div className="pos">

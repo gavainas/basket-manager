@@ -26,8 +26,9 @@ promesas, problemas personales, participación social. Base existente: `.chip`,
 
 ## Anatomía de un evento social
 
-Hoy los eventos usan `EventModal` (`.modal`): título, texto, opciones con hint.
-La familia visual objetivo agrega, en este orden:
+`EventModal` ya implementa los puntos 1-5: ícono por familia (mapa `EVENT_ICONS`),
+título narrativo, participantes con retratos (`.event-people`, con la expresión
+que pide la situación) y opciones con hint. Faltan 6 y 7 (etapa 3).
 
 1. **Título narrativo** — con voz propia: "¿Quién compra la carne?", no "Evento de asado".
 2. **Ilustración o ícono** — un emoji/ícono grande por familia de evento (🍖 asado,

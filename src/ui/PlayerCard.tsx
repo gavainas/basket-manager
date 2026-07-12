@@ -33,7 +33,15 @@ export function PlayerCard({ player: p, selectable, selected, inRotation, dimmed
     >
       <div className="player-head">
         <div className="avatar">
-          <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} />
+          <Avatar
+            seed={p.id}
+            age={p.age}
+            appearance={p.appearance}
+            expressionOverride={
+              p.status === 'molesto' || p.status === 'al_borde' ? 2 : p.status === 'lesionado' ? 3 : undefined
+            }
+            title={p.name}
+          />
         </div>
         <div className="who">
           <div className="name">

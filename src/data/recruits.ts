@@ -1,5 +1,6 @@
 import type { Personality, Player, Position } from '../game/types';
 import type { Rng } from '../game/rng';
+import { appearanceFromSeed } from '../game/appearance';
 import { rollBackground } from './backgrounds';
 
 // Pool de nombres para reclutas y amigos invitados.
@@ -43,10 +44,13 @@ export function createRecruit(
   // Recorre la lista en orden desde un punto aleatorio: sin nombres repetidos seguidos.
   if (nameOffset < 0) nameOffset = rng.int(0, RECRUIT_NAMES.length - 1);
   const name = RECRUIT_NAMES[(nameOffset + recruitCounter) % RECRUIT_NAMES.length];
+  const id = `n${rng.int(0, 0xffffff).toString(36)}_${recruitCounter}`;
+  const age = rng.int(20, 33);
   return {
-    id: `n${rng.int(0, 0xffffff).toString(36)}_${recruitCounter}`,
+    id,
     name,
-    age: rng.int(20, 33),
+    age,
+    appearance: appearanceFromSeed(id, age),
     position,
     technique,
     visibleRating: Math.round(technique + rng.range(-9, 9)),

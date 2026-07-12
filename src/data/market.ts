@@ -1,4 +1,5 @@
 import { BALANCE } from '../game/balance';
+import { appearanceFromSeed } from '../game/appearance';
 import type {
   DemandType,
   ExpectedRole,
@@ -307,6 +308,8 @@ export function marketToPlayer(
     id: `sg_${mp.id}_${mp.name.length}`,
     name: mp.name,
     age: mp.age,
+    // La misma cara que se vio en el mercado: la seed es el id del fichable.
+    appearance: appearanceFromSeed(mp.id, mp.age),
     position: mp.position,
     technique: mp.technique,
     // Lo que creés que vale: tu estimación. La verdad se ve en la cancha.

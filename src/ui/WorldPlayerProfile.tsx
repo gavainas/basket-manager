@@ -7,6 +7,7 @@ import {
   worldPlayerName,
   worldPlayerTeam,
 } from '../game/world';
+import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
@@ -39,7 +40,9 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="profile" onClick={(e) => e.stopPropagation()}>
         <div className="profile-head">
-          <div className="avatar profile-avatar">{p.firstName[0] + p.lastName[0]}</div>
+          <div className="avatar profile-avatar">
+            <Avatar seed={p.id} age={p.age} jersey={club?.colors[0]} title={worldPlayerName(p)} />
+          </div>
           <div className="profile-who">
             <div className="profile-name">{worldPlayerName(p)}</div>
             <div className="profile-chips">
