@@ -402,6 +402,151 @@ export interface PreseasonState {
   summary: PreseasonSummaryData | null;
 }
 
+// ---------- Mundo: ligas, clubes, equipos y jugadores rivales ----------
+// Capa nueva y modular: el juego clásico sigue usando rivals/schedule/standings,
+// y el mundo los espeja con entidades completas (compatibilidad vía legacyRivalId).
+
+export type WeekDay = 'lunes' | 'martes' | 'miércoles' | 'jueves' | 'viernes' | 'sábado' | 'domingo';
+
+export interface League {
+  id: string;
+  name: string;
+  kind: 'universitaria' | 'libre' | 'veteranos';
+  minAge?: number;
+  divisionCount: number;
+  rules: string[];
+}
+
+export interface Division {
+  id: string;
+  leagueId: string;
+  name: string;
+  level: number;
+  gameDay: WeekDay;
+  gameTimes: string[];
+  altDays: WeekDay[];
+}
+
+export interface SeasonInfo {
+  id: string;
+  number: number;
+  year: number;
+  /** ISO de la fecha del partido de la semana 1. */
+  startDate: string;
+}
+
+export interface WorldClub {
+  id: string;
+  name: string;
+  colors: [string, string];
+  crest: string;
+  isUser?: boolean;
+}
+
+export interface Team {
+  id: string;
+  clubId: string;
+  name: string;
+  category: 'mayores' | '+35' | 'social';
+  status: 'activo' | 'inactivo';
+  venueId: string;
+  delegate: string;
+  /** Id del rival del sistema clásico al que mapea (compatibilidad). */
+  legacyRivalId?: string;
+}
+
+export interface Venue {
+  id: string;
+  name: string;
+  neighborhood: string;
+}
+
+export interface CompetitionEntry {
+  teamId: string;
+  leagueId: string;
+  divisionId: string;
+  seasonId: string;
+  status: 'activa' | 'baja';
+  fee: number;
+  registeredWeek: number;
+}
+
+/** Inscripción de un jugador: máx. una activa por playerId + leagueId + seasonId. */
+export interface PlayerRegistration {
+  id: string;
+  playerId: string;
+  teamId: string;
+  leagueId: string;
+  seasonId: string;
+  status: 'activa' | 'baja';
+  registeredWeek: number;
+  endWeek?: number;
+}
+
+export interface AvailabilityProfile {
+  /** Probabilidad base de estar para un partido cualquiera (0-1). */
+  baseChance: number;
+  blockedDays: WeekDay[];
+  /** Solo puede en estos horarios (vacío = cualquiera). */
+  onlyTimes: string[];
+  lateChance: number;
+  residence: string;
+  /** Km a la capital; > 50 se considera del interior. */
+  distanceKm: number;
+  notes: string[];
+}
+
+/** Jugador del mundo (rivales): persona independiente de sus equipos. */
+export interface WorldPlayer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  age: number;
+  position: Position;
+  secondaryPositions: Position[];
+  /** Nivel estimado desde afuera (0-100). */
+  level: number;
+  personality: Personality;
+  commitment: number;
+  reliability: number;
+  prestige: number;
+  availability: AvailabilityProfile;
+  injuryWeeks: number;
+}
+
+export type FixtureStatus = 'programado' | 'jugado' | 'reprogramado' | 'suspendido';
+
+export interface WorldFixture {
+  id: string;
+  seasonId: string;
+  leagueId: string;
+  divisionId: string;
+  week: number;
+  date: string; // ISO
+  time: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  venueId: string;
+  status: FixtureStatus;
+  scoreHome?: number;
+  scoreAway?: number;
+  isUserMatch: boolean;
+}
+
+export interface WorldState {
+  season: SeasonInfo;
+  leagues: League[];
+  divisions: Division[];
+  venues: Venue[];
+  clubs: WorldClub[];
+  teams: Team[];
+  /** Solo rivales: los jugadores del usuario viven en GameState.players. */
+  players: WorldPlayer[];
+  registrations: PlayerRegistration[];
+  entries: CompetitionEntry[];
+  fixtures: WorldFixture[];
+}
+
 export interface GameState {
   saveVersion: number;
   seed: number;
@@ -453,4 +598,6 @@ export interface GameState {
   promises: ClubPromise[];
   /** Estado de la pretemporada (null durante la temporada regular). */
   preseason: PreseasonState | null;
+  /** El mundo: ligas, equipos, jugadores rivales, inscripciones y fixture. */
+  world: WorldState;
 }

@@ -9,10 +9,11 @@ import { activePlayers, clubPosition, matchAbsentIds, suggestRotation, suggestSt
 import { rollCallUp } from './callup';
 import { checkPromises } from './promises';
 import { logClubEvent, logPlayerEvent } from './timeline';
+import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);
@@ -73,8 +74,10 @@ export function createNewGame(seed: number): GameState {
     startingMoney: money,
     promises: [],
     preseason: null,
+    world: emptyWorld(),
   };
   state.objectives = generateObjectives(1, state.club.sportPrestige, rng);
+  state.world = buildWorld(state, rng);
   state.seed = rng.nextSeed();
   return state;
 }
@@ -193,6 +196,13 @@ export function advanceWeek(state: GameState): GameState {
   // --- Promesas: lo que prometiste en la pretemporada se cobra acá ---
   // (después de la evolución semanal, para que el enojo no se pise con la recuperación)
   checkPromises(s);
+
+  // --- El mundo también vive: fichas al día y lesiones rivales ---
+  syncUserRegistrations(s);
+  for (const wp of s.world.players) {
+    if (wp.injuryWeeks > 0) wp.injuryWeeks -= 1;
+    else if (rng.chance(0.015)) wp.injuryWeeks = rng.int(1, 3);
+  }
 
   // --- Economía de la semana ---
   applyWeeklyEconomy(s, rng);

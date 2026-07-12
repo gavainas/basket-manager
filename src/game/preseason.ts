@@ -9,6 +9,7 @@ import { clubPosition, suggestRotation, suggestStarters } from './match';
 import { computeSeasonEvaluation } from './evaluation';
 import { rollPreseasonEvent } from './preseasonEvents';
 import { logClubEvent } from './timeline';
+import { buildWorld, emptyWorld } from './world';
 import { SAVE_VERSION } from './week';
 import { Rng } from './rng';
 import type {
@@ -242,6 +243,7 @@ export function createPreseasonNewGame(seed: number): GameState {
     startingMoney: BALANCE.economy.startingMoney,
     promises: [],
     preseason: null,
+    world: emptyWorld(),
   };
   state.preseason = buildPreseasonState(players, state.club, rng, true);
   state.seed = rng.nextSeed();
@@ -352,6 +354,7 @@ export function startPreseason(state: GameState): GameState {
     startingMoney: state.club.money,
     promises: [],
     preseason: null,
+    world: emptyWorld(),
   };
   next.preseason = buildPreseasonState(players, next.club, rng, false);
   next.seed = rng.nextSeed();
@@ -785,6 +788,8 @@ export function startSeasonFromPreseason(state: GameState): GameState {
   });
   logClubEvent(s, 'hito', `Arranca la temporada ${s.seasonNumber} con ${s.players.filter((p) => !p.leftClub).length} jugadores en el plantel.`, 0);
   s.preseason = null;
+  // El mundo se rearma cada temporada: planteles rivales nuevos y fixture nuevo.
+  s.world = buildWorld(s, rng);
   s.seed = rng.nextSeed();
   return s;
 }

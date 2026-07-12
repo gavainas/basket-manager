@@ -12,6 +12,8 @@ import { OpenProfileContext } from './ui/PlayerLink';
 import { PlayerProfile } from './ui/PlayerProfile';
 import { OpenRivalContext } from './ui/RivalLink';
 import { RivalProfile } from './ui/RivalProfile';
+import { OpenWorldPlayerContext } from './ui/WorldPlayerLink';
+import { WorldPlayerProfile } from './ui/WorldPlayerProfile';
 import { NavigateTabContext, type AppTab } from './ui/nav';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
 import { HistoryView } from './ui/HistoryView';
@@ -87,6 +89,7 @@ export default function App() {
   const [saveFailed, setSaveFailed] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [rivalProfileId, setRivalProfileId] = useState<string | null>(null);
+  const [worldPlayerId, setWorldPlayerId] = useState<string | null>(null);
 
   // Guardado automático.
   useEffect(() => {
@@ -148,6 +151,7 @@ export default function App() {
   return (
     <OpenProfileContext.Provider value={setProfileId}>
     <OpenRivalContext.Provider value={setRivalProfileId}>
+    <OpenWorldPlayerContext.Provider value={setWorldPlayerId}>
     <NavigateTabContext.Provider value={setTab}>
     <div className="app-shell">
       <div className="topbar">
@@ -210,8 +214,12 @@ export default function App() {
       {rivalProfileId && (
         <RivalProfile state={state} rivalId={rivalProfileId} onClose={() => setRivalProfileId(null)} />
       )}
+      {worldPlayerId && (
+        <WorldPlayerProfile state={state} playerId={worldPlayerId} onClose={() => setWorldPlayerId(null)} />
+      )}
     </div>
     </NavigateTabContext.Provider>
+    </OpenWorldPlayerContext.Provider>
     </OpenRivalContext.Provider>
     </OpenProfileContext.Provider>
   );

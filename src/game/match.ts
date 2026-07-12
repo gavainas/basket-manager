@@ -1,5 +1,6 @@
 import { BALANCE, clamp } from './balance';
 import { logClubEvent, logPlayerEvent } from './timeline';
+import { USER_TEAM_ID } from './world';
 import type { BoxScoreLine, GameState, MatchResult, Player, Position, Rival, TeamEval } from './types';
 import type { Rng } from './rng';
 
@@ -183,11 +184,23 @@ function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
   rivalRow.pointsFor += result.scoreAgainst;
   rivalRow.pointsAgainst += result.scoreFor;
 
-  // Partidos entre los demás rivales para que la tabla viva.
-  const others = rng.shuffle(s.rivals.filter((r) => r.id !== rivalId));
-  for (let i = 0; i + 1 < others.length; i += 2) {
-    const a = others[i];
-    const b = others[i + 1];
+  // Resultado del usuario al fixture del mundo.
+  const userFx = s.world.fixtures.find((f) => f.week === s.week && f.isUserMatch);
+  if (userFx) {
+    userFx.status = 'jugado';
+    const userHome = userFx.homeTeamId === USER_TEAM_ID;
+    userFx.scoreHome = userHome ? result.scoreFor : result.scoreAgainst;
+    userFx.scoreAway = userHome ? result.scoreAgainst : result.scoreFor;
+  }
+
+  // Los demás partidos de la divisional salen del fixture (tabla y calendario coherentes).
+  const otherFixtures = s.world.fixtures.filter((f) => f.week === s.week && !f.isUserMatch);
+  for (const fx of otherFixtures) {
+    const homeRivalId = s.world.teams.find((t) => t.id === fx.homeTeamId)?.legacyRivalId;
+    const awayRivalId = s.world.teams.find((t) => t.id === fx.awayTeamId)?.legacyRivalId;
+    const a = s.rivals.find((r) => r.id === homeRivalId);
+    const b = s.rivals.find((r) => r.id === awayRivalId);
+    if (!a || !b) continue;
     const pa = a.strength ** 2 / (a.strength ** 2 + b.strength ** 2);
     const aWins = rng.chance(pa);
     const rowA = s.standings.find((r) => r.teamId === a.id)!;
@@ -209,6 +222,9 @@ function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
       rowA.pointsFor += loseScore;
       rowA.pointsAgainst += winScore;
     }
+    fx.status = 'jugado';
+    fx.scoreHome = aWins ? winScore : loseScore;
+    fx.scoreAway = aWins ? loseScore : winScore;
   }
 
   s.lastMatch = result;

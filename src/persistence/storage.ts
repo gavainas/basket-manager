@@ -1,19 +1,10 @@
 import { SAVE_VERSION } from '../game/week';
 import { suggestRotation } from '../game/match';
-import { Rng } from '../game/rng';
+import { buildWorld } from '../game/world';
+import { Rng, seedFromString as seedFrom } from '../game/rng';
 import { RIVALS } from '../data/rivals';
 import { rollBackground } from '../data/backgrounds';
 import type { GameState } from '../game/types';
-
-/** Semilla estable a partir de un string, para migraciones deterministas. */
-function seedFrom(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
 
 const KEY = 'basket-manager-save-v1';
 
@@ -118,6 +109,14 @@ export function loadGame(): GameState | null {
           text,
         }));
       parsed.saveVersion = 11;
+    }
+    // v11 → v12: el mundo (ligas, equipos, jugadores rivales, fixture).
+    if (parsed.saveVersion === 11) {
+      parsed.world = buildWorld(parsed, new Rng(seedFrom(`world_${parsed.seed}`)));
+      // El formato del partido en vivo cambió: si había uno a medias, vuelve al quinteto.
+      parsed.live = null;
+      if (parsed.phase === 'match') parsed.phase = 'lineup';
+      parsed.saveVersion = 12;
     }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;

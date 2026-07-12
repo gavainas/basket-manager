@@ -1,4 +1,5 @@
 import type { GameState } from '../game/types';
+import { USER_TEAM_ID } from '../game/world';
 import { RivalLink } from './RivalLink';
 import { rivalStyleInfo } from './helpers';
 
@@ -23,10 +24,52 @@ export function LeagueView({ state }: { state: GameState }) {
     );
   };
 
+  const world = state.world;
+  const userEntry = world.entries.find((e) => e.teamId === USER_TEAM_ID && e.status === 'activa');
+  const userDivision = world.divisions.find((d) => d.id === userEntry?.divisionId);
+  const userLeague = world.leagues.find((l) => l.id === userEntry?.leagueId);
+
   return (
-    <div className="grid cols-2">
+    <div>
+      {userLeague && userDivision && (
+        <div className="card" style={{ marginBottom: '1rem' }}>
+          <h3>Las ligas</h3>
+          <div className="data-grid">
+            {world.leagues.map((l) => {
+              const divisions = world.divisions.filter((d) => d.leagueId === l.id);
+              const isOurs = l.id === userLeague.id;
+              return (
+                <div className="data-row" key={l.id}>
+                  <span className="data-label">{l.name}</span>
+                  <span className="data-value">
+                    {isOurs ? (
+                      <>
+                        <strong>Jugamos en {userDivision.name}</strong>
+                        <span className="muted">
+                          {' '}
+                          · los {userDivision.gameDay} a las {userDivision.gameTimes.join(' o ')}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="muted">
+                        {divisions.length} divisional{divisions.length !== 1 ? 'es' : ''}
+                        {l.minAge ? ` · desde ${l.minAge} años` : ''} · el club todavía no tiene equipo acá
+                      </span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="grid cols-2">
       <div className="card">
-        <h3>Tabla de posiciones</h3>
+        <h3>
+          Tabla de posiciones
+          {userLeague && userDivision ? ` · ${userLeague.name} ${userDivision.name}` : ''}
+        </h3>
         <div className="table-wrap">
           <table>
             <thead>
@@ -93,6 +136,7 @@ export function LeagueView({ state }: { state: GameState }) {
             </tbody>
           </table>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -1,5 +1,7 @@
 import type { GameState } from '../game/types';
-import { initials, rivalDifficulty, rivalStyleInfo } from './helpers';
+import { divisionOfTeam, teamByLegacyRival, teamRoster, worldPlayerName } from '../game/world';
+import { WorldPlayerLink } from './WorldPlayerLink';
+import { initials, rivalDifficulty, rivalStyleInfo, starsFor } from './helpers';
 
 interface Props {
   state: GameState;
@@ -22,6 +24,14 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
 
   const headToHead = state.history.filter((m) => m.rivalId === rival.id);
   const h2hWins = headToHead.filter((m) => m.won).length;
+
+  const team = teamByLegacyRival(state.world, rival.id);
+  const division = team ? divisionOfTeam(state.world, team.id) : undefined;
+  const league = division ? state.world.leagues.find((l) => l.id === division.leagueId) : undefined;
+  const venue = team ? state.world.venues.find((v) => v.id === team.venueId) : undefined;
+  const roster = team
+    ? teamRoster(state.world, team.id).sort((a, b) => b.level - a.level)
+    : [];
   const upcoming = state.schedule
     .map((id, i) => ({ id, week: i + 1 }))
     .filter(
@@ -53,6 +63,52 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
           <p className="muted" style={{ margin: 0 }}>
             💡 {style.advice}
           </p>
+
+          {team && (
+            <>
+              <h4 className="profile-subtitle">El club</h4>
+              <div className="data-grid">
+                <div className="data-row">
+                  <span className="data-label">Compite en</span>
+                  <span className="data-value">
+                    {league?.name} · {division?.name}
+                    {division ? ` (${division.gameDay} ${division.gameTimes.join(' / ')})` : ''}
+                  </span>
+                </div>
+                <div className="data-row">
+                  <span className="data-label">Cancha</span>
+                  <span className="data-value">
+                    {venue ? `${venue.name} (${venue.neighborhood})` : '—'}
+                  </span>
+                </div>
+                <div className="data-row">
+                  <span className="data-label">Delegado</span>
+                  <span className="data-value">{team.delegate}</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {roster.length > 0 && (
+            <>
+              <h4 className="profile-subtitle">Plantel {state.world.season.id.replace('s', 'temporada ')}</h4>
+              <div className="data-grid">
+                {roster.map((p) => (
+                  <div className="data-row" key={p.id}>
+                    <span className="data-label">{p.position}</span>
+                    <span className="data-value">
+                      <WorldPlayerLink id={p.id}>{worldPlayerName(p)}</WorldPlayerLink>{' '}
+                      <span className="muted">
+                        ≈{p.level} {starsFor(p.level)} · {p.age} años
+                        {p.injuryWeeks > 0 ? ' · 🚑' : ''}
+                        {p.availability.distanceKm > 50 ? ` · ${p.availability.residence}` : ''}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           {row && (
             <>
