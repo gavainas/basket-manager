@@ -3,6 +3,7 @@
 Próximas etapas, en orden aproximado de valor:
 
 ## Hecho recientemente
+- **Playoffs**: la fase regular clasifica del 1° al 4° a la Copa de Oro y del 5° al 8° a la Copa de Plata (semis fecha 10, finales fecha 11); títulos, prestigio e hitos.
 - **Promesas con consecuencias**: las promesas de pretemporada (titularidad, minutos, competitivo, ambiente) se evalúan en temporada y los jugadores reaccionan.
 - **Mundo etapas 1-5**: ligas y divisionales, clubes/equipos separados, planteles rivales completos con perfiles, regla de inscripción (jugador + liga + temporada), calendario con días y horarios, disponibilidad de rivales, convocatorias rivales variables y scouting con incertidumbre.
 
