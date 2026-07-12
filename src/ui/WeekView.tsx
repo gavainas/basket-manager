@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { GameState, Player, Position } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
+import { ABSENCE_ACTIONS, reasonById } from '../game/absences';
 import { ACTIONS } from '../game/actions';
 import { BALANCE } from '../game/balance';
 import { courtFreshness, evaluateTeam, isSelectable } from '../game/match';
@@ -145,20 +146,58 @@ function CallUpPanel({ state, dispatch }: Props) {
 
         {(outs.length > 0 || stillInjured.length > 0) && (
           <div className="callup-list">
-            {outs.map((e) => (
-              <div key={e.playerId} className="callup-row out">
-                <span className="callup-icon">{e.status === 'lesionado' ? '🚑' : '❌'}</span>
-                <div>
-                  <div className="callup-name">
-                    <PlayerLink id={e.playerId}>{e.playerName}</PlayerLink>
-                    <span className={`chip ${e.status === 'lesionado' ? 'bad' : 'warn'}`} style={{ marginLeft: '0.5rem' }}>
-                      {e.status === 'lesionado' ? 'Se lesionó afuera' : 'No viene'}
-                    </span>
+            {outs.map((e) => {
+              const reason = e.reasonId ? reasonById(e.reasonId) : undefined;
+              const canAct = e.status === 'ausente' && reason && !e.resolved;
+              return (
+                <div key={e.playerId} className="callup-row out">
+                  <span className="callup-icon">{e.status === 'lesionado' ? '🚑' : e.lateArrival ? '🕘' : '❌'}</span>
+                  <div style={{ flex: 1 }}>
+                    <div className="callup-name">
+                      <PlayerLink id={e.playerId}>{e.playerName}</PlayerLink>
+                      <span
+                        className={`chip ${e.status === 'lesionado' ? 'bad' : e.lateArrival ? 'warn' : e.status === 'confirmado' ? 'good' : 'warn'}`}
+                        style={{ marginLeft: '0.5rem' }}
+                      >
+                        {e.status === 'lesionado'
+                          ? 'Se lesionó afuera'
+                          : e.lateArrival
+                            ? 'Llega al 2do tiempo'
+                            : e.status === 'confirmado'
+                              ? 'Al final viene'
+                              : 'No viene'}
+                      </span>
+                    </div>
+                    {e.note && <div className="callup-note">{e.note}</div>}
+                    {e.resolution && (
+                      <div className="callup-note" style={{ color: 'var(--text)', fontStyle: 'normal' }}>
+                        → {e.resolution}
+                      </div>
+                    )}
+                    {canAct && (
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.45rem' }}>
+                        {[...reason.actions, 'aceptar' as const].map((actionId) => {
+                          const def = ABSENCE_ACTIONS[actionId];
+                          const noMoney = def.cost > 0 && state.club.money < def.cost;
+                          return (
+                            <button
+                              key={actionId}
+                              className="small"
+                              disabled={noMoney}
+                              title={def.hint + (def.cost > 0 ? ` (cuesta $${def.cost})` : '')}
+                              onClick={() => dispatch({ type: 'CALLUP_ACTION', playerId: e.playerId, actionId })}
+                            >
+                              {def.label}
+                              {def.cost > 0 ? ` ($${def.cost})` : ''}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                  {e.note && <div className="callup-note">{e.note}</div>}
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {stillInjured.map((p) => (
               <div key={p.id} className="callup-row out dim">
                 <span className="callup-icon">🚑</span>

@@ -303,6 +303,10 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
   for (const p of squad) {
     perfs[p.id] = playerEffective(p) * rng.range(0.78, 1.22);
     playerFresh[p.id] = clamp(M.freshStartBase + M.freshStartPhysical * p.physical);
+    // Llega para el segundo tiempo: entra sin calentar y con menos nafta.
+    if (s.callUp.some((c) => c.playerId === p.id && c.lateArrival)) {
+      playerFresh[p.id] = Math.round(playerFresh[p.id] * 0.88);
+    }
     minutes[p.id] = 0;
     stats[p.id] = { pts: 0, reb: 0, ast: 0 };
   }

@@ -2,24 +2,12 @@
 // Por lo general vienen todos, pero los de poco compromiso a veces fallan
 // con alguna excusa, o directamente se lesionaron jugando en otro lado.
 
+import { ABSENCE_REASONS } from './absences';
 import { BALANCE } from './balance';
 import { isSelectable } from './match';
 import { logPlayerEvent } from './timeline';
 import type { CallUpEntry, GameState } from './types';
 import type { Rng } from './rng';
-
-const EXCUSES = [
-  'La mujer no lo deja venir: ayer ya jugó un partido con los del trabajo y hoy "tocaba familia".',
-  'Cumpleaños de la suegra. Dijo que prefería mil veces venir, pero perdió la votación.',
-  'Aniversario de casados. Se olvidó el año pasado: este año no se jugaba otra.',
-  '"Se me complicó", mandó por WhatsApp a las 18:55. No dio más detalles.',
-  'Cayó la esposa con la lista del súper y el nene con fiebre. No hubo caso.',
-  'Cumple de 15 de la sobrina. Prometió llegar para el segundo tiempo; nadie le creyó.',
-  'La mujer le recordó que "el básquet no paga las cuentas". La sentencia llegó anoche.',
-  'Quedó de armar el asado familiar. Mandó foto del fuego encendido como prueba.',
-  'Se fue al camping con la familia política. "Sin señal", fue lo último que se supo.',
-  'Tenía que llevar el auto al mecánico "sí o sí hoy". El mecánico es su cuñado.',
-];
 
 const INJURY_NOTES = [
   'Jugó ayer un picado en el club del barrio y volvió renqueando: tobillo hinchado.',
@@ -65,9 +53,10 @@ export function rollCallUp(s: GameState, rng: Rng): void {
       });
       outCount += 1;
     } else if (outCount < C.maxOut && rng.chance(excuseChance)) {
-      const excuse = rng.pick(EXCUSES);
+      const reason = rng.pick(ABSENCE_REASONS);
+      const excuse = rng.pick(reason.excuses);
       const player = s.players.find((x) => x.id === p.id)!;
-      entries.push({ playerId: p.id, playerName: p.name, status: 'ausente', note: excuse });
+      entries.push({ playerId: p.id, playerName: p.name, status: 'ausente', note: excuse, reasonId: reason.id });
       logPlayerEvent(player, s.seasonNumber, s.week, 'ausencia', `Faltó al partido. ${excuse}`);
       outCount += 1;
     } else {

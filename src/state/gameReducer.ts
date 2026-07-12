@@ -21,6 +21,7 @@ import {
 } from '../game/preseason';
 import { resolvePreseasonEvent } from '../game/preseasonEvents';
 import { Rng, randomSeed } from '../game/rng';
+import { attemptAbsenceAction, type AbsenceActionId } from '../game/absences';
 import { resolveIncident } from '../game/narrative';
 import { advanceWeek, confirmActions, createNewGame, resolveEvent } from '../game/week';
 import type { AttackTactic, DefenseTactic, GameState } from '../game/types';
@@ -35,6 +36,7 @@ export type GameAction =
   | { type: 'CONFIRM_ACTIONS' }
   | { type: 'RESOLVE_EVENT'; optionIndex: number }
   | { type: 'DISMISS_EVENT_OUTCOME' }
+  | { type: 'CALLUP_ACTION'; playerId: string; actionId: AbsenceActionId }
   | { type: 'PROCEED_TO_LINEUP' }
   | { type: 'TOGGLE_STARTER'; id: string }
   | { type: 'TOGGLE_ROTATION'; id: string }
@@ -130,6 +132,11 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       return resolveEvent(state, action.optionIndex);
     case 'DISMISS_EVENT_OUTCOME':
       return { ...state, eventOutcome: null };
+    case 'CALLUP_ACTION': {
+      if (state.phase !== 'callUp') return state;
+      const rng = new Rng(state.seed);
+      return attemptAbsenceAction({ ...state, seed: rng.nextSeed() }, action.playerId, action.actionId, rng);
+    }
     case 'PROCEED_TO_LINEUP': {
       if (state.phase !== 'callUp') return state;
       return { ...state, phase: 'lineup' };
@@ -141,7 +148,9 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       if (state.starters.includes(action.id)) {
         return { ...state, starters: state.starters.filter((id) => id !== action.id) };
       }
-      if (!availableForMatch(state, player) || state.starters.length >= 5) return state;
+      // Los que llegan para el segundo tiempo solo pueden entrar desde el banco.
+      const lateArrival = state.callUp.some((c) => c.playerId === action.id && c.lateArrival);
+      if (!availableForMatch(state, player) || lateArrival || state.starters.length >= 5) return state;
       return {
         ...state,
         starters: [...state.starters, action.id],
@@ -167,7 +176,10 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
     case 'AUTO_LINEUP': {
       if (state.phase !== 'lineup') return state;
       const absent = matchAbsentIds(state);
-      const starters = suggestStarters(state.players, absent);
+      // Para sugerir titulares, los que llegan tarde cuentan como ausentes.
+      const noStart = new Set(absent);
+      for (const c of state.callUp) if (c.lateArrival) noStart.add(c.playerId);
+      const starters = suggestStarters(state.players, noStart);
       return { ...state, starters, rotation: suggestRotation(state.players, starters, absent) };
     }
     case 'CLEAR_LINEUP': {

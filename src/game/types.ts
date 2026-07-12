@@ -183,6 +183,14 @@ export interface CallUpEntry {
   status: CallUpStatus;
   /** Excusa o parte médico (null si confirmó sin drama). */
   note: string | null;
+  /** Motivo estructurado de la ausencia (habilita acciones del manager). */
+  reasonId?: string;
+  /** Ya intentaste algo con esta ausencia (un intento por semana). */
+  resolved?: boolean;
+  /** Desenlace del intento, para mostrar. */
+  resolution?: string;
+  /** Llega para el segundo tiempo: disponible solo desde el banco. */
+  lateArrival?: boolean;
 }
 
 export type DefenseTactic = 'hombre' | 'zona' | 'presion';
