@@ -4,6 +4,11 @@ El repositorio es la **fuente de verdad** del diseño: tokens, componentes, gene
 reglas viven acá. El proyecto **"Basket Manager UI"** en [claude.ai/design](https://claude.ai/design)
 es un espejo para explorar y visualizar el sistema, nunca el original.
 
+> **Estado de aprobación:** la UI y los retratos actuales son funcionales, pero todavía se
+> consideran provisionales como dirección artística final. Antes de expandir o generar arte
+> en masa, seguir las puertas de aprobación de
+> [`ART_PIPELINE.md`](ART_PIPELINE.md).
+
 ## Identidad: gestión amateur
 
 El juego combina dos mundos que la UI debe tratar como uno solo:
@@ -87,13 +92,29 @@ Todos estilados en `src/styles.css`, markup en `src/ui/`:
 
 ```
 design/
-  DESIGN.md          ← este archivo: principios, tokens, reglas
+  DESIGN.md          ← este archivo: principios, tokens y reglas
+  ART_PIPELINE.md    ← proceso de arte, roles y puertas de aprobación
   AVATAR_SYSTEM.md   ← generador modular de retratos
   SOCIAL_UI.md       ← familia visual de eventos sociales
   cards/             ← SALIDA GENERADA por npm run design:sync (ignorada por git)
   components/        ← (futuro) specs por componente cuando haga falta detallar
-  references/        ← (futuro) capturas y referencias visuales
+  references/        ← (futuro) referencias aprobadas y rechazadas
 ```
+
+## Roles de las herramientas
+
+La división completa está documentada en [`ART_PIPELINE.md`](ART_PIPELINE.md):
+
+- **Higgsfield:** exploración artística, concept art, personajes, cuerpos, escenas,
+  fondos e ilustraciones.
+- **Claude Design:** UI/UX, arquitectura de información, layout, navegación y sistema
+  de interfaz.
+- **Claude Code:** implementación, integración de assets y escalado técnico después de
+  la aprobación.
+- **Gabi:** dirección creativa y aprobación explícita en cada puerta.
+
+Ninguna exploración o implementación se considera arte final por el solo hecho de existir
+en el repositorio.
 
 ## Sincronización con Claude Design
 
@@ -110,3 +131,5 @@ design/
   retratado en una card, para que el espejo no quede desactualizado.
 - **Dirección del flujo**: las exploraciones hechas en Claude Design se aplican
   al repo editando `src/styles.css` / `src/ui/`; nunca al revés.
+- **Límite del flujo:** sincronizar componentes no equivale a aprobar una dirección
+  artística. La expansión visual depende de las puertas definidas en `ART_PIPELINE.md`.
