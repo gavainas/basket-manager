@@ -303,6 +303,9 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
       status: 'activo',
       venueId,
       delegate: DELEGATE_NAMES[i % DELEGATE_NAMES.length],
+      // Los grandes pagan DT; el resto se arregla con honorarios o un jugador.
+      coachName: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
+      coachType: rival.strength >= 68 ? 'pago' : rng.chance(0.25) ? 'jugador' : 'honorario',
       legacyRivalId: rival.id,
     });
 

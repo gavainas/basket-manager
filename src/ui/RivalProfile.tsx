@@ -91,6 +91,23 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
                   <span className="data-label">Delegado</span>
                   <span className="data-value">{team.delegate}</span>
                 </div>
+                {team.coachName && (
+                  <div className="data-row">
+                    <span className="data-label">DT</span>
+                    <span className="data-value">
+                      {team.coachName}{' '}
+                      <span className="muted">
+                        (
+                        {team.coachType === 'pago'
+                          ? 'DT pago'
+                          : team.coachType === 'jugador'
+                            ? 'los dirige un jugador'
+                            : 'honorario'}
+                        )
+                      </span>
+                    </span>
+                  </div>
+                )}
                 {worldClub && (
                   <div className="data-row">
                     <span className="data-label">Institución</span>

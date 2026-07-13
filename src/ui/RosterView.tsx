@@ -1,10 +1,12 @@
 import type { GameState, Position } from '../game/types';
+import type { GameAction } from '../state/gameReducer';
 import { activePlayers } from '../game/match';
+import { CoachCard } from './CoachCard';
 import { PlayerCard } from './PlayerCard';
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 
-export function RosterView({ state }: { state: GameState }) {
+export function RosterView({ state, dispatch }: { state: GameState; dispatch: (action: GameAction) => void }) {
   const active = [...activePlayers(state.players)].sort(
     (a, b) => POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) || b.visibleRating - a.visibleRating
   );
@@ -12,6 +14,7 @@ export function RosterView({ state }: { state: GameState }) {
 
   return (
     <div>
+      <CoachCard state={state} dispatch={dispatch} />
       <p className="muted" style={{ marginTop: 0 }}>
         La valoración (≈) es una estimación: el rendimiento real depende del físico, la motivación, la confianza y el
         encaje en el equipo. Nadie muestra todas sus cartas.

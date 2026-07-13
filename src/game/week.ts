@@ -7,6 +7,7 @@ import { getEvent, rollEvent } from './events';
 import { generateObjectives } from './objectives';
 import { activePlayers, matchAbsentIds, suggestRotation, suggestStarters } from './match';
 import { rollCallUp } from './callup';
+import { buildCoachMarket, coachWeeklyTick } from './coach';
 import { advancePlayoffs } from './playoffs';
 import { checkPromises } from './promises';
 import { logClubEvent, logPlayerEvent } from './timeline';
@@ -14,7 +15,7 @@ import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);
@@ -77,6 +78,8 @@ export function createNewGame(seed: number): GameState {
     preseason: null,
     world: emptyWorld(),
     playoffs: null,
+    coach: null,
+    coachMarket: buildCoachMarket(1, seed),
   };
   state.objectives = generateObjectives(1, state.club.sportPrestige, rng);
   state.world = buildWorld(state, rng);
@@ -205,6 +208,9 @@ export function advanceWeek(state: GameState): GameState {
   // --- Promesas: lo que prometiste en la pretemporada se cobra acá ---
   // (después de la evolución semanal, para que el enojo no se pise con la recuperación)
   checkPromises(s);
+
+  // --- El cuerpo técnico también vive: roces, y al proyecto se lo pueden llevar ---
+  coachWeeklyTick(s, rng);
 
   // --- El mundo también vive: fichas al día y lesiones rivales ---
   syncUserRegistrations(s);

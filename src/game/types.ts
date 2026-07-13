@@ -272,6 +272,29 @@ export interface LiveMatchState {
 /** Quintetos predefinidos, estilo unidades de NBA. */
 export type LineupPreset = 'titulares' | 'segunda' | 'frescos' | 'cerradores';
 
+// ---------- Cuerpo técnico ----------
+
+export type CoachType = 'pago' | 'honorario' | 'jugador';
+export type CoachProfile = 'proyecto' | 'profe' | 'quemado';
+
+export interface Coach {
+  id: string;
+  name: string;
+  type: CoachType;
+  profile: CoachProfile;
+  /** Lectura del juego (0-100): calidad de sus decisiones en el partido. */
+  tactics: number;
+  /** Manejo de grupo (0-100): cómo llega al vestuario. */
+  people: number;
+  weeklyWage: number;
+  /** Si es jugador-DT, el jugador del plantel que dirige. */
+  playerId?: string;
+  /** Directiva que le diste para los partidos. */
+  directive: 'ganar' | 'repartir';
+  /** Riesgo semanal de que se lo lleve un club profesional. */
+  poachRisk?: number;
+}
+
 /** Incidencia arbitral con decisión pendiente (serializable). */
 export interface PendingRefIncident {
   kind: 'falta_dudosa' | 'tecnica' | 'criterio' | 'buen_arbitraje';
@@ -535,6 +558,9 @@ export interface Team {
   status: 'activo' | 'inactivo';
   venueId: string;
   delegate: string;
+  /** DT del equipo (para rivales es color; el del usuario vive en GameState.coach). */
+  coachName?: string;
+  coachType?: CoachType;
   /** Id del rival del sistema clásico al que mapea (compatibilidad). */
   legacyRivalId?: string;
 }
@@ -719,4 +745,8 @@ export interface GameState {
   world: WorldState;
   /** Playoffs de la divisional (Copa de Oro / Copa de Plata); null en fase regular. */
   playoffs: PlayoffsState | null;
+  /** El DT del equipo principal (null = dirigís vos). */
+  coach: Coach | null;
+  /** Candidatos a DT disponibles esta temporada. */
+  coachMarket: Coach[];
 }

@@ -1,4 +1,5 @@
 import { BALANCE, clamp } from './balance';
+import { coachBoostsTraining } from './coach';
 import { createRecruit } from '../data/recruits';
 import { logClubEvent } from './timeline';
 import type { GameState, Player } from './types';
@@ -74,9 +75,11 @@ export const ACTIONS: ActionDef[] = [
         p.physical = clamp(p.physical + T.physical);
         p.motivation = clamp(p.motivation + (p.personality === 'competitivo' ? 3 : 1));
         // Progresión real: jóvenes comprometidos crecen; en su plenitud, solo los muy dedicados.
+        // Un DT que enseña multiplica el progreso del entrenamiento.
+        const coachBonus = coachBoostsTraining(s.coach) ? 1.5 : 1;
         const canGrow =
-          (p.age <= 25 && p.commitment >= 50 && rng.chance(T.youngImproveChance)) ||
-          (p.age >= 26 && p.age <= 30 && p.commitment >= 70 && rng.chance(T.primeImproveChance));
+          (p.age <= 25 && p.commitment >= 50 && rng.chance(T.youngImproveChance * coachBonus)) ||
+          (p.age >= 26 && p.age <= 30 && p.commitment >= 70 && rng.chance(T.primeImproveChance * coachBonus));
         if (canGrow && p.technique < 90) {
           p.technique += 1;
           p.techniqueGain += 1;

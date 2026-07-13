@@ -313,6 +313,10 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
   const stats: Record<string, { pts: number; reb: number; ast: number }> = {};
   for (const p of squad) {
     perfs[p.id] = playerEffective(p) * rng.range(0.78, 1.22);
+    // El jugador-DT juega pensando en los cambios: el doble rol se paga.
+    if (s.coach?.type === 'jugador' && s.coach.playerId === p.id) {
+      perfs[p.id] *= 0.94;
+    }
     playerFresh[p.id] = clamp(M.freshStartBase + M.freshStartPhysical * p.physical);
     // Llega para el segundo tiempo: entra sin calentar y con menos nafta.
     if (s.callUp.some((c) => c.playerId === p.id && c.lateArrival)) {
@@ -343,6 +347,9 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     refTension: 0,
     rageBoost: false,
     pendingIncident: null,
+    // Con DT contratado, los cambios arrancan en sus manos y con su directiva.
+    autoRotation: !!s.coach,
+    directive: s.coach?.directive ?? 'ganar',
     rivalFreshness: clamp(M.rivalFreshStart + rng.int(-4, 4)),
     starId: star.id,
     starName: star.name,
@@ -463,7 +470,11 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
 
   const freshOf = (id: string) => live.playerFresh[id] ?? 70;
   const byId = (id: string) => s.players.find((p) => p.id === id)!;
+  const dt = s.coach ? s.coach.name : 'el DT';
   const notes: string[] = [];
+
+  // Un DT con poca lectura de juego aguanta de más a los fundidos.
+  const tiredThreshold = s.coach ? 30 + s.coach.tactics * 0.28 : 45;
 
   if (live.directive === 'repartir' && qIndex <= 2) {
     // Que todos toquen la pelota: entran los que todavía no jugaron.
@@ -472,7 +483,7 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
       const outId = [...live.onCourt].sort((a, b) => (live.minutes[b] ?? 0) - (live.minutes[a] ?? 0))[0];
       if (!outId) break;
       live.onCourt = live.onCourt.map((id) => (id === outId ? inId : id));
-      notes.push(`El DT automático movió el banco: entra ${byId(inId).name} por ${byId(outId).name}.`);
+      notes.push(`${dt} movió el banco: entra ${byId(inId).name} por ${byId(outId).name}.`);
     }
   }
 
@@ -481,18 +492,18 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
     const closers = presetFive(s, live, 'cerradores');
     if (closers.some((id) => !live.onCourt.includes(id))) {
       live.onCourt = closers;
-      notes.push('↺ El DT automático mandó a los cerradores para el último cuarto.');
+      notes.push(`↺ ${dt} mandó a los cerradores para el último cuarto.`);
     }
   } else {
     // Regla general: el fundido descansa si hay recambio con piernas.
     for (const outId of [...live.onCourt]) {
-      if (freshOf(outId) >= 45) continue;
+      if (freshOf(outId) >= tiredThreshold) continue;
       const candidate = live.squad
         .filter((id) => !live.onCourt.includes(id) && isSelectable(byId(id)))
         .sort((a, b) => freshOf(b) - freshOf(a))[0];
       if (candidate && freshOf(candidate) > freshOf(outId) + 12) {
         live.onCourt = live.onCourt.map((id) => (id === outId ? candidate : id));
-        notes.push(`Cambio del DT automático: entra ${byId(candidate).name} por ${byId(outId).name}, que pedía el cambio.`);
+        notes.push(`Cambio de ${dt}: entra ${byId(candidate).name} por ${byId(outId).name}, que pedía el cambio.`);
       }
     }
   }
@@ -594,6 +605,11 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
     live.rageBoost = false;
   }
   atkMult *= 1 - 0.012 * (live.refTension ?? 0);
+
+  // Si el DT maneja los cambios, su lectura del juego suma (o resta).
+  if (live.autoRotation && s.coach) {
+    atkMult *= 1 + (s.coach.tactics - 55) * 0.0012;
+  }
 
   const atk = effAvg * chemFactor * orgFactor * coverageFactor * atkMult;
 
@@ -893,7 +909,9 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       ];
     }
 
-    const moraleDelta = won ? B.winMotivation : B.lossMotivation;
+    // Un DT que llega al grupo suaviza las derrotas y contagia en las victorias.
+    const coachTouch = s.coach && s.coach.people >= 70 ? 1 : 0;
+    const moraleDelta = (won ? B.winMotivation : B.lossMotivation) + coachTouch;
     const personalityScale = np.personality === 'competitivo' ? 1.5 : np.personality === 'social' ? 0.6 : 1;
     np.motivation = clamp(np.motivation + moraleDelta * personalityScale);
 

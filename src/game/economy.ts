@@ -70,6 +70,11 @@ export function applyWeeklyEconomy(s: GameState, rng: Rng): void {
   s.club.money -= BALANCE.economy.refereeWeekly;
   s.ledger.push({ week: s.week, concept: 'Árbitros y planilla', amount: -BALANCE.economy.refereeWeekly });
 
+  if (s.coach && s.coach.weeklyWage > 0) {
+    s.club.money -= s.coach.weeklyWage;
+    s.ledger.push({ week: s.week, concept: `Sueldo del DT (${s.coach.name})`, amount: -s.coach.weeklyWage });
+  }
+
   // Los cumplidores se molestan si sienten que bancan a los demás.
   const freeRiders = active.filter((p) => p.feeStatus === 'pendiente' || p.feeStatus === 'beca_total').length;
   if (freeRiders >= 4) {

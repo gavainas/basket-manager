@@ -23,6 +23,7 @@ import {
 import { resolvePreseasonEvent } from '../game/preseasonEvents';
 import { Rng, randomSeed } from '../game/rng';
 import { attemptAbsenceAction, type AbsenceActionId } from '../game/absences';
+import { appointPlayerCoach, fireCoach, hireCoach } from '../game/coach';
 import { resolveIncident } from '../game/narrative';
 import { advanceWeek, confirmActions, createNewGame, resolveEvent } from '../game/week';
 import type { AttackTactic, DefenseTactic, GameState, LineupPreset } from '../game/types';
@@ -38,6 +39,10 @@ export type GameAction =
   | { type: 'RESOLVE_EVENT'; optionIndex: number }
   | { type: 'DISMISS_EVENT_OUTCOME' }
   | { type: 'CALLUP_ACTION'; playerId: string; actionId: AbsenceActionId }
+  | { type: 'HIRE_COACH'; coachId: string }
+  | { type: 'FIRE_COACH' }
+  | { type: 'APPOINT_PLAYER_COACH'; playerId: string }
+  | { type: 'SET_COACH_DIRECTIVE'; directive: 'ganar' | 'repartir' }
   | { type: 'PROCEED_TO_LINEUP' }
   | { type: 'TOGGLE_STARTER'; id: string }
   | { type: 'TOGGLE_ROTATION'; id: string }
@@ -139,6 +144,22 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       if (state.phase !== 'callUp') return state;
       const rng = new Rng(state.seed);
       return attemptAbsenceAction({ ...state, seed: rng.nextSeed() }, action.playerId, action.actionId, rng);
+    }
+    case 'HIRE_COACH': {
+      if (state.phase === 'match') return state;
+      return hireCoach(state, action.coachId);
+    }
+    case 'FIRE_COACH': {
+      if (state.phase === 'match') return state;
+      return fireCoach(state);
+    }
+    case 'APPOINT_PLAYER_COACH': {
+      if (state.phase === 'match') return state;
+      return appointPlayerCoach(state, action.playerId);
+    }
+    case 'SET_COACH_DIRECTIVE': {
+      if (!state.coach) return state;
+      return { ...state, coach: { ...state.coach, directive: action.directive } };
     }
     case 'PROCEED_TO_LINEUP': {
       if (state.phase !== 'callUp') return state;

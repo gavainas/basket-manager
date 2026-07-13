@@ -1,8 +1,10 @@
 import { SAVE_VERSION } from '../game/week';
 import { appearanceFromSeed } from '../game/appearance';
+import { buildCoachMarket } from '../game/coach';
 import { suggestRotation } from '../game/match';
 import { buildWorld } from '../game/world';
 import { Rng, seedFromString as seedFrom } from '../game/rng';
+import { FIRST_NAMES, LAST_NAMES } from '../data/names';
 import { RIVALS } from '../data/rivals';
 import { rollBackground } from '../data/backgrounds';
 import type { GameState } from '../game/types';
@@ -146,6 +148,20 @@ export function loadGame(): GameState | null {
         p.appearance = p.appearance ?? appearanceFromSeed(p.id, p.age);
       }
       parsed.saveVersion = 15;
+    }
+    // v15 → v16: cuerpo técnico (DT y candidatos de la temporada).
+    if (parsed.saveVersion === 15) {
+      parsed.coach = parsed.coach ?? null;
+      parsed.coachMarket = parsed.coachMarket ?? buildCoachMarket(parsed.seasonNumber, parsed.seed);
+      for (const t of parsed.world.teams) {
+        if (t.legacyRivalId && t.legacyRivalId !== 'club' && !t.coachName) {
+          const rng = new Rng(seedFrom(`dt_${t.id}`));
+          const rival = parsed.rivals.find((r) => r.id === t.legacyRivalId);
+          t.coachName = `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`;
+          t.coachType = (rival?.strength ?? 50) >= 68 ? 'pago' : rng.chance(0.25) ? 'jugador' : 'honorario';
+        }
+      }
+      parsed.saveVersion = 16;
     }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;

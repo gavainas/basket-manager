@@ -890,7 +890,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
                 disabled={live.finished}
                 onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true })}
               >
-                DT automático
+                {state.coach ? `DT: ${shortName(state.coach.name)}` : 'DT'}
               </button>
             </div>
             {live.autoRotation && (
@@ -918,7 +918,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
             {live.finished
               ? 'Partido terminado: no hay más cambios.'
               : live.autoRotation
-                ? 'El DT automático hace los cambios entre cuartos según la directiva. Podés pisar sus decisiones a mano.'
+                ? `${state.coach ? state.coach.name : 'El DT'} hace los cambios entre cuartos según la directiva. Podés pisar sus decisiones a mano.`
                 : outSel
                   ? `Sale ${shortName(byId(outSel).name)}: tocá quién entra del banco.`
                   : 'Arrastrá un suplente sobre uno en cancha (o tocá: sale → entra). Valen las reentradas.'}

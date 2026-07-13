@@ -6,6 +6,7 @@ import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
 import { weeklyFee } from './economy';
 import { generateObjectives } from './objectives';
 import { clubPosition, suggestRotation, suggestStarters } from './match';
+import { buildCoachMarket } from './coach';
 import { computeSeasonEvaluation } from './evaluation';
 import { rollPreseasonEvent } from './preseasonEvents';
 import { logClubEvent } from './timeline';
@@ -245,6 +246,8 @@ export function createPreseasonNewGame(seed: number): GameState {
     preseason: null,
     world: emptyWorld(),
     playoffs: null,
+    coach: null,
+    coachMarket: buildCoachMarket(1, seed),
   };
   state.preseason = buildPreseasonState(players, state.club, rng, true);
   state.seed = rng.nextSeed();
@@ -357,6 +360,9 @@ export function startPreseason(state: GameState): GameState {
     preseason: null,
     world: emptyWorld(),
     playoffs: null,
+    // El DT sigue en el club entre temporadas (si no se fue antes).
+    coach: state.coach,
+    coachMarket: buildCoachMarket(seasonNumber, state.seed),
   };
   next.preseason = buildPreseasonState(players, next.club, rng, false);
   next.seed = rng.nextSeed();

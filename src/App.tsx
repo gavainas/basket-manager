@@ -246,7 +246,7 @@ export default function App() {
       </div>
 
       {tab === 'resumen' && <Dashboard state={state} />}
-      {tab === 'plantilla' && <RosterView state={state} />}
+      {tab === 'plantilla' && <RosterView state={state} dispatch={dispatch} />}
       {tab === 'finanzas' && <FinancesView state={state} />}
       {tab === 'liga' && <LeagueView state={state} />}
       {tab === 'agenda' && <CalendarView state={state} />}
