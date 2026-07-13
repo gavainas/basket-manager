@@ -230,6 +230,18 @@ export function advanceWeek(state: GameState): GameState {
   s.live = null;
   s.lastMatch = state.lastMatch; // se conserva para referencia
 
+  // Reacciones diferidas: lo que quedó picando semanas atrás se comunica ahora.
+  const due = (s.delayed ?? []).filter((d) => d.season === s.seasonNumber && d.week <= s.week);
+  s.delayed = (s.delayed ?? []).filter((d) => d.season === s.seasonNumber && d.week > s.week);
+  for (const d of due) {
+    const target = d.playerId ? s.players.find((p) => p.id === d.playerId) : undefined;
+    if (d.playerId && (!target || target.leftClub)) continue; // ya no está: la historia murió ahí
+    if (target && d.motivation) target.motivation = clamp(target.motivation + d.motivation);
+    if (d.climate) s.club.socialClimate = clamp(s.club.socialClimate + d.climate);
+    s.news.unshift({ week: Math.min(s.week, s.seasonLength), text: d.text, tone: d.tone });
+    if (target) logPlayerEvent(target, s.seasonNumber, Math.min(s.week, s.seasonLength), 'social', d.text);
+  }
+
   const active = activePlayers(s.players);
 
   if (s.club.money < 0) {

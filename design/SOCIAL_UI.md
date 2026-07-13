@@ -26,8 +26,10 @@ motivación. La card de jugador muestra la más urgente; la ficha las muestra to
 partido como chat del vestuario, con retrato y expresión acorde a la emoción
 (`EMOTION_EXPRESSION`).
 
-Pendiente: relación con el DT y entre compañeros como notas (las afinidades ya
-existen en `relations.ts`), y participación social.
+Las notas de relaciones también están: íntimos (🍻), rivalidades (⚡) y relación
+con el DT (🧊/👊) salen de las afinidades de `relations.ts`; la agenda personal
+(🗓) de los fichados con disponibilidad también aparece como nota. Pendiente:
+participación social como nota.
 
 ## Anatomía de un evento social
 
@@ -36,8 +38,10 @@ existen en `relations.ts`), y participación social.
 (`.event-people`, con la expresión que pide la situación — y **gorra** en los
 eventos festivos: `CAP_EVENTS`), opciones con hint, el **desenlace muestra a los
 implicados** y el momento queda **anotado en la historia personal** de cada uno
-(`resolveEvent` en `week.ts`). Falta: consecuencias diferidas que se comunican
-semanas después.
+(`resolveEvent` en `week.ts`). Las **consecuencias diferidas** también están:
+`later(s, semanas, nota)` en `events.ts` agenda una `DelayedNote` que
+`advanceWeek` comunica semanas después (noticia + ánimo + timeline del
+implicado; si el jugador ya se fue del club, la historia muere ahí).
 
 1. **Título narrativo** — con voz propia: "¿Quién compra la carne?", no "Evento de asado".
 2. **Ilustración o ícono** — un emoji/ícono grande por familia de evento (🍖 asado,

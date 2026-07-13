@@ -3,6 +3,8 @@
 Próximas etapas, en orden aproximado de valor:
 
 ## Hecho recientemente
+- **Fichajes con disponibilidad**: los fichables del mercado tienen agenda real (días bloqueados, horarios, interior) que se revela al contactarlos; se puede negociar que prioricen al club (según su flexibilidad); el fichado se lleva su agenda y pesa en la convocatoria (día bloqueado = ausencia avisada, horario incompatible = llega al 2do tiempo).
+- **Identidad visual etapa 4 (parte social)**: notas de relaciones en cards y ficha (íntimos, rivalidades y relación con el DT usando las afinidades de `relations.ts`), consecuencias diferidas de eventos (`DelayedNote`: se comunican semanas después con noticia, ánimo y timeline) y 3 frases por emoción postpartido para que el vestuario no se repita. *Retratos en rankings/box scores quedó en pausa: es propagar arte provisional a pantallas nuevas ([`design/ART_PIPELINE.md`](design/ART_PIPELINE.md)).*
 - **Identidad visual etapa 3**: estados humanos con frase contextual junto a cada número (`humanState.ts` + `.human-note` en cards y ficha), "💬 El grupo del club" en el resumen (las reacciones postpartido como chat del vestuario, con retratos y expresión acorde), reacciones visibles tras cada evento (el desenlace muestra a los implicados y queda anotado en su historia), gorra solo en eventos festivos y guiño de planilla en el box score.
 - **Identidad visual etapa 2**: retratos en todo el juego (rivales con la camiseta de su club, quinteto y banco de la pizarra, convocatoria, pretemporada y mercado), apariencia persistida en el perfil (save v15: la cara no cambia aunque el generador gane variantes), expresión ligada al estado (molesto/lesionado), más variantes (8 caras, 12 pelos, 8 barbas) y eventos con ícono por familia y participantes con sus retratos.
 - **Experiencia viva del partido (4 sistemas)**: notas por rol con frase explicativa (`rating.ts`), estado emocional postpartido (`emotions.ts`), relato con incidencias deportivas y arbitrales con decisiones del manager (`narrative.ts`), scouting progresivo por niveles de conocimiento con modo debug (`scouting.ts`) y decisiones ante ausencias en la convocatoria (`absences.ts` — 5 motivos con acciones, costos y consecuencias sociales).
@@ -12,10 +14,9 @@ Próximas etapas, en orden aproximado de valor:
 - **Mundo etapas 1-5**: ligas y divisionales, clubes/equipos separados, planteles rivales completos con perfiles, regla de inscripción (jugador + liga + temporada), calendario con días y horarios, disponibilidad de rivales, convocatorias rivales variables y scouting con incertidumbre.
 
 ## Corto plazo
-- **Identidad visual etapa 4**: notas de relaciones (con el DT y entre compañeros, usando las afinidades de `relations.ts`), consecuencias diferidas de eventos (se comunican semanas después), retratos en rankings y box scores, y más frases para los `PlayerMood` (hoy se repiten cuando dos jugadores quedan igual) ([`design/SOCIAL_UI.md`](design/SOCIAL_UI.md)).
+- **Dirección artística (puertas 1-2 del pipeline)**: presentar 3 direcciones visuales comparables sobre la pantalla de plantel y aprobar UI y personajes por separado ([`design/ART_PIPELINE.md`](design/ART_PIPELINE.md)); recién después, retratos en más listas y escalado visual.
 - **Mundo etapa 6 — expansión del club**: inscribir equipos nuevos (+35, segunda liga) con costos y requisitos; compartir jugadores entre ligas usando la regla de inscripción ya centralizada.
-- **Mundo etapa 7 — doble partido y fatiga**: jugadores que juegan dos partidos el mismo día (ligas distintas), llegadas tarde, salidas anticipadas, reprogramaciones; estados descriptivos (fresco/cansado/agotado).
-- **Fichajes con disponibilidad**: que el mercado de pretemporada muestre y negocie disponibilidad (días, horarios, interior, liga prioritaria) usando los AvailabilityProfile ya existentes.
+- **Mundo etapa 7 — doble partido y fatiga**: jugadores que juegan dos partidos el mismo día (ligas distintas), llegadas tarde, salidas anticipadas, reprogramaciones; estados descriptivos (fresco/cansado/agotado); agendas para todo el plantel, no solo fichados.
 - **Más eventos y personalidades**: ampliar el pool de eventos (20+), eventos encadenados y personalidades combinadas.
 - **Balance general**: ajustar dificultad económica y deportiva con datos de partidas reales; niveles de dificultad.
 

@@ -894,7 +894,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
         inSquad: live.squad.includes(p.id),
         promisedMinutes: hasMinutesPromise(s.promises, p.id, s.seasonNumber),
         bigGame,
-      })
+      }, s.week)
     );
 
   const result: MatchResult = {

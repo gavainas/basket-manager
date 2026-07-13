@@ -2,6 +2,7 @@
 // Regla de diseño (design/DESIGN.md): si el motor sabe el "por qué", la UI
 // no muestra la cifra sola. Este módulo centraliza esas frases.
 
+import { affinity, coachAffinity, FRIEND_THRESHOLD, RIVALRY_THRESHOLD } from './relations';
 import type { GameState, Player, PlayerEmotion } from './types';
 
 export interface HumanNote {
@@ -73,6 +74,14 @@ export function playerNotes(state: GameState, p: Player): HumanNote[] {
     notes.push({ icon: '🎓', text: 'Juega con beca: el club lo banca para que esté.', tone: 'neutral' });
   }
 
+  if (p.agenda && p.agenda.notes.length > 0) {
+    notes.push({
+      icon: '🗓',
+      text: p.agenda.notes.join(' '),
+      tone: p.agenda.blockedDays.length > 0 || p.agenda.onlyTimes.length > 0 ? 'warn' : 'neutral',
+    });
+  }
+
   if (p.status === 'disponible' && p.weeksBenched >= 3 && p.expectedRole !== 'suplente') {
     notes.push({ icon: '🪑', text: `Lleva ${p.weeksBenched} semanas sin ser titular; por ahora no dijo nada.`, tone: 'warn' });
   }
@@ -89,7 +98,30 @@ export function playerNotes(state: GameState, p: Player): HumanNote[] {
   if (p.motivation <= 35 && p.status === 'disponible') {
     notes.push({ icon: '🫥', text: 'Desmotivado: viene a entrenar sin ganas.', tone: 'warn' });
   } else if (p.motivation >= 85 && p.status === 'disponible') {
-    notes.push({ icon: '⚡', text: 'A pleno: de los primeros en llegar al entrenamiento.', tone: 'good' });
+    notes.push({ icon: '💪', text: 'A pleno: de los primeros en llegar al entrenamiento.', tone: 'good' });
+  }
+
+  // Relaciones al final: son estables semana a semana, así no acaparan el
+  // único renglón de la card (la ficha las muestra igual, entre todas).
+  const mates = state.players.filter((x) => !x.leftClub && x.id !== p.id);
+  let bestMate: Player | undefined, worstMate: Player | undefined;
+  let bestVal = -1, worstVal = 101;
+  for (const m of mates) {
+    const v = affinity(p, m);
+    if (v > bestVal) { bestVal = v; bestMate = m; }
+    if (v < worstVal) { worstVal = v; worstMate = m; }
+  }
+  if (worstMate && worstVal <= RIVALRY_THRESHOLD) {
+    notes.push({ icon: '⚡', text: `No se banca a ${worstMate.name}: mejor no dejarlos marcándose en la práctica.`, tone: 'warn' });
+  }
+  if (bestMate && bestVal >= FRIEND_THRESHOLD) {
+    notes.push({ icon: '🍻', text: `Íntimo de ${bestMate.name}: donde va uno, va el otro.`, tone: 'good' });
+  }
+  const coach = coachAffinity(p);
+  if (coach <= 30) {
+    notes.push({ icon: '🧊', text: 'La relación con vos viene fría: contesta con monosílabos.', tone: 'warn' });
+  } else if (coach >= 80) {
+    notes.push({ icon: '👊', text: 'Con vos tiene buena onda: es de los que te bancan en el grupo.', tone: 'good' });
   }
 
   return notes;

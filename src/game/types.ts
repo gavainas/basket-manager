@@ -405,6 +405,18 @@ export interface MarketPlayer {
   contacted: boolean;
 }
 
+/** Reacción diferida de un evento: se comunica y aplica semanas después. */
+export interface DelayedNote {
+  season: number;
+  week: number;
+  text: string;
+  tone: 'good' | 'bad' | 'neutral';
+  playerId?: string;
+  /** Ajustes chicos al aplicarse (solo si el jugador sigue en el club). */
+  motivation?: number;
+  climate?: number;
+}
+
 /** Condición aceptada que queda registrada como promesa del club. */
 export interface ClubPromise {
   playerId: string;
@@ -670,6 +682,8 @@ export interface GameState {
   eventOutcome: string | null;
   /** Ids de los implicados en ese desenlace: sus caras acompañan la reacción. */
   eventOutcomePeople?: string[];
+  /** Reacciones diferidas pendientes (se aplican al avanzar la semana). */
+  delayed?: DelayedNote[];
   starters: string[]; // ids de los 5 titulares elegidos
   /** Ids de los jugadores de rotación (entran desde el banco, máx. 5). */
   rotation: string[];

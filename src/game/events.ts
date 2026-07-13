@@ -1,6 +1,6 @@
 import { BALANCE, clamp } from './balance';
 import { createRecruit } from '../data/recruits';
-import type { ActiveEvent, GameState, Player } from './types';
+import type { ActiveEvent, DelayedNote, GameState, Player } from './types';
 import type { Rng } from './rng';
 
 export interface EventOptionDef {
@@ -47,6 +47,11 @@ function calm(p: Player): void {
   p.weeksUpset = 0;
 }
 
+/** Agenda una reacción diferida: se comunica y aplica semanas después. */
+function later(s: GameState, weeksAhead: number, note: Omit<DelayedNote, 'week' | 'season'>): void {
+  (s.delayed ??= []).push({ ...note, season: s.seasonNumber, week: s.week + weeksAhead });
+}
+
 function makeLeave(s: GameState, p: Player, reason: string): void {
   p.leftClub = true;
   s.playersLeftCount += 1;
@@ -79,6 +84,12 @@ export const EVENTS: EventDef[] = [
       p.motivation = clamp(p.motivation - 8);
       p.commitment = clamp(p.commitment + 3);
       upset(p);
+      later(s, 2, {
+        playerId: p.id,
+        text: `${p.name} sigue rumiando aquella charla: "el puesto se gana en la cancha", repite imitándote.`,
+        tone: 'neutral',
+        motivation: -1,
+      });
       return `${p.name} apretó los dientes. Quizás lo tome como desafío… o quizás empiece a mirar otros equipos.`;
     },
   },
@@ -106,6 +117,11 @@ export const EVENTS: EventDef[] = [
           s.club.socialClimate = clamp(s.club.socialClimate + 5);
           a.social = clamp(a.social + 3);
           b.social = clamp(b.social + 3);
+          later(s, 1, {
+            text: `${a.name} y ${b.name} se quedaron charlando después de entrenar: la pelea quedó oficialmente enterrada.`,
+            tone: 'good',
+            climate: 2,
+          });
           return 'La reunión terminó con un apretón de manos. El grupo valoró que alguien se hiciera cargo.';
         }
         s.club.socialClimate = clamp(s.club.socialClimate - 3);
@@ -115,6 +131,12 @@ export const EVENTS: EventDef[] = [
       const worse = rng.pick([a, b]);
       worse.motivation = clamp(worse.motivation - 6);
       upset(worse);
+      later(s, 2, {
+        playerId: worse.id,
+        text: `${worse.name} sigue masticando la pelea de hace dos semanas: en el grupo contesta seco.`,
+        tone: 'bad',
+        motivation: -2,
+      });
       return `Nadie cedió. ${worse.name} quedó especialmente caliente y el ambiente se enrareció.`;
     },
   },
@@ -535,6 +557,11 @@ export const EVENTS: EventDef[] = [
         p.motivation = clamp(p.motivation + 8);
         p.social = clamp(p.social + 4);
         s.club.socialClimate = clamp(s.club.socialClimate + 5);
+        later(s, 1, {
+          text: `Siguen circulando fotos del cumpleaños de ${p.name} en el grupo. El clima quedó arriba.`,
+          tone: 'good',
+          climate: 1,
+        });
         if (rng.chance(0.2)) {
           s.memorableMoments.push(`Semana ${s.week}: el cumpleaños de ${p.name} terminó con torta en la cara y fotos épicas.`);
           return `El festejo de ${p.name} se fue de las manos (para bien). Torta en la cara incluida.`;
