@@ -77,6 +77,12 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
     excuses: ['Cayó la esposa con la lista del súper y el nene con fiebre. No hubo caso.'],
     actions: ['segundo_tiempo', 'convencer'],
   },
+  {
+    // Día bloqueado de la agenda: lo avisó al firmar, cuesta más darlo vuelta.
+    id: 'agenda',
+    excuses: ['Compromiso fijo del día: te lo avisó cuando arregló venir.'],
+    actions: ['segundo_tiempo', 'importancia'],
+  },
 ];
 
 export function reasonById(id: string): AbsenceReasonDef | undefined {

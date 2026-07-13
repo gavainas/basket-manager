@@ -181,7 +181,8 @@ const ROSTER_TEMPLATE: Position[] = [
 
 const BLOCKABLE_DAYS: WeekDay[] = ['lunes', 'martes', 'jueves', 'viernes'];
 
-function genAvailability(commitment: number, reliability: number, rng: Rng): AvailabilityProfile {
+/** Genera la agenda personal de un jugador (también usada por el mercado de pases). */
+export function genAvailability(commitment: number, reliability: number, rng: Rng): AvailabilityProfile {
   const interior = rng.chance(0.08);
   const res = interior ? rng.pick(INTERIOR_CITIES) : { city: 'Montevideo', km: 0 };
   const blockedDays: WeekDay[] = rng.chance(0.2) ? [rng.pick(BLOCKABLE_DAYS)] : [];

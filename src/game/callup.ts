@@ -6,8 +6,11 @@ import { ABSENCE_REASONS } from './absences';
 import { BALANCE } from './balance';
 import { isSelectable } from './match';
 import { logPlayerEvent } from './timeline';
-import type { CallUpEntry, GameState } from './types';
+import { userFixtureOfWeek } from './world';
+import type { CallUpEntry, GameState, WeekDay } from './types';
 import type { Rng } from './rng';
+
+const DAY_OF_DATE: WeekDay[] = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
 const INJURY_NOTES = [
   'Jugó ayer un picado en el club del barrio y volvió renqueando: tobillo hinchado.',
@@ -26,12 +29,46 @@ export function rollCallUp(s: GameState, rng: Rng): void {
   const entries: CallUpEntry[] = [];
   let outCount = 0;
 
+  // Día y hora del partido de la semana, para cruzarlos con las agendas.
+  const fx = userFixtureOfWeek(s.world, s.week);
+  const matchDay: WeekDay | null = fx?.date ? DAY_OF_DATE[new Date(`${fx.date}T00:00:00Z`).getUTCDay()] : null;
+  const matchTime = fx?.time ?? null;
+
   for (const p of rng.shuffle(s.players.filter((x) => isSelectable(x)))) {
     const risk = Math.max(0, C.commitmentThreshold - p.commitment) / 100;
     let excuseChance = risk * C.excuseChanceFactor;
     if (p.personality === 'talentoso_informal') excuseChance += C.informalExtra;
     if (p.status === 'molesto' || p.status === 'al_borde') excuseChance += C.upsetExtra;
+    // Los que viven lejos fallan un poco más: el viaje no siempre cierra.
+    if (p.agenda && p.agenda.distanceKm > 50) excuseChance += 0.06;
     const injuryChance = risk * C.injuryChanceFactor;
+
+    // Agenda: el día bloqueado que te avisó cuando firmó (casi siempre se cumple).
+    if (p.agenda && matchDay && p.agenda.blockedDays.includes(matchDay) && outCount < C.maxOut && rng.chance(0.85)) {
+      const player = s.players.find((x) => x.id === p.id)!;
+      const note = `Los ${matchDay} no puede: compromiso fijo. Te lo avisó cuando arregló venir.`;
+      entries.push({ playerId: p.id, playerName: p.name, status: 'ausente', note, reasonId: 'agenda' });
+      logPlayerEvent(player, s.seasonNumber, s.week, 'ausencia', `Faltó al partido. ${note}`);
+      outCount += 1;
+      continue;
+    }
+
+    // Horario: si el partido no es en su franja, llega para el segundo tiempo.
+    if (
+      p.agenda &&
+      matchTime &&
+      ((p.agenda.onlyTimes.length > 0 && !p.agenda.onlyTimes.includes(matchTime) && rng.chance(0.7)) ||
+        rng.chance(p.agenda.lateChance * 0.5))
+    ) {
+      entries.push({
+        playerId: p.id,
+        playerName: p.name,
+        status: 'confirmado',
+        note: 'Sale del trabajo y viaja directo: llega para el segundo tiempo.',
+        lateArrival: true,
+      });
+      continue;
+    }
 
     if (outCount < C.maxOut && rng.chance(injuryChance)) {
       const weeks = rng.int(C.injuryWeeksMin, C.injuryWeeksMax);

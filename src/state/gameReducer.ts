@@ -51,7 +51,7 @@ export type GameAction =
   | { type: 'NEXT_WEEK' }
   | { type: 'PS_TALK'; id: string }
   | { type: 'PS_OPEN_NEGOTIATION'; id: string; isMarket: boolean }
-  | { type: 'PS_NEGOTIATE'; decision: 'accept' | 'reject' | 'counter' | 'later' }
+  | { type: 'PS_NEGOTIATE'; decision: 'accept' | 'reject' | 'counter' | 'later' | 'priority' }
   | { type: 'PS_DISMISS_OUTCOME' }
   | { type: 'PS_RESOLVE_EVENT'; optionIndex: number }
   | { type: 'PS_DISMISS_EVENT_OUTCOME' }

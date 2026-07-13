@@ -488,7 +488,7 @@ export function signMarketPlayer(
 /** Resuelve la negociación abierta según la decisión del usuario. */
 export function resolveNegotiation(
   state: GameState,
-  decision: 'accept' | 'reject' | 'counter' | 'later'
+  decision: 'accept' | 'reject' | 'counter' | 'later' | 'priority'
 ): GameState {
   const s: GameState = structuredClone(state);
   const p = ps(s);
@@ -533,6 +533,26 @@ export function resolveNegotiation(
         p.actionOutcome = `${mp.name} se lo tomó a mal: "Si no valoran lo que pido, no voy". No va a venir.`;
         psLog(s, `${mp.name} rechazó la propuesta y se bajó.`);
       }
+    } else if (decision === 'priority') {
+      // Negociar la agenda: que acomode sus días y horarios por el club.
+      if (!mp.agenda || p.priorityUsed?.[mp.id]) return state;
+      p.priorityUsed = { ...(p.priorityUsed ?? {}), [mp.id]: true };
+      if (rng.chance(Math.min(0.85, mp.flexibility + 0.15))) {
+        mp.agenda = {
+          ...mp.agenda,
+          blockedDays: [],
+          onlyTimes: [],
+          baseChance: Math.max(mp.agenda.baseChance, 0.88),
+          notes: ['Se comprometió a priorizar al club: va a acomodar sus cosas para estar.'],
+        };
+        p.actionOutcome = `${mp.name} lo pensó un segundo y asintió: "Si me hacés un lugar, yo me acomodo". Va a priorizar al club. La negociación sigue abierta.`;
+        psLog(s, `${mp.name} se comprometió a priorizar al club si lo fichás.`);
+      } else {
+        p.actionOutcome = `${mp.name} fue honesto: "Mi agenda es la que es. Si te sirvo así, encantado; si no, lo entiendo". Sigue disponible.`;
+      }
+      p.negotiation = null;
+      s.seed = rng.nextSeed();
+      return s;
     } else if (decision === 'counter') {
       const counter = mp.demand ? COUNTER_OFFERS[mp.demand] : undefined;
       if (!counter || p.counterUsed[mp.id]) return state;

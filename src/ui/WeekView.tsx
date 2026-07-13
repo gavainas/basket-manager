@@ -111,7 +111,8 @@ function PlanningPanel({ state, dispatch }: Props) {
 function CallUpPanel({ state, dispatch }: Props) {
   const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1])!;
   const entries = state.callUp;
-  const outs = entries.filter((e) => e.status !== 'confirmado');
+  // Bajas y llegadas tarde: todo lo que el DT tiene que saber antes de armar.
+  const outs = entries.filter((e) => e.status !== 'confirmado' || e.lateArrival);
   const confirmed = entries.filter((e) => e.status === 'confirmado');
   const stillInjured = state.players.filter(
     (p) => !p.leftClub && p.status === 'lesionado' && !entries.some((e) => e.playerId === p.id)

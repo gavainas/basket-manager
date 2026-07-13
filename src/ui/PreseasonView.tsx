@@ -189,7 +189,7 @@ function MarketSection({ state, dispatch }: Props) {
       <div key={mp.id} className={`player-card${active ? '' : ' dimmed'}`}>
         <div className="player-head">
           <div className="avatar">
-            <Avatar seed={mp.id} age={mp.age} title={mp.name} />
+            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} />
           </div>
           <div className="who">
             <div className="name">{mp.name}</div>
@@ -205,6 +205,11 @@ function MarketSection({ state, dispatch }: Props) {
         <div className="player-desc">
           Viene de <strong>{mp.previousTeam}</strong>. {mp.knowledgeSource}
         </div>
+        {(mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 && (
+          <div className="human-note">
+            <span className="hn-icon">🗓</span> {mp.agenda!.notes.join(' ')}
+          </div>
+        )}
         <div className="player-chips">
           <span className={`chip ${know.cls}`}>{know.label}</span>
           <span className="chip">Físico: {estimateLabel(mp.estPhysical, mp.knowledge)}</span>
@@ -277,6 +282,12 @@ function NegotiationModal({ state, dispatch }: Props) {
             <br />
             {feeAttitudeLabel(mp)}. {mp.signingCost > 0 ? `El pase cuesta $${mp.signingCost}.` : 'El pase es libre.'}
             <br />
+            {(mp.agenda?.notes.length ?? 0) > 0 && (
+              <>
+                🗓 {mp.agenda!.notes.join(' ')}
+                <br />
+              </>
+            )}
             {mp.demand ? (
               <strong>Su condición para venir: {DEMAND_LABELS[mp.demand].toLowerCase()}.</strong>
             ) : (
@@ -294,6 +305,14 @@ function NegotiationModal({ state, dispatch }: Props) {
                 <span className="opt-hint">Puede aceptar o plantarse (una sola vez)</span>
               </button>
             )}
+            {mp.agenda &&
+              (mp.agenda.blockedDays.length > 0 || mp.agenda.onlyTimes.length > 0 || mp.agenda.distanceKm > 50) &&
+              !ps.priorityUsed?.[mp.id] && (
+                <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'priority' })}>
+                  🗓 Pedirle que priorice al club
+                  <span className="opt-hint">Puede comprometerse a acomodar su agenda… o ser honesto (una sola vez)</span>
+                </button>
+              )}
             {mp.demand && (
               <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'reject' })}>
                 "Vení igual, sin condiciones"

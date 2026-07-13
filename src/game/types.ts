@@ -109,6 +109,8 @@ export interface Player {
   description: string;
   /** Retrato (design/AVATAR_SYSTEM.md). Si falta, se deriva del id del jugador. */
   appearance?: Appearance;
+  /** Agenda personal: hoy solo la traen los fichados del mercado; pesa en la convocatoria. */
+  agenda?: AvailabilityProfile;
   feeStatus: FeeStatus;
   /** Semanas seguidas sin pagar (solo si feeStatus = pendiente). */
   weeksUnpaid: number;
@@ -393,6 +395,8 @@ export interface MarketPlayer {
   knowledge: KnowledgeLevel;
   knowledgeSource: string; // por qué lo conocés (o no)
   availability: 'libre' | 'escuchando_ofertas';
+  /** Agenda personal (días bloqueados, horarios, interior). Se conoce al contactarlo. */
+  agenda?: AvailabilityProfile;
   status: 'disponible' | 'fichado' | 'rechazo' | 'perdido';
   /** Estimaciones que ve el usuario (ruido según conocimiento). */
   estTechnique: number;
@@ -445,6 +449,8 @@ export interface PreseasonState {
   negotiation: { targetId: string; isMarket: boolean } | null;
   /** Ya usaste tu contraoferta con este id. */
   counterUsed: Record<string, boolean>;
+  /** Ya le pediste prioridad de agenda a este fichable. */
+  priorityUsed?: Record<string, boolean>;
   /** Desenlace de la última gestión, para mostrar en el modal. */
   actionOutcome: string | null;
   pendingEvent: PreseasonEventState | null;
