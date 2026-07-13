@@ -855,12 +855,73 @@ function LiveMatchPanel({ state, dispatch }: Props) {
 
         <div className="card">
           <h3>Cambios</h3>
+          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+            {(['titulares', 'segunda', 'frescos', 'cerradores'] as const).map((preset) => (
+              <button
+                key={preset}
+                className="small"
+                disabled={live.finished}
+                title={
+                  preset === 'titulares'
+                    ? 'Vuelven los cinco del arranque'
+                    : preset === 'segunda'
+                      ? 'Entra el banco: descansan los titulares'
+                      : preset === 'frescos'
+                        ? 'Los cinco con más piernas ahora'
+                        : 'Los mejores acá y ahora, para cerrar'
+                }
+                onClick={() => dispatch({ type: 'APPLY_PRESET', preset })}
+              >
+                {preset === 'titulares' ? 'Titulares' : preset === 'segunda' ? '2da unidad' : preset === 'frescos' ? 'Frescos' : 'Cerradores'}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+            <div className="segmented">
+              <button
+                className={!live.autoRotation ? 'on' : ''}
+                disabled={live.finished}
+                onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: false })}
+              >
+                Cambios manuales
+              </button>
+              <button
+                className={live.autoRotation ? 'on' : ''}
+                disabled={live.finished}
+                onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true })}
+              >
+                DT automático
+              </button>
+            </div>
+            {live.autoRotation && (
+              <div className="segmented">
+                <button
+                  className={(live.directive ?? 'ganar') === 'ganar' ? 'on' : ''}
+                  disabled={live.finished}
+                  title="Descansa fundidos y mete a los mejores para cerrar"
+                  onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true, directive: 'ganar' })}
+                >
+                  A ganar
+                </button>
+                <button
+                  className={live.directive === 'repartir' ? 'on' : ''}
+                  disabled={live.finished}
+                  title="Rota el banco: todos suman minutos"
+                  onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true, directive: 'repartir' })}
+                >
+                  Juegan todos
+                </button>
+              </div>
+            )}
+          </div>
           <p className="tactic-hint" style={{ margin: '0 0 0.5rem' }}>
             {live.finished
               ? 'Partido terminado: no hay más cambios.'
-              : outSel
-                ? `Sale ${shortName(byId(outSel).name)}: tocá quién entra del banco.`
-                : 'Arrastrá un suplente sobre uno en cancha (o tocá: sale → entra). Valen las reentradas.'}
+              : live.autoRotation
+                ? 'El DT automático hace los cambios entre cuartos según la directiva. Podés pisar sus decisiones a mano.'
+                : outSel
+                  ? `Sale ${shortName(byId(outSel).name)}: tocá quién entra del banco.`
+                  : 'Arrastrá un suplente sobre uno en cancha (o tocá: sale → entra). Valen las reentradas.'}
           </p>
           <div className="sub-group-label">En cancha</div>
           {onCourtPlayers.map((p) => subRow(p, 'court'))}

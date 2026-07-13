@@ -1,5 +1,6 @@
 import { BALANCE } from '../game/balance';
 import {
+  applyLineupPreset,
   availableForMatch,
   finishLiveMatch,
   matchAbsentIds,
@@ -24,7 +25,7 @@ import { Rng, randomSeed } from '../game/rng';
 import { attemptAbsenceAction, type AbsenceActionId } from '../game/absences';
 import { resolveIncident } from '../game/narrative';
 import { advanceWeek, confirmActions, createNewGame, resolveEvent } from '../game/week';
-import type { AttackTactic, DefenseTactic, GameState } from '../game/types';
+import type { AttackTactic, DefenseTactic, GameState, LineupPreset } from '../game/types';
 
 export type GameAction =
   | { type: 'NEW_GAME' }
@@ -45,6 +46,8 @@ export type GameAction =
   | { type: 'START_MATCH' }
   | { type: 'SET_TACTIC'; defense?: DefenseTactic; attack?: AttackTactic }
   | { type: 'SUBSTITUTE'; outId: string; inId: string }
+  | { type: 'APPLY_PRESET'; preset: LineupPreset }
+  | { type: 'SET_AUTO_ROTATION'; on: boolean; directive?: 'ganar' | 'repartir' }
   | { type: 'INCIDENT_CHOICE'; index: number }
   | { type: 'PLAY_QUARTER' }
   | { type: 'FINISH_MATCH' }
@@ -205,6 +208,21 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
     case 'SUBSTITUTE': {
       if (state.phase !== 'match' || !state.live || state.live.finished) return state;
       return substitute(state, action.outId, action.inId);
+    }
+    case 'APPLY_PRESET': {
+      if (state.phase !== 'match' || !state.live || state.live.finished) return state;
+      return applyLineupPreset(state, action.preset);
+    }
+    case 'SET_AUTO_ROTATION': {
+      if (state.phase !== 'match' || !state.live || state.live.finished) return state;
+      return {
+        ...state,
+        live: {
+          ...state.live,
+          autoRotation: action.on,
+          directive: action.directive ?? state.live.directive ?? 'ganar',
+        },
+      };
     }
     case 'INCIDENT_CHOICE': {
       if (state.phase !== 'match' || !state.live?.pendingIncident) return state;

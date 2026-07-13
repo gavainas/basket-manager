@@ -262,8 +262,15 @@ export interface LiveMatchState {
   rageBoost?: boolean;
   /** Incidencia arbitral esperando una decisión del manager. */
   pendingIncident?: PendingRefIncident | null;
+  /** Piloto automático de cambios entre cuartos. */
+  autoRotation?: boolean;
+  /** Directiva del piloto: ganar como sea o que todos sumen minutos. */
+  directive?: 'ganar' | 'repartir';
   eval: TeamEval;
 }
+
+/** Quintetos predefinidos, estilo unidades de NBA. */
+export type LineupPreset = 'titulares' | 'segunda' | 'frescos' | 'cerradores';
 
 /** Incidencia arbitral con decisión pendiente (serializable). */
 export interface PendingRefIncident {

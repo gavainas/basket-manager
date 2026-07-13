@@ -4,7 +4,18 @@ import { fallbackNote, quarterFlavor, rollRefIncident } from './narrative';
 import { computeRating, type PlayerRating } from './rating';
 import { logClubEvent, logPlayerEvent } from './timeline';
 import { rollRivalMatchday, USER_TEAM_ID } from './world';
-import type { BoxScoreLine, GameState, MatchResult, Player, PlayerMood, Position, Rival, TeamEval } from './types';
+import type {
+  BoxScoreLine,
+  GameState,
+  LineupPreset,
+  LiveMatchState,
+  MatchResult,
+  Player,
+  PlayerMood,
+  Position,
+  Rival,
+  TeamEval,
+} from './types';
 import type { Rng } from './rng';
 
 const ALL_POSITIONS: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
@@ -381,6 +392,120 @@ export function courtFreshness(live: { onCourt: string[]; playerFresh: Record<st
   return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
 }
 
+export const PRESET_LABELS: Record<LineupPreset, string> = {
+  titulares: 'Titulares',
+  segunda: '2da unidad',
+  frescos: 'Piernas frescas',
+  cerradores: 'Cerradores',
+};
+
+/** Los 5 del preset, elegidos entre los citados del partido. */
+function presetFive(state: GameState, live: LiveMatchState, preset: LineupPreset): string[] {
+  const squad = live.squad
+    .map((id) => state.players.find((p) => p.id === id))
+    .filter((p): p is Player => !!p && isSelectable(p));
+  const freshOf = (id: string) => live.playerFresh[id] ?? 70;
+  const originalStarters = new Set(state.starters);
+
+  let ordered: Player[];
+  switch (preset) {
+    case 'titulares':
+      ordered = [...squad.filter((p) => originalStarters.has(p.id)), ...squad.filter((p) => !originalStarters.has(p.id))];
+      break;
+    case 'segunda':
+      // El banco primero; se completa con los titulares menos usados.
+      ordered = [
+        ...squad.filter((p) => !originalStarters.has(p.id)).sort((a, b) => playerEffective(b) - playerEffective(a)),
+        ...squad.filter((p) => originalStarters.has(p.id)).sort((a, b) => (live.minutes[a.id] ?? 0) - (live.minutes[b.id] ?? 0)),
+      ];
+      break;
+    case 'frescos':
+      ordered = [...squad].sort((a, b) => freshOf(b.id) - freshOf(a.id));
+      break;
+    case 'cerradores':
+      // Los mejores acá y ahora: nivel del día pesado por las piernas que quedan.
+      ordered = [...squad].sort(
+        (a, b) =>
+          (live.perfs[b.id] ?? playerEffective(b)) * (0.7 + 0.3 * (freshOf(b.id) / 100)) -
+          (live.perfs[a.id] ?? playerEffective(a)) * (0.7 + 0.3 * (freshOf(a.id) / 100))
+      );
+      break;
+  }
+  return ordered.slice(0, 5).map((p) => p.id);
+}
+
+/** Aplica un quinteto predefinido (cambios entre cuartos, con nota al relato). */
+export function applyLineupPreset(state: GameState, preset: LineupPreset): GameState {
+  const s: GameState = structuredClone(state);
+  const live = s.live;
+  if (!live || live.finished) return s;
+  const five = presetFive(s, live, preset);
+  if (five.length < 5) return s;
+  const changed = five.some((id) => !live.onCourt.includes(id));
+  live.onCourt = five;
+  const courtPlayers = s.players.filter((p) => live.onCourt.includes(p.id));
+  const star = [...courtPlayers].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
+  live.starId = star.id;
+  live.starName = star.name;
+  if (changed) live.pendingSubNotes.push(`↺ A la cancha la unidad "${PRESET_LABELS[preset]}".`);
+  return s;
+}
+
+/**
+ * Piloto automático de cambios: corre antes de cada cuarto si está activado.
+ * "Ganar": descansa a los fundidos y mete a los mejores para cerrar.
+ * "Repartir": además se asegura de que el banco sume minutos.
+ */
+function autoRotate(s: GameState, live: LiveMatchState): void {
+  if (!live.autoRotation) return;
+  const qIndex = live.quarters.length;
+  if (qIndex === 0) return; // el arranque es tuyo
+
+  const freshOf = (id: string) => live.playerFresh[id] ?? 70;
+  const byId = (id: string) => s.players.find((p) => p.id === id)!;
+  const notes: string[] = [];
+
+  if (live.directive === 'repartir' && qIndex <= 2) {
+    // Que todos toquen la pelota: entran los que todavía no jugaron.
+    const cold = live.squad.filter((id) => !live.onCourt.includes(id) && (live.minutes[id] ?? 0) === 0).slice(0, 2);
+    for (const inId of cold) {
+      const outId = [...live.onCourt].sort((a, b) => (live.minutes[b] ?? 0) - (live.minutes[a] ?? 0))[0];
+      if (!outId) break;
+      live.onCourt = live.onCourt.map((id) => (id === outId ? inId : id));
+      notes.push(`El DT automático movió el banco: entra ${byId(inId).name} por ${byId(outId).name}.`);
+    }
+  }
+
+  if (qIndex === 3 && live.directive !== 'repartir') {
+    // Último cuarto: cierran los mejores disponibles.
+    const closers = presetFive(s, live, 'cerradores');
+    if (closers.some((id) => !live.onCourt.includes(id))) {
+      live.onCourt = closers;
+      notes.push('↺ El DT automático mandó a los cerradores para el último cuarto.');
+    }
+  } else {
+    // Regla general: el fundido descansa si hay recambio con piernas.
+    for (const outId of [...live.onCourt]) {
+      if (freshOf(outId) >= 45) continue;
+      const candidate = live.squad
+        .filter((id) => !live.onCourt.includes(id) && isSelectable(byId(id)))
+        .sort((a, b) => freshOf(b) - freshOf(a))[0];
+      if (candidate && freshOf(candidate) > freshOf(outId) + 12) {
+        live.onCourt = live.onCourt.map((id) => (id === outId ? candidate : id));
+        notes.push(`Cambio del DT automático: entra ${byId(candidate).name} por ${byId(outId).name}, que pedía el cambio.`);
+      }
+    }
+  }
+
+  if (notes.length > 0) {
+    const courtPlayers = s.players.filter((p) => live.onCourt.includes(p.id));
+    const star = [...courtPlayers].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
+    live.starId = star.id;
+    live.starName = star.name;
+    live.pendingSubNotes.push(...notes.slice(0, 2));
+  }
+}
+
 /** Reparte un total entero entre ids según pesos (el resto se sortea). */
 function distribute(total: number, weights: { id: string; w: number }[], rng: Rng): Record<string, number> {
   const sum = weights.reduce((t, x) => t + Math.max(0.01, x.w), 0);
@@ -411,6 +536,9 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   const rival = s.rivals.find((r) => r.id === live.rivalId)!;
   const qIndex = live.quarters.length; // 0..3
   const notes: string[] = [];
+
+  // El piloto automático hace sus cambios antes de que arranque el cuarto.
+  autoRotate(s, live);
 
   // Cambios hechos en el descanso: abren el relato del cuarto.
   notes.push(...live.pendingSubNotes);
