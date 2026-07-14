@@ -9,6 +9,9 @@ export interface HumanNote {
   icon: string;
   text: string;
   tone: 'good' | 'warn' | 'bad' | 'neutral';
+  /** Jugador mencionado por nombre en el texto: la UI lo vuelve un link a su ficha. */
+  refId?: string;
+  refName?: string;
 }
 
 /** Expresión del retrato (índice de Appearance.expression) para cada emoción postpartido. */
@@ -112,10 +115,10 @@ export function playerNotes(state: GameState, p: Player): HumanNote[] {
     if (v < worstVal) { worstVal = v; worstMate = m; }
   }
   if (worstMate && worstVal <= RIVALRY_THRESHOLD) {
-    notes.push({ icon: '⚡', text: `No se banca a ${worstMate.name}: mejor no dejarlos marcándose en la práctica.`, tone: 'warn' });
+    notes.push({ icon: '⚡', text: `No se banca a ${worstMate.name}: mejor no dejarlos marcándose en la práctica.`, tone: 'warn', refId: worstMate.id, refName: worstMate.name });
   }
   if (bestMate && bestVal >= FRIEND_THRESHOLD) {
-    notes.push({ icon: '🍻', text: `Íntimo de ${bestMate.name}: donde va uno, va el otro.`, tone: 'good' });
+    notes.push({ icon: '🍻', text: `Íntimo de ${bestMate.name}: donde va uno, va el otro.`, tone: 'good', refId: bestMate.id, refName: bestMate.name });
   }
   const coach = coachAffinity(p);
   if (coach <= 30) {

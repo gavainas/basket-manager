@@ -4,6 +4,7 @@ import { affinity, coachAffinity, FRIEND_THRESHOLD, groupStanding, RIVALRY_THRES
 import { playerNotes } from '../game/humanState';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
+import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
 import { Timeline } from './Timeline';
 import { TIPS } from './Tip';
@@ -51,9 +52,7 @@ function GeneralTab({ state, p }: { state: GameState; p: Player }) {
       {notes.length > 0 && (
         <div className="human-notes">
           {notes.map((n, i) => (
-            <div key={i} className={`human-note ${n.tone}`}>
-              <span className="hn-icon">{n.icon}</span> {n.text}
-            </div>
+            <HumanNoteRow key={i} note={n} />
           ))}
         </div>
       )}

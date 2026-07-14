@@ -2,6 +2,7 @@ import type { GameState, Player } from '../game/types';
 import { playerNotes } from '../game/humanState';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
+import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
 import { Tip, TIPS } from './Tip';
 import { feeChip, roleLabel, starsFor, statusChip } from './helpers';
@@ -75,11 +76,7 @@ export function PlayerCard({ player: p, state, selectable, selected, inRotation,
         </>
       )}
 
-      {note && (
-        <div className={`human-note ${note.tone}`}>
-          <span className="hn-icon">{note.icon}</span> {note.text}
-        </div>
-      )}
+      {note && <HumanNoteRow note={note} />}
 
       <div className="player-chips">
         <span className={`chip ${status.cls}`}>{status.label}</span>

@@ -12,6 +12,7 @@ import type { GameState, KnowledgeLevel, MarketPlayer, Player } from '../game/ty
 import type { GameAction } from '../state/gameReducer';
 import { formatMoney, starsFor } from './helpers';
 import { Avatar } from './Avatar';
+import { PlayerLink } from './PlayerLink';
 
 interface Props {
   state: GameState;
@@ -140,7 +141,8 @@ function RosterSection({ state, dispatch }: Props) {
               </div>
               <div className="ps-who">
                 <div className="name">
-                  {p.name} <span className="muted">· {p.position} · {p.age} años · ≈{p.visibleRating}</span>
+                  <PlayerLink id={p.id}>{p.name}</PlayerLink>{' '}
+                  <span className="muted">· {p.position} · {p.age} años · ≈{p.visibleRating}</span>
                 </div>
                 {st === 'pide_condicion' && demand && (
                   <div className="muted">Pide: {DEMAND_LABELS[demand].toLowerCase()}</div>
