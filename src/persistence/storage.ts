@@ -163,6 +163,11 @@ export function loadGame(): GameState | null {
       }
       parsed.saveVersion = 16;
     }
+    // v16 → v17: amigo a prueba (entrena una semana antes de decidir sumarlo).
+    if (parsed.saveVersion === 16) {
+      parsed.trialCandidate = parsed.trialCandidate ?? null;
+      parsed.saveVersion = 17;
+    }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;
   } catch {

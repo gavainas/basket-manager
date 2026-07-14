@@ -1,6 +1,6 @@
 import { BALANCE, clamp } from './balance';
 import { createRecruit } from '../data/recruits';
-import type { ActiveEvent, DelayedNote, GameState, Player } from './types';
+import type { ActiveEvent, DelayedNote, GameState, Player, TrialCandidate } from './types';
 import type { Rng } from './rng';
 
 export interface EventOptionDef {
@@ -235,14 +235,15 @@ export const EVENTS: EventDef[] = [
     id: 'amigo_talentoso',
     title: 'Un amigo con talento',
     weight: 6,
-    canFire: (s) => actives(s).length < 15 && actives(s).some((p) => p.personality === 'social' || p.personality === 'leal'),
+    canFire: (s) =>
+      !s.trialCandidate && actives(s).length < 15 && actives(s).some((p) => p.personality === 'social' || p.personality === 'leal'),
     pickTargets: (s, rng) => {
       const cands = actives(s).filter((p) => p.personality === 'social' || p.personality === 'leal');
       return cands.length ? { playerId: rng.pick(cands).id } : null;
     },
-    text: (s, ev) => `${byId(s, ev.playerId).name} trae un dato: "Tengo un amigo que jugó federado y anda buscando equipo. ¿Le digo que venga?"`,
+    text: (s, ev) => `${byId(s, ev.playerId).name} trae un dato: "Tengo un amigo que jugó federado y anda buscando equipo. ¿Le digo que venga a probarse?"`,
     options: () => [
-      { label: 'Que venga a probarse', hint: 'Refuerzo gratis, pero alguno puede celar minutos' },
+      { label: 'Que venga a probarse', hint: 'Entrena una semana y después decidís' },
       { label: 'Decir que no hay lugar', hint: 'El que invita se desilusiona' },
     ],
     resolve: (s, ev, opt, rng) => {
@@ -250,15 +251,63 @@ export const EVENTS: EventDef[] = [
       if (opt === 0) {
         const friend = createRecruit(rng, { minTechnique: 60, maxTechnique: 80, season: s.seasonNumber });
         friend.description = `Amigo de ${inviter.name}. Se nota que jugó en serio, falta ver si se engancha con el grupo.`;
-        s.players.push(friend);
-        inviter.motivation = clamp(inviter.motivation + 5);
-        const protas = actives(s).filter((p) => p.personality === 'protagonista' && p.id !== friend.id);
-        for (const p of protas) p.motivation = clamp(p.motivation - 2);
-        s.news.unshift({ week: s.week, text: `Se probó y quedó ${friend.name}, amigo de ${inviter.name}.`, tone: 'good' });
-        return `${friend.name} se sumó al plantel y se lo ve con nivel. Algún protagonista ya lo mira de reojo.`;
+        // No entra al plantel: queda a prueba, entrena una semana y recién ahí decidís.
+        s.trialCandidate = {
+          player: friend,
+          inviterId: inviter.id,
+          inviterName: inviter.name,
+          arrivedWeek: s.week,
+          practiceRating: null,
+          practiceNote: '',
+        };
+        inviter.motivation = clamp(inviter.motivation + 3);
+        s.news.unshift({ week: s.week, text: `Un amigo de ${inviter.name} se suma a entrenar para probarse.`, tone: 'neutral' });
+        return `Le dijiste que se sume a la práctica. La semana que viene vas a ver cómo anduvo y ahí decidís si lo sumás.`;
       }
       inviter.motivation = clamp(inviter.motivation - 6);
       return `${inviter.name} quedó desilusionado: "Era buenísimo, te aviso". Ojalá no lo tome a mal.`;
+    },
+  },
+  {
+    id: 'prueba_amigo',
+    title: 'La prueba del amigo',
+    // No se sortea al azar: lo fuerza advanceWeek cuando el amigo ya entrenó.
+    weight: 0,
+    canFire: (s) => !!s.trialCandidate && s.trialCandidate.practiceRating !== null,
+    text: (s) => {
+      const tc = s.trialCandidate;
+      if (!tc) return 'La prueba ya se resolvió.';
+      const f = tc.player;
+      return `Se probó ${f.name} (${f.position}, ${f.age} años), el amigo de ${tc.inviterName}. ${tc.practiceNote} (rindió ${tc.practiceRating}/10 en la práctica). ¿Lo sumás al plantel?`;
+    },
+    options: () => [
+      { label: 'Sumarlo al plantel', hint: 'Refuerzo real, pero alguno puede celar minutos' },
+      { label: 'Agradecerle: no es para el equipo', hint: 'Queda la buena onda, el que invita se desilusiona un poco' },
+    ],
+    resolve: (s, _ev, opt) => {
+      const tc = s.trialCandidate;
+      if (!tc) return 'La prueba ya no estaba pendiente.';
+      s.trialCandidate = null;
+      const inviter = s.players.find((p) => p.id === tc.inviterId && !p.leftClub);
+      const friend = tc.player;
+      if (opt === 0) {
+        friend.joinedSeason = s.seasonNumber;
+        s.players.push(friend);
+        if (inviter) inviter.motivation = clamp(inviter.motivation + 5);
+        const protas = actives(s).filter((p) => p.personality === 'protagonista' && p.id !== friend.id);
+        for (const p of protas) p.motivation = clamp(p.motivation - 2);
+        s.news.unshift({
+          week: s.week,
+          text: `${friend.name} se sumó al plantel tras probarse, invitado por ${tc.inviterName}.`,
+          tone: 'good',
+        });
+        return `${friend.name} ya es parte del plantel. ${
+          protas.length ? 'Algún protagonista lo mira de reojo por los minutos.' : 'El grupo lo recibió bien.'
+        }`;
+      }
+      if (inviter) inviter.motivation = clamp(inviter.motivation - 6);
+      s.news.unshift({ week: s.week, text: `${friend.name} se probó pero no quedó en el club.`, tone: 'neutral' });
+      return `Le agradeciste la buena onda pero no quedó. ${tc.inviterName} lo tomó con cara larga: "Para mí jugaba, eh".`;
     },
   },
   {
@@ -681,4 +730,23 @@ export function getEvent(id: string): EventDef {
   const def = EVENTS.find((e) => e.id === id);
   if (!def) throw new Error(`Evento desconocido: ${id}`);
   return def;
+}
+
+/**
+ * El amigo a prueba entrenó esta semana: se define cómo se lo vio (nota 1-10 y
+ * una frase). Sale de su nivel real con bastante ruido, así a veces sorprende y
+ * a veces decepciona. La llama advanceWeek antes de forzar la decisión.
+ */
+export function rollTrialPractice(tc: TrialCandidate, rng: Rng): void {
+  const raw = tc.player.technique * 0.1 + rng.range(-2, 2.2);
+  const rating = Math.max(2, Math.min(10, Math.round(raw)));
+  tc.practiceRating = rating;
+  tc.practiceNote =
+    rating >= 8
+      ? 'La rompió en la práctica: pidió la pelota y jugó de memoria.'
+      : rating >= 6
+        ? 'Se lo vio bien: entiende el juego y se movió con los demás.'
+        : rating >= 4
+          ? 'Anduvo irregular: momentos buenos y otros para el olvido.'
+          : 'Flojo: se lo vio lento y medio desconectado del grupo.';
 }

@@ -3,7 +3,7 @@ import { createInitialRoster } from '../data/players';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
 import { getAction } from './actions';
 import { applyWeeklyEconomy } from './economy';
-import { getEvent, rollEvent } from './events';
+import { getEvent, rollEvent, rollTrialPractice } from './events';
 import { generateObjectives } from './objectives';
 import { activePlayers, matchAbsentIds, suggestRotation, suggestStarters } from './match';
 import { rollCallUp } from './callup';
@@ -13,9 +13,9 @@ import { checkPromises } from './promises';
 import { logClubEvent, logPlayerEvent } from './timeline';
 import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
-import type { GameState } from './types';
+import type { ActiveEvent, GameState } from './types';
 
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);
@@ -80,6 +80,7 @@ export function createNewGame(seed: number): GameState {
     playoffs: null,
     coach: null,
     coachMarket: buildCoachMarket(1, seed),
+    trialCandidate: null,
   };
   state.objectives = generateObjectives(1, state.club.sportPrestige, rng);
   state.world = buildWorld(state, rng);
@@ -134,6 +135,18 @@ export function resolveEvent(state: GameState, optionIndex: number): GameState {
   s.rotation = suggestRotation(s.players, s.starters, absent);
   s.seed = rng.nextSeed();
   return s;
+}
+
+/**
+ * Si hay un amigo a prueba que ya entrenó su semana, fuerza la decisión de
+ * sumarlo (tiene prioridad sobre un evento al azar). La práctica se resuelve
+ * acá, la semana siguiente a la invitación. Devuelve null si no hay prueba.
+ */
+function trialPlanningEvent(s: GameState, rng: Rng): ActiveEvent | null {
+  const tc = s.trialCandidate;
+  if (!tc) return null;
+  if (tc.practiceRating === null) rollTrialPractice(tc, rng);
+  return { defId: 'prueba_amigo', playerId: tc.inviterId };
 }
 
 /** Cierra la semana tras el partido: recuperación, humores, economía y avance. */
@@ -262,15 +275,16 @@ export function advanceWeek(state: GameState): GameState {
     // Fase regular terminada: arrancan (o siguen) los playoffs de las copas.
     if (advancePlayoffs(s, rng)) {
       s.phase = 'planning';
-      s.pendingEvent = rollEvent(s, rng);
+      s.pendingEvent = trialPlanningEvent(s, rng) ?? rollEvent(s, rng);
       s.starters = suggestStarters(s.players);
       s.rotation = suggestRotation(s.players, s.starters);
     } else {
+      s.trialCandidate = null; // terminó la fase regular: el amigo a prueba siguió su camino
       s.phase = 'seasonEnd';
     }
   } else {
     s.phase = 'planning';
-    s.pendingEvent = rollEvent(s, rng);
+    s.pendingEvent = trialPlanningEvent(s, rng) ?? rollEvent(s, rng);
     s.starters = suggestStarters(s.players);
     s.rotation = suggestRotation(s.players, s.starters);
   }

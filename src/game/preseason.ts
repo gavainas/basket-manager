@@ -248,6 +248,7 @@ export function createPreseasonNewGame(seed: number): GameState {
     playoffs: null,
     coach: null,
     coachMarket: buildCoachMarket(1, seed),
+    trialCandidate: null,
   };
   state.preseason = buildPreseasonState(players, state.club, rng, true);
   state.seed = rng.nextSeed();
@@ -363,6 +364,7 @@ export function startPreseason(state: GameState): GameState {
     // El DT sigue en el club entre temporadas (si no se fue antes).
     coach: state.coach,
     coachMarket: buildCoachMarket(seasonNumber, state.seed),
+    trialCandidate: null,
   };
   next.preseason = buildPreseasonState(players, next.club, rng, false);
   next.seed = rng.nextSeed();

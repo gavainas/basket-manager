@@ -447,6 +447,23 @@ export interface DelayedNote {
   climate?: number;
 }
 
+/**
+ * Amigo invitado a probarse: entrena una semana con el equipo y recién después
+ * decidís si lo sumás. Vive fuera de `players` hasta que lo aceptás.
+ */
+export interface TrialCandidate {
+  /** El jugador ya generado, todavía fuera del plantel. */
+  player: Player;
+  inviterId: string;
+  inviterName: string;
+  /** Semana en que se sumó a entrenar. */
+  arrivedWeek: number;
+  /** Cómo rindió en la práctica (1-10); null hasta que entrena esa semana. */
+  practiceRating: number | null;
+  /** Frase de cómo se lo vio en la práctica (vacía hasta que entrena). */
+  practiceNote: string;
+}
+
 /** Condición aceptada que queda registrada como promesa del club. */
 export interface ClubPromise {
   playerId: string;
@@ -749,4 +766,6 @@ export interface GameState {
   coach: Coach | null;
   /** Candidatos a DT disponibles esta temporada. */
   coachMarket: Coach[];
+  /** Amigo a prueba: entrena una semana antes de que decidas sumarlo (null si no hay). */
+  trialCandidate: TrialCandidate | null;
 }
