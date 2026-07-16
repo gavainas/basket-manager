@@ -2,6 +2,7 @@ import type { GameState, Player } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { getEvent } from '../game/events';
 import { Avatar } from './Avatar';
+import { PlayerLink } from './PlayerLink';
 
 interface Props {
   state: GameState;
@@ -63,7 +64,7 @@ function EventPerson({ p, festive }: { p: Player; festive?: boolean }) {
           title={p.name}
         />
       </div>
-      <span>{p.name}</span>
+      <span><PlayerLink id={p.id}>{p.name}</PlayerLink></span>
     </div>
   );
 }

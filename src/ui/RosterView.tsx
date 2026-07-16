@@ -3,6 +3,7 @@ import type { GameAction } from '../state/gameReducer';
 import { activePlayers } from '../game/match';
 import { CoachCard } from './CoachCard';
 import { PlayerCard } from './PlayerCard';
+import { PlayerLink } from './PlayerLink';
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 
@@ -27,7 +28,14 @@ export function RosterView({ state, dispatch }: { state: GameState; dispatch: (a
       {gone.length > 0 && (
         <>
           <h3 className="section-title">Se fueron del club</h3>
-          <div className="muted">{gone.map((p) => p.name).join(' · ')}</div>
+          <div className="muted">
+            {gone.map((p, i) => (
+              <span key={p.id}>
+                {i > 0 && ' · '}
+                <PlayerLink id={p.id}>{p.name}</PlayerLink>
+              </span>
+            ))}
+          </div>
         </>
       )}
     </div>

@@ -2,6 +2,7 @@ import type { GameState } from '../game/types';
 import { activePlayers } from '../game/match';
 import { weeklyEstimate } from '../game/economy';
 import { feeChip, formatMoney } from './helpers';
+import { PlayerLink } from './PlayerLink';
 
 export function FinancesView({ state }: { state: GameState }) {
   const estimate = weeklyEstimate(state);
@@ -101,7 +102,7 @@ export function FinancesView({ state }: { state: GameState }) {
                   const fee = feeChip(p);
                   return (
                     <tr key={p.id}>
-                      <td>{p.name}</td>
+                      <td><PlayerLink id={p.id}>{p.name}</PlayerLink></td>
                       <td>
                         <span className={`chip ${fee.cls}`}>{fee.label}</span>
                       </td>

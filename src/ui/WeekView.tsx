@@ -770,7 +770,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
             {live.finished ? 'FINAL' : played.length === 0 ? 'vs' : `${Q_LABELS[Math.min(regularPlayed, 3)]}${hasOT ? ' + PR' : ''}`}
           </div>
           <div className="team">
-            <div className="tname">{rival.name}</div>
+            <div className="tname"><RivalLink id={rival.id}>{rival.name}</RivalLink></div>
             <div className={`score ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}>{totalAgainst}</div>
           </div>
         </div>
@@ -818,7 +818,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
                 </td>
               </tr>
               <tr>
-                <td>{rival.name}</td>
+                <td><RivalLink id={rival.id}>{rival.name}</RivalLink></td>
                 {[0, 1, 2, 3].map((i) => (
                   <td className="num" key={i}>
                     {played.filter((q) => !q.overtime)[i]?.against ?? '–'}
@@ -1119,7 +1119,7 @@ function MatchResultPanel({ state, dispatch }: Props) {
                   </td>
                 </tr>
                 <tr>
-                  <td>{m.rivalName}</td>
+                  <td><RivalLink id={m.rivalId}>{m.rivalName}</RivalLink></td>
                   {m.quarters.map((q, i) => (
                     <td className="num" key={i}>
                       {q.against}

@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import type { GameState, WorldFixture } from '../game/types';
 import { fixturesOfWeek, teamName, USER_TEAM_ID, userFixtureOfWeek } from '../game/world';
 import { LeagueLink } from './LeagueLink';
+import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
 import { formatDateLong, formatDateShort, monthLabel } from './helpers';
@@ -118,7 +119,15 @@ export function CalendarView({ state }: Props) {
                     Sin conflictos: nadie del plantel tiene otro partido comprometido ese día.
                   </span>
                 ) : (
-                  `${conflicted.map((p) => p.name).join(', ')} con ficha en dos ligas: revisar horarios.`
+                  <>
+                    {conflicted.map((p, i) => (
+                      <span key={p.id}>
+                        {i > 0 && ', '}
+                        <PlayerLink id={p.id}>{p.name}</PlayerLink>
+                      </span>
+                    ))}
+                    {' '}con ficha en dos ligas: revisar horarios.
+                  </>
                 )}
               </span>
             </div>

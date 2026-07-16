@@ -36,7 +36,7 @@ export function PlayoffsCard({ state }: { state: GameState }) {
                 {cup === 'oro' ? '🥇 Copa de Oro' : '🥈 Copa de Plata'}
                 {champ && (
                   <span className="chip accent" style={{ marginLeft: '0.5rem' }}>
-                    Campeón: {champ === 'club' ? state.club.name : state.rivals.find((r) => r.id === champ)?.name}
+                    Campeón: <LegacyTeamName state={state} id={champ} />
                   </span>
                 )}
               </h4>
