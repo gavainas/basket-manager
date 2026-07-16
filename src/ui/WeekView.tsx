@@ -299,6 +299,59 @@ function CourtLines() {
   );
 }
 
+/** Tira de 5 cartas estilo manager: encabezado visual del quinteto elegido. */
+function QuintetoStrip({ slots }: { slots: (Player | null)[] }) {
+  return (
+    <div className="quinteto-strip">
+      {POSITION_ORDER.map((pos, i) => {
+        const p = slots[i];
+        const oop = p ? p.position !== pos : false;
+        return (
+          <div key={pos} className={`qs-card${p ? '' : ' empty'}`}>
+            <span className="qs-pos">{pos}</span>
+            {p ? (
+              <>
+                <div className={`qs-avatar${oop ? ' oop' : ''}`}>
+                  <Avatar
+                    seed={p.id}
+                    age={p.age}
+                    appearance={p.appearance}
+                    expressionOverride={p.status === 'molesto' || p.status === 'al_borde' ? 2 : undefined}
+                    title={p.name}
+                  />
+                </div>
+                <div className="qs-name">
+                  <PlayerLink id={p.id}>{shortName(p.name)}</PlayerLink>
+                </div>
+                <div className="qs-ht">
+                  {(p.height / 100).toFixed(2)} m
+                  {oop && <span className="oop-tag"> · es {p.position}</span>}
+                </div>
+                <div className="qs-bar">
+                  <i style={{ width: `${Math.round(p.physical)}%` }} />
+                </div>
+                <div className="qs-stars" title="Nivel estimado">
+                  {starsFor(p.visibleRating)}
+                </div>
+                <div className="qs-media">
+                  ≈{p.visibleRating}
+                  <small>media</small>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="qs-avatar empty">+</div>
+                <div className="qs-name dim">Libre</div>
+                <div className="qs-ht">—</div>
+              </>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function LineupPanel({ state, dispatch }: Props) {
   const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1])!;
   const absent = absentIds(state);
@@ -406,6 +459,8 @@ function LineupPanel({ state, dispatch }: Props) {
           </p>
         )}
       </div>
+
+      <QuintetoStrip slots={slots} />
 
       {forfeitRisk && (
         <div className="card" style={{ borderColor: 'var(--bad)', marginBottom: '1rem' }}>

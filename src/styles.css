@@ -1027,6 +1027,129 @@ table.planilla tr:last-child td {
 
 /* ---------- Pizarra del quinteto ---------- */
 
+/* Quinteto inicial: tira de 5 cartas estilo manager, encabezado visual del titular elegido. */
+.quinteto-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.qs-card {
+  position: relative;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.7rem 0.4rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.qs-card.empty {
+  border-style: dashed;
+  border-color: var(--text-dim);
+  background: transparent;
+}
+.qs-pos {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--bg-soft);
+  color: var(--text-dim);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 0.15rem 0.45rem;
+  border-radius: 11px 0 9px 0;
+  text-transform: uppercase;
+}
+.qs-avatar {
+  width: 52px;
+  height: 52px;
+  margin-top: 0.9rem;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+}
+.qs-avatar svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.qs-avatar.oop {
+  border-color: var(--warn);
+}
+.qs-avatar.empty {
+  border-style: dashed;
+  border-color: var(--text-dim);
+}
+.qs-name {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.15;
+  min-height: 2.1em;
+  display: flex;
+  align-items: center;
+}
+.qs-name.dim {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.qs-ht {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+}
+.qs-ht .oop-tag {
+  color: var(--warn);
+}
+.qs-bar {
+  width: 100%;
+  height: 5px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.35rem;
+}
+.qs-bar > i {
+  display: block;
+  height: 100%;
+  background: var(--good);
+}
+.qs-stars {
+  color: var(--accent);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+.qs-media {
+  margin-top: 0.25rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.qs-media small {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  font-weight: 500;
+  margin-left: 0.15rem;
+}
+@media (max-width: 620px) {
+  .qs-avatar {
+    width: 44px;
+    height: 44px;
+  }
+  .qs-name {
+    font-size: 0.68rem;
+  }
+}
+
 .lineup-layout {
   display: grid;
   grid-template-columns: minmax(340px, 1fr) minmax(300px, 420px);
