@@ -1,6 +1,7 @@
 import { BALANCE, clamp } from './balance';
 import { createInitialRoster } from '../data/players';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
+import { USER_DIVISION_ID } from '../data/worldData';
 import { getAction } from './actions';
 import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent, rollTrialPractice } from './events';
@@ -15,7 +16,7 @@ import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
 import type { ActiveEvent, GameState } from './types';
 
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 
 export function createNewGame(seed: number): GameState {
   const rng = new Rng(seed);
@@ -81,6 +82,7 @@ export function createNewGame(seed: number): GameState {
     coach: null,
     coachMarket: buildCoachMarket(1, seed),
     trialCandidate: null,
+    divisionId: USER_DIVISION_ID,
   };
   state.objectives = generateObjectives(1, state.club.sportPrestige, rng);
   state.world = buildWorld(state, rng);

@@ -3,6 +3,7 @@ import { buildMarket, marketToPlayer } from '../data/market';
 import { createInitialRoster } from '../data/players';
 import { createRecruit } from '../data/recruits';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
+import { USER_DIVISION_ID } from '../data/worldData';
 import { weeklyFee } from './economy';
 import { generateObjectives } from './objectives';
 import { clubPosition, suggestRotation, suggestStarters } from './match';
@@ -249,6 +250,7 @@ export function createPreseasonNewGame(seed: number): GameState {
     coach: null,
     coachMarket: buildCoachMarket(1, seed),
     trialCandidate: null,
+    divisionId: USER_DIVISION_ID,
   };
   state.preseason = buildPreseasonState(players, state.club, rng, true);
   state.seed = rng.nextSeed();
@@ -365,6 +367,8 @@ export function startPreseason(state: GameState): GameState {
     coach: state.coach,
     coachMarket: buildCoachMarket(seasonNumber, state.seed),
     trialCandidate: null,
+    // El club se queda en su divisional entre temporadas (los ascensos/descensos la cambian aparte).
+    divisionId: state.divisionId,
   };
   next.preseason = buildPreseasonState(players, next.club, rng, false);
   next.seed = rng.nextSeed();

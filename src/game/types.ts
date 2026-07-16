@@ -768,4 +768,6 @@ export interface GameState {
   coachMarket: Coach[];
   /** Amigo a prueba: entrena una semana antes de que decidas sumarlo (null si no hay). */
   trialCandidate: TrialCandidate | null;
+  /** Divisional donde compite el club (id de world Divisions). Cambia con ascensos/descensos. */
+  divisionId: string;
 }

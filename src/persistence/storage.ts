@@ -6,6 +6,7 @@ import { buildWorld } from '../game/world';
 import { Rng, seedFromString as seedFrom } from '../game/rng';
 import { FIRST_NAMES, LAST_NAMES } from '../data/names';
 import { RIVALS } from '../data/rivals';
+import { USER_DIVISION_ID } from '../data/worldData';
 import { rollBackground } from '../data/backgrounds';
 import type { GameState } from '../game/types';
 
@@ -167,6 +168,11 @@ export function loadGame(): GameState | null {
     if (parsed.saveVersion === 16) {
       parsed.trialCandidate = parsed.trialCandidate ?? null;
       parsed.saveVersion = 17;
+    }
+    // v17 → v18: la divisional del club pasa a ser estado (habilita ascensos/descensos).
+    if (parsed.saveVersion === 17) {
+      parsed.divisionId = parsed.divisionId ?? USER_DIVISION_ID;
+      parsed.saveVersion = 18;
     }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;

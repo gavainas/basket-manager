@@ -3,7 +3,7 @@
 // sistemas existentes (rivals/schedule/standings) siguen mandando en el partido
 // del usuario, y el mundo los espeja con entidades completas.
 
-import { CLUB_COLORS, CRESTS, DIVISIONS, LEAGUES, USER_DIVISION_ID, USER_LEAGUE_ID } from '../data/worldData';
+import { CLUB_COLORS, CRESTS, DIVISIONS, LEAGUES, USER_LEAGUE_ID } from '../data/worldData';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
 import { Rng } from './rng';
 import type {
@@ -250,7 +250,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   };
   world.leagues = LEAGUES;
   world.divisions = DIVISIONS;
-  const division = DIVISIONS.find((d) => d.id === USER_DIVISION_ID)!;
+  const division = DIVISIONS.find((d) => d.id === state.divisionId)!;
 
   // Club y equipo del usuario.
   world.venues.push({ id: 'vn_user', name: 'Gimnasio del Parque', neighborhood: 'Parque Batlle' });
@@ -321,7 +321,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
     world.entries.push({
       teamId: t.id,
       leagueId: USER_LEAGUE_ID,
-      divisionId: USER_DIVISION_ID,
+      divisionId: state.divisionId,
       seasonId,
       status: 'activa',
       fee: 300,
@@ -340,7 +340,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
       id: `fx_${seasonId}_w${w}_u`,
       seasonId,
       leagueId: USER_LEAGUE_ID,
-      divisionId: USER_DIVISION_ID,
+      divisionId: state.divisionId,
       week: w,
       date: fixtureDate(year, w, division.gameDay),
       time: division.gameTimes[w % division.gameTimes.length],
@@ -359,7 +359,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
         id: `fx_${seasonId}_w${w}_${i / 2}`,
         seasonId,
         leagueId: USER_LEAGUE_ID,
-        divisionId: USER_DIVISION_ID,
+        divisionId: state.divisionId,
         week: w,
         date: fixtureDate(year, w, division.gameDay),
         time: division.gameTimes[i / 2 % division.gameTimes.length],
@@ -385,7 +385,7 @@ export function addCupFixture(
   opts: { id: string; week: number; homeLegacyId: string; awayLegacyId: string; label: string }
 ): void {
   const world = state.world;
-  const division = world.divisions.find((d) => d.id === USER_DIVISION_ID)!;
+  const division = world.divisions.find((d) => d.id === state.divisionId)!;
   const homeTeam = opts.homeLegacyId === 'club' ? userTeam(world) : teamByLegacyRival(world, opts.homeLegacyId);
   const awayTeam = opts.awayLegacyId === 'club' ? userTeam(world) : teamByLegacyRival(world, opts.awayLegacyId);
   if (!homeTeam || !awayTeam) return;
@@ -394,7 +394,7 @@ export function addCupFixture(
     id: opts.id,
     seasonId: world.season.id,
     leagueId: USER_LEAGUE_ID,
-    divisionId: USER_DIVISION_ID,
+    divisionId: state.divisionId,
     week: opts.week,
     date: fixtureDate(world.season.year, opts.week, division.gameDay),
     time: division.gameTimes[opts.week % division.gameTimes.length],
