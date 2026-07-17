@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { GameState, Player } from '../game/types';
 import { affinity, coachAffinity, FRIEND_THRESHOLD, groupStanding, RIVALRY_THRESHOLD } from '../game/relations';
+import { fragilityHint, fragilityOf } from '../game/injuries';
 import { playerNotes } from '../game/humanState';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
@@ -193,6 +194,9 @@ function DeportivaTab({ p }: { p: Player }) {
           {p.techniqueGain > 0 ? ' · la técnica viene mejorando' : ''}
         </DataRow>
         <DataRow label="Proyección">{projection}</DataRow>
+        <DataRow label="Durabilidad">
+          {fragilityHint(fragilityOf(p)).icon} {fragilityHint(fragilityOf(p)).text}
+        </DataRow>
       </div>
     </div>
   );

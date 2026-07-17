@@ -1,6 +1,7 @@
 import { BALANCE, clamp } from './balance';
 import { coachBoostsTraining } from './coach';
 import { createRecruit } from '../data/recruits';
+import { pickByFragility } from './injuries';
 import { logClubEvent } from './timeline';
 import type { GameState, Player } from './types';
 import type { Rng } from './rng';
@@ -98,7 +99,8 @@ export const ACTIONS: ActionDef[] = [
       const absent =
         skipped.length === 0 ? '' : skipped.length === 1 ? ` Faltó ${skipped[0]}.` : ` Faltaron ${skipped.join(' y ')}.`;
       if (attendees.length > 0 && rng.chance(A.training.injuryChance)) {
-        const injured = rng.pick(attendees);
+        // El que se resiente no es al azar: los cuerpos frágiles pagan primero.
+        const injured = pickByFragility(attendees, rng);
         injured.status = 'lesionado';
         injured.injuryWeeks = 1;
         s.news.unshift({ week: s.week, text: `${injured.name} se resintió en el entrenamiento. Una semana afuera.`, tone: 'bad' });

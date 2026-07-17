@@ -266,6 +266,8 @@ export interface LiveMatchState {
   autoRotation?: boolean;
   /** Directiva del piloto: ganar como sea o que todos sumen minutos. */
   directive?: 'ganar' | 'repartir';
+  /** Lesionados durante el partido (para el informe y las noticias). */
+  injuries?: { playerId: string; name: string; weeks: number }[];
   eval: TeamEval;
 }
 

@@ -9,12 +9,16 @@ export const BALANCE = {
   economy: {
     startingMoney: 550,
     inscriptionFee: 300,
-    courtRentWeekly: 140,
-    refereeWeekly: 60,
+    courtRentWeekly: 165,
+    refereeWeekly: 80,
     feeWeekly: 30, // cuota por jugador
     partialScholarshipFactor: 0.5,
     sponsorWeekly: 70,
     sponsorDurationWeeks: 4,
+    // Imprevistos: el club siempre encuentra en qué gastarte plata.
+    mishapChance: 0.25,
+    mishapMin: 30,
+    mishapMax: 90,
   },
 
   match: {
@@ -26,21 +30,35 @@ export const BALANCE = {
     forfeitScore: [20, 60] as [number, number],
   },
 
-  // Confirmación de asistencia previa al partido: los de poco compromiso fallan.
+  // Confirmación de asistencia previa al partido: los de poco compromiso fallan
+  // más, pero la vida le pasa a cualquiera (enfermedad, viajes, guardias).
   callUp: {
-    maxOut: 2, // nunca se caen más de 2 por semana
+    maxOut: 3, // nunca se caen más de 3 por semana
     commitmentThreshold: 60, // debajo de esto un jugador puede fallar
     excuseChanceFactor: 0.5, // prob. de excusa = (umbral - compromiso)/100 × esto
+    lifeChance: 0.05, // prob. semanal de imprevisto de la vida, para todos por igual
     informalExtra: 0.08, // el talentoso informal falla aunque tenga compromiso
     upsetExtra: 0.06, // molesto o al borde: menos ganas de venir
-    injuryChanceFactor: 0.12, // prob. de lesión jugando en otro lado
-    injuryWeeksMin: 1,
-    injuryWeeksMax: 2,
+    injuryBase: 0.02, // todos juegan/viven afuera: nadie está exento de romperse
+    injuryChanceFactor: 0.1, // extra de lesión afuera por poco compromiso (juega en todos lados)
   },
 
   // Partido en vivo, cuarto a cuarto.
   liveMatch: {
-    luckPerQuarter: 3, // amplitud del azar en puntos por cuarto
+    luckPerQuarter: 5, // amplitud del azar en puntos por cuarto
+    rivalDayVariance: 0.1, // el rival también tiene días buenos y malos (±)
+    // Remontadas: el que va abajo se enchufa, el que va cómodo se relaja.
+    comebackDeficit: 9, // diferencia que despierta al que pierde
+    comebackFactor: 0.15, // puntos de empuje por punto de déficit al arrancar el cuarto
+    comebackMaxPoints: 3, // tope de ese empuje por cuarto
+    // Rachas: parciales calientes que dan vuelta partidos (para ambos lados).
+    rachaChance: 0.15, // prob. por cuarto de que a un equipo se le prenda el aro
+    rachaMin: 3,
+    rachaMax: 7,
+    // Lesiones en cancha: piernas gastadas y defensa agresiva pagan factura.
+    matchInjuryBase: 0.006, // prob. base por jugador por cuarto
+    matchInjuryTiredMult: 1.8, // con menos de 35 de piernas
+    matchInjuryAggressiveMult: 1.25, // marcando hombre o presionando
     freshStartBase: 55, // piernas iniciales de cada jugador = base + físico × factor
     freshStartPhysical: 0.45,
     freshFactorMin: 0.88, // multiplicador de fuerza = min + span × piernas/100
@@ -63,12 +81,17 @@ export const BALANCE = {
     estrellaDecay: 0.03, // el rival le toma la mano por cada cuarto repetido
     equipoBase: 0.97, // ataque de equipo: mult = base + bonus × química
     equipoChemBonus: 0.08,
-    // Presión a toda cancha: máxima recompensa defensiva, máximo desgaste.
+    // Presión a toda cancha: máxima recompensa defensiva, máximo desgaste…
+    // y una apuesta: si te la rompen, son puntos de regalo.
     presionRivalMult: 0.84, // con piernas, ahoga al rival
     presionTiredMult: 1.12, // sin piernas, te pasan con dos pases
     presionTiredThreshold: 55, // exige más frescura que la marca hombre
     presionDrainExtra: 10, // desgaste extra por cuarto presionando
     presionRivalDrain: 6, // el rival también sufre la presión
+    presionBreakBase: 0.25, // prob. base de que el rival rompa la presión ese cuarto
+    presionBreakStrength: 0.005, // extra por punto de fuerza rival sobre 55
+    presionBreakMult: 1.1, // cuarto en que la presión sale mal
+    aggressiveAdapt: 0.03, // el rival aprende a salir: por cuarto previo de defensa agresiva
     // Correr la cancha: más posesiones para los dos; paga con piernas frescas.
     correrBase: 0.9, // atkMult = base + span × piernas/100
     correrFreshSpan: 0.33,
@@ -135,7 +158,7 @@ export const BALANCE = {
       primeImproveChance: 0.15, // 26-30 años y compromiso ≥ 70
     },
     asado: { cost: 110, climate: 12, socialPrestige: 4, rainChance: 0.15 },
-    raffle: { cost: 25, incomeMin: 60, incomeMax: 190 },
+    raffle: { cost: 30, incomeMin: 30, incomeMax: 170 },
     sponsorSearch: { baseChance: 0.35, prestigeFactor: 0.005 },
     talk: { motivationBoost: 14, failChance: 0.12 },
     collectFees: { motivationHit: -4 },

@@ -1,5 +1,6 @@
 import { BALANCE, clamp } from './balance';
 import { hasMinutesPromise, moodFor } from './emotions';
+import { fragilityOf, MATCH_INJURY_NOTES, rollInjuryWeeks } from './injuries';
 import { fallbackNote, quarterFlavor, rollRefIncident } from './narrative';
 import { computeRating, type PlayerRating } from './rating';
 import { logClubEvent, logPlayerEvent } from './timeline';
@@ -568,6 +569,20 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
     notes.push(`${rival.name} adelantó líneas y presiona a toda cancha: hay que aguantar el cierre.`);
   }
 
+  // Remontadas: el que va abajo sale a morder y el que va cómodo afloja.
+  // Empuje en puntos, proporcional al déficit: nada está sentenciado.
+  let momentumPts = 0;
+  if (qIndex > 0) {
+    const diff = sumFor - sumAgainst;
+    if (diff <= -M.comebackDeficit) {
+      momentumPts = Math.min(M.comebackMaxPoints, -diff * M.comebackFactor);
+      notes.push('Abajo en el marcador, el equipo salió con otra cara: a morder cada pelota.');
+    } else if (diff >= M.comebackDeficit) {
+      momentumPts = -Math.min(M.comebackMaxPoints, diff * M.comebackFactor);
+      notes.push(`${rival.name} no se entrega: salió a descontar con todo.`);
+    }
+  }
+
   // --- Ataque: la fuerza sale de los 5 en cancha, cada uno con sus piernas ---
   const freshOf = (id: string) => live.playerFresh[id] ?? 70;
   const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
@@ -616,12 +631,22 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   // --- Defensa ---
   let defMult = 1;
   if (live.defense === 'presion') {
-    if (teamFresh >= M.presionTiredThreshold) {
-      defMult = M.presionRivalMult;
-      notes.push('La presión a toda cancha ahoga la salida del rival: pelotas recuperadas y bandejas.');
-    } else {
+    if (teamFresh < M.presionTiredThreshold) {
       defMult = M.presionTiredMult;
       notes.push('Presionamos sin piernas y nos pasan con dos pases: regalo tras regalo.');
+    } else if (
+      // La presión es una apuesta: un rival con buen manejo la puede romper.
+      rng.chance(
+        M.presionBreakBase +
+          Math.max(0, rival.strength - 55) * M.presionBreakStrength +
+          (rival.style === 'corredores' ? 0.12 : 0)
+      )
+    ) {
+      defMult = M.presionBreakMult;
+      notes.push('Nos leyeron la presión: dos pases largos y bandeja. La apuesta salió cara.');
+    } else {
+      defMult = M.presionRivalMult;
+      notes.push('La presión a toda cancha ahoga la salida del rival: pelotas recuperadas y bandejas.');
     }
     if (rival.style === 'tiradores') defMult *= M.tiradoresVsHombre;
   } else if (live.defense === 'hombre') {
@@ -645,13 +670,18 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
     defMult *= 1 + M.corredoresTiredBoost * (1 - teamFresh / 100);
     if (teamFresh < 45) notes.push('Nos corren la cancha entera y llegamos siempre tarde a las marcas.');
   }
+  // El rival aprende: cuartos y cuartos de defensa agresiva le enseñan a salir.
+  if ((live.defense === 'hombre' || live.defense === 'presion') && live.hombreQuarters >= 2) {
+    defMult *= 1 + M.aggressiveAdapt * (live.hombreQuarters - 1);
+    notes.push('El rival ya sabe salir contra nuestra marca: la rompen de memoria.');
+  }
   if (teamFresh < 30) notes.push('El equipo juega de memoria: no quedan piernas.');
 
   const rivalFreshFactor = M.freshFactorMin + M.freshFactorSpan * (live.rivalFreshness / 100);
   const rivalEff =
     rival.strength *
     (live.rivalSquad?.mod ?? 1) *
-    rng.range(0.94, 1.06) *
+    rng.range(1 - M.rivalDayVariance, 1 + M.rivalDayVariance) *
     rivalFreshFactor *
     (live.rivalPush ? M.pushRivalBoost : 1);
 
@@ -661,9 +691,23 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   // Correr la cancha sube el ritmo: más posesiones (y puntos) para los dos.
   const pace = live.attack === 'correr' ? M.correrPace : 0;
   const qBase = BALANCE.match.baseScore / 4 + pace;
-  const diffQ = ((atk - rivalEff) * BALANCE.match.strengthToPoints) / 4 + luck;
-  const ourQ = Math.max(4, Math.round(qBase + diffQ / 2 + rng.range(-1.5, 1.5)));
-  const rivalQ = Math.max(4, Math.round((qBase - diffQ / 2 + rng.range(-1.5, 1.5)) * defMult));
+  const diffQ = ((atk - rivalEff) * BALANCE.match.strengthToPoints) / 4 + luck + momentumPts;
+
+  // Rachas: a veces a un equipo se le prende el aro y mete un parcial que
+  // cambia el partido. Le puede tocar a cualquiera, incluso a los dos.
+  let ourRacha = 0;
+  let rivalRacha = 0;
+  if (rng.chance(M.rachaChance)) {
+    ourRacha = rng.int(M.rachaMin, M.rachaMax);
+    notes.push('Entramos en racha: cae un triple atrás de otro y el banco está de pie.');
+  }
+  if (rng.chance(M.rachaChance)) {
+    rivalRacha = rng.int(M.rachaMin, M.rachaMax);
+    notes.push(`A ${rival.name} se le prendió el aro: meten de todos lados.`);
+  }
+
+  const ourQ = Math.max(4, Math.round(qBase + diffQ / 2 + rng.range(-1.5, 1.5)) + ourRacha);
+  const rivalQ = Math.max(4, Math.round((qBase - diffQ / 2 + rng.range(-1.5, 1.5)) * defMult) + rivalRacha);
 
   const qDiff = ourQ - rivalQ;
   if (qDiff >= 6) notes.push(`Parcial demoledor: ${ourQ}-${rivalQ} en el ${Q_NAMES[qIndex]}.`);
@@ -719,6 +763,44 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   }
   for (const id of live.squad) {
     if (!live.onCourt.includes(id)) live.playerFresh[id] = clamp((live.playerFresh[id] ?? 70) + M.benchRecovery);
+  }
+
+  // Lesiones en cancha: correr fundido o defender a los golpes pasa factura,
+  // y a los frágiles les pasa más seguido. Sale de la cancha y queda de baja.
+  const aggressiveDef = live.defense === 'hombre' || live.defense === 'presion';
+  for (const p of onCourt) {
+    const frag = fragilityOf(p);
+    let injChance = M.matchInjuryBase * (0.5 + frag / 60);
+    if (freshOf(p.id) < 35) injChance *= M.matchInjuryTiredMult;
+    if (aggressiveDef) injChance *= M.matchInjuryAggressiveMult;
+    if (!rng.chance(injChance)) continue;
+
+    const weeks = rollInjuryWeeks(frag, rng);
+    const how = rng.pick(MATCH_INJURY_NOTES);
+    const real = s.players.find((x) => x.id === p.id)!;
+    real.status = 'lesionado';
+    real.injuryWeeks = weeks;
+    logPlayerEvent(real, s.seasonNumber, s.week, 'lesion', `Se lesionó en pleno partido: ${how}`);
+    live.injuries = [...(live.injuries ?? []), { playerId: p.id, name: p.name, weeks }];
+
+    // Sale y entra el recambio con más piernas; sin banco, quedan cuatro.
+    const sub = live.squad
+      .filter((id) => !live.onCourt.includes(id))
+      .map((id) => s.players.find((x) => x.id === id)!)
+      .filter((x) => isSelectable(x))
+      .sort((a, b) => (live.playerFresh[b.id] ?? 70) - (live.playerFresh[a.id] ?? 70))[0];
+    live.onCourt = live.onCourt.filter((id) => id !== p.id);
+    if (sub) live.onCourt.push(sub.id);
+    notes.unshift(
+      `🚑 ${p.name} ${how} ${sub ? `Entra ${sub.name} en su lugar.` : 'No queda recambio: seguimos con cuatro.'}`
+    );
+    if (live.starId === p.id && live.onCourt.length > 0) {
+      const court = s.players.filter((x) => live.onCourt.includes(x.id));
+      const newStar = [...court].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
+      live.starId = newStar.id;
+      live.starName = newStar.name;
+    }
+    break; // una lesión por cuarto alcanza para el drama
   }
 
   // Aviso de fundidos, para invitar al cambio.
@@ -958,6 +1040,14 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
         .join(', ')}): desgaste extra repartido entre los que la corrieron.`
     );
   if (upset) effects.push('¡Batacazo! Ganarle a un rival superior sumó prestigio extra.');
+  for (const inj of live.injuries ?? []) {
+    effects.push(`🚑 ${inj.name} salió lesionado: ${inj.weeks} semana${inj.weeks > 1 ? 's' : ''} de baja.`);
+    s.news.unshift({
+      week: s.week,
+      text: `${inj.name} se lesionó en el partido: ${inj.weeks} semana${inj.weeks > 1 ? 's' : ''} afuera.`,
+      tone: 'bad',
+    });
+  }
 
   // Claves tácticas del resultado.
   const endFresh = courtFreshness(live);

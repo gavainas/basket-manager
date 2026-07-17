@@ -83,7 +83,36 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
     excuses: ['Compromiso fijo del día: te lo avisó cuando arregló venir.'],
     actions: ['segundo_tiempo', 'importancia'],
   },
+  // --- Imprevistos de la vida: le pasan a cualquiera, hasta al capitán ---
+  {
+    id: 'enfermo',
+    excuses: [
+      'Cayó con fiebre y anginas. La voz al teléfono lo confirmaba: no está para correr.',
+      'Gripe de cama. Mandó un audio con una voz que dio lástima al grupo entero.',
+      'Pasó la noche con el estómago revuelto. "No me subo a un auto ni loco", avisó.',
+    ],
+    actions: [], // contra la fiebre no hay charla técnica
+  },
+  {
+    id: 'viaje',
+    excuses: [
+      'Está de viaje por el laburo: vuelve el lunes. Avisó apenas le confirmaron el pasaje.',
+      'Se fue el finde largo con la familia. Lo tenía reservado hace meses y avisó con tiempo.',
+    ],
+    actions: [],
+  },
+  {
+    id: 'guardia',
+    excuses: [
+      'Lo llamaron del trabajo por una urgencia: le tocó cubrir la guardia.',
+      'Se cayó el sistema en la oficina y lo llamaron un domingo. "Salgo cuando pueda", prometió.',
+    ],
+    actions: ['segundo_tiempo'],
+  },
 ];
+
+/** Imprevistos que no dependen del compromiso: se sortean parejo para todos. */
+export const LIFE_REASON_IDS = ['enfermo', 'viaje', 'guardia'] as const;
 
 export function reasonById(id: string): AbsenceReasonDef | undefined {
   return ABSENCE_REASONS.find((r) => r.id === id);

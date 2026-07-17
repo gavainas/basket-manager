@@ -3,6 +3,7 @@
 Próximas etapas, en orden aproximado de valor:
 
 ## Hecho recientemente
+- **Balance de jugabilidad (1ª pasada, validada con simulación)**: remontadas y rachas en el partido en vivo (nada está sentenciado), la presión dejó de ser imbatible (pueden rompértela y el rival se adapta a la defensa agresiva), fragilidad por jugador con lesiones en pleno partido/entrenamiento/jugando afuera (pista de durabilidad en la ficha), ausencias imprevistas parejas para todo el plantel (enfermedad, viaje, guardia — ya no falta siempre el mismo) y economía más dura (alquiler y árbitros más caros, imprevistos semanales, rifa menos rendidora). Números medidos con un harness que simula 80 temporadas por estrategia.
 - **Fichajes con disponibilidad**: los fichables del mercado tienen agenda real (días bloqueados, horarios, interior) que se revela al contactarlos; se puede negociar que prioricen al club (según su flexibilidad); el fichado se lleva su agenda y pesa en la convocatoria (día bloqueado = ausencia avisada, horario incompatible = llega al 2do tiempo).
 - **Identidad visual etapa 4 (parte social)**: notas de relaciones en cards y ficha (íntimos, rivalidades y relación con el DT usando las afinidades de `relations.ts`), consecuencias diferidas de eventos (`DelayedNote`: se comunican semanas después con noticia, ánimo y timeline) y 3 frases por emoción postpartido para que el vestuario no se repita. *Retratos en rankings/box scores quedó en pausa: es propagar arte provisional a pantallas nuevas ([`design/ART_PIPELINE.md`](design/ART_PIPELINE.md)).*
 - **Identidad visual etapa 3**: estados humanos con frase contextual junto a cada número (`humanState.ts` + `.human-note` en cards y ficha), "💬 El grupo del club" en el resumen (las reacciones postpartido como chat del vestuario, con retratos y expresión acorde), reacciones visibles tras cada evento (el desenlace muestra a los implicados y queda anotado en su historia), gorra solo en eventos festivos y guiño de planilla en el box score.
@@ -18,12 +19,12 @@ Próximas etapas, en orden aproximado de valor:
 - **Mundo etapa 6 — expansión del club**: inscribir equipos nuevos (+35, segunda liga) con costos y requisitos; compartir jugadores entre ligas usando la regla de inscripción ya centralizada.
 - **Mundo etapa 7 — doble partido y fatiga**: jugadores que juegan dos partidos el mismo día (ligas distintas), llegadas tarde, salidas anticipadas, reprogramaciones; estados descriptivos (fresco/cansado/agotado); agendas para todo el plantel, no solo fichados.
 - **Más eventos y personalidades**: ampliar el pool de eventos (20+), eventos encadenados y personalidades combinadas.
-- **Balance general**: ajustar dificultad económica y deportiva con datos de partidas reales; niveles de dificultad.
+- **Balance general**: niveles de dificultad seleccionables (fácil/normal/difícil) y seguir afinando con datos de partidas reales (la 1ª pasada ya está hecha con simulación).
 
 ## Mediano plazo
 - **Mundo etapa 8 — clima liviano**: suspensiones, público, recaudación, problemas de gimnasio (la estructura de fixture ya soporta estados reprogramado/suspendido).
 - **Más profundidad táctica**: matchups por posición, ritmo de juego (ya hay cuartos, hombre/zona, estrella/equipo, piernas por jugador y cambios).
-- **Lesiones**: gravedad variable, recuperación progresiva, riesgo por sobrecarga de minutos.
+- **Lesiones**: recuperación progresiva y gravedad más fina (la base ya está: fragilidad por jugador, lesiones en partido y riesgo por piernas gastadas).
 - **Relaciones entre jugadores**: influencias (un líder que se va arrastra amigos); las afinidades ya existen.
 - **Sponsors y actividades sociales**: contratos con condiciones, peñas, escuela de básquet.
 

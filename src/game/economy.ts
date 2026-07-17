@@ -2,6 +2,17 @@ import { BALANCE, clamp } from './balance';
 import type { GameState, Player } from './types';
 import type { Rng } from './rng';
 
+/** Gastos sorpresa: mantener un club de barrio es una gotera atrás de otra. */
+const MISHAPS = [
+  'Se rompió un tablero y hubo que soldarlo de apuro',
+  'Multa de la liga por la planilla mal cerrada',
+  'Se quemó un reflector del gimnasio',
+  'Desaparecieron las llaves: cerradura nueva en el vestuario',
+  'Canilla rota en los baños: plomero de urgencia',
+  'Hubo que reponer dos pelotas que quedaron lisas',
+  'El aro quedó flojo tras una volcada ajena: soldadura y bulones',
+];
+
 export function weeklyFee(p: Player): number {
   switch (p.feeStatus) {
     case 'pagada':
@@ -73,6 +84,15 @@ export function applyWeeklyEconomy(s: GameState, rng: Rng): void {
   if (s.coach && s.coach.weeklyWage > 0) {
     s.club.money -= s.coach.weeklyWage;
     s.ledger.push({ week: s.week, concept: `Sueldo del DT (${s.coach.name})`, amount: -s.coach.weeklyWage });
+  }
+
+  // Imprevistos: la infraestructura del club también juega su partido.
+  if (rng.chance(BALANCE.economy.mishapChance)) {
+    const amount = rng.int(BALANCE.economy.mishapMin, BALANCE.economy.mishapMax);
+    const mishap = rng.pick(MISHAPS);
+    s.club.money -= amount;
+    s.ledger.push({ week: s.week, concept: mishap, amount: -amount });
+    s.news.unshift({ week: s.week, text: `${mishap}: se fueron $${amount} de la caja.`, tone: 'bad' });
   }
 
   // Los cumplidores se molestan si sienten que bancan a los demás.
