@@ -185,6 +185,18 @@ export function loadGame(): GameState | null {
       parsed.world = buildWorld(parsed, new Rng(seedFrom(`world_${parsed.seed}`)));
       parsed.saveVersion = 20;
     }
+    // v20 → v21: las listas del cierre de pretemporada llevan id (nombres clickeables).
+    if (parsed.saveVersion === 20) {
+      const sum = parsed.preseason?.summary as Record<string, unknown> | null | undefined;
+      if (sum && Array.isArray(sum.rosterNames)) {
+        const conv = (arr: unknown) => (Array.isArray(arr) ? arr.map((label) => ({ id: '', label })) : []);
+        sum.roster = conv(sum.rosterNames);
+        sum.lost = conv(sum.lostNames);
+        sum.signed = conv(sum.signedNames);
+        sum.emergency = conv(sum.emergencyNames);
+      }
+      parsed.saveVersion = 21;
+    }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;
   } catch {

@@ -26,6 +26,7 @@ import type {
   NewsTone,
   Player,
   PreseasonState,
+  PreseasonSummaryEntry,
 } from './types';
 
 // ---------- Etiquetas de exigencias ----------
@@ -752,8 +753,8 @@ export function closePreseason(state: GameState): GameState {
   const p = ps(s);
   const rng = new Rng(s.seed);
   const consequences: string[] = [];
-  const lostNames: string[] = [];
-  const emergencyNames: string[] = [];
+  const lostEntries: PreseasonSummaryEntry[] = [];
+  const emergencyEntries: PreseasonSummaryEntry[] = [];
 
   // Los que no confirmaron, no siguen.
   for (const player of s.players) {
@@ -761,7 +762,7 @@ export function closePreseason(state: GameState): GameState {
     const st = p.continuity[player.id];
     if (st !== 'confirmado') {
       player.leftClub = true;
-      lostNames.push(`${player.name} (${CONTINUITY_LABELS[st].label.toLowerCase()})`);
+      lostEntries.push({ id: player.id, label: `${player.name} (${CONTINUITY_LABELS[st].label.toLowerCase()})` });
     }
   }
 
@@ -775,7 +776,7 @@ export function closePreseason(state: GameState): GameState {
       emergency.description = 'Vino a dar una mano a último momento para que el club pudiera inscribirse.';
       s.players.push(emergency);
       p.continuity[emergency.id] = 'confirmado';
-      emergencyNames.push(emergency.name);
+      emergencyEntries.push({ id: emergency.id, label: emergency.name });
     }
     s.club.socialPrestige = clamp(s.club.socialPrestige - BALANCE.preseason.emergencyPrestigeHit);
     consequences.push(
@@ -801,10 +802,12 @@ export function closePreseason(state: GameState): GameState {
   const seasonPromises = s.promises.filter((pr) => pr.season === s.seasonNumber);
 
   p.summary = {
-    rosterNames: roster.map((x) => `${x.name} (${x.position})`),
-    lostNames,
-    signedNames: p.market.filter((m) => m.status === 'fichado').map((m) => m.name),
-    emergencyNames,
+    roster: roster.map((x) => ({ id: x.id, label: `${x.name} (${x.position})` })),
+    lost: lostEntries,
+    signed: p.market
+      .filter((m) => m.status === 'fichado')
+      .map((m) => ({ id: s.players.find((x) => !x.leftClub && x.name === m.name)?.id ?? '', label: m.name })),
+    emergency: emergencyEntries,
     moneySpent: p.moneySpent,
     projectedWeeklyFees: roster.reduce((sum, x) => sum + weeklyFee(x), 0),
     projectedWeeklyCosts: BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly,

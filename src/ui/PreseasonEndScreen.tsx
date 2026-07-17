@@ -1,10 +1,16 @@
-import type { GameState } from '../game/types';
+import type { GameState, PreseasonSummaryEntry } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
+import { PlayerLink } from './PlayerLink';
 import { formatMoney } from './helpers';
 
 interface Props {
   state: GameState;
   dispatch: (action: GameAction) => void;
+}
+
+/** Nombre de la lista de cierre: abre la ficha si tenemos el id del jugador. */
+function NameLink({ entry }: { entry: PreseasonSummaryEntry }) {
+  return entry.id ? <PlayerLink id={entry.id}>{entry.label}</PlayerLink> : <>{entry.label}</>;
 }
 
 export function PreseasonEndScreen({ state, dispatch }: Props) {
@@ -17,7 +23,7 @@ export function PreseasonEndScreen({ state, dispatch }: Props) {
         <div style={{ fontSize: '3rem' }}>📋</div>
         <h1>Plantel inscripto</h1>
         <p>La lista quedó cerrada y el club está inscripto en la liga.</p>
-        <p className="muted">Temporada {state.seasonNumber} · {summary.rosterNames.length} jugadores</p>
+        <p className="muted">Temporada {state.seasonNumber} · {summary.roster.length} jugadores</p>
         <p style={{ marginTop: '0.8rem' }}>
           <span className="chip accent">Gastado en pretemporada: {formatMoney(summary.moneySpent)}</span>{' '}
           <span className={`chip ${state.club.money >= 0 ? 'good' : 'bad'}`}>Caja: {formatMoney(state.club.money)}</span>{' '}
@@ -41,34 +47,43 @@ export function PreseasonEndScreen({ state, dispatch }: Props) {
 
       <div className="grid cols-2">
         <div className="card">
-          <h3>Plantel final ({summary.rosterNames.length})</h3>
+          <h3>Plantel final ({summary.roster.length})</h3>
           <ul className="reason-list">
-            {summary.rosterNames.map((n, i) => (
-              <li key={i}>{n}</li>
+            {summary.roster.map((e, i) => (
+              <li key={i}><NameLink entry={e} /></li>
             ))}
           </ul>
-          {summary.emergencyNames.length > 0 && (
-            <p className="muted">De emergencia: {summary.emergencyNames.join(', ')}.</p>
+          {summary.emergency.length > 0 && (
+            <p className="muted">
+              De emergencia:{' '}
+              {summary.emergency.map((e, i) => (
+                <span key={i}>
+                  {i > 0 && ', '}
+                  <NameLink entry={e} />
+                </span>
+              ))}
+              .
+            </p>
           )}
         </div>
         <div className="card">
-          {summary.signedNames.length > 0 && (
+          {summary.signed.length > 0 && (
             <>
               <h3>Fichajes</h3>
               <ul className="reason-list">
-                {summary.signedNames.map((n, i) => (
-                  <li key={i}>{n}</li>
+                {summary.signed.map((e, i) => (
+                  <li key={i}><NameLink entry={e} /></li>
                 ))}
               </ul>
             </>
           )}
           <h3>No siguieron</h3>
-          {summary.lostNames.length === 0 ? (
+          {summary.lost.length === 0 ? (
             <p className="muted">Nadie se fue: el grupo entero sigue.</p>
           ) : (
             <ul className="reason-list">
-              {summary.lostNames.map((n, i) => (
-                <li key={i}>{n}</li>
+              {summary.lost.map((e, i) => (
+                <li key={i}><NameLink entry={e} /></li>
               ))}
             </ul>
           )}

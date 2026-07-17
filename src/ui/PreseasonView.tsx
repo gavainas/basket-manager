@@ -338,7 +338,7 @@ function NegotiationModal({ state, dispatch }: Props) {
   return (
     <div className="modal-backdrop">
       <div className="modal">
-        <h2>🤝 {player.name} pide una condición</h2>
+        <h2>🤝 <PlayerLink id={player.id}>{player.name}</PlayerLink> pide una condición</h2>
         <p className="event-text">
           {player.name} ({player.position}, {player.age} años) quiere seguir en el club, pero pide:{' '}
           <strong>{DEMAND_LABELS[demand].toLowerCase()}</strong>.

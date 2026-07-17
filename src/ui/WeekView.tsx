@@ -237,7 +237,7 @@ function CallUpPanel({ state, dispatch }: Props) {
           <div className="callup-confirmed">
             {confirmed.map((e) => (
               <span key={e.playerId} className="chip good">
-                ✓ {e.playerName}
+                ✓ <PlayerLink id={e.playerId}>{e.playerName}</PlayerLink>
               </span>
             ))}
           </div>

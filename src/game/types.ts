@@ -475,11 +475,17 @@ export interface ClubPromise {
   broken?: boolean;
 }
 
+/** Una entrada de las listas de fin de pretemporada: id para abrir la ficha + texto a mostrar. */
+export interface PreseasonSummaryEntry {
+  id: string;
+  label: string;
+}
+
 export interface PreseasonSummaryData {
-  rosterNames: string[];
-  lostNames: string[];
-  signedNames: string[];
-  emergencyNames: string[];
+  roster: PreseasonSummaryEntry[];
+  lost: PreseasonSummaryEntry[];
+  signed: PreseasonSummaryEntry[];
+  emergency: PreseasonSummaryEntry[];
   moneySpent: number;
   projectedWeeklyFees: number;
   projectedWeeklyCosts: number;
