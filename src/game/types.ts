@@ -770,4 +770,6 @@ export interface GameState {
   trialCandidate: TrialCandidate | null;
   /** Divisional donde compite el club (id de world Divisions). Cambia con ascensos/descensos. */
   divisionId: string;
+  /** Los 10 equipos de la divisional que el usuario NO juega (persisten los ascensos/descensos). */
+  otherDivisionTeams: Rival[];
 }

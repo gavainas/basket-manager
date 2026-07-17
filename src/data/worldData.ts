@@ -1,7 +1,7 @@
 // Definición estática del mundo: ligas y divisionales. Los equipos, planteles
 // y fixtures se generan en src/game/world.ts a partir de estos datos.
 
-import type { Division, League, RivalStyle } from '../game/types';
+import type { Division, League, Rival, RivalStyle } from '../game/types';
 
 /** Semilla de un equipo del mundo que NO es rival directo del usuario (otra divisional). */
 export interface WorldTeamSeed {
@@ -28,6 +28,14 @@ export const DIVISION_A_TEAMS: WorldTeamSeed[] = [
   { id: 'a9', name: 'Colón Basket', strength: 66, style: 'tiradores' },
   { id: 'a10', name: 'Litoral del Norte', strength: 64, style: 'internos' },
 ];
+
+/** Composición inicial de la otra divisional (ids de slot o1..o10, se guarda en el estado). */
+export const INITIAL_OTHER_DIVISION: Rival[] = DIVISION_A_TEAMS.map((t, i) => ({
+  id: `o${i + 1}`,
+  name: t.name,
+  strength: t.strength,
+  style: t.style,
+}));
 
 export const LEAGUES: League[] = [
   {

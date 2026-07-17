@@ -6,7 +6,7 @@ import { buildWorld } from '../game/world';
 import { Rng, seedFromString as seedFrom } from '../game/rng';
 import { FIRST_NAMES, LAST_NAMES } from '../data/names';
 import { RIVALS } from '../data/rivals';
-import { USER_DIVISION_ID } from '../data/worldData';
+import { INITIAL_OTHER_DIVISION, USER_DIVISION_ID } from '../data/worldData';
 import { rollBackground } from '../data/backgrounds';
 import type { GameState } from '../game/types';
 
@@ -178,6 +178,12 @@ export function loadGame(): GameState | null {
     if (parsed.saveVersion === 18) {
       parsed.world = buildWorld(parsed, new Rng(seedFrom(`world_${parsed.seed}`)));
       parsed.saveVersion = 19;
+    }
+    // v19 → v20: la otra divisional pasa a ser estado (persisten los ascensos/descensos).
+    if (parsed.saveVersion === 19) {
+      parsed.otherDivisionTeams = parsed.otherDivisionTeams ?? INITIAL_OTHER_DIVISION.map((t) => ({ ...t }));
+      parsed.world = buildWorld(parsed, new Rng(seedFrom(`world_${parsed.seed}`)));
+      parsed.saveVersion = 20;
     }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;

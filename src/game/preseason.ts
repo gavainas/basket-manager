@@ -3,7 +3,8 @@ import { buildMarket, marketToPlayer } from '../data/market';
 import { createInitialRoster } from '../data/players';
 import { createRecruit } from '../data/recruits';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
-import { USER_DIVISION_ID } from '../data/worldData';
+import { INITIAL_OTHER_DIVISION, USER_DIVISION_ID } from '../data/worldData';
+import { applyPromotionRelegation } from './promotion';
 import { weeklyFee } from './economy';
 import { generateObjectives } from './objectives';
 import { clubPosition, suggestRotation, suggestStarters } from './match';
@@ -22,6 +23,7 @@ import type {
   FeeStatus,
   GameState,
   MarketPlayer,
+  NewsTone,
   Player,
   PreseasonState,
 } from './types';
@@ -251,6 +253,7 @@ export function createPreseasonNewGame(seed: number): GameState {
     coachMarket: buildCoachMarket(1, seed),
     trialCandidate: null,
     divisionId: USER_DIVISION_ID,
+    otherDivisionTeams: INITIAL_OTHER_DIVISION.map((t) => ({ ...t })),
   };
   state.preseason = buildPreseasonState(players, state.club, rng, true);
   state.seed = rng.nextSeed();
@@ -300,10 +303,11 @@ export function startPreseason(state: GameState): GameState {
     return np;
   });
 
-  const rivals = state.rivals.map((r) => ({
-    ...r,
-    strength: clamp(r.strength + rng.int(-4, 4), 40, 85),
-  }));
+  // Ascensos y descensos: rearma las dos divisionales y, si toca, mueve al club.
+  const promo = applyPromotionRelegation(state);
+  const rivals = promo.nextRivals;
+  const promoTone: NewsTone =
+    promo.userMoved === 'ascenso' ? 'good' : promo.userMoved === 'descenso' ? 'bad' : 'neutral';
 
   const seasonNumber = state.seasonNumber + 1;
 
@@ -342,7 +346,8 @@ export function startPreseason(state: GameState): GameState {
     lastMatch: null,
     history: [],
     news: [
-      { week: 0, text: `Termina la temporada ${state.seasonNumber}. Arranca la pretemporada: hay que rearmar el plantel.`, tone: 'neutral' },
+      ...promo.notes.map((text) => ({ week: 0, text, tone: promoTone })),
+      { week: 0, text: `Termina la temporada ${state.seasonNumber}. Arranca la pretemporada: hay que rearmar el plantel.`, tone: 'neutral' as NewsTone },
     ],
     ledger: [{ week: 0, concept: `Caja heredada de la temporada ${state.seasonNumber}`, amount: state.club.money }],
     memorableMoments: [],
@@ -367,9 +372,19 @@ export function startPreseason(state: GameState): GameState {
     coach: state.coach,
     coachMarket: buildCoachMarket(seasonNumber, state.seed),
     trialCandidate: null,
-    // El club se queda en su divisional entre temporadas (los ascensos/descensos la cambian aparte).
-    divisionId: state.divisionId,
+    divisionId: promo.nextDivisionId,
+    otherDivisionTeams: promo.nextOtherTeams,
   };
+  if (promo.userMoved) {
+    next.clubTimeline.push({
+      season: state.seasonNumber,
+      week: state.seasonLength,
+      kind: 'hito',
+      text: promo.userMoved === 'ascenso'
+        ? `¡El club ascendió a la Divisional A tras la temporada ${state.seasonNumber}!`
+        : `El club descendió a la Divisional B tras la temporada ${state.seasonNumber}.`,
+    });
+  }
   next.preseason = buildPreseasonState(players, next.club, rng, false);
   next.seed = rng.nextSeed();
   return next;

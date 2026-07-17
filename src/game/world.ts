@@ -3,7 +3,7 @@
 // sistemas existentes (rivals/schedule/standings) siguen mandando en el partido
 // del usuario, y el mundo los espeja con entidades completas.
 
-import { CLUB_COLORS, CRESTS, DIVISION_A_TEAMS, DIVISIONS, LEAGUES, USER_LEAGUE_ID } from '../data/worldData';
+import { CLUB_COLORS, CRESTS, DIVISIONS, LEAGUES, USER_LEAGUE_ID } from '../data/worldData';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
 import { Rng, seedFromString } from './rng';
 import type {
@@ -377,7 +377,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   // Se genera al final para no alterar el RNG ni el emparejamiento de la del usuario.
   const otherDivision = DIVISIONS.find((d) => d.leagueId === USER_LEAGUE_ID && d.id !== state.divisionId);
   if (otherDivision) {
-    DIVISION_A_TEAMS.forEach((seed, i) => {
+    state.otherDivisionTeams.forEach((seed, i) => {
       const clubId = `cl_${seed.id}`;
       const teamId = `tm_${seed.id}`;
       const venueId = `vn_${seed.id}`;
