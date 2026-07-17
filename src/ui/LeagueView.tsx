@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import type { CupTier, GameState } from '../game/types';
-import { USER_TEAM_ID } from '../game/world';
+import { divisionStandings, USER_TEAM_ID } from '../game/world';
+import { ClubLink } from './ClubLink';
 import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
@@ -86,6 +87,9 @@ export function LeagueView({ state }: { state: GameState }) {
   const userEntry = world.entries.find((e) => e.teamId === USER_TEAM_ID && e.status === 'activa');
   const userDivision = world.divisions.find((d) => d.id === userEntry?.divisionId);
   const userLeague = world.leagues.find((l) => l.id === userEntry?.leagueId);
+  // La otra divisional de la liga (la de arriba mientras jugamos en B): tabla simulada.
+  const otherDivision = world.divisions.find((d) => d.leagueId === userLeague?.id && d.id !== userDivision?.id);
+  const otherRows = otherDivision ? divisionStandings(world, otherDivision.id, state.week, state.seasonNumber) : [];
 
   return (
     <div>
@@ -211,6 +215,55 @@ export function LeagueView({ state }: { state: GameState }) {
         </div>
       </div>
       </div>
+
+      {otherDivision && otherRows.length > 0 && (
+        <div className="card" style={{ marginTop: '1rem' }}>
+          <h3>
+            La otra divisional · {userLeague?.name} {otherDivision.name}
+          </h3>
+          <p className="muted" style={{ marginTop: 0 }}>
+            La divisional de arriba: equipos más fuertes. Tocá un nombre para ver su plantel.
+          </p>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Equipo</th>
+                  <th className="num">G</th>
+                  <th className="num">P</th>
+                  <th className="num">Dif</th>
+                </tr>
+              </thead>
+              <tbody>
+                {otherRows.map((row, i) => {
+                  const clubId = world.teams.find((t) => t.id === row.teamId)?.clubId;
+                  return (
+                    <tr key={row.teamId}>
+                      <td
+                        style={{
+                          color: i >= otherRows.length - 2 ? 'var(--bad)' : 'var(--text-dim)',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {i + 1}
+                      </td>
+                      <td>{clubId ? <ClubLink id={clubId}>{row.name}</ClubLink> : row.name}</td>
+                      <td className="num">{row.wins}</td>
+                      <td className="num">{row.losses}</td>
+                      <td className="num">{row.pointsFor - row.pointsAgainst}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted" style={{ marginBottom: 0 }}>
+            Los 2 últimos descienden a nuestra divisional al cierre; de la nuestra ascienden los 2 finalistas de la
+            Copa de Oro.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

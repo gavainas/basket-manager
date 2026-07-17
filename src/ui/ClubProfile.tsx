@@ -1,13 +1,14 @@
 import { useContext } from 'react';
 import type { GameState, WorldClub } from '../game/types';
-import { divisionOfTeam, USER_TEAM_ID } from '../game/world';
+import { divisionOfTeam, teamRoster, USER_TEAM_ID, worldPlayerName } from '../game/world';
 import { Bar } from './Bar';
 import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
 import { Timeline } from './Timeline';
 import { Tip, TIPS } from './Tip';
+import { WorldPlayerLink } from './WorldPlayerLink';
 import { NavigateTabContext } from './nav';
-import { formatMoney, rivalDifficulty, rivalStyleInfo } from './helpers';
+import { formatMoney, rivalDifficulty, rivalStyleInfo, starsFor } from './helpers';
 
 interface Props {
   state: GameState;
@@ -139,6 +140,32 @@ export function ClubProfile({ state, clubId, onClose }: Props) {
               Con más caja, camisetas y un delegado, el club podrá inscribir equipos en otras ligas.
             </p>
           )}
+
+          {/* Plantel de equipos del mundo (otra divisional): los rivales clásicos ya lo muestran en su ficha con scouting. */}
+          {teams
+            .filter((t) => !t.legacyRivalId && t.id !== USER_TEAM_ID)
+            .map((t) => {
+              const roster = teamRoster(world, t.id).sort((a, b) => b.level - a.level);
+              if (roster.length === 0) return null;
+              return (
+                <div key={t.id}>
+                  <h4 className="profile-subtitle">Plantel</h4>
+                  <div className="data-grid">
+                    {roster.map((p) => (
+                      <div className="data-row" key={p.id}>
+                        <span className="data-label">{p.position}</span>
+                        <span className="data-value">
+                          <WorldPlayerLink id={p.id}>{worldPlayerName(p)}</WorldPlayerLink>{' '}
+                          <span className="muted">
+                            {starsFor(p.level)} · {p.age} años{p.injuryWeeks > 0 ? ' · 🚑' : ''}
+                          </span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
 
           {isUser && (
             <>

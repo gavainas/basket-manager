@@ -1,7 +1,33 @@
 // Definición estática del mundo: ligas y divisionales. Los equipos, planteles
 // y fixtures se generan en src/game/world.ts a partir de estos datos.
 
-import type { Division, League } from '../game/types';
+import type { Division, League, RivalStyle } from '../game/types';
+
+/** Semilla de un equipo del mundo que NO es rival directo del usuario (otra divisional). */
+export interface WorldTeamSeed {
+  id: string;
+  name: string;
+  strength: number;
+  style: RivalStyle;
+}
+
+/**
+ * La Divisional A (la de arriba): 10 equipos más fuertes que la B. No son
+ * rivales clásicos del usuario (mientras juegue en B); viven en la capa del
+ * mundo, se los puede scoutear y son a los que se asciende.
+ */
+export const DIVISION_A_TEAMS: WorldTeamSeed[] = [
+  { id: 'a1', name: 'Náutico del Cerro', strength: 85, style: 'tiradores' },
+  { id: 'a2', name: 'Atlético Progreso', strength: 81, style: 'internos' },
+  { id: 'a3', name: 'Defensor del Prado', strength: 78, style: 'corredores' },
+  { id: 'a4', name: 'Olimpia del Oeste', strength: 76, style: 'equilibrado' },
+  { id: 'a5', name: 'Racing de la Villa', strength: 74, style: 'tiradores' },
+  { id: 'a6', name: 'Sportivo Artigas', strength: 72, style: 'internos' },
+  { id: 'a7', name: 'Estrella del Sur', strength: 70, style: 'corredores' },
+  { id: 'a8', name: 'Unión del Puerto', strength: 68, style: 'equilibrado' },
+  { id: 'a9', name: 'Colón Basket', strength: 66, style: 'tiradores' },
+  { id: 'a10', name: 'Litoral del Norte', strength: 64, style: 'internos' },
+];
 
 export const LEAGUES: League[] = [
   {

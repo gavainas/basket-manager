@@ -3,9 +3,9 @@
 // sistemas existentes (rivals/schedule/standings) siguen mandando en el partido
 // del usuario, y el mundo los espeja con entidades completas.
 
-import { CLUB_COLORS, CRESTS, DIVISIONS, LEAGUES, USER_LEAGUE_ID } from '../data/worldData';
+import { CLUB_COLORS, CRESTS, DIVISION_A_TEAMS, DIVISIONS, LEAGUES, USER_LEAGUE_ID } from '../data/worldData';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
-import { Rng } from './rng';
+import { Rng, seedFromString } from './rng';
 import type {
   AvailabilityProfile,
   Division,
@@ -372,11 +372,125 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
     }
   }
 
+  // La otra divisional de la liga (la de arriba mientras el usuario juega en B):
+  // equipos completos con plantel, para scoutear y para los ascensos/descensos.
+  // Se genera al final para no alterar el RNG ni el emparejamiento de la del usuario.
+  const otherDivision = DIVISIONS.find((d) => d.leagueId === USER_LEAGUE_ID && d.id !== state.divisionId);
+  if (otherDivision) {
+    DIVISION_A_TEAMS.forEach((seed, i) => {
+      const clubId = `cl_${seed.id}`;
+      const teamId = `tm_${seed.id}`;
+      const venueId = `vn_${seed.id}`;
+      world.venues.push({
+        id: venueId,
+        name: `Gimnasio de ${seed.name.split(' ').slice(-1)[0]}`,
+        neighborhood: NEIGHBORHOODS[(i + 5) % NEIGHBORHOODS.length],
+      });
+      world.clubs.push({
+        id: clubId,
+        name: seed.name,
+        colors: CLUB_COLORS[(i + 3) % CLUB_COLORS.length],
+        crest: CRESTS[(i + 3) % CRESTS.length],
+        founded: year - rng.int(6, 60),
+        sportPrestige: Math.max(20, Math.min(95, seed.strength + rng.int(-6, 6))),
+        socialPrestige: rng.int(35, 85),
+      });
+      world.teams.push({
+        id: teamId,
+        clubId,
+        name: seed.name,
+        category: 'mayores',
+        status: 'activo',
+        venueId,
+        delegate: DELEGATE_NAMES[(i + 4) % DELEGATE_NAMES.length],
+        coachName: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
+        coachType: seed.strength >= 75 ? 'pago' : rng.chance(0.3) ? 'jugador' : 'honorario',
+        // Sin legacyRivalId: no es un rival del sistema clásico.
+      });
+      world.entries.push({
+        teamId,
+        leagueId: USER_LEAGUE_ID,
+        divisionId: otherDivision.id,
+        seasonId,
+        status: 'activa',
+        fee: 300,
+        registeredWeek: 0,
+      });
+      const roster = genRoster(100 + i, seed.strength, rng);
+      world.players.push(...roster);
+      for (const p of roster) {
+        registerPlayer(world, { playerId: p.id, teamId, leagueId: USER_LEAGUE_ID, seasonId, week: 0 });
+      }
+    });
+  }
+
   // Fichas del plantel del usuario (regla central incluida).
   const tempState = { ...state, world };
   syncUserRegistrations(tempState);
 
   return world;
+}
+
+export interface DivStandingRow {
+  teamId: string;
+  name: string;
+  wins: number;
+  losses: number;
+  pointsFor: number;
+  pointsAgainst: number;
+}
+
+/**
+ * Tabla simulada de una divisional que el usuario NO juega. Determinista por
+ * temporada: arma un round-robin (método del círculo) y resuelve solo las
+ * fechas ya jugadas (hasta upToWeek-1). No toca state.standings ni los playoffs.
+ */
+export function divisionStandings(
+  world: WorldState,
+  divisionId: string,
+  upToWeek: number,
+  seasonNumber: number
+): DivStandingRow[] {
+  const teams = world.entries
+    .filter((e) => e.divisionId === divisionId && e.status === 'activa')
+    .map((e) => world.teams.find((t) => t.id === e.teamId))
+    .filter((t): t is Team => !!t);
+  const strengthOf = (id: string) => {
+    const t = teams.find((x) => x.id === id)!;
+    return world.clubs.find((c) => c.id === t.clubId)?.sportPrestige ?? 50;
+  };
+  const rows: Record<string, DivStandingRow> = {};
+  for (const t of teams) {
+    rows[t.id] = { teamId: t.id, name: t.name, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 };
+  }
+  const n = teams.length;
+  if (n >= 2) {
+    const rng = new Rng(seedFromString(`div_${divisionId}_s${seasonNumber}`));
+    const arr = teams.map((t) => t.id);
+    for (let r = 0; r < n - 1 && r + 1 < upToWeek; r++) {
+      for (let i = 0; i < n / 2; i++) {
+        const homeId = arr[i];
+        const awayId = arr[n - 1 - i];
+        const sa = strengthOf(homeId);
+        const sb = strengthOf(awayId);
+        const homeWins = rng.chance(sa ** 2 / (sa ** 2 + sb ** 2));
+        const winScore = rng.int(62, 88);
+        const loseScore = winScore - rng.int(2, 20);
+        const w = homeWins ? rows[homeId] : rows[awayId];
+        const l = homeWins ? rows[awayId] : rows[homeId];
+        w.wins += 1;
+        l.losses += 1;
+        w.pointsFor += winScore;
+        w.pointsAgainst += loseScore;
+        l.pointsFor += loseScore;
+        l.pointsAgainst += winScore;
+      }
+      arr.splice(1, 0, arr.splice(n - 1, 1)[0]); // rotar dejando fijo arr[0]
+    }
+  }
+  return Object.values(rows).sort(
+    (a, b) => b.wins - a.wins || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
+  );
 }
 
 /** Agrega al fixture un cruce de copa (playoffs) en la semana dada. */

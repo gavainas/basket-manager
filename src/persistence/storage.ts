@@ -174,6 +174,11 @@ export function loadGame(): GameState | null {
       parsed.divisionId = parsed.divisionId ?? USER_DIVISION_ID;
       parsed.saveVersion = 18;
     }
+    // v18 → v19: se puebla la Divisional A en el mundo (rearmar el mundo para que aparezca).
+    if (parsed.saveVersion === 18) {
+      parsed.world = buildWorld(parsed, new Rng(seedFrom(`world_${parsed.seed}`)));
+      parsed.saveVersion = 19;
+    }
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;
   } catch {

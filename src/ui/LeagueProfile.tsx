@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import type { Division, GameState } from '../game/types';
-import { USER_TEAM_ID } from '../game/world';
+import { divisionStandings, USER_TEAM_ID } from '../game/world';
+import { ClubLink } from './ClubLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
 
@@ -77,25 +78,45 @@ export function LeagueProfile({ state, leagueId, onClose }: Props) {
           {divisions.map((d) => {
             const teams = teamsOf(d);
             const isOurs = userEntry?.divisionId === d.id;
+            // La divisional que no jugamos tiene tabla simulada (determinista por temporada).
+            const otherRows = isOurs ? null : divisionStandings(world, d.id, state.week, state.seasonNumber);
+            const orderedTeams = otherRows
+              ? otherRows
+                  .map((r) => teams.find((t) => t.id === r.teamId))
+                  .filter((t): t is NonNullable<typeof t> => !!t)
+              : teams;
+            const recordFor = (t: (typeof teams)[number]) => {
+              if (isOurs) return recordOf(t.legacyRivalId) ?? '—';
+              const row = otherRows?.find((r) => r.teamId === t.id);
+              return row ? `${row.wins}-${row.losses}` : '—';
+            };
             return (
               <div key={d.id}>
                 <h4 className="profile-subtitle">
                   {d.name}
-                  {isOurs && (
+                  {isOurs ? (
                     <span className="chip good" style={{ marginLeft: '0.5rem' }}>
                       nuestra divisional
                     </span>
+                  ) : (
+                    orderedTeams.length > 0 && (
+                      <span className="chip" style={{ marginLeft: '0.5rem' }}>
+                        {d.level < (userEntry ? divisions.find((x) => x.id === userEntry.divisionId)?.level ?? 99 : 99)
+                          ? 'la de arriba'
+                          : 'la de abajo'}
+                      </span>
+                    )
                   )}
                 </h4>
                 <p className="muted" style={{ margin: '0 0 0.4rem' }}>
                   Se juega los {d.gameDay} a las {d.gameTimes.join(' o ')}
                   {d.altDays.length > 0 ? ` (reprogramaciones: ${d.altDays.join(', ')})` : ''}.
                 </p>
-                {teams.length > 0 ? (
+                {orderedTeams.length > 0 ? (
                   <div className="data-grid">
-                    {teams.map((t) => (
+                    {orderedTeams.map((t) => (
                       <div className="data-row" key={t.id}>
-                        <span className="data-label">{recordOf(t.legacyRivalId) ?? '—'}</span>
+                        <span className="data-label">{recordFor(t)}</span>
                         <span className="data-value">
                           {t.id === USER_TEAM_ID ? (
                             <span
@@ -111,7 +132,7 @@ export function LeagueProfile({ state, leagueId, onClose }: Props) {
                           ) : t.legacyRivalId ? (
                             <RivalLink id={t.legacyRivalId}>{t.name}</RivalLink>
                           ) : (
-                            t.name
+                            <ClubLink id={t.clubId}>{t.name}</ClubLink>
                           )}
                         </span>
                       </div>
