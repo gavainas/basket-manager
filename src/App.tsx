@@ -248,7 +248,7 @@ export default function App() {
       {tab === 'resumen' && <Dashboard state={state} />}
       {tab === 'plantilla' && <RosterView state={state} dispatch={dispatch} />}
       {tab === 'finanzas' && <FinancesView state={state} />}
-      {tab === 'liga' && <LeagueView state={state} />}
+      {tab === 'liga' && <LeagueView state={state} dispatch={dispatch} />}
       {tab === 'agenda' && <CalendarView state={state} />}
       {tab === 'rankings' && <RankingsView state={state} />}
       {tab === 'historia' && <HistoryView state={state} />}

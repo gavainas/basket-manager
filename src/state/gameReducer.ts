@@ -25,6 +25,7 @@ import { Rng, randomSeed } from '../game/rng';
 import { attemptAbsenceAction, type AbsenceActionId } from '../game/absences';
 import { appointPlayerCoach, fireCoach, hireCoach } from '../game/coach';
 import { resolveIncident } from '../game/narrative';
+import { registerSecondTeam } from '../game/secondTeam';
 import { advanceWeek, confirmActions, createNewGame, resolveEvent } from '../game/week';
 import type { AttackTactic, DefenseTactic, GameState, LineupPreset } from '../game/types';
 
@@ -39,6 +40,7 @@ export type GameAction =
   | { type: 'RESOLVE_EVENT'; optionIndex: number }
   | { type: 'DISMISS_EVENT_OUTCOME' }
   | { type: 'CALLUP_ACTION'; playerId: string; actionId: AbsenceActionId }
+  | { type: 'REGISTER_SECOND_TEAM'; leagueId: string; playerIds: string[] }
   | { type: 'HIRE_COACH'; coachId: string }
   | { type: 'FIRE_COACH' }
   | { type: 'APPOINT_PLAYER_COACH'; playerId: string }
@@ -144,6 +146,10 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       if (state.phase !== 'callUp') return state;
       const rng = new Rng(state.seed);
       return attemptAbsenceAction({ ...state, seed: rng.nextSeed() }, action.playerId, action.actionId, rng);
+    }
+    case 'REGISTER_SECOND_TEAM': {
+      if (state.phase !== 'planning') return state;
+      return registerSecondTeam(state, action.leagueId, action.playerIds);
     }
     case 'HIRE_COACH': {
       if (state.phase === 'match') return state;

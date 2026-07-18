@@ -11,6 +11,7 @@ import { rollCallUp } from './callup';
 import { buildCoachMarket, coachWeeklyTick } from './coach';
 import { advancePlayoffs } from './playoffs';
 import { checkPromises } from './promises';
+import { secondTeamWeeklyTick } from './secondTeam';
 import { logClubEvent, logPlayerEvent } from './timeline';
 import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
@@ -227,6 +228,9 @@ export function advanceWeek(state: GameState): GameState {
 
   // --- El cuerpo técnico también vive: roces, y al proyecto se lo pueden llevar ---
   coachWeeklyTick(s, rng);
+
+  // --- El segundo equipo juega su fecha (si el club se expandió) ---
+  secondTeamWeeklyTick(s, rng);
 
   // --- El mundo también vive: fichas al día y lesiones rivales ---
   syncUserRegistrations(s);

@@ -179,6 +179,20 @@ export const BALANCE = {
     trainingsToCount: 3,
   },
 
+  // Expansión del club: un segundo equipo inscripto en otra liga (etapa 6).
+  expansion: {
+    inscriptionFee: 250, // por temporada, se paga al anotarse
+    weeklyUpkeep: 70, // cancha y árbitros del segundo equipo
+    canteenIncome: 30, // la cantina del partido deja algo
+    minPlayers: 8, // fichas mínimas para inscribir el equipo
+    playWear: 2, // desgaste físico semanal de los que jugaron
+    benchMotivation: 3, // los relegados del primero se enchufan jugando acá
+    starterMotivation: 1, // a los titulares del primero les suma poco
+    injuryChance: 0.04, // riesgo semanal de que alguien se rompa en ese torneo
+    socialPrestigeOnRegister: 3, // el barrio ve al club crecer
+    topFinishPrestige: 4, // terminar en el podio suma prestigio deportivo
+  },
+
   preseason: {
     weeks: 4,
     gestionesPerWeek: 3, // contactos/charlas por semana

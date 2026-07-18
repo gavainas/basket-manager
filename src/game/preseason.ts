@@ -348,6 +348,13 @@ export function startPreseason(state: GameState): GameState {
     history: [],
     news: [
       ...promo.notes.map((text) => ({ week: 0, text, tone: promoTone })),
+      ...(state.secondTeam
+        ? [{
+            week: 0,
+            text: `Venció la inscripción de ${state.secondTeam.name}: si el club quiere seguir en esa liga, hay que reinscribirlo.`,
+            tone: 'neutral' as NewsTone,
+          }]
+        : []),
       { week: 0, text: `Termina la temporada ${state.seasonNumber}. Arranca la pretemporada: hay que rearmar el plantel.`, tone: 'neutral' as NewsTone },
     ],
     ledger: [{ week: 0, concept: `Caja heredada de la temporada ${state.seasonNumber}`, amount: state.club.money }],

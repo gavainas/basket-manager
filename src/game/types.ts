@@ -711,6 +711,36 @@ export interface WorldState {
   fixtures: WorldFixture[];
 }
 
+// ---------- Expansión del club: segundo equipo en otra liga (etapa 6) ----------
+
+/** Renglón de la tabla del torneo del segundo equipo (incluye al club). */
+export interface SecondTeamRow {
+  teamId: string;
+  /** Para abrir la ficha del club rival (ClubLink); el del usuario navega a plantilla. */
+  clubId: string;
+  name: string;
+  /** Fuerza del rival (la del club se recalcula con el plantel inscripto). */
+  strength: number;
+  wins: number;
+  losses: number;
+}
+
+/** Segundo equipo del club inscripto en otra liga. Vive una temporada. */
+export interface SecondTeamState {
+  leagueId: string;
+  divisionId: string;
+  teamId: string;
+  name: string;
+  /** Jugadores del plantel con ficha en este equipo (comparten semana a semana). */
+  playerIds: string[];
+  /** Tabla del torneo; el fixture es una rueda todos contra todos. */
+  table: SecondTeamRow[];
+  /** Fechas ya jugadas del torneo. */
+  round: number;
+  lastResult: string | null;
+  finished: boolean;
+}
+
 export interface GameState {
   saveVersion: number;
   seed: number;
@@ -780,4 +810,6 @@ export interface GameState {
   divisionId: string;
   /** Los 10 equipos de la divisional que el usuario NO juega (persisten los ascensos/descensos). */
   otherDivisionTeams: Rival[];
+  /** Segundo equipo del club en otra liga (etapa 6); opcional para no migrar saves. */
+  secondTeam?: SecondTeamState | null;
 }

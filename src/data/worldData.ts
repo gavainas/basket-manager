@@ -37,6 +37,33 @@ export const INITIAL_OTHER_DIVISION: Rival[] = DIVISION_A_TEAMS.map((t, i) => ({
   style: t.style,
 }));
 
+/**
+ * Rivales de las divisionales donde el club puede inscribir un equipo nuevo
+ * (Mundo etapa 6). Se materializan en el mundo recién cuando el club se anota.
+ */
+export const EXPANSION_DIVISION_TEAMS: Record<string, WorldTeamSeed[]> = {
+  // Liga Montevideo, Divisional F: liga libre de barrio, nivel bajo.
+  dv_lm_f: [
+    { id: 'lm1', name: 'Deportivo La Comercial', strength: 56, style: 'equilibrado' },
+    { id: 'lm2', name: 'Malvín Chico', strength: 52, style: 'tiradores' },
+    { id: 'lm3', name: 'La Teja Basket', strength: 49, style: 'corredores' },
+    { id: 'lm4', name: 'La Blanqueada Basket', strength: 46, style: 'internos' },
+    { id: 'lm5', name: 'Ferro del Oeste', strength: 43, style: 'equilibrado' },
+    { id: 'lm6', name: 'Cordón Norte', strength: 40, style: 'tiradores' },
+    { id: 'lm7', name: 'Brazo Oriental', strength: 37, style: 'corredores' },
+  ],
+  // Liga +35, Divisional C: veteranos con oficio, más duros de lo que parecen.
+  dv_v35_c: [
+    { id: 'v1', name: 'Veteranos de Malvín', strength: 62, style: 'internos' },
+    { id: 'v2', name: 'Old Boys del Prado', strength: 58, style: 'tiradores' },
+    { id: 'v3', name: 'Amigos del Círculo', strength: 54, style: 'equilibrado' },
+    { id: 'v4', name: 'Maracaná Seniors', strength: 50, style: 'internos' },
+    { id: 'v5', name: 'Los Notables', strength: 46, style: 'equilibrado' },
+    { id: 'v6', name: 'Peñarol de la Mesa 5', strength: 43, style: 'tiradores' },
+    { id: 'v7', name: 'El Resto del Mundo', strength: 40, style: 'corredores' },
+  ],
+};
+
 export const LEAGUES: League[] = [
   {
     id: 'lg_universitaria',
@@ -92,13 +119,15 @@ export const DIVISIONS: Division[] = [
     altDays: ['miércoles'],
   },
   {
+    // Viernes a propósito: los partidos del segundo equipo no pisan los del
+    // principal (lunes). El doble partido el mismo día es la etapa 7.
     id: 'dv_lm_f',
     leagueId: 'lg_montevideo',
     name: 'Divisional F',
     level: 6,
-    gameDay: 'lunes',
+    gameDay: 'viernes',
     gameTimes: ['20:00', '22:00'],
-    altDays: ['viernes'],
+    altDays: ['lunes'],
   },
   {
     id: 'dv_v35_c',

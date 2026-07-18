@@ -1,8 +1,12 @@
-import { useContext } from 'react';
-import type { CupTier, GameState } from '../game/types';
+import { useContext, useState } from 'react';
+import { BALANCE } from '../game/balance';
+import { checkExpansion, eligibleForLeague, SECOND_TEAM_ID, secondTeamPosition } from '../game/secondTeam';
+import type { CupTier, GameState, League } from '../game/types';
 import { divisionStandings, USER_TEAM_ID } from '../game/world';
+import type { GameAction } from '../state/gameReducer';
 import { ClubLink } from './ClubLink';
 import { LeagueLink } from './LeagueLink';
+import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
 import { rivalStyleInfo } from './helpers';
@@ -67,7 +71,185 @@ export function PlayoffsCard({ state }: { state: GameState }) {
   );
 }
 
-export function LeagueView({ state }: { state: GameState }) {
+/** Panel de inscripción del segundo equipo: requisitos, fichas y confirmación. */
+function ExpansionPanel({
+  state,
+  league,
+  dispatch,
+  onClose,
+}: {
+  state: GameState;
+  league: League;
+  dispatch: (action: GameAction) => void;
+  onClose: () => void;
+}) {
+  const E = BALANCE.expansion;
+  const check = checkExpansion(state, league.id);
+  const eligible = state.players.filter((p) => eligibleForLeague(p, league));
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(eligible.map((p) => p.id)));
+  const planning = state.phase === 'planning';
+  const canConfirm = check.ok && planning && selected.size >= E.minPlayers;
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className="card" style={{ marginBottom: '1rem' }}>
+      <h3>Inscribir un equipo en {league.name}</h3>
+      <div className="data-grid">
+        <div className="data-row">
+          <span className="data-label">Inscripción</span>
+          <span className="data-value">${check.fee} por temporada (después, ~${E.weeklyUpkeep - E.canteenIncome} por semana entre cancha, árbitros y cantina)</span>
+        </div>
+        <div className="data-row">
+          <span className="data-label">Requisitos</span>
+          <span className="data-value">
+            Mínimo {E.minPlayers} fichas{league.minAge ? ` · solo jugadores de ${league.minAge}+` : ''}
+            {check.divisionName ? ` · se juega los ${check.gameDay} (${check.divisionName})` : ''}
+          </span>
+        </div>
+        <div className="data-row">
+          <span className="data-label">La regla</span>
+          <span className="data-value muted">
+            La ficha de esta liga es independiente de la Universitaria: los mismos jugadores pueden jugar en las dos.
+          </span>
+        </div>
+      </div>
+
+      {!check.ok && <p style={{ color: 'var(--bad)' }}>{check.reason}</p>}
+      {check.ok && !planning && (
+        <p className="muted">Las inscripciones se confirman en la semana de planificación.</p>
+      )}
+
+      {eligible.length > 0 && (
+        <>
+          <h4 className="profile-subtitle">
+            Fichas ({selected.size} de {eligible.length} elegidos · mínimo {E.minPlayers})
+          </h4>
+          <div className="callup-list">
+            {eligible.map((p) => (
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.15rem 0' }}>
+                <input
+                  type="checkbox"
+                  checked={selected.has(p.id)}
+                  onChange={() => toggle(p.id)}
+                  title={selected.has(p.id) ? 'Sacar la ficha' : 'Darle ficha'}
+                />
+                <PlayerLink id={p.id}>{p.name}</PlayerLink>
+                <span className="muted">
+                  {p.age} años · ≈{p.visibleRating}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+        <button
+          disabled={!canConfirm}
+          title={canConfirm ? `Se paga la inscripción de $${check.fee}` : (check.reason ?? 'Elegí al menos las fichas mínimas en semana de planificación')}
+          onClick={() => {
+            dispatch({ type: 'REGISTER_SECOND_TEAM', leagueId: league.id, playerIds: [...selected] });
+            onClose();
+          }}
+        >
+          Inscribir por ${check.fee}
+        </button>
+        <button className="small" onClick={onClose}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Tabla y estado del torneo del segundo equipo. */
+function SecondTeamCard({ state }: { state: GameState }) {
+  const st = state.secondTeam;
+  const navigate = useContext(NavigateTabContext);
+  if (!st) return null;
+  const league = state.world.leagues.find((l) => l.id === st.leagueId);
+  const division = state.world.divisions.find((d) => d.id === st.divisionId);
+  const sorted = [...st.table].sort((a, b) => b.wins - a.wins || a.losses - b.losses || a.name.localeCompare(b.name));
+  const roster = state.players.filter((p) => st.playerIds.includes(p.id) && !p.leftClub);
+  const totalRounds = st.table.length - 1;
+
+  return (
+    <div className="card" style={{ marginBottom: '1rem' }}>
+      <h3>
+        {st.name} · {league?.name}
+        {division ? ` ${division.name}` : ''}
+        {st.finished ? (
+          <span className="chip accent" style={{ marginLeft: '0.5rem' }}>
+            Torneo terminado: {secondTeamPosition(st)}°
+          </span>
+        ) : (
+          <span className="chip" style={{ marginLeft: '0.5rem' }}>
+            Fecha {st.round}/{totalRounds}
+          </span>
+        )}
+      </h3>
+      {st.lastResult && <p className="muted" style={{ marginTop: 0 }}>{st.lastResult}</p>}
+      <div className="grid cols-2">
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Equipo</th>
+                <th className="num">G</th>
+                <th className="num">P</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((row, i) => (
+                <tr key={row.teamId} className={row.teamId === SECOND_TEAM_ID ? 'highlight' : ''}>
+                  <td style={{ fontWeight: 700, color: i < 3 ? 'var(--warn)' : 'var(--text-dim)' }}>{i + 1}</td>
+                  <td>
+                    {row.teamId === SECOND_TEAM_ID ? (
+                      <span className="plink" role="button" onClick={() => navigate('plantilla')}>
+                        <strong>{row.name}</strong>
+                      </span>
+                    ) : (
+                      <ClubLink id={row.clubId}>{row.name}</ClubLink>
+                    )}
+                  </td>
+                  <td className="num">{row.wins}</td>
+                  <td className="num">{row.losses}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h4 className="profile-subtitle">Fichas del equipo ({roster.length})</h4>
+          <p style={{ marginTop: 0 }}>
+            {roster.map((p, i) => (
+              <span key={p.id}>
+                {i > 0 && ' · '}
+                <PlayerLink id={p.id}>{p.name}</PlayerLink>
+              </span>
+            ))}
+          </p>
+          <p className="muted" style={{ marginBottom: 0 }}>
+            Juegan los {division?.gameDay}: suma ritmo y ánimo a los relegados del primero, pero desgasta — y alguno
+            puede volver tocado. Podio al cierre = prestigio para el club.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (action: GameAction) => void }) {
+  const [expandLeague, setExpandLeague] = useState<string | null>(null);
   const sorted = [...state.standings].sort(
     (a, b) => b.wins - a.wins || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
   );
@@ -114,11 +296,26 @@ export function LeagueView({ state }: { state: GameState }) {
                           · los {userDivision.gameDay} a las {userDivision.gameTimes.join(' o ')}
                         </span>
                       </>
+                    ) : state.secondTeam?.leagueId === l.id ? (
+                      <>
+                        <strong>{state.secondTeam.name}</strong>
+                        <span className="muted">
+                          {' '}
+                          · {state.secondTeam.table.find((r) => r.teamId === SECOND_TEAM_ID)?.wins ?? 0}-
+                          {state.secondTeam.table.find((r) => r.teamId === SECOND_TEAM_ID)?.losses ?? 0}
+                          {state.secondTeam.finished ? ' · torneo terminado' : ''}
+                        </span>
+                      </>
                     ) : (
-                      <span className="muted">
-                        {divisions.length} divisional{divisions.length !== 1 ? 'es' : ''}
-                        {l.minAge ? ` · desde ${l.minAge} años` : ''} · el club todavía no tiene equipo acá
-                      </span>
+                      <>
+                        <span className="muted">
+                          {divisions.length} divisional{divisions.length !== 1 ? 'es' : ''}
+                          {l.minAge ? ` · desde ${l.minAge} años` : ''} · el club todavía no tiene equipo acá
+                        </span>{' '}
+                        <button className="small" onClick={() => setExpandLeague(l.id)}>
+                          Inscribir equipo…
+                        </button>
+                      </>
                     )}
                   </span>
                 </div>
@@ -127,6 +324,16 @@ export function LeagueView({ state }: { state: GameState }) {
           </div>
         </div>
       )}
+
+      {expandLeague &&
+        (() => {
+          const l = world.leagues.find((x) => x.id === expandLeague);
+          return l ? (
+            <ExpansionPanel state={state} league={l} dispatch={dispatch} onClose={() => setExpandLeague(null)} />
+          ) : null;
+        })()}
+
+      <SecondTeamCard state={state} />
 
       <PlayoffsCard state={state} />
 
