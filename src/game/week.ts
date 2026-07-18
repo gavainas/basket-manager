@@ -15,11 +15,11 @@ import { secondTeamWeeklyTick } from './secondTeam';
 import { logClubEvent, logPlayerEvent } from './timeline';
 import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
-import type { ActiveEvent, GameState } from './types';
+import type { AbsenceDifficulty, ActiveEvent, GameState } from './types';
 
 export const SAVE_VERSION = 21;
 
-export function createNewGame(seed: number): GameState {
+export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'medio'): GameState {
   const rng = new Rng(seed);
   const players = createInitialRoster(rng);
   const money = BALANCE.economy.startingMoney - BALANCE.economy.inscriptionFee;
@@ -85,6 +85,7 @@ export function createNewGame(seed: number): GameState {
     trialCandidate: null,
     divisionId: USER_DIVISION_ID,
     otherDivisionTeams: INITIAL_OTHER_DIVISION.map((t) => ({ ...t })),
+    absenceDifficulty: difficulty,
   };
   state.objectives = generateObjectives(1, state.club.sportPrestige, rng);
   state.world = buildWorld(state, rng);

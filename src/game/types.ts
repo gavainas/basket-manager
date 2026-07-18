@@ -16,6 +16,9 @@ export type Personality =
 
 export type PlayerStatus = 'disponible' | 'molesto' | 'lesionado' | 'al_borde';
 
+/** Dificultad de faltas: cuánto te complica la vida el plantel (se elige al crear la partida). */
+export type AbsenceDifficulty = 'facil' | 'medio' | 'dificil';
+
 export type Hand = 'derecha' | 'zurda';
 
 /** Tipo de hito en una historia personal (reutilizable para club/temporadas). */
@@ -825,4 +828,6 @@ export interface GameState {
   otherDivisionTeams: Rival[];
   /** Segundo equipo del club en otra liga (etapa 6); opcional para no migrar saves. */
   secondTeam?: SecondTeamState | null;
+  /** Dificultad de faltas y lesiones (elegida al crear la partida; saves viejos = medio). */
+  absenceDifficulty?: AbsenceDifficulty;
 }

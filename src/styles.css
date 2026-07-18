@@ -868,6 +868,31 @@ table.planilla tr:last-child td {
   line-height: 1.5;
 }
 
+/* Selector de dificultad de faltas para partidas nuevas. */
+.menu-difficulty {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.menu-diff-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.menu-diff-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  max-width: 420px;
+  text-align: center;
+  min-height: 2.2em;
+}
+
 .menu-screen .menu-buttons {
   display: flex;
   flex-direction: column;

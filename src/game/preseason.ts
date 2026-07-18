@@ -16,6 +16,7 @@ import { buildWorld, emptyWorld } from './world';
 import { SAVE_VERSION } from './week';
 import { Rng } from './rng';
 import type {
+  AbsenceDifficulty,
   Club,
   ContinuityStatus,
   DemandType,
@@ -194,7 +195,7 @@ function buildPreseasonState(players: Player[], club: Club, rng: Rng, firstSeaso
 // ---------- Arranques ----------
 
 /** Partida nueva que empieza por la pretemporada (la inscripción se paga al cierre). */
-export function createPreseasonNewGame(seed: number): GameState {
+export function createPreseasonNewGame(seed: number, difficulty: AbsenceDifficulty = 'medio'): GameState {
   const rng = new Rng(seed);
   const players = createInitialRoster(rng);
 
@@ -255,6 +256,7 @@ export function createPreseasonNewGame(seed: number): GameState {
     trialCandidate: null,
     divisionId: USER_DIVISION_ID,
     otherDivisionTeams: INITIAL_OTHER_DIVISION.map((t) => ({ ...t })),
+    absenceDifficulty: difficulty,
   };
   state.preseason = buildPreseasonState(players, state.club, rng, true);
   state.seed = rng.nextSeed();
@@ -382,6 +384,8 @@ export function startPreseason(state: GameState): GameState {
     trialCandidate: null,
     divisionId: promo.nextDivisionId,
     otherDivisionTeams: promo.nextOtherTeams,
+    // La dificultad de faltas acompaña al club toda la carrera.
+    absenceDifficulty: state.absenceDifficulty,
   };
   if (promo.userMoved) {
     next.clubTimeline.push({

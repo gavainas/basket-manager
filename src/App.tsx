@@ -21,6 +21,7 @@ import { ClubLink, OpenClubContext } from './ui/ClubLink';
 import { ClubProfile } from './ui/ClubProfile';
 import { USER_CLUB_ID } from './game/world';
 import { NavigateTabContext, type AppTab } from './ui/nav';
+import type { AbsenceDifficulty } from './game/types';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
 import { HistoryView } from './ui/HistoryView';
 import { PreseasonView } from './ui/PreseasonView';
@@ -41,16 +42,23 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'semana', label: 'Semana' },
 ];
 
+const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }> = {
+  facil: { label: '😌 Fácil', desc: 'Casi siempre están todos: la vida molesta poco.' },
+  medio: { label: '😅 Medio', desc: 'La vida pasa: enfermos, viajes y algún lesionado.' },
+  dificil: { label: '🔥 Difícil', desc: 'Cada semana falta gente: armar el equipo con los que vinieron es el juego.' },
+};
+
 function MainMenu({
   onNew,
   onNewPreseason,
   onContinue,
 }: {
-  onNew: () => void;
-  onNewPreseason: () => void;
+  onNew: (difficulty: AbsenceDifficulty) => void;
+  onNewPreseason: (difficulty: AbsenceDifficulty) => void;
   onContinue: () => void;
 }) {
   const [, forceRender] = useState(0);
+  const [difficulty, setDifficulty] = useState<AbsenceDifficulty>('medio');
   const saved = hasSave();
 
   return (
@@ -63,16 +71,27 @@ function MainMenu({
         Manejás un club amateur de básquet. No alcanza con ganar: necesitás jugadores motivados, cuotas pagas, buen
         ambiente y una caja que no llegue a cero. Sobreviví la temporada… y si se puede, salí campeón.
       </p>
+      <div className="menu-difficulty">
+        <div className="menu-diff-label">Faltas y lesiones (para partidas nuevas)</div>
+        <div className="segmented">
+          {(Object.keys(DIFFICULTY_INFO) as AbsenceDifficulty[]).map((d) => (
+            <button key={d} className={difficulty === d ? 'on' : ''} onClick={() => setDifficulty(d)}>
+              {DIFFICULTY_INFO[d].label}
+            </button>
+          ))}
+        </div>
+        <p className="menu-diff-desc">{DIFFICULTY_INFO[difficulty].desc}</p>
+      </div>
       <div className="menu-buttons">
         {saved && (
           <button className="primary" onClick={onContinue}>
             ▶ Continuar partida
           </button>
         )}
-        <button className={saved ? '' : 'primary'} onClick={onNewPreseason}>
+        <button className={saved ? '' : 'primary'} onClick={() => onNewPreseason(difficulty)}>
           ✚ Nueva partida (armá el plantel en la pretemporada)
         </button>
-        <button onClick={onNew}>⚡ Nueva partida directa (plantel ya armado)</button>
+        <button onClick={() => onNew(difficulty)}>⚡ Nueva partida directa (plantel ya armado)</button>
         {saved && (
           <button
             className="danger"
@@ -121,13 +140,13 @@ export default function App() {
   if (!state) {
     return (
       <MainMenu
-        onNew={() => {
+        onNew={(difficulty) => {
           if (hasSave() && !window.confirm('Hay una partida guardada. ¿Empezar de nuevo y sobrescribirla?')) return;
-          dispatch({ type: 'NEW_GAME' });
+          dispatch({ type: 'NEW_GAME', difficulty });
         }}
-        onNewPreseason={() => {
+        onNewPreseason={(difficulty) => {
           if (hasSave() && !window.confirm('Hay una partida guardada. ¿Empezar de nuevo y sobrescribirla?')) return;
-          dispatch({ type: 'NEW_GAME_PRESEASON' });
+          dispatch({ type: 'NEW_GAME_PRESEASON', difficulty });
         }}
         onContinue={() => {
           const saved = loadGame();

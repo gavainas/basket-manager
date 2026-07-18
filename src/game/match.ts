@@ -768,9 +768,10 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   // Lesiones en cancha: correr fundido o defender a los golpes pasa factura,
   // y a los frágiles les pasa más seguido. Sale de la cancha y queda de baja.
   const aggressiveDef = live.defense === 'hombre' || live.defense === 'presion';
+  const injuryDiffMult = BALANCE.absenceDifficulty[s.absenceDifficulty ?? 'medio'].injury;
   for (const p of onCourt) {
     const frag = fragilityOf(p);
-    let injChance = M.matchInjuryBase * (0.5 + frag / 60);
+    let injChance = M.matchInjuryBase * (0.5 + frag / 60) * injuryDiffMult;
     if (freshOf(p.id) < 35) injChance *= M.matchInjuryTiredMult;
     if (aggressiveDef) injChance *= M.matchInjuryAggressiveMult;
     if (!rng.chance(injChance)) continue;

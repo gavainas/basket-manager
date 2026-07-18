@@ -27,11 +27,11 @@ import { appointPlayerCoach, fireCoach, hireCoach } from '../game/coach';
 import { resolveIncident } from '../game/narrative';
 import { registerSecondTeam } from '../game/secondTeam';
 import { advanceWeek, confirmActions, createNewGame, resolveEvent } from '../game/week';
-import type { AttackTactic, DefenseTactic, GameState, LineupPreset } from '../game/types';
+import type { AbsenceDifficulty, AttackTactic, DefenseTactic, GameState, LineupPreset } from '../game/types';
 
 export type GameAction =
-  | { type: 'NEW_GAME' }
-  | { type: 'NEW_GAME_PRESEASON' }
+  | { type: 'NEW_GAME'; difficulty?: AbsenceDifficulty }
+  | { type: 'NEW_GAME_PRESEASON'; difficulty?: AbsenceDifficulty }
   | { type: 'NEW_SEASON' }
   | { type: 'LOAD'; state: GameState }
   | { type: 'QUIT_TO_MENU' }
@@ -72,9 +72,9 @@ export type GameAction =
 export function gameReducer(state: GameState | null, action: GameAction): GameState | null {
   switch (action.type) {
     case 'NEW_GAME':
-      return createNewGame(randomSeed());
+      return createNewGame(randomSeed(), action.difficulty);
     case 'NEW_GAME_PRESEASON':
-      return createPreseasonNewGame(randomSeed());
+      return createPreseasonNewGame(randomSeed(), action.difficulty);
     case 'LOAD':
       return action.state;
     case 'QUIT_TO_MENU':

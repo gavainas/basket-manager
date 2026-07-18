@@ -27,6 +27,8 @@ const INJURY_NOTES = [
  */
 export function rollCallUp(s: GameState, rng: Rng): void {
   const C = BALANCE.callUp;
+  // La dificultad elegida al crear la partida escala cuánto falta la gente.
+  const D = BALANCE.absenceDifficulty[s.absenceDifficulty ?? 'medio'];
   const entries: CallUpEntry[] = [];
   let outCount = 0;
 
@@ -48,12 +50,14 @@ export function rollCallUp(s: GameState, rng: Rng): void {
     if (p.status === 'molesto' || p.status === 'al_borde') excuseChance += C.upsetExtra;
     // Los que viven lejos fallan un poco más: el viaje no siempre cierra.
     if (p.agenda && p.agenda.distanceKm > 50) excuseChance += 0.06;
+    excuseChance *= D.excuse;
     // Romperse jugando en otro lado: los frágiles caen más, y jugar poco
     // comprometido en todos lados multiplica las chances.
-    const injuryChance = (C.injuryBase + risk * C.injuryChanceFactor) * (0.5 + fragilityOf(p) / 100);
+    const injuryChance =
+      (C.injuryBase + risk * C.injuryChanceFactor) * (0.5 + fragilityOf(p) / 100) * D.injury;
 
     // Agenda: el día bloqueado que te avisó cuando firmó (casi siempre se cumple).
-    if (p.agenda && matchDay && p.agenda.blockedDays.includes(matchDay) && outCount < C.maxOut && rng.chance(0.85)) {
+    if (p.agenda && matchDay && p.agenda.blockedDays.includes(matchDay) && outCount < D.maxOut && rng.chance(0.85)) {
       const player = s.players.find((x) => x.id === p.id)!;
       const note = `Los ${matchDay} no puede: compromiso fijo. Te lo avisó cuando arregló venir.`;
       entries.push({ playerId: p.id, playerName: p.name, status: 'ausente', note, reasonId: 'agenda' });
@@ -79,7 +83,7 @@ export function rollCallUp(s: GameState, rng: Rng): void {
       continue;
     }
 
-    if (outCount < C.maxOut && rng.chance(injuryChance)) {
+    if (outCount < D.maxOut && rng.chance(injuryChance)) {
       const weeks = rollInjuryWeeks(fragilityOf(p), rng);
       const player = s.players.find((x) => x.id === p.id)!;
       player.status = 'lesionado';
@@ -98,7 +102,7 @@ export function rollCallUp(s: GameState, rng: Rng): void {
         tone: 'bad',
       });
       outCount += 1;
-    } else if (outCount < C.maxOut && rng.chance(C.lifeChance)) {
+    } else if (outCount < D.maxOut && rng.chance(C.lifeChance * D.life)) {
       // La vida: enfermedad, viaje o guardia. Le toca a cualquiera, sin aviso.
       const reason = rng.pick(lifeReasons);
       const excuse = rng.pick(reason.excuses);
@@ -106,7 +110,7 @@ export function rollCallUp(s: GameState, rng: Rng): void {
       entries.push({ playerId: p.id, playerName: p.name, status: 'ausente', note: excuse, reasonId: reason.id });
       logPlayerEvent(player, s.seasonNumber, s.week, 'ausencia', `Faltó al partido. ${excuse}`);
       outCount += 1;
-    } else if (outCount < C.maxOut && rng.chance(excuseChance)) {
+    } else if (outCount < D.maxOut && rng.chance(excuseChance)) {
       const reason = rng.pick(excuseReasons);
       const excuse = rng.pick(reason.excuses);
       const player = s.players.find((x) => x.id === p.id)!;

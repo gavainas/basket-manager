@@ -181,6 +181,13 @@ function CallUpPanel({ state, dispatch }: Props) {
       <div className="card">
         <h3>
           Pasando lista · {weekLabel(state.week, state.seasonLength)} vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
+          <span
+            className="chip"
+            style={{ marginLeft: '0.5rem' }}
+            title="Dificultad de faltas elegida al crear la partida"
+          >
+            Faltas: {BALANCE.absenceDifficulty[state.absenceDifficulty ?? 'medio'].label}
+          </span>
         </h3>
         {outs.length === 0 && stillInjured.length === 0 ? (
           <p style={{ marginTop: 0 }}>

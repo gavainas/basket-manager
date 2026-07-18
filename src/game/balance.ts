@@ -30,6 +30,15 @@ export const BALANCE = {
     forfeitScore: [20, 60] as [number, number],
   },
 
+  // Dificultad de faltas (se elige al crear la partida): multiplica las
+  // ausencias y lesiones. En difícil, armar el equipo con los que vinieron
+  // es el juego; en fácil, casi siempre están todos.
+  absenceDifficulty: {
+    facil: { label: 'Fácil', life: 0.5, excuse: 0.6, injury: 0.6, maxOut: 2 },
+    medio: { label: 'Medio', life: 1, excuse: 1, injury: 1, maxOut: 3 },
+    dificil: { label: 'Difícil', life: 1.9, excuse: 1.6, injury: 1.5, maxOut: 4 },
+  },
+
   // Confirmación de asistencia previa al partido: los de poco compromiso fallan
   // más, pero la vida le pasa a cualquiera (enfermedad, viajes, guardias).
   callUp: {
