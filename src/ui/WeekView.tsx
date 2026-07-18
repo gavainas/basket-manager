@@ -40,7 +40,7 @@ function absentIds(state: GameState): Set<string> {
 
 function Steps({ phase }: { phase: GameState['phase'] }) {
   const steps = [
-    { key: 'planning', label: '1 · Decisiones' },
+    { key: 'planning', label: '1 · La semana' },
     { key: 'callUp', label: '2 · Convocatoria' },
     { key: 'lineup', label: '3 · Quinteto' },
     { key: 'match', label: '4 · Partido' },
@@ -59,51 +59,97 @@ function Steps({ phase }: { phase: GameState['phase'] }) {
   );
 }
 
+/**
+ * La semana del club, estilo PC Fútbol: el camino directo es el partido.
+ * Las acciones (entrenar, asado, rifa…) son un menú opcional, no un peaje.
+ */
 function PlanningPanel({ state, dispatch }: Props) {
   const max = BALANCE.actions.maxPerWeek;
+  const [showActions, setShowActions] = useState(state.actionsChosen.length > 0);
+  const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1]);
+  const chosen = state.actionsChosen
+    .map((id) => ACTIONS.find((a) => a.id === id))
+    .filter((a): a is (typeof ACTIONS)[number] => !!a);
+
   return (
     <div>
-      <p className="muted" style={{ marginTop: 0 }}>
-        Elegí hasta {max} acciones para esta semana. Cada una tiene costos, beneficios y algún riesgo.
-      </p>
-      <div className="action-grid">
-        {ACTIONS.map((a) => {
-          const check = a.available(state);
-          const selected = state.actionsChosen.includes(a.id);
-          const blocked = !check.ok && !selected;
-          const full = !selected && state.actionsChosen.length >= max;
-          return (
-            <div
-              key={a.id}
-              className={`action-card${selected ? ' selected' : ''}${blocked || full ? ' disabled' : ''}`}
-              onClick={() => {
-                if (!blocked && !full) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
-                else if (selected) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
-              }}
-            >
-              <div className="action-title">
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <h3>
+          {weekLabel(state.week, state.seasonLength)}
+          {rival && (
+            <>
+              {' '}· vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
+            </>
+          )}
+        </h3>
+        {rival && (
+          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.4rem' }}>
+            <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
+            <span className="chip accent" title={rivalStyleInfo(rival.style).desc}>
+              {rivalStyleInfo(rival.style).label}
+            </span>
+          </div>
+        )}
+        {chosen.length > 0 && (
+          <p style={{ margin: '0.3rem 0' }}>
+            Esta semana además:{' '}
+            {chosen.map((a) => (
+              <span key={a.id} className="chip accent" style={{ marginRight: '0.3rem' }}>
                 {a.icon} {a.name}
-              </div>
-              <div className="action-desc">{a.description}</div>
-              {blocked ? (
-                <div className="action-blocked">⛔ {check.reason}</div>
-              ) : (
-                <div className="action-cost">{a.costLabel}</div>
-              )}
-            </div>
-          );
-        })}
+              </span>
+            ))}
+          </p>
+        )}
+        <div className="confirm-bar" style={{ marginTop: '0.6rem' }}>
+          <button className="primary" onClick={() => dispatch({ type: 'CONFIRM_ACTIONS' })}>
+            ▶ Pasar lista e ir al partido
+          </button>
+          <button className="small" onClick={() => setShowActions((v) => !v)}>
+            {showActions ? 'Ocultar acciones' : `🗂 Acciones del club${chosen.length > 0 ? ` (${chosen.length}/${max})` : ''}`}
+          </button>
+          <span className="hint">
+            {chosen.length > 0
+              ? 'Las acciones elegidas se aplican al pasar lista.'
+              : 'Si querés, antes podés entrenar, recaudar o mover el club (opcional).'}
+          </span>
+        </div>
       </div>
-      <div className="confirm-bar">
-        <button className="primary" onClick={() => dispatch({ type: 'CONFIRM_ACTIONS' })}>
-          {state.actionsChosen.length > 0
-            ? `Confirmar ${state.actionsChosen.length === 1 ? '1 acción' : `${state.actionsChosen.length} acciones`} y pasar lista →`
-            : 'No hacer nada esta semana y pasar lista →'}
-        </button>
-        <span className="hint">
-          {state.actionsChosen.length}/{max} acciones elegidas
-        </span>
-      </div>
+
+      {showActions && (
+        <>
+          <p className="muted" style={{ marginTop: 0 }}>
+            Hasta {max} acciones por semana. Cada una tiene costos, beneficios y algún riesgo. Ninguna es obligatoria.
+          </p>
+          <div className="action-grid">
+            {ACTIONS.map((a) => {
+              const check = a.available(state);
+              const selected = state.actionsChosen.includes(a.id);
+              const blocked = !check.ok && !selected;
+              const full = !selected && state.actionsChosen.length >= max;
+              return (
+                <div
+                  key={a.id}
+                  className={`action-card${selected ? ' selected' : ''}${blocked || full ? ' disabled' : ''}`}
+                  onClick={() => {
+                    if (!blocked && !full) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
+                    else if (selected) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
+                  }}
+                >
+                  <div className="action-title">
+                    {a.icon} {a.name}
+                  </div>
+                  <div className="action-desc">{a.description}</div>
+                  {blocked ? (
+                    <div className="action-blocked">⛔ {check.reason}</div>
+                  ) : (
+                    <div className="action-cost">{a.costLabel}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -650,6 +696,16 @@ function LiveMatchPanel({ state, dispatch }: Props) {
   const isHalftime = regularPlayed === 2 && !live.finished;
   const hasOT = played.some((q) => q.overtime);
 
+  // Drama del partido: lo que el motor ya sabe (rachas, remontadas, lesiones),
+  // la UI lo tiene que gritar, no esconderlo en una línea del relato.
+  const lastQ = played.length > 0 ? played[played.length - 1] : null;
+  const lastDiff = lastQ ? lastQ.for - lastQ.against : 0;
+  const hotStreak = !live.finished && lastQ !== null && lastDiff >= 6;
+  const coldStreak = !live.finished && lastQ !== null && lastDiff <= -6;
+  const comebackMode = !live.finished && played.length > 0 && diff <= -BALANCE.liveMatch.comebackDeficit;
+  const holdMode = !live.finished && played.length > 0 && diff >= BALANCE.liveMatch.comebackDeficit;
+  const injuryNote = lastQ?.notes.find((n) => n.startsWith('🚑')) ?? null;
+
   const scoreLine =
     played.length === 0
       ? 'Todo listo para la presentación.'
@@ -764,16 +820,35 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         <div className="scoreboard live">
           <div className="team">
             <div className="tname">{state.club.name}</div>
-            <div className={`score ${diff > 0 ? 'win' : diff < 0 ? 'lose' : ''}`}>{totalFor}</div>
+            <div key={totalFor} className={`score score-pop ${diff > 0 ? 'win' : diff < 0 ? 'lose' : ''}`}>
+              {totalFor}
+            </div>
           </div>
           <div style={{ color: 'var(--text-dim)', fontWeight: 700 }}>
             {live.finished ? 'FINAL' : played.length === 0 ? 'vs' : `${Q_LABELS[Math.min(regularPlayed, 3)]}${hasOT ? ' + PR' : ''}`}
           </div>
           <div className="team">
             <div className="tname"><RivalLink id={rival.id}>{rival.name}</RivalLink></div>
-            <div className={`score ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}>{totalAgainst}</div>
+            <div key={totalAgainst} className={`score score-pop ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}>
+              {totalAgainst}
+            </div>
           </div>
         </div>
+
+        {(hotStreak || coldStreak || comebackMode || holdMode) && (
+          <div className="drama-row">
+            {hotStreak && lastQ && (
+              <span className="chip good">🔥 Parcial de {lastQ.for}-{lastQ.against}: estamos en racha</span>
+            )}
+            {coldStreak && lastQ && (
+              <span className="chip bad">🧊 Nos metieron un parcial de {lastQ.against}-{lastQ.for}</span>
+            )}
+            {comebackMode && <span className="chip warn">💪 {-diff} abajo: el equipo sale a morder cada pelota</span>}
+            {holdMode && <span className="chip warn">⚠ Ojo: {rival.name} va a salir con todo a descontar</span>}
+          </div>
+        )}
+
+        {injuryNote && <div className="match-alert">{injuryNote}</div>}
         {live.rivalSquad && live.rivalSquad.notes.length > 0 && (
           <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.4rem', fontSize: '0.82rem' }}>
             📋 {live.rivalSquad.notes.join(' ')}
@@ -1010,7 +1085,18 @@ function LiveMatchPanel({ state, dispatch }: Props) {
               </div>
               <ul className="reason-list">
                 {q.notes.map((n, j) => (
-                  <li key={j}>{n}</li>
+                  <li
+                    key={j}
+                    className={
+                      n.startsWith('🚑')
+                        ? 'note-injury'
+                        : n.includes('racha') || n.includes('prendió el aro')
+                          ? 'note-hot'
+                          : ''
+                    }
+                  >
+                    {n}
+                  </li>
                 ))}
                 {q.notes.length === 0 && <li>Cuarto parejo, sin sobresaltos.</li>}
               </ul>

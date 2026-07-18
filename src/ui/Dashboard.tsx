@@ -8,7 +8,7 @@ import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
-import { NavigateTabContext } from './nav';
+import { NavigateTabContext, type AppTab } from './nav';
 import { TIPS } from './Tip';
 import { avgMotivation, formatMoney, rivalDifficulty, rivalStyleInfo } from './helpers';
 
@@ -26,8 +26,94 @@ const PROMISE_BADGE: Record<PromiseHealth, { cls: string; label: string }> = {
   cumplida: { cls: 'accent', label: 'cumplida' },
 };
 
+interface WatchItem {
+  icon: string;
+  cls: 'bad' | 'warn' | 'good';
+  text: string;
+  tab: AppTab;
+}
+
+/** Lo urgente de la semana, priorizado: lo que un manager miraría primero. */
+function watchItems(state: GameState): WatchItem[] {
+  const items: WatchItem[] = [];
+  const active = activePlayers(state.players);
+
+  for (const p of active.filter((x) => x.status === 'al_borde')) {
+    items.push({
+      icon: '🚨',
+      cls: 'bad',
+      text: `${p.name} está al borde de dejar el club: una charla o minutos pueden salvarlo.`,
+      tab: 'plantilla',
+    });
+  }
+  const fixedCosts = 245 + (state.coach?.weeklyWage ?? 0);
+  if (state.club.money < fixedCosts) {
+    items.push({
+      icon: '💸',
+      cls: 'bad',
+      text: `La caja no cubre la semana: $${state.club.money} contra ~$${fixedCosts} de gastos fijos. Rifa, sponsor o cuotas, ya.`,
+      tab: 'finanzas',
+    });
+  }
+  const upset = active.filter((x) => x.status === 'molesto');
+  if (upset.length > 0) {
+    items.push({
+      icon: '😠',
+      cls: 'warn',
+      text:
+        upset.length === 1
+          ? `${upset[0].name} está molesto con cómo vienen las cosas.`
+          : `${upset.length} jugadores están molestos: el vestuario pide atención.`,
+      tab: 'plantilla',
+    });
+  }
+  const returning = active.filter((x) => x.status === 'lesionado' && x.injuryWeeks === 1);
+  const injured = active.filter((x) => x.status === 'lesionado');
+  if (returning.length > 0) {
+    items.push({
+      icon: '🩹',
+      cls: 'good',
+      text: `${returning.map((p) => p.name).join(' y ')} ${returning.length > 1 ? 'reciben' : 'recibe'} el alta la próxima semana.`,
+      tab: 'plantilla',
+    });
+  } else if (injured.length > 0) {
+    items.push({
+      icon: '🚑',
+      cls: 'warn',
+      text: `${injured.length === 1 ? `${injured[0].name} sigue` : `${injured.length} jugadores siguen`} en la enfermería.`,
+      tab: 'plantilla',
+    });
+  }
+  const debtors = active.filter((x) => x.feeStatus === 'pendiente' && x.weeksUnpaid >= 2);
+  if (debtors.length > 0) {
+    items.push({
+      icon: '🧾',
+      cls: 'warn',
+      text: `${debtors.length === 1 ? `${debtors[0].name} debe` : `${debtors.length} jugadores deben`} la cuota hace ${debtors.length === 1 ? `${debtors[0].weeksUnpaid} semanas` : 'rato'}: pasar la gorra cuesta caro después.`,
+      tab: 'finanzas',
+    });
+  }
+  if (state.secondTeam && !state.secondTeam.finished) {
+    const fit = state.players.filter(
+      (p) => state.secondTeam!.playerIds.includes(p.id) && !p.leftClub && p.status !== 'lesionado'
+    ).length;
+    if (fit < 6) {
+      items.push({
+        icon: '🏀',
+        cls: 'warn',
+        text: `El segundo equipo llega justo: ${fit} fichas en condiciones para su fecha.`,
+        tab: 'liga',
+      });
+    }
+  }
+
+  const order = { bad: 0, warn: 1, good: 2 } as const;
+  return items.sort((a, b) => order[a.cls] - order[b.cls]).slice(0, 4);
+}
+
 export function Dashboard({ state }: { state: GameState }) {
   const navigate = useContext(NavigateTabContext);
+  const watch = watchItems(state);
   const row = state.standings.find((r) => r.teamId === 'club')!;
   const position = clubPosition(state);
   const active = activePlayers(state.players);
@@ -46,6 +132,30 @@ export function Dashboard({ state }: { state: GameState }) {
 
   return (
     <div>
+      <div className="card watch-card" style={{ marginBottom: '1rem' }}>
+        <h3>📌 Qué mirar hoy</h3>
+        {watch.length === 0 ? (
+          <p style={{ margin: 0 }}>
+            ✅ <strong>Semana tranquila.</strong> Sin urgencias en el club: a pensar en el partido.
+          </p>
+        ) : (
+          <ul className="news-list">
+            {watch.map((w, i) => (
+              <li
+                key={i}
+                className="watch-row"
+                onClick={() => navigate(w.tab)}
+                title="Ir a la pantalla"
+              >
+                <span style={{ minWidth: 20 }}>{w.icon}</span>
+                <span style={{ flex: 1 }}>{w.text}</span>
+                <span className={`chip ${w.cls}`}>ver →</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <div className="grid cols-4">
         <div className="stat-tile clickable" onClick={() => navigate('semana')} title="Ir a la semana">
           <div className="label">Semana</div>

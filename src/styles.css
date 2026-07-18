@@ -455,6 +455,21 @@ td.num, th.num {
   border-bottom: none;
 }
 
+/* "Qué mirar hoy": avisos priorizados y clickeables del Dashboard. */
+.watch-card {
+  border-color: var(--accent);
+}
+
+.watch-row {
+  cursor: pointer;
+  align-items: center;
+  border-radius: 6px;
+}
+
+.watch-row:hover {
+  background: var(--bg-soft);
+}
+
 .news-week {
   color: var(--text-dim);
   font-size: 0.75rem;
@@ -1417,6 +1432,50 @@ button.mini.blue.on {
 
 .scoreboard.live .score {
   font-size: 2.6rem;
+}
+
+/* Drama del partido: el marcador salta al actualizarse y las alertas entran. */
+.scoreboard .score-pop {
+  animation: score-pop 0.55s ease;
+}
+
+@keyframes score-pop {
+  0% { transform: scale(1.35); color: var(--accent); }
+  100% { transform: scale(1); }
+}
+
+.drama-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 0.15rem 0 0.55rem;
+}
+
+.match-alert {
+  border: 1px solid var(--bad);
+  background: color-mix(in srgb, var(--bad) 14%, var(--panel));
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  margin: 0.4rem auto 0.6rem;
+  max-width: 560px;
+  text-align: center;
+  font-weight: 700;
+  animation: alert-in 0.4s ease;
+}
+
+@keyframes alert-in {
+  from { transform: translateY(-6px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.reason-list .note-injury {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.reason-list .note-hot {
+  color: var(--accent);
 }
 
 .tactic-block {
