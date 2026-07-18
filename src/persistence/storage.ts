@@ -197,6 +197,8 @@ export function loadGame(): GameState | null {
       }
       parsed.saveVersion = 21;
     }
+    // scheduledEvents (eventos encadenados) es opcional y se accede con ?? []:
+    // los saves viejos cargan sin migración.
     if (parsed.saveVersion !== SAVE_VERSION) return null;
     return parsed;
   } catch {

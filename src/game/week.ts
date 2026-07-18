@@ -4,7 +4,7 @@ import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
 import { INITIAL_OTHER_DIVISION, USER_DIVISION_ID } from '../data/worldData';
 import { getAction } from './actions';
 import { applyWeeklyEconomy } from './economy';
-import { getEvent, rollEvent, rollTrialPractice } from './events';
+import { getEvent, rollEvent, rollTrialPractice, takeScheduledEvent } from './events';
 import { generateObjectives } from './objectives';
 import { activePlayers, matchAbsentIds, suggestRotation, suggestStarters } from './match';
 import { rollCallUp } from './callup';
@@ -282,7 +282,7 @@ export function advanceWeek(state: GameState): GameState {
     // Fase regular terminada: arrancan (o siguen) los playoffs de las copas.
     if (advancePlayoffs(s, rng)) {
       s.phase = 'planning';
-      s.pendingEvent = trialPlanningEvent(s, rng) ?? rollEvent(s, rng);
+      s.pendingEvent = trialPlanningEvent(s, rng) ?? takeScheduledEvent(s) ?? rollEvent(s, rng);
       s.starters = suggestStarters(s.players);
       s.rotation = suggestRotation(s.players, s.starters);
     } else {
@@ -291,7 +291,9 @@ export function advanceWeek(state: GameState): GameState {
     }
   } else {
     s.phase = 'planning';
-    s.pendingEvent = trialPlanningEvent(s, rng) ?? rollEvent(s, rng);
+    // Prioridad: el amigo a prueba, después las consecuencias encadenadas
+    // (seguras), y recién ahí el sorteo semanal.
+    s.pendingEvent = trialPlanningEvent(s, rng) ?? takeScheduledEvent(s) ?? rollEvent(s, rng);
     s.starters = suggestStarters(s.players);
     s.rotation = suggestRotation(s.players, s.starters);
   }

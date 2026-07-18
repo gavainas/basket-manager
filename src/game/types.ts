@@ -365,6 +365,17 @@ export interface ActiveEvent {
   playerId2?: string;
 }
 
+/** Evento encadenado: una decisión de hoy lo agenda para dispararse semanas
+ *  después con los mismos protagonistas. Se descarta si cambia la temporada
+ *  o si el protagonista dejó el club. */
+export interface ScheduledEvent {
+  defId: string;
+  season: number;
+  week: number;
+  playerId?: string;
+  playerId2?: string;
+}
+
 export type Phase =
   | 'preseason'
   | 'preseasonEnd'
@@ -772,6 +783,8 @@ export interface GameState {
   eventOutcomePeople?: string[];
   /** Reacciones diferidas pendientes (se aplican al avanzar la semana). */
   delayed?: DelayedNote[];
+  /** Eventos encadenados pendientes: consecuencias interactivas de decisiones previas. */
+  scheduledEvents?: ScheduledEvent[];
   starters: string[]; // ids de los 5 titulares elegidos
   /** Ids de los jugadores de rotación (entran desde el banco, máx. 5). */
   rotation: string[];
