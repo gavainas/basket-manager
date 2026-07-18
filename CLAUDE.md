@@ -12,5 +12,6 @@ Juego de gestión de un club de básquet amateur (React + TypeScript + Vite, sin
 
 - `npm run dev` — servidor de desarrollo (http://localhost:5173)
 - `npm run build` — chequeo de TypeScript + build a `dist/`
+- `npm run sim` — harness de balance: simula temporadas y reporta métricas (ver `design/BALANCE.md`)
 
-Toda la lógica del juego vive en `src/game/` y es independiente de React. Los números de balance están centralizados en `src/game/balance.ts`. El roadmap de features está en `ROADMAP.md`.
+Toda la lógica del juego vive en `src/game/` y es independiente de React. Los números de balance están centralizados en `src/game/balance.ts`; antes de ajustarlos, correr `npm run sim` y comparar contra los objetivos de `design/BALANCE.md`. El roadmap de features está en `ROADMAP.md`.

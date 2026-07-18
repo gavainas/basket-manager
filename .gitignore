@@ -5,3 +5,6 @@ dist
 
 # Salida generada por npm run design:sync (se regenera desde src/styles.css)
 design/cards/
+
+# Salida compilada por npm run sim (se regenera desde src/game)
+scripts/.sim-out/

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "design:sync": "node scripts/design-sync.mjs"
+    "design:sync": "node scripts/design-sync.mjs",
+    "sim": "node scripts/sim-balance.cjs"
   },
   "dependencies": {
     "react": "^18.3.1",
