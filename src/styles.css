@@ -785,6 +785,152 @@ table.planilla tr:last-child td {
   border-bottom: 3px double var(--border);
 }
 
+/* ---------- Plantel: vista planilla (tabla densa estilo mesa de control) ---------- */
+
+.roster-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.view-toggle {
+  display: inline-flex;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.view-toggle button {
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: var(--text-dim);
+  padding: 0.3rem 0.9rem;
+  font-size: 0.8rem;
+}
+
+.view-toggle button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.sheet-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .sheet-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+table.sheet td {
+  padding: 0.3rem 0.5rem;
+}
+
+table.sheet .sheet-avatar {
+  padding-right: 0;
+  line-height: 0;
+}
+
+tr.sheet-group td {
+  background: var(--bg-soft);
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sheet-name .sheet-mvp {
+  margin-left: 0.3rem;
+  font-size: 0.7rem;
+}
+
+.sheet-rating {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.stat-good { color: var(--good); }
+.stat-warn { color: var(--warn); }
+.stat-bad { color: var(--bad); }
+
+.sheet-tag { font-size: 0.75rem; }
+.sheet-tag.good { color: var(--good); }
+.sheet-tag.warn { color: var(--warn); }
+.sheet-tag.bad { color: var(--bad); }
+.sheet-tag.accent { color: var(--accent); }
+
+.sheet-side {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 0.9rem;
+}
+
+.sheet-media {
+  text-align: center;
+  margin-bottom: 0.7rem;
+}
+
+.sheet-media-num {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.sheet-media-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+
+.sheet-court {
+  position: relative;
+}
+
+.sheet-court svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.court-slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  line-height: 1.15;
+}
+
+.court-slot .court-name {
+  font-size: 0.66rem;
+  color: var(--text);
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(5, 8, 14, 0.85);
+}
+
+.court-slot .court-rating {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 1px 3px rgba(5, 8, 14, 0.85);
+}
+
+.sheet-court-note {
+  font-size: 0.75rem;
+  margin: 0.6rem 0 0;
+}
+
 /* ---------- Modal ---------- */
 
 .modal-backdrop {
