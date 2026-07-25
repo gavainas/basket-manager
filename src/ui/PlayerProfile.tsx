@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { GameState, Player } from '../game/types';
 import { affinity, coachAffinity, FRIEND_THRESHOLD, groupStanding, RIVALRY_THRESHOLD } from '../game/relations';
+import { friendshipsOf } from '../game/friendsAbroad';
+import { worldPlayerName } from '../game/world';
 import { fragilityHint, fragilityOf } from '../game/injuries';
 import { playerNotes } from '../game/humanState';
 import { Avatar } from './Avatar';
@@ -217,6 +219,7 @@ function AffinityRow({ value, children }: { value: number; children: React.React
 
 function RelacionesTab({ state, p }: { state: GameState; p: Player }) {
   const teammates = state.players.filter((t) => !t.leftClub && t.id !== p.id);
+  const abroad = friendshipsOf(state, p.id);
   const rows = teammates
     .map((t) => ({ t, aff: affinity(p, t, state.affinityBonus) }))
     .sort((a, b) => b.aff - a.aff);
@@ -247,6 +250,16 @@ function RelacionesTab({ state, p }: { state: GameState; p: Player }) {
               ))
             : 'Sin conflictos a la vista.'}
         </DataRow>
+        {abroad.length > 0 && (
+          <DataRow label="🌍 En otros cuadros">
+            {abroad.map((f, i) => (
+              <span key={f.friend.id}>
+                {i > 0 && ', '}
+                {worldPlayerName(f.friend)} ({f.team.name}) — {f.origin}
+              </span>
+            ))}
+          </DataRow>
+        )}
       </div>
 
       <h4 className="profile-subtitle">Afinidad con los compañeros</h4>

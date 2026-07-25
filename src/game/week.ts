@@ -5,6 +5,7 @@ import { INITIAL_OTHER_DIVISION, USER_DIVISION_ID } from '../data/worldData';
 import { getAction } from './actions';
 import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent, rollTrialPractice, takeScheduledEvent } from './events';
+import { maybeFriendMessage } from './friendsAbroad';
 import { generateObjectives } from './objectives';
 import { activePlayers, matchAbsentIds, suggestRotation, suggestStarters } from './match';
 import { rollCallUp } from './callup';
@@ -265,6 +266,9 @@ export function advanceWeek(state: GameState): GameState {
   s.lastMatch = state.lastMatch; // se conserva para referencia
   s.asadoPlan = null; // la convocatoria al asado vence con la semana
   s.lastAsado = null;
+
+  // Un amigo de otro cuadro puede escribir: data del rival, picados, rumores.
+  maybeFriendMessage(s, rng);
 
   // Reacciones diferidas: lo que quedó picando semanas atrás se comunica ahora.
   const due = (s.delayed ?? []).filter((d) => d.season === s.seasonNumber && d.week <= s.week);
