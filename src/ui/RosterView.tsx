@@ -6,6 +6,7 @@ import { CoachCard } from './CoachCard';
 import { PlayerCard } from './PlayerCard';
 import { PlayerLink } from './PlayerLink';
 import { RosterSheet } from './RosterSheet';
+import { VestuarioCard } from './VestuarioCard';
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 
@@ -31,6 +32,7 @@ export function RosterView({ state, dispatch }: { state: GameState; dispatch: (a
   return (
     <div>
       <CoachCard state={state} dispatch={dispatch} />
+      <VestuarioCard state={state} />
       <div className="roster-head">
         <p className="muted" style={{ marginTop: 0 }}>
           La valoración (≈) es una estimación: el rendimiento real depende del físico, la motivación, la confianza y el

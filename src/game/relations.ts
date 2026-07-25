@@ -16,7 +16,7 @@ function hash01(s: string): number {
 }
 
 /** Compatibilidad entre personalidades: quiénes se llevan bien y quiénes chocan. */
-function personalityCompat(a: Personality, b: Personality): number {
+export function personalityCompat(a: Personality, b: Personality): number {
   const key = [a, b].sort().join('+');
   const table: Record<string, number> = {
     'social+social': 12,
