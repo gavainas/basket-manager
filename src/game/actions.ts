@@ -1,3 +1,4 @@
+import { asadoSummary, resolveAsado } from './asado';
 import { BALANCE, clamp } from './balance';
 import { coachBoostsTraining } from './coach';
 import { createRecruit } from '../data/recruits';
@@ -115,26 +116,14 @@ export const ACTIONS: ActionDef[] = [
     id: 'asado',
     name: 'Organizar asado',
     icon: '🍖',
-    description: 'Asado del plantel. Sube mucho el ambiente y el prestigio social del club.',
-    costLabel: `Cuesta $${A.asado.cost}`,
+    description:
+      'Convocás al plantel a un asado: cada uno confirma según su momento. Si va la mayoría, el grupo sale otro; si van cuatro, es un papelón.',
+    costLabel: `Cuesta $${A.asado.cost} (según quiénes vayan)`,
     available: (s) => needMoney(s, A.asado.cost),
     apply: (s, rng) => {
       spend(s, 'Asado del plantel', A.asado.cost);
-      const rained = rng.chance(A.asado.rainChance);
-      const factor = rained ? 0.5 : 1;
-      s.club.socialClimate = clamp(s.club.socialClimate + A.asado.climate * factor);
-      s.club.socialPrestige = clamp(s.club.socialPrestige + A.asado.socialPrestige * factor);
-      for (const p of actives(s)) {
-        p.motivation = clamp(p.motivation + (p.personality === 'social' ? 6 : 3) * factor);
-        p.social = clamp(p.social + 2 * factor);
-      }
-      if (rained) return 'Llovió y el asado quedó a medias bajo techo. Sumó igual, pero menos de lo esperado.';
-      if (rng.chance(0.3)) {
-        s.memorableMoments.push(`Semana ${s.week}: el asado terminó con anécdotas que se van a contar por años.`);
-        s.club.socialClimate = clamp(s.club.socialClimate + 4);
-        return '¡Asado histórico! Sobremesa larga, risas y un grupo mucho más unido.';
-      }
-      return 'Gran asado: el ambiente del plantel mejoró notablemente.';
+      const report = resolveAsado(s, rng);
+      return asadoSummary(report, actives(s).length);
     },
   },
   {

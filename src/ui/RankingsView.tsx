@@ -64,7 +64,9 @@ export function RankingsView({ state }: { state: GameState }) {
   const lovedRows = players
     .map((p) => {
       const others = players.filter((t) => t.id !== p.id);
-      const avg = others.length ? others.reduce((t, o) => t + affinity(o, p), 0) / others.length : 0;
+      const avg = others.length
+        ? others.reduce((t, o) => t + affinity(o, p, state.affinityBonus), 0) / others.length
+        : 0;
       return { p, v: Math.round(avg) };
     })
     .sort((a, b) => b.v - a.v)
@@ -72,7 +74,7 @@ export function RankingsView({ state }: { state: GameState }) {
     .map((x) => ({ id: x.p.id, name: x.p.name, value: `${x.v}/100` }));
 
   const conflictive = top(
-    (p) => players.filter((t) => t.id !== p.id && affinity(t, p) <= RIVALRY_THRESHOLD).length,
+    (p) => players.filter((t) => t.id !== p.id && affinity(t, p, state.affinityBonus) <= RIVALRY_THRESHOLD).length,
     (v) => `${v} roce${v > 1 ? 's' : ''}`
   );
 

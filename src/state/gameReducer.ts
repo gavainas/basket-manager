@@ -21,6 +21,7 @@ import {
   talkToPlayer,
 } from '../game/preseason';
 import { resolvePreseasonEvent } from '../game/preseasonEvents';
+import { planAsado } from '../game/asado';
 import { Rng, randomSeed } from '../game/rng';
 import { attemptAbsenceAction, type AbsenceActionId } from '../game/absences';
 import { appointPlayerCoach, fireCoach, hireCoach } from '../game/coach';
@@ -133,6 +134,13 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
         : state.actionsChosen.length < BALANCE.actions.maxPerWeek
           ? [...state.actionsChosen, action.id]
           : state.actionsChosen;
+      // Proponer el asado dispara la convocatoria: el plantel responde una sola
+      // vez por semana (destildar y volver a tildar no re-sortea respuestas).
+      if (action.id === 'asado' && chosen.includes('asado') && state.asadoPlan?.week !== state.week) {
+        const rng = new Rng(state.seed);
+        const plan = planAsado(state, rng);
+        return { ...state, actionsChosen: chosen, asadoPlan: plan, seed: rng.nextSeed() };
+      }
       return { ...state, actionsChosen: chosen };
     }
     case 'CONFIRM_ACTIONS':

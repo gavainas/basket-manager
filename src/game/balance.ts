@@ -166,7 +166,15 @@ export const BALANCE = {
       youngImproveChance: 0.3, // ≤25 años y compromiso ≥ 50
       primeImproveChance: 0.15, // 26-30 años y compromiso ≥ 70
     },
-    asado: { cost: 110, climate: 12, socialPrestige: 4, rainChance: 0.15 },
+    asado: {
+      cost: 110,
+      climate: 12,
+      socialPrestige: 4,
+      rainChance: 0.15,
+      // Umbrales de respuesta a la convocatoria (score 0-1 por jugador).
+      rsvpYes: 0.62,
+      rsvpMaybe: 0.4,
+    },
     raffle: { cost: 30, incomeMin: 30, incomeMax: 170 },
     sponsorSearch: { baseChance: 0.35, prestigeFactor: 0.005 },
     talk: { motivationBoost: 14, failChance: 0.12 },

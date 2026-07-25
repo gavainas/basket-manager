@@ -110,7 +110,7 @@ export function playerNotes(state: GameState, p: Player): HumanNote[] {
   let bestMate: Player | undefined, worstMate: Player | undefined;
   let bestVal = -1, worstVal = 101;
   for (const m of mates) {
-    const v = affinity(p, m);
+    const v = affinity(p, m, state.affinityBonus);
     if (v > bestVal) { bestVal = v; bestMate = m; }
     if (v < worstVal) { worstVal = v; worstMate = m; }
   }

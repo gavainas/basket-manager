@@ -218,7 +218,7 @@ function AffinityRow({ value, children }: { value: number; children: React.React
 function RelacionesTab({ state, p }: { state: GameState; p: Player }) {
   const teammates = state.players.filter((t) => !t.leftClub && t.id !== p.id);
   const rows = teammates
-    .map((t) => ({ t, aff: affinity(p, t) }))
+    .map((t) => ({ t, aff: affinity(p, t, state.affinityBonus) }))
     .sort((a, b) => b.aff - a.aff);
   const friends = rows.filter((r) => r.aff >= FRIEND_THRESHOLD);
   const rivals = rows.filter((r) => r.aff <= RIVALRY_THRESHOLD);
@@ -272,7 +272,7 @@ function RelacionesTab({ state, p }: { state: GameState; p: Player }) {
 function SocialTab({ state, p }: { state: GameState; p: Player }) {
   const socialCount = p.timeline.filter((e) => e.kind === 'social').length;
   const absences = p.timeline.filter((e) => e.kind === 'ausencia').length;
-  const standing = groupStanding(p, state.players, state.seasonNumber);
+  const standing = groupStanding(p, state.players, state.seasonNumber, state.affinityBonus);
   return (
     <div>
       <div className="data-grid">

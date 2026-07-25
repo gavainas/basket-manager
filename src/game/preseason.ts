@@ -386,6 +386,8 @@ export function startPreseason(state: GameState): GameState {
     otherDivisionTeams: promo.nextOtherTeams,
     // La dificultad de faltas acompaña al club toda la carrera.
     absenceDifficulty: state.absenceDifficulty,
+    // Lo vivido entre compañeros (asados, sociedades, peleas) no se resetea.
+    affinityBonus: state.affinityBonus ?? {},
   };
   if (promo.userMoved) {
     next.clubTimeline.push({

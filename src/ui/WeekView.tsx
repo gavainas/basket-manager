@@ -59,6 +59,65 @@ function Steps({ phase }: { phase: GameState['phase'] }) {
   );
 }
 
+/** Respuestas del plantel a la convocatoria del asado: quién va, quién duda, quién se baja. */
+function AsadoRsvpPanel({ state }: { state: GameState }) {
+  const plan = state.asadoPlan;
+  if (!plan || plan.week !== state.week) return null;
+  const byId = (id: string) => state.players.find((p) => p.id === id);
+  const group = (answer: string) =>
+    plan.rsvps
+      .filter((r) => r.answer === answer)
+      .map((r) => ({ rsvp: r, p: byId(r.playerId) }))
+      .filter((x): x is { rsvp: (typeof plan.rsvps)[number]; p: Player } => !!x.p);
+  const going = group('va');
+  const maybe = group('duda');
+  const declined = group('no_va');
+  return (
+    <div className="card" style={{ marginBottom: '1rem' }}>
+      <h3>🍖 El grupo responde a la convocatoria</h3>
+      <p style={{ margin: '0.2rem 0 0.5rem' }}>
+        <span className="chip good" style={{ marginRight: '0.4rem' }}>✓ Van {going.length}</span>
+        <span className="chip warn" style={{ marginRight: '0.4rem' }}>🤔 Dudan {maybe.length}</span>
+        <span className="chip bad">✗ No van {declined.length}</span>
+      </p>
+      {going.length > 0 && (
+        <p style={{ margin: '0.25rem 0' }}>
+          <strong>Confirmados:</strong>{' '}
+          {going.map(({ p }, i) => (
+            <span key={p.id}>
+              {i > 0 && ', '}
+              <PlayerLink id={p.id}>{p.name}</PlayerLink>
+            </span>
+          ))}
+        </p>
+      )}
+      {maybe.length > 0 && (
+        <p style={{ margin: '0.25rem 0' }}>
+          <strong>"Veo y aviso":</strong>{' '}
+          {maybe.map(({ p }, i) => (
+            <span key={p.id}>
+              {i > 0 && ', '}
+              <PlayerLink id={p.id}>{p.name}</PlayerLink>
+            </span>
+          ))}
+        </p>
+      )}
+      {declined.length > 0 && (
+        <ul className="log-list" style={{ margin: '0.25rem 0' }}>
+          {declined.map(({ p, rsvp }) => (
+            <li key={p.id}>
+              <PlayerLink id={p.id}>{p.name}</PlayerLink>: {rsvp.reason}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="hint" style={{ margin: '0.4rem 0 0' }}>
+        Los que dudan se definen el mismo día. Si el número no te cierra, podés levantarlo destildando la acción.
+      </p>
+    </div>
+  );
+}
+
 /**
  * La semana del club, estilo PC Fútbol: el camino directo es el partido.
  * Las acciones (entrenar, asado, rifa…) son un menú opcional, no un peaje.
@@ -115,6 +174,8 @@ function PlanningPanel({ state, dispatch }: Props) {
         </div>
       </div>
 
+      {state.actionsChosen.includes('asado') && <AsadoRsvpPanel state={state} />}
+
       {showActions && (
         <>
           <p className="muted" style={{ marginTop: 0 }}>
@@ -154,6 +215,62 @@ function PlanningPanel({ state, dispatch }: Props) {
   );
 }
 
+const ASADO_TIER_INFO: Record<string, { icon: string; title: string; cls: string }> = {
+  fieston: { icon: '🔥', title: 'Asadazo', cls: 'good' },
+  bueno: { icon: '🍖', title: 'Buen asado', cls: 'good' },
+  flojo: { icon: '😕', title: 'Asado flojo', cls: 'warn' },
+  papelon: { icon: '🫗', title: 'Papelón', cls: 'bad' },
+};
+
+/** Crónica del asado: quiénes estuvieron en la mesa y qué dejó la noche. */
+function AsadoReportCard({ state }: { state: GameState }) {
+  const report = state.lastAsado;
+  if (!report || report.week !== state.week) return null;
+  const info = ASADO_TIER_INFO[report.tier];
+  const byId = (id: string) => state.players.find((p) => p.id === id);
+  const attended = report.attended.map(byId).filter((p): p is Player => !!p);
+  const total = state.players.filter((p) => !p.leftClub).length;
+  return (
+    <div className="card" style={{ marginBottom: '1rem' }}>
+      <h3>
+        {info.icon} {info.title}
+        <span className={`chip ${info.cls}`} style={{ marginLeft: '0.5rem' }}>
+          {attended.length} de {total} en la mesa
+        </span>
+        {report.rained && <span className="chip" style={{ marginLeft: '0.3rem' }}>🌧 Con lluvia</span>}
+      </h3>
+      {attended.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', margin: '0.4rem 0' }}>
+          {attended.map((p) => (
+            <span key={p.id} className="chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={22} title={p.name} />
+              <PlayerLink id={p.id}>{shortName(p.name)}</PlayerLink>
+            </span>
+          ))}
+        </div>
+      )}
+      {report.missed.length > 0 && (
+        <ul className="log-list" style={{ margin: '0.3rem 0' }}>
+          {report.missed.map((m) => {
+            const p = byId(m.playerId);
+            if (!p) return null;
+            return (
+              <li key={m.playerId}>
+                <PlayerLink id={p.id}>{p.name}</PlayerLink>: {m.reason}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {report.highlights.map((h, i) => (
+        <p key={i} style={{ margin: '0.25rem 0', fontStyle: 'italic' }}>
+          {h}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 function CallUpPanel({ state, dispatch }: Props) {
   const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1])!;
   const entries = state.callUp;
@@ -177,6 +294,9 @@ function CallUpPanel({ state, dispatch }: Props) {
           </ul>
         </div>
       )}
+
+      <AsadoReportCard state={state} />
+
 
       <div className="card">
         <h3>

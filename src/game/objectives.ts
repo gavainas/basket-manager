@@ -78,6 +78,21 @@ const DEFS: ObjectiveDef[] = [
       return count >= t ? 'en_curso' : 'en_riesgo';
     },
   },
+  {
+    id: 'asados',
+    label: (t) =>
+      t === 1
+        ? 'Juntar al plantel: 1 asado con más de la mitad del grupo'
+        : `Juntar al plantel: ${t} asados con más de la mitad del grupo`,
+    makeTarget: (ambition, rng) => Math.min(3, 1 + Math.floor(ambition / 2) + rng.int(0, 1)),
+    status: (s, t, over) => {
+      const good = (s.asadoHistory ?? []).filter((a) => a.good).length;
+      if (good >= t) return 'cumplido';
+      const weeksLeft = Math.max(0, s.seasonLength - s.week + 1);
+      if (over || weeksLeft < t - good) return 'fallado';
+      return weeksLeft <= t - good + 2 ? 'en_riesgo' : 'en_curso';
+    },
+  },
 ];
 
 /** Genera 3 objetivos distintos. La ambición crece con las temporadas y el prestigio. */

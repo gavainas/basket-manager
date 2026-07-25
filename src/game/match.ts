@@ -89,7 +89,18 @@ export function evaluateTeam(state: GameState, starterIds: string[]): TeamEval {
   const missingPositions = ALL_POSITIONS.filter((pos) => !covered.has(pos)).length;
 
   const socialAvg = avg(starters.map((p) => p.social));
-  const chemistry01 = (0.6 * state.club.socialClimate + 0.4 * socialAvg) / 100;
+  // El asado de la semana entra a la cancha: mesa llena empuja, papelón pesa.
+  const asadoGlow =
+    state.lastAsado && state.lastAsado.week === state.week
+      ? state.lastAsado.tier === 'fieston'
+        ? 0.06
+        : state.lastAsado.tier === 'bueno'
+          ? 0.03
+          : state.lastAsado.tier === 'papelon'
+            ? -0.05
+            : 0
+      : 0;
+  const chemistry01 = Math.max(0, Math.min(1, (0.6 * state.club.socialClimate + 0.4 * socialAvg) / 100 + asadoGlow));
   const chemFactor = 0.94 + 0.12 * chemistry01;
   const orgFactor = 0.97 + 0.06 * (state.club.organization / 100);
   const coverageFactor = 1 - missingPositions * BALANCE.match.positionMissingPenalty;
@@ -1075,6 +1086,12 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     extraReasons.push({ weight: 7, text: 'Los cambios mantuvieron piernas frescas hasta el final.' });
   if (subsMade === 0 && endFresh < 35)
     extraReasons.push({ weight: 8, text: 'Sin tocar el banco, el quinteto llegó fundido al cierre.' });
+  if (s.lastAsado && s.lastAsado.week === s.week) {
+    if (s.lastAsado.tier === 'fieston' || s.lastAsado.tier === 'bueno')
+      extraReasons.push({ weight: 7, text: 'El asado de la semana se notó: el grupo entró de buen humor y conectado.' });
+    else if (s.lastAsado.tier === 'papelon')
+      extraReasons.push({ weight: 7, text: 'Las caras largas del asado fallido entraron a la cancha con el equipo.' });
+  }
 
   const summary = won
     ? margin > 15

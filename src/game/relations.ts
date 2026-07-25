@@ -37,14 +37,23 @@ function personalityCompat(a: Personality, b: Personality): number {
   return table[key] ?? 0;
 }
 
-/** Afinidad entre dos compañeros (0-100). Simétrica y estable. */
-export function affinity(a: Player, b: Player): number {
+/** Clave estable de un par de jugadores (ids ordenados). */
+export function pairKey(aId: string, bId: string): string {
+  return [aId, bId].sort().join('|');
+}
+
+/**
+ * Afinidad entre dos compañeros (0-100). Simétrica y estable; el mapa opcional
+ * de bonus (state.affinityBonus) suma lo vivido juntos: asados, sociedades, peleas.
+ */
+export function affinity(a: Player, b: Player, bonus?: Record<string, number>): number {
   const social = (a.social + b.social) / 2;
   const compat = personalityCompat(a.personality, b.personality);
   const ageGap = Math.min(8, Math.abs(a.age - b.age) * 0.8);
-  const pairKey = [a.id, b.id].sort().join('|');
-  const noise = (hash01(pairKey) - 0.5) * 30;
-  return clamp(Math.round(22 + social * 0.55 + compat - ageGap + noise));
+  const key = pairKey(a.id, b.id);
+  const noise = (hash01(key) - 0.5) * 30;
+  const lived = bonus?.[key] ?? 0;
+  return clamp(Math.round(22 + social * 0.55 + compat - ageGap + noise + lived));
 }
 
 /** Cómo está la relación del jugador con vos, el entrenador (0-100). */
@@ -57,10 +66,10 @@ export function coachAffinity(p: Player): number {
 }
 
 /** Peso del jugador en el vestuario (0-100): cariño recibido + logros + antigüedad. */
-export function groupStanding(p: Player, teammates: Player[], currentSeason: number): number {
+export function groupStanding(p: Player, teammates: Player[], currentSeason: number, bonus?: Record<string, number>): number {
   const others = teammates.filter((t) => t.id !== p.id && !t.leftClub);
   const received = others.length
-    ? others.reduce((sum, t) => sum + affinity(t, p), 0) / others.length
+    ? others.reduce((sum, t) => sum + affinity(t, p, bonus), 0) / others.length
     : 50;
   const mvps = p.matchLog.filter((m) => m.mvp).length;
   const seniority = Math.min(15, Math.max(0, currentSeason - p.joinedSeason) * 5);

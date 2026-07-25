@@ -256,6 +256,8 @@ export function advanceWeek(state: GameState): GameState {
   s.callUp = [];
   s.live = null;
   s.lastMatch = state.lastMatch; // se conserva para referencia
+  s.asadoPlan = null; // la convocatoria al asado vence con la semana
+  s.lastAsado = null;
 
   // Reacciones diferidas: lo que quedó picando semanas atrás se comunica ahora.
   const due = (s.delayed ?? []).filter((d) => d.season === s.seasonNumber && d.week <= s.week);

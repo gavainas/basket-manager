@@ -1,3 +1,4 @@
+import { planAsado, weeksSinceAsado } from './asado';
 import { BALANCE, clamp } from './balance';
 import { createRecruit } from '../data/recruits';
 import type { ActiveEvent, DelayedNote, GameState, Player, ScheduledEvent, TrialCandidate } from './types';
@@ -1162,6 +1163,49 @@ export const EVENTS: EventDef[] = [
       }
       s.club.socialClimate = clamp(s.club.socialClimate - 5);
       return 'Ni las charlas por separado alcanzaron. Se toleran a regañadientes y el grupo sigue partido.';
+    },
+  },
+  {
+    id: 'piden_asado',
+    title: 'Piden asado',
+    weight: 8,
+    canFire: (s) =>
+      s.club.money >= BALANCE.actions.asado.cost &&
+      !s.actionsChosen.includes('asado') &&
+      actives(s).length >= 6 &&
+      weeksSinceAsado(s) >= 3,
+    pickTargets: (s) => {
+      // Lo pide el organizador natural: el más social del plantel.
+      const cands = actives(s).slice().sort((a, b) => b.social - a.social);
+      const organizer = cands.find((p) => p.personality === 'social') ?? cands[0];
+      return organizer ? { playerId: organizer.id } : null;
+    },
+    text: (s, ev) =>
+      `${byId(s, ev.playerId).name} te frena en el estacionamiento: "¿Hace cuánto que no comemos todos juntos? Yo consigo la parrilla, vos poné el club".`,
+    options: () => [
+      { label: 'Armarlo para esta semana', hint: `Queda agendado el asado (cuesta $${BALANCE.actions.asado.cost})` },
+      { label: '"Ahora no da, hay que cuidar la caja"', hint: 'El grupo lo va a notar' },
+    ],
+    resolve: (s, ev, opt, rng) => {
+      const p = byId(s, ev.playerId);
+      if (opt === 0) {
+        if (!s.actionsChosen.includes('asado') && s.actionsChosen.length < BALANCE.actions.maxPerWeek) {
+          s.actionsChosen.push('asado');
+        }
+        s.asadoPlan = planAsado(s, rng);
+        const going = s.asadoPlan.rsvps.filter((r) => r.answer === 'va').length;
+        p.motivation = clamp(p.motivation + 5);
+        return `${p.name} mandó mensaje al grupo ahí mismo y ${going} confirmaron al toque. El asado quedó agendado: se hace al pasar lista.`;
+      }
+      p.motivation = clamp(p.motivation - 5);
+      s.club.socialClimate = clamp(s.club.socialClimate - 2);
+      later(s, 1, {
+        playerId: p.id,
+        text: `${p.name} guardó la parrilla sin comentarios. En el grupo quedó un "bueno, otra será" que se leyó fuerte.`,
+        tone: 'bad',
+        climate: -1,
+      });
+      return `${p.name} asintió sin discutir: "vos manejás la caja". Pero el grupo tenía ganas, y eso no se borra con un sticker.`;
     },
   },
 ];

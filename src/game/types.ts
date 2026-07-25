@@ -830,4 +830,54 @@ export interface GameState {
   secondTeam?: SecondTeamState | null;
   /** Dificultad de faltas y lesiones (elegida al crear la partida; saves viejos = medio). */
   absenceDifficulty?: AbsenceDifficulty;
+  /** Convocatoria al asado de esta semana (respuestas del plantel); opcional para no migrar saves. */
+  asadoPlan?: AsadoPlan | null;
+  /** Cómo salió el asado de esta semana (para el informe y el partido). */
+  lastAsado?: AsadoReport | null;
+  /** Asados de la temporada: semana, asistencia y quiénes fueron (alimenta objetivos y memoria). */
+  asadoHistory?: AsadoRecord[];
+  /** Ajustes vivos de afinidad entre pares (clave: ids ordenados "a|b"). Persiste entre temporadas. */
+  affinityBonus?: Record<string, number>;
+}
+
+// ---------- Asado con convocatoria ----------
+
+export type AsadoAnswer = 'va' | 'duda' | 'no_va';
+
+export interface AsadoRsvp {
+  playerId: string;
+  answer: AsadoAnswer;
+  /** Por qué no viene (solo para no_va): laburo, familia, bronca… */
+  reason?: string;
+}
+
+export interface AsadoPlan {
+  /** Semana para la que vale la convocatoria (si cambia la semana, se descarta). */
+  week: number;
+  rsvps: AsadoRsvp[];
+}
+
+export type AsadoTier = 'fieston' | 'bueno' | 'flojo' | 'papelon';
+
+export interface AsadoReport {
+  week: number;
+  season: number;
+  /** Ids de los que estuvieron en la mesa. */
+  attended: string[];
+  /** Los que faltaron, con su motivo (incluye a los que confirmaron y se cayeron). */
+  missed: { playerId: string; reason: string }[];
+  /** Asistencia sobre el plantel activo (0-1). */
+  ratio: number;
+  tier: AsadoTier;
+  rained: boolean;
+  /** Frases de color: sociedades nuevas, anécdotas, caras largas. */
+  highlights: string[];
+}
+
+export interface AsadoRecord {
+  week: number;
+  ratio: number;
+  /** true si fue más de la mitad del plantel: cuenta para la comisión. */
+  good: boolean;
+  attended: string[];
 }
