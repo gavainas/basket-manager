@@ -2,6 +2,7 @@
 // determinista (sin guardar nada ni migrar saves) y escriben durante la
 // semana: data del próximo rival, invitaciones a picados y color de la liga.
 
+import { affinity } from './relations';
 import { logPlayerEvent } from './timeline';
 import { teamByLegacyRival, teamRoster, worldPlayerName } from './world';
 import type { GameState, Player, Team, WorldPlayer } from './types';
@@ -90,7 +91,7 @@ export function friendshipsOf(state: GameState, playerId: string): AbroadFriends
  */
 export function maybeFriendMessage(s: GameState, rng: Rng): void {
   if (s.week > s.seasonLength) return;
-  if (!rng.chance(0.45)) return;
+  if (!rng.chance(0.32)) return;
   const friendships = friendshipsAbroad(s);
   if (friendships.length === 0) return;
   const f = rng.pick(friendships);
@@ -112,13 +113,31 @@ export function maybeFriendMessage(s: GameState, rng: Rng): void {
     }
   } else {
     const roll = rng.next();
-    if (roll < 0.35) {
-      text = `💬 ${friendName} (${f.team.name}) invitó a ${f.player.name} a un picado del jueves: "sin roscas, juego y birra". Volvió enchufado.`;
+    if (roll < 0.2) {
+      // Picado para dos: se lleva a un compañero (la amistad interna importa).
+      const compa = s.players
+        .filter((p) => !p.leftClub && p.id !== f.player.id)
+        .map((p) => ({ p, aff: affinity(f.player, p, s.affinityBonus) }))
+        .sort((a, b) => b.aff - a.aff)[0];
+      if (compa && compa.aff >= 60) {
+        text = `💬 ${friendName} (${f.team.name}) armó picado y pidió que vayan ${f.player.name} y ${compa.p.name}: "traé al otro, que la última vez la rompió". Volvieron enchufados.`;
+        compa.p.motivation = Math.min(100, compa.p.motivation + 2);
+      } else {
+        text = `💬 ${friendName} (${f.team.name}) invitó a ${f.player.name} a un picado del jueves: "sin roscas, juego y birra". Volvió enchufado.`;
+      }
       tone = 'good';
       f.player.motivation = Math.min(100, f.player.motivation + 2);
       f.player.social = Math.min(100, f.player.social + 1);
-    } else if (roll < 0.65) {
+    } else if (roll < 0.4) {
       text = `💬 Rumor vía ${f.player.name}: en ${f.team.name} se dijeron de todo después del último partido. Vestuario caliente el de ellos.`;
+    } else if (roll < 0.55) {
+      const pos = rng.pick(['base', 'escolta', 'alero', 'ala-pívot', 'pívot']);
+      text = `💬 Chisme de mercado vía ${f.player.name}: un ${pos} de ${f.team.name} está buscando equipo. "Te aviso antes que a nadie", le dijo ${friendName}.`;
+    } else if (roll < 0.7) {
+      text = `💬 ${friendName} (${f.team.name}) le escribió a ${f.player.name} desde la costa: "acá ni me acuerdo del básquet". Foto de reposera incluida.`;
+    } else if (roll < 0.85) {
+      text = `💬 ${friendName} (${f.team.name}) le preguntó a ${f.player.name} cómo viene el equipo: "los miro de afuera y están para pelear arriba, eh".`;
+      tone = 'good';
     } else {
       text = `💬 ${friendName} (${f.team.name}) le mandó a ${f.player.name} el video de su triple del finde. "Aprendé", decía el mensaje.`;
     }

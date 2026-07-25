@@ -14,7 +14,16 @@ function actives(s: GameState): Player[] {
   return s.players.filter((p) => !p.leftClub);
 }
 
-/** Motivos de "no voy": algunos no pueden, otros no quieren (y se nota). */
+/** "No puedo": la vida, sin mirar el ánimo. */
+const NO_PUEDE = [
+  'Laburo hasta cualquier hora: no llega ni al postre.',
+  'Compromiso familiar imposible de mover.',
+  'Está fuera de la ciudad justo esa noche.',
+  'Le toca cuidar a los pibes: "mandame foto del vacío".',
+  'Le cambiaron el turno en el laburo. "A la próxima voy fija", jura.',
+];
+
+/** Motivos de "no voy" cuando es por ganas: la bronca, la deuda o el personaje. */
 function declineReason(p: Player, rng: Rng): string {
   if (p.status === 'molesto' || p.status === 'al_borde') {
     return rng.pick([
@@ -29,12 +38,7 @@ function declineReason(p: Player, rng: Rng): string {
   if (p.personality === 'mercenario') {
     return '"Tengo otra cosa", dijo sin dar detalles. Como siempre.';
   }
-  return rng.pick([
-    'Laburo hasta cualquier hora: no llega ni al postre.',
-    'Compromiso familiar imposible de mover.',
-    'Está fuera de la ciudad justo esa noche.',
-    'Le toca cuidar a los pibes: "mandame foto del vacío".',
-  ]);
+  return rng.pick(NO_PUEDE);
 }
 
 /** Cuánto pesa la personalidad en las ganas de ir a un asado. */
@@ -57,30 +61,45 @@ function personalityPull(p: Player): number {
 export function planAsado(s: GameState, rng: Rng): AsadoPlan {
   const squad = actives(s);
   const score = new Map<string, number>();
+  const noPuede = new Map<string, string>();
+  // La racha pesa: ganar da ganas de juntarse; perder seguido, de irse a casa.
+  const recent = s.history.slice(-3);
+  const streakAdj = recent.reduce((t, m) => t + (m.won ? 0.03 : -0.05), 0);
+  // Excusas sin repetir en la misma convocatoria: dos con "los pibes" el mismo
+  // jueves es mucha casualidad hasta para esta liga.
+  const freeExcuses = rng.shuffle([...NO_PUEDE]);
   for (const p of squad) {
+    // La vida no mira el ánimo: a algunos directamente no les da el calendario.
+    if (rng.chance(A.noPuedeChance)) {
+      noPuede.set(p.id, freeExcuses.pop() ?? rng.pick(NO_PUEDE));
+      continue;
+    }
     let v =
       0.18 +
       p.social * 0.004 +
-      p.motivation * 0.0025 +
+      p.motivation * 0.004 +
       s.club.socialClimate * 0.0015 +
-      personalityPull(p);
+      personalityPull(p) +
+      streakAdj;
     if (p.status === 'molesto' || p.status === 'al_borde') v -= 0.3;
     // El lesionado va igual: está al pedo y extraña al grupo.
     if (p.status === 'lesionado') v += 0.05;
     if (p.feeStatus === 'pendiente' && p.weeksUnpaid >= 2) v -= 0.1;
-    if (s.lastMatch) v += s.lastMatch.won ? 0.06 : -0.03;
-    v += rng.range(-0.08, 0.08);
+    v += rng.range(-0.14, 0.14);
     score.set(p.id, v);
   }
   // Segunda pasada: si van los amigos, se prende. "¿Va el Chino? Ah, voy."
   const bonus = s.affinityBonus;
   for (const p of squad) {
+    if (noPuede.has(p.id)) continue;
     const friendsGoing = squad.filter(
       (q) => q.id !== p.id && (score.get(q.id) ?? 0) >= A.rsvpYes && affinity(p, q, bonus) >= FRIEND_THRESHOLD
     ).length;
     if (friendsGoing > 0) score.set(p.id, (score.get(p.id) ?? 0) + Math.min(0.14, friendsGoing * 0.07));
   }
   const rsvps: AsadoRsvp[] = squad.map((p) => {
+    const impediment = noPuede.get(p.id);
+    if (impediment) return { playerId: p.id, answer: 'no_va', reason: impediment };
     const v = score.get(p.id) ?? 0;
     if (v >= A.rsvpYes) return { playerId: p.id, answer: 'va' };
     if (v >= A.rsvpMaybe) return { playerId: p.id, answer: 'duda' };

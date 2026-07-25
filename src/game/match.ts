@@ -1103,10 +1103,12 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   if (subsMade === 0 && endFresh < 35)
     extraReasons.push({ weight: 8, text: 'Sin tocar el banco, el quinteto llegó fundido al cierre.' });
   if (s.lastAsado && s.lastAsado.week === s.week) {
+    // Si hubo asado, su clave le gana a la genérica de química: es la misma
+    // historia, contada con nombre y apellido.
     if (s.lastAsado.tier === 'fieston' || s.lastAsado.tier === 'bueno')
-      extraReasons.push({ weight: 7, text: 'El asado de la semana se notó: el grupo entró de buen humor y conectado.' });
+      extraReasons.push({ weight: 11, text: 'El asado de la semana se notó: el grupo entró de buen humor y conectado.' });
     else if (s.lastAsado.tier === 'papelon')
-      extraReasons.push({ weight: 7, text: 'Las caras largas del asado fallido entraron a la cancha con el equipo.' });
+      extraReasons.push({ weight: 11, text: 'Las caras largas del asado fallido entraron a la cancha con el equipo.' });
   }
 
   const summary = won

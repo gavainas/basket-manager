@@ -50,7 +50,7 @@ export const BALANCE = {
     upsetExtra: 0.06, // molesto o al borde: menos ganas de venir
     injuryBase: 0.02, // todos juegan/viven afuera: nadie está exento de romperse
     injuryChanceFactor: 0.1, // extra de lesión afuera por poco compromiso (juega en todos lados)
-    exhaustedThreshold: 42, // físico ≤ esto: confirma pero avisa que está fundido (decisión del manager)
+    exhaustedThreshold: 46, // físico ≤ esto: confirma pero avisa que está fundido (decisión del manager)
   },
 
   // Partido en vivo, cuarto a cuarto.
@@ -175,6 +175,8 @@ export const BALANCE = {
       // Umbrales de respuesta a la convocatoria (score 0-1 por jugador).
       rsvpYes: 0.62,
       rsvpMaybe: 0.4,
+      // La vida no mira el ánimo: prob. de que a un jugador directamente no le dé el calendario.
+      noPuedeChance: 0.13,
     },
     raffle: { cost: 30, incomeMin: 30, incomeMax: 170 },
     sponsorSearch: { baseChance: 0.35, prestigeFactor: 0.005 },

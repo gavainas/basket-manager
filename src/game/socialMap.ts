@@ -2,8 +2,14 @@
 // aislados de las afinidades vivas (base + lo compartido: asados, sociedades,
 // peleas). No guarda nada: se calcula al mirar, siempre al día.
 
-import { affinity, personalityCompat, FRIEND_THRESHOLD, RIVALRY_THRESHOLD } from './relations';
+import { affinity, personalityCompat, RIVALRY_THRESHOLD } from './relations';
 import type { GameState, Player } from './types';
+
+/**
+ * Umbral para que un lazo arme grupo: más alto que la amistad simple (70),
+ * si no el plantel inicial forma un solo bloque gigante y el mapa no cuenta nada.
+ */
+const GROUP_THRESHOLD = 77;
 
 export interface SocialGroup {
   members: Player[];
@@ -80,7 +86,7 @@ export function buildSocialMap(state: GameState): SocialMapData {
       const v = aff(players[i], players[j]);
       affSum += v;
       affCount += 1;
-      if (v >= FRIEND_THRESHOLD) union(players[i].id, players[j].id);
+      if (v >= GROUP_THRESHOLD) union(players[i].id, players[j].id);
     }
   }
   const cohesion = affCount ? Math.round(affSum / affCount) : 50;
