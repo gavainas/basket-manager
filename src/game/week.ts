@@ -176,6 +176,13 @@ export function advanceWeek(state: GameState): GameState {
       p.physical = clamp(p.physical + BALANCE.weekly.physicalRecovery);
     }
 
+    if (p.suspendedWeeks && p.suspendedWeeks > 0) {
+      p.suspendedWeeks -= 1;
+      if (p.suspendedWeeks <= 0) {
+        s.news.unshift({ week: s.week, text: `${p.name} cumplió la suspensión: vuelve a estar habilitado.`, tone: 'good' });
+      }
+    }
+
     p.motivation = clamp(p.motivation - BALANCE.weekly.motivationDecay);
     if (p.personality === 'social') {
       if (s.club.socialClimate > 70) p.motivation = clamp(p.motivation + 2);

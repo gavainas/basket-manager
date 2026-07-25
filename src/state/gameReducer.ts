@@ -24,6 +24,7 @@ import { resolvePreseasonEvent } from '../game/preseasonEvents';
 import { planAsado } from '../game/asado';
 import { Rng, randomSeed } from '../game/rng';
 import { attemptAbsenceAction, type AbsenceActionId } from '../game/absences';
+import { resolveExhausted } from '../game/callup';
 import { appointPlayerCoach, fireCoach, hireCoach } from '../game/coach';
 import { resolveIncident } from '../game/narrative';
 import { registerSecondTeam } from '../game/secondTeam';
@@ -41,6 +42,7 @@ export type GameAction =
   | { type: 'RESOLVE_EVENT'; optionIndex: number }
   | { type: 'DISMISS_EVENT_OUTCOME' }
   | { type: 'CALLUP_ACTION'; playerId: string; actionId: AbsenceActionId }
+  | { type: 'CALLUP_EXHAUSTED'; playerId: string; decision: 'descansar' | 'jugar' }
   | { type: 'REGISTER_SECOND_TEAM'; leagueId: string; playerIds: string[] }
   | { type: 'HIRE_COACH'; coachId: string }
   | { type: 'FIRE_COACH' }
@@ -154,6 +156,11 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       if (state.phase !== 'callUp') return state;
       const rng = new Rng(state.seed);
       return attemptAbsenceAction({ ...state, seed: rng.nextSeed() }, action.playerId, action.actionId, rng);
+    }
+    case 'CALLUP_EXHAUSTED': {
+      if (state.phase !== 'callUp') return state;
+      const rng = new Rng(state.seed);
+      return resolveExhausted(state, action.playerId, action.decision, rng);
     }
     case 'REGISTER_SECOND_TEAM': {
       if (state.phase !== 'planning') return state;

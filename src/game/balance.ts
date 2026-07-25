@@ -50,6 +50,7 @@ export const BALANCE = {
     upsetExtra: 0.06, // molesto o al borde: menos ganas de venir
     injuryBase: 0.02, // todos juegan/viven afuera: nadie está exento de romperse
     injuryChanceFactor: 0.1, // extra de lesión afuera por poco compromiso (juega en todos lados)
+    exhaustedThreshold: 42, // físico ≤ esto: confirma pero avisa que está fundido (decisión del manager)
   },
 
   // Partido en vivo, cuarto a cuarto.
@@ -188,6 +189,13 @@ export const BALANCE = {
   prestige: {
     min: 0,
     max: 100,
+  },
+
+  // Suspensiones por acumulación de faltas técnicas.
+  suspension: {
+    techsForSuspension: 3,
+    // 2 = se pierde exactamente la próxima fecha (el contador baja al avanzar la semana).
+    weeks: 2,
   },
 
   progression: {

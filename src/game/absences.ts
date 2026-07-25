@@ -3,9 +3,9 @@
 // Estructura de datos reutilizable: agregar un motivo es agregar una entrada.
 
 import { clamp } from './balance';
-import { coachAffinity } from './relations';
+import { affinity, coachAffinity, FRIEND_THRESHOLD } from './relations';
 import { logPlayerEvent } from './timeline';
-import type { GameState } from './types';
+import type { GameState, Player } from './types';
 import type { Rng } from './rng';
 
 export type AbsenceActionId =
@@ -148,13 +148,30 @@ export function attemptAbsenceAction(
     return state;
   }
 
+  // Mandar a un compañero funciona si de verdad tiene un amigo en el plantel:
+  // las sociedades del asado y las amistades pesan acá.
+  let friend: Player | undefined;
+  let friendAdj = 0;
+  if (actionId === 'companero') {
+    const candidates = s.players.filter((x) => !x.leftClub && x.id !== player.id && x.status !== 'lesionado');
+    friend = candidates
+      .map((x) => ({ x, aff: affinity(player, x, s.affinityBonus) }))
+      .sort((a, b) => b.aff - a.aff)
+      .filter((c) => c.aff >= FRIEND_THRESHOLD)[0]?.x;
+    friendAdj = friend ? 0.18 : -0.12;
+  }
+
   // Éxito según la relación con vos, su compromiso y lo que se juega.
   const bigGame = s.week > s.seasonLength || s.week === s.seasonLength;
   const chance = Math.max(
     0.05,
     Math.min(
       0.9,
-      action.baseChance + (coachAffinity(player) - 50) * 0.004 + (player.commitment - 50) * 0.002 + (bigGame ? 0.15 : 0)
+      action.baseChance +
+        (coachAffinity(player) - 50) * 0.004 +
+        (player.commitment - 50) * 0.002 +
+        (bigGame ? 0.15 : 0) +
+        friendAdj
     )
   );
 
@@ -168,6 +185,8 @@ export function attemptAbsenceAction(
     if (actionId === 'segundo_tiempo') {
       entry.lateArrival = true;
       entry.resolution = 'Aceptó: llega para el segundo tiempo. Solo puede entrar desde el banco.';
+    } else if (actionId === 'companero' && friend) {
+      entry.resolution = `${friend.name} lo pasó a buscar sin preguntar. Llegaron juntos, ya cambiados.`;
     } else {
       entry.resolution = 'Funcionó: viene al partido. Excusa archivada hasta la próxima.';
     }
@@ -204,7 +223,9 @@ export function attemptAbsenceAction(
     entry.resolution =
       actionId === 'insistir'
         ? 'No vino igual, y encima se pudrió de la insistencia.'
-        : 'No hubo caso: esta semana no cuenta con él.';
+        : actionId === 'companero' && !friend
+          ? 'Nadie del grupo se ofreció a ir a buscarlo. Eso también dice algo del vestuario.'
+          : 'No hubo caso: esta semana no cuenta con él.';
   }
 
   s.seed = rng.nextSeed();

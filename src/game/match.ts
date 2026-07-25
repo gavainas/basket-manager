@@ -31,7 +31,7 @@ export function playerEffective(p: Player): number {
 }
 
 export function isSelectable(p: Player): boolean {
-  return !p.leftClub && p.status !== 'lesionado';
+  return !p.leftClub && p.status !== 'lesionado' && !(p.suspendedWeeks && p.suspendedWeeks > 0);
 }
 
 export function activePlayers(players: Player[]): Player[] {
@@ -785,6 +785,8 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
     let injChance = M.matchInjuryBase * (0.5 + frag / 60) * injuryDiffMult;
     if (freshOf(p.id) < 35) injChance *= M.matchInjuryTiredMult;
     if (aggressiveDef) injChance *= M.matchInjuryAggressiveMult;
+    // Jugarlo fundido fue tu decisión al pasar lista: el cuerpo la cobra.
+    if (s.callUp.some((c) => c.playerId === p.id && c.playingExhausted)) injChance *= 1.6;
     if (!rng.chance(injChance)) continue;
 
     const weeks = rollInjuryWeeks(frag, rng);
@@ -1059,6 +1061,20 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       text: `${inj.name} se lesionó en el partido: ${inj.weeks} semana${inj.weeks > 1 ? 's' : ''} afuera.`,
       tone: 'bad',
     });
+  }
+  // Tres técnicas en el año: el informe llega a la liga y cae la suspensión.
+  for (const p of s.players) {
+    if ((p.seasonTechs ?? 0) >= BALANCE.suspension.techsForSuspension) {
+      p.seasonTechs = 0;
+      p.suspendedWeeks = BALANCE.suspension.weeks;
+      effects.push(`🟥 ${p.name} acumuló ${BALANCE.suspension.techsForSuspension} técnicas: una fecha de suspensión.`);
+      s.news.unshift({
+        week: s.week,
+        text: `La liga suspendió a ${p.name} por acumulación de técnicas: se pierde la próxima fecha.`,
+        tone: 'bad',
+      });
+      logPlayerEvent(p, s.seasonNumber, s.week, 'hito', 'Suspendido una fecha por acumulación de faltas técnicas. Fama de calentón en toda la liga.');
+    }
   }
 
   // Claves tácticas del resultado.

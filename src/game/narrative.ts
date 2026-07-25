@@ -105,18 +105,27 @@ export function rollRefIncident(
   }
   if (roll < 0.65 && qIndex < 3) {
     live.refTension = clamp(tension + 1, 0, 5);
+    // La técnica queda en el prontuario: a la tercera del año, la mesa pide informe.
+    hothead.seasonTechs = (hothead.seasonTechs ?? 0) + 1;
+    const nth = hothead.seasonTechs;
+    const text =
+      nth >= 3
+        ? `Técnica para ${hothead.name}… la tercera de la temporada. Los jueces anotan con ganas: se viene un informe a la liga.`
+        : nth === 2
+          ? `Otra técnica para ${hothead.name}, segunda en el año. En la mesa de control ya lo tienen fichado: una más y hay suspensión.`
+          : `Técnica para ${hothead.name} por protestar. El equipo siente que el fallo fue injusto; el árbitro, no.`;
     live.pendingIncident = {
       kind: 'tecnica',
       playerId: hothead.id,
       playerName: hothead.name,
-      text: `Técnica para ${hothead.name} por protestar. El equipo siente que el fallo fue injusto; el árbitro, no.`,
+      text,
       options: [
         { label: 'Cambiarlo ya', hint: 'Antes de que una segunda técnica lo mande afuera' },
         { label: 'Bancarlo y calmarlo', hint: 'Sigue en cancha, pero marcado por los jueces' },
         { label: 'Usar la bronca', hint: 'Canalizar el enojo: más intensidad, más riesgo' },
       ],
     };
-    return `Técnica para ${hothead.name} por protestar.`;
+    return nth >= 2 ? `Técnica para ${hothead.name} por protestar (${nth}ª de la temporada).` : `Técnica para ${hothead.name} por protestar.`;
   }
   live.refTension = clamp(tension + 1, 0, 5);
   return 'El equipo siente que los jueces están cobrando distinto en cada aro.';

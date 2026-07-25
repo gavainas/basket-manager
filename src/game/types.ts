@@ -129,6 +129,10 @@ export interface Player {
   weeksBenched: number;
   /** Entrenamientos a los que asistió esta temporada. */
   seasonTrainings: number;
+  /** Faltas técnicas acumuladas en la temporada (a la 3ª, una fecha de suspensión). */
+  seasonTechs?: number;
+  /** Semanas restantes de suspensión por acumulación de técnicas. */
+  suspendedWeeks?: number;
   /** Técnica ganada esta temporada entrenando (impulsa el progreso visible). */
   techniqueGain: number;
   leftClub: boolean;
@@ -196,6 +200,10 @@ export interface CallUpEntry {
   resolution?: string;
   /** Llega para el segundo tiempo: disponible solo desde el banco. */
   lateArrival?: boolean;
+  /** Confirmó pero está fundido: el manager decide si lo cuida o lo juega. */
+  exhausted?: boolean;
+  /** Decidiste jugarlo fundido: rinde menos y el físico puede decir basta. */
+  playingExhausted?: boolean;
 }
 
 export type DefenseTactic = 'hombre' | 'zona' | 'presion';

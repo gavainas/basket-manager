@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import type { GameState } from '../game/types';
+import { BALANCE } from '../game/balance';
 import { activePlayers, clubPosition } from '../game/match';
 import { EMOTION_EXPRESSION } from '../game/humanState';
 import { objectiveStatus, type ObjectiveStatus } from '../game/objectives';
@@ -82,6 +83,36 @@ function watchItems(state: GameState): WatchItem[] {
       cls: 'warn',
       text: `${injured.length === 1 ? `${injured[0].name} sigue` : `${injured.length} jugadores siguen`} en la enfermería.`,
       tab: 'plantilla',
+    });
+  }
+  const suspended = active.filter((x) => (x.suspendedWeeks ?? 0) > 0);
+  for (const p of suspended) {
+    items.push({
+      icon: '🟥',
+      cls: 'bad',
+      text: `${p.name} está suspendido: esta fecha la mira desde la tribuna.`,
+      tab: 'plantilla',
+    });
+  }
+  const hotheads = active.filter((x) => (x.seasonTechs ?? 0) === 2 && (x.suspendedWeeks ?? 0) === 0);
+  for (const p of hotheads) {
+    items.push({
+      icon: '🟨',
+      cls: 'warn',
+      text: `${p.name} acumula 2 técnicas en el año: una más y se pierde una fecha.`,
+      tab: 'plantilla',
+    });
+  }
+  const exhausted = active.filter((x) => x.status !== 'lesionado' && x.physical <= BALANCE.callUp.exhaustedThreshold);
+  if (exhausted.length > 0) {
+    items.push({
+      icon: '🥵',
+      cls: 'warn',
+      text:
+        exhausted.length === 1
+          ? `${exhausted[0].name} viene fundido: al pasar lista vas a tener que decidir si lo cuidás.`
+          : `${exhausted.length} jugadores vienen fundidos: al pasar lista habrá que decidir quién descansa.`,
+      tab: 'semana',
     });
   }
   const debtors = active.filter((x) => x.feeStatus === 'pendiente' && x.weeksUnpaid >= 2);

@@ -275,12 +275,15 @@ function CallUpPanel({ state, dispatch }: Props) {
   const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1])!;
   const entries = state.callUp;
   // Bajas y llegadas tarde: todo lo que el DT tiene que saber antes de armar.
-  const outs = entries.filter((e) => e.status !== 'confirmado' || e.lateArrival);
-  const confirmed = entries.filter((e) => e.status === 'confirmado');
+  // En la lista grande va todo lo que pide atención o tiene historia que contar:
+  // bajas, llegadas tarde, fundidos y los que diste vuelta con una gestión.
+  const outs = entries.filter((e) => e.status !== 'confirmado' || e.lateArrival || e.resolved || e.exhausted);
+  const confirmed = entries.filter((e) => e.status === 'confirmado' && !e.lateArrival && !e.resolved && !e.exhausted);
   const stillInjured = state.players.filter(
     (p) => !p.leftClub && p.status === 'lesionado' && !entries.some((e) => e.playerId === p.id)
   );
-  const availableCount = confirmed.length;
+  const suspended = state.players.filter((p) => !p.leftClub && (p.suspendedWeeks ?? 0) > 0);
+  const availableCount = entries.filter((e) => e.status === 'confirmado').length;
 
   return (
     <div>
@@ -309,18 +312,19 @@ function CallUpPanel({ state, dispatch }: Props) {
             Faltas: {BALANCE.absenceDifficulty[state.absenceDifficulty ?? 'medio'].label}
           </span>
         </h3>
-        {outs.length === 0 && stillInjured.length === 0 ? (
+        {outs.length === 0 && stillInjured.length === 0 && suspended.length === 0 ? (
           <p style={{ marginTop: 0 }}>
             ✅ <strong>Vinieron todos.</strong> Semana tranquila: el grupo está entero para el partido.
           </p>
         ) : (
           <p className="muted" style={{ marginTop: 0 }}>
             {availableCount} confirmado{availableCount !== 1 ? 's' : ''} ·{' '}
-            {outs.length + stillInjured.length} baja{outs.length + stillInjured.length !== 1 ? 's' : ''}
+            {entries.filter((e) => e.status !== 'confirmado').length + stillInjured.length + suspended.length} baja
+            {entries.filter((e) => e.status !== 'confirmado').length + stillInjured.length + suspended.length !== 1 ? 's' : ''}
           </p>
         )}
 
-        {(outs.length > 0 || stillInjured.length > 0) && (
+        {(outs.length > 0 || stillInjured.length > 0 || suspended.length > 0) && (
           <div className="callup-list">
             {outs.map((e) => {
               const reason = e.reasonId ? reasonById(e.reasonId) : undefined;
@@ -339,27 +343,51 @@ function CallUpPanel({ state, dispatch }: Props) {
                       />
                     </div>
                   )}
-                  <span className="callup-icon">{e.status === 'lesionado' ? '🚑' : e.lateArrival ? '🕘' : '❌'}</span>
+                  <span className="callup-icon">
+                    {e.status === 'lesionado' ? '🚑' : e.exhausted && e.status === 'confirmado' ? '🥵' : e.lateArrival ? '🕘' : e.status === 'confirmado' ? '✔' : '❌'}
+                  </span>
                   <div style={{ flex: 1 }}>
                     <div className="callup-name">
                       <PlayerLink id={e.playerId}>{e.playerName}</PlayerLink>
                       <span
-                        className={`chip ${e.status === 'lesionado' ? 'bad' : e.lateArrival ? 'warn' : e.status === 'confirmado' ? 'good' : 'warn'}`}
+                        className={`chip ${e.status === 'lesionado' ? 'bad' : e.exhausted && e.status === 'confirmado' ? 'warn' : e.lateArrival ? 'warn' : e.status === 'confirmado' ? 'good' : 'warn'}`}
                         style={{ marginLeft: '0.5rem' }}
                       >
                         {e.status === 'lesionado'
                           ? 'Se lesionó afuera'
-                          : e.lateArrival
-                            ? 'Llega al 2do tiempo'
-                            : e.status === 'confirmado'
-                              ? 'Al final viene'
-                              : 'No viene'}
+                          : e.exhausted && e.status === 'confirmado'
+                            ? e.playingExhausted
+                              ? 'Juega fundido'
+                              : 'Viene fundido'
+                            : e.lateArrival
+                              ? 'Llega al 2do tiempo'
+                              : e.status === 'confirmado'
+                                ? 'Al final viene'
+                                : 'No viene'}
                       </span>
                     </div>
                     {e.note && <div className="callup-note">{e.note}</div>}
                     {e.resolution && (
                       <div className="callup-note" style={{ color: 'var(--text)', fontStyle: 'normal' }}>
                         → {e.resolution}
+                      </div>
+                    )}
+                    {e.exhausted && !e.resolved && (
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.45rem' }}>
+                        <button
+                          className="small"
+                          title="No juega esta semana: recupera físico y lo valora"
+                          onClick={() => dispatch({ type: 'CALLUP_EXHAUSTED', playerId: e.playerId, decision: 'descansar' })}
+                        >
+                          Darle la semana
+                        </button>
+                        <button
+                          className="small"
+                          title="Juega igual: rinde menos y el cuerpo puede decir basta"
+                          onClick={() => dispatch({ type: 'CALLUP_EXHAUSTED', playerId: e.playerId, decision: 'jugar' })}
+                        >
+                          Lo necesito igual
+                        </button>
                       </div>
                     )}
                     {canAct && (
@@ -399,6 +427,25 @@ function CallUpPanel({ state, dispatch }: Props) {
                   <div className="callup-note">
                     Sigue lesionado: le queda{p.injuryWeeks > 1 ? 'n' : ''} {p.injuryWeeks} semana
                     {p.injuryWeeks > 1 ? 's' : ''}.
+                  </div>
+                </div>
+              </div>
+            ))}
+            {suspended.map((p) => (
+              <div key={p.id} className="callup-row out dim">
+                <div className="avatar callup-avatar">
+                  <Avatar seed={p.id} age={p.age} appearance={p.appearance} expressionOverride={2} title={p.name} />
+                </div>
+                <span className="callup-icon">🟥</span>
+                <div>
+                  <div className="callup-name">
+                    <PlayerLink id={p.id}>{p.name}</PlayerLink>
+                    <span className="chip bad" style={{ marginLeft: '0.5rem' }}>
+                      Suspendido
+                    </span>
+                  </div>
+                  <div className="callup-note">
+                    Cumple la fecha de suspensión por acumulación de técnicas. Mira desde la tribuna.
                   </div>
                 </div>
               </div>

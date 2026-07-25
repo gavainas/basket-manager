@@ -3,7 +3,7 @@
 // con alguna excusa, o directamente se lesionaron jugando en otro lado.
 
 import { ABSENCE_REASONS, LIFE_REASON_IDS } from './absences';
-import { BALANCE } from './balance';
+import { BALANCE, clamp } from './balance';
 import { fragilityOf, rollInjuryWeeks } from './injuries';
 import { isSelectable } from './match';
 import { logPlayerEvent } from './timeline';
@@ -117,6 +117,15 @@ export function rollCallUp(s: GameState, rng: Rng): void {
       entries.push({ playerId: p.id, playerName: p.name, status: 'ausente', note: excuse, reasonId: reason.id });
       logPlayerEvent(player, s.seasonNumber, s.week, 'ausencia', `Faltó al partido. ${excuse}`);
       outCount += 1;
+    } else if (p.physical <= C.exhaustedThreshold) {
+      // Viene, pero el cuerpo no da: es tu decisión cuidarlo o exprimirlo.
+      entries.push({
+        playerId: p.id,
+        playerName: p.name,
+        status: 'confirmado',
+        note: rng.pick(EXHAUSTED_NOTES),
+        exhausted: true,
+      });
     } else {
       entries.push({ playerId: p.id, playerName: p.name, status: 'confirmado', note: null });
     }
@@ -126,4 +135,41 @@ export function rollCallUp(s: GameState, rng: Rng): void {
   const rank = { lesionado: 0, ausente: 1, confirmado: 2 } as const;
   entries.sort((a, b) => rank[a.status] - rank[b.status] || a.playerName.localeCompare(b.playerName));
   s.callUp = entries;
+}
+
+const EXHAUSTED_NOTES = [
+  'Confirmó, pero avisa que está fundido: "si querés voy, pero no doy más".',
+  'Viene, aunque entre el laburo y los partidos llega con lo justo: "las piernas no responden".',
+  'Dijo que sí de guapo nomás: se lo ve reventado. "Vos decime y juego", tiró.',
+];
+
+/**
+ * Decisión sobre el que llegó fundido: darle la semana (recupera y lo valora)
+ * o jugarlo igual (rinde menos y el cuerpo puede decir basta en la cancha).
+ */
+export function resolveExhausted(
+  state: GameState,
+  playerId: string,
+  decision: 'descansar' | 'jugar',
+  rng: Rng
+): GameState {
+  const s: GameState = structuredClone(state);
+  const entry = s.callUp.find((c) => c.playerId === playerId && c.exhausted && !c.resolved);
+  const p = s.players.find((x) => x.id === playerId);
+  if (!entry || !p) return state;
+
+  entry.resolved = true;
+  if (decision === 'descansar') {
+    entry.status = 'ausente';
+    entry.resolution = '"Gracias, en serio", contestó. Semana para el cuerpo: vuelve entero.';
+    p.physical = clamp(p.physical + 12);
+    p.motivation = clamp(p.motivation + 4);
+    logPlayerEvent(p, s.seasonNumber, s.week, 'animo', 'Llegó fundido y le diste la semana. Lo valoró.');
+  } else {
+    entry.playingExhausted = true;
+    entry.resolution = 'Se vendó, se ató los cordones y adentro. Va a dejar lo que le queda… que no es mucho.';
+    logPlayerEvent(p, s.seasonNumber, s.week, 'animo', 'Llegó fundido pero lo jugaste igual: el cuerpo al límite.');
+  }
+  s.seed = rng.nextSeed();
+  return s;
 }
