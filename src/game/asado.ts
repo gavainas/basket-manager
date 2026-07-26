@@ -116,7 +116,7 @@ function tierFor(ratio: number): AsadoTier {
 }
 
 /** Suma vivencia compartida a un par (con techo, para que no explote). */
-function addPairBonus(s: GameState, aId: string, bId: string, amount: number): void {
+export function addPairBonus(s: GameState, aId: string, bId: string, amount: number): void {
   if (!s.affinityBonus) s.affinityBonus = {};
   const key = pairKey(aId, bId);
   const current = s.affinityBonus[key] ?? 0;

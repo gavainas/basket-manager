@@ -1,3 +1,4 @@
+import { addPairBonus } from './asado';
 import { BALANCE, clamp } from './balance';
 import { hasMinutesPromise, moodFor } from './emotions';
 import { fragilityOf, MATCH_INJURY_NOTES, rollInjuryWeeks } from './injuries';
@@ -157,11 +158,34 @@ function buildReasons(
   return top;
 }
 
-function lockerRoomNotes(state: GameState, result: { won: boolean; margin: number }, starters: Player[], mvp: Player | null, rng: Rng): string[] {
+function lockerRoomNotes(
+  state: GameState,
+  result: { won: boolean; margin: number; shortHanded?: boolean; clutch?: boolean; comeback?: boolean; squadCount?: number },
+  starters: Player[],
+  mvp: Player | null,
+  rng: Rng
+): string[] {
   const notes: string[] = [];
+
+  // La épica manda: si el partido tuvo historia, el vestuario habla de eso.
+  const n = result.squadCount ?? 0;
+  if (result.shortHanded && result.won) {
+    notes.push(`Los ${n} que estuvieron se abrazaron como campeones. Gesta para contar en el asado por años.`);
+  } else if (result.shortHanded && !result.won) {
+    notes.push(`"Con ${n} no se podía más", dijo alguien. Adentro del vestuario nadie reprochó nada. Adentro.`);
+  } else if (result.comeback) {
+    notes.push('El vestuario tardó en creerlo: la remontada se festejó dos veces.');
+  } else if (result.clutch && result.won) {
+    notes.push('Ganada en la hora: gritos, abrazos y alguna lágrima disimulada.');
+  } else if (result.clutch && !result.won) {
+    notes.push('"La teníamos…", repetía el banco. La derrota en la hora es la que más cuesta dormir.');
+  }
+
+  const matchAbsent = matchAbsentIds(state);
   const benched = state.players.filter(
     (p) =>
       isSelectable(p) &&
+      !matchAbsent.has(p.id) &&
       !starters.some((s) => s.id === p.id) &&
       !state.rotation.includes(p.id) &&
       p.personality === 'protagonista'
@@ -957,6 +981,37 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   const B = BALANCE.matchEffects;
   const upset = won && rival.strength > evalTeam.baseSkill + 5;
 
+  // La épica del resultado: con lo justo, en la hora, o de atrás.
+  const shortHanded = live.squad.length <= B.shortHandedSquad;
+  const clutch = margin <= B.clutchMargin;
+  let runFor = 0;
+  let runAgainst = 0;
+  let maxDeficit = 0;
+  for (const q of live.quarters) {
+    runFor += q.for;
+    runAgainst += q.against;
+    maxDeficit = Math.max(maxDeficit, runAgainst - runFor);
+  }
+  const comeback = won && maxDeficit >= B.comebackDeficit;
+
+  // Cuánto pega el resultado en el ánimo: la gesta con 7 vale más que la
+  // paliza, y la derrota ajustada duele menos que el baile.
+  const baseMorale = shortHanded
+    ? won
+      ? B.shortHandedWinMotivation
+      : B.shortHandedLossMotivation
+    : won
+      ? margin >= B.blowoutMargin
+        ? B.blowoutWinMotivation
+        : clutch
+          ? B.closeWinMotivation
+          : B.winMotivation
+      : margin >= B.blowoutMargin
+        ? B.blowoutLossMotivation
+        : clutch
+          ? B.closeLossMotivation
+          : B.lossMotivation;
+
   s.players = s.players.map((p) => {
     if (p.leftClub) return p;
     const np = { ...p };
@@ -1028,7 +1083,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
 
     // Un DT que llega al grupo suaviza las derrotas y contagia en las victorias.
     const coachTouch = s.coach && s.coach.people >= 70 ? 1 : 0;
-    const moraleDelta = (won ? B.winMotivation : B.lossMotivation) + coachTouch;
+    const moraleDelta = baseMorale + coachTouch;
     const personalityScale = np.personality === 'competitivo' ? 1.5 : np.personality === 'social' ? 0.6 : 1;
     np.motivation = clamp(np.motivation + moraleDelta * personalityScale);
 
@@ -1048,13 +1103,87 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     return np;
   });
 
-  const prestigeDelta = won ? B.winSportPrestige + (upset ? B.upsetWinBonus : 0) : margin > 18 ? B.lossSportPrestige - 1 : B.lossSportPrestige;
+  const prestigeDelta =
+    (won ? B.winSportPrestige + (upset ? B.upsetWinBonus : 0) : margin > 18 ? B.lossSportPrestige - 1 : B.lossSportPrestige) +
+    (shortHanded && won ? 1 : 0);
   s.club.sportPrestige = clamp(s.club.sportPrestige + prestigeDelta);
   if (won) s.club.socialClimate = clamp(s.club.socialClimate + 3);
   else if (margin > 15) s.club.socialClimate = clamp(s.club.socialClimate - 4);
 
-  effects.push(`Motivación del plantel ${won ? '+' : ''}${won ? B.winMotivation : B.lossMotivation}`);
-  effects.push(`Prestigio deportivo ${prestigeDelta >= 0 ? '+' : ''}${prestigeDelta}`);
+  // Confianza y memoria de la épica (los np ya están asignados a s.players).
+  const byIdNow = (id: string) => s.players.find((p) => p.id === id);
+  if (clutch && won) {
+    for (const id of live.onCourt) {
+      const p = byIdNow(id);
+      if (p) p.confidence = clamp(p.confidence + B.clutchConfidence);
+    }
+    if (rng.chance(0.4)) s.memorableMoments.push(`Semana ${s.week}: la ganamos en la hora contra ${rival.name} (${scoreFor}-${scoreAgainst}).`);
+  }
+  if (clutch && !won) {
+    for (const x of played) {
+      const p = byIdNow(x.p.id);
+      if (p && p.personality === 'competitivo') p.motivation = clamp(p.motivation - 2);
+    }
+  }
+  if (comeback) {
+    for (const x of played) {
+      const p = byIdNow(x.p.id);
+      if (p) p.confidence = clamp(p.confidence + 3);
+    }
+    s.memorableMoments.push(`Semana ${s.week}: de ${maxDeficit} abajo a ganarle a ${rival.name}. Remontada para contar.`);
+    s.news.unshift({ week: s.week, text: `Remontada épica ante ${rival.name}: estuvimos ${maxDeficit} abajo y la dimos vuelta.`, tone: 'good' });
+  }
+  if (!won && margin >= B.blowoutMargin) {
+    for (const p of starters) {
+      const real = byIdNow(p.id);
+      if (real) real.confidence = clamp(real.confidence - 3);
+    }
+  }
+  if (shortHanded) {
+    const n = live.squad.length;
+    if (won) {
+      s.memorableMoments.push(`Semana ${s.week}: ganamos siendo ${n}. Los que estuvieron, estuvieron.`);
+      s.news.unshift({ week: s.week, text: `Gesta con lo justo: le ganamos a ${rival.name} siendo ${n}. El barrio todavía lo comenta.`, tone: 'good' });
+      logClubEvent(s, 'partido', `Gesta: victoria ante ${rival.name} con solo ${n} jugadores.`, Math.min(s.week, s.seasonLength));
+      for (const x of played) {
+        const p = byIdNow(x.p.id);
+        if (p) logPlayerEvent(p, s.seasonNumber, Math.min(s.week, s.seasonLength), 'hito', `Estuvo el día de la gesta: ganarle a ${rival.name} siendo ${n}.`);
+      }
+    } else {
+      // Con lo justo nadie reprocha el resultado… el tema es quiénes faltaron.
+      const weakAbsent = s.callUp.filter(
+        (c) => c.status === 'ausente' && c.reasonId && !['enfermo', 'viaje', 'guardia', 'agenda'].includes(c.reasonId)
+      );
+      if (weakAbsent.length > 0) {
+        for (const c of weakAbsent) {
+          const faltador = byIdNow(c.playerId);
+          if (!faltador) continue;
+          for (const x of played) addPairBonus(s, x.p.id, faltador.id, -1);
+          logPlayerEvent(faltador, s.seasonNumber, Math.min(s.week, s.seasonLength), 'ausencia', `Faltó con excusa floja el día que el equipo jugó con ${n}. El grupo tomó nota.`);
+        }
+        const names = weakAbsent.map((c) => c.playerName).join(' y ');
+        s.news.unshift({ week: s.week, text: `Quedó picando en el grupo: ${names} faltó justo cuando el equipo fue con ${n}.`, tone: 'bad' });
+      }
+    }
+  }
+
+  const moraleTag = shortHanded
+    ? won
+      ? ` (gesta con ${live.squad.length})`
+      : ` (con ${live.squad.length}, nadie reprocha nada)`
+    : won && comeback
+      ? ' (remontada épica)'
+      : clutch
+        ? won
+          ? ' (ganada en la hora)'
+          : ' (perdida en la hora: duele distinto)'
+        : margin >= B.blowoutMargin
+          ? won
+            ? ' (paliza a favor)'
+            : ' (paliza en contra)'
+          : '';
+  effects.push(`Motivación del plantel ${baseMorale >= 0 ? '+' : ''}${baseMorale}${moraleTag}`);
+  effects.push(`Prestigio deportivo ${prestigeDelta >= 0 ? '+' : ''}${prestigeDelta}${shortHanded && won ? ' (la liga habla de la gesta)' : ''}`);
   const mostUsed = [...played].sort((a, b) => b.mins - a.mins);
   if (mostUsed.length > 0) {
     effects.push(
@@ -1152,7 +1281,13 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     .slice(0, 6);
   if (mvpFromBench) highlights.push(`${mvp.name} entró desde el banco y cambió el partido: figura inesperada.`);
 
-  const lockerRoom = lockerRoomNotes(s, { won, margin }, starters, won ? mvp : null, rng);
+  const lockerRoom = lockerRoomNotes(
+    s,
+    { won, margin, shortHanded, clutch, comeback, squadCount: live.squad.length },
+    starters,
+    won ? mvp : null,
+    rng
+  );
   const absentOnes = s.callUp.filter((c) => c.status === 'ausente');
   if (!won && absentOnes.length > 0 && lockerRoom.length < 2) {
     lockerRoom.push(`"Para el picado nunca falta", tiró uno del grupo cuando se habló de la ausencia de ${absentOnes[0].playerName}.`);

@@ -149,6 +149,18 @@ export const BALANCE = {
     winSportPrestige: 3,
     lossSportPrestige: -2,
     upsetWinBonus: 3, // extra por ganarle a un rival más fuerte
+    // El margen y la épica pesan en el ánimo:
+    closeWinMotivation: 4, // ganada por 3 o menos: alegría con el corazón en la boca
+    blowoutWinMotivation: 7, // paliza a favor (15+): el grupo sale volando
+    closeLossMotivation: -3, // perdida por 3 o menos: dolió, pero se compitió
+    blowoutLossMotivation: -8, // paliza en contra (15+): golpe de verdad
+    blowoutMargin: 15,
+    clutchMargin: 3, // definido por esto o menos = "en la hora"
+    clutchConfidence: 4, // confianza extra a los que cerraron el partido ganado en la hora
+    comebackDeficit: 10, // ir tanto abajo y ganarla = remontada consumada
+    shortHandedSquad: 7, // convocados ≤ esto = jugar "con lo justo"
+    shortHandedWinMotivation: 9, // la gesta: ganar siendo 7 o menos
+    shortHandedLossMotivation: -2, // con 7 nadie puede reprochar nada
     benchedMotivationHit: -6, // protagonistas sin titularidad
     rotationMotivationHit: -3, // esperaban ser titulares y solo rotaron
     subMinutesBoost: 2, // suplentes contentos por sumar minutos
