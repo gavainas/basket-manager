@@ -141,6 +141,7 @@ export const BALANCE = {
     leaveThreshold: 18, // debajo de esto un jugador al borde puede irse
     upsetWeeksToAlBorde: 2,
     eventChance: 0.65,
+    eventCooldownWeeks: 4, // un evento no se repite hasta pasadas estas semanas
   },
 
   matchEffects: {

@@ -39,9 +39,15 @@ function textSeed(id: string, salt: number): number {
   return ((h >>> 0) + salt * 13) >>> 0;
 }
 
-export function moodFor(p: Player, ctx: EmotionContext, salt = 0): PlayerMood {
+export function moodFor(p: Player, ctx: EmotionContext, salt = 0, avoid?: Set<string>): PlayerMood {
   const e = pickEmotion(p, ctx);
-  return { playerId: p.id, name: p.name, emotion: e, label: LABELS[e], text: moodText(e, ctx, textSeed(p.id, salt)) };
+  let text = moodText(e, ctx, textSeed(p.id, salt));
+  // Nadie repite la frase de otro en la misma pantalla: rotamos el pool hasta encontrar una libre.
+  for (let bump = 1; avoid?.has(text) && bump <= 5; bump++) {
+    text = moodText(e, ctx, textSeed(p.id, salt + bump));
+  }
+  avoid?.add(text);
+  return { playerId: p.id, name: p.name, emotion: e, label: LABELS[e], text };
 }
 
 function pickEmotion(p: Player, ctx: EmotionContext): PlayerEmotion {
@@ -73,35 +79,47 @@ function moodText(e: PlayerEmotion, ctx: EmotionContext, seed: number): string {
             '"Estos partidos son los que uno juega toda la semana en la cabeza. ¡Vamos!"',
             '"Para esto uno banca todo el año: qué noche, por favor."',
             '"Que alguien guarde la planilla de hoy, la quiero enmarcar."',
+            '"Llamé a mi vieja desde el vestuario. Lloramos los dos, no lo voy a negar."',
+            '"Esta la contamos en el asado por diez años, mínimo."',
           ])
         : pick([
             '"Noche redonda: ganamos y me salió todo. A festejarlo con una birra."',
             '"Hoy entraba todo. Hasta la de tres que tiré cayendo casi de espaldas."',
             '"Avisen en el grupo que la próxima ronda la pago yo."',
+            '"¿Vieron el aro? Estaba gigante. Hoy no fallaba ni queriendo."',
+            '"Esta camiseta no se lava, eh. Trae suerte."',
           ]);
     case 'orgulloso':
       return pick([
         '"Cuando el equipo me necesitó, estuve. De esto se trata."',
         '"Los años no vienen solos, pero hoy respondí. Contento por el grupo."',
         '"Me tocó dar un paso al frente y lo di. Así se gana."',
+        '"Que los pibes anoten: así se juegan estos partidos."',
+        '"Hoy duermo tranquilo: cuando me buscaron, aparecí."',
       ]);
     case 'contento':
       return pick([
         '"Entré, defendí y ayudé al equipo. Buen triunfo."',
         '"Cumplí con lo mío y nos llevamos el partido. Bien ahí."',
         '"Buen clima, buen partido. Así dan ganas de venir a entrenar."',
+        '"Sumé mis minutos, aporté lo mío y ganamos. No pido más nada."',
+        '"De a poco me voy soltando. Y si el equipo gana, todo vale doble."',
       ]);
     case 'conforme':
       return pick([
         '"Se hizo lo que había que hacer. Semana que viene, más."',
         '"Partido cumplido. Ahora a casa, que mañana madrugo."',
         '"Bien. Sin mucho más para decir: bien."',
+        '"Ni para enmarcar ni para quemar: un partido más."',
+        '"Contento por el grupo. Lo mío, correcto: hice mi trabajo."',
       ]);
     case 'indiferente':
       return pick([
         '"Otro partido más. Nos vemos el lunes."',
         '"¿Terminó? Bueno, avisen a qué hora es el próximo."',
         '"Yo vengo, juego lo que me toque y no molesto."',
+        '"Todo bien, todo bien. ¿Alguien me acerca hasta el centro?"',
+        '"Cumplí. Si el DT está conforme, yo también. Más o menos."',
       ]);
     case 'frustrado':
       return ctx.won
@@ -109,11 +127,15 @@ function moodText(e: PlayerEmotion, ctx: EmotionContext, seed: number): string {
             '"Ganamos, bárbaro. Pero yo mirando de afuera no sumo nada."',
             '"Me alegro por el grupo, en serio. Ahora, ¿yo para qué me cambio?"',
             '"Buena victoria. Igual algún día me gustaría participar, digo."',
+            '"Toda la semana entrenando para terminar de asistente del bidón."',
+            '"Sí, ganamos, aplaudo. ¿Se nota mucho que aplaudo con bronca?"',
           ])
         : pick([
             '"Así no. Algo tenemos que cambiar, y rápido."',
             '"Perder se pierde, pero así duele el doble."',
             '"Me voy caliente. Mejor no me hablen hasta el jueves."',
+            '"Hoy no me consuela nadie. Mañana sí, hoy no."',
+            '"¿Alguien anotó la patente del camión que nos pasó por arriba?"',
           ]);
     case 'molesto_minutos':
       return ctx.won
@@ -121,17 +143,23 @@ function moodText(e: PlayerEmotion, ctx: EmotionContext, seed: number): string {
             `"Ganamos, pero para jugar ${ctx.minutes || 'cero'} minutos no sé para qué vengo."`,
             '"Felicitaciones a los que jugaron. Yo vine a hidratarme, parece."',
             '"Buenísimo el triunfo. Yo de espectador lo disfruté igual, eh."',
+            '"Gran victoria. Yo hice el precalentamiento más largo de mi vida."',
+            '"El banco cómodo, eso sí. Ya me hice amigo de los de la tribuna."',
           ])
         : pick([
             '"Perdimos y ni siquiera me dieron la chance de ayudar. Doble bronca."',
             '"Ni cuando va perdiendo el equipo me miran al banco. Tomo nota."',
             '"Para mirar desde afuera me quedo en casa, que la silla es más cómoda."',
+            '"Perdimos por poco. Capaz con alguien fresco desde el banco… no sé, digo."',
+            '"Yo vine a jugar. Para mirar tengo el sillón de casa, y con mate."',
           ]);
     case 'decepcionado':
       return pick([
         '"Hoy no estuve. El equipo merecía más de mí."',
         '"Noche para el olvido. La próxima la pago con creces."',
         '"No me salió una. Prefiero ni ver el video del partido."',
+        '"Pido disculpas al grupo. Esta semana entreno doble."',
+        '"Esa pelota que regalé me va a dar vueltas en la cabeza toda la semana."',
       ]);
   }
 }

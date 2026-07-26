@@ -805,6 +805,8 @@ export interface GameState {
   delayed?: DelayedNote[];
   /** Eventos encadenados pendientes: consecuencias interactivas de decisiones previas. */
   scheduledEvents?: ScheduledEvent[];
+  /** Últimos eventos semanales sorteados: alimenta el cooldown anti-repetición. */
+  eventLog?: { id: string; season: number; week: number }[];
   starters: string[]; // ids de los 5 titulares elegidos
   /** Ids de los jugadores de rotación (entran desde el banco, máx. 5). */
   rotation: string[];

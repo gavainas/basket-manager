@@ -1310,6 +1310,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
 
   // Cómo quedó cada uno: el resultado no tapa los minutos que no jugaste.
   const bigGame = s.week > s.seasonLength;
+  const usedMoodLines = new Set<string>();
   const moods: PlayerMood[] = s.players
     .filter((p) => !p.leftClub && isSelectable(p) && !absent.has(p.id))
     .map((p) =>
@@ -1322,7 +1323,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
         inSquad: live.squad.includes(p.id),
         promisedMinutes: hasMinutesPromise(s.promises, p.id, s.seasonNumber),
         bigGame,
-      }, s.week)
+      }, s.week, usedMoodLines)
     );
 
   const result: MatchResult = {

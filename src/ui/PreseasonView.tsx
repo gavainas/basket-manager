@@ -13,6 +13,8 @@ import type { GameAction } from '../state/gameReducer';
 import { formatMoney, starsFor } from './helpers';
 import { Avatar } from './Avatar';
 import { PlayerLink } from './PlayerLink';
+import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
+import { useState } from 'react';
 
 interface Props {
   state: GameState;
@@ -63,6 +65,7 @@ function playerFeeLabel(p: Player): { label: string; cls: string } {
 // ---------- Cabecera con la fecha límite ----------
 
 function DeadlinePanel({ state, dispatch }: Props) {
+  const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
   const ps = state.preseason!;
   const confirmed = confirmedPlayers(state);
   const min = BALANCE.preseason.minPlayers;
@@ -84,12 +87,19 @@ function DeadlinePanel({ state, dispatch }: Props) {
       <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
         <h2 style={{ margin: 0, flex: 1 }}>🗓 Pretemporada · Temporada {state.seasonNumber}</h2>
         <button
-          onClick={() => {
-            if (window.confirm('¿Volver al menú? La partida queda guardada automáticamente.')) dispatch({ type: 'QUIT_TO_MENU' });
-          }}
+          onClick={() =>
+            setConfirmReq({
+              title: 'Volver al menú',
+              message: 'La partida queda guardada automáticamente: retomás cuando quieras.',
+              confirmLabel: 'Volver al menú',
+              icon: '🚪',
+              onConfirm: () => dispatch({ type: 'QUIT_TO_MENU' }),
+            })
+          }
         >
           Menú
         </button>
+        <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
       </div>
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', margin: '0.6rem 0' }}>
         <span className={`chip ${weeksLeft === 0 ? 'bad' : 'accent'}`}>

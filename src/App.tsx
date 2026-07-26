@@ -28,6 +28,7 @@ import { PreseasonView } from './ui/PreseasonView';
 import { PreseasonEndScreen } from './ui/PreseasonEndScreen';
 import { formatMoney, weekLabel } from './ui/helpers';
 import { AvatarGallery } from './ui/AvatarGallery';
+import { ConfirmDialog, type ConfirmRequest } from './ui/ConfirmDialog';
 
 type Tab = AppTab;
 
@@ -52,10 +53,12 @@ function MainMenu({
   onNew,
   onNewPreseason,
   onContinue,
+  ask,
 }: {
   onNew: (difficulty: AbsenceDifficulty) => void;
   onNewPreseason: (difficulty: AbsenceDifficulty) => void;
   onContinue: () => void;
+  ask: (req: ConfirmRequest) => void;
 }) {
   const [, forceRender] = useState(0);
   const [difficulty, setDifficulty] = useState<AbsenceDifficulty>('medio');
@@ -95,12 +98,19 @@ function MainMenu({
         {saved && (
           <button
             className="danger"
-            onClick={() => {
-              if (window.confirm('¿Borrar la partida guardada? Esto no se puede deshacer.')) {
-                clearSave();
-                forceRender((n) => n + 1);
-              }
-            }}
+            onClick={() =>
+              ask({
+                title: 'Borrar la partida guardada',
+                message: 'Se pierden el club, el plantel y toda su historia. Esto no se puede deshacer.',
+                confirmLabel: 'Borrar todo',
+                danger: true,
+                icon: '🗑',
+                onConfirm: () => {
+                  clearSave();
+                  forceRender((n) => n + 1);
+                },
+              })
+            }
           >
             🗑 Borrar partida guardada
           </button>
@@ -117,6 +127,7 @@ export default function App() {
   if (window.location.hash === '#retratos') return <AvatarGallery />;
   const [tab, setTab] = useState<Tab>('resumen');
   const [saveFailed, setSaveFailed] = useState(false);
+  const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [rivalProfileId, setRivalProfileId] = useState<string | null>(null);
   const [worldPlayerId, setWorldPlayerId] = useState<string | null>(null);
@@ -138,21 +149,33 @@ export default function App() {
   }, [phase]);
 
   if (!state) {
+    const startNew = (type: 'NEW_GAME' | 'NEW_GAME_PRESEASON', difficulty: AbsenceDifficulty) => {
+      if (hasSave()) {
+        setConfirmReq({
+          title: 'Hay una partida guardada',
+          message: 'Si empezás de nuevo, la partida guardada se sobrescribe y se pierde.',
+          confirmLabel: 'Empezar de nuevo',
+          danger: true,
+          icon: '⚠️',
+          onConfirm: () => dispatch({ type, difficulty }),
+        });
+        return;
+      }
+      dispatch({ type, difficulty });
+    };
     return (
-      <MainMenu
-        onNew={(difficulty) => {
-          if (hasSave() && !window.confirm('Hay una partida guardada. ¿Empezar de nuevo y sobrescribirla?')) return;
-          dispatch({ type: 'NEW_GAME', difficulty });
-        }}
-        onNewPreseason={(difficulty) => {
-          if (hasSave() && !window.confirm('Hay una partida guardada. ¿Empezar de nuevo y sobrescribirla?')) return;
-          dispatch({ type: 'NEW_GAME_PRESEASON', difficulty });
-        }}
-        onContinue={() => {
-          const saved = loadGame();
-          if (saved) dispatch({ type: 'LOAD', state: saved });
-        }}
-      />
+      <>
+        <MainMenu
+          ask={setConfirmReq}
+          onNew={(difficulty) => startNew('NEW_GAME', difficulty)}
+          onNewPreseason={(difficulty) => startNew('NEW_GAME_PRESEASON', difficulty)}
+          onContinue={() => {
+            const saved = loadGame();
+            if (saved) dispatch({ type: 'LOAD', state: saved });
+          }}
+        />
+        <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
+      </>
     );
   }
 
@@ -240,12 +263,27 @@ export default function App() {
         {saveFailed && <span className="chip bad">⚠ No se pudo guardar</span>}
         <span className="chip accent">{phaseHint}</span>
         <button
-          onClick={() => {
-            const msg = saveFailed
-              ? 'ATENCIÓN: el guardado automático está fallando (storage bloqueado o lleno). Si salís al menú, esta partida se pierde. ¿Salir igual?'
-              : '¿Volver al menú? La partida queda guardada automáticamente.';
-            if (window.confirm(msg)) dispatch({ type: 'QUIT_TO_MENU' });
-          }}
+          onClick={() =>
+            setConfirmReq(
+              saveFailed
+                ? {
+                    title: 'El guardado está fallando',
+                    message:
+                      'El guardado automático no está funcionando (storage bloqueado o lleno). Si salís al menú, esta partida se pierde.',
+                    confirmLabel: 'Salir igual',
+                    danger: true,
+                    icon: '⚠️',
+                    onConfirm: () => dispatch({ type: 'QUIT_TO_MENU' }),
+                  }
+                : {
+                    title: 'Volver al menú',
+                    message: 'La partida queda guardada automáticamente: retomás cuando quieras.',
+                    confirmLabel: 'Volver al menú',
+                    icon: '🚪',
+                    onConfirm: () => dispatch({ type: 'QUIT_TO_MENU' }),
+                  }
+            )
+          }
         >
           Menú
         </button>
@@ -274,6 +312,7 @@ export default function App() {
       {tab === 'semana' && <WeekView state={state} dispatch={dispatch} />}
 
       <EventModal state={state} dispatch={dispatch} />
+      <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
     </div>
   );
 }

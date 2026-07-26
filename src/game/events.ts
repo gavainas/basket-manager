@@ -1,5 +1,6 @@
 import { planAsado, weeksSinceAsado } from './asado';
 import { BALANCE, clamp } from './balance';
+import { affinity } from './relations';
 import { createRecruit } from '../data/recruits';
 import type { ActiveEvent, DelayedNote, GameState, Player, ScheduledEvent, TrialCandidate } from './types';
 import type { Rng } from './rng';
@@ -26,6 +27,11 @@ export interface EventDef {
 
 function actives(s: GameState): Player[] {
   return s.players.filter((p) => !p.leftClub);
+}
+
+/** Las figuras de verdad: el top 3 de técnica del plantel. Si un evento habla de "tu figura", tiene que ser una de estas. */
+function figuras(s: GameState): Player[] {
+  return [...actives(s)].sort((a, b) => b.technique - a.technique).slice(0, 3);
 }
 
 function byId(s: GameState, id: string | undefined): Player {
@@ -109,7 +115,12 @@ export const EVENTS: EventDef[] = [
     pickTargets: (s, rng) => {
       const cands = rng.shuffle(actives(s));
       if (cands.length < 2) return null;
-      return { playerId: cands[0].id, playerId2: cands[1].id };
+      // La pelea busca el roce real: del primero sorteado, el compañero con peor afinidad.
+      const first = cands[0];
+      const worst = cands
+        .slice(1)
+        .reduce((w, p) => (affinity(first, p, s.affinityBonus) < affinity(first, w, s.affinityBonus) ? p : w));
+      return { playerId: first.id, playerId2: worst.id };
     },
     text: (s, ev) => `${byId(s, ev.playerId).name} y ${byId(s, ev.playerId2).name} se dijeron de todo por una marca mal hecha. El vestuario quedó cortado al medio.`,
     options: () => [
@@ -495,9 +506,10 @@ export const EVENTS: EventDef[] = [
     id: 'oferta_rival',
     title: 'Un rival tienta a tu figura',
     weight: 7,
-    canFire: (s) => actives(s).some((p) => p.technique >= 68 && p.motivation < 60),
+    // "Tu figura" tiene que ser la figura: solo tienta a los del top del plantel.
+    canFire: (s) => figuras(s).some((p) => p.technique >= 68 && p.motivation < 60),
     pickTargets: (s, rng) => {
-      const cands = actives(s).filter((p) => p.technique >= 68 && p.motivation < 60);
+      const cands = figuras(s).filter((p) => p.technique >= 68 && p.motivation < 60);
       return cands.length ? { playerId: rng.pick(cands).id } : null;
     },
     text: (s, ev) =>
@@ -1239,7 +1251,13 @@ export function takeScheduledEvent(s: GameState): ActiveEvent | null {
 /** Sortea un evento para la semana (o ninguno). Devuelve el ActiveEvent listo. */
 export function rollEvent(state: GameState, rng: Rng): ActiveEvent | null {
   if (!rng.chance(BALANCE.weekly.eventChance)) return null;
-  const eligible = EVENTS.filter((e) => !e.chained && e.canFire(state));
+  // Cooldown anti-repetición: el mismo chiste dos semanas seguidas deja de ser chiste.
+  const onCooldown = new Set(
+    (state.eventLog ?? [])
+      .filter((e) => e.season === state.seasonNumber && state.week - e.week < BALANCE.weekly.eventCooldownWeeks)
+      .map((e) => e.id)
+  );
+  const eligible = EVENTS.filter((e) => !e.chained && !onCooldown.has(e.id) && e.canFire(state));
   if (eligible.length === 0) return null;
   const totalWeight = eligible.reduce((sum, e) => sum + e.weight, 0);
   let roll = rng.range(0, totalWeight);
@@ -1248,6 +1266,7 @@ export function rollEvent(state: GameState, rng: Rng): ActiveEvent | null {
     if (roll <= 0) {
       const targets = def.pickTargets ? def.pickTargets(state, rng) : {};
       if (targets === null) return null;
+      state.eventLog = [...(state.eventLog ?? []), { id: def.id, season: state.seasonNumber, week: state.week }].slice(-24);
       return { defId: def.id, ...targets };
     }
   }
