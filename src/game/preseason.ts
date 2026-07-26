@@ -103,7 +103,8 @@ function assignContinuity(
   p: Player,
   club: Club,
   rng: Rng,
-  firstSeason: boolean
+  firstSeason: boolean,
+  seasonNumber: number
 ): { status: ContinuityStatus; demand?: DemandType } {
   if (firstSeason) {
     // Temporada 1: el grupo viene junto; solo algunos plantean cosas.
@@ -118,6 +119,19 @@ function assignContinuity(
   if (p.age >= 34 && p.physical < 55 && rng.chance(0.25)) return { status: 'retirado' };
   if (p.status === 'al_borde') return { status: 'quiere_irse' };
   if (p.motivation < 35) return rng.chance(0.6) ? { status: 'quiere_irse' } : { status: 'dudando' };
+
+  // La promesa rota del año pasado se cobra acá: el que quedó pagando vuelve
+  // con condiciones duras… o directamente con el bolso armado.
+  if (p.grudge && p.grudge.season === seasonNumber - 1) {
+    const roll = rng.range(0, 1);
+    if (roll < 0.2) return { status: 'quiere_irse' };
+    if (roll < 0.75) {
+      const demand: DemandType =
+        p.grudge.type === 'titularidad' || p.grudge.type === 'minutos' ? 'titularidad' : 'beca_parcial';
+      return { status: 'pide_condicion', demand };
+    }
+    return { status: 'dudando' };
+  }
 
   switch (p.personality) {
     case 'leal':
@@ -150,13 +164,13 @@ function assignContinuity(
   }
 }
 
-function buildPreseasonState(players: Player[], club: Club, rng: Rng, firstSeason: boolean): PreseasonState {
+function buildPreseasonState(players: Player[], club: Club, rng: Rng, firstSeason: boolean, seasonNumber = 1): PreseasonState {
   const continuity: Record<string, ContinuityStatus> = {};
   const playerDemands: Record<string, DemandType> = {};
 
   const active = players.filter((p) => !p.leftClub);
   for (const p of active) {
-    const r = assignContinuity(p, club, rng, firstSeason);
+    const r = assignContinuity(p, club, rng, firstSeason, seasonNumber);
     continuity[p.id] = r.status;
     if (r.demand) playerDemands[p.id] = r.demand;
   }
@@ -299,6 +313,10 @@ export function startPreseason(state: GameState): GameState {
     np.weeksUpset = 0;
     np.weeksBenched = 0;
     np.lastRating = null;
+    np.suspendedWeeks = 0;
+    np.seasonTechs = 0;
+    // El rencor dura una temporada entera; más viejo que eso, prescribe.
+    if (np.grudge && np.grudge.season < state.seasonNumber) np.grudge = null;
     if (np.feeStatus === 'pendiente') {
       np.feeStatus = 'pagada';
       np.weeksUnpaid = 0;
@@ -401,7 +419,7 @@ export function startPreseason(state: GameState): GameState {
         : `El club descendió a la Divisional B tras la temporada ${state.seasonNumber}.`,
     });
   }
-  next.preseason = buildPreseasonState(players, next.club, rng, false);
+  next.preseason = buildPreseasonState(players, next.club, rng, false, next.seasonNumber);
   next.seed = rng.nextSeed();
   return next;
 }
@@ -624,15 +642,26 @@ export function resolveNegotiation(
     const demand = p.playerDemands[neg.targetId];
     if (!player || !demand) return state;
 
+    // El que arrastra una promesa rota negocia distinto: vino a cobrarse la deuda.
+    const hasGrudge = !!player.grudge && player.grudge.season >= s.seasonNumber - 1;
+
     if (decision === 'accept') {
       applyDemandToPlayer(player, demand);
       addPromise(s, player.id, player.name, demand, `${player.name}: ${DEMAND_LABELS[demand]}`);
       p.continuity[player.id] = 'confirmado';
       player.motivation = clamp(player.motivation + 8);
-      p.actionOutcome = `${player.name} confirmó: le prometiste ${DEMAND_LABELS[demand].toLowerCase()}.`;
+      if (hasGrudge) {
+        player.grudge = null;
+        p.actionOutcome = `${player.name} confirmó: le prometiste ${DEMAND_LABELS[demand].toLowerCase()}. "Esta vez cumplí", te dijo mirándote fijo. La deuda del año pasado quedó saldada… si cumplís.`;
+      } else {
+        p.actionOutcome = `${player.name} confirmó: le prometiste ${DEMAND_LABELS[demand].toLowerCase()}.`;
+      }
       psLog(s, `${player.name} sigue en el club (promesa: ${DEMAND_LABELS[demand].toLowerCase()}).`);
     } else if (decision === 'reject') {
-      const flexibility = Math.max(0.15, (player.commitment / 100) * 0.6);
+      // Con rencor encima, negarse es casi un portazo asegurado.
+      const flexibility = hasGrudge
+        ? Math.max(0.05, (player.commitment / 100) * 0.25)
+        : Math.max(0.15, (player.commitment / 100) * 0.6);
       if (rng.chance(flexibility)) {
         p.continuity[player.id] = 'confirmado';
         player.motivation = clamp(player.motivation - 5);
@@ -640,11 +669,21 @@ export function resolveNegotiation(
         psLog(s, `${player.name} confirmó sin condiciones.`);
       } else {
         p.continuity[player.id] = 'quiere_irse';
-        p.actionOutcome = `${player.name} se lo tomó mal: "Entonces no cuenten conmigo". Ahora quiere irse.`;
+        p.actionOutcome = hasGrudge
+          ? `${player.name} juntó sus cosas sin levantar la voz: "El año pasado ya me fallaste una vez. No hay segunda". Quiere irse.`
+          : `${player.name} se lo tomó mal: "Entonces no cuenten conmigo". Ahora quiere irse.`;
       }
     } else if (decision === 'counter') {
       const counter = COUNTER_OFFERS[demand];
       if (!counter || p.counterUsed[player.id] || counter.result === 'medio_pase') return state;
+      if (hasGrudge) {
+        // A un acreedor no se le ofrece la mitad: la contraoferta ni se discute.
+        p.counterUsed[player.id] = true;
+        p.actionOutcome = `${player.name} ni la escuchó: "¿Otra promesa a medias? Lo que pedí, o nada". Mantiene su condición.`;
+        p.negotiation = null;
+        s.seed = rng.nextSeed();
+        return s;
+      }
       const newDemand = counter.result as DemandType;
       if (rng.chance(0.55 + player.commitment / 400)) {
         applyDemandToPlayer(player, newDemand);

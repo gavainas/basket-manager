@@ -59,6 +59,13 @@ export function playerNotes(state: GameState, p: Player): HumanNote[] {
   const broken = promises.find((pr) => pr.broken);
   if (broken) {
     notes.push({ icon: '💔', text: 'Le rompiste una promesa: de eso no se olvida.', tone: 'bad' });
+  } else if (p.grudge && p.grudge.season < state.seasonNumber && p.grudge.season >= state.seasonNumber - 1) {
+    // El rencor cruzó de temporada: lo va a poner sobre la mesa cuando negocien.
+    notes.push({
+      icon: '🧨',
+      text: `Sigue masticando la promesa rota del año pasado (${p.grudge.label.replace(`${p.name}: `, '').toLowerCase()}).`,
+      tone: 'bad',
+    });
   } else if (promises.length > 0) {
     notes.push({
       icon: '🤝',

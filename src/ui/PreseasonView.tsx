@@ -333,6 +333,7 @@ function NegotiationModal({ state, dispatch }: Props) {
   const player = state.players.find((p) => p.id === neg.targetId);
   const demand = ps.playerDemands[neg.targetId];
   if (!player || !demand) return null;
+  const hasGrudge = !!player.grudge && player.grudge.season >= state.seasonNumber - 1;
   const counter = COUNTER_OFFERS[demand];
   const canCounter = counter && counter.result !== 'medio_pase' && !ps.counterUsed[player.id];
   return (
@@ -342,21 +343,27 @@ function NegotiationModal({ state, dispatch }: Props) {
         <p className="event-text">
           {player.name} ({player.position}, {player.age} años) quiere seguir en el club, pero pide:{' '}
           <strong>{DEMAND_LABELS[demand].toLowerCase()}</strong>.
+          {hasGrudge && (
+            <>
+              {' '}
+              🧨 Y esta vez lo quiere en serio: <strong>el año pasado le prometiste y no cumpliste</strong>. "Palabra va, palabra viene, yo ya puse la mía", te dice.
+            </>
+          )}
         </p>
         <div className="options">
           <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'accept' })}>
             Aceptar y prometérselo
-            <span className="opt-hint">Confirma, y la promesa queda registrada</span>
+            <span className="opt-hint">{hasGrudge ? 'Confirma y salda la deuda… mientras cumplas' : 'Confirma, y la promesa queda registrada'}</span>
           </button>
           {canCounter && (
             <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'counter' })}>
               {counter.label}
-              <span className="opt-hint">Puede aceptar o mantenerse firme (una sola vez)</span>
+              <span className="opt-hint">{hasGrudge ? 'Con la deuda del año pasado, ni la va a escuchar' : 'Puede aceptar o mantenerse firme (una sola vez)'}</span>
             </button>
           )}
           <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'reject' })}>
             Negarse: "Acá somos todos iguales"
-            <span className="opt-hint">Puede aceptar quedarse igual… o querer irse</span>
+            <span className="opt-hint">{hasGrudge ? 'A un acreedor no le gusta escuchar eso: portazo casi seguro' : 'Puede aceptar quedarse igual… o querer irse'}</span>
           </button>
           <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'later' })}>
             Dejar la negociación pendiente

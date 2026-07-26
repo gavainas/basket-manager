@@ -131,6 +131,8 @@ export interface Player {
   seasonTrainings: number;
   /** Faltas técnicas acumuladas en la temporada (a la 3ª, una fecha de suspensión). */
   seasonTechs?: number;
+  /** La promesa que le rompiste: el rencor persiste hasta compensarlo (o un año). */
+  grudge?: { season: number; type: string; label: string } | null;
   /** Semanas restantes de suspensión por acumulación de técnicas. */
   suspendedWeeks?: number;
   /** Técnica ganada esta temporada entrenando (impulsa el progreso visible). */

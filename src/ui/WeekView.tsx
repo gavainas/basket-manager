@@ -5,6 +5,7 @@ import { ABSENCE_ACTIONS, reasonById } from '../game/absences';
 import { ACTIONS } from '../game/actions';
 import { BALANCE } from '../game/balance';
 import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
+import { lineupPromiseWarnings } from '../game/promises';
 import { courtFreshness, evaluateTeam, isSelectable } from '../game/match';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
@@ -847,6 +848,12 @@ function LineupPanel({ state, dispatch }: Props) {
           </div>
         </div>
       </div>
+
+      {lineupPromiseWarnings(state).map((w) => (
+        <p key={w.playerId} style={{ color: w.breaksToday ? 'var(--bad)' : 'var(--warn, #c90)', fontWeight: 600, margin: '0.5rem 0 0' }}>
+          🤝 {w.text}
+        </p>
+      ))}
 
       <div className="confirm-bar">
         <button
