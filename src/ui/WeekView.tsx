@@ -4,6 +4,7 @@ import type { GameAction } from '../state/gameReducer';
 import { ABSENCE_ACTIONS, reasonById } from '../game/absences';
 import { ACTIONS } from '../game/actions';
 import { BALANCE } from '../game/balance';
+import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { courtFreshness, evaluateTeam, isSelectable } from '../game/match';
 import { Bar } from './Bar';
 import { PlayerLink } from './PlayerLink';
@@ -147,7 +148,18 @@ function PlanningPanel({ state, dispatch }: Props) {
             <span className="chip accent" title={rivalStyleInfo(rival.style).desc}>
               {rivalStyleInfo(rival.style).label}
             </span>
+            {rivalryWith(state, rival.id) && (
+              <span className="chip bad" title={rivalryWith(state, rival.id)!.text}>
+                🔥 Revancha
+              </span>
+            )}
+            <span className="chip" title={refereeOfWeek(state).blurb}>
+              🧑‍⚖️ Dirige {refereeOfWeek(state).name}
+            </span>
           </div>
+        )}
+        {rival && rivalryWith(state, rival.id) && (
+          <p style={{ margin: '0.2rem 0 0.4rem' }}>🔥 {rivalryWith(state, rival.id)!.text}</p>
         )}
         {chosen.length > 0 && (
           <p style={{ margin: '0.3rem 0' }}>

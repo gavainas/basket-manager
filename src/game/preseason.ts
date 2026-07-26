@@ -388,6 +388,8 @@ export function startPreseason(state: GameState): GameState {
     absenceDifficulty: state.absenceDifficulty,
     // Lo vivido entre compañeros (asados, sociedades, peleas) no se resetea.
     affinityBonus: state.affinityBonus ?? {},
+    // La espina clavada tampoco: la revancha puede esperar un año entero.
+    nemesis: state.nemesis ?? null,
   };
   if (promo.userMoved) {
     next.clubTimeline.push({

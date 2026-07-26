@@ -1,6 +1,7 @@
 import { BALANCE, clamp } from './balance';
 import { hasMinutesPromise, moodFor } from './emotions';
 import { fragilityOf, MATCH_INJURY_NOTES, rollInjuryWeeks } from './injuries';
+import { leagueNewsForWeek, refereeOfWeek, rivalryWith, settleRivalryAfterMatch, type OtherResult } from './leagueLife';
 import { fallbackNote, quarterFlavor, rollRefIncident } from './narrative';
 import { computeRating, type PlayerRating } from './rating';
 import { logClubEvent, logPlayerEvent } from './timeline';
@@ -226,6 +227,7 @@ function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
 
   // Los demás partidos de la divisional salen del fixture (tabla y calendario coherentes).
   const otherFixtures = isPlayoffs ? [] : s.world.fixtures.filter((f) => f.week === s.week && !f.isUserMatch);
+  const otherResults: OtherResult[] = [];
   for (const fx of otherFixtures) {
     const homeRivalId = s.world.teams.find((t) => t.id === fx.homeTeamId)?.legacyRivalId;
     const awayRivalId = s.world.teams.find((t) => t.id === fx.awayTeamId)?.legacyRivalId;
@@ -256,6 +258,14 @@ function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
     fx.status = 'jugado';
     fx.scoreHome = aWins ? winScore : loseScore;
     fx.scoreAway = aWins ? loseScore : winScore;
+    otherResults.push({
+      winnerName: aWins ? a.name : b.name,
+      loserName: aWins ? b.name : a.name,
+      winnerLegacyId: aWins ? a.id : b.id,
+      winScore,
+      loseScore,
+      winnerOdds: aWins ? pa : 1 - pa,
+    });
   }
 
   s.lastMatch = result;
@@ -267,6 +277,9 @@ function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
       : `${result.won ? 'Victoria' : 'Derrota'} ${result.scoreFor}-${result.scoreAgainst} vs ${result.rivalName}.`,
     tone: result.won ? 'good' : 'bad',
   });
+  // La liga habla: revanchas cumplidas y lo que pasó en las otras canchas.
+  settleRivalryAfterMatch(s);
+  leagueNewsForWeek(s, otherResults, rng);
   s.live = null;
   s.phase = 'matchResult';
 }
@@ -342,6 +355,12 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
   // La convocatoria del rival se sortea recién el día del partido.
   const rivalSquad = rollRivalMatchday(s, rivalId, rng);
 
+  // La previa: el árbitro anunciado y la historia con este rival, si la hay.
+  const ref = refereeOfWeek(s);
+  const prematchNotes = [...rivalSquad.notes, `Dirige ${ref.name}: ${ref.blurb}.`];
+  const rivalry = rivalryWith(s, rivalId);
+  if (rivalry) prematchNotes.push(`🔥 ${rivalry.text}`);
+
   s.live = {
     rivalId,
     rivalName: rival.name,
@@ -349,12 +368,14 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     finished: false,
     defense: 'zona',
     attack: 'equipo',
+    refName: ref.name,
+    refStyle: ref.style,
     squad: squad.map((p) => p.id),
     onCourt: starters.map((p) => p.id),
     playerFresh,
     minutes,
     stats,
-    pendingSubNotes: [...rivalSquad.notes],
+    pendingSubNotes: prematchNotes,
     rivalSquad: { presentCount: rivalSquad.presentCount, mod: rivalSquad.mod, notes: rivalSquad.notes },
     refTension: 0,
     rageBoost: false,

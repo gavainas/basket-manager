@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import type { GameState } from '../game/types';
 import { BALANCE } from '../game/balance';
+import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { activePlayers, clubPosition } from '../game/match';
 import { EMOTION_EXPRESSION } from '../game/humanState';
 import { objectiveStatus, type ObjectiveStatus } from '../game/objectives';
@@ -95,11 +96,15 @@ function watchItems(state: GameState): WatchItem[] {
     });
   }
   const hotheads = active.filter((x) => (x.seasonTechs ?? 0) === 2 && (x.suspendedWeeks ?? 0) === 0);
+  const weekRef = refereeOfWeek(state);
   for (const p of hotheads) {
+    const strictRef = weekRef.style === 'estricto' || weekRef.style === 'protagonista';
     items.push({
       icon: '🟨',
-      cls: 'warn',
-      text: `${p.name} acumula 2 técnicas en el año: una más y se pierde una fecha.`,
+      cls: strictRef ? 'bad' : 'warn',
+      text: strictRef
+        ? `${p.name} acumula 2 técnicas y esta fecha dirige ${weekRef.name} (${weekRef.blurb}). Una protesta y se va.`
+        : `${p.name} acumula 2 técnicas en el año: una más y se pierde una fecha.`,
       tab: 'plantilla',
     });
   }
@@ -277,7 +282,14 @@ export function Dashboard({ state }: { state: GameState }) {
                 <span className="chip accent" title={rivalStyleInfo(nextRival.style).desc}>
                   {rivalStyleInfo(nextRival.style).label}
                 </span>
+                {rivalryWith(state, nextRival.id) && <span className="chip bad">🔥 Revancha</span>}
               </div>
+              {rivalryWith(state, nextRival.id) && (
+                <p style={{ margin: '0.4rem 0 0' }}>{rivalryWith(state, nextRival.id)!.text}</p>
+              )}
+              <p className="muted" style={{ margin: '0.4rem 0 0' }}>
+                🧑‍⚖️ Dirige {refereeOfWeek(state).name}: {refereeOfWeek(state).blurb}.
+              </p>
             </div>
           )}
           {groupChat.length > 0 && (

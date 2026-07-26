@@ -3,6 +3,7 @@
 // El arbitraje siempre se presenta como percepción del equipo, no como verdad.
 
 import { clamp } from './balance';
+import { refIncidentFactor } from './leagueLife';
 import type { GameState, LiveMatchState, Player } from './types';
 import type { Rng } from './rng';
 
@@ -76,7 +77,9 @@ export function rollRefIncident(
   rng: Rng
 ): string | null {
   const tension = live.refTension ?? 0;
-  const chance = 0.2 + tension * 0.06;
+  // El árbitro anunciado no es decorado: con un estricto o un protagonista
+  // pasan más cosas; con un permisivo, la noche suele ser tranquila.
+  const chance = (0.2 + tension * 0.06) * refIncidentFactor(live.refStyle);
   if (!rng.chance(chance)) return null;
 
   // De vez en cuando, los jueces la sacan barata.
@@ -128,7 +131,9 @@ export function rollRefIncident(
     return nth >= 2 ? `Técnica para ${hothead.name} por protestar (${nth}ª de la temporada).` : `Técnica para ${hothead.name} por protestar.`;
   }
   live.refTension = clamp(tension + 1, 0, 5);
-  return 'El equipo siente que los jueces están cobrando distinto en cada aro.';
+  return live.refName
+    ? `El equipo siente que ${live.refName} está cobrando distinto en cada aro.`
+    : 'El equipo siente que los jueces están cobrando distinto en cada aro.';
 }
 
 /** Resuelve la decisión del manager ante la incidencia pendiente. */

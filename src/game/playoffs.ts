@@ -158,6 +158,11 @@ function closeCups(s: GameState): void {
       s.club.sportPrestige = clamp(s.club.sportPrestige + 2);
       logClubEvent(s, 'hito', `Subcampeones de la ${CUP_LABELS[cup]}: la final se escapó.`, final.week);
       s.news.unshift({ week: final.week, text: `Perdimos la final de la ${CUP_LABELS[cup]}. Dolió.`, tone: 'bad' });
+      // La espina queda clavada: este rival se recuerda hasta la revancha.
+      s.nemesis = {
+        rivalId: final.winnerId,
+        reason: `nos ganó la final de la ${CUP_LABELS[cup]} de la temporada ${s.seasonNumber}`,
+      };
     } else {
       s.news.unshift({ week: final.week, text: `${champName} se quedó con la ${CUP_LABELS[cup]}.`, tone: 'neutral' });
     }

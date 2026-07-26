@@ -261,6 +261,9 @@ export interface LiveMatchState {
   perfs: Record<string, number>;
   hombreQuarters: number;
   estrellaQuarters: number;
+  /** El árbitro del partido (nombre y estilo): condiciona las incidencias. */
+  refName?: string;
+  refStyle?: 'estricto' | 'permisivo' | 'casero' | 'protagonista';
   /** Suerte acumulada, para explicar el resultado. */
   luckTotal: number;
   /** El rival metió una presión especial en el último cuarto. */
@@ -846,6 +849,8 @@ export interface GameState {
   asadoHistory?: AsadoRecord[];
   /** Ajustes vivos de afinidad entre pares (clave: ids ordenados "a|b"). Persiste entre temporadas. */
   affinityBonus?: Record<string, number>;
+  /** La espina clavada: el rival que nos eliminó o nos ganó la final. Persiste hasta la revancha. */
+  nemesis?: { rivalId: string; reason: string } | null;
 }
 
 // ---------- Asado con convocatoria ----------
