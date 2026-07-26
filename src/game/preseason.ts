@@ -315,6 +315,7 @@ export function startPreseason(state: GameState): GameState {
     np.lastRating = null;
     np.suspendedWeeks = 0;
     np.seasonTechs = 0;
+    np.promiseLog = [];
     // El rencor dura una temporada entera; más viejo que eso, prescribe.
     if (np.grudge && np.grudge.season < state.seasonNumber) np.grudge = null;
     if (np.feeStatus === 'pendiente') {

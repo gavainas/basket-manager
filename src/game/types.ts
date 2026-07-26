@@ -133,6 +133,8 @@ export interface Player {
   seasonTechs?: number;
   /** La promesa que le rompiste: el rencor persiste hasta compensarlo (o un año). */
   grudge?: { season: number; type: string; label: string } | null;
+  /** Registro semanal para promesas de titularidad/rotación: solo fechas en las que estuvo disponible. */
+  promiseLog?: { season: number; week: number; started: boolean; inSquad: boolean }[];
   /** Semanas restantes de suspensión por acumulación de técnicas. */
   suspendedWeeks?: number;
   /** Técnica ganada esta temporada entrenando (impulsa el progreso visible). */
@@ -502,6 +504,8 @@ export interface ClubPromise {
   season: number;
   /** Ya se rompió y el jugador reaccionó (no se vuelve a evaluar). */
   broken?: boolean;
+  /** Ya te encaró una vez por esta promesa (la charla previa a la ruptura). */
+  warned?: boolean;
 }
 
 /** Una entrada de las listas de fin de pretemporada: id para abrir la ficha + texto a mostrar. */
