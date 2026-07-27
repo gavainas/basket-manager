@@ -2,6 +2,7 @@
 // Regla de diseño (design/DESIGN.md): si el motor sabe el "por qué", la UI
 // no muestra la cifra sola. Este módulo centraliza esas frases.
 
+import { grievanceCause, grievanceIcon, grievanceNote } from './mood';
 import { affinity, coachAffinity, FRIEND_THRESHOLD, RIVALRY_THRESHOLD } from './relations';
 import type { GameState, Player, PlayerEmotion } from './types';
 
@@ -34,8 +35,21 @@ export function playerNotes(state: GameState, p: Player): HumanNote[] {
   const notes: HumanNote[] = [];
   const promises = state.promises.filter((pr) => pr.playerId === p.id && pr.season === state.seasonNumber);
 
+  // La queja activa manda: es la misma que ve el radar y la acción de hablar,
+  // con su historia ("van 3 semanas") en vez de una foto suelta.
+  const grievance = grievanceNote(p, Math.min(state.week, state.seasonLength));
+
   if (p.status === 'al_borde') {
-    notes.push({ icon: '🚨', text: 'Al borde de irse: una semana más así y busca otro club.', tone: 'bad' });
+    const why = grievanceCause(p);
+    notes.push({
+      icon: '🚨',
+      text: why
+        ? `Al borde de irse por ${why}: una semana más así y busca otro club.`
+        : 'Al borde de irse: una semana más así y busca otro club.',
+      tone: 'bad',
+    });
+  } else if (grievance) {
+    notes.push({ icon: grievanceIcon(p), text: grievance, tone: p.grievance!.level >= 2 ? 'bad' : 'warn' });
   } else if (p.status === 'molesto') {
     if (p.weeksBenched >= 2 && p.expectedRole === 'titular') {
       notes.push({

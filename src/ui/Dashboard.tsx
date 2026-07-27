@@ -4,6 +4,7 @@ import { BALANCE } from '../game/balance';
 import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { activePlayers, clubPosition } from '../game/match';
 import { EMOTION_EXPRESSION } from '../game/humanState';
+import { aggrieved, grievanceWarning } from '../game/mood';
 import { objectiveStatus, type ObjectiveStatus } from '../game/objectives';
 import { promiseHealth, type PromiseHealth } from '../game/promises';
 import { Avatar } from './Avatar';
@@ -57,7 +58,19 @@ function watchItems(state: GameState): WatchItem[] {
       tab: 'finanzas',
     });
   }
-  const upset = active.filter((x) => x.status === 'molesto');
+  // Las quejas vivas primero, con nombre y motivo: es la misma lista que ve la
+  // acción de hablar, así lo que dice el informe del sábado sigue estando acá.
+  const week = Math.min(state.week, state.seasonLength);
+  const hot = aggrieved(state, 2).filter((p) => p.status !== 'al_borde');
+  for (const p of hot.slice(0, 2)) {
+    items.push({
+      icon: p.grievance!.level >= 3 ? '🔥' : '😠',
+      cls: p.grievance!.level >= 3 ? 'bad' : 'warn',
+      text: grievanceWarning(p, week),
+      tab: 'plantilla',
+    });
+  }
+  const upset = active.filter((x) => x.status === 'molesto' && !hot.includes(x));
   if (upset.length > 0) {
     items.push({
       icon: '😠',

@@ -197,6 +197,13 @@ export function loadGame(): GameState | null {
       }
       parsed.saveVersion = 21;
     }
+    // v21 → v22: estado emocional unificado (la queja activa por jugador).
+    // Es opcional: el plantel arranca sin quejas guardadas y las va generando
+    // con lo que pase de acá en más.
+    if (parsed.saveVersion === 21) {
+      for (const p of parsed.players) p.grievance = p.grievance ?? null;
+      parsed.saveVersion = 22;
+    }
     // scheduledEvents (eventos encadenados) es opcional y se accede con ?? []:
     // los saves viejos cargan sin migración.
     if (parsed.saveVersion !== SAVE_VERSION) return null;

@@ -24,20 +24,27 @@ estrategias de referencia, **sin acciones del manager** (mide el piso):
 
 Reporta: % de victorias, remontadas (concretadas / oportunidades), lesiones en
 partido por temporada, distribución de ausencias por semana y por jugador, caja
-final y quiebras. Flujo de trabajo: tocar `balance.ts` → `npm run sim` → mirar
-si los objetivos de abajo se sostienen.
+final, quiebras, **abandonos por temporada** y **cuántos quedan con bronca viva
+al cierre** (con el motivo). Flujo de trabajo: tocar `balance.ts` → `npm run sim`
+→ mirar si los objetivos de abajo se sostienen.
+
+Las dos últimas métricas son el termómetro del estado emocional (`mood.ts`):
+como el harness juega **sin acciones del manager**, nadie atiende una sola
+queja en toda la temporada. Es el techo de bronca posible, no lo esperable en
+una partida jugada de verdad.
 
 ## Objetivos de balance (qué mirar en el reporte)
 
 | Métrica | Objetivo | Última corrida |
 |---|---|---|
-| Presión vs otras tácticas | La mejor, pero no dominante (55-60%) | 57% vs 52% (mixta) vs 45% (zona) |
-| Remontadas propias (9+ abajo) | Raras pero reales (~5%) | 5/90 |
-| Nos remontan (9+ arriba) | Ninguna ventaja sellada (~7-10%) | 14/203 |
+| Presión vs otras tácticas | La mejor, pero no dominante (55-60%) | 59.8% vs 53.2% (mixta) vs 41.9% (zona) |
+| Remontadas propias (9+ abajo) | Raras pero reales (~5%) | 4/89 |
+| Nos remontan (9+ arriba) | Ninguna ventaja sellada (~7-10%) | 13/217 |
 | Lesiones en partido / temporada | 1-2 | 1.4 |
 | Semanas sin ausencias | ~1/3 (que "vinieron todos" sea noticia) | 35% |
 | Top faltador vs resto | Tato ~2/temp, resto ~0.7 (no siempre el mismo) | ✓ |
-| Caja final sin recaudar | Deriva leve, con riesgo real de quiebre | ~$370 y ~10% de quiebras |
+| Caja final sin recaudar | Deriva leve, con riesgo real de quiebre | ~$385 y ~10% de quiebras |
+| Abandonos / temporada (sin gestión) | Castigar ignorar al plantel, no ser una masacre | 0.00 rotando · 1.63 sin tocar el banco |
 
 ## Sistemas de la 1ª pasada
 
@@ -80,6 +87,28 @@ si los objetivos de abajo se sostienen.
 - Las **excusas flojas** siguen dependiendo del compromiso (los de <60 fallan
   más, el talentoso informal suma extra), pero ya no son la única fuente.
 - `maxOut` 2→3: existen las semanas negras de 3 bajas (~7% de las semanas).
+
+### Estado emocional unificado (`src/game/mood.ts`)
+
+La queja activa (causa + nivel 1-3 + reincidencia) escala sola si el motivo se
+repite. Los números salieron de medir, no de intuición:
+
+- **Umbrales de escalada** (`HITS_TO_LEVEL2` 3, `HITS_TO_LEVEL3` 6): con 2 y 4
+  el plantel al que nunca le das minutos perdía **2.39 jugadores por temporada**
+  (contra 0.39 antes del sistema) y arrastraba la economía: la caja de `zona`
+  caía de $350 a $231 y las quiebras subían de 8 a 17 sobre 80 temporadas.
+  Con 3 y 6, los abandonos quedan en 1.63 y las quiebras vuelven a 7.
+- **Golpe de motivación por nivel** (`LEVEL_HIT` 0 / 0 / -4 / -6): el nivel 1 no
+  toca ningún número a propósito — una molestia es una anotación en la ficha,
+  no un castigo. Recién cuando se hace costumbre pesa en el ánimo, y siempre
+  va **encima** de lo que ya descuenta el banco cada fecha.
+- **Irse con la bronca al tope**: un jugador con motivación alta pero queja
+  nivel 3 puede irse igual, con menos probabilidad (15% por semana estando al
+  borde, contra el 30% del que además está desmotivado).
+
+El gradiente resultante es el que se buscaba: rotando el banco no se va nadie
+(0.00/temp), sin tocarlo nunca se va gente en serio (1.63/temp) — y eso último
+midiéndolo sin que el manager hable una sola vez con nadie.
 
 ### Economía (`economy` en balance.ts, lógica en `economy.ts`)
 

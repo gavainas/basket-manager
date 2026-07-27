@@ -1,8 +1,9 @@
 import { addPairBonus } from './asado';
 import { BALANCE, clamp } from './balance';
-import { hasMinutesPromise, moodFor } from './emotions';
+import { buildMoods, hasMinutesPromise, moodCauseFor, type EmotionContext } from './emotions';
 import { fragilityOf, MATCH_INJURY_NOTES, rollInjuryWeeks } from './injuries';
 import { leagueNewsForWeek, refereeOfWeek, rivalryWith, settleRivalryAfterMatch, type OtherResult } from './leagueLife';
+import { bumpGrievance, sootheGrievance } from './mood';
 import { fallbackNote, quarterFlavor, rollRefIncident } from './narrative';
 import { computeRating, type PlayerRating } from './rating';
 import { logClubEvent, logPlayerEvent } from './timeline';
@@ -1310,21 +1311,30 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
 
   // Cómo quedó cada uno: el resultado no tapa los minutos que no jugaste.
   const bigGame = s.week > s.seasonLength;
-  const usedMoodLines = new Set<string>();
-  const moods: PlayerMood[] = s.players
-    .filter((p) => !p.leftClub && isSelectable(p) && !absent.has(p.id))
-    .map((p) =>
-      moodFor(p, {
-        won,
-        margin,
-        minutes: minutesOf(p.id),
-        rating: ratings[p.id]?.rating ?? null,
-        mvp: p.id === mvp.id,
-        inSquad: live.squad.includes(p.id),
-        promisedMinutes: hasMinutesPromise(s.promises, p.id, s.seasonNumber),
-        bigGame,
-      }, s.week, usedMoodLines)
-    );
+  const moodPlayers = s.players.filter((p) => !p.leftClub && isSelectable(p) && !absent.has(p.id));
+  const moodCtx = (p: Player): EmotionContext => ({
+    won,
+    margin,
+    minutes: minutesOf(p.id),
+    rating: ratings[p.id]?.rating ?? null,
+    mvp: p.id === mvp.id,
+    inSquad: live.squad.includes(p.id),
+    promisedMinutes: hasMinutesPromise(s.promises, p.id, s.seasonNumber),
+    bigGame,
+    grievanceLevel: p.grievance?.cause === 'minutos' ? p.grievance.level : 0,
+    grievanceWeeks: p.grievance ? Math.max(1, Math.min(s.week, s.seasonLength) - p.grievance.sinceWeek + 1) : 0,
+  });
+
+  // Lo que sintió hoy deja rastro: alimenta su queja activa (o la apaga si le
+  // diste cancha). Va ANTES de escribir las frases, para que la frase ya salga
+  // escalada: "van 3 fechas con lo mismo" en vez de la queja de siempre.
+  for (const p of moodPlayers) {
+    const cause = moodCauseFor(p, moodCtx(p));
+    if (cause) bumpGrievance(s, p, cause);
+    else if (p.grievance?.cause === 'minutos' && minutesOf(p.id) >= 15) sootheGrievance(s, p, 'hechos');
+  }
+
+  const moods: PlayerMood[] = buildMoods(moodPlayers, moodCtx, s.week);
 
   const result: MatchResult = {
     week: s.week,

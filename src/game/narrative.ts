@@ -69,6 +69,31 @@ export function quarterFlavor(ctx: FlavorContext, rng: Rng): string[] {
 
 // ---------- Incidencias arbitrales ----------
 
+/** La misma falta dudosa contada igual tres partidos seguidos deja de ser una falta. */
+const DOUBTFUL_FOULS = [
+  'Una falta dudosa sobre el cierre encendió al banco: todos mirando a los jueces.',
+  'Cargaron una falta en ataque que nadie vio: el banco se levantó entero a protestar.',
+  'Un pasos inexistente en el mejor momento nuestro. El grito fue unánime desde afuera.',
+  'No cobraron una falta clarísima abajo del aro y el que la recibió quedó en el piso, mirando al árbitro.',
+  'Dudosa en la línea de tres: el árbitro sacó dos tiros libres y de nuestro lado juraban que eran tres.',
+];
+
+const REF_MOOD_NOTES = [
+  'El equipo siente que los jueces están cobrando distinto en cada aro.',
+  'Dos criterios distintos según el aro: eso creen todos de este lado de la cancha.',
+  'Cada silbato de los jueces enciende un poco más al banco.',
+  'De nuestro lado ya nadie discute las jugadas: discuten los fallos.',
+];
+
+/** Elige un texto que todavía no se haya usado en este partido. */
+function freshIncident(live: LiveMatchState, options: string[], rng: Rng): string {
+  const used = (live.usedIncidents ??= []);
+  const fresh = options.filter((o) => !used.includes(o));
+  const text = rng.pick(fresh.length > 0 ? fresh : options);
+  used.push(text);
+  return text;
+}
+
 /** Sortea una incidencia arbitral tras el cuarto. Puede dejar una decisión pendiente. */
 export function rollRefIncident(
   live: LiveMatchState,
@@ -97,7 +122,7 @@ export function rollRefIncident(
     live.refTension = clamp(tension + 1, 0, 5);
     live.pendingIncident = {
       kind: 'falta_dudosa',
-      text: 'Una falta dudosa sobre el cierre encendió al banco: todos mirando a los jueces.',
+      text: freshIncident(live, DOUBTFUL_FOULS, rng),
       options: [
         { label: 'Calmar al equipo', hint: 'Recuperar la concentración: acá se juega' },
         { label: 'Respaldar la protesta', hint: 'El grupo se siente defendido, pero el árbitro toma nota' },
@@ -131,9 +156,8 @@ export function rollRefIncident(
     return nth >= 2 ? `Técnica para ${hothead.name} por protestar (${nth}ª de la temporada).` : `Técnica para ${hothead.name} por protestar.`;
   }
   live.refTension = clamp(tension + 1, 0, 5);
-  return live.refName
-    ? `El equipo siente que ${live.refName} está cobrando distinto en cada aro.`
-    : 'El equipo siente que los jueces están cobrando distinto en cada aro.';
+  const note = freshIncident(live, REF_MOOD_NOTES, rng);
+  return live.refName ? note.replace('los jueces', live.refName) : note;
 }
 
 /** Resuelve la decisión del manager ante la incidencia pendiente. */

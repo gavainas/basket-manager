@@ -76,6 +76,11 @@ function playSeason(seed, strategy) {
     absenceCounts: [],
     moneyEnd: 0,
     gameOver: false,
+    playersLeft: 0,
+    // Estado emocional al cierre: cuántos quedaron con bronca viva y de qué.
+    hotAtEnd: 0,
+    burningAtEnd: 0,
+    grievanceCauses: {},
   };
 
   while (s.phase !== 'gameOver' && s.week <= s.seasonLength) {
@@ -133,6 +138,13 @@ function playSeason(seed, strategy) {
 
   st.moneyEnd = s.club.money;
   st.gameOver = s.phase === 'gameOver';
+  st.playersLeft = s.playersLeftCount;
+  for (const p of s.players) {
+    if (p.leftClub || !p.grievance) continue;
+    if (p.grievance.level >= 3) st.burningAtEnd += 1;
+    if (p.grievance.level >= 2) st.hotAtEnd += 1;
+    st.grievanceCauses[p.grievance.cause] = (st.grievanceCauses[p.grievance.cause] || 0) + 1;
+  }
   return st;
 }
 
@@ -154,6 +166,10 @@ for (const strat of Object.keys(STRATEGIES)) {
     absCounts: {},
     absByPlayer: {},
     seasons: 0,
+    playersLeft: 0,
+    hotAtEnd: 0,
+    burningAtEnd: 0,
+    causes: {},
   };
   for (let i = 0; i < RUNS; i++) {
     const st = playSeason(1000 + i * 7919, strat);
@@ -168,6 +184,10 @@ for (const strat of Object.keys(STRATEGIES)) {
     a.forfeits += st.forfeits;
     a.money.push(st.moneyEnd);
     if (st.gameOver) a.gameOvers += 1;
+    a.playersLeft += st.playersLeft;
+    a.hotAtEnd += st.hotAtEnd;
+    a.burningAtEnd += st.burningAtEnd;
+    for (const [c, n] of Object.entries(st.grievanceCauses)) a.causes[c] = (a.causes[c] || 0) + n;
     for (const n of st.absenceCounts) a.absCounts[n] = (a.absCounts[n] || 0) + 1;
     for (const [name, c] of Object.entries(st.absencesByPlayer)) a.absByPlayer[name] = (a.absByPlayer[name] || 0) + c;
   }
@@ -187,6 +207,12 @@ for (const strat of Object.keys(STRATEGIES)) {
     .sort((x, y) => y[1] - x[1])
     .slice(0, 5);
   console.log(`Top faltadores:`, top.map(([n, c]) => `${n}: ${(c / a.seasons).toFixed(1)}/temp`).join('  ·  '));
+  // Sin acciones del manager, nadie atiende una sola queja: esto es el techo
+  // de bronca posible, no lo esperable en una partida jugada.
+  console.log(
+    `Abandonos: ${(a.playersLeft / a.seasons).toFixed(2)}/temp  ·  Con bronca al cierre: ${(a.hotAtEnd / a.seasons).toFixed(1)} (al límite: ${(a.burningAtEnd / a.seasons).toFixed(1)})  ·  Motivos:`,
+    JSON.stringify(a.causes)
+  );
 }
 
 // Fragilidad del plantel inicial: sirve para calibrar la pista de la ficha.

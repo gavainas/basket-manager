@@ -3,6 +3,7 @@
 // Estructura de datos reutilizable: agregar un motivo es agregar una entrada.
 
 import { clamp } from './balance';
+import { bumpGrievance } from './mood';
 import { affinity, coachAffinity, FRIEND_THRESHOLD } from './relations';
 import { logPlayerEvent } from './timeline';
 import type { GameState, Player } from './types';
@@ -45,7 +46,11 @@ export interface AbsenceReasonDef {
 export const ABSENCE_REASONS: AbsenceReasonDef[] = [
   {
     id: 'mecanico',
-    excuses: ['Tenía que llevar el auto al mecánico "sí o sí hoy". El mecánico es su cuñado.'],
+    excuses: [
+      'Tenía que llevar el auto al mecánico "sí o sí hoy". El mecánico es su cuñado.',
+      'Se le quedó el auto en la vuelta de casa. Mandó foto del capó abierto, por las dudas.',
+      'Le prestó el auto al hermano y volvió tarde. "Nunca más", juró, como todos los meses.',
+    ],
     actions: ['convencer', 'uber', 'importancia'],
   },
   {
@@ -64,23 +69,38 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
     excuses: [
       'La mujer le recordó que "el básquet no paga las cuentas". La sentencia llegó anoche.',
       'La mujer no lo deja venir: ayer ya jugó un partido con los del trabajo y hoy "tocaba familia".',
+      'Le cargaron horas extra a último momento y no se pudo negar: está juntando para las vacaciones.',
+      'Cierre de mes en la oficina. "Salgo a las nueve, no llego ni loco", avisó resignado.',
     ],
     actions: ['segundo_tiempo', 'uber'],
   },
   {
     id: 'vago',
-    excuses: ['"Se me complicó", mandó por WhatsApp a las 18:55. No dio más detalles.'],
+    excuses: [
+      '"Se me complicó", mandó por WhatsApp a las 18:55. No dio más detalles.',
+      'Dejó el visto en el grupo toda la tarde. Apareció a la noche: "uh, recién veo".',
+      '"Estoy re al horno, hoy no me da", escribió. Nadie averiguó con qué.',
+      'Se quedó dormido en el sillón. Lo confesó él mismo, sin culpa.',
+    ],
     actions: ['insistir', 'companero', 'importancia'],
   },
   {
     id: 'nene',
-    excuses: ['Cayó la esposa con la lista del súper y el nene con fiebre. No hubo caso.'],
+    excuses: [
+      'Cayó la esposa con la lista del súper y el nene con fiebre. No hubo caso.',
+      'Le tocó llevar a la nena al cumpleaños de una compañerita. Peleó y perdió.',
+      'Se quedó sin quién le cuide los chicos justo hoy. Preguntó en el grupo, sin suerte.',
+    ],
     actions: ['segundo_tiempo', 'convencer'],
   },
   {
     // Día bloqueado de la agenda: lo avisó al firmar, cuesta más darlo vuelta.
     id: 'agenda',
-    excuses: ['Compromiso fijo del día: te lo avisó cuando arregló venir.'],
+    excuses: [
+      'Compromiso fijo del día: te lo avisó cuando arregló venir.',
+      'El día que te había marcado como imposible. Cumplió con avisar, al menos.',
+      'Tiene su compromiso de siempre este día: quedó claro desde que firmó.',
+    ],
     actions: ['segundo_tiempo', 'importancia'],
   },
   // --- Imprevistos de la vida: le pasan a cualquiera, hasta al capitán ---
@@ -106,10 +126,26 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
     excuses: [
       'Lo llamaron del trabajo por una urgencia: le tocó cubrir la guardia.',
       'Se cayó el sistema en la oficina y lo llamaron un domingo. "Salgo cuando pueda", prometió.',
+      'Le pidieron que cubriera a un compañero que faltó. Dijo que sí antes de mirar el calendario.',
+      'Quedó de urgencia en el trabajo: alguien tenía que quedarse y le tocó a él.',
     ],
     actions: ['segundo_tiempo'],
   },
 ];
+
+/**
+ * Elige una excusa sin repetir: ni la de otro compañero en la misma lista, ni
+ * la que puso él la vez pasada. Dos "le tocó cubrir la guardia" seguidos
+ * convierten a las personas en plantillas.
+ */
+export function pickExcuse(reason: AbsenceReasonDef, player: Player, used: Set<string>, rng: Rng): string {
+  const fresh = reason.excuses.filter((e) => !used.has(e) && e !== player.lastExcuse);
+  const pool = fresh.length > 0 ? fresh : reason.excuses.filter((e) => !used.has(e));
+  const excuse = rng.pick(pool.length > 0 ? pool : reason.excuses);
+  used.add(excuse);
+  player.lastExcuse = excuse;
+  return excuse;
+}
 
 /** Imprevistos que no dependen del compromiso: se sortean parejo para todos. */
 export const LIFE_REASON_IDS = ['enfermo', 'viaje', 'guardia'] as const;
@@ -220,6 +256,8 @@ export function attemptAbsenceAction(
   } else {
     const hit = actionId === 'insistir' ? -4 : -1;
     player.motivation = clamp(player.motivation + hit);
+    // Presionarlo y que igual no venga deja marca: la próxima te atiende peor.
+    if (actionId === 'insistir') bumpGrievance(s, player, 'trato');
     entry.resolution =
       actionId === 'insistir'
         ? 'No vino igual, y encima se pudrió de la insistencia.'

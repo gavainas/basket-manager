@@ -2,6 +2,7 @@ import { planAsado, weeksSinceAsado } from './asado';
 import { BALANCE, clamp } from './balance';
 import { affinity } from './relations';
 import { createRecruit } from '../data/recruits';
+import { bumpGrievance, easeGrievance } from './mood';
 import type { ActiveEvent, DelayedNote, GameState, Player, ScheduledEvent, TrialCandidate } from './types';
 import type { Rng } from './rng';
 
@@ -48,12 +49,17 @@ function upset(p: Player): void {
   }
 }
 
-/** Calma a un jugador molesto/al borde sin curar mágicamente una lesión. */
+/**
+ * Calma a un jugador molesto/al borde sin curar mágicamente una lesión.
+ * También afloja la queja que traía: el humor es uno solo, no puede quedar
+ * "tranquilo" en un lado y "caliente" en el otro.
+ */
 function calm(p: Player): void {
   if (p.status === 'molesto' || p.status === 'al_borde') {
     p.status = 'disponible';
   }
   p.weeksUpset = 0;
+  easeGrievance(p);
 }
 
 /** Agenda una reacción diferida: se comunica y aplica semanas después. */
@@ -81,7 +87,12 @@ export const EVENTS: EventDef[] = [
     canFire: (s) => actives(s).some((p) => p.weeksBenched >= 1 && (p.personality === 'protagonista' || p.personality === 'competitivo')),
     pickTargets: (s, rng) => {
       const cands = actives(s).filter((p) => p.weeksBenched >= 1 && (p.personality === 'protagonista' || p.personality === 'competitivo'));
-      return cands.length ? { playerId: rng.pick(cands).id } : null;
+      if (!cands.length) return null;
+      // Si alguno ya viene masticando bronca por los minutos, es ÉL el que te
+      // encara: el evento cae sobre la historia que ya venía, no sobre un
+      // nombre al azar.
+      const hot = cands.filter((p) => p.grievance?.cause === 'minutos');
+      return { playerId: rng.pick(hot.length ? hot : cands).id };
     },
     text: (s, ev) => `${byId(s, ev.playerId).name} te encara después del entrenamiento: "Vine a jugar, no a mirar. Si no cuento para vos, decímelo de frente".`,
     options: () => [
@@ -354,6 +365,7 @@ export const EVENTS: EventDef[] = [
       }
       p.motivation = clamp(p.motivation - 8);
       p.commitment = clamp(p.commitment + 4);
+      bumpGrievance(s, p, 'trato');
       return `${p.name} respondió seco: "Ok". Igual no viene, y encima quedó picante el asunto.`;
     },
   },
@@ -1109,7 +1121,10 @@ export const EVENTS: EventDef[] = [
       const a = byId(s, ev.playerId);
       const b = byId(s, ev.playerId2);
       if (opt === 0) {
-        for (const p of [a, b]) p.motivation = clamp(p.motivation - 5);
+        for (const p of [a, b]) {
+          p.motivation = clamp(p.motivation - 5);
+          bumpGrievance(s, p, 'trato');
+        }
         s.club.socialClimate = clamp(s.club.socialClimate - 2);
         s.club.organization = clamp(s.club.organization + 3);
         return 'Los sentaste a los dos un partido. Entendieron el mensaje, aunque alguno lo mastica.';
@@ -1125,6 +1140,7 @@ export const EVENTS: EventDef[] = [
         return 'La reunión no alcanzó: se dijeron las cosas, pero el clima quedó pesado. Esto no terminó acá.';
       }
       s.club.socialClimate = clamp(s.club.socialClimate - 4);
+      for (const p of [a, b]) bumpGrievance(s, p, 'grupo');
       chain(s, 2, { defId: 'bronca_secuela', playerId: a.id, playerId2: b.id });
       return 'Hiciste la vista gorda. Por ahora se toleran, pero el rencor sigue ahí abajo, latente.';
     },
@@ -1257,7 +1273,11 @@ export function rollEvent(state: GameState, rng: Rng): ActiveEvent | null {
       .filter((e) => e.season === state.seasonNumber && state.week - e.week < BALANCE.weekly.eventCooldownWeeks)
       .map((e) => e.id)
   );
-  const eligible = EVENTS.filter((e) => !e.chained && !onCooldown.has(e.id) && e.canFire(state));
+  const fireable = EVENTS.filter((e) => !e.chained && e.canFire(state));
+  // Si todo lo posible está en cooldown (plantel muy estable), se relaja el
+  // filtro antes que dejar la semana muda.
+  const fresh = fireable.filter((e) => !onCooldown.has(e.id));
+  const eligible = fresh.length > 0 ? fresh : fireable;
   if (eligible.length === 0) return null;
   const totalWeight = eligible.reduce((sum, e) => sum + e.weight, 0);
   let roll = rng.range(0, totalWeight);

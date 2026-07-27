@@ -3,8 +3,9 @@ import { BALANCE, clamp } from './balance';
 import { coachBoostsTraining } from './coach';
 import { createRecruit } from '../data/recruits';
 import { pickByFragility } from './injuries';
+import { bumpGrievance, sootheGrievance, upsetPlayers } from './mood';
 import { logClubEvent } from './timeline';
-import type { GameState, Player } from './types';
+import type { GameState, GrievanceCause, Player } from './types';
 import type { Rng } from './rng';
 
 export interface ActionAvailability {
@@ -25,6 +26,15 @@ export interface ActionDef {
 }
 
 const A = BALANCE.actions;
+
+/** Cómo se nombra el tema en la charla del manager. */
+const CAUSE_TALK: Record<GrievanceCause, string> = {
+  minutos: 'los minutos',
+  promesa: 'la promesa que le quedaste debiendo',
+  plata: 'el tema de la cuota',
+  trato: 'cómo se manejó lo suyo',
+  grupo: 'cómo se siente en el grupo',
+};
 
 function actives(s: GameState): Player[] {
   return s.players.filter((p) => !p.leftClub);
@@ -172,22 +182,31 @@ export const ACTIONS: ActionDef[] = [
     icon: '💬',
     description: 'Sentarse a charlar con el jugador más caliente del plantel para bajar la espuma.',
     costLabel: 'Gratis (puede salir mal)',
+    // Mira la misma lista que el informe del partido y el radar: si alguien
+    // quedó caliente el sábado, el lunes está acá.
     available: (s) =>
-      actives(s).some((p) => p.status === 'molesto' || p.status === 'al_borde')
-        ? { ok: true }
-        : { ok: false, reason: 'No hay jugadores molestos' },
+      upsetPlayers(s).length > 0 ? { ok: true } : { ok: false, reason: 'No hay jugadores molestos' },
     apply: (s, rng) => {
-      const upset = actives(s)
-        .filter((p) => p.status === 'molesto' || p.status === 'al_borde')
-        .sort((a, b) => (a.status === 'al_borde' ? -1 : 1) - (b.status === 'al_borde' ? -1 : 1) || a.motivation - b.motivation);
-      const target = upset[0];
-      if (rng.chance(A.talk.failChance)) {
+      const target = upsetPlayers(s)[0];
+      const g = target.grievance;
+      // Con la bronca vieja y encima ya hablada, la charla sola no alcanza.
+      const failChance = A.talk.failChance + (g ? (g.level - 1) * 0.08 + (g.attended ?? 0) * 0.1 : 0);
+      if (rng.chance(Math.min(0.7, failChance))) {
         target.motivation = clamp(target.motivation - 5);
-        return `La charla con ${target.name} terminó mal: sintió que eran excusas y quedó peor.`;
+        if (g) bumpGrievance(s, target, g.cause, { note: `Otra charla que no cambió nada. Ya no cree en las palabras.` });
+        return g && (g.attended ?? 0) > 0
+          ? `${target.name} te escuchó con media sonrisa: "Esto ya me lo dijiste". Las palabras se le gastaron.`
+          : `La charla con ${target.name} terminó mal: sintió que eran excusas y quedó peor.`;
       }
       target.motivation = clamp(target.motivation + A.talk.motivationBoost);
       target.status = 'disponible';
       target.weeksUpset = 0;
+      if (g) {
+        sootheGrievance(s, target, 'charla');
+        return target.grievance
+          ? `Larga charla con ${target.name} por ${CAUSE_TALK[g.cause]}. Bajó la espuma, pero te va a mirar la pizarra el sábado.`
+          : `Larga charla con ${target.name} por ${CAUSE_TALK[g.cause]}. Quedaron a mano.`;
+      }
       return `Larga charla con ${target.name}. Se fue más tranquilo y con ganas de volver a jugar.`;
     },
   },
@@ -220,6 +239,9 @@ export const ACTIONS: ActionDef[] = [
           p.status = 'molesto';
           p.weeksUpset = 0;
         }
+        // Al que le pasaste la gorra y no pudo pagar le queda el mal trago:
+        // apretarlo todas las semanas es una forma de romper una relación.
+        if (p.feeStatus === 'pendiente' && rng.chance(0.3)) bumpGrievance(s, p, 'trato');
       }
       if (collected > 0) earn(s, `Cuotas atrasadas (${paidCount} jugadores)`, collected);
       const grumbled = debtors.length - paidCount;
@@ -253,8 +275,12 @@ export const ACTIONS: ActionDef[] = [
         star.weeksUpset = 0;
       }
       s.club.socialClimate = clamp(s.club.socialClimate + A.scholarship.climateHit);
-      const cumplidores = actives(s).filter((p) => p.personality === 'cumplidor');
-      for (const p of cumplidores) p.motivation = clamp(p.motivation - 4);
+      const cumplidores = actives(s).filter((p) => p.personality === 'cumplidor' && p.id !== star.id);
+      for (const p of cumplidores) {
+        p.motivation = clamp(p.motivation - 4);
+        // El que paga religiosamente y ve que otro no, se lo guarda.
+        if (p.feeStatus === 'pagada' && rng.chance(0.4)) bumpGrievance(s, p, 'plata');
+      }
       if (cumplidores.length > 0 && rng.chance(0.5)) {
         s.news.unshift({ week: s.week, text: `Murmullos en el grupo: "¿Así que ${star.name} no paga y yo sí?"`, tone: 'bad' });
       }

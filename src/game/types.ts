@@ -87,6 +87,33 @@ export interface PlayerMood {
   emotion: PlayerEmotion;
   label: string;
   text: string;
+  /** Si lo que sintió es materia de queja, con qué causa (alimenta mood.ts). */
+  cause?: GrievanceCause;
+}
+
+// ---------- Estado emocional unificado (mood.ts) ----------
+
+/** Por qué está caliente. La causa manda el texto y cómo se lo puede atender. */
+export type GrievanceCause = 'minutos' | 'promesa' | 'plata' | 'trato' | 'grupo';
+
+/**
+ * La queja activa de un jugador: una sola por vez (la más grave). Es la
+ * memoria que le faltaba al humor: nace, escala si la ignorás, se calma si la
+ * atendés y se apaga sola cuando el motivo deja de repetirse.
+ */
+export interface Grievance {
+  cause: GrievanceCause;
+  /** 1 molestia · 2 bronca · 3 ruptura. Sube por reincidencia. */
+  level: number;
+  /** Veces que el motivo volvió a pasar. */
+  hits: number;
+  season: number;
+  /** Semana en la que empezó (para contar "van N fechas"). */
+  sinceWeek: number;
+  /** Última semana en la que el motivo se repitió (manda el decaimiento). */
+  lastHitWeek: number;
+  /** Veces que la atendiste: si igual vuelve a pasar, escala más rápido. */
+  attended?: number;
 }
 
 export type FeeStatus = 'pagada' | 'pendiente' | 'beca_total' | 'beca_parcial';
@@ -123,6 +150,10 @@ export interface Player {
   injuryWeeks: number;
   /** Semanas seguidas con estado "molesto" o "al_borde". */
   weeksUpset: number;
+  /** Queja activa: la fuente única del humor accionable (ver `mood.ts`). */
+  grievance?: Grievance | null;
+  /** Última excusa que puso al faltar: no se le repite la próxima vez. */
+  lastExcuse?: string;
   /** Rendimiento del último partido jugado (1-10), null si no jugó. */
   lastRating: number | null;
   /** Semanas seguidas sin ser titular. */
@@ -280,6 +311,8 @@ export interface LiveMatchState {
   rageBoost?: boolean;
   /** Incidencia arbitral esperando una decisión del manager. */
   pendingIncident?: PendingRefIncident | null;
+  /** Textos de incidencia ya usados en este partido: no se repiten. */
+  usedIncidents?: string[];
   /** Piloto automático de cambios entre cuartos. */
   autoRotation?: boolean;
   /** Directiva del piloto: ganar como sea o que todos sumen minutos. */

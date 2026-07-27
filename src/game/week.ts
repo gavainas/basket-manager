@@ -6,6 +6,7 @@ import { getAction } from './actions';
 import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent, rollTrialPractice, takeScheduledEvent } from './events';
 import { maybeFriendMessage } from './friendsAbroad';
+import { decayGrievance, grievanceNote, isBurning, isHot } from './mood';
 import { generateObjectives } from './objectives';
 import { activePlayers, matchAbsentIds, suggestRotation, suggestStarters } from './match';
 import { rollCallUp } from './callup';
@@ -18,7 +19,7 @@ import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
 import type { AbsenceDifficulty, ActiveEvent, GameState } from './types';
 
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 
 export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'medio'): GameState {
   const rng = new Rng(seed);
@@ -202,23 +203,42 @@ export function advanceWeek(state: GameState): GameState {
       if (p.motivation < 45) p.motivation = clamp(p.motivation + 2); // aguantan las malas
     }
 
-    // Transiciones de estado de ánimo.
-    if (p.status === 'disponible' && p.motivation < BALANCE.weekly.lowMotivationThreshold) {
+    // La bronca vieja se enfría sola si el motivo dejó de repetirse.
+    decayGrievance(s, p);
+
+    // Transiciones de estado de ánimo. El estado "molesto" ya no depende solo
+    // de la motivación: una queja activa que escaló a bronca también lo prende,
+    // así lo que dice el informe del partido es lo mismo que ve el menú.
+    const hot = isHot(p);
+    const burning = isBurning(p);
+    if (p.status === 'disponible' && (p.motivation < BALANCE.weekly.lowMotivationThreshold || hot)) {
       p.status = 'molesto';
       p.weeksUpset = 0;
-      logPlayerEvent(p, s.seasonNumber, s.week, 'animo', 'Se calentó: está molesto con cómo vienen las cosas.');
-      s.news.unshift({ week: s.week, text: `${p.name} está molesto con cómo vienen las cosas.`, tone: 'bad' });
+      const why = p.grievance ? grievanceNote(p, s.week) : null;
+      logPlayerEvent(p, s.seasonNumber, s.week, 'animo', why ?? 'Se calentó: está molesto con cómo vienen las cosas.');
+      if (!hot) s.news.unshift({ week: s.week, text: `${p.name} está molesto con cómo vienen las cosas.`, tone: 'bad' });
     } else if (p.status === 'molesto' || p.status === 'al_borde') {
-      if (p.motivation >= 45) {
+      if (p.motivation >= 45 && !hot) {
         p.status = 'disponible';
         p.weeksUpset = 0;
       } else {
         p.weeksUpset += 1;
-        if (p.status === 'molesto' && p.weeksUpset >= BALANCE.weekly.upsetWeeksToAlBorde) {
+        if (
+          p.status === 'molesto' &&
+          p.weeksUpset >= BALANCE.weekly.upsetWeeksToAlBorde &&
+          (p.motivation < 45 || burning)
+        ) {
           p.status = 'al_borde';
           logPlayerEvent(p, s.seasonNumber, s.week, 'animo', 'Al borde de dejar el club: la relación pende de un hilo.');
           s.news.unshift({ week: s.week, text: `${p.name} está al borde de dejar el club. Habría que hablarle.`, tone: 'bad' });
-        } else if (p.status === 'al_borde' && (p.motivation < BALANCE.weekly.leaveThreshold || rng.chance(0.3))) {
+        } else if (
+          p.status === 'al_borde' &&
+          (p.motivation < BALANCE.weekly.leaveThreshold ||
+            (p.motivation < 45 && rng.chance(0.3)) ||
+            // Con la motivación alta pero la bronca al tope, también se puede
+            // ir: menos probable, porque el que está bien igual la piensa.
+            (burning && rng.chance(0.15)))
+        ) {
           p.leftClub = true;
           s.playersLeftCount += 1;
           logPlayerEvent(p, s.seasonNumber, s.week, 'salida', 'Abandonó el club a mitad de temporada. "Esto ya no es para mí".');

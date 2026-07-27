@@ -3,6 +3,7 @@
 
 import { clamp } from './balance';
 import { clubPosition } from './match';
+import { bumpGrievance } from './mood';
 import { groupStanding } from './relations';
 import { logPlayerEvent } from './timeline';
 import type { ClubPromise, GameState, Player } from './types';
@@ -139,6 +140,9 @@ function maybeComplain(s: GameState, pr: ClubPromise, p: Player): boolean {
   if (!text) return false;
   pr.warned = true;
   p.motivation = clamp(p.motivation - 4);
+  // La charla no se la lleva el viento: queda como queja activa. Si seguís
+  // sin darle cancha, la próxima ya no viene a hablar.
+  bumpGrievance(s, p, 'promesa');
   logPlayerEvent(p, s.seasonNumber, s.week, 'animo', `Reclamo por la promesa: ${text}`);
   s.news.unshift({ week: s.week, text: `${p.name} te encaró: ${text} La promesa cruje.`, tone: 'bad' });
   return true;
@@ -164,6 +168,12 @@ export function checkPromises(s: GameState): void {
       p.status = 'molesto';
       p.weeksUpset = 0;
     }
+    // Una promesa rota no es una molestia: entra directo como bronca, y es la
+    // queja que manda por encima de cualquier otra que tuviera.
+    bumpGrievance(s, p, 'promesa', {
+      floor: 2,
+      note: `Le rompiste "${pr.label}". De acá en más lo mira todo con esa lente.`,
+    });
     // El rencor queda anotado: pesa en la renegociación del año que viene.
     p.grudge = { season: s.seasonNumber, type: pr.type, label: pr.label };
     logPlayerEvent(p, s.seasonNumber, s.week, 'animo', `Promesa incumplida: "${pr.label}". No se olvida.`);

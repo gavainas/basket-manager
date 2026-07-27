@@ -2,7 +2,7 @@
 // Por lo general vienen todos, pero los de poco compromiso a veces fallan
 // con alguna excusa, o directamente se lesionaron jugando en otro lado.
 
-import { ABSENCE_REASONS, LIFE_REASON_IDS } from './absences';
+import { ABSENCE_REASONS, LIFE_REASON_IDS, pickExcuse } from './absences';
 import { BALANCE, clamp } from './balance';
 import { fragilityOf, rollInjuryWeeks } from './injuries';
 import { isSelectable } from './match';
@@ -31,6 +31,15 @@ export function rollCallUp(s: GameState, rng: Rng): void {
   const D = BALANCE.absenceDifficulty[s.absenceDifficulty ?? 'medio'];
   const entries: CallUpEntry[] = [];
   let outCount = 0;
+  // Nada se repite dentro de la misma lista: ni excusas, ni partes médicos,
+  // ni avisos de fundido. Leer dos veces el mismo texto rompe el hechizo.
+  const usedTexts = new Set<string>();
+  const freshPick = (options: string[]): string => {
+    const fresh = options.filter((o) => !usedTexts.has(o));
+    const text = rng.pick(fresh.length > 0 ? fresh : options);
+    usedTexts.add(text);
+    return text;
+  };
 
   // Día y hora del partido de la semana, para cruzarlos con las agendas.
   const fx = userFixtureOfWeek(s.world, s.week);
@@ -88,7 +97,7 @@ export function rollCallUp(s: GameState, rng: Rng): void {
       const player = s.players.find((x) => x.id === p.id)!;
       player.status = 'lesionado';
       player.injuryWeeks = weeks;
-      const note = rng.pick(INJURY_NOTES);
+      const note = freshPick(INJURY_NOTES);
       entries.push({
         playerId: p.id,
         playerName: p.name,
@@ -105,15 +114,15 @@ export function rollCallUp(s: GameState, rng: Rng): void {
     } else if (outCount < D.maxOut && rng.chance(C.lifeChance * D.life)) {
       // La vida: enfermedad, viaje o guardia. Le toca a cualquiera, sin aviso.
       const reason = rng.pick(lifeReasons);
-      const excuse = rng.pick(reason.excuses);
       const player = s.players.find((x) => x.id === p.id)!;
+      const excuse = pickExcuse(reason, player, usedTexts, rng);
       entries.push({ playerId: p.id, playerName: p.name, status: 'ausente', note: excuse, reasonId: reason.id });
       logPlayerEvent(player, s.seasonNumber, s.week, 'ausencia', `Faltó al partido. ${excuse}`);
       outCount += 1;
     } else if (outCount < D.maxOut && rng.chance(excuseChance)) {
       const reason = rng.pick(excuseReasons);
-      const excuse = rng.pick(reason.excuses);
       const player = s.players.find((x) => x.id === p.id)!;
+      const excuse = pickExcuse(reason, player, usedTexts, rng);
       entries.push({ playerId: p.id, playerName: p.name, status: 'ausente', note: excuse, reasonId: reason.id });
       logPlayerEvent(player, s.seasonNumber, s.week, 'ausencia', `Faltó al partido. ${excuse}`);
       outCount += 1;
@@ -123,7 +132,7 @@ export function rollCallUp(s: GameState, rng: Rng): void {
         playerId: p.id,
         playerName: p.name,
         status: 'confirmado',
-        note: rng.pick(EXHAUSTED_NOTES),
+        note: freshPick(EXHAUSTED_NOTES),
         exhausted: true,
       });
     } else {
