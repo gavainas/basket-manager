@@ -8,11 +8,13 @@ import {
   projectedWeeklyFees,
 } from '../game/preseason';
 import { getPreseasonEvent } from '../game/preseasonEvents';
+import { DIVISIONS, LEAGUES } from '../data/worldData';
 import type { GameState, KnowledgeLevel, MarketPlayer, Player } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { formatMoney, starsFor } from './helpers';
 import { Avatar } from './Avatar';
 import { PlayerLink } from './PlayerLink';
+import { RivalLink } from './RivalLink';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
 import { useState } from 'react';
 
@@ -62,6 +64,49 @@ function playerFeeLabel(p: Player): { label: string; cls: string } {
   return { label: `Aporta $${fee}/sem`, cls: 'good' };
 }
 
+// ---------- Liga, día de partido y agendas ----------
+
+/** La divisional donde va a jugar el equipo esta temporada (día y horarios de partido). */
+function userDivision(state: GameState) {
+  return DIVISIONS.find((d) => d.id === state.divisionId) ?? DIVISIONS[1];
+}
+
+/** ¿Ya conocés su agenda real? Se revela al contactarlo (o si es de la casa). */
+function agendaKnown(mp: MarketPlayer): boolean {
+  return mp.contacted || mp.knowledge === 'muy_conocido';
+}
+
+/**
+ * Cruce de la agenda del fichable con nuestro día y horarios de partido: el
+ * dato que decide un fichaje. Si no puede nuestro día, te clavás; si llega
+ * tarde a una franja, te la jugás; si puede todo, adelante.
+ */
+function agendaFit(state: GameState, mp: MarketPlayer): { cls: string; text: string } | null {
+  if (!agendaKnown(mp) || !mp.agenda) return null;
+  const d = userDivision(state);
+  if (mp.agenda.blockedDays.includes(d.gameDay)) {
+    return { cls: 'bad', text: `⛔ No puede los ${d.gameDay} — justo nuestro día de partido` };
+  }
+  const missed =
+    mp.agenda.onlyTimes.length > 0 ? d.gameTimes.filter((t) => !mp.agenda!.onlyTimes.includes(t)) : [];
+  if (missed.length > 0) {
+    return { cls: 'warn', text: `A los partidos de ${missed.join(' y ')} llegaría para el 2do tiempo` };
+  }
+  return { cls: 'good', text: `Puede los ${d.gameDay}, nuestro día de partido` };
+}
+
+/** Nombre del club de origen: clickeable cuando es un rival real de la liga. */
+function prevTeamNode(state: GameState, name: string) {
+  const rival = state.rivals.find((r) => name === r.name || name.includes(r.name));
+  return rival ? (
+    <RivalLink id={rival.id}>
+      <strong>{name}</strong>
+    </RivalLink>
+  ) : (
+    <strong>{name}</strong>
+  );
+}
+
 // ---------- Cabecera con la fecha límite ----------
 
 function DeadlinePanel({ state, dispatch }: Props) {
@@ -73,6 +118,8 @@ function DeadlinePanel({ state, dispatch }: Props) {
   const weeksLeft = ps.totalWeeks - ps.week;
   const fees = projectedWeeklyFees(state);
   const costs = BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly;
+  const division = userDivision(state);
+  const league = LEAGUES.find((l) => l.id === division.leagueId)!;
 
   const risks: string[] = [];
   if (confirmed.length < min)
@@ -104,6 +151,9 @@ function DeadlinePanel({ state, dispatch }: Props) {
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', margin: '0.6rem 0' }}>
         <span className={`chip ${weeksLeft === 0 ? 'bad' : 'accent'}`}>
           {weeksLeft === 0 ? '¡Última semana! Al avanzar, se cierra la inscripción' : `Semana ${ps.week}/${ps.totalWeeks} · quedan ${weeksLeft + 1} semanas`}
+        </span>
+        <span className="chip accent">
+          🏆 {league.name} · {division.name} — se juega los {division.gameDay} ({division.gameTimes.join(' / ')})
         </span>
         <span className={`chip ${ps.gestionesLeft > 0 ? 'good' : 'warn'}`}>Gestiones: {ps.gestionesLeft}/{BALANCE.preseason.gestionesPerWeek}</span>
         <span className={`chip ${confirmed.length >= min ? 'good' : 'bad'}`}>
@@ -193,18 +243,30 @@ function MarketSection({ state, dispatch }: Props) {
   const noGestiones = ps.gestionesLeft <= 0;
   const available = ps.market.filter((m) => m.status === 'disponible');
   const gone = ps.market.filter((m) => m.status !== 'disponible');
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const profileMp = ps.market.find((m) => m.id === profileId) ?? null;
 
   const renderCard = (mp: MarketPlayer) => {
     const know = KNOWLEDGE_LABELS[mp.knowledge];
     const active = mp.status === 'disponible';
+    const fit = agendaFit(state, mp);
     return (
       <div key={mp.id} className={`player-card${active ? '' : ' dimmed'}`}>
-        <div className="player-head">
+        <div
+          className="player-head"
+          style={{ cursor: 'pointer' }}
+          title={`Ver ficha de ${mp.name}`}
+          onClick={() => setProfileId(mp.id)}
+        >
           <div className="avatar">
             <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} />
           </div>
           <div className="who">
-            <div className="name">{mp.name}</div>
+            <div className="name">
+              <span className="plink" role="button" tabIndex={0}>
+                {mp.name}
+              </span>
+            </div>
             <div className="pos">
               {mp.position} · {mp.age} años · {mp.height} cm
             </div>
@@ -215,7 +277,7 @@ function MarketSection({ state, dispatch }: Props) {
           </div>
         </div>
         <div className="player-desc">
-          Viene de <strong>{mp.previousTeam}</strong>. {mp.knowledgeSource}
+          Viene de {prevTeamNode(state, mp.previousTeam)}. {mp.knowledgeSource}
         </div>
         {(mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 && (
           <div className="human-note">
@@ -226,6 +288,7 @@ function MarketSection({ state, dispatch }: Props) {
           <span className={`chip ${know.cls}`}>{know.label}</span>
           <span className="chip">Físico: {estimateLabel(mp.estPhysical, mp.knowledge)}</span>
           <span className="chip">{mp.signingCost > 0 ? `Pase: $${mp.signingCost}` : 'Pase libre'}</span>
+          {fit && <span className={`chip ${fit.cls}`}>{fit.text}</span>}
           {mp.availability === 'escuchando_ofertas' && active && (
             <span className="chip warn">Escucha otras ofertas</span>
           )}
@@ -267,6 +330,146 @@ function MarketSection({ state, dispatch }: Props) {
           <div className="player-grid">{gone.map(renderCard)}</div>
         </>
       )}
+      {profileMp && (
+        <MarketProfile state={state} dispatch={dispatch} mp={profileMp} onClose={() => setProfileId(null)} />
+      )}
+    </div>
+  );
+}
+
+// ---------- Ficha de un fichable (estilo FM: lo que sabés, y "?" en lo que no) ----------
+
+function MarketProfile({
+  state,
+  dispatch,
+  mp,
+  onClose,
+}: Props & { mp: MarketPlayer; onClose: () => void }) {
+  const ps = state.preseason!;
+  const noGestiones = ps.gestionesLeft <= 0;
+  const know = KNOWLEDGE_LABELS[mp.knowledge];
+  // Cuánto se sabe de él: la personalidad y el compromiso solo se conocen de
+  // verdad si es de la casa; la cuota se comenta más fácil en la liga.
+  const deepKnown = mp.knowledge === 'muy_conocido';
+  const feeKnown = mp.contacted || deepKnown || mp.knowledge === 'conocido';
+  const fit = agendaFit(state, mp);
+  const active = mp.status === 'disponible';
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="profile" onClick={(e) => e.stopPropagation()}>
+        <div className="profile-head">
+          <div className="avatar profile-avatar">
+            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} />
+          </div>
+          <div className="profile-who">
+            <div className="profile-name">{mp.name}</div>
+            <div className="profile-chips">
+              <span className="chip">{mp.position}</span>
+              <span className="chip">{mp.age} años</span>
+              <span className="chip">{mp.height} cm</span>
+              <span className={`chip ${know.cls}`}>{know.label}</span>
+              {mp.availability === 'escuchando_ofertas' && active && (
+                <span className="chip warn">Escucha otras ofertas</span>
+              )}
+              {mp.status === 'fichado' && <span className="chip good">Fichado ✔</span>}
+              {mp.status === 'perdido' && <span className="chip bad">Arregló con otro club</span>}
+              {mp.status === 'rechazo' && <span className="chip bad">La negociación se cayó</span>}
+            </div>
+          </div>
+          <div className="rating">
+            <div className="num">{estimateLabel(mp.estTechnique, mp.knowledge)}</div>
+            <div className="approx">nivel</div>
+          </div>
+          <button className="profile-close" onClick={onClose} title="Cerrar">
+            ✕
+          </button>
+        </div>
+
+        <div className="profile-body">
+          <p style={{ margin: '0 0 0.6rem' }}>
+            Viene de {prevTeamNode(state, mp.previousTeam)}. {mp.knowledgeSource}
+          </p>
+
+          <h4 className="profile-subtitle">Lo que sabés (y lo que no)</h4>
+          <div className="data-grid">
+            <div className="data-row">
+              <span className="data-label">Nivel</span>
+              <span className="data-value">{estimateLabel(mp.estTechnique, mp.knowledge)}</span>
+            </div>
+            <div className="data-row">
+              <span className="data-label">Físico</span>
+              <span className="data-value">{estimateLabel(mp.estPhysical, mp.knowledge)}</span>
+            </div>
+            <div className="data-row">
+              <span className="data-label">Pase</span>
+              <span className="data-value">{mp.signingCost > 0 ? `$${mp.signingCost}` : 'Libre'}</span>
+            </div>
+            <div className="data-row">
+              <span className="data-label">Cuota</span>
+              <span className="data-value">{feeKnown ? feeAttitudeLabel(mp) : '?'}</span>
+            </div>
+            <div className="data-row">
+              <span className="data-label">Exigencias</span>
+              <span className="data-value">
+                {mp.contacted ? (mp.demand ? DEMAND_LABELS[mp.demand] : 'Sin exigencias') : '? (se sabe al contactarlo)'}
+              </span>
+            </div>
+            <div className="data-row">
+              <span className="data-label">Personalidad</span>
+              <span className="data-value">{deepKnown ? mp.personality.replace('_', ' ') : '?'}</span>
+            </div>
+            <div className="data-row">
+              <span className="data-label">Compromiso</span>
+              <span className="data-value">{deepKnown ? starsFor(mp.commitment) : '?'}</span>
+            </div>
+            <div className="data-row">
+              <span className="data-label">Cartel en la liga</span>
+              <span className="data-value">{deepKnown || mp.knowledge === 'conocido' ? starsFor(mp.sportRep) : '?'}</span>
+            </div>
+          </div>
+
+          <h4 className="profile-subtitle">Agenda</h4>
+          {agendaKnown(mp) && mp.agenda ? (
+            <>
+              {mp.agenda.notes.length > 0 ? (
+                <ul className="reason-list">
+                  {mp.agenda.notes.map((n, i) => (
+                    <li key={i}>{n}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="muted" style={{ margin: 0 }}>
+                  Sin restricciones que te haya avisado.
+                </p>
+              )}
+              {fit && (
+                <p style={{ margin: '0.5rem 0 0' }}>
+                  <span className={`chip ${fit.cls}`}>{fit.text}</span>
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="muted" style={{ margin: 0 }}>
+              ? — La agenda real la cuenta él mismo: se conoce al contactarlo.
+            </p>
+          )}
+
+          {active && (
+            <button
+              className="primary"
+              style={{ width: '100%', marginTop: '0.9rem' }}
+              disabled={noGestiones}
+              onClick={() => {
+                onClose();
+                dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true });
+              }}
+            >
+              📞 {mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -283,6 +486,7 @@ function NegotiationModal({ state, dispatch }: Props) {
     if (!mp) return null;
     const counter = mp.demand ? COUNTER_OFFERS[mp.demand] : undefined;
     const canCounter = counter && !ps.counterUsed[mp.id];
+    const fit = agendaFit(state, mp);
     return (
       <div className="modal-backdrop">
         <div className="modal">
@@ -297,6 +501,12 @@ function NegotiationModal({ state, dispatch }: Props) {
             {(mp.agenda?.notes.length ?? 0) > 0 && (
               <>
                 🗓 {mp.agenda!.notes.join(' ')}
+                <br />
+              </>
+            )}
+            {fit && (
+              <>
+                <span className={`chip ${fit.cls}`}>{fit.text}</span>
                 <br />
               </>
             )}
