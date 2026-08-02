@@ -116,6 +116,17 @@ function MainMenu({
           </button>
         )}
       </div>
+      <p className="menu-version">
+        Versión {__COMMIT_HASH__} ·{' '}
+        {new Date(__COMMIT_DATE__).toLocaleString('es-UY', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        })}
+      </p>
     </div>
   );
 }

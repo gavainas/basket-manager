@@ -1014,6 +1014,13 @@ tr.sheet-group td {
   line-height: 1.5;
 }
 
+/* Versión del build (hash + fecha del commit): para saber qué se está jugando. */
+.menu-screen .menu-version {
+  font-size: 0.72rem;
+  opacity: 0.65;
+  margin-top: 0.4rem;
+}
+
 /* Selector de dificultad de faltas para partidas nuevas. */
 .menu-difficulty {
   margin-top: 0.8rem;
