@@ -333,3 +333,14 @@ A la fecha de creación de este documento:
 - No está autorizado escalar el arte actual únicamente por estar ya implementado.
 - El siguiente paso visual correcto es presentar direcciones artísticas comparables y luego
   construir un vertical slice aprobado.
+
+### 2026-08-02 — Puerta 1: propuestas presentadas (pendiente de decisión)
+
+- Alcance: 3 direcciones sobre la pantalla de plantel, en
+  [`design/art/puerta1-direcciones.html`](art/puerta1-direcciones.html)
+  (ver [`design/art/README.md`](art/README.md)).
+- Aprobado: nada todavía — esperando la devolución de Gabi
+  (conservar / combinar / descartar).
+- Integrado al juego: nada (cero cambios en `src/`).
+- Próximo paso autorizado: registrar la decisión de Gabi acá y recién entonces
+  encarar la Puerta 2.

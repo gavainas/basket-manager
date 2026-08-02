@@ -1,0 +1,1206 @@
+<title>Basket Manager — Direcciones de arte (Puerta 1)</title>
+<style>
+  /* ============================================================
+     SHELL (el marco de la presentación, no el juego)
+     ============================================================ */
+  :root {
+    --s-bg: #faf9f6;
+    --s-panel: #ffffff;
+    --s-ink: #20252d;
+    --s-dim: #67707e;
+    --s-line: #e4e2da;
+    --s-accent: #d97a26;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --s-bg: #12161d;
+      --s-panel: #1a202a;
+      --s-ink: #e9ecf1;
+      --s-dim: #97a1af;
+      --s-line: #2a3140;
+      --s-accent: #f08c2e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --s-bg: #12161d;
+    --s-panel: #1a202a;
+    --s-ink: #e9ecf1;
+    --s-dim: #97a1af;
+    --s-line: #2a3140;
+    --s-accent: #f08c2e;
+  }
+  :root[data-theme="light"] {
+    --s-bg: #faf9f6;
+    --s-panel: #ffffff;
+    --s-ink: #20252d;
+    --s-dim: #67707e;
+    --s-line: #e4e2da;
+    --s-accent: #d97a26;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--s-bg);
+    color: var(--s-ink);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  .shell { max-width: 1150px; margin: 0 auto; padding: 0 1rem 4rem; }
+
+  .studio-head { padding: 2.2rem 0 1rem; }
+  .kicker {
+    font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--s-accent); font-weight: 700; margin-bottom: 0.6rem;
+  }
+  .studio-head h1 {
+    margin: 0 0 0.6rem; font-size: clamp(1.5rem, 4vw, 2.2rem);
+    line-height: 1.15; text-wrap: balance; letter-spacing: -0.01em;
+  }
+  .lede { color: var(--s-dim); max-width: 62ch; margin: 0 0 1rem; }
+  .lede strong { color: var(--s-ink); }
+
+  .eval-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.8rem 0 0; }
+  .eval-chips span {
+    font-size: 0.72rem; padding: 0.22rem 0.6rem; border: 1px solid var(--s-line);
+    border-radius: 999px; color: var(--s-dim);
+  }
+
+  .switch-wrap {
+    position: sticky; top: 0; z-index: 50; background: var(--s-bg);
+    padding: 0.7rem 0; border-bottom: 1px solid var(--s-line); margin-bottom: 1.6rem;
+  }
+  .switch { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .switch label {
+    cursor: pointer; padding: 0.5rem 1rem; border-radius: 999px;
+    border: 1px solid var(--s-line); font-size: 0.88rem; font-weight: 600;
+    color: var(--s-dim); background: var(--s-panel); user-select: none;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .switch label:hover { border-color: var(--s-accent); color: var(--s-ink); }
+
+  .tabradio {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  #tabA:checked ~ .shell label[for="tabA"],
+  #tabB:checked ~ .shell label[for="tabB"],
+  #tabC:checked ~ .shell label[for="tabC"] {
+    background: var(--s-accent); border-color: var(--s-accent); color: #fff;
+  }
+  #tabA:focus-visible ~ .shell label[for="tabA"],
+  #tabB:focus-visible ~ .shell label[for="tabB"],
+  #tabC:focus-visible ~ .shell label[for="tabC"] {
+    outline: 2px solid var(--s-accent); outline-offset: 2px;
+  }
+  .dir { display: none; }
+  #tabA:checked ~ .shell .secA { display: block; }
+  #tabB:checked ~ .shell .secB { display: block; }
+  #tabC:checked ~ .shell .secC { display: block; }
+
+  .dir-mast { margin: 0 0 1.1rem; }
+  .dir-mast h2 { margin: 0 0 0.3rem; font-size: 1.35rem; letter-spacing: -0.01em; }
+  .dir-mast .tesis { color: var(--s-dim); max-width: 68ch; margin: 0; }
+  .dir-notes { margin: 0.7rem 0 0; padding-left: 1.1rem; color: var(--s-dim); font-size: 0.88rem; }
+  .dir-notes li { margin-bottom: 0.15rem; }
+  .dir-notes b { color: var(--s-ink); font-weight: 600; }
+
+  .frame {
+    border: 1px solid var(--s-line); border-radius: 14px; overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.14);
+  }
+  .frame-label {
+    font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--s-dim); margin: 1.6rem 0 0.45rem; font-weight: 700;
+  }
+
+  .syspanel {
+    border: 1px solid var(--s-line); border-radius: 14px; padding: 1rem;
+    display: grid; gap: 1.2rem; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    background: var(--s-panel);
+  }
+  .syspanel h4 {
+    margin: 0 0 0.55rem; font-size: 0.7rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--s-dim);
+  }
+  .swatches { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  .swatch { width: 84px; }
+  .swatch i {
+    display: block; height: 40px; border-radius: 8px; border: 1px solid var(--s-line);
+  }
+  .swatch small {
+    display: block; font-size: 0.64rem; color: var(--s-dim); margin-top: 0.2rem;
+    font-family: ui-monospace, 'Courier New', monospace;
+  }
+  .sizes-row { display: flex; align-items: flex-end; gap: 0.9rem; }
+  .sizes-row figure { margin: 0; text-align: center; }
+  .sizes-row figcaption { font-size: 0.64rem; color: var(--s-dim); margin-top: 0.25rem; }
+
+  .compare { margin-top: 3rem; border-top: 1px solid var(--s-line); padding-top: 1.8rem; }
+  .compare h2 { margin: 0 0 0.3rem; font-size: 1.3rem; }
+  .compare > p { color: var(--s-dim); margin: 0 0 1.2rem; max-width: 62ch; }
+  .cmp-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); }
+  .cmp-col .cmp-tag {
+    font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 700; color: var(--s-dim); margin: 0 0 0.4rem;
+  }
+  .cmp-box { border-radius: 12px; overflow: hidden; border: 1px solid var(--s-line); }
+
+  .sumtable-wrap { overflow-x: auto; margin-top: 2rem; }
+  .sumtable { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 0.85rem; }
+  .sumtable th, .sumtable td {
+    text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--s-line);
+    vertical-align: top;
+  }
+  .sumtable th { color: var(--s-dim); font-weight: 600; white-space: nowrap; }
+  .sumtable thead th { color: var(--s-ink); font-weight: 700; }
+
+  .next { margin-top: 2.6rem; border: 1px solid var(--s-line); border-radius: 14px; padding: 1.2rem 1.3rem; background: var(--s-panel); }
+  .next h2 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+  .next p, .next li { color: var(--s-dim); font-size: 0.92rem; }
+  .next ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+  .next b { color: var(--s-ink); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  /* ============================================================
+     ESTRUCTURA COMPARTIDA DE LOS MOCKUPS
+     (cada dirección la re-viste con sus propios tokens)
+     ============================================================ */
+  .mock { padding: 0; }
+  .mock .mtop { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1.1rem; }
+  .mock .mclub { font-weight: 800; white-space: nowrap; }
+  .mock .mmeta { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; font-size: 0.82rem; }
+  .mock .mtabs { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .mock .mtabs span { font-size: 0.82rem; padding: 0.34rem 0.85rem; border-radius: 999px; }
+  .mock .mhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 1rem; }
+  .mock .mhead h3 { margin: 0; }
+  .mock .mhead .msub { font-size: 0.82rem; }
+  .pgrid { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+
+  .pcard { display: flex; flex-direction: column; gap: 0.45rem; }
+  .phead { display: flex; align-items: center; gap: 0.6rem; }
+  .phead .who { flex: 1; min-width: 0; }
+  .pname { display: block; font-weight: 700; }
+  .pmeta { display: block; font-size: 0.76rem; }
+  .prating { text-align: right; }
+  .pnum { display: block; font-weight: 800; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .pstars { display: block; font-size: 0.72rem; letter-spacing: 0.08em; }
+  .pdesc { margin: 0; font-size: 0.8rem; }
+  .av { display: inline-block; line-height: 0; overflow: hidden; }
+  .av svg { width: 100%; height: 100%; display: block; }
+  .av48 { width: 48px; height: 48px; flex: none; }
+
+  .bar { display: grid; grid-template-columns: 72px 1fr 26px; align-items: center; gap: 0.5rem; font-size: 0.75rem; }
+  .btrack { height: 8px; border-radius: 99px; overflow: hidden; position: relative; }
+  .bfill { display: block; height: 100%; border-radius: 99px; }
+  .bval { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .pnote { margin: 0; font-size: 0.78rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .chip { font-size: 0.7rem; padding: 0.16rem 0.5rem; border-radius: 999px; white-space: nowrap; }
+
+  /* ============================================================
+     DIRECCIÓN A — PLANILLA NOCTURNA (manager sobrio)
+     ============================================================ */
+  .dA {
+    --bg: #0b1220; --panel: #141f31; --panel2: #1b2941; --line: #263551;
+    --ink: #e9eff8; --dim: #8ca1bd; --acc: #f08c2e;
+    --good: #3bd689; --warn: #e9bc52; --bad: #f2635f;
+    font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  }
+  .dA .mock { background: var(--bg); color: var(--ink); padding: 1rem 1.1rem 1.4rem; }
+  .dA .mtop { padding-bottom: 0.75rem; border-bottom: 1px solid var(--line); }
+  .dA .mclub { color: var(--acc); font-size: 1.05rem; letter-spacing: -0.01em; }
+  .dA .mmeta { color: var(--dim); }
+  .dA .mmeta b { color: var(--ink); font-weight: 600; }
+  .dA .mtabs { margin: 0.75rem 0 1rem; }
+  .dA .mtabs span { color: var(--dim); border: 1px solid var(--line); }
+  .dA .mtabs .on { background: var(--acc); border-color: var(--acc); color: #1a1206; font-weight: 700; }
+  .dA .mhead h3 { font-size: 0.78rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+  .dA .mhead .msub { color: var(--dim); }
+  .dA .mhead .msub b { color: var(--good); font-weight: 600; }
+  .dA .pgrid { margin-top: 0.7rem; }
+  .dA .pcard {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 0.8rem 0.85rem;
+  }
+  .dA .av { background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; }
+  .dA .pname { color: var(--ink); font-size: 0.94rem; }
+  .dA .pmeta { color: var(--dim); }
+  .dA .pnum { color: var(--ink); }
+  .dA .pstars { color: var(--acc); }
+  .dA .pdesc { color: var(--dim); font-style: italic; }
+  .dA .bar { color: var(--dim); }
+  .dA .btrack { background: #0e1626; }
+  .dA .bval { color: var(--ink); }
+  .dA .bfill.g { background: var(--good); } .dA .bfill.w { background: var(--warn); } .dA .bfill.b { background: var(--bad); }
+  .dA .pnote { color: var(--dim); border-left: 2px solid var(--acc); padding-left: 0.5rem; }
+  .dA .pnote.angry { border-left-color: var(--bad); }
+  .dA .chip { border: 1px solid var(--line); color: var(--dim); }
+  .dA .chip.ok { border-color: rgba(59,214,137,0.4); color: var(--good); }
+  .dA .chip.warn { border-color: rgba(233,188,82,0.45); color: var(--warn); }
+  .dA .chip.bad { border-color: rgba(242,99,95,0.45); color: var(--bad); }
+  .dA .chip.accent { border-color: rgba(240,140,46,0.5); color: var(--acc); }
+  .dA .type-demo .big { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.01em; }
+  .dA .type-demo .nums { font-variant-numeric: tabular-nums; color: var(--s-dim); }
+
+  /* ============================================================
+     DIRECCIÓN B — CARNÉ DE SOCIO (club de barrio editorial)
+     ============================================================ */
+  .dB {
+    --paper: #f4eedf; --paper2: #ece4cf; --rule: #cdc3a8; --ink: #232e3d;
+    --dim: #6d7382; --acc: #8e3b2f; --sello: #2f5a9e;
+    --good: #3e7d4e; --warn: #a8842f; --bad: #a03b2e;
+    font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  }
+  .dB .mock {
+    background:
+      repeating-linear-gradient(0deg, transparent 0 26px, rgba(35,46,61,0.035) 26px 27px),
+      var(--paper);
+    color: var(--ink); padding: 1.1rem 1.2rem 1.5rem;
+  }
+  .dB .mtop { border-bottom: 3px double var(--ink); padding-bottom: 0.6rem; }
+  .dB .mclub { font-size: 1.2rem; letter-spacing: 0.02em; font-variant: small-caps; }
+  .dB .mmeta { color: var(--dim); font-size: 0.8rem; }
+  .dB .mmeta b { color: var(--ink); }
+  .dB .mtabs { margin: 0.7rem 0 1rem; gap: 0; }
+  .dB .mtabs span {
+    border-radius: 0; border-bottom: 2px solid transparent; color: var(--dim);
+    font-variant: small-caps; letter-spacing: 0.04em; font-size: 0.9rem; padding: 0.25rem 0.7rem;
+  }
+  .dB .mtabs .on { color: var(--acc); border-bottom-color: var(--acc); font-weight: 700; }
+  .dB .mhead h3 { font-size: 1.05rem; font-variant: small-caps; letter-spacing: 0.03em; }
+  .dB .mhead .msub { color: var(--dim); font-style: italic; }
+  .dB .pgrid { margin-top: 0.75rem; }
+  .dB .pcard {
+    background: var(--paper); border: 1px solid var(--ink); border-radius: 3px;
+    padding: 0.75rem 0.8rem; position: relative;
+    box-shadow: 2px 2px 0 rgba(35,46,61,0.18);
+  }
+  .dB .pcard::before {
+    content: "FICHA Nº " attr(data-ficha);
+    position: absolute; top: 0.45rem; right: 0.6rem;
+    font-family: 'Courier New', monospace; font-size: 0.6rem; letter-spacing: 0.08em;
+    color: var(--dim);
+  }
+  .dB .av { background: var(--paper2); border: 1px solid var(--ink); border-radius: 2px; }
+  .dB .pname { font-size: 1rem; }
+  .dB .pmeta { color: var(--dim); font-style: italic; }
+  .dB .pnum { font-family: 'Courier New', monospace; color: var(--acc); }
+  .dB .pstars { color: var(--acc); }
+  .dB .pdesc { font-style: italic; color: var(--dim); }
+  .dB .bar { font-family: 'Courier New', monospace; font-size: 0.72rem; color: var(--dim); }
+  .dB .btrack { background: transparent; border: 1px solid var(--rule); border-radius: 0; height: 9px; }
+  .dB .bfill { border-radius: 0; }
+  .dB .bval { color: var(--ink); font-weight: 700; }
+  .dB .bfill.g { background: var(--good); } .dB .bfill.w { background: var(--warn); } .dB .bfill.b { background: var(--bad); }
+  .dB .pnote { color: var(--sello); font-style: italic; }
+  .dB .pnote::before { content: "✎ "; }
+  .dB .chip {
+    border: 1.5px solid var(--dim); color: var(--dim); border-radius: 2px;
+    font-family: 'Courier New', monospace; text-transform: uppercase; font-size: 0.62rem;
+    letter-spacing: 0.06em; font-weight: 700;
+  }
+  .dB .chip.ok { border-color: var(--good); color: var(--good); transform: rotate(-1deg); }
+  .dB .chip.warn { border-color: var(--warn); color: var(--warn); transform: rotate(1deg); }
+  .dB .chip.bad { border-color: var(--bad); color: var(--bad); transform: rotate(-2deg); }
+  .dB .chip.accent { border-color: var(--sello); color: var(--sello); }
+  .dB .type-demo .big { font-size: 1.6rem; font-variant: small-caps; }
+  .dB .type-demo .nums { font-family: 'Courier New', monospace; }
+
+  /* ============================================================
+     DIRECCIÓN C — PIZARRA DEL VESTUARIO (caricatura adulta)
+     ============================================================ */
+  .dC {
+    --board: #1a2b23; --board2: #22362c; --chalk: #f1f4e8; --chalkdim: #a9b8a4;
+    --acc: #ff9330; --tape: #f2d14b; --cardbg: #fdf6e8; --cardink: #2a2118;
+    --good: #2f9e63; --warn: #d8a02f; --bad: #e05545; --outline: #14100b;
+    font-family: 'Trebuchet MS', Verdana, sans-serif;
+  }
+  .dC .mock {
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(241,244,232,0.05), transparent 45%),
+      radial-gradient(ellipse at 85% 90%, rgba(241,244,232,0.04), transparent 40%),
+      var(--board);
+    color: var(--chalk); padding: 1.1rem 1.2rem 1.5rem;
+    border: 10px solid #4a3423; border-radius: 4px;
+  }
+  .dC .mtop { align-items: center; }
+  .dC .mclub {
+    font-size: 1.15rem; color: var(--chalk); text-transform: uppercase; letter-spacing: 0.04em;
+    font-family: 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive;
+  }
+  .dC .mmeta { color: var(--chalkdim); font-family: 'Segoe Print', 'Bradley Hand', cursive; font-size: 0.78rem; }
+  .dC .mmeta b { color: var(--chalk); }
+  .dC .mtabs { margin: 0.8rem 0 1.1rem; }
+  .dC .mtabs span {
+    color: var(--chalkdim); border: 2px dashed rgba(169,184,164,0.4); font-weight: 700;
+    text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.06em;
+  }
+  .dC .mtabs .on {
+    background: var(--acc); border: 2px solid var(--outline); color: var(--outline);
+    box-shadow: 2px 2px 0 var(--outline);
+  }
+  .dC .mhead h3 {
+    font-family: 'Segoe Print', 'Bradley Hand', cursive; font-size: 1.1rem; color: var(--chalk);
+  }
+  .dC .mhead .msub { color: var(--chalkdim); font-family: 'Segoe Print', 'Bradley Hand', cursive; }
+  .dC .pgrid { margin-top: 0.8rem; }
+  .dC .pcard {
+    background: var(--cardbg); color: var(--cardink);
+    border: 3px solid var(--outline); border-radius: 14px;
+    padding: 0.8rem 0.85rem; position: relative;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.45);
+  }
+  .dC .pcard::before {
+    content: ""; position: absolute; top: -9px; left: 50%; transform: translateX(-50%) rotate(-2deg);
+    width: 58px; height: 15px; background: var(--tape); opacity: 0.9;
+    border: 1px solid rgba(0,0,0,0.25);
+  }
+  .dC .pcard:nth-child(odd) { transform: rotate(-0.6deg); }
+  .dC .pcard:nth-child(even) { transform: rotate(0.5deg); }
+  .dC .av { background: #fff; border: 2.5px solid var(--outline); border-radius: 50%; }
+  .dC .pname { font-size: 0.98rem; font-weight: 800; letter-spacing: -0.01em; }
+  .dC .pmeta { color: #7a6c58; font-weight: 700; text-transform: uppercase; font-size: 0.66rem; letter-spacing: 0.05em; }
+  .dC .pnum {
+    background: var(--acc); border: 2px solid var(--outline); border-radius: 8px;
+    padding: 0 0.35rem; display: inline-block; box-shadow: 2px 2px 0 var(--outline);
+    font-size: 1rem; color: var(--outline);
+  }
+  .dC .pstars { color: #b3831e; margin-top: 0.2rem; }
+  .dC .pdesc { color: #6d5f4c; font-weight: 600; }
+  .dC .bar { font-weight: 700; color: #7a6c58; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .dC .btrack { background: #e4d9c3; border: 2px solid var(--outline); height: 12px; }
+  .dC .bfill { border-right: 2px solid var(--outline); }
+  .dC .bval { color: var(--cardink); font-weight: 800; }
+  .dC .bfill.g { background: var(--good); } .dC .bfill.w { background: var(--warn); } .dC .bfill.b { background: var(--bad); }
+  .dC .pnote {
+    font-family: 'Segoe Print', 'Bradley Hand', cursive; color: #4b5d8f; font-size: 0.78rem;
+    transform: rotate(-0.5deg);
+  }
+  .dC .chip { border: 2px solid var(--outline); font-weight: 800; background: #fff; color: var(--cardink); box-shadow: 1.5px 1.5px 0 var(--outline); border-radius: 7px; }
+  .dC .chip.ok { background: var(--good); color: #fff; }
+  .dC .chip.warn { background: var(--warn); color: #241a05; }
+  .dC .chip.bad { background: var(--bad); color: #fff; }
+  .dC .chip.accent { background: var(--acc); color: var(--outline); }
+  .dC .type-demo .big { font-size: 1.5rem; font-weight: 800; }
+  .dC .type-demo .chalkline { font-family: 'Segoe Print', 'Bradley Hand', cursive; }
+
+  /* Paneles de sistema: heredan tipografía shell salvo demos */
+  .syspanel .type-demo p { margin: 0 0 0.25rem; }
+</style>
+
+<!-- ==================== RETRATOS (symbols reutilizables) ==================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- ============ ESTILO A: vector plano sobrio ============ -->
+    <!-- Techera 38: pelado, barba canosa, robusto -->
+    <symbol id="a-p1" viewBox="0 0 100 100">
+      <path d="M13 100 Q15 76 34 70 L43 65 L57 65 L66 70 Q85 76 87 100 Z" fill="#c96f2a"/>
+      <rect x="42" y="52" width="16" height="16" rx="5" fill="#b57947"/>
+      <circle cx="30" cy="42" r="4" fill="#c98f5f"/><circle cx="70" cy="42" r="4" fill="#c98f5f"/>
+      <ellipse cx="50" cy="40" rx="19" ry="20" fill="#c98f5f"/>
+      <path d="M34 47 Q37 60 50 60 Q63 60 66 47" stroke="#b9bfc4" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <path d="M43 50 Q50 53 57 50" stroke="#b9bfc4" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="42" cy="39" r="2" fill="#241a10"/><circle cx="58" cy="39" r="2" fill="#241a10"/>
+      <path d="M38 34 L46 35" stroke="#8a8f94" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M62 34 L54 35" stroke="#8a8f94" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M50 41 Q52 45 50 46" stroke="#a06c3c" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M42 30 L58 30" stroke="#a06c3c" stroke-width="1.4" opacity="0.5" stroke-linecap="round"/>
+    </symbol>
+    <!-- Silveira 24: rulos, flaco, figura -->
+    <symbol id="a-p2" viewBox="0 0 100 100">
+      <path d="M16 100 Q18 78 36 72 L44 66 L56 66 L64 72 Q82 78 84 100 Z" fill="#c96f2a"/>
+      <rect x="43" y="52" width="14" height="15" rx="5" fill="#754a28"/>
+      <circle cx="34" cy="41" r="3.5" fill="#8a5a34"/><circle cx="66" cy="41" r="3.5" fill="#8a5a34"/>
+      <ellipse cx="50" cy="41" rx="16" ry="19" fill="#8a5a34"/>
+      <circle cx="37" cy="27" r="6" fill="#17120e"/><circle cx="45" cy="22" r="6.5" fill="#17120e"/>
+      <circle cx="54" cy="21" r="6.5" fill="#17120e"/><circle cx="62" cy="25" r="6" fill="#17120e"/>
+      <circle cx="66" cy="32" r="5" fill="#17120e"/><circle cx="33" cy="33" r="5" fill="#17120e"/>
+      <circle cx="43" cy="40" r="2" fill="#171310"/><circle cx="57" cy="40" r="2" fill="#171310"/>
+      <path d="M39 35 L46 34" stroke="#171310" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M61 35 L54 34" stroke="#171310" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M50 42 Q52 46 50 47" stroke="#5e3a1e" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M43 51 Q50 57 57 51" stroke="#3d2513" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <!-- Píriz 31: lentes, entradas, prolijo -->
+    <symbol id="a-p3" viewBox="0 0 100 100">
+      <path d="M15 100 Q17 77 35 71 L44 66 L56 66 L65 71 Q83 77 85 100 Z" fill="#c96f2a"/>
+      <rect x="43" y="52" width="14" height="15" rx="5" fill="#cf9c6d"/>
+      <circle cx="32" cy="42" r="3.5" fill="#e9be93"/><circle cx="68" cy="42" r="3.5" fill="#e9be93"/>
+      <ellipse cx="50" cy="41" rx="17" ry="19" fill="#e9be93"/>
+      <path d="M36 30 Q40 24 50 23 Q60 24 64 30 Q58 27 50 27 Q42 27 36 30 Z" fill="#4a341f"/>
+      <circle cx="42" cy="40" r="6" fill="none" stroke="#2a3442" stroke-width="2"/>
+      <circle cx="58" cy="40" r="6" fill="none" stroke="#2a3442" stroke-width="2"/>
+      <path d="M48 40 L52 40" stroke="#2a3442" stroke-width="2"/>
+      <path d="M36 40 L32 41 M64 40 L68 41" stroke="#2a3442" stroke-width="2"/>
+      <circle cx="42" cy="40" r="1.8" fill="#241c12"/><circle cx="58" cy="40" r="1.8" fill="#241c12"/>
+      <path d="M50 42 Q52 46 50 47" stroke="#c08a58" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M44 52 Q50 54 56 52" stroke="#8d5f36" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <!-- Cabrera 27: vincha, barba desprolija -->
+    <symbol id="a-p4" viewBox="0 0 100 100">
+      <path d="M15 100 Q17 77 35 71 L44 66 L56 66 L65 71 Q83 77 85 100 Z" fill="#c96f2a"/>
+      <rect x="43" y="52" width="14" height="15" rx="5" fill="#96602f"/>
+      <circle cx="32" cy="42" r="3.5" fill="#b97c4b"/><circle cx="68" cy="42" r="3.5" fill="#b97c4b"/>
+      <ellipse cx="50" cy="41" rx="17" ry="19" fill="#b97c4b"/>
+      <path d="M34 28 Q40 18 50 17 Q60 18 66 28 L66 31 Q58 25 50 25 Q42 25 34 31 Z" fill="#241a10"/>
+      <rect x="33" y="28" width="34" height="6" rx="3" fill="#f08c2e"/>
+      <path d="M36 47 Q39 58 50 58 Q61 58 64 47" stroke="#241a10" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.55"/>
+      <circle cx="42" cy="40" r="2" fill="#1c1610"/><circle cx="58" cy="40" r="2" fill="#1c1610"/>
+      <path d="M38 36 L46 35" stroke="#241a10" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M62 36 L54 35" stroke="#241a10" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M50 42 Q52 46 50 47" stroke="#8d5629" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M44 51 Q52 54 58 49" stroke="#241a10" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <!-- Olivera 41: coronilla, canas, bigote caído -->
+    <symbol id="a-p5" viewBox="0 0 100 100">
+      <path d="M13 100 Q15 76 34 70 L43 65 L57 65 L66 70 Q85 76 87 100 Z" fill="#c96f2a"/>
+      <rect x="42" y="52" width="16" height="16" rx="5" fill="#c28a52"/>
+      <circle cx="31" cy="42" r="4" fill="#d9a56e"/><circle cx="69" cy="42" r="4" fill="#d9a56e"/>
+      <ellipse cx="50" cy="41" rx="18" ry="19" fill="#d9a56e"/>
+      <path d="M33 34 Q32 26 38 24 L38 34 Q35 36 33 38 Z" fill="#a9afb5"/>
+      <path d="M67 34 Q68 26 62 24 L62 34 Q65 36 67 38 Z" fill="#a9afb5"/>
+      <circle cx="42" cy="40" r="2" fill="#241c12"/><circle cx="58" cy="40" r="2" fill="#241c12"/>
+      <path d="M39 44 Q42 45 45 44 M55 44 Q58 45 61 44" stroke="#a4713d" stroke-width="1.4" fill="none" opacity="0.7"/>
+      <path d="M38 35 L46 35" stroke="#8f959b" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M62 35 L54 35" stroke="#8f959b" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M50 42 Q52 46 50 47" stroke="#b07c46" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M41 51 Q50 55 59 51" stroke="#a9afb5" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M41 51 L39 58 M59 51 L61 58" stroke="#a9afb5" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M41 29 L59 29" stroke="#b07c46" stroke-width="1.4" opacity="0.5" stroke-linecap="round"/>
+    </symbol>
+    <!-- Acosta 22: erizo, curita -->
+    <symbol id="a-p6" viewBox="0 0 100 100">
+      <path d="M16 100 Q18 78 36 72 L44 66 L56 66 L64 72 Q82 78 84 100 Z" fill="#c96f2a"/>
+      <rect x="43" y="52" width="14" height="15" rx="5" fill="#c58a5c"/>
+      <circle cx="33" cy="42" r="3.5" fill="#e2a878"/><circle cx="67" cy="42" r="3.5" fill="#e2a878"/>
+      <ellipse cx="50" cy="41" rx="16.5" ry="19" fill="#e2a878"/>
+      <path d="M33 33 L36 20 L41 27 L46 16 L51 25 L57 15 L62 24 L66 21 L67 33 Q58 26 50 26 Q41 26 33 33 Z" fill="#201812"/>
+      <circle cx="43" cy="40" r="2" fill="#1d1710"/><circle cx="57" cy="40" r="2" fill="#1d1710"/>
+      <path d="M39 35 L46 34" stroke="#201812" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M61 35 L54 34" stroke="#201812" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M50 42 Q52 46 50 47" stroke="#b5793f" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M43 51 Q50 56 57 51" stroke="#402a16" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <g transform="rotate(-18 63 46)"><rect x="58" y="44" width="10" height="4.6" rx="2.2" fill="#e8c9a8" stroke="#caa27b" stroke-width="0.8"/></g>
+    </symbol>
+
+    <!-- ============ ESTILO B: tinta editorial (figurita impresa) ============ -->
+    <!-- Techera -->
+    <symbol id="b-p1" viewBox="0 0 100 100">
+      <path d="M13 100 Q15 76 34 70 L43 65 L57 65 L66 70 Q85 76 87 100 Z" fill="#8e3b2f" stroke="#2b3240" stroke-width="2"/>
+      <text x="50" y="90" font-family="'Courier New', monospace" font-size="15" font-weight="bold" fill="#f4eedf" text-anchor="middle">5</text>
+      <rect x="42" y="52" width="16" height="15" rx="4" fill="#d9b48f" stroke="#2b3240" stroke-width="2"/>
+      <ellipse cx="50" cy="40" rx="19" ry="20" fill="#d9b48f" stroke="#2b3240" stroke-width="2"/>
+      <circle cx="30" cy="42" r="4" fill="#d9b48f" stroke="#2b3240" stroke-width="1.6"/>
+      <circle cx="70" cy="42" r="4" fill="#d9b48f" stroke="#2b3240" stroke-width="1.6"/>
+      <path d="M34 46 Q37 60 50 60 Q63 60 66 46 L66 51 Q62 63 50 63 Q38 63 34 51 Z" fill="#f4eedf" stroke="#2b3240" stroke-width="1.8"/>
+      <path d="M40 53 L42 58 M46 55 L47 60 M54 55 L53 60 M60 53 L58 58" stroke="#2b3240" stroke-width="1" opacity="0.7"/>
+      <path d="M43 49 Q50 52 57 49" stroke="#2b3240" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <circle cx="42" cy="39" r="1.8" fill="#2b3240"/><circle cx="58" cy="39" r="1.8" fill="#2b3240"/>
+      <path d="M38 34 L46 35 M62 34 L54 35" stroke="#2b3240" stroke-width="2" stroke-linecap="round"/>
+      <path d="M50 39 Q53 44 50 46" stroke="#2b3240" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M42 29 L58 29" stroke="#2b3240" stroke-width="1" opacity="0.5"/>
+      <path d="M32 44 L36 48 M64 48 L68 44" stroke="#2b3240" stroke-width="0.8" opacity="0.4"/>
+    </symbol>
+    <!-- Silveira -->
+    <symbol id="b-p2" viewBox="0 0 100 100">
+      <path d="M16 100 Q18 78 36 72 L44 66 L56 66 L64 72 Q82 78 84 100 Z" fill="#8e3b2f" stroke="#2b3240" stroke-width="2"/>
+      <text x="50" y="90" font-family="'Courier New', monospace" font-size="15" font-weight="bold" fill="#f4eedf" text-anchor="middle">7</text>
+      <rect x="43" y="52" width="14" height="15" rx="4" fill="#a8794f" stroke="#2b3240" stroke-width="2"/>
+      <ellipse cx="50" cy="41" rx="16" ry="19" fill="#a8794f" stroke="#2b3240" stroke-width="2"/>
+      <circle cx="34" cy="41" r="3.5" fill="#a8794f" stroke="#2b3240" stroke-width="1.6"/>
+      <circle cx="66" cy="41" r="3.5" fill="#a8794f" stroke="#2b3240" stroke-width="1.6"/>
+      <g fill="#2b3240">
+        <circle cx="37" cy="27" r="6"/><circle cx="45" cy="22" r="6.5"/><circle cx="54" cy="21" r="6.5"/>
+        <circle cx="62" cy="25" r="6"/><circle cx="66" cy="32" r="5"/><circle cx="33" cy="33" r="5"/>
+      </g>
+      <circle cx="43" cy="40" r="1.8" fill="#2b3240"/><circle cx="57" cy="40" r="1.8" fill="#2b3240"/>
+      <path d="M39 35 L46 34 M61 35 L54 34" stroke="#2b3240" stroke-width="2" stroke-linecap="round"/>
+      <path d="M50 40 Q52 45 50 47" stroke="#2b3240" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M43 51 Q50 57 57 51" stroke="#2b3240" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M36 45 L40 49 M60 49 L64 45" stroke="#2b3240" stroke-width="0.8" opacity="0.4"/>
+    </symbol>
+    <!-- Píriz -->
+    <symbol id="b-p3" viewBox="0 0 100 100">
+      <path d="M15 100 Q17 77 35 71 L44 66 L56 66 L65 71 Q83 77 85 100 Z" fill="#8e3b2f" stroke="#2b3240" stroke-width="2"/>
+      <text x="50" y="90" font-family="'Courier New', monospace" font-size="15" font-weight="bold" fill="#f4eedf" text-anchor="middle">8</text>
+      <rect x="43" y="52" width="14" height="15" rx="4" fill="#f0dfc8" stroke="#2b3240" stroke-width="2"/>
+      <ellipse cx="50" cy="41" rx="17" ry="19" fill="#f0dfc8" stroke="#2b3240" stroke-width="2"/>
+      <circle cx="32" cy="42" r="3.5" fill="#f0dfc8" stroke="#2b3240" stroke-width="1.6"/>
+      <circle cx="68" cy="42" r="3.5" fill="#f0dfc8" stroke="#2b3240" stroke-width="1.6"/>
+      <path d="M36 30 Q40 23 50 22 Q60 23 64 30 Q58 26 50 26 Q42 26 36 30 Z" fill="#2b3240"/>
+      <circle cx="42" cy="40" r="6" fill="none" stroke="#2b3240" stroke-width="2.2"/>
+      <circle cx="58" cy="40" r="6" fill="none" stroke="#2b3240" stroke-width="2.2"/>
+      <path d="M48 40 L52 40 M36 40 L32 41 M64 40 L68 41" stroke="#2b3240" stroke-width="2"/>
+      <circle cx="42" cy="40" r="1.6" fill="#2b3240"/><circle cx="58" cy="40" r="1.6" fill="#2b3240"/>
+      <path d="M50 42 Q52 46 50 47" stroke="#2b3240" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M44 52 Q50 54 56 52" stroke="#2b3240" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <!-- Cabrera -->
+    <symbol id="b-p4" viewBox="0 0 100 100">
+      <path d="M15 100 Q17 77 35 71 L44 66 L56 66 L65 71 Q83 77 85 100 Z" fill="#8e3b2f" stroke="#2b3240" stroke-width="2"/>
+      <text x="50" y="90" font-family="'Courier New', monospace" font-size="14" font-weight="bold" fill="#f4eedf" text-anchor="middle">11</text>
+      <rect x="43" y="52" width="14" height="15" rx="4" fill="#c99b6e" stroke="#2b3240" stroke-width="2"/>
+      <ellipse cx="50" cy="41" rx="17" ry="19" fill="#c99b6e" stroke="#2b3240" stroke-width="2"/>
+      <circle cx="32" cy="42" r="3.5" fill="#c99b6e" stroke="#2b3240" stroke-width="1.6"/>
+      <circle cx="68" cy="42" r="3.5" fill="#c99b6e" stroke="#2b3240" stroke-width="1.6"/>
+      <path d="M34 28 Q40 18 50 17 Q60 18 66 28 L66 30 Q58 24 50 24 Q42 24 34 30 Z" fill="#2b3240"/>
+      <rect x="33" y="28" width="34" height="6" rx="1" fill="#8e3b2f" stroke="#2b3240" stroke-width="1.4"/>
+      <path d="M38 48 L40 52 M43 51 L44 55 M50 53 L50 57 M56 51 L56 55 M61 48 L60 52" stroke="#2b3240" stroke-width="1.2" opacity="0.75"/>
+      <circle cx="42" cy="40" r="1.8" fill="#2b3240"/><circle cx="58" cy="40" r="1.8" fill="#2b3240"/>
+      <path d="M38 36 L46 35 M62 36 L54 35" stroke="#2b3240" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M50 42 Q52 46 50 47" stroke="#2b3240" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M44 50 Q52 53 58 48" stroke="#2b3240" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <!-- Olivera -->
+    <symbol id="b-p5" viewBox="0 0 100 100">
+      <path d="M13 100 Q15 76 34 70 L43 65 L57 65 L66 70 Q85 76 87 100 Z" fill="#8e3b2f" stroke="#2b3240" stroke-width="2"/>
+      <text x="50" y="90" font-family="'Courier New', monospace" font-size="15" font-weight="bold" fill="#f4eedf" text-anchor="middle">4</text>
+      <rect x="42" y="52" width="16" height="15" rx="4" fill="#d9b48f" stroke="#2b3240" stroke-width="2"/>
+      <ellipse cx="50" cy="41" rx="18" ry="19" fill="#d9b48f" stroke="#2b3240" stroke-width="2"/>
+      <circle cx="31" cy="42" r="4" fill="#d9b48f" stroke="#2b3240" stroke-width="1.6"/>
+      <circle cx="69" cy="42" r="4" fill="#d9b48f" stroke="#2b3240" stroke-width="1.6"/>
+      <path d="M33 35 Q32 26 38 24 L38 35 Z" fill="#f4eedf" stroke="#2b3240" stroke-width="1.4"/>
+      <path d="M67 35 Q68 26 62 24 L62 35 Z" fill="#f4eedf" stroke="#2b3240" stroke-width="1.4"/>
+      <circle cx="42" cy="40" r="1.8" fill="#2b3240"/><circle cx="58" cy="40" r="1.8" fill="#2b3240"/>
+      <path d="M39 44 Q42 45 45 44 M55 44 Q58 45 61 44" stroke="#2b3240" stroke-width="1" fill="none" opacity="0.6"/>
+      <path d="M38 35 L46 35 M62 35 L54 35" stroke="#2b3240" stroke-width="2" stroke-linecap="round"/>
+      <path d="M50 40 Q53 45 50 47" stroke="#2b3240" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M40 51 Q50 56 60 51 L61 57 M40 51 L39 57" stroke="#2b3240" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <path d="M41 29 L59 29 M43 25 L57 25" stroke="#2b3240" stroke-width="0.9" opacity="0.5"/>
+    </symbol>
+    <!-- Acosta -->
+    <symbol id="b-p6" viewBox="0 0 100 100">
+      <path d="M16 100 Q18 78 36 72 L44 66 L56 66 L64 72 Q82 78 84 100 Z" fill="#8e3b2f" stroke="#2b3240" stroke-width="2"/>
+      <text x="50" y="90" font-family="'Courier New', monospace" font-size="15" font-weight="bold" fill="#f4eedf" text-anchor="middle">9</text>
+      <rect x="43" y="52" width="14" height="15" rx="4" fill="#e3c19a" stroke="#2b3240" stroke-width="2"/>
+      <ellipse cx="50" cy="41" rx="16.5" ry="19" fill="#e3c19a" stroke="#2b3240" stroke-width="2"/>
+      <circle cx="33" cy="42" r="3.5" fill="#e3c19a" stroke="#2b3240" stroke-width="1.6"/>
+      <circle cx="67" cy="42" r="3.5" fill="#e3c19a" stroke="#2b3240" stroke-width="1.6"/>
+      <path d="M33 33 L36 20 L41 27 L46 16 L51 25 L57 15 L62 24 L66 21 L67 33 Q58 26 50 26 Q41 26 33 33 Z" fill="#2b3240"/>
+      <circle cx="43" cy="40" r="1.8" fill="#2b3240"/><circle cx="57" cy="40" r="1.8" fill="#2b3240"/>
+      <path d="M39 35 L46 34 M61 35 L54 34" stroke="#2b3240" stroke-width="2" stroke-linecap="round"/>
+      <path d="M50 42 Q52 46 50 47" stroke="#2b3240" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M43 51 Q50 56 57 51" stroke="#2b3240" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <g transform="rotate(-18 63 46)"><rect x="58" y="44" width="10" height="4.6" rx="1" fill="#f4eedf" stroke="#2b3240" stroke-width="1.2"/><path d="M60 46.3 L66 46.3" stroke="#2b3240" stroke-width="0.7" opacity="0.6"/></g>
+    </symbol>
+
+    <!-- ============ ESTILO C: caricatura adulta (contorno grueso) ============ -->
+    <!-- Techera: mandíbula enorme, barba tremenda -->
+    <symbol id="c-p1" viewBox="0 0 100 100">
+      <path d="M10 100 Q13 74 34 68 L42 63 L58 63 L66 68 Q87 74 90 100 Z" fill="#ff9330" stroke="#14100b" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="41" y="50" width="18" height="16" rx="5" fill="#c98046" stroke="#14100b" stroke-width="3"/>
+      <path d="M35 22 Q50 15 65 22 L69 45 Q68 60 50 62 Q32 60 31 45 Z" fill="#e0975a" stroke="#14100b" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="28" cy="40" r="5" fill="#e0975a" stroke="#14100b" stroke-width="3"/>
+      <circle cx="72" cy="40" r="5" fill="#e0975a" stroke="#14100b" stroke-width="3"/>
+      <path d="M31 42 Q32 62 50 64 Q68 62 69 42 L69 50 Q66 68 50 68 Q34 68 31 50 Z" fill="#c7ccd1" stroke="#14100b" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M42 49 Q50 53 58 49" stroke="#14100b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <circle cx="41" cy="36" r="2.2" fill="#14100b"/><circle cx="59" cy="36" r="2.2" fill="#14100b"/>
+      <path d="M35 30 L45 32 M65 30 L55 32" stroke="#14100b" stroke-width="3" stroke-linecap="round"/>
+      <path d="M50 33 L56 45 L45 45 Z" fill="#c9803f" stroke="#14100b" stroke-width="2.6" stroke-linejoin="round"/>
+      <path d="M40 24 Q50 20 60 24" stroke="#14100b" stroke-width="1.6" fill="none" opacity="0.4"/>
+    </symbol>
+    <!-- Silveira: cabeza flaca alta, nube de rulos, sonrisa con dientes -->
+    <symbol id="c-p2" viewBox="0 0 100 100">
+      <path d="M18 100 Q20 78 37 72 L44 65 L56 65 L63 72 Q80 78 82 100 Z" fill="#ff9330" stroke="#14100b" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="44" y="52" width="12" height="15" rx="4" fill="#6b3f1c" stroke="#14100b" stroke-width="3"/>
+      <ellipse cx="50" cy="42" rx="13" ry="21" fill="#7c4a22" stroke="#14100b" stroke-width="3"/>
+      <circle cx="36" cy="42" r="4" fill="#7c4a22" stroke="#14100b" stroke-width="2.6"/>
+      <circle cx="64" cy="42" r="4" fill="#7c4a22" stroke="#14100b" stroke-width="2.6"/>
+      <g fill="#17120e" stroke="#14100b" stroke-width="2.4">
+        <circle cx="36" cy="27" r="7"/><circle cx="45" cy="21" r="7.5"/><circle cx="55" cy="20" r="7.5"/>
+        <circle cx="64" cy="25" r="7"/><circle cx="68" cy="33" r="5.5"/><circle cx="32" cy="34" r="5.5"/>
+      </g>
+      <circle cx="44" cy="39" r="2" fill="#14100b"/><circle cx="56" cy="39" r="2" fill="#14100b"/>
+      <path d="M40 34 L47 33 M60 34 L53 33" stroke="#14100b" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M50 38 L53 47 L47 47 Z" fill="#5e3517" stroke="#14100b" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M41 51 Q50 60 59 51 L58 54 Q50 63 42 54 Z" fill="#fff" stroke="#14100b" stroke-width="2.4" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Píriz: cabeza huevo, anteojos gigantes, boca chiquita -->
+    <symbol id="c-p3" viewBox="0 0 100 100">
+      <path d="M15 100 Q17 77 35 71 L44 65 L56 65 L65 71 Q83 77 85 100 Z" fill="#ff9330" stroke="#14100b" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="43" y="51" width="14" height="16" rx="4" fill="#d69a63" stroke="#14100b" stroke-width="3"/>
+      <path d="M50 20 Q68 22 67 42 Q66 60 50 61 Q34 60 33 42 Q32 22 50 20 Z" fill="#f2c49b" stroke="#14100b" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="31" cy="43" r="4.5" fill="#f2c49b" stroke="#14100b" stroke-width="2.6"/>
+      <circle cx="69" cy="43" r="4.5" fill="#f2c49b" stroke="#14100b" stroke-width="2.6"/>
+      <path d="M37 29 Q42 23 50 22 Q58 23 63 29 Q56 26 50 26 Q44 26 37 29 Z" fill="#3a2a16" stroke="#14100b" stroke-width="2.2" stroke-linejoin="round"/>
+      <circle cx="42" cy="40" r="8.5" fill="#fff" stroke="#14100b" stroke-width="3"/>
+      <circle cx="59" cy="40" r="8.5" fill="#fff" stroke="#14100b" stroke-width="3"/>
+      <path d="M33.5 38 L31 40 M67.5 38 L70 40" stroke="#14100b" stroke-width="2.6" stroke-linecap="round"/>
+      <circle cx="43" cy="41" r="2" fill="#14100b"/><circle cx="58" cy="41" r="2" fill="#14100b"/>
+      <path d="M50 45 L52 50 L48 50 Z" fill="#dba76e" stroke="#14100b" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M47 55 Q50 56.5 53 55" stroke="#14100b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <!-- Cabrera: cabeza cuadrada, vincha con nudo, media sonrisa canchera -->
+    <symbol id="c-p4" viewBox="0 0 100 100">
+      <path d="M14 100 Q16 76 35 70 L43 64 L57 64 L65 70 Q84 76 86 100 Z" fill="#ff9330" stroke="#14100b" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="42" y="51" width="16" height="15" rx="4" fill="#9e6532" stroke="#14100b" stroke-width="3"/>
+      <path d="M34 24 L66 24 Q69 40 66 52 Q60 61 50 61 Q40 61 34 52 Q31 40 34 24 Z" fill="#b87a41" stroke="#14100b" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="31" cy="42" r="4.5" fill="#b87a41" stroke="#14100b" stroke-width="2.6"/>
+      <circle cx="69" cy="42" r="4.5" fill="#b87a41" stroke="#14100b" stroke-width="2.6"/>
+      <path d="M33 18 Q42 12 50 12 Q58 12 67 18 L67 25 L33 25 Z" fill="#241a10" stroke="#14100b" stroke-width="2.6" stroke-linejoin="round"/>
+      <rect x="31" y="24" width="38" height="8" rx="3" fill="#ff9330" stroke="#14100b" stroke-width="2.6"/>
+      <circle cx="70" cy="28" r="3.4" fill="#ff9330" stroke="#14100b" stroke-width="2.2"/>
+      <path d="M37 47 Q40 58 50 58 Q60 58 63 47 L63 51 Q59 60 50 60 Q41 60 37 51 Z" fill="#241a10" opacity="0.5" stroke="#14100b" stroke-width="1.6"/>
+      <circle cx="42" cy="39" r="2.2" fill="#14100b"/><circle cx="58" cy="39" r="2.2" fill="#14100b"/>
+      <path d="M37 34 Q42 32 46 34 M63 34 Q58 32 54 34" stroke="#14100b" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M50 37 L55 46 L46 46 Z" fill="#96602c" stroke="#14100b" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M44 50 Q52 54 60 47" stroke="#14100b" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <!-- Olivera: cabeza pera, papada, bigote morsa gris, brillo en la pelada -->
+    <symbol id="c-p5" viewBox="0 0 100 100">
+      <path d="M10 100 Q13 75 33 69 L42 64 L58 64 L67 69 Q87 75 90 100 Z" fill="#ff9330" stroke="#14100b" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="41" y="51" width="18" height="15" rx="5" fill="#cf9257" stroke="#14100b" stroke-width="3"/>
+      <path d="M50 21 Q63 22 65 34 Q71 40 69 48 Q66 60 50 61 Q34 60 31 48 Q29 40 35 34 Q37 22 50 21 Z" fill="#e5a866" stroke="#14100b" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="29" cy="43" r="5" fill="#e5a866" stroke="#14100b" stroke-width="2.6"/>
+      <circle cx="71" cy="43" r="5" fill="#e5a866" stroke="#14100b" stroke-width="2.6"/>
+      <path d="M32 34 Q30 25 37 23 L38 34 Z" fill="#b9bfc4" stroke="#14100b" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M68 34 Q70 25 63 23 L62 34 Z" fill="#b9bfc4" stroke="#14100b" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M43 24 Q47 22 51 24" stroke="#fff" stroke-width="2" fill="none" opacity="0.8" stroke-linecap="round"/>
+      <circle cx="42" cy="39" r="2" fill="#14100b"/><circle cx="58" cy="39" r="2" fill="#14100b"/>
+      <path d="M38 43 Q42 45 45 43 M55 43 Q58 45 62 43" stroke="#14100b" stroke-width="1.6" fill="none" opacity="0.55"/>
+      <path d="M37 34 L45 34 M63 34 L55 34" stroke="#7d8288" stroke-width="3" stroke-linecap="round"/>
+      <path d="M50 38 L55 48 L45 48 Z" fill="#c9884a" stroke="#14100b" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M38 51 Q50 57 62 51 L64 60 Q60 57 57 58 M38 51 L36 60 Q40 57 43 58" fill="#b9bfc4" stroke="#14100b" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M42 28 L58 28" stroke="#14100b" stroke-width="1.4" opacity="0.35"/>
+    </symbol>
+    <!-- Acosta: cabecita, pelos parados violentos, curita, entusiasmo -->
+    <symbol id="c-p6" viewBox="0 0 100 100">
+      <path d="M17 100 Q19 78 37 72 L44 66 L56 66 L63 72 Q81 78 83 100 Z" fill="#ff9330" stroke="#14100b" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="44" y="53" width="12" height="14" rx="4" fill="#d69a68" stroke="#14100b" stroke-width="3"/>
+      <ellipse cx="50" cy="43" rx="14.5" ry="17" fill="#efb283" stroke="#14100b" stroke-width="3"/>
+      <circle cx="34" cy="44" r="4" fill="#efb283" stroke="#14100b" stroke-width="2.6"/>
+      <circle cx="66" cy="44" r="4" fill="#efb283" stroke="#14100b" stroke-width="2.6"/>
+      <path d="M34 36 L30 18 L39 26 L44 12 L50 24 L57 11 L61 24 L69 17 L66 36 Q58 28 50 28 Q42 28 34 36 Z" fill="#201812" stroke="#14100b" stroke-width="2.4" stroke-linejoin="round"/>
+      <circle cx="44" cy="41" r="2.4" fill="#14100b"/><circle cx="57" cy="41" r="2.4" fill="#14100b"/>
+      <path d="M40 36 L47 35 M61 36 L54 35" stroke="#14100b" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M50 41 L53 48 L47 48 Z" fill="#d3925c" stroke="#14100b" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M42 52 Q50 59 58 52 L57 54 Q50 61 43 54 Z" fill="#fff" stroke="#14100b" stroke-width="2.2" stroke-linejoin="round"/>
+      <g transform="rotate(-18 64 47)"><rect x="58" y="44" width="12" height="6" rx="3" fill="#f2d1a8" stroke="#14100b" stroke-width="2"/></g>
+    </symbol>
+  </defs>
+</svg>
+
+<input type="radio" name="dir" id="tabA" class="tabradio" checked>
+<input type="radio" name="dir" id="tabB" class="tabradio">
+<input type="radio" name="dir" id="tabC" class="tabradio">
+
+<div class="shell">
+  <header class="studio-head">
+    <div class="kicker">Basket Manager · Pipeline de arte · Puerta 1</div>
+    <h1>Tres direcciones para el mismo plantel</h1>
+    <p class="lede">
+      La misma pantalla de <strong>Plantilla</strong>, con los mismos seis jugadores y los mismos
+      datos, vestida con tres mundos visuales distintos. <strong>Nada de esto está en el juego</strong>:
+      son propuestas para elegir, combinar y corregir, como pide
+      <strong>ART_PIPELINE.md — Puerta 1</strong>. Los retratos son bocetos del <em>estilo</em>
+      (el acabado fino viene después, con la hoja de 12 personajes de la Puerta 3).
+    </p>
+    <p class="lede" style="margin-bottom:0.2rem"><strong>Qué evaluar en cada una:</strong></p>
+    <div class="eval-chips">
+      <span>tono general</span><span>paleta</span><span>tipografía</span>
+      <span>densidad de información</span><span>estilo de cards</span><span>estilo de retratos</span>
+      <span>identidad amateur</span><span>adulto vs. infantil</span><span>legibilidad</span>
+    </div>
+  </header>
+
+  <div class="switch-wrap">
+    <nav class="switch">
+      <label for="tabA">A · Planilla nocturna</label>
+      <label for="tabB">B · Carné de socio</label>
+      <label for="tabC">C · Pizarra del vestuario</label>
+    </nav>
+  </div>
+
+  <!-- ==================== DIRECCIÓN A ==================== -->
+  <section class="dir secA dA">
+    <div class="dir-mast">
+      <h2>A · Planilla nocturna — manager deportivo sobrio</h2>
+      <p class="tesis">
+        La noche de liga: gimnasio con poca luz, datos primero, calma de planilla digital.
+        Es la evolución seria de lo que ya existe — misma familia del naranja actual, pero con
+        jerarquía más afilada. El riesgo asumido: es la opción más parecida a "un Football Manager".
+      </p>
+      <ul class="dir-notes">
+        <li><b>Cards:</b> panel oscuro, borde fino, radio corto. La densidad manda.</li>
+        <li><b>Tipografía:</b> grotesca del sistema, títulos en versalitas espaciadas, números tabulares grandes.</li>
+        <li><b>Retratos:</b> vector plano y limpio, paleta contenida, sin contornos gruesos.</li>
+      </ul>
+    </div>
+
+    <div class="frame">
+      <div class="mock">
+        <div class="mtop">
+          <span class="mclub">Atlético La Teja</span>
+          <span class="mmeta"><span>Semana <b>7</b> de 11</span><span>Caja <b>$ 1.240</b></span><span>Ánimo <b>68</b></span><span>Liga Universitaria · Div. B</span></span>
+        </div>
+        <div class="mtabs">
+          <span>Resumen</span><span>Semana</span><span class="on">Plantilla</span><span>Liga</span><span>Finanzas</span><span>Historia</span>
+        </div>
+        <div class="mhead">
+          <h3>Plantilla — 9 fichas</h3>
+          <span class="msub">Unión del grupo: <b>71</b> · dos grupos y un puente</span>
+        </div>
+        <div class="pgrid">
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#a-p1"/></svg></span>
+              <div class="who"><span class="pname">Diego Techera</span><span class="pmeta">Pívot · 38 años</span></div>
+              <div class="prating"><span class="pnum">≈71</span><span class="pstars">★★★☆</span></div>
+            </div>
+            <p class="pdesc">El capitán. Pide la pelota abajo y la protege como si fuera la última.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill w" style="width:52%"></span></span><span class="bval">52</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:74%"></span></span><span class="bval">74</span></div>
+            <div class="chips"><span class="chip ok">Bien</span><span class="chip ok">Cuota al día</span><span class="chip">Capitán</span><span class="chip accent">Último: 7/10</span></div>
+          </article>
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#a-p2"/></svg></span>
+              <div class="who"><span class="pname">Gonzalo Silveira</span><span class="pmeta">Base · 24 años</span></div>
+              <div class="prating"><span class="pnum">≈78</span><span class="pstars">★★★★</span></div>
+            </div>
+            <p class="pdesc">La figura del equipo. Cambia de ritmo y te deja pagando.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill g" style="width:81%"></span></span><span class="bval">81</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:88%"></span></span><span class="bval">88</span></div>
+            <p class="pnote">Viene encendido: 18 puntos el sábado pasado.</p>
+            <div class="chips"><span class="chip ok">Bien</span><span class="chip ok">Cuota al día</span><span class="chip accent">★ MVP ×2</span><span class="chip accent">Último: 9/10</span></div>
+          </article>
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#a-p3"/></svg></span>
+              <div class="who"><span class="pname">Martín Píriz</span><span class="pmeta">Alero · 31 años</span></div>
+              <div class="prating"><span class="pnum">≈66</span><span class="pstars">★★★</span></div>
+            </div>
+            <p class="pdesc">Contador de día, alero de noche. El triple abierto no se lo pierde.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill b" style="width:38%"></span></span><span class="bval">38</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill w" style="width:60%"></span></span><span class="bval">60</span></div>
+            <p class="pnote">«Si querés voy, pero no doy más» — pide la semana.</p>
+            <div class="chips"><span class="chip warn">Fundido</span><span class="chip ok">Cuota al día</span><span class="chip">Rotación</span></div>
+          </article>
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#a-p4"/></svg></span>
+              <div class="who"><span class="pname">Nacho Cabrera</span><span class="pmeta">Escolta · 27 años</span></div>
+              <div class="prating"><span class="pnum">≈69</span><span class="pstars">★★★</span></div>
+            </div>
+            <p class="pdesc">Talento para rato, pólvora para regalar.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill g" style="width:72%"></span></span><span class="bval">72</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill w" style="width:45%"></span></span><span class="bval">45</span></div>
+            <p class="pnote angry">Van tres fechas seguidas arrancando desde el banco, y lo mastica.</p>
+            <div class="chips"><span class="chip bad">Molesto</span><span class="chip ok">Cuota al día</span><span class="chip">Titular</span></div>
+          </article>
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#a-p5"/></svg></span>
+              <div class="who"><span class="pname">Waldemar Olivera</span><span class="pmeta">Ala-pívot · 41 años</span></div>
+              <div class="prating"><span class="pnum">≈58</span><span class="pstars">★★</span></div>
+            </div>
+            <p class="pdesc">El veterano del club. Sabe dónde pararse desde antes de que nacieras.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill w" style="width:41%"></span></span><span class="bval">41</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:79%"></span></span><span class="bval">79</span></div>
+            <p class="pnote">Debe dos cuotas, pero no falta a un asado.</p>
+            <div class="chips"><span class="chip ok">Bien</span><span class="chip warn">Debe 2 cuotas</span><span class="chip">Suplente</span></div>
+          </article>
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#a-p6"/></svg></span>
+              <div class="who"><span class="pname">Seba Acosta</span><span class="pmeta">Escolta · 22 años</span></div>
+              <div class="prating"><span class="pnum">≈63</span><span class="pstars">★★★</span></div>
+            </div>
+            <p class="pdesc">El pibe del barrio: corre todo, choca todo.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill b" style="width:30%"></span></span><span class="bval">30</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:66%"></span></span><span class="bval">66</span></div>
+            <p class="pnote">Esguince de tobillo jugando al fútbol 5. Vuelve en dos semanas.</p>
+            <div class="chips"><span class="chip bad">Lesionado · 2 sem.</span><span class="chip ok">Cuota al día</span><span class="chip">Rotación</span></div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-label">Sistema de la dirección A</div>
+    <div class="syspanel">
+      <div>
+        <h4>Paleta</h4>
+        <div class="swatches">
+          <div class="swatch"><i style="background:#0b1220"></i><small>#0B1220 fondo</small></div>
+          <div class="swatch"><i style="background:#141f31"></i><small>#141F31 panel</small></div>
+          <div class="swatch"><i style="background:#f08c2e"></i><small>#F08C2E acento</small></div>
+          <div class="swatch"><i style="background:#8ca1bd"></i><small>#8CA1BD texto dim</small></div>
+          <div class="swatch"><i style="background:#3bd689"></i><small>#3BD689 bien</small></div>
+          <div class="swatch"><i style="background:#f2635f"></i><small>#F2635F mal</small></div>
+        </div>
+      </div>
+      <div class="dA type-demo">
+        <h4>Tipografía</h4>
+        <p class="big" style="color:var(--s-ink)">Fecha 7 — vs. Deportivo Sayago</p>
+        <p class="nums">Grotesca del sistema · números tabulares 0123456789 · versalitas para títulos de card</p>
+      </div>
+      <div>
+        <h4>Retrato en tamaños (24 / 48 / 96 px)</h4>
+        <div class="sizes-row">
+          <figure><span class="av" style="width:24px;height:24px;background:#141f31;border-radius:5px"><svg viewBox="0 0 100 100"><use href="#a-p1"/></svg></span><figcaption>24</figcaption></figure>
+          <figure><span class="av" style="width:48px;height:48px;background:#141f31;border-radius:8px"><svg viewBox="0 0 100 100"><use href="#a-p1"/></svg></span><figcaption>48</figcaption></figure>
+          <figure><span class="av" style="width:96px;height:96px;background:#141f31;border-radius:12px"><svg viewBox="0 0 100 100"><use href="#a-p1"/></svg></span><figcaption>96</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== DIRECCIÓN B ==================== -->
+  <section class="dir secB dB">
+    <div class="dir-mast">
+      <h2>B · Carné de socio — club de barrio editorial</h2>
+      <p class="tesis">
+        El juego como papelería del club: el boletín de la comisión, la planilla del partido,
+        el carné con la foto en blanco y negro. Tema claro (única dirección en papel), tinta,
+        sellos de goma y números de máquina de escribir. La más arriesgada respecto a lo actual —
+        y la que más huele a club de verdad.
+      </p>
+      <ul class="dir-notes">
+        <li><b>Cards:</b> fichas de carné numeradas, borde de tinta, sombra de imprenta.</li>
+        <li><b>Tipografía:</b> serifa editorial para nombres, Courier para datos y sellos.</li>
+        <li><b>Retratos:</b> figurita impresa a tinta con número de camiseta; tramas y plumín.</li>
+      </ul>
+    </div>
+
+    <div class="frame">
+      <div class="mock">
+        <div class="mtop">
+          <span class="mclub">Club Atlético La Teja</span>
+          <span class="mmeta"><span>Semana <b>7</b> de 11</span><span>Caja <b>$ 1.240</b></span><span>Ánimo <b>68</b></span><span>Liga Universitaria · Div. B</span></span>
+        </div>
+        <div class="mtabs">
+          <span>Resumen</span><span>Semana</span><span class="on">Plantilla</span><span>Liga</span><span>Finanzas</span><span>Historia</span>
+        </div>
+        <div class="mhead">
+          <h3>Plantilla — 9 fichas habilitadas</h3>
+          <span class="msub">Unión del grupo: 71 — dos grupos y un puente</span>
+        </div>
+        <div class="pgrid">
+          <article class="pcard" data-ficha="005">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#b-p1"/></svg></span>
+              <div class="who"><span class="pname">Diego Techera</span><span class="pmeta">Pívot · 38 años</span></div>
+              <div class="prating"><span class="pnum">≈71</span><span class="pstars">★★★☆</span></div>
+            </div>
+            <p class="pdesc">El capitán. Pide la pelota abajo y la protege como si fuera la última.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill w" style="width:52%"></span></span><span class="bval">52</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:74%"></span></span><span class="bval">74</span></div>
+            <div class="chips"><span class="chip ok">Bien</span><span class="chip ok">Al día</span><span class="chip">Capitán</span><span class="chip accent">Últ. 7/10</span></div>
+          </article>
+          <article class="pcard" data-ficha="007">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#b-p2"/></svg></span>
+              <div class="who"><span class="pname">Gonzalo Silveira</span><span class="pmeta">Base · 24 años</span></div>
+              <div class="prating"><span class="pnum">≈78</span><span class="pstars">★★★★</span></div>
+            </div>
+            <p class="pdesc">La figura del equipo. Cambia de ritmo y te deja pagando.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill g" style="width:81%"></span></span><span class="bval">81</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:88%"></span></span><span class="bval">88</span></div>
+            <p class="pnote">Viene encendido: 18 puntos el sábado pasado.</p>
+            <div class="chips"><span class="chip ok">Bien</span><span class="chip ok">Al día</span><span class="chip accent">MVP ×2</span><span class="chip accent">Últ. 9/10</span></div>
+          </article>
+          <article class="pcard" data-ficha="008">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#b-p3"/></svg></span>
+              <div class="who"><span class="pname">Martín Píriz</span><span class="pmeta">Alero · 31 años</span></div>
+              <div class="prating"><span class="pnum">≈66</span><span class="pstars">★★★</span></div>
+            </div>
+            <p class="pdesc">Contador de día, alero de noche. El triple abierto no se lo pierde.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill b" style="width:38%"></span></span><span class="bval">38</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill w" style="width:60%"></span></span><span class="bval">60</span></div>
+            <p class="pnote">«Si querés voy, pero no doy más» — pide la semana.</p>
+            <div class="chips"><span class="chip warn">Fundido</span><span class="chip ok">Al día</span><span class="chip">Rotación</span></div>
+          </article>
+          <article class="pcard" data-ficha="011">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#b-p4"/></svg></span>
+              <div class="who"><span class="pname">Nacho Cabrera</span><span class="pmeta">Escolta · 27 años</span></div>
+              <div class="prating"><span class="pnum">≈69</span><span class="pstars">★★★</span></div>
+            </div>
+            <p class="pdesc">Talento para rato, pólvora para regalar.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill g" style="width:72%"></span></span><span class="bval">72</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill w" style="width:45%"></span></span><span class="bval">45</span></div>
+            <p class="pnote">Van tres fechas seguidas arrancando desde el banco, y lo mastica.</p>
+            <div class="chips"><span class="chip bad">Molesto</span><span class="chip ok">Al día</span><span class="chip">Titular</span></div>
+          </article>
+          <article class="pcard" data-ficha="004">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#b-p5"/></svg></span>
+              <div class="who"><span class="pname">Waldemar Olivera</span><span class="pmeta">Ala-pívot · 41 años</span></div>
+              <div class="prating"><span class="pnum">≈58</span><span class="pstars">★★</span></div>
+            </div>
+            <p class="pdesc">El veterano del club. Sabe dónde pararse desde antes de que nacieras.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill w" style="width:41%"></span></span><span class="bval">41</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:79%"></span></span><span class="bval">79</span></div>
+            <p class="pnote">Debe dos cuotas, pero no falta a un asado.</p>
+            <div class="chips"><span class="chip ok">Bien</span><span class="chip warn">Debe 2</span><span class="chip">Suplente</span></div>
+          </article>
+          <article class="pcard" data-ficha="009">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#b-p6"/></svg></span>
+              <div class="who"><span class="pname">Seba Acosta</span><span class="pmeta">Escolta · 22 años</span></div>
+              <div class="prating"><span class="pnum">≈63</span><span class="pstars">★★★</span></div>
+            </div>
+            <p class="pdesc">El pibe del barrio: corre todo, choca todo.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill b" style="width:30%"></span></span><span class="bval">30</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:66%"></span></span><span class="bval">66</span></div>
+            <p class="pnote">Esguince de tobillo jugando al fútbol 5. Vuelve en dos semanas.</p>
+            <div class="chips"><span class="chip bad">Lesionado 2 sem.</span><span class="chip ok">Al día</span><span class="chip">Rotación</span></div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-label">Sistema de la dirección B</div>
+    <div class="syspanel">
+      <div>
+        <h4>Paleta</h4>
+        <div class="swatches">
+          <div class="swatch"><i style="background:#f4eedf"></i><small>#F4EEDF papel</small></div>
+          <div class="swatch"><i style="background:#232e3d"></i><small>#232E3D tinta</small></div>
+          <div class="swatch"><i style="background:#8e3b2f"></i><small>#8E3B2F bordó</small></div>
+          <div class="swatch"><i style="background:#2f5a9e"></i><small>#2F5A9E sello</small></div>
+          <div class="swatch"><i style="background:#3e7d4e"></i><small>#3E7D4E bien</small></div>
+          <div class="swatch"><i style="background:#a8842f"></i><small>#A8842F alerta</small></div>
+        </div>
+      </div>
+      <div class="dB type-demo">
+        <h4>Tipografía</h4>
+        <p class="big" style="color:var(--s-ink)">Fecha 7 — vs. Deportivo Sayago</p>
+        <p class="nums" style="color:var(--s-dim)">Serifa editorial + COURIER PARA SELLOS Y DATOS 0123456789</p>
+      </div>
+      <div>
+        <h4>Retrato en tamaños (24 / 48 / 96 px)</h4>
+        <div class="sizes-row">
+          <figure><span class="av" style="width:24px;height:24px;background:#ece4cf;border:1px solid #232e3d"><svg viewBox="0 0 100 100"><use href="#b-p1"/></svg></span><figcaption>24</figcaption></figure>
+          <figure><span class="av" style="width:48px;height:48px;background:#ece4cf;border:1px solid #232e3d"><svg viewBox="0 0 100 100"><use href="#b-p1"/></svg></span><figcaption>48</figcaption></figure>
+          <figure><span class="av" style="width:96px;height:96px;background:#ece4cf;border:1px solid #232e3d"><svg viewBox="0 0 100 100"><use href="#b-p1"/></svg></span><figcaption>96</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== DIRECCIÓN C ==================== -->
+  <section class="dir secC dC">
+    <div class="dir-mast">
+      <h2>C · Pizarra del vestuario — caricatura adulta estilizada</h2>
+      <p class="tesis">
+        La previa en el vestuario: la pizarra verde con marco de madera, fichas magnéticas con la
+        cara de cada uno, notas en tiza y cinta adhesiva. Personalidad primero — caras exageradas
+        con panza, canas y años de liga encima. Adulta, no infantil: más Balatro que dibujito.
+      </p>
+      <ul class="dir-notes">
+        <li><b>Cards:</b> fichas claras sobre pizarra oscura, contorno grueso, cinta y leve rotación.</li>
+        <li><b>Tipografía:</b> palo seco redondeada y pesada para datos; tiza manuscrita para notas humanas.</li>
+        <li><b>Retratos:</b> caricatura con contorno de marcador; rasgos y proporciones exagerados.</li>
+      </ul>
+    </div>
+
+    <div class="frame">
+      <div class="mock">
+        <div class="mtop">
+          <span class="mclub">Atlético La Teja</span>
+          <span class="mmeta"><span>Semana <b>7</b> de 11</span><span>Caja <b>$ 1.240</b></span><span>Ánimo <b>68</b></span><span>Liga Universitaria · Div. B</span></span>
+        </div>
+        <div class="mtabs">
+          <span>Resumen</span><span>Semana</span><span class="on">Plantilla</span><span>Liga</span><span>Finanzas</span><span>Historia</span>
+        </div>
+        <div class="mhead">
+          <h3>La plantilla — 9 fichas</h3>
+          <span class="msub">unión del grupo: 71 — dos grupitos y un puente</span>
+        </div>
+        <div class="pgrid">
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#c-p1"/></svg></span>
+              <div class="who"><span class="pname">Diego Techera</span><span class="pmeta">Pívot · 38</span></div>
+              <div class="prating"><span class="pnum">≈71</span><span class="pstars">★★★☆</span></div>
+            </div>
+            <p class="pdesc">El capitán. Pide la pelota abajo y la protege como si fuera la última.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill w" style="width:52%"></span></span><span class="bval">52</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:74%"></span></span><span class="bval">74</span></div>
+            <div class="chips"><span class="chip ok">Bien</span><span class="chip">Capitán</span><span class="chip accent">Últ. 7/10</span></div>
+          </article>
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#c-p2"/></svg></span>
+              <div class="who"><span class="pname">Gonzalo Silveira</span><span class="pmeta">Base · 24</span></div>
+              <div class="prating"><span class="pnum">≈78</span><span class="pstars">★★★★</span></div>
+            </div>
+            <p class="pdesc">La figura del equipo. Cambia de ritmo y te deja pagando.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill g" style="width:81%"></span></span><span class="bval">81</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:88%"></span></span><span class="bval">88</span></div>
+            <p class="pnote">viene encendido: 18 puntos el sábado</p>
+            <div class="chips"><span class="chip ok">Bien</span><span class="chip accent">MVP ×2</span><span class="chip accent">Últ. 9/10</span></div>
+          </article>
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#c-p3"/></svg></span>
+              <div class="who"><span class="pname">Martín Píriz</span><span class="pmeta">Alero · 31</span></div>
+              <div class="prating"><span class="pnum">≈66</span><span class="pstars">★★★</span></div>
+            </div>
+            <p class="pdesc">Contador de día, alero de noche. El triple abierto no se lo pierde.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill b" style="width:38%"></span></span><span class="bval">38</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill w" style="width:60%"></span></span><span class="bval">60</span></div>
+            <p class="pnote">«si querés voy, pero no doy más»</p>
+            <div class="chips"><span class="chip warn">Fundido</span><span class="chip">Rotación</span></div>
+          </article>
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#c-p4"/></svg></span>
+              <div class="who"><span class="pname">Nacho Cabrera</span><span class="pmeta">Escolta · 27</span></div>
+              <div class="prating"><span class="pnum">≈69</span><span class="pstars">★★★</span></div>
+            </div>
+            <p class="pdesc">Talento para rato, pólvora para regalar.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill g" style="width:72%"></span></span><span class="bval">72</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill w" style="width:45%"></span></span><span class="bval">45</span></div>
+            <p class="pnote">3 fechas al banco y lo mastica…</p>
+            <div class="chips"><span class="chip bad">Molesto</span><span class="chip">Titular</span></div>
+          </article>
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#c-p5"/></svg></span>
+              <div class="who"><span class="pname">Waldemar Olivera</span><span class="pmeta">Ala-pívot · 41</span></div>
+              <div class="prating"><span class="pnum">≈58</span><span class="pstars">★★</span></div>
+            </div>
+            <p class="pdesc">El veterano del club. Sabe dónde pararse desde antes de que nacieras.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill w" style="width:41%"></span></span><span class="bval">41</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:79%"></span></span><span class="bval">79</span></div>
+            <p class="pnote">debe 2 cuotas, pero al asado no falta</p>
+            <div class="chips"><span class="chip warn">Debe 2 cuotas</span><span class="chip">Suplente</span></div>
+          </article>
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#c-p6"/></svg></span>
+              <div class="who"><span class="pname">Seba Acosta</span><span class="pmeta">Escolta · 22</span></div>
+              <div class="prating"><span class="pnum">≈63</span><span class="pstars">★★★</span></div>
+            </div>
+            <p class="pdesc">El pibe del barrio: corre todo, choca todo.</p>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill b" style="width:30%"></span></span><span class="bval">30</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:66%"></span></span><span class="bval">66</span></div>
+            <p class="pnote">tobillo: 2 semanas afuera (fútbol 5…)</p>
+            <div class="chips"><span class="chip bad">Lesionado</span><span class="chip">Rotación</span></div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-label">Sistema de la dirección C</div>
+    <div class="syspanel">
+      <div>
+        <h4>Paleta</h4>
+        <div class="swatches">
+          <div class="swatch"><i style="background:#1a2b23"></i><small>#1A2B23 pizarra</small></div>
+          <div class="swatch"><i style="background:#fdf6e8"></i><small>#FDF6E8 ficha</small></div>
+          <div class="swatch"><i style="background:#ff9330"></i><small>#FF9330 acento</small></div>
+          <div class="swatch"><i style="background:#f2d14b"></i><small>#F2D14B cinta</small></div>
+          <div class="swatch"><i style="background:#14100b"></i><small>#14100B contorno</small></div>
+          <div class="swatch"><i style="background:#e05545"></i><small>#E05545 mal</small></div>
+        </div>
+      </div>
+      <div class="dC type-demo">
+        <h4>Tipografía</h4>
+        <p class="big" style="color:var(--s-ink)">Fecha 7 — vs. Dep. Sayago</p>
+        <p class="chalkline" style="color:var(--s-dim)">tiza manuscrita para lo humano, palo seco pesada para los datos</p>
+      </div>
+      <div>
+        <h4>Retrato en tamaños (24 / 48 / 96 px)</h4>
+        <div class="sizes-row">
+          <figure><span class="av" style="width:24px;height:24px;background:#fff;border:2px solid #14100b;border-radius:50%"><svg viewBox="0 0 100 100"><use href="#c-p1"/></svg></span><figcaption>24</figcaption></figure>
+          <figure><span class="av" style="width:48px;height:48px;background:#fff;border:2.5px solid #14100b;border-radius:50%"><svg viewBox="0 0 100 100"><use href="#c-p1"/></svg></span><figcaption>48</figcaption></figure>
+          <figure><span class="av" style="width:96px;height:96px;background:#fff;border:3px solid #14100b;border-radius:50%"><svg viewBox="0 0 100 100"><use href="#c-p1"/></svg></span><figcaption>96</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== COMPARACIÓN ==================== -->
+  <section class="compare">
+    <h2>La misma card, tres mundos</h2>
+    <p>Diego Techera (38, pívot, capitán, el físico ya no es lo que era) en las tres direcciones.</p>
+    <div class="cmp-grid">
+      <div class="cmp-col">
+        <p class="cmp-tag">A · Planilla nocturna</p>
+        <div class="cmp-box dA" style="background:#0b1220;padding:0.9rem">
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#a-p1"/></svg></span>
+              <div class="who"><span class="pname">Diego Techera</span><span class="pmeta">Pívot · 38 años</span></div>
+              <div class="prating"><span class="pnum">≈71</span><span class="pstars">★★★☆</span></div>
+            </div>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill w" style="width:52%"></span></span><span class="bval">52</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:74%"></span></span><span class="bval">74</span></div>
+            <div class="chips"><span class="chip ok">Bien</span><span class="chip">Capitán</span></div>
+          </article>
+        </div>
+      </div>
+      <div class="cmp-col">
+        <p class="cmp-tag">B · Carné de socio</p>
+        <div class="cmp-box dB" style="background:#f4eedf;padding:0.9rem">
+          <article class="pcard" data-ficha="005">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#b-p1"/></svg></span>
+              <div class="who"><span class="pname">Diego Techera</span><span class="pmeta">Pívot · 38 años</span></div>
+              <div class="prating"><span class="pnum">≈71</span><span class="pstars">★★★☆</span></div>
+            </div>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill w" style="width:52%"></span></span><span class="bval">52</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:74%"></span></span><span class="bval">74</span></div>
+            <div class="chips"><span class="chip ok">Bien</span><span class="chip">Capitán</span></div>
+          </article>
+        </div>
+      </div>
+      <div class="cmp-col">
+        <p class="cmp-tag">C · Pizarra del vestuario</p>
+        <div class="cmp-box dC" style="background:#1a2b23;padding:0.9rem">
+          <article class="pcard">
+            <div class="phead">
+              <span class="av av48"><svg viewBox="0 0 100 100"><use href="#c-p1"/></svg></span>
+              <div class="who"><span class="pname">Diego Techera</span><span class="pmeta">Pívot · 38</span></div>
+              <div class="prating"><span class="pnum">≈71</span><span class="pstars">★★★☆</span></div>
+            </div>
+            <div class="bar"><span>Físico</span><span class="btrack"><span class="bfill w" style="width:52%"></span></span><span class="bval">52</span></div>
+            <div class="bar"><span>Motivación</span><span class="btrack"><span class="bfill g" style="width:74%"></span></span><span class="bval">74</span></div>
+            <div class="chips"><span class="chip ok">Bien</span><span class="chip">Capitán</span></div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="sumtable-wrap">
+      <table class="sumtable">
+        <thead>
+          <tr><th></th><th>A · Planilla nocturna</th><th>B · Carné de socio</th><th>C · Pizarra del vestuario</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>Tesis</th><td>La noche de liga, datos primero</td><td>La papelería del club, impresa</td><td>La previa en el vestuario, con humor</td></tr>
+          <tr><th>Tema</th><td>Oscuro (continuidad)</td><td>Claro / papel (ruptura)</td><td>Oscuro con fichas claras (mixto)</td></tr>
+          <tr><th>Tipografía</th><td>Grotesca de sistema, números grandes</td><td>Serifa + Courier de máquina</td><td>Palo seco pesada + tiza manuscrita</td></tr>
+          <tr><th>Retratos</th><td>Vector plano sobrio</td><td>Figurita a tinta con número</td><td>Caricatura de contorno grueso</td></tr>
+          <tr><th>Dónde brilla</th><td>Densidad, legibilidad, seriedad</td><td>Nostalgia, identidad de club único</td><td>Personalidad, humor, lo social</td></tr>
+          <tr><th>Riesgo a vigilar</th><td>Quedar genérico ("otro FM oscuro")</td><td>Legibilidad de datos densos en papel</td><td>Pasarse de rosca hacia lo infantil</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== CÓMO SEGUIR ==================== -->
+  <section class="next">
+    <h2>Cómo responder (Puerta 1)</h2>
+    <p>No hace falta elegir una entera. El formato que pide el pipeline:</p>
+    <ul>
+      <li><b>Conservar:</b> qué dirección (o qué partes) te gustan tal cual.</li>
+      <li><b>Combinar:</b> mezclas — p. ej. «la UI de A con los retratos de C», «el papel de B solo para la Historia».</li>
+      <li><b>Descartar:</b> qué no va, y por qué (eso también queda registrado).</li>
+    </ul>
+    <p style="margin-bottom:0">
+      Con tu devolución se registra la decisión en <b>ART_PIPELINE.md</b>, y recién ahí siguen la
+      <b>Puerta 2</b> (aprobar UI y personajes por separado), la <b>hoja de 12 personajes</b> y el
+      <b>vertical slice de 5 pantallas</b>. Hasta entonces, el juego queda exactamente como está.
+    </p>
+  </section>
+</div>
