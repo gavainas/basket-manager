@@ -87,6 +87,7 @@ export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'med
     trialCandidate: null,
     divisionId: USER_DIVISION_ID,
     otherDivisionTeams: INITIAL_OTHER_DIVISION.map((t) => ({ ...t })),
+    heldDivision: null,
     absenceDifficulty: difficulty,
   };
   state.objectives = generateObjectives(1, state.club.sportPrestige, rng);

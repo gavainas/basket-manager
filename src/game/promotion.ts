@@ -6,6 +6,7 @@
 // le toca subir o bajar, cambia state.divisionId y se reasigna todo por slot.
 
 import { divisionStandings } from './world';
+import { PLAZA_DIVISION_ID } from '../data/worldData';
 import { Rng, seedFromString } from './rng';
 import type { GameState, Rival, RivalStyle } from './types';
 
@@ -51,6 +52,23 @@ function simulateSemifinals(top4: string[], strengthOf: (k: string) => number, s
  * Puro: no muta `state`. Lo llama startPreseason.
  */
 export function applyPromotionRelegation(state: GameState): PromotionResult {
+  // En la plaza no hay ascensos ni descensos: los mismos cuadros, un año más.
+  // La Universitaria sigue existiendo aparte (el lugar guardado vive en
+  // state.heldDivision) y sus movimientos internos quedan en pausa narrativa.
+  if (state.divisionId === PLAZA_DIVISION_ID) {
+    const drift = new Rng(seedFromString(`plaza_s${state.seasonNumber}`));
+    return {
+      nextDivisionId: PLAZA_DIVISION_ID,
+      nextRivals: state.rivals.map((r) => ({
+        ...r,
+        strength: Math.max(25, Math.min(55, r.strength + drift.int(-3, 3))),
+      })),
+      nextOtherTeams: state.otherDivisionTeams.map((t) => ({ ...t })),
+      notes: ['En la plaza no hay ascensos ni descensos: los mismos cuadros de siempre, un año más.'],
+      userMoved: null,
+    };
+  }
+
   const userDiv = state.divisionId;
   const otherDiv = userDiv === LOWER_DIV ? HIGHER_DIV : LOWER_DIV;
   const userInLower = userDiv === LOWER_DIV;

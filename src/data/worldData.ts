@@ -76,6 +76,17 @@ export const LEAGUES: League[] = [
     ],
   },
   {
+    id: 'lg_plaza',
+    name: 'Liga de la Plaza',
+    kind: 'libre',
+    divisionCount: 1,
+    rules: [
+      'Inscripción gratuita: la organiza la comisión de la plaza.',
+      'Sin ascensos ni descensos: acá se viene a jugar, no a subir.',
+      'Un jugador solo puede estar inscripto en un equipo de la liga por temporada.',
+    ],
+  },
+  {
     id: 'lg_montevideo',
     name: 'Liga Montevideo',
     kind: 'libre',
@@ -138,11 +149,42 @@ export const DIVISIONS: Division[] = [
     gameTimes: ['20:30', '22:15'],
     altDays: ['martes'],
   },
+  {
+    // La Liga de la Plaza: sábados a la tarde, gratis, sin ascensos. Nadie
+    // tiene la agenda bloqueada los sábados: acá puede venir todo el mundo.
+    // Lo que se paga es otra cosa: nivel bajo y prestigio que no acompaña.
+    id: 'dv_pl_u',
+    leagueId: 'lg_plaza',
+    name: 'Única',
+    level: 8,
+    gameDay: 'sábado',
+    gameTimes: ['17:00', '19:00'],
+    altDays: ['domingo'],
+  },
 ];
 
 /** Liga y divisional donde compite el equipo principal del usuario. */
 export const USER_LEAGUE_ID = 'lg_universitaria';
 export const USER_DIVISION_ID = 'dv_lu_b';
+export const PLAZA_DIVISION_ID = 'dv_pl_u';
+
+/**
+ * Los 9 de la plaza: rivales del torneo si el club se anota ahí. Usan los
+ * mismos slots r1..r9 del sistema clásico, así el fixture y la tabla no
+ * cambian. Varios son los cuadros de origen que ya se nombran en el mercado
+ * ("viene de Unión Vecinal"): el mundo chico cierra solo.
+ */
+export const PLAZA_RIVALS: Rival[] = [
+  { id: 'r1', name: 'Unión Vecinal', strength: 48, style: 'equilibrado' },
+  { id: 'r2', name: 'Deportivo La Curva', strength: 45, style: 'corredores' },
+  { id: 'r3', name: 'Los de Siempre', strength: 43, style: 'internos' },
+  { id: 'r4', name: 'El Galpón', strength: 41, style: 'equilibrado' },
+  { id: 'r5', name: 'Panadería La Ideal', strength: 38, style: 'tiradores' },
+  { id: 'r6', name: 'La Esquina del Tanque', strength: 36, style: 'internos' },
+  { id: 'r7', name: 'Barrio Norte', strength: 33, style: 'corredores' },
+  { id: 'r8', name: 'Los Primos', strength: 31, style: 'tiradores' },
+  { id: 'r9', name: 'El Túnel', strength: 28, style: 'equilibrado' },
+];
 
 export const CLUB_COLORS: [string, string][] = [
   ['#f08c2e', '#1b2739'],

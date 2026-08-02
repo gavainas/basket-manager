@@ -3,7 +3,14 @@ import { buildMarket, marketToPlayer } from '../data/market';
 import { createInitialRoster } from '../data/players';
 import { createRecruit } from '../data/recruits';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
-import { INITIAL_OTHER_DIVISION, USER_DIVISION_ID } from '../data/worldData';
+import {
+  DIVISIONS,
+  INITIAL_OTHER_DIVISION,
+  LEAGUES,
+  PLAZA_DIVISION_ID,
+  PLAZA_RIVALS,
+  USER_DIVISION_ID,
+} from '../data/worldData';
 import { applyPromotionRelegation } from './promotion';
 import { weeklyFee } from './economy';
 import { generateObjectives } from './objectives';
@@ -28,6 +35,7 @@ import type {
   Player,
   PreseasonState,
   PreseasonSummaryEntry,
+  WeekDay,
 } from './types';
 
 // ---------- Etiquetas de exigencias ----------
@@ -192,6 +200,7 @@ function buildPreseasonState(players: Player[], club: Club, rng: Rng, firstSeaso
     week: 1,
     totalWeeks: BALANCE.preseason.weeks,
     gestionesLeft: BALANCE.preseason.gestionesPerWeek,
+    chosenDivisionId: null,
     continuity,
     playerDemands,
     market: buildMarket(rng),
@@ -204,6 +213,69 @@ function buildPreseasonState(players: Player[], club: Club, rng: Rng, firstSeaso
     moneySpent: 0,
     summary: null,
   };
+}
+
+// ---------- Inscripción: la oferta de ligas ----------
+
+export interface LeagueOption {
+  divisionId: string;
+  leagueName: string;
+  divisionName: string;
+  gameDay: WeekDay;
+  gameTimes: string[];
+  fee: number;
+  /** Lectura del nivel según los rivales de esa liga. */
+  levelLabel: string;
+  /** Nota con carácter de la opción (qué se gana y qué se paga). */
+  note: string;
+  isCurrent: boolean;
+  isPlaza: boolean;
+}
+
+function levelLabelFor(avgStrength: number): string {
+  if (avgStrength >= 68) return 'Nivel muy duro';
+  if (avgStrength >= 58) return 'Nivel competitivo';
+  if (avgStrength >= 48) return 'Nivel accesible';
+  return 'Nivel para pasear';
+}
+
+function optionFor(s: GameState, divisionId: string, rivals: { strength: number }[], held: boolean): LeagueOption {
+  const division = DIVISIONS.find((d) => d.id === divisionId)!;
+  const league = LEAGUES.find((l) => l.id === division.leagueId)!;
+  const isPlaza = divisionId === PLAZA_DIVISION_ID;
+  const avg = rivals.reduce((sum, r) => sum + r.strength, 0) / Math.max(1, rivals.length);
+  return {
+    divisionId,
+    leagueName: league.name,
+    divisionName: division.name,
+    gameDay: division.gameDay,
+    gameTimes: division.gameTimes,
+    fee: isPlaza ? 0 : BALANCE.economy.inscriptionFee,
+    levelLabel: levelLabelFor(avg),
+    note: isPlaza
+      ? 'Gratis y los sábados puede todo el mundo. Sin ascensos, y el prestigio deportivo lo siente.'
+      : held
+        ? 'Te guardaron el lugar: el dueño de la liga te conoce.'
+        : 'Tu liga de siempre: acá te conocen, y si no llegás con la plata, la comisión banca.',
+    isCurrent: divisionId === s.divisionId,
+    isPlaza,
+  };
+}
+
+/**
+ * La oferta de ligas de esta pretemporada: tu divisional actual, la plaza y,
+ * si el club está en la plaza, la divisional de la Universitaria que le
+ * guardaron. La elección se hace con PS_CHOOSE_LEAGUE y se paga al cierre.
+ */
+export function inscriptionOffer(s: GameState): LeagueOption[] {
+  const options: LeagueOption[] = [optionFor(s, s.divisionId, s.rivals, false)];
+  if (s.heldDivision && s.heldDivision.divisionId !== s.divisionId) {
+    options.push(optionFor(s, s.heldDivision.divisionId, s.heldDivision.rivals, true));
+  }
+  if (s.divisionId !== PLAZA_DIVISION_ID) {
+    options.push(optionFor(s, PLAZA_DIVISION_ID, PLAZA_RIVALS, false));
+  }
+  return options;
 }
 
 // ---------- Arranques ----------
@@ -270,6 +342,7 @@ export function createPreseasonNewGame(seed: number, difficulty: AbsenceDifficul
     trialCandidate: null,
     divisionId: USER_DIVISION_ID,
     otherDivisionTeams: INITIAL_OTHER_DIVISION.map((t) => ({ ...t })),
+    heldDivision: null,
     absenceDifficulty: difficulty,
   };
   state.preseason = buildPreseasonState(players, state.club, rng, true);
@@ -403,6 +476,8 @@ export function startPreseason(state: GameState): GameState {
     trialCandidate: null,
     divisionId: promo.nextDivisionId,
     otherDivisionTeams: promo.nextOtherTeams,
+    // El lugar guardado en la Universitaria (si el club anda por la plaza) se hereda.
+    heldDivision: state.heldDivision ?? null,
     // La dificultad de faltas acompaña al club toda la carrera.
     absenceDifficulty: state.absenceDifficulty,
     // Lo vivido entre compañeros (asados, sociedades, peleas) no se resetea.
@@ -840,18 +915,59 @@ export function closePreseason(state: GameState): GameState {
     roster = s.players.filter((x) => !x.leftClub);
   }
 
-  // Inscripción: si no alcanza la plata, la comisión pasa la gorra.
-  const fee = BALANCE.economy.inscriptionFee;
-  if (s.club.money < fee) {
-    const needed = fee - s.club.money;
-    psEarn(s, 'Aporte extraordinario de la comisión', needed);
-    s.club.socialPrestige = clamp(s.club.socialPrestige - BALANCE.preseason.bailoutSocialHit);
-    s.club.sportPrestige = clamp(s.club.sportPrestige - BALANCE.preseason.bailoutSportHit);
+  // Inscripción: la liga elegida — o el default a las corridas si nadie eligió.
+  const offer = inscriptionOffer(s);
+  // undefined = save de antes de que existiera la oferta: se inscribe como siempre, sin recargo.
+  const late = p.chosenDivisionId === null;
+  const target = offer.find((o) => o.divisionId === p.chosenDivisionId) ?? offer.find((o) => o.isCurrent)!;
+
+  // Cambio de divisional: rivales y tabla nuevos, y el lugar que corresponda guardado.
+  if (target.divisionId !== s.divisionId) {
+    if (target.isPlaza) {
+      s.heldDivision = { divisionId: s.divisionId, rivals: s.rivals.map((r) => ({ ...r })) };
+      s.rivals = PLAZA_RIVALS.map((r) => ({ ...r }));
+      s.club.sportPrestige = clamp(s.club.sportPrestige - BALANCE.preseason.plazaPrestigeHit);
+      consequences.push(
+        `El club se anotó en la Liga de la Plaza: gratis y los sábados a la tarde, pero el barrio lo lee como un paso atrás (prestigio deportivo -${BALANCE.preseason.plazaPrestigeHit}). La Universitaria te guarda el lugar.`
+      );
+      logClubEvent(s, 'hito', 'El club dejó la Universitaria y se anotó en la Liga de la Plaza.', 0);
+    } else {
+      s.rivals = (s.heldDivision?.rivals ?? RIVALS).map((r) => ({ ...r }));
+      s.heldDivision = null;
+      consequences.push('El club vuelve a la Liga Universitaria: el lugar estaba guardado y la vuelta se firmó sin drama.');
+      logClubEvent(s, 'hito', 'El club volvió a la Liga Universitaria tras su paso por la plaza.', 0);
+    }
+    s.divisionId = target.divisionId;
+    s.standings = [
+      { teamId: 'club', wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 },
+      ...s.rivals.map((r) => ({ teamId: r.id, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 })),
+    ];
+  }
+
+  // El costo: la plaza es gratis; no elegir a tiempo tiene recargo y mala imagen.
+  let fee = target.fee;
+  if (late) {
+    if (target.fee > 0) fee += BALANCE.preseason.lateInscriptionFee;
+    s.club.socialPrestige = clamp(s.club.socialPrestige - BALANCE.preseason.lateInscriptionPrestigeHit);
     consequences.push(
-      `No alcanzaba la caja para la inscripción: la comisión puso $${needed} de su bolsillo. El club arranca debiendo favores (prestigio -${BALANCE.preseason.bailoutSocialHit}).`
+      `Nadie eligió liga a tiempo: la comisión te anotó a último momento en ${target.leagueName}${
+        target.fee > 0 ? ` con recargo ($${BALANCE.preseason.lateInscriptionFee})` : ''
+      }. El apuro se notó (prestigio social -${BALANCE.preseason.lateInscriptionPrestigeHit}).`
     );
   }
-  psSpend(s, 'Inscripción a la liga', fee);
+  if (fee > 0) {
+    // Si no alcanza la plata, la comisión pasa la gorra (acá te conocen: te fían el resto).
+    if (s.club.money < fee) {
+      const needed = fee - s.club.money;
+      psEarn(s, 'Aporte extraordinario de la comisión', needed);
+      s.club.socialPrestige = clamp(s.club.socialPrestige - BALANCE.preseason.bailoutSocialHit);
+      s.club.sportPrestige = clamp(s.club.sportPrestige - BALANCE.preseason.bailoutSportHit);
+      consequences.push(
+        `No alcanzaba la caja para la inscripción: la comisión puso $${needed} de su bolsillo. El club arranca debiendo favores (prestigio -${BALANCE.preseason.bailoutSocialHit}).`
+      );
+    }
+    psSpend(s, `Inscripción a ${target.leagueName}`, fee);
+  }
 
   const { strengths, risks } = computeStrengthsAndRisks(s);
   const seasonPromises = s.promises.filter((pr) => pr.season === s.seasonNumber);

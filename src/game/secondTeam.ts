@@ -13,7 +13,7 @@ import { BALANCE, clamp } from './balance';
 import { fragilityOf, pickByFragility, rollInjuryWeeks } from './injuries';
 import { playerEffective } from './match';
 import { logClubEvent, logPlayerEvent } from './timeline';
-import { registerPlayer, USER_CLUB_ID } from './world';
+import { dayLabel, registerPlayer, USER_CLUB_ID } from './world';
 import { Rng, seedFromString } from './rng';
 import type { GameState, League, Player, SecondTeamRow, SecondTeamState } from './types';
 
@@ -181,7 +181,7 @@ export function registerSecondTeam(state: GameState, leagueId: string, playerIds
   s.club.socialPrestige = clamp(s.club.socialPrestige + E.socialPrestigeOnRegister);
   s.news.unshift({
     week: s.week,
-    text: `El club inscribió un segundo equipo: ${teamName} jugará en ${league.name} · ${division.name} (los ${division.gameDay}).`,
+    text: `El club inscribió un segundo equipo: ${teamName} jugará en ${league.name} · ${division.name} (los ${dayLabel(division.gameDay)}).`,
     tone: 'good',
   });
   logClubEvent(s, 'hito', `El club se expande: ${teamName} se inscribe en ${league.name} con ${chosen.length} fichas.`);

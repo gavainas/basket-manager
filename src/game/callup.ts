@@ -7,7 +7,7 @@ import { BALANCE, clamp } from './balance';
 import { fragilityOf, rollInjuryWeeks } from './injuries';
 import { isSelectable } from './match';
 import { logPlayerEvent } from './timeline';
-import { userFixtureOfWeek } from './world';
+import { dayLabel, userFixtureOfWeek } from './world';
 import type { CallUpEntry, GameState, WeekDay } from './types';
 import type { Rng } from './rng';
 
@@ -68,7 +68,7 @@ export function rollCallUp(s: GameState, rng: Rng): void {
     // Agenda: el día bloqueado que te avisó cuando firmó (casi siempre se cumple).
     if (p.agenda && matchDay && p.agenda.blockedDays.includes(matchDay) && outCount < D.maxOut && rng.chance(0.85)) {
       const player = s.players.find((x) => x.id === p.id)!;
-      const note = `Los ${matchDay} no puede: compromiso fijo. Te lo avisó cuando arregló venir.`;
+      const note = `Los ${dayLabel(matchDay)} no puede: compromiso fijo. Te lo avisó cuando arregló venir.`;
       entries.push({ playerId: p.id, playerName: p.name, status: 'ausente', note, reasonId: 'agenda' });
       logPlayerEvent(player, s.seasonNumber, s.week, 'ausencia', `Faltó al partido. ${note}`);
       outCount += 1;

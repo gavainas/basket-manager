@@ -14,6 +14,7 @@ import {
   advancePreseasonWeek,
   closePreseason,
   createPreseasonNewGame,
+  inscriptionOffer,
   openNegotiation,
   resolveNegotiation,
   startPreseason,
@@ -70,6 +71,7 @@ export type GameAction =
   | { type: 'PS_DISMISS_EVENT_OUTCOME' }
   | { type: 'PS_ADVANCE' }
   | { type: 'PS_CLOSE' }
+  | { type: 'PS_CHOOSE_LEAGUE'; divisionId: string }
   | { type: 'START_SEASON' };
 
 export function gameReducer(state: GameState | null, action: GameAction): GameState | null {
@@ -124,6 +126,12 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       if (state.phase !== 'preseason' || !state.preseason) return state;
       if (state.preseason.pendingEvent || state.preseason.negotiation) return state;
       return closePreseason(state);
+    }
+    case 'PS_CHOOSE_LEAGUE': {
+      if (state.phase !== 'preseason' || !state.preseason) return state;
+      // Solo se puede elegir una liga de la oferta real de esta pretemporada.
+      if (!inscriptionOffer(state).some((o) => o.divisionId === action.divisionId)) return state;
+      return { ...state, preseason: { ...state.preseason, chosenDivisionId: action.divisionId } };
     }
     case 'START_SEASON': {
       if (state.phase !== 'preseasonEnd') return state;

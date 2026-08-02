@@ -243,6 +243,9 @@ export const BALANCE = {
     emergencyPrestigeHit: 4, // por recurrir a jugadores de emergencia
     bailoutSocialHit: 6, // aporte extraordinario de la comisión
     bailoutSportHit: 3,
+    lateInscriptionFee: 60, // recargo por no elegir liga: te anotan a último momento
+    lateInscriptionPrestigeHit: 3, // y el barrio se entera de las corridas
+    plazaPrestigeHit: 6, // bajarse a la plaza: el prestigio deportivo lo siente
   },
 } as const;
 

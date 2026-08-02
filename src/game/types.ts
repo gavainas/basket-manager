@@ -571,6 +571,12 @@ export interface PreseasonState {
   week: number; // 1..totalWeeks
   totalWeeks: number;
   gestionesLeft: number;
+  /**
+   * Divisional elegida en la inscripción (null = todavía no eligió; si llega
+   * así al cierre, la comisión lo anota a último momento en la de siempre,
+   * con recargo). undefined = save de antes de que existiera la oferta.
+   */
+  chosenDivisionId?: string | null;
   /** Situación de cada jugador del plantel anterior (por id). */
   continuity: Record<string, ContinuityStatus>;
   /** Condición que pide cada jugador del plantel con 'pide_condicion'. */
@@ -878,6 +884,11 @@ export interface GameState {
   divisionId: string;
   /** Los 10 equipos de la divisional que el usuario NO juega (persisten los ascensos/descensos). */
   otherDivisionTeams: Rival[];
+  /**
+   * Si el club se fue a la plaza, la Universitaria le guarda el lugar: la
+   * divisional que dejó y sus rivales, para poder volver en otra pretemporada.
+   */
+  heldDivision?: { divisionId: string; rivals: Rival[] } | null;
   /** Segundo equipo del club en otra liga (etapa 6); opcional para no migrar saves. */
   secondTeam?: SecondTeamState | null;
   /** Dificultad de faltas y lesiones (elegida al crear la partida; saves viejos = medio). */

@@ -5,16 +5,19 @@ import {
   COUNTER_OFFERS,
   DEMAND_LABELS,
   confirmedPlayers,
+  inscriptionOffer,
   projectedWeeklyFees,
+  type LeagueOption,
 } from '../game/preseason';
 import { getPreseasonEvent } from '../game/preseasonEvents';
-import { DIVISIONS, LEAGUES } from '../data/worldData';
+import { DIVISIONS } from '../data/worldData';
 import type { GameState, KnowledgeLevel, MarketPlayer, Player } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { formatMoney, starsFor } from './helpers';
 import { Avatar } from './Avatar';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
+import { dayLabel } from '../game/world';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
 import { useState } from 'react';
 
@@ -71,6 +74,19 @@ function userDivision(state: GameState) {
   return DIVISIONS.find((d) => d.id === state.divisionId) ?? DIVISIONS[1];
 }
 
+/**
+ * La divisional contra la que se cruzan las agendas. Con la inscripción
+ * abierta y sin liga elegida no hay "nuestro día": el veredicto se apaga
+ * hasta que firmes (los saves de antes de la oferta siguen como siempre).
+ */
+function verdictDivision(state: GameState) {
+  const p = state.preseason;
+  if (p && p.chosenDivisionId !== undefined) {
+    return p.chosenDivisionId ? (DIVISIONS.find((d) => d.id === p.chosenDivisionId) ?? null) : null;
+  }
+  return userDivision(state);
+}
+
 /** ¿Ya conocés su agenda real? Se revela al contactarlo (o si es de la casa). */
 function agendaKnown(mp: MarketPlayer): boolean {
   return mp.contacted || mp.knowledge === 'muy_conocido';
@@ -83,16 +99,17 @@ function agendaKnown(mp: MarketPlayer): boolean {
  */
 function agendaFit(state: GameState, mp: MarketPlayer): { cls: string; text: string } | null {
   if (!agendaKnown(mp) || !mp.agenda) return null;
-  const d = userDivision(state);
+  const d = verdictDivision(state);
+  if (!d) return null;
   if (mp.agenda.blockedDays.includes(d.gameDay)) {
-    return { cls: 'bad', text: `⛔ No puede los ${d.gameDay} — justo nuestro día de partido` };
+    return { cls: 'bad', text: `⛔ No puede los ${dayLabel(d.gameDay)} — justo nuestro día de partido` };
   }
   const missed =
     mp.agenda.onlyTimes.length > 0 ? d.gameTimes.filter((t) => !mp.agenda!.onlyTimes.includes(t)) : [];
   if (missed.length > 0) {
     return { cls: 'warn', text: `A los partidos de ${missed.join(' y ')} llegaría para el 2do tiempo` };
   }
-  return { cls: 'good', text: `Puede los ${d.gameDay}, nuestro día de partido` };
+  return { cls: 'good', text: `Puede los ${dayLabel(d.gameDay)}, nuestro día de partido` };
 }
 
 /** Nombre del club de origen: clickeable cuando es un rival real de la liga. */
@@ -114,20 +131,28 @@ function DeadlinePanel({ state, dispatch }: Props) {
   const ps = state.preseason!;
   const confirmed = confirmedPlayers(state);
   const min = BALANCE.preseason.minPlayers;
-  const fee = BALANCE.economy.inscriptionFee;
   const weeksLeft = ps.totalWeeks - ps.week;
   const fees = projectedWeeklyFees(state);
   const costs = BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly;
-  const division = userDivision(state);
-  const league = LEAGUES.find((l) => l.id === division.leagueId)!;
+  const offer = inscriptionOffer(state);
+  // Save viejo (sin oferta): sigue inscripto en la de siempre. null = falta elegir.
+  const chosenOpt =
+    ps.chosenDivisionId === undefined
+      ? offer.find((o) => o.isCurrent)!
+      : (offer.find((o) => o.divisionId === ps.chosenDivisionId) ?? null);
+  const fee = chosenOpt ? chosenOpt.fee : BALANCE.economy.inscriptionFee;
 
   const risks: string[] = [];
   if (confirmed.length < min)
     risks.push(`Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`);
-  if (state.club.money < fee)
+  if (fee > 0 && state.club.money < fee)
     risks.push(`La caja no cubre la inscripción ($${fee}): la comisión tendría que pasar la gorra, y eso cuesta prestigio.`);
   if (fees < costs && confirmed.length >= min)
     risks.push(`Las cuotas proyectadas ($${fees}/sem) no cubren los gastos fijos ($${costs}/sem).`);
+  if (chosenOpt === null)
+    risks.push(
+      `Todavía no elegiste liga: si cerrás la pretemporada así, la comisión te anota a último momento en la de siempre (recargo $${BALANCE.preseason.lateInscriptionFee} y mala imagen).`
+    );
 
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
@@ -152,15 +177,22 @@ function DeadlinePanel({ state, dispatch }: Props) {
         <span className={`chip ${weeksLeft === 0 ? 'bad' : 'accent'}`}>
           {weeksLeft === 0 ? '¡Última semana! Al avanzar, se cierra la inscripción' : `Semana ${ps.week}/${ps.totalWeeks} · quedan ${weeksLeft + 1} semanas`}
         </span>
-        <span className="chip accent">
-          🏆 {league.name} · {division.name} — se juega los {division.gameDay} ({division.gameTimes.join(' / ')})
-        </span>
+        {chosenOpt ? (
+          <span className="chip accent">
+            🏆 {chosenOpt.leagueName} · {chosenOpt.divisionName} — se juega los {dayLabel(chosenOpt.gameDay)} (
+            {chosenOpt.gameTimes.join(' / ')})
+          </span>
+        ) : (
+          <span className="chip warn">📝 Inscripción abierta: elegí en qué liga jugar</span>
+        )}
         <span className={`chip ${ps.gestionesLeft > 0 ? 'good' : 'warn'}`}>Gestiones: {ps.gestionesLeft}/{BALANCE.preseason.gestionesPerWeek}</span>
         <span className={`chip ${confirmed.length >= min ? 'good' : 'bad'}`}>
           Confirmados: {confirmed.length} (mín. {min})
         </span>
         <span className={`chip ${state.club.money >= fee ? 'good' : 'bad'}`}>Caja: {formatMoney(state.club.money)}</span>
-        <span className="chip">Inscripción: ${fee}</span>
+        <span className="chip">
+          {chosenOpt ? (fee > 0 ? `Inscripción: $${fee}` : 'Inscripción: gratis') : `Inscripción: $0 a $${BALANCE.economy.inscriptionFee}`}
+        </span>
         <span className="chip">Cuotas proyectadas: ${fees}/sem · Gastos fijos: ${costs}/sem</span>
       </div>
       {risks.map((r, i) => (
@@ -173,6 +205,91 @@ function DeadlinePanel({ state, dispatch }: Props) {
           ✓ Con lo que hay hoy, el club llega a inscribirse sin problemas.
         </p>
       )}
+    </div>
+  );
+}
+
+// ---------- Inscripción: la oferta de ligas ----------
+
+function InscriptionSection({ state, dispatch }: Props) {
+  const ps = state.preseason!;
+  // Saves de antes de la oferta: siguen inscriptos en la de siempre, sin pantalla.
+  if (ps.chosenDivisionId === undefined) return null;
+  const offer = inscriptionOffer(state);
+  const confirmed = confirmedPlayers(state);
+
+  const renderOption = (opt: LeagueOption) => {
+    const chosen = ps.chosenDivisionId === opt.divisionId;
+    // La agenda del plantel confirmado, cruzada con el día y horarios de ESA liga:
+    // el dato que decide la inscripción.
+    const blocked = confirmed.filter((p) => p.agenda?.blockedDays.includes(opt.gameDay));
+    const late = confirmed.filter(
+      (p) =>
+        p.agenda &&
+        p.agenda.onlyTimes.length > 0 &&
+        !blocked.includes(p) &&
+        opt.gameTimes.some((t) => !p.agenda!.onlyTimes.includes(t))
+    );
+    return (
+      <div key={opt.divisionId} className={`player-card${chosen ? ' selected' : ''}`}>
+        <div className="player-head">
+          <div className="who">
+            <div className="name">
+              {opt.leagueName} · {opt.divisionName}
+            </div>
+            <div className="pos">
+              Se juega los {dayLabel(opt.gameDay)} ({opt.gameTimes.join(' / ')})
+            </div>
+          </div>
+        </div>
+        <div className="player-chips">
+          <span className={`chip ${opt.fee > 0 ? '' : 'good'}`}>
+            {opt.fee > 0 ? `Inscripción: $${opt.fee}` : 'Inscripción gratis'}
+          </span>
+          <span className="chip accent">{opt.levelLabel}</span>
+          {opt.isPlaza && <span className="chip warn">Sin ascensos · prestigio -{BALANCE.preseason.plazaPrestigeHit}</span>}
+        </div>
+        <p className="muted" style={{ margin: '0.5rem 0' }}>
+          {opt.note}
+        </p>
+        {blocked.length > 0 && (
+          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--bad)' }}>
+            ⛔ No podrían los {dayLabel(opt.gameDay)}: {blocked.map((p) => p.name).join(', ')}
+          </p>
+        )}
+        {late.length > 0 && (
+          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--warn)' }}>
+            🕗 Llegarían tarde a los de{' '}
+            {opt.gameTimes.filter((t) => late.some((p) => !p.agenda!.onlyTimes.includes(t))).join(' y ')}:{' '}
+            {late.map((p) => p.name).join(', ')}
+          </p>
+        )}
+        {blocked.length === 0 && late.length === 0 && (
+          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--good)' }}>
+            ✓ Todos los confirmados pueden los {dayLabel(opt.gameDay)}
+          </p>
+        )}
+        <button
+          className={chosen ? '' : 'primary'}
+          style={{ width: '100%', marginTop: '0.4rem' }}
+          disabled={chosen}
+          onClick={() => dispatch({ type: 'PS_CHOOSE_LEAGUE', divisionId: opt.divisionId })}
+        >
+          {chosen ? '✓ Inscripto acá (se paga al cierre)' : 'Anotarse acá'}
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <div className="card" style={{ marginBottom: '1rem' }}>
+      <h3>📝 Inscripción: ¿dónde jugamos este año?</h3>
+      <div className="player-grid">{offer.map(renderOption)}</div>
+      <p className="hint" style={{ marginBottom: 0 }}>
+        Elegir liga es elegir tu día de partido: mirá qué día puede tu gente antes de firmar. Podés cambiar hasta el
+        cierre. Si no elegís, la comisión te anota a último momento en la de siempre (recargo $
+        {BALANCE.preseason.lateInscriptionFee} y mala imagen).
+      </p>
     </div>
   );
 }
@@ -663,6 +780,7 @@ export function PreseasonView({ state, dispatch }: Props) {
   return (
     <div className="app-shell">
       <DeadlinePanel state={state} dispatch={dispatch} />
+      <InscriptionSection state={state} dispatch={dispatch} />
       <RosterSection state={state} dispatch={dispatch} />
       <MarketSection state={state} dispatch={dispatch} />
 

@@ -55,6 +55,16 @@ export function registerPlayer(
   return { ok: true };
 }
 
+/** La liga donde compite el equipo principal (depende de la divisional elegida). */
+export function userLeagueId(state: GameState): string {
+  return DIVISIONS.find((d) => d.id === state.divisionId)?.leagueId ?? USER_LEAGUE_ID;
+}
+
+/** "los lunes" pero "los sábados": el plural del día para los textos. */
+export function dayLabel(d: WeekDay): string {
+  return d === 'sábado' ? 'sábados' : d === 'domingo' ? 'domingos' : d;
+}
+
 /** Mantiene las fichas del plantel del usuario al día (altas y bajas). */
 export function syncUserRegistrations(state: GameState): void {
   const world = state.world;
@@ -64,7 +74,7 @@ export function syncUserRegistrations(state: GameState): void {
     registerPlayer(world, {
       playerId: p.id,
       teamId: USER_TEAM_ID,
-      leagueId: USER_LEAGUE_ID,
+      leagueId: userLeagueId(state),
       seasonId,
       week: Math.min(state.week, state.seasonLength),
     });
@@ -192,7 +202,7 @@ export function genAvailability(commitment: number, reliability: number, rng: Rn
 
   const notes: string[] = [];
   if (interior) notes.push(`Vive en ${res.city} (${res.km} km): viene cuando puede.`);
-  for (const d of blockedDays) notes.push(`Los ${d} no puede: compromiso fijo.`);
+  for (const d of blockedDays) notes.push(`Los ${dayLabel(d)} no puede: compromiso fijo.`);
   if (onlyTimes.length > 0) notes.push('Por el trabajo solo llega a los partidos de 22:00.');
   if (lateChance > 0.25) notes.push('Suele llegar sobre la hora, a veces empezado el partido.');
   if (notes.length === 0 && baseChance > 0.85) notes.push('De los que están siempre: confirma temprano y no falla.');
@@ -251,6 +261,8 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   world.leagues = LEAGUES;
   world.divisions = DIVISIONS;
   const division = DIVISIONS.find((d) => d.id === state.divisionId)!;
+  // La liga del usuario sale de su divisional (Universitaria o la plaza).
+  const leagueId = division.leagueId;
 
   // Club y equipo del usuario.
   world.venues.push({ id: 'vn_user', name: 'Gimnasio del Parque', neighborhood: 'Parque Batlle' });
@@ -312,7 +324,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
     const roster = genRoster(i + 1, rival.strength, rng);
     world.players.push(...roster);
     for (const p of roster) {
-      registerPlayer(world, { playerId: p.id, teamId, leagueId: USER_LEAGUE_ID, seasonId, week: 0 });
+      registerPlayer(world, { playerId: p.id, teamId, leagueId, seasonId, week: 0 });
     }
   });
 
@@ -320,7 +332,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   for (const t of world.teams) {
     world.entries.push({
       teamId: t.id,
-      leagueId: USER_LEAGUE_ID,
+      leagueId,
       divisionId: state.divisionId,
       seasonId,
       status: 'activa',
@@ -339,7 +351,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
     world.fixtures.push({
       id: `fx_${seasonId}_w${w}_u`,
       seasonId,
-      leagueId: USER_LEAGUE_ID,
+      leagueId,
       divisionId: state.divisionId,
       week: w,
       date: fixtureDate(year, w, division.gameDay),
@@ -358,7 +370,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
       world.fixtures.push({
         id: `fx_${seasonId}_w${w}_${i / 2}`,
         seasonId,
-        leagueId: USER_LEAGUE_ID,
+        leagueId,
         divisionId: state.divisionId,
         week: w,
         date: fixtureDate(year, w, division.gameDay),
@@ -537,7 +549,7 @@ export function attendChance(p: WorldPlayer, division: Division, time: string): 
 function absenceReason(p: WorldPlayer, division: Division): string {
   if (p.injuryWeeks > 0) return 'lesionado';
   if (p.availability.distanceKm > 50) return `vive en ${p.availability.residence}`;
-  if (p.availability.blockedDays.includes(division.gameDay)) return `los ${division.gameDay} no puede`;
+  if (p.availability.blockedDays.includes(division.gameDay)) return `los ${dayLabel(division.gameDay)} no puede`;
   if (p.availability.onlyTimes.length > 0) return 'solo llega a los de 22:00';
   if (p.availability.baseChance < 0.6) return 'poco confiable';
   return 'compromiso de último momento';
