@@ -339,6 +339,10 @@ A la fecha de creación de este documento:
 - Alcance: 3 direcciones sobre la pantalla de plantel, en
   [`design/art/puerta1-direcciones.html`](art/puerta1-direcciones.html)
   (ver [`design/art/README.md`](art/README.md)).
+- Además: la exploración propia de Gabi en Higgsfield (jul 2026, 26 imágenes:
+  oficina del club, fichas realistas, plantel caricatura) quedó archivada en
+  [`design/references/higgsfield-2026-07/`](references/higgsfield-2026-07/)
+  con manifest y cruce contra las 3 direcciones.
 - Aprobado: nada todavía — esperando la devolución de Gabi
   (conservar / combinar / descartar).
 - Integrado al juego: nada (cero cambios en `src/`).
