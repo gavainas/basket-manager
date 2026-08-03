@@ -83,6 +83,81 @@ accents, expressive caricatured faces with exaggerated proportions. Adult and fu
 never childish.
 ```
 
+## v2 — Ajuste de Gabi: más alegre y con humor (ago 2026)
+
+La v1 dio el layout correcto pero salió **oscura y sin gracia**: paleta nocturna
+(culpa del bloque `STYLE` original, que pedía *charcoal* y *cold gym lighting at night*)
+y once retratos fotorrealistas de señores serios que parecen la misma persona.
+
+Dos correcciones: **paleta soleada** y **el humor en el contenido**, no en el layout.
+
+### Ruta recomendada: re-estilar sin perder el layout
+
+Pasar la imagen generada como referencia y pedir solo el cambio de piel:
+
+```
+Keep the exact same layout, the same four thematic groups, the same menu entries, the
+same left rail, the same central club block and the same bottom strip of player
+portraits. Change only the palette, the lighting and the character art.
+
+PALETTE: bright, sunny and cheerful. Warm cream and bone white panels, sky blue, grass
+green, basketball orange, tomato red and mustard yellow accents, a honey coloured
+wooden floor. Warm afternoon daylight pouring in through the gym windows. Saturated,
+high contrast, clean and readable. Remove all the dark navy, all the charcoal and all
+the moody cinematic lighting.
+
+CHARACTERS: replace every photorealistic face with warm adult caricature illustration.
+Exaggerated noses, chins, bellies, ears and bald heads. Big expressive grins. Wildly
+different body types and ages from 20 to 45, so that no two men look alike. Affectionate
+and funny, never grotesque, never mean spirited, never childish.
+
+HUMOR, in the small details:
+- the PASAR LISTA clipboard: half the names ticked, the rest with handwritten excuses
+  scribbled beside them - "LABURO", "LA SUEGRA", "ME DUELE TODO".
+- the QUINTETO board: a tactics diagram drawn over and erased far too many times.
+- the PARTIDO scoreboard: 68-69 with two seconds left on the clock.
+- the VESTUARIO: a lonely sock on the bench, flip flops on the floor, one locker
+  hanging half open.
+- the FICHAJES handshake: it happens over a bar table with two beers on it.
+- the TABLA standings sheet: a coffee ring stain on the paper.
+- the CUOTAS cash box: coins, a few crumpled bills and a scribbled IOU note.
+- the RIFA: raffle tickets and the prize, a wicker basket of food.
+- the bottom strip of portraits: the captain with a huge belly and a headband, a bald
+  veteran wearing a knee brace, a very tall skinny kid drowning in an oversized singlet,
+  one man still in his work shirt with the tie loosened, one holding a mate gourd, one
+  wearing sunglasses with an obvious hangover.
+
+The interface itself stays clean, orderly and easy to read. The jokes live in the
+illustrations and the small details, never in the layout.
+```
+
+### Si se genera de cero
+
+Sobre el prompt de la v1, reemplazar el bloque `STYLE:` por este y **agregar** las
+secciones `HUMOR` y `CHARACTERS` de arriba:
+
+```
+STYLE: bright, sunny and cheerful. Warm cream and bone white panels, sky blue, grass
+green, basketball orange, tomato red and mustard yellow accents, a honey coloured
+wooden floor, warm afternoon daylight through the gym windows. Saturated and high
+contrast, but always clean and readable. Warm adult caricature illustration for every
+person, in the spirit of an affectionate sports cartoon.
+```
+
+Y en el bloque `AVOID`, quitar *"childish cartoon style"* (ahora sí queremos caricatura)
+y agregar: `grotesque or ugly caricature; mean spirited humor; wacky cluttered interface;
+funny at the cost of readability.`
+
+### La regla del humor
+
+> Los personajes se caricaturizan; **la interfaz no**.
+
+Si todo grita, no hay chiste y además el juego se vuelve ilegible. El humor entra por
+las ilustraciones y los detalles chiquitos (las excusas en la planilla, la media sola
+en el vestuario, el vale por dos cuotas en la caja de lata) mientras las cards, los
+datos y la jerarquía siguen siendo sobrios. Eso es lo que hace que la broma se sostenga
+en la fecha 40 en vez de cansar en la 3.
+
 ## Notas prácticas
 
 - **Modelo**: `gpt_image_2` maneja mejor el texto de interfaz que `nano_banana`. Aun así
