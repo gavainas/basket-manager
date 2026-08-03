@@ -1,0 +1,61 @@
+# Workflow temporal (solo en la rama de arte): baja las referencias de Higgsfield
+# al repo, porque el entorno de la sesión de Claude no tiene salida a ese CDN.
+# Se borra después de correr una vez.
+name: Fetch art references
+
+on: workflow_dispatch
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/game-art-design-yyn2yu
+      - name: Download references from Higgsfield CDN
+        run: |
+          set -euo pipefail
+          base="https://d8j0ntlcm91z4.cloudfront.net/user_38J1fgjqwozgF8cecRMtEJrRyPB"
+          dir="design/references/higgsfield-2026-07"
+          mkdir -p "$dir"
+          while read -r name file; do
+            curl -sSf --retry 3 -o "$dir/$name" "$base/$file"
+          done <<'EOF'
+          s1-01-oficina-original-a.webp hf_20260715_185033_e93f3bc9-f5a2-432d-89b2-b30804b78f0d_min.webp
+          s1-02-oficina-original-b.webp hf_20260715_185044_90213ab4-fa60-4a35-8008-0785d7ea4297_min.webp
+          s1-03-retro-pc-90s.webp hf_20260715_185738_6d016b78-fbb4-43b3-b7ac-533de2a0a427_min.webp
+          s1-04-escritorio-papeles.webp hf_20260715_185905_05a645de-8b9d-456c-a32a-780ef6534e81_min.webp
+          s1-05-nocturna-inmersiva.webp hf_20260715_185937_08c53278-0f66-4e37-8c72-b18a5e0ebbcc_min.webp
+          s1-06-social-calida.webp hf_20260715_185949_f358600e-6193-4faa-bed1-88830940376f_min.webp
+          s1-07-indie-limpia-oscura.webp hf_20260715_190001_1a93b5ae-a801-45d4-8a9f-e5f09731993f_min.webp
+          s1-08-indie-limpia-basquet.webp hf_20260715_203849_1b875e89-4743-40f4-a9e8-1407fea7c925_min.webp
+          s1-09-sintesis-oficina-papel-paneles.webp hf_20260715_204410_15dee516-e524-49fe-933a-143f59eb27bb_min.webp
+          s1-10-paleta-navy-crema.webp hf_20260715_205111_88b1e2ce-737b-4ef6-a6cc-920e75fc0ba7_min.webp
+          s1-11-paleta-verde-club-barrio.webp hf_20260715_205125_e87244b4-bc3b-4011-ad9c-c7339a599b4b_min.webp
+          s1-12-paleta-retro-manager.webp hf_20260715_205214_a308c9ba-3527-4c8c-8537-46c4f6f72ad9_min.webp
+          s1-13-paleta-charcoal-teal-oro.webp hf_20260715_205241_0d8417d5-7494-499d-bcc0-b6d6fde093c1_min.webp
+          s2-01-pantalla-a.webp hf_20260719_183513_e9307afc-5188-4ca2-9033-e84fcd66237a_min.webp
+          s2-02-pantalla-b.webp hf_20260719_184102_008ce9be-35d2-41c2-b706-4a990b2e39df_min.webp
+          s2-03-pantalla-c.webp hf_20260719_184403_a02d6b0f-fa8f-44a3-afd4-8a090b119f21_min.webp
+          s2-04-pantalla-d.webp hf_20260719_190430_72e0513a-fd7c-441e-96ba-c13e977c7e72_min.webp
+          s2-05-pantalla-e.webp hf_20260719_190611_7470fc04-dd95-4504-9aa7-f946139e4402_min.webp
+          s2-06-ficha-jugador-a.webp hf_20260719_191632_33b41f4d-333b-43ba-8937-1be9ae69f37c_min.webp
+          s2-07-ficha-jugador-b.webp hf_20260719_192529_5757c9df-92ee-4d6e-91d8-2789cdf71d2d_min.webp
+          s2-08-ficha-jugador-c.webp hf_20260719_192834_ab80c5f4-6b9f-465f-980b-2f7b25a66195_min.webp
+          s2-09-plantel-caricatura.webp hf_20260719_194348_b9cc1a6f-27c7-494e-aa13-808e8e59d2f2_min.webp
+          s2-10-plantel-a.webp hf_20260719_194718_88e0f1d5-f6b7-46af-adfb-91cf943f3b21_min.webp
+          s2-11-plantilla-b.webp hf_20260719_201439_0858aad0-f4eb-4dd3-9f99-0273b999e6b7_min.webp
+          s2-12-plantilla-c.webp hf_20260719_202528_249a74a3-59e6-43ae-b331-b4b52bf84ff6_min.webp
+          s2-13-sintesis-referencias.webp hf_20260719_205314_55b19e37-725e-43a2-96de-8486f33d2e1a_min.webp
+          EOF
+      - name: Commit to the art branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add design/references/higgsfield-2026-07
+          git commit -m "Referencias Higgsfield jul-2026 (bajadas por Actions: el entorno de sesión no llega al CDN)"
+          git push origin claude/game-art-design-yyn2yu
