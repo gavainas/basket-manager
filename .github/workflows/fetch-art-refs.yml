@@ -3,7 +3,12 @@
 # Se borra después de correr una vez.
 name: Fetch art references
 
-on: workflow_dispatch
+# workflow_dispatch no sirve acá (la API solo resuelve workflows de la rama
+# default): se dispara con el push de este mismo archivo en la rama de arte.
+on:
+  push:
+    branches: [claude/game-art-design-yyn2yu]
+    paths: ['.github/workflows/fetch-art-refs.yml']
 
 permissions:
   contents: write
