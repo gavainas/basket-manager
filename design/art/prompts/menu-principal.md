@@ -158,6 +158,82 @@ en el vestuario, el vale por dos cuotas en la caja de lata) mientras las cards, 
 datos y la jerarquía siguen siendo sobrios. Eso es lo que hace que la broma se sostenga
 en la fecha 40 en vez de cansar en la 3.
 
+## v3 — "parece un juego de niños": contención y desgaste (ago 2026)
+
+La v2 acertó el clima (soleado, de tarde) pero cayó en registro infantil. **No es por el
+brillo.** Cuatro causas concretas:
+
+1. **Cuatro hues saturados como código de categoría** (azul / rojo / verde / naranja en
+   fila). Es el tell más fuerte: las apps para chicos codifican todo con primarios.
+2. **Cero valores oscuros** en toda la imagen. Sin un ancla oscura la composición flota.
+3. **Todo nuevo y liso.** Un club de barrio tiene cosas gastadas; el desgaste es lo que
+   lee como adulto.
+4. **Tipografía redondeada y blanda**, con sombras suaves.
+
+### Prompt de corrección (pasando la v2 como referencia)
+
+```
+Keep the exact same layout, the same four thematic groups, the same menu entries, the
+same left rail and the same central club block. Change only the palette, the materials
+and the typography. Bring back the bottom strip of eleven player portrait thumbnails.
+
+The current version reads as a children's game. Fix it through restraint and wear, not
+through darkness.
+
+PALETTE: keep the sunny warm mood but mute every hue. Replace the bright primary blues,
+greens, reds and yellows with faded printed tones: dusty slate blue, brick terracotta,
+olive moss green, ochre mustard, burnt orange. Card surfaces in warm oat and bone, never
+pure white. Add a dark value anchor: a deep ink charcoal frame around the whole screen
+and behind the left rail, so the warm cards sit against something solid. Wood floor in
+scuffed honey and walnut. The colours should look like faded printed cardboard and old
+painted club signage, never like plastic toys.
+
+CATEGORY HEADERS: stop colour coding the four groups with four saturated hues. Give all
+four the same dark ink header band, distinguished only by a small muted colour tab and
+by the icon.
+
+MATERIALS AND WEAR: everything is used, not new. Scuffed varnish on the floor, chipped
+paint, worn corners on the cards, a strip of masking tape, faint paper grain, a coffee
+ring, slightly bent photographs. Real directional late afternoon light with actual
+shadows and contrast, not flat even brightness.
+
+TYPOGRAPHY: heavy condensed sans serif, slightly compressed, industrial and printed. No
+rounded bubbly letterforms, no soft glow, no outlined cartoon text.
+
+CHARACTERS: the faces in PLANTILLA, FICHAJES and in the bottom strip must be warm adult
+caricature illustration, not photographs. Weathered adult men from 20 to 45, all clearly
+different from one another.
+
+REMOVE: the crest in the top right corner, it belongs to a real club. Keep only the
+fictional ATLETICO LA TEJA crest in the centre. Remove the loose floating words over the
+QUINTETO panel: the handwritten excuses belong written on the PASAR LISTA clipboard and
+nowhere else.
+
+Keep it cheerful and sunny, but grown up: a real neighbourhood club on a Sunday
+afternoon, worn by use, not a toy.
+```
+
+### La regla del registro adulto
+
+> Lo adulto no lo da la oscuridad: lo dan **el ancla de valor** y **el desgaste**.
+
+Una pantalla soleada y clarísima puede leerse perfectamente adulta si (a) los colores
+están apagados —impresos, no plásticos—, (b) hay algo genuinamente oscuro sosteniendo la
+composición, y (c) las cosas parecen usadas. Un afiche viejo de club es alegre y no tiene
+nada de infantil. El error de la v2 fue confundir *alegre* con *saturado*.
+
+**Dial de vuelta**: si queda demasiado sobrio, cambiar `faded printed tones` por
+`warm printed tones with one saturated accent`.
+
+### Errores de generación que esta pasada también corrige
+
+- **Escudo real**: apareció el del Sporting de Gijón arriba a la derecha, filtrado desde
+  la referencia de PC Fútbol. Vigilar siempre: no va identidad de clubes reales.
+- La **tira de retratos** de abajo desapareció entre la v1 y la v2.
+- Las **excusas** quedaron flotando sobre el panel de QUINTETO en vez de escritas en la
+  planilla de PASAR LISTA.
+- Las caras de PLANTILLA y FICHAJES siguieron fotorrealistas pese al pedido de caricatura.
+
 ## Notas prácticas
 
 - **Modelo**: `gpt_image_2` maneja mejor el texto de interfaz que `nano_banana`. Aun así
