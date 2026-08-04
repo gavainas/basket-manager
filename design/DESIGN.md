@@ -4,9 +4,11 @@ El repositorio es la **fuente de verdad** del diseño: tokens, componentes, gene
 reglas viven acá. El proyecto **"Basket Manager UI"** en [claude.ai/design](https://claude.ai/design)
 es un espejo para explorar y visualizar el sistema, nunca el original.
 
-> **Estado de aprobación:** la UI y los retratos actuales son funcionales, pero todavía se
-> consideran provisionales como dirección artística final. Antes de expandir o generar arte
-> en masa, seguir las puertas de aprobación de
+> **Estado de aprobación:** la UI y los retratos **actualmente implementados** siguen
+> siendo provisionales. En agosto de 2026 se cerró la **Puerta 1**: hay una dirección
+> artística aprobada (paleta y estructura de hub), documentada en
+> [`ART_BIBLE.md`](ART_BIBLE.md) — todavía **sin implementar**, y con tipografía e
+> íconos abiertos. Antes de expandir o generar arte en masa, seguir las puertas de
 > [`ART_PIPELINE.md`](ART_PIPELINE.md).
 
 ## Identidad: gestión amateur
@@ -92,14 +94,20 @@ Todos estilados en `src/styles.css`, markup en `src/ui/`:
 
 ```
 design/
-  DESIGN.md          ← este archivo: principios, tokens y reglas
+  DESIGN.md          ← este archivo: principios, tokens y reglas de la UI implementada
+  ART_BIBLE.md       ← dirección artística aprobada (reglas, no exploración)
   ART_PIPELINE.md    ← proceso de arte, roles y puertas de aprobación
   AVATAR_SYSTEM.md   ← generador modular de retratos
   SOCIAL_UI.md       ← familia visual de eventos sociales
+  art/               ← exploración: propuestas y prompts (no aprobado por defecto)
   cards/             ← SALIDA GENERADA por npm run design:sync (ignorada por git)
   components/        ← (futuro) specs por componente cuando haga falta detallar
-  references/        ← (futuro) referencias aprobadas y rechazadas
+  references/        ← referencias e imágenes de exploración, con su manifest
 ```
+
+**Diferencia clave**: `DESIGN.md` describe **lo que está implementado hoy**;
+`ART_BIBLE.md` describe **lo aprobado como dirección futura**. Mientras la implementación
+no alcance a la dirección aprobada, los dos documentos conviven y no se contradicen.
 
 ## Roles de las herramientas
 

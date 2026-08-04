@@ -334,7 +334,28 @@ A la fecha de creación de este documento:
 - El siguiente paso visual correcto es presentar direcciones artísticas comparables y luego
   construir un vertical slice aprobado.
 
-### 2026-08-02 — Puerta 1: propuestas presentadas (pendiente de decisión)
+### 2026-08-04 — Puerta 1 CERRADA: dirección artística aprobada
+
+- **Alcance**: dirección visual general, evaluada sobre el menú principal
+  (iteración v5 de [`art/prompts/menu-principal.md`](art/prompts/menu-principal.md)).
+- **Aprobado por Gabi**:
+  - la **paleta** (madera cálida de gimnasio + azul pizarra profundo + paneles claros
+    fríos + naranja quemado de acción);
+  - la **UI y su estructura de hub** (bloque central de club, cuatro familias temáticas,
+    rail de utilidades, tira de plantel al pie), heredada de PC Fútbol / ProManager.
+- **No aprobado, a corregir**:
+  - los **íconos ilustrados** del menú (registro inconsistente y, sobre todo, ilegibles
+    a tamaño chico en el celular);
+  - la **tipografía** (además, la de las imágenes no existe: hay que elegir fuentes
+    reales, libres y auto-alojables).
+- **Correcciones registradas como reglas** en [`ART_BIBLE.md`](ART_BIBLE.md) §6: el
+  desgaste va en los objetos y no en la interfaz; lo adulto lo dan el ancla de valor y
+  el desgaste, no la oscuridad; se caricaturizan los personajes, no la interfaz.
+- **Integrado al juego**: nada. Cero cambios en `src/`.
+- **Próximo paso autorizado**: cerrar tipografía e íconos (Puerta 2 — UI), y recién
+  después la hoja de 12 personajes (Puerta 3). Sigue sin autorizarse escalar nada.
+
+### 2026-08-02 — Puerta 1: propuestas presentadas (superada por el registro de arriba)
 
 - Alcance: 3 direcciones sobre la pantalla de plantel, en
   [`design/art/puerta1-direcciones.html`](art/puerta1-direcciones.html)
