@@ -341,6 +341,58 @@ reales del juego**: ahí el texto es perfecto por construcción, se prueba en el
 los tamaños que importan (que es donde estos estilos se rompen). Eso es exactamente la
 Puerta 4/5 del pipeline.
 
+## v5 — Sacar el lavado sepia: el desgaste va en los objetos, no en la UI (ago 2026)
+
+La v4 resolvió casi todo: **cero contaminación de PC Fútbol**, las 12 etiquetas correctas,
+volvió la tira de once retratos con caras distintas y con carácter, y los íconos quedaron
+con gracia (la planilla con tildes y cruces, el 68-62, el talonario de rifa, la mancha de
+café). **La estructura está cerrada.**
+
+Lo que falló: **un lavado beige / tostado / sepia parejo sobre toda la imagen**. Gabi lo
+leyó al toque: *"parece gastado y con IA"*. Tiene razón, y el error fue del prompt: pedir
+`worn`, `aged` y `faint paper grain` a nivel global. Los modelos de imagen traducen eso a
+un **filtro sepia uniforme**, que es una de las firmas de IA más reconocibles que existen.
+
+### La regla
+
+> El desgaste va **adentro de los objetos dibujados**, nunca sobre la interfaz.
+
+La planilla puede estar ajada; la card que la contiene, no. El contraste entre una UI
+limpia y contemporánea y unos objetos usados viviendo adentro de los íconos es exactamente
+la identidad que ya declara `DESIGN.md`: *profesional en usabilidad, amateur en
+personalidad*. Cuando el desgaste se derrama sobre el chrome, se pierden las dos cosas.
+
+### Prompt de corrección (pasando la v4 como referencia)
+
+```
+Keep the exact same layout, the same panels, the same icons, the same portraits and the
+same typography. Change only the colours and the surface treatment.
+
+The current version has a uniform beige, tan and sepia wash over the entire image. It
+reads as an artificially aged AI picture. Remove it completely.
+
+INTERFACE SURFACES: the interface itself is clean, flat and modern. Solid colour panels
+with crisp edges. No paper texture, no grain, no stains, no scuffing, no torn corners, no
+sepia, no parchment, no beige, no tan, no cream, and no aged or vintage treatment anywhere
+on the interface.
+
+Card panels: clean off white with a slight cool grey cast, like freshly printed card.
+Shell, frame and left rail: deep slate navy, almost black. Group header bands: the same
+deep navy for all four. Accents: one confident burnt orange and one mid petrol blue.
+Labels and numbers: near black on the light panels, bone white on the dark ones.
+
+THE ONLY WARM ELEMENTS: the honey amber wooden gym floor in the centre, and the objects
+drawn inside the icon panels. Those objects may still look used and lived in - the
+scuffed clipboard, the dented tin cash box, the printed standings sheet with its coffee
+ring - but their wear stays inside the illustration and never spreads onto the interface
+around them.
+
+Keep everything else exactly as it is.
+```
+
+**Dial**: si queda demasiado frío, agrandar el piso de madera antes que volver a teñir las
+cards.
+
 ## Notas prácticas
 
 - **Modelo**: `gpt_image_2` maneja mejor el texto de interfaz que `nano_banana`. Aun así
