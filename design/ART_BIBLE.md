@@ -11,6 +11,19 @@ proceso y las puertas de aprobación, en [`ART_PIPELINE.md`](ART_PIPELINE.md).
 
 ---
 
+## 0. Plataforma
+
+**Juego web/PC**, en la tradición de PC Fútbol: pantalla ancha, densidad alta, mucha
+información por vista. Se prueba también desde el celular y **no debe romperse** ahí,
+pero el diseño se piensa para desktop primero.
+
+Consecuencias de diseño:
+
+- El layout **16:9 es el objetivo principal**, no una versión a adaptar.
+- Los íconos viven a **64-80 px**, no a 40: las mini-escenas ilustradas son viables.
+- La tipografía puede ser **más chica y más densa** que en un diseño mobile-first.
+- El responsive es **robustez**, no dirección: que entre en el celular, no que nazca ahí.
+
 ## 1. Identidad
 
 > Manager de básquet amateur adulto, humano, divertido y nostálgico.
@@ -82,9 +95,10 @@ formas de letra dibujadas por el modelo. Hay que elegir archivos reales.
 **Requisitos**, que salen de cómo es el juego y no del gusto:
 
 - **Cifras tabulares de verdad**: la mitad del juego son columnas de números.
-- **Condensada y pesada para títulos**: densidad alta en pantallas chicas.
+- **Condensada y pesada para títulos**: permite densidad alta, que es lo que buscamos.
 - **Licencia libre y auto-alojable**: se sirve desde el repo (GitHub Pages, sin CDN).
-- **Legible a 12-13 px en el celular de Gabi**, que es donde se juega de verdad.
+- **Buena en cuerpos chicos de desktop** (13-14 px), que es donde vive la densidad; y
+  que aguante el celular sin romperse.
 - **Una tercera voz manuscrita**, opcional, solo para lo humano (las excusas anotadas,
   las notas del vestuario). Nunca para datos.
 
@@ -97,9 +111,14 @@ Prohibido: letras redondeadas tipo burbuja, contornos de dibujito, sombras bland
 El set actual (mini-escenas casi fotográficas generadas por IA) **no se aprueba**, por
 dos razones:
 
-1. **Registro inconsistente**: algunas parecen foto, otras ilustración.
-2. **No se leen chicos**: a ~40 px en el celular se convierten en manchas marrones.
-   Un ícono de UI necesita silueta simple y contraste alto.
+1. **Registro inconsistente**: algunas parecen foto, otras ilustración. Este es el
+   problema principal.
+2. **Silueta poco definida**: aun a 64-80 px de desktop, varias se leen como una mancha
+   marrón hasta que uno se acerca. Necesitan formas más simples y más contraste interno.
+
+*(La objeción original era más dura — "a 40 px son ilegibles" — pero salía de suponer
+mobile-first. En desktop las mini-escenas ilustradas son perfectamente viables; lo que
+no es viable es que cada una esté en un registro distinto.)*
 
 Lo que sí se conserva del set actual es **el repertorio de objetos**, que está bien
 elegido y es genuinamente del mundo del club: la planilla con tildes y cruces, la
@@ -162,4 +181,5 @@ Heredadas del brief y confirmadas por lo que fue apareciendo en las iteraciones:
 - [ ] Aprobar 3 íconos de muestra antes de producir el set (§5).
 - [ ] Hoja de 12 personajes (Puerta 3).
 - [ ] Vertical slice de 5 pantallas (Puerta 4) e implementación de prueba (Puerta 5).
-- [ ] Adaptación a celular: el menú aprobado es 16:9; Gabi juega en vertical.
+- [ ] Verificar que el layout 16:9 **no se rompa** en pantallas chicas (robustez, no
+      rediseño: ver §0).
