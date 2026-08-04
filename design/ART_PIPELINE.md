@@ -103,6 +103,45 @@ Responsabilidades principales:
 
 Claude Code no debe expandir un sistema visual provisional a todo el juego sin aprobación.
 
+## Qué es asset y qué es código
+
+La división más importante del día a día, y la que más se presta a confusión:
+
+| | Cómo se hace | Por qué |
+| --- | --- | --- |
+| **Interfaz** — layout, paneles, botones, cards, tablas, tipografía, colores, fondos generados por CSS, íconos vectoriales | **Código** (HTML / CSS / SVG) | Necesita texto real, estirarse a cualquier pantalla, tener estados (hover, foco, deshabilitado) y **cambiar con los datos**: la caja sube y baja, la semana avanza, el rival es otro cada fecha. |
+| **Arte** — retratos de jugadores, ilustraciones de eventos, escenas sociales, fondos ambientales, imágenes promocionales | **Assets** (imágenes, hoy vía Higgsfield) | Son contenido, no mecanismo. Se ven, no se operan. |
+
+**Regla**: una imagen generada nunca es la interfaz. Higgsfield puede ayudar a *decidir
+cómo debería verse* una pantalla — para eso sirven las exploraciones de la Puerta 1 —
+pero la pantalla se construye en código. Un PNG de una UI es una foto de un juego, no un
+juego.
+
+**Los íconos son la zona gris.** Tres caminos válidos:
+
+- **Vector a mano**: livianos, nítidos a cualquier tamaño, se recolorean con la paleta.
+  El techo es la mano que dibuja.
+- **Ilustrados como imagen**: más ricos, pero cuesta la consistencia entre piezas, pesan
+  más, no se recolorean y hay que regenerarlos ante cualquier cambio de paleta.
+- **Híbrido (recomendado)**: generar en Higgsfield para *diseñar* el ícono, y redibujarlo
+  como vector para implementarlo. Riqueza de la idea, liviandad de la ejecución.
+
+### Cómo aterriza un asset de Higgsfield en el juego
+
+Cuando la Puerta correspondiente esté aprobada:
+
+```text
+1. Generar en Higgsfield con el prompt del estilo aprobado
+2. Seleccionar (nunca entra todo lo generado)
+3. Recortar el fondo (remove_background) y encuadrar
+4. Exportar a WebP en los tamaños que usa la UI
+5. Optimizar peso — el juego se sirve por GitHub Pages
+6. Guardar en public/ con nombre estable
+7. El código lo referencia de forma determinística (p. ej. por id de jugador)
+```
+
+Los pasos 3 a 7 son de Claude Code; los pasos 1 y 2, de Higgsfield y de Gabi.
+
 ## Flujo obligatorio
 
 ```text
