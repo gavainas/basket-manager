@@ -234,6 +234,113 @@ nada de infantil. El error de la v2 fue confundir *alegre* con *saturado*.
   planilla de PASAR LISTA.
 - Las caras de PLANTILLA y FICHAJES siguieron fotorrealistas pese al pedido de caricatura.
 
+## v4 — Prompt limpio: cortar la contaminación de la referencia (ago 2026)
+
+La v3 (generada en **Grok Imagine**) ganó lo que buscábamos en materiales: papel
+envejecido en los íconos, madera gastada, marco oscuro que ancla, cards color avena. La
+paleta dejó de ser plástica. **Ese hallazgo se conserva.**
+
+Pero apareció el problema grande: **la captura de PC Fútbol se metió dentro de la imagen**.
+Se ven el escudo del Oviedo a la izquierda y el del Sporting a la derecha, con los menús
+verdes de PC Fútbol asomando por ambos costados — el modelo trató la referencia como
+decorado de fondo. Y peor, **le contaminó el vocabulario**: donde iba FICHAJES quedó
+"VER RIVAL", donde iba TABLA quedó "FICHAR", donde iba RIFA quedó "ESTADIO".
+
+**Causa raíz**: seguir pasando la captura de PC Fútbol como imagen de referencia. Su
+estructura ya está descrita en palabras en el prompt; la imagen no aporta y contamina.
+
+**Regla**: nunca más pasar la captura de PC Fútbol. Si se quiere conservar el layout, se
+pasa **únicamente la última imagen generada del propio juego**, o ninguna.
+
+### Prompt limpio (sin ninguna imagen de referencia)
+
+```
+Full-screen 16:9 screenshot of the main navigation hub of a management video game called
+"Basket Manager". The screenshot fills the entire frame edge to edge, flat and straight
+on. It is not a device, not a floating mockup in a room, not shown in perspective, and no
+other screen, window or game is visible anywhere in the image.
+
+THE GAME: managing an amateur adult basketball club in a Montevideo neighbourhood,
+Uruguay. Grown men with jobs and families who play in a local league at night. Basketball
+only: no football pitches and no football imagery anywhere.
+
+LAYOUT: a central club block, menu entries grouped into four thematic corner blocks, a
+narrow vertical utility rail on the left, and a strip of player portraits along the
+bottom edge.
+
+CENTER: a fictional club crest, "ATLETICO LA TEJA", "SEMANA 7 DE 11", "vs. DEPORTIVO
+SAYAGO - LUNES 20:30" and "CAJA $1.240", over an old worn leather basketball resting on a
+scuffed wooden gym floor.
+
+THE FOUR GROUPS AND THEIR TWELVE ENTRIES. These twelve words are the only menu labels
+allowed in the image:
+- "LA SEMANA": PASAR LISTA, QUINTETO, PARTIDO
+- "EL PLANTEL": PLANTILLA, VESTUARIO, FICHAJES
+- "LA LIGA": TABLA, CALENDARIO, RIVALES
+- "LA CAJA": CUOTAS, GASTOS, RIFA
+Each entry is a bold label beside a small illustrated icon panel: a clipboard with ticked
+names and handwritten excuses, a tactics board, a gym scoreboard reading 68-69, a row of
+teammates, metal lockers with a lonely sock, a handshake over a bar table with two beers,
+a printed standings sheet with a coffee ring, a wall calendar, a rival singlet on a
+hanger, a tin cash box with coins and an IOU note, receipts and a referee whistle, a
+booklet of raffle tickets.
+
+FORBIDDEN WORDS: this is not a football game. Never write VER RIVAL, ALINEACION, TACTICAS,
+ESTADIO, EMPLEADOS, CLASIFICACION, DECISIONES, GOLES or FICHAR anywhere in the image.
+
+LEFT RAIL: GUARDAR, NOTICIAS, SALIR, plus one large burnt orange button: AVANZAR SEMANA.
+
+BOTTOM STRIP: eleven small player portraits, each with a number and a position beneath it.
+Warm adult caricature illustration, never photographs: exaggerated noses, chins, bellies,
+ears and bald heads, ages 20 to 45, wildly different builds so that no two men look alike.
+The captain with a big belly and a headband, a bald veteran in a knee brace, a very tall
+skinny kid drowning in an oversized singlet, one man still in his work shirt, one holding
+a mate gourd, one in sunglasses with an obvious hangover. Affectionate and funny, never
+grotesque, never mean spirited, never childish.
+
+PALETTE: sunny and warm but muted. Faded printed tones: dusty slate blue, brick terracotta,
+olive moss green, ochre mustard, burnt orange. Card surfaces in warm oat and bone, never
+pure white. A deep ink charcoal frame around the screen and behind the left rail as a dark
+anchor. Scuffed honey and walnut wood. Colours like faded printed cardboard and old painted
+club signage, never like plastic toys.
+
+CATEGORY HEADERS: all four groups share the same dark ink header band, distinguished only
+by a small muted colour tab and by the icon. Do not colour code the four groups with four
+saturated hues.
+
+MATERIALS: everything is used. Scuffed varnish, chipped paint, worn card corners, masking
+tape, faint paper grain, slightly bent photographs. Directional late afternoon light with
+real shadows.
+
+TYPOGRAPHY: heavy condensed sans serif, industrial and printed. No rounded bubbly
+letterforms, no glow, no outlined cartoon text.
+
+CRESTS: only the fictional ATLETICO LA TEJA crest, once, in the centre. No other crest
+anywhere, and never a real club's crest.
+
+AVOID: any second screen or window; perspective or 3D mockup framing; Football Manager
+clone aesthetics; SaaS dashboard design; mobile app minimalism; esports neon; NBA glamour;
+grotesque caricature; a cluttered interface that is hard to read.
+```
+
+### Modelo
+
+Volver a **`gpt_image_2`**. Grok Imagine rindió peor justo en lo que más importa acá: el
+texto de interfaz salió mucho más roto, y trató la imagen de referencia como decorado
+("poné esto en la escena") en vez de como guía de estilo.
+
+### Cuándo dejar de generar
+
+Lo que la Puerta 1 necesita es decidir una **dirección** — paleta, materiales, estilo de
+personajes, clima. La v3 ya la está diciendo: papel gastado + madera + tonos apagados
+funciona. Que las etiquetas digan "BASTOS" o "RIU1TAS" no cambia esa decisión, y **ningún
+modelo de imagen va a dar texto de interfaz perfecto**.
+
+Cuando la dirección cierre, el paso que rinde es implementarla **en código con los datos
+reales del juego**: ahí el texto es perfecto por construcción, se prueba en el celular y a
+los tamaños que importan (que es donde estos estilos se rompen). Eso es exactamente la
+Puerta 4/5 del pipeline.
+
 ## Notas prácticas
 
 - **Modelo**: `gpt_image_2` maneja mejor el texto de interfaz que `nano_banana`. Aun así
