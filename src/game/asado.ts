@@ -5,6 +5,7 @@
 import { BALANCE, clamp } from './balance';
 import { affinity, pairKey, FRIEND_THRESHOLD } from './relations';
 import { logPlayerEvent } from './timeline';
+import { pickVoicedRng, type VoicePools } from './voices';
 import type { AsadoPlan, AsadoReport, AsadoRsvp, AsadoTier, GameState, Player } from './types';
 import type { Rng } from './rng';
 
@@ -23,8 +24,31 @@ const NO_PUEDE = [
   'Le cambiaron el turno en el laburo. "A la próxima voy fija", jura.',
 ];
 
+/** Cómo avisa cada uno que la vida le ganó (ver `voices.ts`). */
+const NO_PUEDE_VOICES: VoicePools = {
+  cumplidor: ['Le toca laburar y avisó tres días antes. Preguntó si podía mandar algo para la mesa igual.'],
+  social: ['Tiene otro cumpleaños esa misma noche. "Dos asados no me da el cuerpo", se lamentó en serio.'],
+  leal: ['No le da el día y lo dijo con culpa. Preguntó dos veces si no se podía mover para el viernes.'],
+  veterano: ['Compromiso familiar de esos que a los cuarenta no se discuten.'],
+};
+
+/** Cuando el "no voy" es por ganas y no por agenda, cada uno lo dice a su modo. */
+const DECLINE_VOICES: VoicePools = {
+  competitivo: ['"¿Asado? Con lo mal que venimos jugando, prefiero entrenar", contestó, y no era chiste.'],
+  social: ['Increíble pero cierto: dijo que no. "Ando con la cabeza en otra", admitió.'],
+  protagonista: ['Preguntó quién más iba antes de contestar. La lista no lo convenció.'],
+  leal: ['Dijo que no puede y lo repitió tres veces, como pidiendo perdón.'],
+  mercenario: [
+    '"Tengo otra cosa", dijo sin dar detalles. Como siempre.',
+    'Preguntó si lo pagaba el club. Cuando le dijeron que no, se le complicó la agenda.',
+  ],
+  cumplidor: ['"Si es después de entrenar, voy; si es un jueves a las once, no." Era un jueves a las once.'],
+  veterano: ['"A esta altura prefiero cenar en casa, muchachos. No se ofendan."'],
+  talentoso_informal: ['"Veo y aviso", escribió. Nunca avisó.'],
+};
+
 /** Motivos de "no voy" cuando es por ganas: la bronca, la deuda o el personaje. */
-function declineReason(p: Player, rng: Rng): string {
+function declineReason(p: Player, rng: Rng, used: Set<string>): string {
   if (p.status === 'molesto' || p.status === 'al_borde') {
     return rng.pick([
       '"No tengo ganas de ver a nadie", contestó seco.',
@@ -35,10 +59,7 @@ function declineReason(p: Player, rng: Rng): string {
   if (p.feeStatus === 'pendiente' && p.weeksUnpaid >= 2) {
     return 'Debe cuotas y le da no sé qué sentarse a la mesa. "La próxima fija", prometió.';
   }
-  if (p.personality === 'mercenario') {
-    return '"Tengo otra cosa", dijo sin dar detalles. Como siempre.';
-  }
-  return rng.pick(NO_PUEDE);
+  return pickVoicedRng(p.personality, DECLINE_VOICES, NO_PUEDE, rng, { used });
 }
 
 /** Cuánto pesa la personalidad en las ganas de ir a un asado. */
@@ -66,12 +87,13 @@ export function planAsado(s: GameState, rng: Rng): AsadoPlan {
   const recent = s.history.slice(-3);
   const streakAdj = recent.reduce((t, m) => t + (m.won ? 0.03 : -0.05), 0);
   // Excusas sin repetir en la misma convocatoria: dos con "los pibes" el mismo
-  // jueves es mucha casualidad hasta para esta liga.
-  const freeExcuses = rng.shuffle([...NO_PUEDE]);
+  // jueves es mucha casualidad hasta para esta liga. El registro es compartido
+  // con los "no voy" de más abajo, así toda la lista suena a catorce personas.
+  const usedExcuses = new Set<string>();
   for (const p of squad) {
     // La vida no mira el ánimo: a algunos directamente no les da el calendario.
     if (rng.chance(A.noPuedeChance)) {
-      noPuede.set(p.id, freeExcuses.pop() ?? rng.pick(NO_PUEDE));
+      noPuede.set(p.id, pickVoicedRng(p.personality, NO_PUEDE_VOICES, NO_PUEDE, rng, { used: usedExcuses }));
       continue;
     }
     let v =
@@ -103,7 +125,7 @@ export function planAsado(s: GameState, rng: Rng): AsadoPlan {
     const v = score.get(p.id) ?? 0;
     if (v >= A.rsvpYes) return { playerId: p.id, answer: 'va' };
     if (v >= A.rsvpMaybe) return { playerId: p.id, answer: 'duda' };
-    return { playerId: p.id, answer: 'no_va', reason: declineReason(p, rng) };
+    return { playerId: p.id, answer: 'no_va', reason: declineReason(p, rng, usedExcuses) };
   });
   return { week: s.week, rsvps };
 }

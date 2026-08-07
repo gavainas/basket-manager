@@ -1,8 +1,14 @@
 // Estado emocional de cada jugador al terminar el partido: depende del
 // resultado, sus minutos, su rendimiento, su rol esperado, su personalidad
 // y las promesas que le hiciste. Centraliza los textos del vestuario.
+//
+// La personalidad decide qué siente (`pickEmotion`) y también cómo lo dice:
+// las emociones que más se leen tienen pool propio por arquetipo (ver
+// `voices.ts`), así el mercenario y el cumplidor molestos por lo mismo suenan
+// a dos problemas distintos. Las que no tienen pool caen en el genérico.
 
-import type { ClubPromise, GrievanceCause, Player, PlayerMood, PlayerEmotion } from './types';
+import type { ClubPromise, GrievanceCause, Personality, Player, PlayerMood, PlayerEmotion } from './types';
+import { pickVoiced, type VoicePools } from './voices';
 
 export interface EmotionContext {
   won: boolean;
@@ -50,7 +56,7 @@ export function moodFor(p: Player, ctx: EmotionContext, salt = 0, used?: Set<str
     name: p.name,
     emotion: e,
     label: LABELS[e],
-    text: moodText(e, ctx, textSeed(p.id, salt), used),
+    text: moodText(e, ctx, textSeed(p.id, salt), used, p.personality),
     cause: causeOf(e, ctx),
   };
 }
@@ -109,9 +115,16 @@ function pickEmotion(p: Player, ctx: EmotionContext): PlayerEmotion {
 /**
  * Frases de vestuario por emoción. `used` es el registro de lo ya dicho en
  * esta misma pantalla: si la frase que toca ya salió, se corre a la siguiente
- * del pool en vez de repetirla.
+ * del pool en vez de repetirla. `voiced` hace lo mismo pero probando primero
+ * el pool del arquetipo: la voz propia gana, el genérico es la red.
  */
-function moodText(e: PlayerEmotion, ctx: EmotionContext, seed: number, used?: Set<string>): string {
+function moodText(
+  e: PlayerEmotion,
+  ctx: EmotionContext,
+  seed: number,
+  used: Set<string> | undefined,
+  personality: Personality
+): string {
   const pick = (options: string[]) => {
     const start = seed % options.length;
     for (let i = 0; i < options.length; i++) {
@@ -123,18 +136,20 @@ function moodText(e: PlayerEmotion, ctx: EmotionContext, seed: number, used?: Se
     }
     return options[start]; // pool agotado: alguien va a repetir, y está bien
   };
+  const voiced = (pools: VoicePools, generic: string[]) =>
+    pickVoiced(personality, pools, generic, seed, used);
   const weeks = ctx.grievanceWeeks ?? 0;
   switch (e) {
     case 'euforico':
       return ctx.bigGame
-        ? pick([
+        ? voiced(EUFORICO_GRANDE, [
             '"Estos partidos son los que uno juega toda la semana en la cabeza. ¡Vamos!"',
             '"Para esto uno banca todo el año: qué noche, por favor."',
             '"Que alguien guarde la planilla de hoy, la quiero enmarcar."',
             '"Llamé a mi vieja desde el vestuario. Lloramos los dos, no lo voy a negar."',
             '"Esta la contamos en el asado por diez años, mínimo."',
           ])
-        : pick([
+        : voiced(EUFORICO, [
             '"Noche redonda: ganamos y me salió todo. A festejarlo con una birra."',
             '"Hoy entraba todo. Hasta la de tres que tiré cayendo casi de espaldas."',
             '"Avisen en el grupo que la próxima ronda la pago yo."',
@@ -210,14 +225,14 @@ function moodText(e: PlayerEmotion, ctx: EmotionContext, seed: number, used?: Se
             ]);
       }
       return ctx.won
-        ? pick([
+        ? voiced(FRUSTRADO_GANANDO, [
             '"Ganamos, bárbaro. Pero yo mirando de afuera no sumo nada."',
             '"Me alegro por el grupo, en serio. Ahora, ¿yo para qué me cambio?"',
             '"Buena victoria. Igual algún día me gustaría participar, digo."',
             '"Toda la semana entrenando para terminar de asistente del bidón."',
             '"Sí, ganamos, aplaudo. ¿Se nota mucho que aplaudo con bronca?"',
           ])
-        : pick([
+        : voiced(FRUSTRADO_PERDIENDO, [
             '"Así no. Algo tenemos que cambiar, y rápido."',
             '"Perder se pierde, pero así duele el doble."',
             '"Me voy caliente. Mejor no me hablen hasta el jueves."',
@@ -242,7 +257,7 @@ function moodText(e: PlayerEmotion, ctx: EmotionContext, seed: number, used?: Se
         ]);
       }
       return ctx.won
-        ? pick([
+        ? voiced(MOLESTO_GANANDO, [
             `"Ganamos, pero para jugar ${ctx.minutes || 'cero'} minutos no sé para qué vengo."`,
             '"Felicitaciones a los que jugaron. Yo vine a hidratarme, parece."',
             '"Buenísimo el triunfo. Yo de espectador lo disfruté igual, eh."',
@@ -250,7 +265,7 @@ function moodText(e: PlayerEmotion, ctx: EmotionContext, seed: number, used?: Se
             '"El banco cómodo, eso sí. Ya me hice amigo de los de la tribuna."',
             '"Me alegro, de verdad. Igual me voy con un gustito raro."',
           ])
-        : pick([
+        : voiced(MOLESTO_PERDIENDO, [
             '"Perdimos y ni siquiera me dieron la chance de ayudar. Doble bronca."',
             '"Ni cuando va perdiendo el equipo me miran al banco. Tomo nota."',
             '"Para mirar desde afuera me quedo en casa, que la silla es más cómoda."',
@@ -269,6 +284,126 @@ function moodText(e: PlayerEmotion, ctx: EmotionContext, seed: number, used?: Se
       ]);
   }
 }
+
+// --- Voces por arquetipo ------------------------------------------------
+// Las tres emociones que más se leen en una temporada: la bronca por minutos
+// (la que dispara quejas), la frustración del que ni entró en la lista y la
+// euforia del triunfo. Misma emoción, ocho registros: si tapás el nombre,
+// tenés que poder decir quién habló. Lo que no está acá cae en el genérico.
+
+const MOLESTO_GANANDO: VoicePools = {
+  competitivo: [
+    '"Ganamos, sí. Yo no gané nada: no jugué."',
+    '"Me alegro por ellos. Yo vine a competir, no a aplaudir."',
+  ],
+  social: [
+    '"Todo bien, ni me quejo. ¿Vamos a tomar algo igual? Total, corrí poco."',
+    '"Feliz por el grupo. Igual la próxima quiero sudar la camiseta, no doblarla."',
+  ],
+  protagonista: [
+    '"Con este equipo, y conmigo adentro, ganábamos por veinte. Que quede dicho."',
+    '"Bien los muchachos. Igual el partido lo daba vuelta yo en tres minutos."',
+  ],
+  leal: [
+    '"Yo banco igual, sabés que sí. Pero mirar de afuera duele, no te voy a mentir."',
+    '"No te voy a hacer un escándalo. Te pido que mires al banco alguna vez, nada más."',
+  ],
+  mercenario: [
+    '"Pago la ficha igual que todos. La mejor plata mal gastada del año, parece."',
+    '"Si vengo a calentar el banco, avisame y me ahorro la nafta."',
+  ],
+  cumplidor: [
+    '"Estuve a las ocho, como siempre. Los minutos que jugué contalos vos."',
+    '"No falté a un entrenamiento en todo el año. Lo dejo ahí, nomás."',
+  ],
+  veterano: [
+    '"Yo ya jugué mil partidos, tranquilo. Pero si no me vas a usar, decímelo de frente."',
+    '"A mi edad los sábados se cuentan distinto. No me los hagas perder."',
+  ],
+  talentoso_informal: [
+    '"¿Jugué? Ah, sí, esos minutos. Casi que era más cómodo no venir."',
+    '"Ganamos, bárbaro. Yo entré, me despeiné y me volvieron a sentar."',
+  ],
+};
+
+const MOLESTO_PERDIENDO: VoicePools = {
+  competitivo: [
+    '"Perdimos y me tuviste sentado. Eso me hierve más que la derrota."',
+    '"No me banco perder mirando. Prefiero perder jugando, mil veces."',
+  ],
+  social: [
+    '"Perdimos y encima no jugué. Menos mal que después hay birra."',
+    '"Vine, alenté, perdimos. Linda tarde, eh."',
+  ],
+  protagonista: [
+    '"Perdimos porque el que la tenía que agarrar estaba sentado al lado tuyo."',
+    '"Cuando el equipo se cayó, ¿a quién ibas a mandar? Ah, cierto: a nadie."',
+  ],
+  leal: [
+    '"Duele doble: perder y no haber podido dar una mano."',
+    '"Yo estoy para cuando se complica. Hoy ni eso me dejaste."',
+  ],
+  mercenario: [
+    '"Perdimos, no jugué y la ficha la pagué igual. Buen negocio."',
+    '"Avisame si el mes que viene me toca jugar y lo hablamos."',
+  ],
+  cumplidor: [
+    '"Llegué primero al gimnasio para mirar el partido entero. Bien ahí."',
+    '"Hice todo lo que había que hacer menos jugar, que era lo único que no dependía de mí."',
+  ],
+  veterano: [
+    '"Perder sin despeinarme ya no lo aguanto. Estoy grande para esto."',
+    '"Estas las remonté mil veces. Desde el banco no se remonta nada."',
+  ],
+  talentoso_informal: [
+    '"Perdimos. Yo miré. Podría haber mirado desde casa, con mate."',
+    '"Si me ibas a dejar sentado, avisame y traigo la reposera."',
+  ],
+};
+
+const FRUSTRADO_GANANDO: VoicePools = {
+  competitivo: ['"Ganamos y yo ni me cambié. Así no se compite, así se mira."'],
+  social: ['"Los felicité a todos, en serio. Igual quedar afuera de la lista es un bajón."'],
+  protagonista: ['"Ganaron sin mí. Bueno: que se acostumbren, entonces."'],
+  leal: ['"Aplaudo de verdad. Pero me hubiera gustado estar en la foto."'],
+  mercenario: ['"Ni citado. ¿Y la ficha la pago igual? Pregunto, nomás."'],
+  cumplidor: ['"Entreno toda la semana para quedar afuera de la lista del sábado."'],
+  veterano: ['"Cuando ganan sin vos, empezás a entender el mensaje."'],
+  talentoso_informal: ['"Ah, ¿era hoy? Buenísimo, ganamos igual."'],
+};
+
+const FRUSTRADO_PERDIENDO: VoicePools = {
+  competitivo: ['"Perdimos y yo de saco y corbata. Esto se cambia ya."'],
+  social: ['"Perdimos y el clima quedó espeso. Hay que juntarse a hablar, en serio."'],
+  protagonista: ['"Miré perder. Sin mí es más difícil, y hoy se vio."'],
+  leal: ['"Me duele por el equipo. Y un poco por mí, también."'],
+  mercenario: ['"Perdimos y ni figuré en la planilla. Semana redonda."'],
+  cumplidor: ['"Encima perdimos. Vine para nada, entonces."'],
+  veterano: ['"Vi muchas derrotas. Las que más duelen son las que mirás."'],
+  talentoso_informal: ['"Perdimos. Sinceramente, ni me enteré de cómo."'],
+};
+
+const EUFORICO: VoicePools = {
+  competitivo: ['"Así se juega. Que se acostumbren a que somos esto."'],
+  social: ['"¡La ronda la pago yo! Avisen en el grupo, no acepto discusión."'],
+  protagonista: ['"Cuando la agarro yo, el equipo cambia. Hoy se vio, ¿no?"'],
+  leal: ['"Ganar con esta camiseta y con estos tipos no tiene precio."'],
+  mercenario: ['"Hoy, sinceramente, valió la ficha."'],
+  cumplidor: ['"Salió todo como lo veníamos entrenando. Eso es lo que más me gusta."'],
+  veterano: ['"Estas ya no me tocan tan seguido. Por eso esta me la llevo puesta."'],
+  talentoso_informal: ['"Ni entrené esta semana y me salió todo. Que alguien me lo explique."'],
+};
+
+const EUFORICO_GRANDE: VoicePools = {
+  competitivo: ['"Para esto entreno. Que venga el que sigue."'],
+  social: ['"Esto se festeja hasta el domingo. Organizo yo, ¿alguien discute?"'],
+  protagonista: ['"Los partidos grandes son míos. Alguien tenía que agarrarla."'],
+  leal: ['"Toda una vida en el club para una noche así. Toda una vida."'],
+  mercenario: ['"Hasta yo me emocioné, mirá lo que te digo."'],
+  cumplidor: ['"No falté a un entrenamiento en todo el año. Hoy me lo cobré."'],
+  veterano: ['"Ya no me quedan muchas de estas. Me la voy a guardar."'],
+  talentoso_informal: ['"Y yo que casi no vengo. Mirá si me lo perdía."'],
+};
 
 /** ¿Tiene promesa activa (sin romper) de titularidad o minutos esta temporada? */
 export function hasMinutesPromise(promises: ClubPromise[], playerId: string, season: number): boolean {

@@ -6,6 +6,7 @@ import { clamp } from './balance';
 import { bumpGrievance } from './mood';
 import { affinity, coachAffinity, FRIEND_THRESHOLD } from './relations';
 import { logPlayerEvent } from './timeline';
+import { pickVoicedRng, type VoicePools } from './voices';
 import type { GameState, Player } from './types';
 import type { Rng } from './rng';
 
@@ -39,6 +40,13 @@ export const ABSENCE_ACTIONS: Record<AbsenceActionId, AbsenceActionDef> = {
 export interface AbsenceReasonDef {
   id: string;
   excuses: string[];
+  /**
+   * Cómo falta cada arquetipo con ese mismo motivo: el cumplidor avisa el
+   * lunes con el motivo real, el talentoso informal escribe a las 19:05. Es
+   * opcional y parcial a propósito (ver `voices.ts`): donde no hay voz propia,
+   * manda `excuses`.
+   */
+  voices?: VoicePools;
   actions: AbsenceActionId[];
 }
 
@@ -51,6 +59,12 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
       'Se le quedó el auto en la vuelta de casa. Mandó foto del capó abierto, por las dudas.',
       'Le prestó el auto al hermano y volvió tarde. "Nunca más", juró, como todos los meses.',
     ],
+    voices: {
+      mercenario: ['Dice que el auto no arranca y que pagar un Uber hasta allá "no le cierra".'],
+      cumplidor: ['Se le rompió el auto y avisó a las ocho de la mañana, con foto y presupuesto del taller.'],
+      talentoso_informal: ['Tiene el auto roto hace tres semanas. Sigue "viendo qué hace".'],
+      veterano: ['El auto en el taller y arriba de un ómnibus no se sube: "ya viajé bastante parado en mi vida".'],
+    },
     actions: ['convencer', 'uber', 'importancia'],
   },
   {
@@ -62,6 +76,12 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
       'Quedó de armar el asado familiar. Mandó foto del fuego encendido como prueba.',
       'Se fue al camping con la familia política. "Sin señal", fue lo último que se supo.',
     ],
+    voices: {
+      social: ['Cumpleaños familiar con asado propio. Mandó foto de la mesa y la leyenda: "el próximo lo hago para el plantel".'],
+      leal: ['Compromiso familiar sin escapatoria. Pidió disculpas dos veces y preguntó el resultado antes de que terminara el partido.'],
+      cumplidor: ['Avisó el lunes: "el sábado tengo el cumpleaños de mi hija, no voy a estar". Puntual hasta para faltar.'],
+      protagonista: ['Evento familiar impostergable. "Sin mí van a sufrir", avisó, medio en broma.'],
+    },
     actions: ['segundo_tiempo', 'convencer', 'importancia'],
   },
   {
@@ -72,6 +92,11 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
       'Le cargaron horas extra a último momento y no se pudo negar: está juntando para las vacaciones.',
       'Cierre de mes en la oficina. "Salgo a las nueve, no llego ni loco", avisó resignado.',
     ],
+    voices: {
+      mercenario: ['Le salió una changa que se cobra esa misma noche. La eligió sin dudar ni un segundo.'],
+      cumplidor: ['Le cayó laburo a último momento y se quedó: "si me voy ahora, queda todo tirado".'],
+      competitivo: ['Se peleó con el jefe para poder salir y perdió. Lo contó con más bronca que el resultado del partido.'],
+    },
     actions: ['segundo_tiempo', 'uber'],
   },
   {
@@ -82,6 +107,16 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
       '"Estoy re al horno, hoy no me da", escribió. Nadie averiguó con qué.',
       'Se quedó dormido en el sillón. Lo confesó él mismo, sin culpa.',
     ],
+    voices: {
+      talentoso_informal: [
+        '"Uh, me colgué", escribió a las 19:05. El partido era a las 19:00.',
+        'Estaba en la playa "hasta recién". Recién eran las siete de la tarde.',
+      ],
+      mercenario: ['"Hoy no me sirve ir", puso, y no agregó nada más.'],
+      social: ['Se quedó en un cumpleaños al que había ido "un ratito". Eran las nueve y seguía ahí.'],
+      veterano: ['"Hoy el cuerpo me dijo que no", avisó. A esta altura se lo respeta y no se pregunta.'],
+      protagonista: ['"Si voy a jugar veinte minutos, mejor descanso", tiró, sin que nadie le hubiera preguntado.'],
+    },
     actions: ['insistir', 'companero', 'importancia'],
   },
   {
@@ -111,6 +146,10 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
       'Gripe de cama. Mandó un audio con una voz que dio lástima al grupo entero.',
       'Pasó la noche con el estómago revuelto. "No me subo a un auto ni loco", avisó.',
     ],
+    voices: {
+      veterano: ['Anda con una gripe que "a los veinte se pasaba en un día". Ahora no.'],
+      competitivo: ['Con fiebre y ofreciéndose igual. Hubo que decirle que no viniera.'],
+    },
     actions: [], // contra la fiebre no hay charla técnica
   },
   {
@@ -129,6 +168,10 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
       'Le pidieron que cubriera a un compañero que faltó. Dijo que sí antes de mirar el calendario.',
       'Quedó de urgencia en el trabajo: alguien tenía que quedarse y le tocó a él.',
     ],
+    voices: {
+      cumplidor: ['Le pidieron cubrir la guardia y dijo que sí antes de pensarlo. Después preguntó si servía llegar para el segundo tiempo.'],
+      mercenario: ['Le pagan doble por quedarse. No hizo falta que lo pensara.'],
+    },
     actions: ['segundo_tiempo'],
   },
 ];
@@ -137,12 +180,16 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
  * Elige una excusa sin repetir: ni la de otro compañero en la misma lista, ni
  * la que puso él la vez pasada. Dos "le tocó cubrir la guardia" seguidos
  * convierten a las personas en plantillas.
+ *
+ * Con el mismo criterio, la voz del arquetipo pesa pero no monopoliza: si el
+ * mercenario faltara siempre con sus dos frases propias, cambiaríamos un molde
+ * por otro más chico.
  */
 export function pickExcuse(reason: AbsenceReasonDef, player: Player, used: Set<string>, rng: Rng): string {
-  const fresh = reason.excuses.filter((e) => !used.has(e) && e !== player.lastExcuse);
-  const pool = fresh.length > 0 ? fresh : reason.excuses.filter((e) => !used.has(e));
-  const excuse = rng.pick(pool.length > 0 ? pool : reason.excuses);
-  used.add(excuse);
+  const excuse = pickVoicedRng(player.personality, reason.voices ?? {}, reason.excuses, rng, {
+    used,
+    avoid: player.lastExcuse,
+  });
   player.lastExcuse = excuse;
   return excuse;
 }
