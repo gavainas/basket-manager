@@ -28,6 +28,7 @@ import { PreseasonView } from './ui/PreseasonView';
 import { PreseasonEndScreen } from './ui/PreseasonEndScreen';
 import { formatMoney, weekLabel } from './ui/helpers';
 import { AvatarGallery } from './ui/AvatarGallery';
+import { Maqueta } from './ui/Maqueta';
 import { ConfirmDialog, type ConfirmRequest } from './ui/ConfirmDialog';
 
 type Tab = AppTab;
@@ -136,6 +137,8 @@ export default function App() {
 
   // Pantalla de validación de retratos, solo desarrollo (ver design/AVATAR_SYSTEM.md).
   if (window.location.hash === '#retratos') return <AvatarGallery />;
+  // Maqueta navegable de la dirección de arte en evaluación (ver design/ART_PIPELINE.md).
+  if (window.location.hash === '#maqueta') return <Maqueta />;
   const [tab, setTab] = useState<Tab>('resumen');
   const [saveFailed, setSaveFailed] = useState(false);
   const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);

@@ -323,6 +323,20 @@ Formato sugerido:
 - Próximo paso autorizado: ...
 ```
 
+### 2026-08-09 — Referencia candidata y maqueta navegable
+
+- Alcance: dirección visual candidata elegida por Gabi sobre una referencia generada
+  (collage fotográfico sobre parquet cálido: cards crema tipo papel con foto, headers
+  azul marino, acento naranja, tira de retratos del plantel abajo — espíritu PC Fútbol).
+- Aprobado: la referencia como **candidata a dirección**, no como arte final. Se saltea
+  la comparación de 3 direcciones de la Puerta 1 por decisión del director.
+- No aprobado: ningún asset todavía; los retratos y la UI del juego siguen provisionales.
+- Próximo paso autorizado: maqueta navegable en `/#maqueta` (las 5 pantallas de la
+  Puerta 4) con placeholders SVG en los huecos de foto. Los assets reales se generan
+  con Higgsfield cuando Gabi apruebe el estilo sobre la maqueta, y se copian a
+  `public/maqueta/` con los nombres listados en `src/ui/Maqueta.tsx` (aparecen solos,
+  sin tocar código).
+
 ## Estado de aprobación actual
 
 A la fecha de creación de este documento:
