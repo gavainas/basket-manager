@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Avatar } from './Avatar';
 import '../maqueta.css';
 
@@ -453,13 +453,25 @@ function Partido({ go }: { go: (s: MqScreen) => void }) {
 export function Maqueta() {
   const [screen, setScreen] = useState<MqScreen>('inicio');
   const [ficha, setFicha] = useState<MqPlayer>(PLANTEL[0]);
+  // Fondo real (asset): si public/maqueta/fondo-cancha.jpg existe, reemplaza
+  // al parquet dibujado en CSS (y esconde las líneas de cancha falsas).
+  const fondoUrl = `${import.meta.env.BASE_URL}maqueta/fondo-cancha.jpg`;
+  const [fondoOk, setFondoOk] = useState(false);
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setFondoOk(true);
+    img.src = fondoUrl;
+  }, [fondoUrl]);
   const openFicha = (p: MqPlayer) => {
     setFicha(p);
     setScreen('ficha');
   };
   return (
     <div className="mq-root">
-      <div className="mq-court-lines" />
+      <div
+        className={`mq-court-lines ${fondoOk ? 'mq-has-photo' : ''}`}
+        style={fondoOk ? { backgroundImage: `url(${fondoUrl})` } : undefined}
+      />
       <div className="mq-content">
         <div className="mq-note">
           <span>

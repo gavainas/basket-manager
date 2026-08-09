@@ -40,6 +40,16 @@
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 3px, transparent 3px 210px),
     linear-gradient(180deg, var(--mq-wood-hi), var(--mq-wood) 40%, var(--mq-wood-lo));
 }
+/* Con foto real de fondo: la foto pisa los degradés y las líneas dibujadas sobran. */
+.mq-court-lines.mq-has-photo {
+  background-size: cover;
+  background-position: center top;
+}
+.mq-court-lines.mq-has-photo::before,
+.mq-court-lines.mq-has-photo::after {
+  display: none;
+}
+
 .mq-court-lines::before {
   content: '';
   position: absolute;
