@@ -1,17 +1,53 @@
+/* Sistema visual "club de barrio" — ver design/SISTEMA_VISUAL.md.
+   Los nombres de token viejos se conservan a propósito: así las ~2200 líneas de
+   abajo siguen funcionando sin tocarlas. Lo que cambió es a qué apuntan. */
 :root {
-  --bg: #0e141f;
-  --bg-soft: #16202e;
-  --panel: #1b2739;
-  --panel-2: #223148;
-  --border: #2d3f5a;
-  --text: #e8eef7;
-  --text-dim: #93a5bf;
-  --accent: #f08c2e;
-  --accent-soft: rgba(240, 140, 46, 0.15);
-  --good: #3ddc84;
-  --warn: #f2c14e;
-  --bad: #ff5d5d;
-  --radius: 10px;
+  /* Chrome — neutro. Nunca lleva los colores de un club: si los llevara, se
+     pelearía con la ficha de cada rival. */
+  --chrome: #32353a;
+  --chrome-alto: #3d4147;
+  --chrome-linea: #4a4e55;
+
+  /* Superficies */
+  --bg: #d8d4cc;      /* el campo donde apoyan los paneles */
+  --bg-soft: #e6e3dd; /* pistas de barra, filas hundidas */
+  --panel: #f6f4f1;   /* cuerpo de card */
+  --panel-2: #eceae6; /* botones y superficies elevadas */
+  --border: #d2cec8;
+
+  /* Tinta */
+  --text: #25282c;
+  --text-dim: #6a6f76;
+  --text-faint: #9a9fa6;
+  --text-light: #f6f4f1; /* sobre chrome y sobre la cancha */
+
+  /* Acción — RESERVADO: botón primario y dato clave. Máximo dos por pantalla. */
+  --accent: #e07a2a;
+  --accent-soft: rgba(224, 122, 42, 0.14);
+  --on-accent: #2a1a08; /* tinta sobre naranja: 5:1, pasa AA en texto chico */
+
+  /* Semáforo — vive dentro de los datos, nunca en un cabezal */
+  --good: #4a9160;
+  --warn: #c69320;
+  --bad: #b8443a;
+
+  /* Colores de sección: señalización, no decoración */
+  --sec-tablero: #2f6b4f;
+  --sec-partidos: #2d5c8a;
+  --sec-vestuario: #9d3b3b;
+  --sec-plantel: #b07f27;
+  --sec-finanzas: #6a4a86;
+  --sec-scouting: #456470;
+  --sec-ajustes: #565b62;
+
+  --radius: 4px; /* esta dirección es cuadrada */
+  --sombra: 0 1px 2px rgba(37, 40, 44, 0.1);
+  --sombra-alta: 0 8px 28px rgba(37, 40, 44, 0.22);
+  --display: 'Bahnschrift SemiBold Condensed', 'Bahnschrift', 'Oswald',
+             'Barlow Condensed', 'Arial Narrow', 'Segoe UI', sans-serif;
+
+  /* Alto de la barra de recursos fija, para el padding del body */
+  --recursos-alto: 68px;
 }
 
 * {
@@ -63,7 +99,7 @@ button:disabled {
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #1a1206;
+  color: var(--on-accent);
   font-weight: 700;
 }
 
@@ -81,70 +117,234 @@ button.danger {
 .app-shell {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem 3rem;
+  /* Deja aire para la barra de recursos fija. */
+  padding: 0 1rem calc(var(--recursos-alto) + 2rem);
 }
 
+/* ---------- Chrome: barra superior ---------- */
+
+/* Vive fuera de .app-shell y ocupa todo el ancho; el contenido se alinea con
+   la app vía .topbar-inner. Nada de trucos con vw: con scrollbar desbordan. */
 .topbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem 1.25rem;
-  padding: 0.9rem 0;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 1rem;
   position: sticky;
   top: 0;
-  background: var(--bg);
-  z-index: 10;
+  z-index: 30;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--chrome-linea);
 }
 
-.topbar .club-name {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: var(--accent);
+.topbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.topbar .marca {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1.1rem 0.5rem 0;
+  border-right: 1px solid var(--chrome-linea);
+  margin-right: 0.4rem;
+  flex-shrink: 0;
+}
+
+.topbar .marca .club-name {
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text-light);
   white-space: nowrap;
 }
 
-.topbar .meta {
-  display: flex;
-  gap: 1rem;
-  color: var(--text-dim);
-  font-size: 0.9rem;
-  flex-wrap: wrap;
+/* El nombre del club es un ClubLink: hereda el color del chrome, no el punteado. */
+.topbar .marca .club-name .plink {
+  color: inherit;
+  border-bottom-color: rgba(246, 244, 241, 0.4);
 }
 
-.topbar .meta strong {
-  color: var(--text);
+.topbar .marca .club-name .plink:hover {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+.topbar .marca .temporada {
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.58rem;
+  color: var(--text-faint);
+  margin-top: 0.2rem;
 }
 
 .topbar .spacer {
   flex: 1;
+  min-width: 0.5rem;
 }
+
+.topbar .chip {
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* Salir: gris de "ajustes", el más callado a propósito. */
+.topbar .salir {
+  align-self: center;
+  flex-shrink: 0;
+  margin-left: 0.6rem;
+  background: transparent;
+  border-color: var(--chrome-linea);
+  color: var(--text-faint);
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 0.76rem;
+  padding: 0.4rem 0.9rem;
+}
+
+.topbar .salir:hover:not(:disabled) {
+  background: var(--sec-ajustes);
+  border-color: var(--sec-ajustes);
+  color: var(--text-light);
+}
+
+/* ---------- Chrome: secciones ---------- */
 
 .tabs {
   display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.25rem;
+  align-items: stretch;
 }
 
 .tabs button {
-  border-radius: 999px;
-  padding: 0.45rem 1rem;
-  font-size: 0.9rem;
+  border: 0;
+  border-radius: 0;
   background: transparent;
+  color: var(--text-faint);
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  padding: 0.55rem 0.85rem 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+/* El punto de color es lo que enseña dónde estás sin leer. */
+.tabs button::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sec, var(--sec-ajustes));
+  flex-shrink: 0;
+}
+
+.tabs button:hover:not(:disabled) {
+  background: var(--chrome-alto);
+  color: var(--text-light);
+  border-color: transparent;
 }
 
 .tabs button.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #1a1206;
-  font-weight: 700;
+  background: var(--chrome-alto);
+  color: var(--text-light);
+  border-bottom-color: var(--sec, var(--sec-ajustes));
+  font-weight: 400;
 }
 
-.tabs button.attention {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
+.tabs button:active:not(:disabled) {
+  transform: none;
+}
+
+/* ---------- Chrome: barra de recursos ---------- */
+
+.recursos {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  background: var(--chrome);
+  border-top: 1px solid var(--chrome-linea);
+}
+
+.recursos-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  min-height: var(--recursos-alto);
+}
+
+.recursos .recurso {
+  padding: 0.5rem 1.1rem;
+  border-right: 1px solid var(--chrome-linea);
+  flex: 1 0 auto;
+  min-width: 122px;
+}
+
+.recursos .recurso .k {
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: 0.62rem;
+  color: var(--text-faint);
+  display: block;
+}
+
+.recursos .recurso .v {
+  font-family: var(--display);
+  font-size: 1.3rem;
+  line-height: 1.15;
+  color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.08rem;
+}
+
+.recursos .recurso .v.good { color: var(--good); }
+.recursos .recurso .v.warn { color: var(--warn); }
+.recursos .recurso .v.bad { color: var(--bad); }
+
+.recursos .recurso .s {
+  font-size: 0.66rem;
+  color: var(--text-faint);
+  line-height: 1.25;
+}
+
+.recursos .recurso.accion {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-right: 0;
+  margin-left: auto;
+  padding-right: 1.2rem;
+}
+
+.recursos .recurso.accion .s {
+  max-width: 15ch;
+  text-align: right;
+}
+
+.recursos .avanzar {
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 0.88rem;
+  padding: 0.6rem 1.2rem;
+  white-space: nowrap;
 }
 
 /* ---------- Cards & grids ---------- */
@@ -154,6 +354,7 @@ button.danger {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1rem;
+  box-shadow: var(--sombra);
 }
 
 .card + .card {
@@ -161,12 +362,32 @@ button.danger {
 }
 
 .card h3 {
-  font-size: 1rem;
+  font-family: var(--display);
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 0.8rem;
+  letter-spacing: 0.11em;
+  font-size: 0.85rem;
   margin-bottom: 0.75rem;
+}
+
+/* Banda de sección en el cabezal de una card. El color lo pone --sec: así el
+   paso 4 es poner una clase por pantalla y nada más. */
+.card.banda {
+  padding: 0;
+  overflow: hidden;
+}
+
+.card.banda > h3 {
+  background: var(--sec, var(--sec-ajustes));
+  color: var(--text-light);
+  font-size: 0.95rem;
+  letter-spacing: 0.09em;
+  margin: 0;
+  padding: 0.55rem 0.9rem;
+}
+
+.card.banda > .card-body {
+  padding: 1rem;
 }
 
 .grid {
@@ -192,6 +413,7 @@ button.danger {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.8rem 1rem;
+  box-shadow: var(--sombra);
 }
 
 .stat-tile.clickable {
@@ -204,16 +426,19 @@ button.danger {
 }
 
 .stat-tile .label {
-  color: var(--text-dim);
-  font-size: 0.75rem;
+  font-family: var(--display);
+  color: var(--text-faint);
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.13em;
 }
 
 .stat-tile .value {
-  font-size: 1.45rem;
-  font-weight: 800;
-  margin-top: 0.15rem;
+  font-family: var(--display);
+  font-size: 1.55rem;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.1rem;
 }
 
 .stat-tile .sub {
@@ -282,7 +507,10 @@ button.danger {
 .chip.good { color: var(--good); border-color: var(--good); }
 .chip.warn { color: var(--warn); border-color: var(--warn); }
 .chip.bad { color: var(--bad); border-color: var(--bad); }
-.chip.accent { color: var(--accent); border-color: var(--accent); }
+/* Un chip informativo NO es una acción: si el naranja aparece en cada etiqueta
+   de rival, deja de decir "acá se toca". Ver la regla del naranja en
+   design/SISTEMA_VISUAL.md. Pizarra es el tono de "esto es información". */
+.chip.accent { color: var(--sec-scouting); border-color: var(--sec-scouting); }
 
 /* ---------- Player cards ---------- */
 
@@ -305,14 +533,14 @@ button.danger {
 }
 
 .player-card.rotation {
-  border-color: #4ea8de;
+  border-color: var(--sec-partidos);
   border-style: dashed;
-  box-shadow: 0 0 0 2px rgba(78, 168, 222, 0.15);
+  box-shadow: 0 0 0 2px rgba(45, 92, 138, 0.15);
 }
 
 .chip.rotation-chip {
-  border-color: #4ea8de;
-  color: #4ea8de;
+  border-color: var(--sec-partidos);
+  color: var(--sec-partidos);
 }
 
 .player-card.unavailable {
@@ -331,18 +559,20 @@ button.danger {
   margin-bottom: 0.5rem;
 }
 
+/* El aro del retrato es cromo, no acción: doce caras con borde naranja se
+   comen el único color que dice "acá se toca". */
 .avatar {
   width: 42px;
   height: 42px;
   min-width: 42px;
   border-radius: 50%;
   background: var(--panel-2);
-  border: 2px solid var(--accent);
+  border: 2px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  color: var(--accent);
+  color: var(--text-dim);
   font-size: 0.9rem;
   overflow: hidden;
 }
@@ -456,8 +686,10 @@ td.num, th.num {
 }
 
 /* "Qué mirar hoy": avisos priorizados y clickeables del Dashboard. */
+/* "Qué mirar hoy" no es una acción ni un dato clave: es el resumen de la
+   sección. Va con una franja del color del Tablero, no con el naranja. */
 .watch-card {
-  border-color: var(--accent);
+  border-left: 4px solid var(--sec-tablero);
 }
 
 .watch-row {
@@ -506,11 +738,12 @@ td.num, th.num {
   font-size: 0.8rem;
 }
 
+/* El paso en curso es señalización, no acción: lleva el azul de Partidos. */
 .step.active {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--sec-partidos);
+  color: var(--sec-partidos);
   font-weight: 700;
-  background: var(--accent-soft);
+  background: rgba(45, 92, 138, 0.1);
 }
 
 .step.done {
@@ -620,8 +853,8 @@ td.num, th.num {
   border-radius: 999px;
 }
 
-.result-badge.win { background: rgba(61, 220, 132, 0.15); color: var(--good); }
-.result-badge.lose { background: rgba(255, 93, 93, 0.15); color: var(--bad); }
+.result-badge.win { background: #e2efe5; color: #2f6b45; }
+.result-badge.lose { background: #f6e2df; color: #8f342c; }
 
 .reason-list {
   margin: 0.4rem 0 0;
@@ -914,16 +1147,16 @@ tr.sheet-group td {
 
 .court-slot .court-name {
   font-size: 0.66rem;
-  color: var(--text);
+  color: var(--text-light);
   white-space: nowrap;
-  text-shadow: 0 1px 3px rgba(5, 8, 14, 0.85);
+  text-shadow: 0 1px 3px rgba(20, 32, 44, 0.85);
 }
 
 .court-slot .court-rating {
   font-size: 0.66rem;
   font-weight: 700;
-  color: var(--accent);
-  text-shadow: 0 1px 3px rgba(5, 8, 14, 0.85);
+  color: #ffc078; /* el naranja no llega sobre la cancha; se aclara para leerse */
+  text-shadow: 0 1px 3px rgba(20, 32, 44, 0.85);
 }
 
 .sheet-court-note {
@@ -936,7 +1169,7 @@ tr.sheet-group td {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(5, 8, 14, 0.75);
+  background: rgba(37, 40, 44, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -951,7 +1184,7 @@ tr.sheet-group td {
   max-width: 520px;
   width: 100%;
   padding: 1.4rem;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--sombra-alta);
 }
 
 .modal h2 {
@@ -1146,7 +1379,7 @@ tr.sheet-group td {
 }
 
 .callup-row.out {
-  border-color: rgba(255, 93, 93, 0.4);
+  border-color: rgba(184, 68, 58, 0.45);
 }
 
 .callup-row.dim {
@@ -1389,8 +1622,8 @@ button.small {
 }
 
 .lp-row.rot {
-  border: 1px dashed #4ea8de;
-  background: rgba(78, 168, 222, 0.08);
+  border: 1px dashed var(--sec-partidos);
+  background: rgba(45, 92, 138, 0.08);
 }
 
 .lp-row.off {
@@ -1460,22 +1693,31 @@ button.mini {
 button.mini.on {
   background: var(--accent);
   border-color: var(--accent);
-  color: #1a1206;
+  color: var(--on-accent);
 }
 
 button.mini.blue.on {
-  background: #4ea8de;
-  border-color: #4ea8de;
-  color: #06121c;
+  background: var(--sec-partidos);
+  border-color: var(--sec-partidos);
+  color: var(--text-light);
 }
 
+/* La pizarra es la única superficie oscura del sistema: es una cancha pintada,
+   como la del gimnasio. Todo lo que va encima lleva tinta clara explícita. */
 .court {
   position: relative;
   width: 100%;
   aspect-ratio: 300 / 340;
-  background: linear-gradient(180deg, #253248 0%, #1c2839 100%);
-  border-radius: 12px;
+  background: linear-gradient(180deg, #4a6a86 0%, #3d5a74 100%);
+  border-radius: var(--radius);
   overflow: hidden;
+}
+
+.court .slot-name,
+.court .slot-sub,
+.court .slot-pos-label,
+.court .court-name {
+  color: var(--text-light);
 }
 
 .court-lines {
@@ -1490,7 +1732,7 @@ button.mini.blue.on {
 .court-lines line,
 .court-lines path {
   fill: none;
-  stroke: rgba(147, 165, 191, 0.35);
+  stroke: rgba(255, 255, 255, 0.38);
   stroke-width: 2;
 }
 
@@ -1506,20 +1748,22 @@ button.mini.blue.on {
   cursor: default;
 }
 
+/* Sobre la cancha azul el aro va claro: se recorta mejor que el naranja y no
+   gasta el color de acción cinco veces por pizarra. */
 .slot-avatar {
   width: 46px;
   height: 46px;
   margin: 0 auto;
   border-radius: 50%;
   background: var(--panel-2);
-  border: 2px solid var(--accent);
+  border: 2px solid var(--text-light);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  color: var(--accent);
+  color: var(--text-dim);
   font-size: 0.9rem;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 3px 10px rgba(20, 32, 44, 0.45);
   overflow: hidden;
 }
 
@@ -1555,7 +1799,7 @@ button.mini.blue.on {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 1px 3px rgba(20, 32, 44, 0.8);
 }
 
 .slot-name.dim {
@@ -1566,7 +1810,7 @@ button.mini.blue.on {
 .slot-sub {
   font-size: 0.65rem;
   color: var(--text-dim);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 1px 3px rgba(20, 32, 44, 0.8);
 }
 
 .bench {
@@ -1691,7 +1935,7 @@ button.mini.blue.on {
 
 .segmented button.on {
   background: var(--accent);
-  color: #1a1206;
+  color: var(--on-accent);
   font-weight: 700;
 }
 
@@ -1798,7 +2042,7 @@ button.mini.blue.on {
   border-radius: 10px;
   padding: 0.7rem 0.85rem;
   z-index: 70;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--sombra-alta);
   pointer-events: none;
   cursor: default;
 }
@@ -1850,7 +2094,7 @@ button.mini.blue.on {
   color: var(--text-dim);
   font-weight: 700;
   margin-bottom: 0.15rem;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 1px 3px rgba(20, 32, 44, 0.8);
 }
 
 .slot-sub.oop-text {
@@ -1879,7 +2123,7 @@ button.mini.blue.on {
 .tip {
   position: relative;
   cursor: help;
-  border-bottom: 1px dotted rgba(147, 165, 191, 0.55);
+  border-bottom: 1px dotted var(--text-faint);
 }
 
 .tip:hover::after {
@@ -1901,7 +2145,7 @@ button.mini.blue.on {
   white-space: normal;
   text-transform: none;
   letter-spacing: normal;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--sombra-alta);
   pointer-events: none;
 }
 
@@ -1924,7 +2168,7 @@ button.mini.blue.on {
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--sombra-alta);
 }
 
 .profile-head {
@@ -1982,7 +2226,7 @@ button.mini.blue.on {
 .profile-tabs button.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #1a1206;
+  color: var(--on-accent);
   font-weight: 700;
 }
 

@@ -32,15 +32,19 @@ import { ConfirmDialog, type ConfirmRequest } from './ui/ConfirmDialog';
 
 type Tab = AppTab;
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'resumen', label: 'Resumen' },
-  { id: 'plantilla', label: 'Plantilla' },
-  { id: 'finanzas', label: 'Finanzas' },
-  { id: 'liga', label: 'Liga' },
-  { id: 'agenda', label: 'Agenda' },
-  { id: 'rankings', label: 'Rankings' },
-  { id: 'historia', label: 'Historia' },
-  { id: 'semana', label: 'Semana' },
+/* Cada sección lleva su color (ver design/SISTEMA_VISUAL.md): sirve para saber
+   dónde estás sin leer. Liga, Agenda y Rankings comparten el azul de Partidos
+   porque son la misma área — el color responde "¿qué parte del juego es esta?",
+   no "¿qué pestaña toqué?".
+   `semana` no está acá: es la acción, y vive en la barra de recursos. */
+const TABS: { id: Tab; label: string; sec: string }[] = [
+  { id: 'resumen', label: 'Resumen', sec: 'var(--sec-tablero)' },
+  { id: 'plantilla', label: 'Plantilla', sec: 'var(--sec-plantel)' },
+  { id: 'finanzas', label: 'Finanzas', sec: 'var(--sec-finanzas)' },
+  { id: 'liga', label: 'Liga', sec: 'var(--sec-partidos)' },
+  { id: 'agenda', label: 'Agenda', sec: 'var(--sec-partidos)' },
+  { id: 'rankings', label: 'Rankings', sec: 'var(--sec-partidos)' },
+  { id: 'historia', label: 'Historia', sec: 'var(--sec-tablero)' },
 ];
 
 const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }> = {
@@ -245,36 +249,43 @@ export default function App() {
             ? 'Dirigí el partido cuarto a cuarto'
             : 'Mirá el resultado del partido';
 
+  const alDia = state.players.filter((p) => p.weeksUnpaid === 0).length;
+  const semanaLabel =
+    state.week <= state.seasonLength
+      ? `${Math.min(state.week, state.seasonLength)}`
+      : weekLabel(state.week, state.seasonLength);
+
   return withProviders(
-    <div className="app-shell">
-      <div className="topbar">
-        <span className="club-name">
-          🏀 <ClubLink id={USER_CLUB_ID}>{state.club.name}</ClubLink>
-        </span>
-        <div className="meta">
-          <span>
-            T{state.seasonNumber} ·{' '}
-            <strong>
-              {state.week <= state.seasonLength
-                ? `Semana ${Math.min(state.week, state.seasonLength)}/${state.seasonLength}`
-                : weekLabel(state.week, state.seasonLength)}
-            </strong>
-          </span>
-          <span>
-            Caja <strong>{formatMoney(state.club.money)}</strong>
-          </span>
-          <span>
-            Récord{' '}
-            <strong>
-              {row.wins}-{row.losses}
-            </strong>
-          </span>
-        </div>
-        <div className="spacer" />
-        {saveFailed && <span className="chip bad">⚠ No se pudo guardar</span>}
-        <span className="chip accent">{phaseHint}</span>
-        <button
-          onClick={() =>
+    <>
+      <header className="topbar">
+        <div className="topbar-inner">
+          <div className="marca">
+            <div>
+              <div className="club-name">
+                <ClubLink id={USER_CLUB_ID}>{state.club.name}</ClubLink>
+              </div>
+              <div className="temporada">Temporada {state.seasonNumber}</div>
+            </div>
+          </div>
+
+          <div className="tabs">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                style={{ '--sec': t.sec } as React.CSSProperties}
+                className={tab === t.id ? 'active' : ''}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="spacer" />
+          {saveFailed && <span className="chip bad">⚠ No se pudo guardar</span>}
+          <button
+            className="salir"
+            onClick={() =>
             setConfirmReq(
               saveFailed
                 ? {
@@ -295,35 +306,66 @@ export default function App() {
                   }
             )
           }
-        >
-          Menú
-        </button>
-      </div>
-
-      <div className="tabs">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            className={`${tab === t.id ? 'active' : ''} ${t.id === 'semana' && tab !== 'semana' ? 'attention' : ''}`}
-            onClick={() => setTab(t.id)}
           >
-            {t.label}
-            {t.id === 'semana' ? ' ▶' : ''}
+            Salir
           </button>
-        ))}
+        </div>
+      </header>
+
+      <div className="app-shell">
+        {tab === 'resumen' && <Dashboard state={state} />}
+        {tab === 'plantilla' && <RosterView state={state} dispatch={dispatch} />}
+        {tab === 'finanzas' && <FinancesView state={state} />}
+        {tab === 'liga' && <LeagueView state={state} dispatch={dispatch} />}
+        {tab === 'agenda' && <CalendarView state={state} />}
+        {tab === 'rankings' && <RankingsView state={state} />}
+        {tab === 'historia' && <HistoryView state={state} />}
+        {tab === 'semana' && <WeekView state={state} dispatch={dispatch} />}
       </div>
 
-      {tab === 'resumen' && <Dashboard state={state} />}
-      {tab === 'plantilla' && <RosterView state={state} dispatch={dispatch} />}
-      {tab === 'finanzas' && <FinancesView state={state} />}
-      {tab === 'liga' && <LeagueView state={state} dispatch={dispatch} />}
-      {tab === 'agenda' && <CalendarView state={state} />}
-      {tab === 'rankings' && <RankingsView state={state} />}
-      {tab === 'historia' && <HistoryView state={state} />}
-      {tab === 'semana' && <WeekView state={state} dispatch={dispatch} />}
+      {/* Los números que mirás siempre, siempre en el mismo lugar. */}
+      <footer className="recursos">
+        <div className="recursos-inner">
+          <div className="recurso">
+            <span className="k">Semana</span>
+            <div className="v">{semanaLabel}</div>
+            <div className="s">de {state.seasonLength}</div>
+          </div>
+          <div className="recurso">
+            <span className="k">Caja del club</span>
+            <div className={`v ${state.club.money < 0 ? 'bad' : ''}`}>{formatMoney(state.club.money)}</div>
+            <div className="s">disponible</div>
+          </div>
+          <div className="recurso">
+            <span className="k">Cuotas al día</span>
+            <div className={`v ${alDia < state.players.length ? 'warn' : 'good'}`}>
+              {alDia} / {state.players.length}
+            </div>
+            <div className="s">jugadores</div>
+          </div>
+          <div className="recurso">
+            <span className="k">Récord</span>
+            <div className="v">
+              {row.wins}-{row.losses}
+            </div>
+            <div className="s">en la liga</div>
+          </div>
+          <div className="recurso accion">
+            <span className="s">{phaseHint}</span>
+            {/* Ya estando en la semana, el botón primario es el de la vista: dos
+                naranjas compitiendo rompen la regla de uno por pantalla. */}
+            <button
+              className={`avanzar ${tab === 'semana' ? '' : 'primary'}`}
+              onClick={() => setTab('semana')}
+            >
+              » Avanzar semana
+            </button>
+          </div>
+        </div>
+      </footer>
 
       <EventModal state={state} dispatch={dispatch} />
       <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
-    </div>
+    </>
   );
 }
