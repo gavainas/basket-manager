@@ -1,0 +1,847 @@
+<title>Kit Club de Barrio</title>
+
+<style>
+  :root {
+    /* Chrome — neutro, nunca lleva color de club */
+    --chrome: #32353a;
+    --chrome-alto: #3d4147;
+    --chrome-linea: #4a4e55;
+
+    /* Superficies */
+    --lienzo: #e2dfd9;
+    --panel: #f6f4f1;
+    --panel-alt: #eceae6;
+    --linea: #d2cec8;
+
+    /* Tinta */
+    --tinta: #25282c;
+    --tinta-media: #6a6f76;
+    --tinta-suave: #9a9fa6;
+    --tinta-clara: #f6f4f1;
+
+    /* Acción — reservado */
+    --naranja: #e07a2a;
+    --naranja-hover: #ef8a39;
+
+    /* Secciones */
+    --sec-tablero: #2f6b4f;
+    --sec-partidos: #2d5c8a;
+    --sec-vestuario: #9d3b3b;
+    --sec-plantel: #b07f27;
+    --sec-finanzas: #6a4a86;
+    --sec-scouting: #456470;
+    --sec-ajustes: #565b62;
+
+    /* Semáforo */
+    --bien: #4a9160;
+    --ojo: #c69320;
+    --mal: #b8443a;
+
+    --radio: 4px;
+    --display: 'Bahnschrift SemiBold Condensed', 'Bahnschrift', 'Oswald',
+               'Barlow Condensed', 'Arial Narrow', 'Segoe UI', sans-serif;
+    --cuerpo: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--lienzo);
+    color: var(--tinta);
+    font: 15px/1.5 var(--cuerpo);
+  }
+
+  .display {
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .etiqueta {
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.68rem;
+    color: var(--tinta-suave);
+  }
+
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ═══════ Barra superior — es la nav real del juego ═══════ */
+  .barra-sup {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--chrome);
+    display: flex; align-items: stretch;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--chrome-linea);
+  }
+  .marca {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.55rem 1.1rem 0.55rem 1rem;
+    border-right: 1px solid var(--chrome-linea);
+    flex-shrink: 0;
+  }
+  .marca svg { width: 30px; height: 34px; flex-shrink: 0; }
+  .marca-nombre {
+    font-family: var(--display); text-transform: uppercase;
+    color: var(--tinta-clara); font-size: 1.05rem; line-height: 1; letter-spacing: 0.05em;
+  }
+  .marca-sub {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.12em;
+    font-size: 0.58rem; color: var(--tinta-suave); margin-top: 0.2rem;
+  }
+  .nav { display: flex; align-items: stretch; }
+  .nav a {
+    display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+    padding: 0.6rem 0.85rem 0.5rem;
+    text-decoration: none; color: var(--tinta-suave);
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.08em;
+    font-size: 0.72rem; white-space: nowrap;
+    border-bottom: 3px solid transparent;
+  }
+  .nav a:hover { color: var(--tinta-clara); background: var(--chrome-alto); }
+  .nav a .punto {
+    width: 7px; height: 7px; border-radius: 50%; display: block;
+  }
+  .nav a .fila { display: flex; align-items: center; gap: 0.4rem; }
+  .nav a svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.7; }
+  .nav a:focus-visible { outline: 2px solid var(--naranja); outline-offset: -2px; }
+
+  /* ═══════ Estructura de página ═══════ */
+  .hoja { max-width: 1180px; margin: 0 auto; padding: 1.6rem 1.4rem 4rem; }
+
+  .portada { padding: 1.6rem 0 0.4rem; }
+  .portada h1 {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.03em;
+    font-size: clamp(2.2rem, 5vw, 3.2rem); line-height: 0.98; margin: 0.3rem 0 0.5rem;
+    text-wrap: balance;
+  }
+  .portada p { max-width: 62ch; color: var(--tinta-media); margin: 0 0 0.9rem; }
+
+  .aviso {
+    border-left: 4px solid var(--ojo);
+    background: var(--panel);
+    padding: 0.75rem 1rem;
+    border-radius: 0 var(--radio) var(--radio) 0;
+    font-size: 0.9rem;
+    max-width: 68ch;
+  }
+  .aviso strong { color: var(--tinta); }
+
+  section { margin-top: 2.6rem; }
+  section > h2 {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 1.15rem; margin: 0 0 0.25rem;
+    padding-bottom: 0.5rem; border-bottom: 2px solid var(--linea);
+  }
+  section > .bajada {
+    color: var(--tinta-media); margin: 0.7rem 0 1.1rem; max-width: 66ch;
+  }
+
+  /* ═══════ Paleta ═══════ */
+  .swatches {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 0.7rem;
+  }
+  .swatch {
+    background: var(--panel); border: 1px solid var(--linea); border-radius: var(--radio);
+    overflow: hidden;
+  }
+  .swatch .muestra { height: 62px; }
+  .swatch .pie { padding: 0.5rem 0.6rem 0.6rem; }
+  .swatch .token {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.06em;
+    font-size: 0.78rem; color: var(--tinta);
+  }
+  .swatch .hex {
+    font-variant-numeric: tabular-nums; font-size: 0.74rem; color: var(--tinta-suave);
+    letter-spacing: 0.03em;
+  }
+  .swatch .rol { font-size: 0.76rem; color: var(--tinta-media); margin-top: 0.25rem; line-height: 1.35; }
+
+  /* ═══════ Anatomía de panel ═══════ */
+  .paneles { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1rem; align-items: start; }
+  .p {
+    background: var(--panel); border: 1px solid var(--linea);
+    border-radius: var(--radio); overflow: hidden;
+    box-shadow: 0 1px 2px rgba(37, 40, 44, 0.08);
+  }
+  .p > header {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.6rem 0.85rem;
+    color: var(--tinta-clara);
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.09em;
+    font-size: 0.95rem;
+  }
+  .p > header svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .p > .cuerpo { padding: 0.85rem; }
+  .h-tablero { background: var(--sec-tablero); }
+  .h-partidos { background: var(--sec-partidos); }
+  .h-vestuario { background: var(--sec-vestuario); }
+  .h-plantel { background: var(--sec-plantel); }
+  .h-finanzas { background: var(--sec-finanzas); }
+  .h-scouting { background: var(--sec-scouting); }
+  .h-ajustes { background: var(--sec-ajustes); }
+
+  /* ═══════ Tabla ═══════ */
+  .tabla-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th {
+    text-align: left; font-family: var(--display); text-transform: uppercase;
+    letter-spacing: 0.1em; font-size: 0.66rem; color: var(--tinta-suave);
+    padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--linea); white-space: nowrap;
+  }
+  td {
+    padding: 0.44rem 0.5rem; border-bottom: 1px solid var(--linea);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  th.der, td.der { text-align: right; }
+  tr.propia td { background: var(--panel-alt); font-weight: 700; }
+  tr.propia td.pos, tr.propia td.pts { color: var(--naranja); }
+
+  /* ═══════ Controles ═══════ */
+  .fila-demo { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+
+  .btn {
+    font: inherit; cursor: pointer; border-radius: var(--radio);
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.09em;
+    font-size: 0.86rem; padding: 0.6rem 1.2rem; border: 1px solid transparent;
+  }
+  .btn-primario { background: var(--naranja); color: #fff; }
+  .btn-primario:hover { background: var(--naranja-hover); }
+  .btn-secundario { background: var(--panel); color: var(--tinta); border-color: var(--linea); }
+  .btn-secundario:hover { background: var(--panel-alt); }
+  .btn-fantasma { background: transparent; color: var(--tinta-media); border-color: transparent; }
+  .btn-fantasma:hover { color: var(--tinta); background: var(--panel-alt); }
+  .btn:focus-visible { outline: 3px solid var(--naranja); outline-offset: 2px; }
+
+  .chip {
+    display: inline-block; font-size: 0.72rem; font-weight: 600;
+    padding: 0.16rem 0.6rem; border-radius: 999px;
+    background: var(--panel-alt); color: var(--tinta-media);
+    border: 1px solid var(--linea);
+  }
+  .chip.bien { color: #2f6b45; background: #e2efe5; border-color: #b9d8c2; }
+  .chip.ojo { color: #85631a; background: #f5ecd4; border-color: #e0cd9a; }
+  .chip.mal { color: #8f342c; background: #f6e2df; border-color: #e2b7b1; }
+
+  .barra { height: 7px; border-radius: 3px; background: var(--panel-alt); overflow: hidden; min-width: 110px; }
+  .barra i { display: block; height: 100%; border-radius: 3px; }
+  .barra i.bien { background: var(--bien); }
+  .barra i.ojo { background: var(--ojo); }
+  .barra i.mal { background: var(--mal); }
+
+  .nota-humana {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem 0.7rem;
+    align-items: center; font-size: 0.86rem;
+  }
+  .nota-humana .frase { grid-column: 1 / -1; color: var(--tinta-media); font-size: 0.82rem; margin-top: -0.2rem; }
+
+  /* ═══════ Barra de recursos ═══════ */
+  .recursos {
+    background: var(--chrome); border-radius: var(--radio);
+    display: flex; align-items: stretch; overflow-x: auto;
+  }
+  .recurso {
+    padding: 0.6rem 1.1rem; border-right: 1px solid var(--chrome-linea);
+    flex: 1 0 auto; min-width: 132px;
+  }
+  .recurso .etiqueta { color: var(--tinta-suave); display: block; }
+  .recurso .valor {
+    font-family: var(--display); color: var(--tinta-clara);
+    font-size: 1.4rem; line-height: 1.15; font-variant-numeric: tabular-nums;
+    margin-top: 0.1rem;
+  }
+  .recurso .sub { font-size: 0.7rem; color: var(--tinta-suave); }
+  .recurso.accion { display: flex; align-items: center; border-right: 0; }
+
+  /* ═══════ Slot de arte ═══════ */
+  .slot {
+    border: 2px dashed var(--tinta-suave); border-radius: var(--radio);
+    background: var(--panel-alt); display: grid; place-items: center;
+    color: var(--tinta-suave); text-align: center; padding: 1rem;
+    aspect-ratio: 3 / 4; min-height: 230px;
+  }
+  .slot .etiqueta { color: var(--tinta-suave); }
+  .heroe-demo { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 1.2rem; align-items: start; }
+
+  /* ═══════ Regla del naranja ═══════ */
+  .comparacion { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+  .veredicto {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 0.78rem; padding: 0.35rem 0.7rem; border-radius: var(--radio);
+    display: inline-block; margin-bottom: 0.5rem;
+  }
+  .veredicto.no { background: #f6e2df; color: #8f342c; }
+  .veredicto.si { background: #e2efe5; color: #2f6b45; }
+  .mal-naranja { color: var(--naranja); font-weight: 700; }
+
+  ul.reglas { margin: 0; padding-left: 1.1rem; max-width: 66ch; }
+  ul.reglas li { margin-bottom: 0.5rem; }
+  ul.reglas li::marker { color: var(--tinta-suave); }
+
+  .dos { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; align-items: start; }
+
+  .specimen { background: var(--panel); border: 1px solid var(--linea); border-radius: var(--radio); padding: 1rem 1.1rem; }
+  .specimen > div + div { margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--linea); }
+  .specimen .muestra-tipo { line-height: 1.1; }
+  .specimen .detalle { font-size: 0.74rem; color: var(--tinta-suave); margin-top: 0.25rem; font-variant-numeric: tabular-nums; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  @media (max-width: 640px) {
+    .heroe-demo { grid-template-columns: 1fr; }
+  }
+</style>
+
+<nav class="barra-sup" aria-label="Secciones del kit">
+  <div class="marca">
+    <svg viewBox="0 0 30 34" role="img" aria-label="Escudo">
+      <path d="M1.5 2 h27 v18 c0 7 -6.5 10.5 -13.5 12 C8 30.5 1.5 27 1.5 20 Z"
+            fill="#f6f4f1" stroke="#25282c" stroke-width="1.6"/>
+      <path d="M11 2 h8 v29.2 c-1.3 .5 -2.7 .9 -4 1.2 -1.3 -.3 -2.7 -.7 -4 -1.2 Z" fill="#2d5c8a"/>
+      <circle cx="15" cy="15" r="5.2" fill="#e07a2a" stroke="#25282c" stroke-width="1"/>
+      <path d="M9.8 15 h10.4 M15 9.8 v10.4" stroke="#25282c" stroke-width=".8" fill="none"/>
+    </svg>
+    <div>
+      <div class="marca-nombre">Club de Barrio</div>
+      <div class="marca-sub">Sistema visual</div>
+    </div>
+  </div>
+  <div class="nav">
+    <a href="#paleta"><span class="fila"><span class="punto" style="background: var(--sec-tablero)"></span><svg viewBox="0 0 24 24"><path d="M4 5h7v6H4z M13 5h7v10h-7z M4 13h7v6H4z"/></svg></span>Paleta</a>
+    <a href="#secciones"><span class="fila"><span class="punto" style="background: var(--sec-partidos)"></span><svg viewBox="0 0 24 24"><path d="M4 6h16v14H4z M4 10h16 M9 3v4 M15 3v4"/></svg></span>Secciones</a>
+    <a href="#tipografia"><span class="fila"><span class="punto" style="background: var(--sec-vestuario)"></span><svg viewBox="0 0 24 24"><path d="M5 7V5h14v2 M12 5v14 M9 19h6"/></svg></span>Tipografía</a>
+    <a href="#panel"><span class="fila"><span class="punto" style="background: var(--sec-plantel)"></span><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z M4 10h16"/></svg></span>Panel</a>
+    <a href="#datos"><span class="fila"><span class="punto" style="background: var(--sec-finanzas)"></span><svg viewBox="0 0 24 24"><path d="M4 19V9 M10 19V5 M16 19v-7 M20 19H3"/></svg></span>Datos</a>
+    <a href="#recursos"><span class="fila"><span class="punto" style="background: var(--sec-scouting)"></span><svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 3 10 2-6 2 3h5"/></svg></span>Recursos</a>
+    <a href="#heroe"><span class="fila"><span class="punto" style="background: var(--sec-ajustes)"></span><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/></svg></span>Héroe</a>
+  </div>
+</nav>
+
+<div class="hoja">
+
+  <div class="portada">
+    <span class="etiqueta">Dirección de arte · candidata</span>
+    <h1>El manager como club de barrio</h1>
+    <p>
+      El sistema visual sacado de la referencia del 16 de agosto. El chrome es neutro,
+      cada área del juego tiene su color, y el naranja queda reservado para lo que se
+      toca. Esta página usa el sistema que documenta: todo lo que ves acá abajo está
+      construido con los mismos tokens que van a ir a <code>styles.css</code>.
+    </p>
+    <div class="aviso">
+      <strong>No es arte aprobado.</strong> Es candidata a Puerta 2 del pipeline. Mientras
+      no esté aprobada, los componentes siguen siendo reemplazables y no se propaga a
+      pantallas nuevas. El juego publicado sigue exactamente como está.
+    </div>
+  </div>
+
+  <!-- ═══════ PALETA ═══════ -->
+  <section id="paleta">
+    <h2>Paleta</h2>
+    <p class="bajada">
+      Grafito para el marco, gris cálido para el campo, casi blanco para los paneles.
+      Los neutros tienen una pizca de tibio: un gris puro dejaría la pantalla clínica y
+      esto es un club de barrio.
+    </p>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="muestra" style="background: var(--chrome)"></div>
+        <div class="pie">
+          <div class="token">--chrome</div>
+          <div class="hex">#32353a</div>
+          <div class="rol">Barra superior y barra de recursos. Nunca lleva color de club.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="muestra" style="background: var(--chrome-alto)"></div>
+        <div class="pie">
+          <div class="token">--chrome-alto</div>
+          <div class="hex">#3d4147</div>
+          <div class="rol">Pestaña activa y superficies elevadas del marco.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="muestra" style="background: var(--lienzo)"></div>
+        <div class="pie">
+          <div class="token">--lienzo</div>
+          <div class="hex">#e2dfd9</div>
+          <div class="rol">El campo donde apoyan los paneles.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="muestra" style="background: var(--panel); border-bottom: 1px solid var(--linea)"></div>
+        <div class="pie">
+          <div class="token">--panel</div>
+          <div class="hex">#f6f4f1</div>
+          <div class="rol">Cuerpo de panel. Donde vive la información.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="muestra" style="background: var(--panel-alt); border-bottom: 1px solid var(--linea)"></div>
+        <div class="pie">
+          <div class="token">--panel-alt</div>
+          <div class="hex">#eceae6</div>
+          <div class="rol">Bloque interno, fila alterna, tu fila en la tabla.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="muestra" style="background: var(--tinta)"></div>
+        <div class="pie">
+          <div class="token">--tinta</div>
+          <div class="hex">#25282c</div>
+          <div class="rol">Texto principal.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="muestra" style="background: var(--tinta-media)"></div>
+        <div class="pie">
+          <div class="token">--tinta-media</div>
+          <div class="hex">#6a6f76</div>
+          <div class="rol">Texto secundario y frases de contexto.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="muestra" style="background: var(--naranja)"></div>
+        <div class="pie">
+          <div class="token">--naranja</div>
+          <div class="hex">#e07a2a</div>
+          <div class="rol"><strong>Reservado.</strong> Acción y dato clave, nada más.</div>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin-top: 2rem; font-size: 1rem; border-bottom-width: 1px">Semáforo</h2>
+    <p class="bajada">
+      Aparte del acento y de los colores de sección. Vive dentro de los datos — chips,
+      barras, puntos de noticia — y nunca en un cabezal. El verde de estado es más claro
+      que el verde de sección a propósito: si se parecen, se lee "liga" donde dice "bien".
+    </p>
+    <div class="fila-demo">
+      <span class="chip bien">al día</span>
+      <span class="chip ojo">debe 2 semanas</span>
+      <span class="chip mal">al borde</span>
+      <div class="barra" style="width: 130px"><i class="bien" style="width: 78%"></i></div>
+      <div class="barra" style="width: 130px"><i class="ojo" style="width: 47%"></i></div>
+      <div class="barra" style="width: 130px"><i class="mal" style="width: 22%"></i></div>
+    </div>
+  </section>
+
+  <!-- ═══════ SECCIONES ═══════ -->
+  <section id="secciones">
+    <h2>Los siete colores de sección</h2>
+    <p class="bajada">
+      El color acá es señalización, no decoración: sirve para saber dónde estás sin leer.
+      Cada uno aparece en exactamente dos lugares — el punto de su pestaña arriba y la
+      banda del cabezal de sus paneles. Siete es el techo; si aparece un área nueva,
+      comparte color con la más cercana.
+    </p>
+    <div class="paneles">
+      <div class="p">
+        <header class="h-tablero"><svg viewBox="0 0 24 24"><path d="M4 5h7v6H4z M13 5h7v10h-7z M4 13h7v6H4z"/></svg>Tablero</header>
+        <div class="cuerpo">
+          <div class="etiqueta">Color</div>
+          <div class="num" style="font-size: 0.85rem">#2f6b4f · verde pino</div>
+          <div class="rol" style="font-size: 0.82rem; color: var(--tinta-media); margin-top: 0.4rem">
+            Con él van también Historia y Noticias.
+          </div>
+        </div>
+      </div>
+      <div class="p">
+        <header class="h-partidos"><svg viewBox="0 0 24 24"><path d="M4 6h16v14H4z M4 10h16 M9 3v4 M15 3v4"/></svg>Partidos</header>
+        <div class="cuerpo">
+          <div class="etiqueta">Color</div>
+          <div class="num" style="font-size: 0.85rem">#2d5c8a · azul</div>
+          <div class="rol" style="font-size: 0.82rem; color: var(--tinta-media); margin-top: 0.4rem">
+            Con él van Liga, Calendario y Rivales.
+          </div>
+        </div>
+      </div>
+      <div class="p">
+        <header class="h-vestuario"><svg viewBox="0 0 24 24"><path d="M4 20V9l4-3h8l4 3v11z M9 6a3 3 0 006 0"/></svg>Vestuario</header>
+        <div class="cuerpo">
+          <div class="etiqueta">Color</div>
+          <div class="num" style="font-size: 0.85rem">#9d3b3b · bordó</div>
+          <div class="rol" style="font-size: 0.82rem; color: var(--tinta-media); margin-top: 0.4rem">
+            Lo social: charlas, asados, conflictos.
+          </div>
+        </div>
+      </div>
+      <div class="p">
+        <header class="h-plantel"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6 M16 6.5a3 3 0 010 5.6 M17 13.4c2.4.6 4 2.8 4 5.6"/></svg>Plantel</header>
+        <div class="cuerpo">
+          <div class="etiqueta">Color</div>
+          <div class="num" style="font-size: 0.85rem">#b07f27 · mostaza</div>
+          <div class="rol" style="font-size: 0.82rem; color: var(--tinta-media); margin-top: 0.4rem">
+            Con él van Pretemporada y Mercado.
+          </div>
+        </div>
+      </div>
+      <div class="p">
+        <header class="h-finanzas"><svg viewBox="0 0 24 24"><path d="M3 7h18v11H3z M3 11h18 M7 15h3"/></svg>Finanzas</header>
+        <div class="cuerpo">
+          <div class="etiqueta">Color</div>
+          <div class="num" style="font-size: 0.85rem">#6a4a86 · violeta</div>
+          <div class="rol" style="font-size: 0.82rem; color: var(--tinta-media); margin-top: 0.4rem">
+            La caja, las cuotas, el alquiler.
+          </div>
+        </div>
+      </div>
+      <div class="p">
+        <header class="h-scouting"><svg viewBox="0 0 24 24"><circle cx="7" cy="13" r="3.6"/><circle cx="17" cy="13" r="3.6"/><path d="M10.6 13h2.8 M5 9l2-3 M19 9l-2-3"/></svg>Scouting</header>
+        <div class="cuerpo">
+          <div class="etiqueta">Color</div>
+          <div class="num" style="font-size: 0.85rem">#456470 · pizarra</div>
+          <div class="rol" style="font-size: 0.82rem; color: var(--tinta-media); margin-top: 0.4rem">
+            Lo que todavía no sabés del todo.
+          </div>
+        </div>
+      </div>
+      <div class="p">
+        <header class="h-ajustes"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3 M12 18v3 M3 12h3 M18 12h3 M5.6 5.6l2.1 2.1 M16.3 16.3l2.1 2.1 M18.4 5.6l-2.1 2.1 M7.7 16.3l-2.1 2.1"/></svg>Ajustes</header>
+        <div class="cuerpo">
+          <div class="etiqueta">Color</div>
+          <div class="num" style="font-size: 0.85rem">#565b62 · gris</div>
+          <div class="rol" style="font-size: 0.82rem; color: var(--tinta-media); margin-top: 0.4rem">
+            Deliberadamente el más callado.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ TIPOGRAFÍA ═══════ -->
+  <section id="tipografia">
+    <h2>Tipografía</h2>
+    <p class="bajada">
+      Condensada pesada en mayúsculas para todo lo que estructura; sans humanista para
+      todo lo que se lee como frase. Las cifras siempre tabulares, para que las columnas
+      no bailen entre semana y semana.
+    </p>
+    <div class="dos">
+      <div class="specimen">
+        <div>
+          <div class="etiqueta">Display · cabezales</div>
+          <div class="display muestra-tipo" style="font-size: 2rem">Posiciones</div>
+          <div class="detalle">1.15rem · 0.10em · mayúsculas</div>
+        </div>
+        <div>
+          <div class="etiqueta">Display · cifras grandes</div>
+          <div class="display muestra-tipo num" style="font-size: 2.6rem">18:30</div>
+          <div class="detalle">tabular-nums siempre</div>
+        </div>
+        <div>
+          <div class="etiqueta">Etiqueta chica</div>
+          <div class="etiqueta" style="font-size: 0.68rem">Cuotas al día</div>
+          <div class="detalle">0.68rem · 0.14em · --tinta-suave</div>
+        </div>
+      </div>
+      <div class="specimen">
+        <div>
+          <div class="etiqueta">Cuerpo</div>
+          <p style="margin: 0.3rem 0 0">
+            Che, el miércoles puedo ir más tarde al entrenamiento, laburo hasta las 8.
+          </p>
+          <div class="detalle">15px / 1.5 — el diálogo del vestuario vive acá</div>
+        </div>
+        <div>
+          <div class="etiqueta">Cuerpo secundario</div>
+          <p style="margin: 0.3rem 0 0; color: var(--tinta-media); font-size: 0.86rem">
+            Molesto porque jugó solo seis minutos contra Cilindro Viejo.
+          </p>
+          <div class="detalle">La frase que acompaña al número, nunca lo reemplaza</div>
+        </div>
+        <div>
+          <div class="etiqueta">Pendiente técnico</div>
+          <p style="margin: 0.3rem 0 0; font-size: 0.86rem; color: var(--tinta-media)">
+            La maqueta usa Bahnschrift, que está en Windows y no en Linux ni Mac. Para
+            Steam hay que empaquetar una condensada con licencia propia.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ PANEL ═══════ -->
+  <section id="panel">
+    <h2>Anatomía de panel</h2>
+    <p class="bajada">
+      Cabezal del color de la sección con ícono y título, cuerpo casi blanco, filete de
+      un pixel entre filas. Radio de 4px: esta dirección es cuadrada. Sin biseles, sin
+      degradados, un solo nivel de sombra — es lo que la hace leer como manager y no
+      como app de teléfono.
+    </p>
+    <div class="paneles">
+      <div class="p">
+        <header class="h-vestuario"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 4z"/></svg>Vestuario</header>
+        <div class="cuerpo" style="display: flex; flex-direction: column; gap: 0.7rem">
+          <div class="nota-humana">
+            <strong>Luciano</strong>
+            <div class="barra"><i class="bien" style="width: 88%"></i></div>
+            <span class="chip bien">motivado</span>
+            <div class="frase">Llegó primero, como siempre. Trajo la hielera.</div>
+          </div>
+          <div class="nota-humana">
+            <strong>el Colo</strong>
+            <div class="barra"><i class="mal" style="width: 24%"></i></div>
+            <span class="chip mal">al borde</span>
+            <div class="frase">Quiere más minutos. Ya lo dijo dos veces.</div>
+          </div>
+          <div class="nota-humana">
+            <strong>Andrés</strong>
+            <div class="barra"><i class="ojo" style="width: 52%"></i></div>
+            <span class="chip ojo">debe 3 sem</span>
+            <div class="frase">Dice que la semana que viene la pone.</div>
+          </div>
+        </div>
+      </div>
+      <div class="p">
+        <header class="h-partidos"><svg viewBox="0 0 24 24"><path d="M4 6h16v14H4z M4 10h16 M9 3v4 M15 3v4"/></svg>Próximo partido</header>
+        <div class="cuerpo">
+          <div class="etiqueta">Fecha 8 · Torneo Apertura</div>
+          <div class="display" style="font-size: 1.5rem; margin: 0.35rem 0 0.1rem">Los Pibes vs Cilindro Viejo</div>
+          <div style="color: var(--tinta-media); font-size: 0.86rem">
+            Gimnasio Municipal “Don Orione” · Av. Perito Moreno 1234
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.7rem">
+            <span class="display num" style="font-size: 2.2rem; color: var(--naranja)">18:30</span>
+            <span class="etiqueta">Sábado 25/05</span>
+          </div>
+          <div style="margin-top: 0.8rem">
+            <button class="btn btn-primario" type="button">Jugar partido</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ DATOS ═══════ -->
+  <section id="datos">
+    <h2>Tablas y controles</h2>
+    <p class="bajada">
+      La densidad es una promesa: siete columnas y una leyenda dicen “acá hay juego”.
+      Tu fila se marca con fondo tenue y el naranja en la posición y los puntos — es el
+      dato que la pantalla existe para mostrar.
+    </p>
+    <div class="p" style="margin-bottom: 1.2rem">
+      <header class="h-partidos"><svg viewBox="0 0 24 24"><path d="M6 20V10 M12 20V4 M18 20v-7"/></svg>Posiciones · Torneo Apertura</header>
+      <div class="cuerpo" style="padding: 0.5rem 0.6rem 0.7rem">
+        <div class="tabla-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="der">#</th><th>Equipo</th>
+                <th class="der">PJ</th><th class="der">PG</th><th class="der">PP</th>
+                <th class="der">PF</th><th class="der">PC</th><th class="der">Dif</th><th class="der">Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="propia">
+                <td class="der pos">1</td><td>Los Pibes del Barrio</td>
+                <td class="der">7</td><td class="der">6</td><td class="der">1</td>
+                <td class="der">560</td><td class="der">487</td><td class="der">+73</td><td class="der pts">13</td>
+              </tr>
+              <tr>
+                <td class="der">2</td><td>Atlético San Martín</td>
+                <td class="der">7</td><td class="der">5</td><td class="der">2</td>
+                <td class="der">542</td><td class="der">499</td><td class="der">+43</td><td class="der">12</td>
+              </tr>
+              <tr>
+                <td class="der">3</td><td>Unión de Flores</td>
+                <td class="der">7</td><td class="der">5</td><td class="der">2</td>
+                <td class="der">523</td><td class="der">511</td><td class="der">+12</td><td class="der">12</td>
+              </tr>
+              <tr>
+                <td class="der">4</td><td>Club 17 de Agosto</td>
+                <td class="der">7</td><td class="der">4</td><td class="der">3</td>
+                <td class="der">518</td><td class="der">505</td><td class="der">+13</td><td class="der">11</td>
+              </tr>
+              <tr>
+                <td class="der">5</td><td>Social Lanús Oeste</td>
+                <td class="der">7</td><td class="der">2</td><td class="der">5</td>
+                <td class="der">476</td><td class="der">529</td><td class="der">−53</td><td class="der">9</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="fila-demo" style="margin-top: 0.7rem; padding: 0 0.5rem; font-size: 0.78rem; color: var(--tinta-media)">
+          <span style="display: inline-flex; align-items: center; gap: 0.35rem">
+            <span style="width: 11px; height: 11px; background: var(--sec-tablero); border-radius: 2px"></span>
+            Clasifica a playoffs
+          </span>
+          <span style="display: inline-flex; align-items: center; gap: 0.35rem">
+            <span style="width: 11px; height: 11px; background: var(--tinta-suave); border-radius: 2px"></span>
+            Descenso
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fila-demo">
+      <button class="btn btn-primario" type="button">Avanzar semana</button>
+      <button class="btn btn-secundario" type="button">Ver plantilla</button>
+      <button class="btn btn-fantasma" type="button">Cancelar</button>
+    </div>
+  </section>
+
+  <!-- ═══════ RECURSOS ═══════ -->
+  <section id="recursos">
+    <h2>Barra de recursos</h2>
+    <p class="bajada">
+      Fija abajo, siempre visible: los cinco números que mirás todo el tiempo. Ícono,
+      etiqueta chica, valor grande tabular, sub-etiqueta. El botón de avanzar semana es
+      el único naranja de la barra.
+    </p>
+    <div class="recursos">
+      <div class="recurso">
+        <span class="etiqueta">Semana</span>
+        <div class="valor">8</div>
+        <div class="sub">de 28</div>
+      </div>
+      <div class="recurso">
+        <span class="etiqueta">Caja del club</span>
+        <div class="valor">$ 12.540</div>
+        <div class="sub">disponible</div>
+      </div>
+      <div class="recurso">
+        <span class="etiqueta">Cuotas al día</span>
+        <div class="valor">9 / 12</div>
+        <div class="sub">jugadores</div>
+      </div>
+      <div class="recurso">
+        <span class="etiqueta">Alquiler gimnasio</span>
+        <div class="valor">$ 1.800</div>
+        <div class="sub">por partido</div>
+      </div>
+      <div class="recurso">
+        <span class="etiqueta">Próximo asado</span>
+        <div class="valor">Dom 02/06</div>
+        <div class="sub">después del entrenamiento</div>
+      </div>
+      <div class="recurso accion">
+        <button class="btn btn-primario" type="button">» Avanzar semana</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ HÉROE ═══════ -->
+  <section id="heroe">
+    <h2>El héroe</h2>
+    <p class="bajada">
+      El personaje grande de la izquierda no es un jugador cualquiera: es el arquetipo de
+      tu figura. El juego ya tiene ocho personalidades definidas en el código, así que son
+      ocho ilustraciones y no ciento veinte — y el tipo que te mira desde el tablero
+      cambia según quién sea el referente del plantel.
+    </p>
+    <div class="heroe-demo">
+      <div class="slot">
+        <div>
+          <div class="etiqueta">Slot de héroe</div>
+          <div style="font-size: 0.8rem; margin-top: 0.3rem">3:4 · cuerpo entero</div>
+        </div>
+      </div>
+      <div>
+        <ul class="reglas">
+          <li><strong>Relleno plano, sin contorno.</strong> Las formas se definen por color, no por línea.</li>
+          <li><strong>Dos tonos de sombra por forma como máximo.</strong> Sin degradados, sin textura, sin 3D.</li>
+          <li><strong>Cabeza levemente agrandada</strong>, caricatura cálida, y que sea una persona específica — no un tipo lindo genérico.</li>
+          <li><strong>Cuerpo entero, de pie</strong>, peso en una pierna, mirando apenas fuera de eje. Una pose de stock mata el personaje.</li>
+          <li><strong>El fondo de gimnasio va desaturado y desenfocado.</strong> El personaje es lo único nítido de la pantalla.</li>
+        </ul>
+        <p style="color: var(--tinta-media); font-size: 0.88rem; max-width: 62ch">
+          Estas reglas no son estéticas: son la condición para que el generador SVG por
+          capas pueda alcanzar el estilo después. Un cartoon con sombreado pictórico sería
+          otro objetivo inalcanzable, como el fotorrealismo.
+        </p>
+        <div class="etiqueta" style="margin-top: 0.9rem">Los ocho arquetipos</div>
+        <div class="fila-demo" style="margin-top: 0.4rem">
+          <span class="chip">competitivo</span>
+          <span class="chip">social</span>
+          <span class="chip">protagonista</span>
+          <span class="chip">leal</span>
+          <span class="chip">mercenario</span>
+          <span class="chip">cumplidor</span>
+          <span class="chip">veterano</span>
+          <span class="chip">talentoso informal</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ REGLA DEL NARANJA ═══════ -->
+  <section id="naranja">
+    <h2>La regla del naranja</h2>
+    <p class="bajada">
+      Máximo dos apariciones por pantalla: el botón primario y el dato que la pantalla
+      existe para mostrar. Todo lo demás usa tinta, color de sección o semáforo. El mismo
+      panel, mal y bien:
+    </p>
+    <div class="comparacion">
+      <div>
+        <span class="veredicto no">Así no</span>
+        <div class="p">
+          <header class="h-finanzas"><svg viewBox="0 0 24 24"><path d="M3 7h18v11H3z M3 11h18"/></svg>Caja del club</header>
+          <div class="cuerpo">
+            <div class="etiqueta" style="color: var(--naranja)">Disponible</div>
+            <div class="display num mal-naranja" style="font-size: 2rem">$ 12.540</div>
+            <div style="margin-top: 0.5rem; display: flex; justify-content: space-between; font-size: 0.86rem">
+              <span>Cuotas cobradas</span><span class="num mal-naranja">9 / 12</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.86rem">
+              <span>Alquiler del mes</span><span class="num mal-naranja">$ 7.200</span>
+            </div>
+            <div style="margin-top: 0.6rem">
+              <span class="chip" style="color: var(--naranja); border-color: var(--naranja)">rifa pendiente</span>
+            </div>
+            <button class="btn btn-primario" type="button" style="margin-top: 0.7rem">Cobrar cuotas</button>
+          </div>
+        </div>
+        <p style="font-size: 0.84rem; color: var(--tinta-media); max-width: 40ch">
+          Cinco naranjas. Ninguno dice nada: el ojo no sabe dónde ir y el botón dejó de
+          ser el botón.
+        </p>
+      </div>
+      <div>
+        <span class="veredicto si">Así sí</span>
+        <div class="p">
+          <header class="h-finanzas"><svg viewBox="0 0 24 24"><path d="M3 7h18v11H3z M3 11h18"/></svg>Caja del club</header>
+          <div class="cuerpo">
+            <div class="etiqueta">Disponible</div>
+            <div class="display num" style="font-size: 2rem; color: var(--naranja)">$ 12.540</div>
+            <div style="margin-top: 0.5rem; display: flex; justify-content: space-between; font-size: 0.86rem">
+              <span>Cuotas cobradas</span><span class="num">9 / 12</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.86rem">
+              <span>Alquiler del mes</span><span class="num">$ 7.200</span>
+            </div>
+            <div style="margin-top: 0.6rem">
+              <span class="chip ojo">rifa pendiente</span>
+            </div>
+            <button class="btn btn-primario" type="button" style="margin-top: 0.7rem">Cobrar cuotas</button>
+          </div>
+        </div>
+        <p style="font-size: 0.84rem; color: var(--tinta-media); max-width: 40ch">
+          Dos: la plata que tenés y la acción. El chip usa semáforo, que es su idioma.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ DESCARTES ═══════ -->
+  <section id="descartes">
+    <h2>Qué no tomamos de la referencia</h2>
+    <p class="bajada">
+      La imagen de la que salió este sistema tenía errores que no son parte del sistema.
+      Quedan anotados para que no se cuelen cuando se pidan los assets.
+    </p>
+    <ul class="reglas">
+      <li><strong>La escala del dinero.</strong> Mostraba $1.245.870 de caja. El juego maneja cuotas de $30 por semana: la caja va en miles.</li>
+      <li><strong>Marcas reales.</strong> Las zapatillas tenían el swoosh de Nike.</li>
+      <li><strong>Diálogo de molde.</strong> “Buen laburo en la semana, muchachos” no lo dice nadie. El motor ya escribe mejor: la UI muestra lo que genera el juego, no relleno.</li>
+      <li><strong>Mascotas de escudo.</strong> Un lobo dibujado es de liga universitaria yanqui. Los clubes de barrio van con escudo, franja, estrella e iniciales.</li>
+      <li><strong>Naranja diluido.</strong> Aparecía cinco veces.</li>
+    </ul>
+  </section>
+
+</div>
