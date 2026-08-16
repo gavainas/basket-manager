@@ -47,7 +47,8 @@ interface Props {
   seed: string;
   age?: number;
   size?: number;
-  /** Color de camiseta; por defecto el naranja del club. */
+  /** Color de camiseta; por defecto el azul de cancha (el naranja está reservado
+   *  para la acción: doce camisetas naranjas se lo comen). */
   jersey?: string;
   /** Apariencia ya calculada/guardada; si falta se deriva de la seed. */
   appearance?: Appearance;
@@ -58,7 +59,7 @@ interface Props {
   title?: string;
 }
 
-export function Avatar({ seed, age, size = 42, jersey = 'var(--accent)', appearance, expressionOverride, cap, title }: Props) {
+export function Avatar({ seed, age, size = 42, jersey = 'var(--sec-partidos)', appearance, expressionOverride, cap, title }: Props) {
   const base = appearance ?? appearanceFromSeed(seed, age);
   const a = expressionOverride == null ? base : { ...base, expression: expressionOverride };
   const f = FACES[a.faceShape % FACES.length];

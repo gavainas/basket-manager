@@ -207,13 +207,49 @@ La referencia tiene errores que no son parte del sistema:
 - **Mascotas de escudo.** Un lobo dibujado es de liga universitaria de EEUU. Los clubes
   de barrio van con escudo, franja, estrella e iniciales.
 
+## Estado de implementación
+
+**Paso 3 hecho** (shell): `src/styles.css` cambió de tema oscuro azul a este sistema.
+Los nombres de token viejos se conservaron, así que las ~2200 líneas de componentes
+siguieron funcionando sin tocarlas: lo único que cambió es a qué apuntan.
+
+Además del cambio de tokens hubo que arreglar a mano lo que asumía fondo oscuro:
+
+- La **pizarra del quinteto** es ahora la única superficie oscura del sistema — una
+  cancha pintada de azul, como la del gimnasio. Todo lo que va encima lleva tinta clara
+  explícita, porque hereda `--text` y en claro sería ilegible.
+- Sombras, scrim del modal y tintes de resultado, recalculados para fondo claro.
+- El azul de rotación `#4ea8de`, que `DESIGN.md` marcaba como "candidato a token",
+  pasó a ser `--sec-partidos`.
+
+**Pasada de la regla del naranja.** Al verlo corriendo aparecieron cinco naranjas por
+pantalla. Lo que se corrigió, y por qué cada uno no era ni acción ni dato clave:
+
+| Antes | Ahora | Razón |
+| --- | --- | --- |
+| `.chip.accent` naranja | pizarra | Un chip informativo no es una acción |
+| `.step.active` naranja | azul de Partidos | El paso en curso es señalización |
+| `.watch-card` borde naranja | franja verde Tablero | Es el resumen de la sección |
+| Aro de `.avatar` naranja | filete neutro | Doce caras se comen el color de acción |
+| `.slot-avatar` naranja | aro claro | Sobre la cancha azul se recorta mejor |
+| Camiseta por defecto naranja | azul de cancha | Ídem, multiplicado por plantel |
+| Botón de la barra en la semana | secundario | Dos primarios competían en pantalla |
+
+**Mapa de secciones → pestañas.** Liga, Agenda y Rankings comparten el azul de Partidos
+porque son la misma área: el color responde "¿qué parte del juego es esta?", no "¿qué
+pestaña toqué?". `semana` dejó de ser pestaña — es la acción, y vive en la barra de
+recursos.
+
+Pendiente del paso 4: las cards todavía no llevan banda de color (la clase `.card.banda`
+ya existe), y el Resumen duplica Semana, Récord y Dinero, que ahora están fijos abajo.
+
 ## Cómo volver atrás
 
 Cada paso queda en un commit propio en `claude/basket-manager-mockup-vm5xak`. El arte
 anterior no se borra:
 
 - La dirección cálida sigue viva en su artifact y en la maqueta HTML de las 24 pantallas.
-- `src/styles.css` no se toca hasta el paso 3; hasta entonces el juego publicado sigue
-  exactamente como está.
-- Para empezar el arte de cero: `git checkout main -- src/styles.css design/` y este
-  documento desaparece sin dejar rastro en el juego.
+- Para volver al tema oscuro azul: `git checkout main -- src/styles.css src/App.tsx
+  src/ui/Avatar.tsx`. El motor no se tocó en ningún momento.
+- Para empezar el arte de cero además: `git checkout main -- design/` y estos documentos
+  desaparecen sin dejar rastro.
