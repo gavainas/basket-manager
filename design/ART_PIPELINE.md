@@ -323,13 +323,27 @@ Formato sugerido:
 - Próximo paso autorizado: ...
 ```
 
-## Estado de aprobación actual
+### 2026-08-16 — Dirección "club de barrio" (candidata, sin aprobar)
 
-A la fecha de creación de este documento:
+- Alcance: dirección visual de interfaz y estilo de personajes para el tablero principal.
+- Referencias exploradas: cálida (madera y papel), AAA oscura tipo EA/2K, gris cemento,
+  y la ganadora por comparación directa — chrome grafito neutro, código de color por
+  sección, héroe caricatura de relleno plano, gimnasio municipal desaturado de fondo.
+- Descartadas: la cálida (no sobrevivió a la comparación) y la AAA oscura (el negro
+  hundía al personaje y la ficción prometía una NBA que el juego no tiene).
+- Sistematizado en: [SISTEMA_VISUAL.md](SISTEMA_VISUAL.md) + kit navegable
+  [`kit-sistema-visual.html`](kit-sistema-visual.html).
+- Aprobado: **nada todavía.** Falta que Gabi apruebe el kit.
+- Próximo paso autorizado: solo revisión del kit. **No** tocar `src/styles.css`, **no**
+  pedir assets a Higgsfield, **no** propagar a pantallas.
+
+## Estado de aprobación actual
 
 - La lógica y estructura técnica del sistema de retratos puede conservarse.
 - El estilo visual actual de las caras **no está aprobado como arte final**.
 - El estilo general actual de la interfaz **no está aprobado como dirección final**.
 - No está autorizado escalar el arte actual únicamente por estar ya implementado.
-- El siguiente paso visual correcto es presentar direcciones artísticas comparables y luego
-  construir un vertical slice aprobado.
+- Existe una **dirección candidata documentada** (ver el registro del 2026-08-16), pendiente
+  de aprobación. Hasta que se apruebe, el juego publicado sigue con el tema oscuro azul.
+- El generador de escudos de club no existe y es la pieza procedural que falta: ninguna
+  IA da diez escudos consistentes entre sí.
