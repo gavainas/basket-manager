@@ -266,7 +266,8 @@ export function Dashboard({ state }: { state: GameState }) {
             </div>
           )}
           {state.promises.length > 0 && (
-            <div className="card">
+            /* Una promesa es del vestuario, no del tablero: lleva su color. */
+            <div className="card sec-vestuario">
               <h3>Promesas del club</h3>
               <ul className="news-list">
                 {state.promises.map((pr, i) => {
@@ -285,7 +286,8 @@ export function Dashboard({ state }: { state: GameState }) {
             </div>
           )}
           {nextRival && (
-            <div className="card">
+            /* El rival es del área de Partidos: el panel es una ventana ahí. */
+            <div className="card sec-partidos">
               <h3>Próximo rival</h3>
               <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>
                 <RivalLink id={nextRival.id}>{nextRival.name}</RivalLink>
@@ -306,7 +308,8 @@ export function Dashboard({ state }: { state: GameState }) {
             </div>
           )}
           {groupChat.length > 0 && (
-            <div className="card">
+            /* El chat del plantel es vestuario puro. */
+            <div className="card sec-vestuario">
               <h3>💬 El grupo del club</h3>
               <div className="chat-list">
                 {groupChat.map((m) => {

@@ -24,7 +24,9 @@ export function VestuarioCard({ state }: { state: GameState }) {
   const map = buildSocialMap(state);
 
   return (
-    <div className="card" style={{ marginBottom: '1rem' }}>
+    /* Su color es el del vestuario en cualquier pantalla donde aparezca, no el
+       del área que la contiene. */
+    <div className="card sec-vestuario" style={{ marginBottom: '1rem' }}>
       <h3>🧩 El vestuario por dentro</h3>
       <div style={{ maxWidth: 320, marginBottom: '0.6rem' }}>
         <Bar
