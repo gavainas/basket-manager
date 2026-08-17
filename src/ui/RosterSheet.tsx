@@ -14,10 +14,20 @@ const POSITION_SHORT: Record<Position, string> = {
   Pívot: 'P',
 };
 
+/**
+ * Los grupos son por lo que cada jugador **espera**, no por quién juega: eso se
+ * decide partido a partido en el quinteto.
+ *
+ * Decían "Titulares / Rotación / Suplentes" y se leía como la formación, así que
+ * ver siete en el primer grupo parecía un bug. No lo es — que más jugadores se
+ * crean titulares que los cinco que entran es la tensión central del juego (de
+ * ahí salen las quejas por minutos y las promesas rotas). Lo que estaba mal era
+ * el nombre.
+ */
 const GROUPS: { role: Player['expectedRole']; label: string }[] = [
-  { role: 'titular', label: 'Titulares' },
-  { role: 'rotación', label: 'Rotación' },
-  { role: 'suplente', label: 'Suplentes' },
+  { role: 'titular', label: 'Se ven titulares' },
+  { role: 'rotación', label: 'Esperan minutos' },
+  { role: 'suplente', label: 'Vienen a acompañar' },
 ];
 
 /** Dónde para cada posición sobre la media cancha (%; el aro queda abajo). */
@@ -126,7 +136,15 @@ export function RosterSheet({ state }: { state: GameState }) {
               <tbody key={g.role}>
                 <tr className="sheet-group">
                   <td colSpan={12}>
-                    {g.label} · media ≈{avgRating(rows)}
+                    {g.label} ({rows.length}) · media ≈{avgRating(rows)}
+                    {/* Si se creen titulares más de los que entran, la planilla lo
+                        dice en voz alta: es de donde salen las quejas por minutos. */}
+                    {g.role === 'titular' && rows.length > 5 && (
+                      <span className="sheet-tension">
+                        {' '}
+                        · en la cancha entran 5: {rows.length - 5} van a mirar desde el banco
+                      </span>
+                    )}
                   </td>
                 </tr>
                 {rows.map((p) => {

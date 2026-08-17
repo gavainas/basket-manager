@@ -1234,10 +1234,17 @@ table.sheet .sheet-avatar {
 tr.sheet-group td {
   background: var(--bg-soft);
   color: var(--text);
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-family: var(--display);
+  font-size: 0.8rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.09em;
+}
+
+/* El aviso de que sobran titulares no es un error: es información del juego. */
+.sheet-tension {
+  color: var(--warn);
+  font-weight: 500;
 }
 
 .sheet-name .sheet-mvp {
