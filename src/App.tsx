@@ -53,9 +53,9 @@ const TABS: { id: Tab; label: string; sec: string; icon: IconName }[] = [
 ];
 
 const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }> = {
-  facil: { label: '😌 Fácil', desc: 'Casi siempre están todos: la vida molesta poco.' },
-  medio: { label: '😅 Medio', desc: 'La vida pasa: enfermos, viajes y algún lesionado.' },
-  dificil: { label: '🔥 Difícil', desc: 'Cada semana falta gente: armar el equipo con los que vinieron es el juego.' },
+  facil: { label: 'Fácil', desc: 'Casi siempre están todos: la vida molesta poco.' },
+  medio: { label: 'Medio', desc: 'La vida pasa: enfermos, viajes y algún lesionado.' },
+  dificil: { label: 'Difícil', desc: 'Cada semana falta gente: armar el equipo con los que vinieron es el juego.' },
 };
 
 function MainMenu({
@@ -75,67 +75,76 @@ function MainMenu({
 
   return (
     <div className="menu-screen">
-      <div className="logo">🏀</div>
-      <h1>
-        Básquet <span>Manager</span> Amateur
-      </h1>
-      <p>
-        Manejás un club amateur de básquet. No alcanza con ganar: necesitás jugadores motivados, cuotas pagas, buen
-        ambiente y una caja que no llegue a cero. Sobreviví la temporada… y si se puede, salí campeón.
-      </p>
-      <div className="menu-difficulty">
-        <div className="menu-diff-label">Faltas y lesiones (para partidas nuevas)</div>
-        <div className="segmented">
-          {(Object.keys(DIFFICULTY_INFO) as AbsenceDifficulty[]).map((d) => (
-            <button key={d} className={difficulty === d ? 'on' : ''} onClick={() => setDifficulty(d)}>
-              {DIFFICULTY_INFO[d].label}
-            </button>
-          ))}
+      {/* Arte provisional (ver design/ART_PIPELINE.md): reemplazable por archivo,
+          sin tocar código. Si falta, el panel queda en grafito. */}
+      <div
+        className="menu-portada"
+        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}portada.webp)` }}
+        role="img"
+        aria-label="Asado en la cantina del club"
+      />
+
+      <div className="menu-panel">
+        <h1>
+          Básquet <span>Manager</span> Amateur
+        </h1>
+        <p>
+          Manejás un club amateur de básquet. No alcanza con ganar: necesitás jugadores motivados, cuotas pagas, buen
+          ambiente y una caja que no llegue a cero. Sobreviví la temporada… y si se puede, salí campeón.
+        </p>
+        <div className="menu-difficulty">
+          <div className="menu-diff-label">Faltas y lesiones (para partidas nuevas)</div>
+          <div className="segmented">
+            {(Object.keys(DIFFICULTY_INFO) as AbsenceDifficulty[]).map((d) => (
+              <button key={d} className={difficulty === d ? 'on' : ''} onClick={() => setDifficulty(d)}>
+                {DIFFICULTY_INFO[d].label}
+              </button>
+            ))}
+          </div>
+          <p className="menu-diff-desc">{DIFFICULTY_INFO[difficulty].desc}</p>
         </div>
-        <p className="menu-diff-desc">{DIFFICULTY_INFO[difficulty].desc}</p>
-      </div>
-      <div className="menu-buttons">
-        {saved && (
-          <button className="primary" onClick={onContinue}>
-            ▶ Continuar partida
+        <div className="menu-buttons">
+          {saved && (
+            <button className="primary" onClick={onContinue}>
+              Continuar partida
+            </button>
+          )}
+          <button className={saved ? '' : 'primary'} onClick={() => onNewPreseason(difficulty)}>
+            Nueva partida · armá el plantel en la pretemporada
           </button>
-        )}
-        <button className={saved ? '' : 'primary'} onClick={() => onNewPreseason(difficulty)}>
-          ✚ Nueva partida (armá el plantel en la pretemporada)
-        </button>
-        <button onClick={() => onNew(difficulty)}>⚡ Nueva partida directa (plantel ya armado)</button>
-        {saved && (
-          <button
-            className="danger"
-            onClick={() =>
-              ask({
-                title: 'Borrar la partida guardada',
-                message: 'Se pierden el club, el plantel y toda su historia. Esto no se puede deshacer.',
-                confirmLabel: 'Borrar todo',
-                danger: true,
-                icon: '🗑',
-                onConfirm: () => {
-                  clearSave();
-                  forceRender((n) => n + 1);
-                },
-              })
-            }
-          >
-            🗑 Borrar partida guardada
-          </button>
-        )}
+          <button onClick={() => onNew(difficulty)}>Nueva partida directa · plantel ya armado</button>
+          {saved && (
+            <button
+              className="danger"
+              onClick={() =>
+                ask({
+                  title: 'Borrar la partida guardada',
+                  message: 'Se pierden el club, el plantel y toda su historia. Esto no se puede deshacer.',
+                  confirmLabel: 'Borrar todo',
+                  danger: true,
+                  onConfirm: () => {
+                    clearSave();
+                    forceRender((n) => n + 1);
+                  },
+                })
+              }
+            >
+              Borrar partida guardada
+            </button>
+          )}
+        </div>
+        <p className="menu-version">
+          Versión {__COMMIT_HASH__} ·{' '}
+          {new Date(__COMMIT_DATE__).toLocaleString('es-UY', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          })}
+        </p>
       </div>
-      <p className="menu-version">
-        Versión {__COMMIT_HASH__} ·{' '}
-        {new Date(__COMMIT_DATE__).toLocaleString('es-UY', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        })}
-      </p>
     </div>
   );
 }

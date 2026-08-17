@@ -1384,23 +1384,57 @@ tr.sheet-group td {
 
 /* ---------- Menu & season end ---------- */
 
+/* ---------- Menú principal ----------
+   Pantalla partida: la portada a la izquierda, el menú a la derecha.
+   La portada es cuadrada (1:1) y el monitor es ancho: usada como fondo a sangre
+   habría que recortarla, y el recorte se come justo lo mejor — las camisetas
+   colgadas arriba y la pelota con los bolsos abajo. Partida se ve entera, el
+   texto tiene una superficie limpia donde vivir, y de paso repite el esquema del
+   Resumen (arte a un lado, datos al otro): el juego se siente uno desde el menú. */
 .menu-screen {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  text-align: center;
-  padding: 2rem 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+  background: var(--bg);
 }
 
-.menu-screen .logo {
-  font-size: 4rem;
+/* La imagen se pone por style inline desde App.tsx con import.meta.env.BASE_URL:
+   el proyecto usa base relativa ('./') y un url() absoluto en CSS apuntaría a la
+   raíz del dominio, no a /basket-manager/. Si el archivo falta, queda el grafito
+   y el menú sigue perfectamente usable. */
+.menu-portada {
+  position: relative;
+  background: var(--chrome) center / cover no-repeat;
+  min-height: 100vh;
+}
+
+/* Degradado hacia el panel: el corte duro entre foto y menú se ve barato. */
+.menu-portada::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 88%, color-mix(in srgb, var(--bg) 80%, transparent));
+}
+
+.menu-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.9rem;
+  padding: 2.5rem 2.2rem;
+  background: var(--bg);
+  overflow-y: auto;
 }
 
 .menu-screen h1 {
-  font-size: 2rem;
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: clamp(2.2rem, 4vw, 3.1rem);
+  line-height: 0.95;
+  margin: 0;
+  text-wrap: balance;
 }
 
 .menu-screen h1 span {
@@ -1409,8 +1443,20 @@ tr.sheet-group td {
 
 .menu-screen p {
   color: var(--text-dim);
-  max-width: 480px;
   line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 880px) {
+  .menu-screen {
+    grid-template-columns: 1fr;
+  }
+  .menu-portada {
+    min-height: 38vh;
+  }
+  .menu-portada::after {
+    background: linear-gradient(180deg, transparent 60%, color-mix(in srgb, var(--bg) 90%, transparent));
+  }
 }
 
 /* Versión del build (hash + fecha del commit): para saber qué se está jugando. */
@@ -1422,36 +1468,30 @@ tr.sheet-group td {
 
 /* Selector de dificultad de faltas para partidas nuevas. */
 .menu-difficulty {
-  margin-top: 0.8rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .menu-diff-label {
-  font-size: 0.72rem;
+  font-family: var(--display);
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
+  letter-spacing: 0.13em;
+  color: var(--text-faint);
 }
 
 .menu-diff-desc {
   margin: 0;
   font-size: 0.85rem;
   color: var(--text-dim);
-  max-width: 420px;
-  text-align: center;
   min-height: 2.2em;
 }
 
 .menu-screen .menu-buttons {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  width: 100%;
-  max-width: 280px;
-  margin-top: 1rem;
+  gap: 0.6rem;
 }
 
 .menu-screen .menu-buttons button {
