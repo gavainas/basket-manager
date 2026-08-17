@@ -43,8 +43,8 @@
   --radius: 4px; /* esta dirección es cuadrada */
   --sombra: 0 1px 2px rgba(37, 40, 44, 0.1);
   --sombra-alta: 0 8px 28px rgba(37, 40, 44, 0.22);
-  --display: 'Bahnschrift SemiBold Condensed', 'Bahnschrift', 'Oswald',
-             'Barlow Condensed', 'Arial Narrow', 'Segoe UI', sans-serif;
+  /* Empaquetada en el build (ver main.tsx): no depende de la fuente del sistema. */
+  --display: 'Oswald', 'Bahnschrift SemiBold Condensed', 'Arial Narrow', sans-serif;
 
   /* Alto de la barra de recursos fija, para el padding del body */
   --recursos-alto: 68px;
@@ -155,10 +155,11 @@ button.danger {
 
 .topbar .marca .club-name {
   font-family: var(--display);
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 1.1rem;
-  line-height: 1;
+  letter-spacing: 0.04em;
+  font-size: 1.2rem;
+  line-height: 1.05;
   color: var(--text-light);
   white-space: nowrap;
 }
@@ -202,10 +203,14 @@ button.danger {
   border-color: var(--chrome-linea);
   color: var(--text-faint);
   font-family: var(--display);
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.09em;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   padding: 0.4rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .topbar .salir:hover:not(:disabled) {
@@ -227,10 +232,11 @@ button.danger {
   background: transparent;
   color: var(--text-faint);
   font-family: var(--display);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.78rem;
-  padding: 0.55rem 0.85rem 0.5rem;
+  letter-spacing: 0.07em;
+  font-size: 0.82rem;
+  padding: 0.5rem 0.8rem 0.45rem;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -247,6 +253,16 @@ button.danger {
   border-radius: 50%;
   background: var(--sec, var(--sec-ajustes));
   flex-shrink: 0;
+}
+
+.tabs button .ico {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.tabs button.active .ico,
+.tabs button:hover .ico {
+  opacity: 1;
 }
 
 .tabs button:hover:not(:disabled) {
@@ -298,16 +314,25 @@ button.danger {
 
 .recursos .recurso .k {
   font-family: var(--display);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.13em;
-  font-size: 0.62rem;
+  letter-spacing: 0.11em;
+  font-size: 0.66rem;
   color: var(--text-faint);
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.recursos .recurso .k .ico {
+  flex-shrink: 0;
+  opacity: 0.8;
 }
 
 .recursos .recurso .v {
   font-family: var(--display);
-  font-size: 1.3rem;
+  font-weight: 600;
+  font-size: 1.45rem;
   line-height: 1.15;
   color: var(--text-light);
   font-variant-numeric: tabular-nums;
@@ -370,24 +395,40 @@ button.danger {
   margin-bottom: 0.75rem;
 }
 
-/* Banda de sección en el cabezal de una card. El color lo pone --sec: así el
-   paso 4 es poner una clase por pantalla y nada más. */
-.card.banda {
-  padding: 0;
-  overflow: hidden;
-}
+/* ---------- Cabezal de sección ---------- */
 
-.card.banda > h3 {
-  background: var(--sec, var(--sec-ajustes));
+/* Un solo lugar donde el nombre de un área se vuelve color. Sirve en cualquier
+   elemento: la pestaña lo usa para su punto y su filete, la vista para las
+   bandas de todas sus cards. Una card de otra área lo pisa con
+   style={{'--sec': ...}} —el vestuario dentro del Resumen, por ejemplo. */
+.vista { --sec: var(--sec-ajustes); }
+.sec-tablero { --sec: var(--sec-tablero); }
+.sec-partidos { --sec: var(--sec-partidos); }
+.sec-vestuario { --sec: var(--sec-vestuario); }
+.sec-plantel { --sec: var(--sec-plantel); }
+.sec-finanzas { --sec: var(--sec-finanzas); }
+.sec-scouting { --sec: var(--sec-scouting); }
+.sec-ajustes { --sec: var(--sec-ajustes); }
+
+/* La banda sangra hasta el borde con márgenes negativos: así ninguna card
+   necesita un div nuevo envolviendo su cuerpo. */
+.vista .card > h3:first-child {
+  background: var(--sec);
   color: var(--text-light);
+  font-weight: 600;
   font-size: 0.95rem;
-  letter-spacing: 0.09em;
-  margin: 0;
-  padding: 0.55rem 0.9rem;
+  letter-spacing: 0.08em;
+  margin: -1rem -1rem 0.9rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 3px 3px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
-.card.banda > .card-body {
-  padding: 1rem;
+/* Con banda arriba, la franja al costado es redundante. */
+.vista .watch-card {
+  border-left: 1px solid var(--border);
 }
 
 .grid {
