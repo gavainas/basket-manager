@@ -7,7 +7,7 @@
 // Los partidos en vivo del segundo equipo (y el doble partido el mismo día)
 // son la etapa 7: acá el cruce se resuelve como los demás partidos del mundo.
 
-import { CLUB_COLORS, CRESTS, EXPANSION_DIVISION_TEAMS } from '../data/worldData';
+import { CLUB_COLORS, EXPANSION_DIVISION_TEAMS } from '../data/worldData';
 import { DELEGATE_NAMES, NEIGHBORHOODS } from '../data/names';
 import { BALANCE, clamp } from './balance';
 import { fragilityOf, pickByFragility, rollInjuryWeeks } from './injuries';
@@ -139,7 +139,6 @@ export function registerSecondTeam(state: GameState, leagueId: string, playerIds
         id: clubId,
         name: seed.name,
         colors: CLUB_COLORS[(i + 5) % CLUB_COLORS.length],
-        crest: CRESTS[(i + 5) % CRESTS.length],
         founded: s.world.season.year - rng.int(3, 50),
         sportPrestige: clamp(seed.strength + rng.int(-8, 8), 15, 90),
         socialPrestige: rng.int(30, 80),

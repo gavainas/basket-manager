@@ -186,17 +186,26 @@ export const PLAZA_RIVALS: Rival[] = [
   { id: 'r9', name: 'El Túnel', strength: 28, style: 'equilibrado' },
 ];
 
+/**
+ * Colores de camiseta [principal, vivo].
+ *
+ * Antes eran los neón del tema oscuro (#3ddc84, #4ea8de, #ff5d5d, #b085f5):
+ * pensados para brillar sobre azul noche, chillones sobre papel claro. Ahora son
+ * combinaciones de club de barrio — tintas apagadas, la clase de par que ves en
+ * una camiseta de algodón lavada cien veces.
+ *
+ * **Ninguno es el naranja de acción** (`--naranja`, #e07a2a): ese color está
+ * reservado y una camiseta no lo puede gastar (ver design/SISTEMA_VISUAL.md).
+ */
 export const CLUB_COLORS: [string, string][] = [
-  ['#f08c2e', '#1b2739'],
-  ['#3ddc84', '#0e141f'],
-  ['#4ea8de', '#16202e'],
-  ['#ff5d5d', '#222'],
-  ['#f2c14e', '#333'],
-  ['#b085f5', '#1a1a2e'],
-  ['#e0e0e0', '#111'],
-  ['#7ec850', '#123'],
-  ['#ff9e6d', '#20242e'],
-  ['#5dd0c0', '#1c2331'],
+  ['#2d5c8a', '#e8e4dc'], // azul y blanco
+  ['#9d3b3b', '#f0e6d2'], // bordó y crema
+  ['#2f6b4f', '#efe9dc'], // verde y blanco
+  ['#3a3f4a', '#c9a227'], // negro y oro
+  ['#6a4a86', '#ece7f0'], // violeta y blanco
+  ['#8c4a2a', '#e8ddcf'], // ladrillo y hueso
+  ['#456470', '#cfe0e6'], // pizarra y celeste
+  ['#c9a227', '#3a3f4a'], // oro y negro
+  ['#7a2f45', '#e6dfd4'], // vino y crema
+  ['#356b6b', '#eef0e8'], // verde agua y blanco
 ];
-
-export const CRESTS = ['🏀', '🦅', '🐺', '⚡', '🔥', '🛡', '🌊', '🚂', '⭐', '🦁'] as const;

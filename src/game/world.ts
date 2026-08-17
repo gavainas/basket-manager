@@ -3,7 +3,7 @@
 // sistemas existentes (rivals/schedule/standings) siguen mandando en el partido
 // del usuario, y el mundo los espeja con entidades completas.
 
-import { CLUB_COLORS, CRESTS, DIVISIONS, LEAGUES, USER_LEAGUE_ID } from '../data/worldData';
+import { CLUB_COLORS, DIVISIONS, LEAGUES, USER_LEAGUE_ID } from '../data/worldData';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
 import { Rng, seedFromString } from './rng';
 import type {
@@ -14,6 +14,7 @@ import type {
   Position,
   Team,
   WeekDay,
+  WorldClub,
   WorldFixture,
   WorldPlayer,
   WorldState,
@@ -97,6 +98,17 @@ export function userTeam(world: WorldState): Team {
 
 export function teamByLegacyRival(world: WorldState, rivalId: string): Team | undefined {
   return world.teams.find((t) => t.legacyRivalId === rivalId);
+}
+
+/**
+ * Club del mundo detrás de un id del sistema clásico ('club' para el usuario,
+ * 'rN' para un rival). Lo necesita cualquier pantalla que quiera el escudo o los
+ * colores de un equipo que solo conoce por su id viejo — la tabla de posiciones,
+ * el fixture, el próximo rival.
+ */
+export function clubByLegacyId(world: WorldState, id: string): WorldClub | undefined {
+  const team = id === 'club' ? userTeam(world) : teamByLegacyRival(world, id);
+  return team ? world.clubs.find((c) => c.id === team.clubId) : undefined;
 }
 
 /** Plantel de un equipo rival (jugadores del mundo con ficha activa). */
@@ -270,7 +282,6 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
     id: USER_CLUB_ID,
     name: state.club.name,
     colors: CLUB_COLORS[0],
-    crest: '🏀',
     founded: 2026 - (state.seasonNumber - 1) - 1,
     // El prestigio real del usuario vive en state.club; esto es un espejo.
     sportPrestige: state.club.sportPrestige,
@@ -302,7 +313,6 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
       id: clubId,
       name: rival.name,
       colors: CLUB_COLORS[(i + 1) % CLUB_COLORS.length],
-      crest: CRESTS[(i + 1) % CRESTS.length],
       founded: year - rng.int(4, 45),
       sportPrestige: Math.max(15, Math.min(90, Math.round(rival.strength + rng.int(-8, 8)))),
       socialPrestige: rng.int(30, 80),
@@ -402,7 +412,6 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
         id: clubId,
         name: seed.name,
         colors: CLUB_COLORS[(i + 3) % CLUB_COLORS.length],
-        crest: CRESTS[(i + 3) % CRESTS.length],
         founded: year - rng.int(6, 60),
         sportPrestige: Math.max(20, Math.min(95, seed.strength + rng.int(-6, 6))),
         socialPrestige: rng.int(35, 85),
