@@ -2,9 +2,10 @@ import { useContext, useState } from 'react';
 import { BALANCE } from '../game/balance';
 import { checkExpansion, eligibleForLeague, SECOND_TEAM_ID, secondTeamPosition } from '../game/secondTeam';
 import type { CupTier, GameState, League } from '../game/types';
-import { divisionStandings, USER_TEAM_ID } from '../game/world';
+import { clubByLegacyId, divisionStandings, USER_TEAM_ID } from '../game/world';
 import type { GameAction } from '../state/gameReducer';
 import { ClubLink } from './ClubLink';
+import { Crest } from './Crest';
 import { LeagueLink } from './LeagueLink';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
@@ -254,6 +255,13 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
     (a, b) => b.wins - a.wins || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
   );
   const teamName = (id: string) => <LegacyTeamName state={state} id={id} />;
+  /* A 18px del escudo se lee la silueta y los dos colores, que es justo lo que
+     hace falta para distinguir diez filas de un vistazo. */
+  const crestOf = (id: string) => {
+    const club = clubByLegacyId(state.world, id);
+    if (!club) return null;
+    return <Crest seed={club.id} name={club.name} colors={club.colors} founded={club.founded} size={18} />;
+  };
   const styleChip = (id: string) => {
     const rival = state.rivals.find((r) => r.id === id);
     if (!rival) return null;
@@ -366,7 +374,11 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
                     {i + 1}
                   </td>
                   <td>
-                    {teamName(row.teamId)} {styleChip(row.teamId)}
+                    <span className="con-escudo">
+                      {crestOf(row.teamId)}
+                      {teamName(row.teamId)}
+                    </span>{' '}
+                    {styleChip(row.teamId)}
                   </td>
                   <td className="num">{row.wins}</td>
                   <td className="num">{row.losses}</td>

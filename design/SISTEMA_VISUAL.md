@@ -178,7 +178,7 @@ Reglas de estilo, para que el generador SVG pueda alcanzarlo después:
 | Asset | Cantidad | Cómo |
 | --- | --- | --- |
 | Retratos de jugadores | 120+ y crece | Procedural — ya existe ([AVATAR_SYSTEM.md](AVATAR_SYSTEM.md)) |
-| Escudos de club | 10+ y crece | Procedural — **falta construirlo** |
+| Escudos de club | 30+ y crece | Procedural — ya existe (`game/crest.ts`) |
 | Camisetas | por club | Procedural, derivado del color |
 | Fondos de gimnasio | 4-6 | Generado |
 | Cancha para la pizarra | 1-2 | Generado |
@@ -186,8 +186,31 @@ Reglas de estilo, para que el generador SVG pueda alcanzarlo después:
 | Ilustraciones de evento | ~6 familias | Generado |
 | Key art / portada Steam | 1-2 | Generado |
 
-Ninguna IA te va a dar diez escudos consistentes entre sí, y menos treinta: el generador
-de escudos es hermano del de retratos y es la pieza que falta.
+Ninguna IA te va a dar diez escudos consistentes entre sí, y menos treinta: por eso el
+generador de escudos (`game/crest.ts` + `ui/Crest.tsx`) es hermano del de retratos —
+seed = id del club, un hash por capa, todo SVG dibujado por código.
+
+Lo que reemplazó: los escudos eran emoji de un bolillero de diez, y tres eran mascotas
+(águila, lobo, león) — justo lo que este documento decía no tomar. Las iniciales salen
+del **nombre del club**, no del azar: "Atlético El Parque" → EP, y las palabras de
+relleno (Club, Atlético, Deportivo, Social, de, la…) no cuentan, porque si contaran media
+liga tendría las mismas.
+
+**La restricción que manda el diseño es el tamaño.** El escudo vive en la fila de una
+tabla de diez equipos (18px) y en la ficha de un club (96px). A 18px lo único que se lee
+es silueta + dos colores + una partición: una pelota con costuras ahí es puré. Así que el
+detalle entra por umbral — abajo de 28px solo la silueta, arriba suma medallón, iniciales
+y estrellas. Validar en `/#escudos`, que es la pantalla hermana de `/#retratos`.
+
+Dos cosas que solo aparecieron al ver la galería, y que valen como advertencia para
+cualquier capa nueva:
+
+1. **El clipPath recorta el campo, no el contenido.** Las figuras y las iniciales se
+   desbordaban en el rombo y el círculo. Cada silueta declara ahora su caja segura
+   (`SAFE` en `Crest.tsx`) y el contenido se dibuja siempre en coordenadas locales.
+2. **Tinta clara sobre partición clara desaparece.** No hay forma de saber de antemano qué
+   partición le tocó a cada club, así que la figura va sobre un medallón del color de
+   campo y las iniciales llevan contorno con `paint-order: stroke`.
 
 **No pedir assets hasta que el shell exista.** Sin el marco no se conocen las medidas,
 las proporciones ni el recorte del héroe.

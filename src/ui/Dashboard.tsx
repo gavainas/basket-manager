@@ -7,8 +7,10 @@ import { EMOTION_EXPRESSION } from '../game/humanState';
 import { aggrieved, grievanceWarning } from '../game/mood';
 import { objectiveStatus, type ObjectiveStatus } from '../game/objectives';
 import { promiseHealth, type PromiseHealth } from '../game/promises';
+import { clubByLegacyId } from '../game/world';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
+import { Crest } from './Crest';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext, type AppTab } from './nav';
@@ -171,6 +173,7 @@ export function Dashboard({ state }: { state: GameState }) {
   const upcomingWeek = state.phase === 'matchResult' ? state.week + 1 : state.week;
   const nextRivalId = upcomingWeek <= state.seasonLength ? state.schedule[upcomingWeek - 1] : null;
   const nextRival = nextRivalId ? state.rivals.find((r) => r.id === nextRivalId)! : null;
+  const rivalClub = nextRivalId ? clubByLegacyId(state.world, nextRivalId) : undefined;
   const moneyCls = state.club.money < 100 ? 'bad' : state.club.money < 300 ? 'warn' : 'good';
 
   // El grupo del club: lo que se dijo después del último partido, como chat.
@@ -289,7 +292,16 @@ export function Dashboard({ state }: { state: GameState }) {
             /* El rival es del área de Partidos: el panel es una ventana ahí. */
             <div className="card sec-partidos">
               <h3>Próximo rival</h3>
-              <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>
+              <div className="con-escudo" style={{ fontSize: '1.3rem', fontWeight: 800 }}>
+                {rivalClub && (
+                  <Crest
+                    seed={rivalClub.id}
+                    name={rivalClub.name}
+                    colors={rivalClub.colors}
+                    founded={rivalClub.founded}
+                    size={34}
+                  />
+                )}
                 <RivalLink id={nextRival.id}>{nextRival.name}</RivalLink>
               </div>
               <div style={{ marginTop: '0.3rem', display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>

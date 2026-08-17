@@ -431,6 +431,21 @@ button.danger {
   border-left: 1px solid var(--border);
 }
 
+/* ---------- Escudos ---------- */
+
+.crest {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Nombre de club precedido por su escudo, alineados por la base del texto. */
+.con-escudo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  vertical-align: middle;
+}
+
 .grid {
   display: grid;
   gap: 1rem;

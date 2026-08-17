@@ -30,6 +30,8 @@ import { formatMoney, weekLabel } from './ui/helpers';
 import { AvatarGallery } from './ui/AvatarGallery';
 import { ConfirmDialog, type ConfirmRequest } from './ui/ConfirmDialog';
 import { Icon, type IconName } from './ui/Icon';
+import { Crest } from './ui/Crest';
+import { CrestGallery } from './ui/CrestGallery';
 
 type Tab = AppTab;
 
@@ -141,8 +143,10 @@ function MainMenu({
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, null);
 
-  // Pantalla de validación de retratos, solo desarrollo (ver design/AVATAR_SYSTEM.md).
+  // Pantallas de validación, solo desarrollo (ver design/AVATAR_SYSTEM.md y
+  // design/SISTEMA_VISUAL.md).
   if (window.location.hash === '#retratos') return <AvatarGallery />;
+  if (window.location.hash === '#escudos') return <CrestGallery />;
   const [tab, setTab] = useState<Tab>('resumen');
   const [saveFailed, setSaveFailed] = useState(false);
   const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
@@ -252,6 +256,7 @@ export default function App() {
             ? 'Dirigí el partido cuarto a cuarto'
             : 'Mirá el resultado del partido';
 
+  const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
   const alDia = state.players.filter((p) => p.weeksUnpaid === 0).length;
   const semanaLabel =
     state.week <= state.seasonLength
@@ -263,11 +268,23 @@ export default function App() {
       <header className="topbar">
         <div className="topbar-inner">
           <div className="marca">
+            {userClub && (
+              <Crest
+                seed={userClub.id}
+                name={userClub.name}
+                colors={userClub.colors}
+                founded={userClub.founded}
+                size={38}
+              />
+            )}
             <div>
               <div className="club-name">
                 <ClubLink id={USER_CLUB_ID}>{state.club.name}</ClubLink>
               </div>
-              <div className="temporada">Temporada {state.seasonNumber}</div>
+              <div className="temporada">
+                Temporada {state.seasonNumber}
+                {userClub ? ` · fundado en ${userClub.founded}` : ''}
+              </div>
             </div>
           </div>
 

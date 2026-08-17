@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import type { GameState, WorldClub } from '../game/types';
 import { divisionOfTeam, teamRoster, USER_TEAM_ID, worldPlayerName } from '../game/world';
 import { Bar } from './Bar';
+import { Crest } from './Crest';
 import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
 import { Timeline } from './Timeline';
@@ -63,7 +64,7 @@ export function ClubProfile({ state, clubId, onClose }: Props) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="profile" onClick={(e) => e.stopPropagation()}>
         <div className="profile-head">
-          <div className="avatar profile-avatar">{club.crest}</div>
+          <Crest seed={club.id} name={club.name} colors={club.colors} founded={club.founded} size={62} />
           <div className="profile-who">
             <div className="profile-name">{club.name}</div>
             <div className="profile-chips">
