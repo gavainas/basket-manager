@@ -6,11 +6,11 @@ import { clubByLegacyId, divisionStandings, USER_TEAM_ID } from '../game/world';
 import type { GameAction } from '../state/gameReducer';
 import { ClubLink } from './ClubLink';
 import { Crest } from './Crest';
+import { StyleChip } from './StyleChip';
 import { LeagueLink } from './LeagueLink';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
-import { rivalStyleInfo } from './helpers';
 
 /** Nombre de un equipo por id clásico: rivales abren su ficha, el club lleva a la plantilla. */
 function LegacyTeamName({ state, id }: { state: GameState; id: string }) {
@@ -264,13 +264,7 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
   };
   const styleChip = (id: string) => {
     const rival = state.rivals.find((r) => r.id === id);
-    if (!rival) return null;
-    const info = rivalStyleInfo(rival.style);
-    return (
-      <span className="chip" title={info.desc}>
-        {info.label}
-      </span>
-    );
+    return rival ? <StyleChip style={rival.style} /> : null;
   };
 
   const world = state.world;

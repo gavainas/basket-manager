@@ -3,7 +3,7 @@ import type { GameState } from '../game/types';
 import { BALANCE } from '../game/balance';
 import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { activePlayers, clubPosition } from '../game/match';
-import { EMOTION_EXPRESSION } from '../game/humanState';
+import { EMOTION_EXPRESSION, type NoteKind } from '../game/humanState';
 import { aggrieved, grievanceWarning } from '../game/mood';
 import { objectiveStatus, type ObjectiveStatus } from '../game/objectives';
 import { promiseHealth, type PromiseHealth } from '../game/promises';
@@ -11,11 +11,14 @@ import { clubByLegacyId } from '../game/world';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { Crest } from './Crest';
+import { Icon } from './Icon';
+import { NOTE_ICON } from './HumanNoteRow';
+import { StyleChip } from './StyleChip';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext, type AppTab } from './nav';
 import { TIPS } from './Tip';
-import { avgMotivation, formatMoney, rivalDifficulty, rivalStyleInfo } from './helpers';
+import { avgMotivation, formatMoney, rivalDifficulty } from './helpers';
 
 const OBJECTIVE_BADGE: Record<ObjectiveStatus, { icon: string; cls: string; label: string }> = {
   cumplido: { icon: '✔', cls: 'good', label: 'cumplido' },
@@ -32,7 +35,9 @@ const PROMISE_BADGE: Record<PromiseHealth, { cls: string; label: string }> = {
 };
 
 interface WatchItem {
-  icon: string;
+  /* Misma clasificación que las notas humanas: el ícono dice de qué habla y
+     `cls` si es bueno o malo. Ver NoteKind en game/humanState.ts. */
+  kind: NoteKind;
   cls: 'bad' | 'warn' | 'good';
   text: string;
   tab: AppTab;
@@ -45,7 +50,7 @@ function watchItems(state: GameState): WatchItem[] {
 
   for (const p of active.filter((x) => x.status === 'al_borde')) {
     items.push({
-      icon: '🚨',
+      kind: 'alerta',
       cls: 'bad',
       text: `${p.name} está al borde de dejar el club: una charla o minutos pueden salvarlo.`,
       tab: 'plantilla',
@@ -54,7 +59,7 @@ function watchItems(state: GameState): WatchItem[] {
   const fixedCosts = 245 + (state.coach?.weeklyWage ?? 0);
   if (state.club.money < fixedCosts) {
     items.push({
-      icon: '💸',
+      kind: 'plata',
       cls: 'bad',
       text: `La caja no cubre la semana: $${state.club.money} contra ~$${fixedCosts} de gastos fijos. Rifa, sponsor o cuotas, ya.`,
       tab: 'finanzas',
@@ -66,7 +71,7 @@ function watchItems(state: GameState): WatchItem[] {
   const hot = aggrieved(state, 2).filter((p) => p.status !== 'al_borde');
   for (const p of hot.slice(0, 2)) {
     items.push({
-      icon: p.grievance!.level >= 3 ? '🔥' : '😠',
+      kind: 'animo',
       cls: p.grievance!.level >= 3 ? 'bad' : 'warn',
       text: grievanceWarning(p, week),
       tab: 'plantilla',
@@ -75,7 +80,7 @@ function watchItems(state: GameState): WatchItem[] {
   const upset = active.filter((x) => x.status === 'molesto' && !hot.includes(x));
   if (upset.length > 0) {
     items.push({
-      icon: '😠',
+      kind: 'animo',
       cls: 'warn',
       text:
         upset.length === 1
@@ -88,14 +93,14 @@ function watchItems(state: GameState): WatchItem[] {
   const injured = active.filter((x) => x.status === 'lesionado');
   if (returning.length > 0) {
     items.push({
-      icon: '🩹',
+      kind: 'fisico',
       cls: 'good',
       text: `${returning.map((p) => p.name).join(' y ')} ${returning.length > 1 ? 'reciben' : 'recibe'} el alta la próxima semana.`,
       tab: 'plantilla',
     });
   } else if (injured.length > 0) {
     items.push({
-      icon: '🚑',
+      kind: 'fisico',
       cls: 'warn',
       text: `${injured.length === 1 ? `${injured[0].name} sigue` : `${injured.length} jugadores siguen`} en la enfermería.`,
       tab: 'plantilla',
@@ -104,7 +109,7 @@ function watchItems(state: GameState): WatchItem[] {
   const suspended = active.filter((x) => (x.suspendedWeeks ?? 0) > 0);
   for (const p of suspended) {
     items.push({
-      icon: '🟥',
+      kind: 'alerta',
       cls: 'bad',
       text: `${p.name} está suspendido: esta fecha la mira desde la tribuna.`,
       tab: 'plantilla',
@@ -115,7 +120,7 @@ function watchItems(state: GameState): WatchItem[] {
   for (const p of hotheads) {
     const strictRef = weekRef.style === 'estricto' || weekRef.style === 'protagonista';
     items.push({
-      icon: '🟨',
+      kind: 'alerta',
       cls: strictRef ? 'bad' : 'warn',
       text: strictRef
         ? `${p.name} acumula 2 técnicas y esta fecha dirige ${weekRef.name} (${weekRef.blurb}). Una protesta y se va.`
@@ -126,7 +131,7 @@ function watchItems(state: GameState): WatchItem[] {
   const exhausted = active.filter((x) => x.status !== 'lesionado' && x.physical <= BALANCE.callUp.exhaustedThreshold);
   if (exhausted.length > 0) {
     items.push({
-      icon: '🥵',
+      kind: 'fisico',
       cls: 'warn',
       text:
         exhausted.length === 1
@@ -138,7 +143,7 @@ function watchItems(state: GameState): WatchItem[] {
   const debtors = active.filter((x) => x.feeStatus === 'pendiente' && x.weeksUnpaid >= 2);
   if (debtors.length > 0) {
     items.push({
-      icon: '🧾',
+      kind: 'plata',
       cls: 'warn',
       text: `${debtors.length === 1 ? `${debtors[0].name} debe` : `${debtors.length} jugadores deben`} la cuota hace ${debtors.length === 1 ? `${debtors[0].weeksUnpaid} semanas` : 'rato'}: pasar la gorra cuesta caro después.`,
       tab: 'finanzas',
@@ -150,7 +155,7 @@ function watchItems(state: GameState): WatchItem[] {
     ).length;
     if (fit < 6) {
       items.push({
-        icon: '🏀',
+        kind: 'cancha',
         cls: 'warn',
         text: `El segundo equipo llega justo: ${fit} fichas en condiciones para su fecha.`,
         tab: 'liga',
@@ -185,10 +190,12 @@ export function Dashboard({ state }: { state: GameState }) {
   return (
     <div>
       <div className="card watch-card" style={{ marginBottom: '1rem' }}>
-        <h3>📌 Qué mirar hoy</h3>
+        <h3>
+          <Icon name="destacado" size={17} /> Qué mirar hoy
+        </h3>
         {watch.length === 0 ? (
           <p style={{ margin: 0 }}>
-            ✅ <strong>Semana tranquila.</strong> Sin urgencias en el club: a pensar en el partido.
+            <strong>Semana tranquila.</strong> Sin urgencias en el club: a pensar en el partido.
           </p>
         ) : (
           <ul className="news-list">
@@ -199,7 +206,9 @@ export function Dashboard({ state }: { state: GameState }) {
                 onClick={() => navigate(w.tab)}
                 title="Ir a la pantalla"
               >
-                <span style={{ minWidth: 20 }}>{w.icon}</span>
+                <span className="hn-icon" style={{ minWidth: 18 }}>
+                  <Icon name={NOTE_ICON[w.kind]} size={14} />
+                </span>
                 <span style={{ flex: 1 }}>{w.text}</span>
                 <span className={`chip ${w.cls}`}>ver →</span>
               </li>
@@ -306,23 +315,23 @@ export function Dashboard({ state }: { state: GameState }) {
               </div>
               <div style={{ marginTop: '0.3rem', display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                 <span className={`chip ${rivalDifficulty(nextRival).cls}`}>{rivalDifficulty(nextRival).label}</span>
-                <span className="chip accent" title={rivalStyleInfo(nextRival.style).desc}>
-                  {rivalStyleInfo(nextRival.style).label}
-                </span>
+                <StyleChip style={nextRival.style} />
                 {rivalryWith(state, nextRival.id) && <span className="chip bad">🔥 Revancha</span>}
               </div>
               {rivalryWith(state, nextRival.id) && (
                 <p style={{ margin: '0.4rem 0 0' }}>{rivalryWith(state, nextRival.id)!.text}</p>
               )}
               <p className="muted" style={{ margin: '0.4rem 0 0' }}>
-                🧑‍⚖️ Dirige {refereeOfWeek(state).name}: {refereeOfWeek(state).blurb}.
+                Dirige {refereeOfWeek(state).name}: {refereeOfWeek(state).blurb}.
               </p>
             </div>
           )}
           {groupChat.length > 0 && (
             /* El chat del plantel es vestuario puro. */
             <div className="card sec-vestuario">
-              <h3>💬 El grupo del club</h3>
+              <h3>
+                <Icon name="chat" size={17} /> El grupo del club
+              </h3>
               <div className="chat-list">
                 {groupChat.map((m) => {
                   const pl = state.players.find((p) => p.id === m.playerId);

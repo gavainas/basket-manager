@@ -1,4 +1,5 @@
 import type { Player, Rival, RivalStyle } from '../game/types';
+import type { IconName } from './Icon';
 
 export function initials(name: string): string {
   const clean = name.replace(/"[^"]*"\s*/g, '').trim();
@@ -99,29 +100,44 @@ export function monthLabel(iso: string): string {
   return `${m[0].toUpperCase()}${m.slice(1)} ${d.getUTCFullYear()}`;
 }
 
-export function rivalStyleInfo(style: RivalStyle): { label: string; desc: string; advice: string } {
+/**
+ * El `icon` sale aparte del `label` a propósito: pegado al texto solo se puede
+ * pintar un emoji, y un emoji de colores dentro de un chip es la firma más obvia
+ * de interfaz generada. Separado, el llamador lo dibuja con `<Icon>` y hereda el
+ * color del contexto.
+ */
+export function rivalStyleInfo(style: RivalStyle): {
+  label: string;
+  icon: IconName;
+  desc: string;
+  advice: string;
+} {
   switch (style) {
     case 'tiradores':
       return {
-        label: '🎯 Tiradores',
+        label: 'Tiradores',
+        icon: 'tiradores',
         desc: 'Viven del tiro externo: la zona les regala tiros abiertos; la marca hombre los incomoda.',
         advice: 'Salí a marcarlos hombre mientras tengas piernas; la zona contra ellos es un regalo.',
       };
     case 'internos':
       return {
-        label: '🏋 Juego interior',
+        label: 'Juego interior',
+        icon: 'interior',
         desc: 'Grandotes que castigan cerca del aro: marcarlos hombre desgasta el doble; la zona les cierra la pintura.',
         advice: 'La zona les cierra la pintura sin fundirte. Si los marcás hombre, tené el banco listo.',
       };
     case 'corredores':
       return {
-        label: '🏃 Corredores',
+        label: 'Corredores',
+        icon: 'corredores',
         desc: 'Corren toda la cancha los 40 minutos: si tu equipo se queda sin piernas, te pasan por arriba.',
         advice: 'Rotá el banco temprano y llegá con piernas al último cuarto: castigan al que se cansa.',
       };
     case 'equilibrado':
       return {
-        label: '⚖ Equilibrado',
+        label: 'Equilibrado',
+        icon: 'equilibrado',
         desc: 'No tienen un punto débil claro: gana el que impone su juego.',
         advice: 'Sin ventajas de pizarrón: jugá a lo tuyo y cuidá las piernas para el cierre.',
       };

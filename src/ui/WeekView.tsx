@@ -8,7 +8,9 @@ import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { lineupPromiseWarnings } from '../game/promises';
 import { courtFreshness, evaluateTeam, isSelectable } from '../game/match';
 import { Bar } from './Bar';
+import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
+import { StyleChip } from './StyleChip';
 import { RivalLink } from './RivalLink';
 import { ScoutingCard } from './ScoutingCard';
 import { Tip, TIPS } from './Tip';
@@ -76,7 +78,9 @@ function AsadoRsvpPanel({ state }: { state: GameState }) {
   const declined = group('no_va');
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
-      <h3>🍖 El grupo responde a la convocatoria</h3>
+      <h3>
+        <Icon name="chat" size={17} /> El grupo responde a la convocatoria
+      </h3>
       <p style={{ margin: '0.2rem 0 0.5rem' }}>
         <span className="chip good" style={{ marginRight: '0.4rem' }}>✓ Van {going.length}</span>
         <span className="chip warn" style={{ marginRight: '0.4rem' }}>🤔 Dudan {maybe.length}</span>
@@ -146,9 +150,7 @@ function PlanningPanel({ state, dispatch }: Props) {
         {rival && (
           <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.4rem' }}>
             <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
-            <span className="chip accent" title={rivalStyleInfo(rival.style).desc}>
-              {rivalStyleInfo(rival.style).label}
-            </span>
+            <StyleChip style={rival.style} />
             {rivalryWith(state, rival.id) && (
               <span className="chip bad" title={rivalryWith(state, rival.id)!.text}>
                 🔥 Revancha
@@ -1300,7 +1302,9 @@ function LiveMatchPanel({ state, dispatch }: Props) {
 
       {live.pendingIncident && (
         <div className="card" style={{ marginBottom: '1rem', borderColor: 'var(--warn)' }}>
-          <h3>⚠ Incidencia en la cancha</h3>
+          <h3>
+            <Icon name="alerta" size={17} /> Incidencia en la cancha
+          </h3>
           <p style={{ marginTop: 0 }}>{live.pendingIncident.text}</p>
           <div className="modal-like options" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {live.pendingIncident.options.map((opt, i) => (

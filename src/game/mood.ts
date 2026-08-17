@@ -230,10 +230,8 @@ export function grievanceCause(p: Player): string | null {
 }
 
 /** Ícono según cuán espesa está la bronca. */
-export function grievanceIcon(p: Player): string {
-  const level = p.grievance?.level ?? 0;
-  return level >= 3 ? '🔥' : level === 2 ? '😠' : '😕';
-}
+/* grievanceIcon() se fue con los emoji de las notas: el nivel de la queja ya
+   viaja en el `tone` de la HumanNote, y el color dice lo mismo sin un glifo. */
 
 /** Frase corta para la ficha y la plantilla ("Caliente por los minutos · 3 semanas"). */
 export function grievanceNote(p: Player, week: number): string | null {

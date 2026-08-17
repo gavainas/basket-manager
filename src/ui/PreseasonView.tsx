@@ -15,6 +15,7 @@ import type { GameState, KnowledgeLevel, MarketPlayer, Player } from '../game/ty
 import type { GameAction } from '../state/gameReducer';
 import { formatMoney, starsFor } from './helpers';
 import { Avatar } from './Avatar';
+import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { dayLabel } from '../game/world';
@@ -283,7 +284,9 @@ function InscriptionSection({ state, dispatch }: Props) {
 
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
-      <h3>📝 Inscripción: ¿dónde jugamos este año?</h3>
+      <h3>
+        <Icon name="inscripcion" size={17} /> Inscripción: ¿dónde jugamos este año?
+      </h3>
       <div className="player-grid">{offer.map(renderOption)}</div>
       <p className="hint" style={{ marginBottom: 0 }}>
         Elegir liga es elegir tu día de partido: mirá qué día puede tu gente antes de firmar. Podés cambiar hasta el

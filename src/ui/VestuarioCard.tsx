@@ -2,6 +2,7 @@ import type { GameState, Player } from '../game/types';
 import { buildSocialMap } from '../game/socialMap';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
+import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 
 function PlayerChip({ p }: { p: Player }) {
@@ -27,7 +28,9 @@ export function VestuarioCard({ state }: { state: GameState }) {
     /* Su color es el del vestuario en cualquier pantalla donde aparezca, no el
        del área que la contiene. */
     <div className="card sec-vestuario" style={{ marginBottom: '1rem' }}>
-      <h3>🧩 El vestuario por dentro</h3>
+      <h3>
+        <Icon name="vestuario" size={17} /> El vestuario por dentro
+      </h3>
       <div style={{ maxWidth: 320, marginBottom: '0.6rem' }}>
         <Bar
           label="Unión del grupo"

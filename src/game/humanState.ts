@@ -2,12 +2,25 @@
 // Regla de diseño (design/DESIGN.md): si el motor sabe el "por qué", la UI
 // no muestra la cifra sola. Este módulo centraliza esas frases.
 
-import { grievanceCause, grievanceIcon, grievanceNote } from './mood';
+import { grievanceCause, grievanceNote } from './mood';
 import { affinity, coachAffinity, FRIEND_THRESHOLD, RIVALRY_THRESHOLD } from './relations';
 import type { GameState, Player, PlayerEmotion } from './types';
 
+/**
+ * Categoría de la nota. La UI la dibuja con un ícono de línea del set propio.
+ *
+ * Antes cada nota traía su emoji y había diecinueve distintos (😠 🩹 💸 🪑 🥵 🫥
+ * 💪 ⚡ 🍻 🧊 👊 …). Dos problemas: los emoji de colores dentro de una interfaz
+ * son la firma más obvia de pantalla generada, y a 16px nadie distingue "fundido"
+ * de "desmotivado" — diecinueve glifos únicos es ruido, no sistema.
+ *
+ * Seis categorías más el `tone` que ya existía alcanzan: el ícono dice de qué
+ * habla la nota y el color dice si es buena o mala.
+ */
+export type NoteKind = 'animo' | 'fisico' | 'plata' | 'social' | 'cancha' | 'agenda' | 'alerta';
+
 export interface HumanNote {
-  icon: string;
+  kind: NoteKind;
   text: string;
   tone: 'good' | 'warn' | 'bad' | 'neutral';
   /** Jugador mencionado por nombre en el texto: la UI lo vuelve un link a su ficha. */
@@ -42,29 +55,29 @@ export function playerNotes(state: GameState, p: Player): HumanNote[] {
   if (p.status === 'al_borde') {
     const why = grievanceCause(p);
     notes.push({
-      icon: '🚨',
+      kind: 'alerta',
       text: why
         ? `Al borde de irse por ${why}: una semana más así y busca otro club.`
         : 'Al borde de irse: una semana más así y busca otro club.',
       tone: 'bad',
     });
   } else if (grievance) {
-    notes.push({ icon: grievanceIcon(p), text: grievance, tone: p.grievance!.level >= 2 ? 'bad' : 'warn' });
+    notes.push({ kind: 'animo', text: grievance, tone: p.grievance!.level >= 2 ? 'bad' : 'warn' });
   } else if (p.status === 'molesto') {
     if (p.weeksBenched >= 2 && p.expectedRole === 'titular') {
       notes.push({
-        icon: '😠',
+        kind: 'animo',
         text: `Molesto: esperaba ser titular y lleva ${p.weeksBenched} semanas mirando desde el banco.`,
         tone: 'bad',
       });
     } else if (p.weeksBenched >= 2) {
-      notes.push({ icon: '😠', text: `Molesto: lleva ${p.weeksBenched} semanas sin arrancar de titular.`, tone: 'bad' });
+      notes.push({ kind: 'animo', text: `Molesto: lleva ${p.weeksBenched} semanas sin arrancar de titular.`, tone: 'bad' });
     } else {
-      notes.push({ icon: '😠', text: 'Viene molesto: en el vestuario se lo nota callado.', tone: 'bad' });
+      notes.push({ kind: 'animo', text: 'Viene molesto: en el vestuario se lo nota callado.', tone: 'bad' });
     }
   } else if (p.status === 'lesionado') {
     notes.push({
-      icon: '🩹',
+      kind: 'fisico',
       text: `Lesionado: le queda${p.injuryWeeks > 1 ? 'n' : ''} ${p.injuryWeeks} semana${p.injuryWeeks > 1 ? 's' : ''} de recuperación.`,
       tone: 'bad',
     });
@@ -72,17 +85,17 @@ export function playerNotes(state: GameState, p: Player): HumanNote[] {
 
   const broken = promises.find((pr) => pr.broken);
   if (broken) {
-    notes.push({ icon: '💔', text: 'Le rompiste una promesa: de eso no se olvida.', tone: 'bad' });
+    notes.push({ kind: 'social', text: 'Le rompiste una promesa: de eso no se olvida.', tone: 'bad' });
   } else if (p.grudge && p.grudge.season < state.seasonNumber && p.grudge.season >= state.seasonNumber - 1) {
     // El rencor cruzó de temporada: lo va a poner sobre la mesa cuando negocien.
     notes.push({
-      icon: '🧨',
+      kind: 'social',
       text: `Sigue masticando la promesa rota del año pasado (${p.grudge.label.replace(`${p.name}: `, '').toLowerCase()}).`,
       tone: 'bad',
     });
   } else if (promises.length > 0) {
     notes.push({
-      icon: '🤝',
+      kind: 'social',
       text: `Le prometiste ${promises[0].label.replace(`${p.name}: `, '').toLowerCase()}: lo tiene anotado.`,
       tone: 'warn',
     });
@@ -91,38 +104,38 @@ export function playerNotes(state: GameState, p: Player): HumanNote[] {
   if (p.feeStatus === 'pendiente') {
     notes.push(
       p.weeksUnpaid >= 3
-        ? { icon: '💸', text: `Debe ${p.weeksUnpaid} semanas de cuota: en la comisión ya se comenta.`, tone: 'bad' }
-        : { icon: '💸', text: 'Cuota atrasada: dice que la semana que viene se pone al día.', tone: 'warn' }
+        ? { kind: 'plata', text: `Debe ${p.weeksUnpaid} semanas de cuota: en la comisión ya se comenta.`, tone: 'bad' }
+        : { kind: 'plata', text: 'Cuota atrasada: dice que la semana que viene se pone al día.', tone: 'warn' }
     );
   } else if (p.feeStatus === 'beca_total' || p.feeStatus === 'beca_parcial') {
-    notes.push({ icon: '🎓', text: 'Juega con beca: el club lo banca para que esté.', tone: 'neutral' });
+    notes.push({ kind: 'plata', text: 'Juega con beca: el club lo banca para que esté.', tone: 'neutral' });
   }
 
   if (p.agenda && p.agenda.notes.length > 0) {
     notes.push({
-      icon: '🗓',
+      kind: 'agenda',
       text: p.agenda.notes.join(' '),
       tone: p.agenda.blockedDays.length > 0 || p.agenda.onlyTimes.length > 0 ? 'warn' : 'neutral',
     });
   }
 
   if (p.status === 'disponible' && p.weeksBenched >= 3 && p.expectedRole !== 'suplente') {
-    notes.push({ icon: '🪑', text: `Lleva ${p.weeksBenched} semanas sin ser titular; por ahora no dijo nada.`, tone: 'warn' });
+    notes.push({ kind: 'cancha', text: `Lleva ${p.weeksBenched} semanas sin ser titular; por ahora no dijo nada.`, tone: 'warn' });
   }
 
   if (p.lastRating !== null && p.lastRating >= 8) {
-    notes.push({ icon: '🔥', text: `Viene de un partidazo (${p.lastRating}/10): está en confianza.`, tone: 'good' });
+    notes.push({ kind: 'animo', text: `Viene de un partidazo (${p.lastRating}/10): está en confianza.`, tone: 'good' });
   } else if (p.lastRating !== null && p.lastRating <= 3) {
-    notes.push({ icon: '🕳', text: `El último partido fue para el olvido (${p.lastRating}/10).`, tone: 'warn' });
+    notes.push({ kind: 'animo', text: `El último partido fue para el olvido (${p.lastRating}/10).`, tone: 'warn' });
   }
 
   if (p.physical <= 35 && p.status !== 'lesionado') {
-    notes.push({ icon: '🥵', text: 'Fundido: entre el trabajo y los partidos necesita un respiro.', tone: 'warn' });
+    notes.push({ kind: 'fisico', text: 'Fundido: entre el trabajo y los partidos necesita un respiro.', tone: 'warn' });
   }
   if (p.motivation <= 35 && p.status === 'disponible') {
-    notes.push({ icon: '🫥', text: 'Desmotivado: viene a entrenar sin ganas.', tone: 'warn' });
+    notes.push({ kind: 'animo', text: 'Desmotivado: viene a entrenar sin ganas.', tone: 'warn' });
   } else if (p.motivation >= 85 && p.status === 'disponible') {
-    notes.push({ icon: '💪', text: 'A pleno: de los primeros en llegar al entrenamiento.', tone: 'good' });
+    notes.push({ kind: 'animo', text: 'A pleno: de los primeros en llegar al entrenamiento.', tone: 'good' });
   }
 
   // Relaciones al final: son estables semana a semana, así no acaparan el
@@ -136,16 +149,16 @@ export function playerNotes(state: GameState, p: Player): HumanNote[] {
     if (v < worstVal) { worstVal = v; worstMate = m; }
   }
   if (worstMate && worstVal <= RIVALRY_THRESHOLD) {
-    notes.push({ icon: '⚡', text: `No se banca a ${worstMate.name}: mejor no dejarlos marcándose en la práctica.`, tone: 'warn', refId: worstMate.id, refName: worstMate.name });
+    notes.push({ kind: 'social', text: `No se banca a ${worstMate.name}: mejor no dejarlos marcándose en la práctica.`, tone: 'warn', refId: worstMate.id, refName: worstMate.name });
   }
   if (bestMate && bestVal >= FRIEND_THRESHOLD) {
-    notes.push({ icon: '🍻', text: `Íntimo de ${bestMate.name}: donde va uno, va el otro.`, tone: 'good', refId: bestMate.id, refName: bestMate.name });
+    notes.push({ kind: 'social', text: `Íntimo de ${bestMate.name}: donde va uno, va el otro.`, tone: 'good', refId: bestMate.id, refName: bestMate.name });
   }
   const coach = coachAffinity(p);
   if (coach <= 30) {
-    notes.push({ icon: '🧊', text: 'La relación con vos viene fría: contesta con monosílabos.', tone: 'warn' });
+    notes.push({ kind: 'social', text: 'La relación con vos viene fría: contesta con monosílabos.', tone: 'warn' });
   } else if (coach >= 80) {
-    notes.push({ icon: '👊', text: 'Con vos tiene buena onda: es de los que te bancan en el grupo.', tone: 'good' });
+    notes.push({ kind: 'social', text: 'Con vos tiene buena onda: es de los que te bancan en el grupo.', tone: 'good' });
   }
 
   return notes;

@@ -3,13 +3,14 @@ import type { GameState, WorldClub } from '../game/types';
 import { divisionOfTeam, teamRoster, USER_TEAM_ID, worldPlayerName } from '../game/world';
 import { Bar } from './Bar';
 import { Crest } from './Crest';
+import { StyleChip } from './StyleChip';
 import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
 import { Timeline } from './Timeline';
 import { Tip, TIPS } from './Tip';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { NavigateTabContext } from './nav';
-import { formatMoney, rivalDifficulty, rivalStyleInfo, starsFor } from './helpers';
+import { formatMoney, rivalDifficulty, starsFor } from './helpers';
 
 interface Props {
   state: GameState;
@@ -73,11 +74,7 @@ export function ClubProfile({ state, clubId, onClose }: Props) {
               {rival && (
                 <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
               )}
-              {rival && (
-                <span className="chip accent" title={rivalStyleInfo(rival.style).desc}>
-                  {rivalStyleInfo(rival.style).label}
-                </span>
-              )}
+              {rival && <StyleChip style={rival.style} />}
             </div>
           </div>
           <Jersey colors={club.colors} size={46} />

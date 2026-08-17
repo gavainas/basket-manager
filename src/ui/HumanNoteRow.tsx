@@ -1,5 +1,20 @@
-import type { HumanNote } from '../game/humanState';
+import type { HumanNote, NoteKind } from '../game/humanState';
+import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
+
+/**
+ * La categoría de la nota elige el ícono; el color lo pone `tone`.
+ * Lo comparte el radar del tablero (`watchItems`), que clasifica igual.
+ */
+export const NOTE_ICON: Record<NoteKind, IconName> = {
+  animo: 'animo',
+  fisico: 'fisico',
+  plata: 'plata',
+  social: 'social',
+  cancha: 'cancha',
+  agenda: 'agenda',
+  alerta: 'alerta',
+};
 
 /**
  * Una nota humana (ícono + frase contextual). Si la nota menciona a un
@@ -9,7 +24,10 @@ import { PlayerLink } from './PlayerLink';
 export function HumanNoteRow({ note }: { note: HumanNote }) {
   return (
     <div className={`human-note ${note.tone}`}>
-      <span className="hn-icon">{note.icon}</span> {renderText(note)}
+      <span className="hn-icon">
+        <Icon name={NOTE_ICON[note.kind]} size={14} />
+      </span>{' '}
+      {renderText(note)}
     </div>
   );
 }

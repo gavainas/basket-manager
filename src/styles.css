@@ -446,6 +446,20 @@ button.danger {
   vertical-align: middle;
 }
 
+/* Chip con ícono adelante: el ícono toma el color del chip por currentColor. */
+.chip.con-ico {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  vertical-align: middle;
+}
+
+/* Los cabezales de card ya son flex (ver la banda de sección); esto alinea el
+   ícono también en las cards que todavía no llevan banda. */
+.card > h3 > .ico {
+  vertical-align: -0.18em;
+}
+
 .grid {
   display: grid;
   gap: 1rem;
@@ -988,8 +1002,13 @@ td.num, th.num {
   line-height: 1.35;
 }
 
+/* El ícono de la nota hereda el color del tono (bad/warn/good), así que no
+   necesita color propio: la categoría la dice el dibujo, el estado el color. */
 .human-note .hn-icon {
+  display: inline-flex;
+  vertical-align: -0.15em;
   margin-right: 0.15rem;
+  opacity: 0.9;
 }
 
 .human-note.bad { color: var(--bad); }
