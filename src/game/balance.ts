@@ -249,8 +249,22 @@ export const BALANCE = {
   },
 } as const;
 
+/**
+ * Acota a un rango y **redondea a entero**.
+ *
+ * Los atributos 0-100 (físico, motivación, compromiso, moral) son enteros: nadie
+ * tiene 77,96 de físico. Pero varias fuentes de cambio son fraccionarias
+ * (`rng.range()`, el desgaste por minutos jugados, los multiplicadores de
+ * balance), y sin redondear el error se acumula semana a semana hasta que el
+ * estado guardado tiene basura de punto flotante: `77.96101502049714`,
+ * `90.60000000000001`. Eso salía impreso en la planilla.
+ *
+ * Se redondea acá, en el único lugar por donde pasan todas las escrituras, y no
+ * en la UI: si se arregla solo al mostrar, el estado sigue derivando y el próximo
+ * lugar que lea el número sin formatear vuelve a mostrar el desastre.
+ */
 export function clamp(value: number, min = 0, max = 100): number {
-  return Math.max(min, Math.min(max, value));
+  return Math.round(Math.max(min, Math.min(max, value)));
 }
 
 export function clampMoney(value: number): number {

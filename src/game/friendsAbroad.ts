@@ -2,6 +2,7 @@
 // determinista (sin guardar nada ni migrar saves) y escriben durante la
 // semana: data del próximo rival, invitaciones a picados y color de la liga.
 
+import { clamp } from './balance';
 import { affinity } from './relations';
 import { logPlayerEvent } from './timeline';
 import { teamByLegacyRival, teamRoster, worldPlayerName } from './world';
@@ -121,13 +122,13 @@ export function maybeFriendMessage(s: GameState, rng: Rng): void {
         .sort((a, b) => b.aff - a.aff)[0];
       if (compa && compa.aff >= 60) {
         text = `💬 ${friendName} (${f.team.name}) armó picado y pidió que vayan ${f.player.name} y ${compa.p.name}: "traé al otro, que la última vez la rompió". Volvieron enchufados.`;
-        compa.p.motivation = Math.min(100, compa.p.motivation + 2);
+        compa.p.motivation = clamp(compa.p.motivation + 2);
       } else {
         text = `💬 ${friendName} (${f.team.name}) invitó a ${f.player.name} a un picado del jueves: "sin roscas, juego y birra". Volvió enchufado.`;
       }
       tone = 'good';
-      f.player.motivation = Math.min(100, f.player.motivation + 2);
-      f.player.social = Math.min(100, f.player.social + 1);
+      f.player.motivation = clamp(f.player.motivation + 2);
+      f.player.social = clamp(f.player.social + 1);
     } else if (roll < 0.4) {
       text = `💬 Rumor vía ${f.player.name}: en ${f.team.name} se dijeron de todo después del último partido. Vestuario caliente el de ellos.`;
     } else if (roll < 0.55) {

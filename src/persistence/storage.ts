@@ -204,6 +204,24 @@ export function loadGame(): GameState | null {
       for (const p of parsed.players) p.grievance = p.grievance ?? null;
       parsed.saveVersion = 22;
     }
+    // v22 → v23: limpiar la basura de punto flotante de los atributos 0-100.
+    //
+    // `clamp()` no redondeaba, y varias fuentes de cambio son fraccionarias
+    // (rng.range, el desgaste por minutos). El error se acumulaba semana a semana
+    // y terminaba impreso en la planilla: "77.96101502049714", "90.60000000000001".
+    // Arreglado en balance.ts para lo que viene; esto limpia lo ya guardado.
+    if (parsed.saveVersion === 22) {
+      const ENTEROS = ['physical', 'motivation', 'commitment', 'social', 'technique', 'confidence'] as const;
+      for (const p of parsed.players ?? []) {
+        for (const k of ENTEROS) {
+          if (typeof p[k] === 'number') p[k] = Math.round(p[k]);
+        }
+      }
+      for (const k of ['socialClimate', 'organization', 'sportPrestige', 'socialPrestige'] as const) {
+        if (typeof parsed.club?.[k] === 'number') parsed.club[k] = Math.round(parsed.club[k]);
+      }
+      parsed.saveVersion = 23;
+    }
     // scheduledEvents (eventos encadenados) es opcional y se accede con ?? []:
     // los saves viejos cargan sin migración.
     if (parsed.saveVersion !== SAVE_VERSION) return null;

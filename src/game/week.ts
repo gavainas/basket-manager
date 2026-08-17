@@ -19,7 +19,7 @@ import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
 import type { AbsenceDifficulty, ActiveEvent, GameState } from './types';
 
-export const SAVE_VERSION = 22;
+export const SAVE_VERSION = 23;
 
 export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'medio'): GameState {
   const rng = new Rng(seed);
