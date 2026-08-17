@@ -29,6 +29,7 @@ import { PreseasonEndScreen } from './ui/PreseasonEndScreen';
 import { formatMoney, weekLabel } from './ui/helpers';
 import { AvatarGallery } from './ui/AvatarGallery';
 import { ConfirmDialog, type ConfirmRequest } from './ui/ConfirmDialog';
+import { Icon, type IconName } from './ui/Icon';
 
 type Tab = AppTab;
 
@@ -36,15 +37,17 @@ type Tab = AppTab;
    dónde estás sin leer. Liga, Agenda y Rankings comparten el azul de Partidos
    porque son la misma área — el color responde "¿qué parte del juego es esta?",
    no "¿qué pestaña toqué?".
+   `sec` nombra la clase de área: la usa la pestaña para su punto y su filete, y
+   la vista para las bandas de sus cards. Un solo lugar donde se decide.
    `semana` no está acá: es la acción, y vive en la barra de recursos. */
-const TABS: { id: Tab; label: string; sec: string }[] = [
-  { id: 'resumen', label: 'Resumen', sec: 'var(--sec-tablero)' },
-  { id: 'plantilla', label: 'Plantilla', sec: 'var(--sec-plantel)' },
-  { id: 'finanzas', label: 'Finanzas', sec: 'var(--sec-finanzas)' },
-  { id: 'liga', label: 'Liga', sec: 'var(--sec-partidos)' },
-  { id: 'agenda', label: 'Agenda', sec: 'var(--sec-partidos)' },
-  { id: 'rankings', label: 'Rankings', sec: 'var(--sec-partidos)' },
-  { id: 'historia', label: 'Historia', sec: 'var(--sec-tablero)' },
+const TABS: { id: Tab; label: string; sec: string; icon: IconName }[] = [
+  { id: 'resumen', label: 'Resumen', sec: 'sec-tablero', icon: 'tablero' },
+  { id: 'plantilla', label: 'Plantilla', sec: 'sec-plantel', icon: 'plantel' },
+  { id: 'finanzas', label: 'Finanzas', sec: 'sec-finanzas', icon: 'finanzas' },
+  { id: 'liga', label: 'Liga', sec: 'sec-partidos', icon: 'liga' },
+  { id: 'agenda', label: 'Agenda', sec: 'sec-partidos', icon: 'agenda' },
+  { id: 'rankings', label: 'Rankings', sec: 'sec-partidos', icon: 'rankings' },
+  { id: 'historia', label: 'Historia', sec: 'sec-tablero', icon: 'historia' },
 ];
 
 const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }> = {
@@ -272,10 +275,10 @@ export default function App() {
             {TABS.map((t) => (
               <button
                 key={t.id}
-                style={{ '--sec': t.sec } as React.CSSProperties}
-                className={tab === t.id ? 'active' : ''}
+                className={`${t.sec} ${tab === t.id ? 'active' : ''}`}
                 onClick={() => setTab(t.id)}
               >
+                <Icon name={t.icon} size={19} />
                 {t.label}
               </button>
             ))}
@@ -285,6 +288,7 @@ export default function App() {
           {saveFailed && <span className="chip bad">⚠ No se pudo guardar</span>}
           <button
             className="salir"
+            title="Volver al menú"
             onClick={() =>
             setConfirmReq(
               saveFailed
@@ -307,44 +311,87 @@ export default function App() {
             )
           }
           >
+            <Icon name="salir" size={17} />
             Salir
           </button>
         </div>
       </header>
 
+      {/* La clase de área envuelve a la vista: de ahí toman su color las bandas
+          de todas sus cards, sin tocar los archivos de las vistas. */}
       <div className="app-shell">
-        {tab === 'resumen' && <Dashboard state={state} />}
-        {tab === 'plantilla' && <RosterView state={state} dispatch={dispatch} />}
-        {tab === 'finanzas' && <FinancesView state={state} />}
-        {tab === 'liga' && <LeagueView state={state} dispatch={dispatch} />}
-        {tab === 'agenda' && <CalendarView state={state} />}
-        {tab === 'rankings' && <RankingsView state={state} />}
-        {tab === 'historia' && <HistoryView state={state} />}
-        {tab === 'semana' && <WeekView state={state} dispatch={dispatch} />}
+        {tab === 'resumen' && (
+          <div className="vista sec-tablero">
+            <Dashboard state={state} />
+          </div>
+        )}
+        {tab === 'plantilla' && (
+          <div className="vista sec-plantel">
+            <RosterView state={state} dispatch={dispatch} />
+          </div>
+        )}
+        {tab === 'finanzas' && (
+          <div className="vista sec-finanzas">
+            <FinancesView state={state} />
+          </div>
+        )}
+        {tab === 'liga' && (
+          <div className="vista sec-partidos">
+            <LeagueView state={state} dispatch={dispatch} />
+          </div>
+        )}
+        {tab === 'agenda' && (
+          <div className="vista sec-partidos">
+            <CalendarView state={state} />
+          </div>
+        )}
+        {tab === 'rankings' && (
+          <div className="vista sec-partidos">
+            <RankingsView state={state} />
+          </div>
+        )}
+        {tab === 'historia' && (
+          <div className="vista sec-tablero">
+            <HistoryView state={state} />
+          </div>
+        )}
+        {tab === 'semana' && (
+          <div className="vista sec-partidos">
+            <WeekView state={state} dispatch={dispatch} />
+          </div>
+        )}
       </div>
 
       {/* Los números que mirás siempre, siempre en el mismo lugar. */}
       <footer className="recursos">
         <div className="recursos-inner">
           <div className="recurso">
-            <span className="k">Semana</span>
+            <span className="k">
+              <Icon name="agenda" size={14} /> Semana
+            </span>
             <div className="v">{semanaLabel}</div>
             <div className="s">de {state.seasonLength}</div>
           </div>
           <div className="recurso">
-            <span className="k">Caja del club</span>
+            <span className="k">
+              <Icon name="caja" size={14} /> Caja del club
+            </span>
             <div className={`v ${state.club.money < 0 ? 'bad' : ''}`}>{formatMoney(state.club.money)}</div>
             <div className="s">disponible</div>
           </div>
           <div className="recurso">
-            <span className="k">Cuotas al día</span>
+            <span className="k">
+              <Icon name="plantel" size={14} /> Cuotas al día
+            </span>
             <div className={`v ${alDia < state.players.length ? 'warn' : 'good'}`}>
               {alDia} / {state.players.length}
             </div>
             <div className="s">jugadores</div>
           </div>
           <div className="recurso">
-            <span className="k">Récord</span>
+            <span className="k">
+              <Icon name="liga" size={14} /> Récord
+            </span>
             <div className="v">
               {row.wins}-{row.losses}
             </div>
