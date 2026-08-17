@@ -3,7 +3,7 @@ import type { GameState } from '../game/types';
 import { BALANCE } from '../game/balance';
 import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { activePlayers, clubPosition } from '../game/match';
-import { EMOTION_EXPRESSION, type NoteKind } from '../game/humanState';
+import { EMOTION_EXPRESSION, playerNotes, type NoteKind } from '../game/humanState';
 import { aggrieved, grievanceWarning } from '../game/mood';
 import { objectiveStatus, type ObjectiveStatus } from '../game/objectives';
 import { promiseHealth, type PromiseHealth } from '../game/promises';
@@ -12,13 +12,13 @@ import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { Crest } from './Crest';
 import { Icon } from './Icon';
-import { NOTE_ICON } from './HumanNoteRow';
+import { HumanNoteRow, NOTE_ICON } from './HumanNoteRow';
 import { StyleChip } from './StyleChip';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext, type AppTab } from './nav';
 import { TIPS } from './Tip';
-import { avgMotivation, formatMoney, rivalDifficulty } from './helpers';
+import { avgMotivation, rivalDifficulty } from './helpers';
 
 const OBJECTIVE_BADGE: Record<ObjectiveStatus, { icon: string; cls: string; label: string }> = {
   cumplido: { icon: '✔', cls: 'good', label: 'cumplido' },
@@ -167,10 +167,80 @@ function watchItems(state: GameState): WatchItem[] {
   return items.sort((a, b) => order[a.cls] - order[b.cls]).slice(0, 4);
 }
 
+/**
+ * Tabla de posiciones compacta para el tablero. La completa vive en Liga; acá van
+ * cuatro columnas y el escudo, que es lo que se lee de un vistazo.
+ */
+function Posiciones({
+  state,
+  position,
+  navigate,
+}: {
+  state: GameState;
+  position: number;
+  navigate: (t: AppTab) => void;
+}) {
+  const sorted = [...state.standings].sort(
+    (a, b) => b.wins - a.wins || a.losses - b.losses || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
+  );
+  const nameOf = (id: string) =>
+    id === 'club' ? state.club.name : (state.rivals.find((r) => r.id === id)?.name ?? id);
+
+  return (
+    <div className="card sec-partidos">
+      <h3>
+        <Icon name="liga" size={17} /> Posiciones · vas {position}° de {sorted.length}
+      </h3>
+      <div className="table-wrap">
+        <table className="tabla-compacta">
+          <thead>
+            <tr>
+              <th className="num">#</th>
+              <th>Equipo</th>
+              <th className="num">G</th>
+              <th className="num">P</th>
+              <th className="num">Dif</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((r, i) => {
+              const club = clubByLegacyId(state.world, r.teamId);
+              return (
+                <tr key={r.teamId} className={r.teamId === 'club' ? 'highlight' : ''}>
+                  <td className="num">{i + 1}</td>
+                  <td>
+                    <span className="con-escudo">
+                      {club && (
+                        <Crest
+                          seed={club.id}
+                          name={club.name}
+                          colors={club.colors}
+                          founded={club.founded}
+                          size={16}
+                        />
+                      )}
+                      {nameOf(r.teamId)}
+                    </span>
+                  </td>
+                  <td className="num">{r.wins}</td>
+                  <td className="num">{r.losses}</td>
+                  <td className="num">{r.pointsFor - r.pointsAgainst}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <button className="small" style={{ marginTop: '0.6rem' }} onClick={() => navigate('liga')}>
+        Ver la liga completa →
+      </button>
+    </div>
+  );
+}
+
 export function Dashboard({ state }: { state: GameState }) {
   const navigate = useContext(NavigateTabContext);
   const watch = watchItems(state);
-  const row = state.standings.find((r) => r.teamId === 'club')!;
   const position = clubPosition(state);
   const active = activePlayers(state.players);
   const morale = avgMotivation(state.players);
@@ -179,7 +249,6 @@ export function Dashboard({ state }: { state: GameState }) {
   const nextRivalId = upcomingWeek <= state.seasonLength ? state.schedule[upcomingWeek - 1] : null;
   const nextRival = nextRivalId ? state.rivals.find((r) => r.id === nextRivalId)! : null;
   const rivalClub = nextRivalId ? clubByLegacyId(state.world, nextRivalId) : undefined;
-  const moneyCls = state.club.money < 100 ? 'bad' : state.club.money < 300 ? 'warn' : 'good';
 
   // El grupo del club: lo que se dijo después del último partido, como chat.
   // Priorizamos a los que tienen algo para decir (ni conformes ni indiferentes).
@@ -187,9 +256,32 @@ export function Dashboard({ state }: { state: GameState }) {
   const opinionated = moods.filter((m) => m.emotion !== 'conforme' && m.emotion !== 'indiferente');
   const groupChat = (opinionated.length >= 3 ? opinionated : moods).slice(0, 5);
 
+  // La figura del plantel: el mejor valorado de los que están. Es quien ocupa la
+  // columna del héroe, y cuando existan las ilustraciones por arquetipo su
+  // retrato se reemplaza por la del suyo (ver design/SISTEMA_VISUAL.md).
+  const figura = [...active].sort((a, b) => b.visibleRating - a.visibleRating)[0];
+  const figuraNota = figura ? playerNotes(state, figura)[0] : undefined;
+
   return (
-    <div>
-      <div className="card watch-card" style={{ marginBottom: '1rem' }}>
+    <div className="tablero">
+      <div className="tablero-top">
+        {figura && (
+          <aside className="card figura-card">
+            <div className="figura-retrato">
+              <Avatar seed={figura.id} age={figura.age} appearance={figura.appearance} title={figura.name} size={168} />
+            </div>
+            <div className="figura-nombre">
+              <PlayerLink id={figura.id}>{figura.name}</PlayerLink>
+            </div>
+            <div className="figura-meta">
+              {figura.position} · {figura.age} años · ≈{figura.visibleRating}
+            </div>
+            {figuraNota && <HumanNoteRow note={figuraNota} />}
+          </aside>
+        )}
+
+        <div className="tablero-col">
+      <div className="card watch-card">
         <h3>
           <Icon name="destacado" size={17} /> Qué mirar hoy
         </h3>
@@ -217,34 +309,45 @@ export function Dashboard({ state }: { state: GameState }) {
         )}
       </div>
 
-      <div className="grid cols-4">
-        <div className="stat-tile clickable" onClick={() => navigate('semana')} title="Ir a la semana">
-          <div className="label">Semana</div>
-          <div className="value">
-            {Math.min(state.week, state.seasonLength)}/{state.seasonLength}
+      {/* Las posiciones son el dato que un manager mira primero, y hasta ahora
+          vivían solo en Liga. Los cuatro tiles que estaban acá (Semana, Récord,
+          Dinero) se fueron: repetían la barra de recursos, que está siempre
+          visible. La posición ya se lee en la tabla. */}
+      <Posiciones state={state} position={position} navigate={navigate} />
+
+      {nextRival && (
+        /* El rival es del área de Partidos: el panel es una ventana ahí. */
+        <div className="card sec-partidos">
+          <h3>Próximo rival</h3>
+          <div className="con-escudo" style={{ fontSize: '1.3rem', fontWeight: 800 }}>
+            {rivalClub && (
+              <Crest
+                seed={rivalClub.id}
+                name={rivalClub.name}
+                colors={rivalClub.colors}
+                founded={rivalClub.founded}
+                size={34}
+              />
+            )}
+            <RivalLink id={nextRival.id}>{nextRival.name}</RivalLink>
           </div>
-          <div className="sub">ver la semana →</div>
-        </div>
-        <div className="stat-tile clickable" onClick={() => navigate('liga')} title="Ver la tabla de posiciones">
-          <div className="label">Posición en la liga</div>
-          <div className="value">{position}°</div>
-          <div className="sub">de 10 equipos · ver tabla →</div>
-        </div>
-        <div className="stat-tile clickable" onClick={() => navigate('historia')} title="Ver los partidos jugados">
-          <div className="label">Récord</div>
-          <div className="value">
-            {row.wins}-{row.losses}
+          <div style={{ marginTop: '0.3rem', display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+            <span className={`chip ${rivalDifficulty(nextRival).cls}`}>{rivalDifficulty(nextRival).label}</span>
+            <StyleChip style={nextRival.style} />
+            {rivalryWith(state, nextRival.id) && <span className="chip bad">Revancha</span>}
           </div>
-          <div className="sub">ganados-perdidos · ver historia →</div>
+          {rivalryWith(state, nextRival.id) && (
+            <p style={{ margin: '0.4rem 0 0' }}>{rivalryWith(state, nextRival.id)!.text}</p>
+          )}
+          <p className="muted" style={{ margin: '0.4rem 0 0' }}>
+            Dirige {refereeOfWeek(state).name}: {refereeOfWeek(state).blurb}.
+          </p>
         </div>
-        <div className="stat-tile clickable" onClick={() => navigate('finanzas')} title="Ver las finanzas">
-          <div className="label">Dinero</div>
-          <div className={`value ${moneyCls}`}>{formatMoney(state.club.money)}</div>
-          <div className="sub">ver finanzas →</div>
+      )}
         </div>
       </div>
 
-      <div className="grid cols-2" style={{ marginTop: '1rem' }}>
+      <div className="grid cols-3" style={{ marginTop: '1rem' }}>
         <div className="card">
           <h3>Estado del club</h3>
           <Bar label="Moral general" value={morale} hint={TIPS.moralGeneral} />
@@ -297,35 +400,9 @@ export function Dashboard({ state }: { state: GameState }) {
               </ul>
             </div>
           )}
-          {nextRival && (
-            /* El rival es del área de Partidos: el panel es una ventana ahí. */
-            <div className="card sec-partidos">
-              <h3>Próximo rival</h3>
-              <div className="con-escudo" style={{ fontSize: '1.3rem', fontWeight: 800 }}>
-                {rivalClub && (
-                  <Crest
-                    seed={rivalClub.id}
-                    name={rivalClub.name}
-                    colors={rivalClub.colors}
-                    founded={rivalClub.founded}
-                    size={34}
-                  />
-                )}
-                <RivalLink id={nextRival.id}>{nextRival.name}</RivalLink>
-              </div>
-              <div style={{ marginTop: '0.3rem', display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                <span className={`chip ${rivalDifficulty(nextRival).cls}`}>{rivalDifficulty(nextRival).label}</span>
-                <StyleChip style={nextRival.style} />
-                {rivalryWith(state, nextRival.id) && <span className="chip bad">🔥 Revancha</span>}
-              </div>
-              {rivalryWith(state, nextRival.id) && (
-                <p style={{ margin: '0.4rem 0 0' }}>{rivalryWith(state, nextRival.id)!.text}</p>
-              )}
-              <p className="muted" style={{ margin: '0.4rem 0 0' }}>
-                Dirige {refereeOfWeek(state).name}: {refereeOfWeek(state).blurb}.
-              </p>
-            </div>
-          )}
+        </div>
+
+        <div>
           {groupChat.length > 0 && (
             /* El chat del plantel es vestuario puro. */
             <div className="card sec-vestuario">
