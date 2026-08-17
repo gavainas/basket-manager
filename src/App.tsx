@@ -52,6 +52,24 @@ const TABS: { id: Tab; label: string; sec: string; icon: IconName }[] = [
   { id: 'historia', label: 'Historia', sec: 'sec-tablero', icon: 'historia' },
 ];
 
+/**
+ * Portada del menú principal.
+ *
+ * **PROVISORIO — apunta al CDN de Higgsfield, no al repo.** La imagen la carga el
+ * navegador de quien juega, no está versionada acá. Sirve para verla funcionando
+ * ya, pero es una dependencia externa: si Higgsfield mueve o vence esa URL, la
+ * portada desaparece (y el menú queda en grafito, no se rompe).
+ *
+ * Para hacerlo permanente, en dos pasos:
+ *   1. Subir el archivo a `public/portada.webp` (ver public/LEEME.md).
+ *   2. Cambiar esta constante por: `${import.meta.env.BASE_URL}portada.webp`
+ *
+ * No pude hacer el paso 1 desde la sesión: la política de red del entorno
+ * bloquea el dominio del CDN, así que no puedo descargar el archivo.
+ */
+const PORTADA =
+  'https://d8j0ntlcm91z4.cloudfront.net/user_38J1fgjqwozgF8cecRMtEJrRyPB/hf_20260817_190745_2f18d140-45f2-44ac-8e7f-483853f6c4e8_min.webp';
+
 const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }> = {
   facil: { label: 'Fácil', desc: 'Casi siempre están todos: la vida molesta poco.' },
   medio: { label: 'Medio', desc: 'La vida pasa: enfermos, viajes y algún lesionado.' },
@@ -75,11 +93,11 @@ function MainMenu({
 
   return (
     <div className="menu-screen">
-      {/* Arte provisional (ver design/ART_PIPELINE.md): reemplazable por archivo,
-          sin tocar código. Si falta, el panel queda en grafito. */}
+      {/* Arte provisional (ver design/ART_PIPELINE.md y la constante PORTADA).
+          Si la imagen no carga, el panel queda en grafito y el menú sigue usable. */}
       <div
         className="menu-portada"
-        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}portada.webp)` }}
+        style={{ backgroundImage: `url(${PORTADA})` }}
         role="img"
         aria-label="Asado en la cantina del club"
       />
