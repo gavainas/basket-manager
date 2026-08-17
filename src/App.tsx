@@ -53,22 +53,16 @@ const TABS: { id: Tab; label: string; sec: string; icon: IconName }[] = [
 ];
 
 /**
- * Portada del menú principal.
+ * Portada del menú principal: `public/portada.webp`, versionada en el repo.
  *
- * **PROVISORIO — apunta al CDN de Higgsfield, no al repo.** La imagen la carga el
- * navegador de quien juega, no está versionada acá. Sirve para verla funcionando
- * ya, pero es una dependencia externa: si Higgsfield mueve o vence esa URL, la
- * portada desaparece (y el menú queda en grafito, no se rompe).
+ * Se arma con `BASE_URL` y no con un path absoluto porque el proyecto usa base
+ * relativa (`'./'` en vite.config.ts): `/portada.webp` apuntaría a la raíz del
+ * dominio en vez de `/basket-manager/`.
  *
- * Para hacerlo permanente, en dos pasos:
- *   1. Subir el archivo a `public/portada.webp` (ver public/LEEME.md).
- *   2. Cambiar esta constante por: `${import.meta.env.BASE_URL}portada.webp`
- *
- * No pude hacer el paso 1 desde la sesión: la política de red del entorno
- * bloquea el dominio del CDN, así que no puedo descargar el archivo.
+ * Si el archivo faltara, el panel queda en grafito y el menú sigue usable.
+ * Es arte provisional: se reemplaza pisando el archivo (ver public/LEEME.md).
  */
-const PORTADA =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38J1fgjqwozgF8cecRMtEJrRyPB/hf_20260817_190745_2f18d140-45f2-44ac-8e7f-483853f6c4e8_min.webp';
+const PORTADA = `${import.meta.env.BASE_URL}portada.webp`;
 
 const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }> = {
   facil: { label: 'Fácil', desc: 'Casi siempre están todos: la vida molesta poco.' },
