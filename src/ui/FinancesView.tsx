@@ -39,7 +39,7 @@ export function FinancesView({ state }: { state: GameState }) {
 
       <div className="grid cols-2" style={{ marginTop: '1rem' }}>
         <div>
-          <div className="card">
+          <div className="card" data-focus="gastos">
             <h3>Movimiento semanal estimado</h3>
             <div className="table-wrap">
               <table>
@@ -87,7 +87,7 @@ export function FinancesView({ state }: { state: GameState }) {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card" data-focus="cuotas">
           <h3>Cuotas del plantel</h3>
           <div className="table-wrap">
             <table>

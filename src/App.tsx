@@ -1,7 +1,8 @@
 import { useEffect, useReducer, useState } from 'react';
 import { gameReducer } from './state/gameReducer';
 import { clearSave, hasSave, loadGame, saveGame } from './persistence/storage';
-import { Dashboard } from './ui/Dashboard';
+import { Hub } from './ui/Hub';
+import { ClubView } from './ui/ClubView';
 import { RosterView } from './ui/RosterView';
 import { FinancesView } from './ui/FinancesView';
 import { LeagueView } from './ui/LeagueView';
@@ -20,7 +21,7 @@ import { LeagueProfile } from './ui/LeagueProfile';
 import { ClubLink, OpenClubContext } from './ui/ClubLink';
 import { ClubProfile } from './ui/ClubProfile';
 import { USER_CLUB_ID } from './game/world';
-import { NavigateTabContext, type AppTab } from './ui/nav';
+import { NavigateTabContext, type AppFocus, type AppTab } from './ui/nav';
 import type { AbsenceDifficulty } from './game/types';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
 import { HistoryView } from './ui/HistoryView';
@@ -35,22 +36,25 @@ import { CrestGallery } from './ui/CrestGallery';
 
 type Tab = AppTab;
 
-/* Cada sección lleva su color (ver design/SISTEMA_VISUAL.md): sirve para saber
-   dónde estás sin leer. Liga, Agenda y Rankings comparten el azul de Partidos
-   porque son la misma área — el color responde "¿qué parte del juego es esta?",
-   no "¿qué pestaña toqué?".
-   `sec` nombra la clase de área: la usa la pestaña para su punto y su filete, y
-   la vista para las bandas de sus cards. Un solo lugar donde se decide.
-   `semana` no está acá: es la acción, y vive en la barra de recursos. */
-const TABS: { id: Tab; label: string; sec: string; icon: IconName }[] = [
-  { id: 'resumen', label: 'Resumen', sec: 'sec-tablero', icon: 'tablero' },
-  { id: 'plantilla', label: 'Plantilla', sec: 'sec-plantel', icon: 'plantel' },
-  { id: 'finanzas', label: 'Finanzas', sec: 'sec-finanzas', icon: 'finanzas' },
-  { id: 'liga', label: 'Liga', sec: 'sec-partidos', icon: 'liga' },
-  { id: 'agenda', label: 'Agenda', sec: 'sec-partidos', icon: 'agenda' },
-  { id: 'rankings', label: 'Rankings', sec: 'sec-partidos', icon: 'rankings' },
-  { id: 'historia', label: 'Historia', sec: 'sec-tablero', icon: 'historia' },
-];
+/* Cada pantalla lleva su color de área (ver design/SISTEMA_VISUAL.md): sirve
+   para saber dónde estás sin leer. Liga, Agenda y Rankings comparten el azul de
+   Partidos porque son la misma área — el color responde "¿qué parte del juego
+   es esta?", no "¿qué botón toqué?".
+   `sec` nombra la clase de área: la usan el cabezal de la pantalla y las bandas
+   de sus cards. Un solo lugar donde se decide.
+   Las pestañas se fueron: la navegación es el inicio (ver ui/Hub.tsx), y de
+   cualquier pantalla se vuelve con el botón Inicio de la barra. */
+const VIEWS: Record<Tab, { label: string; sec: string; icon: IconName }> = {
+  resumen: { label: 'Inicio', sec: 'sec-tablero', icon: 'tablero' },
+  plantilla: { label: 'Plantilla', sec: 'sec-plantel', icon: 'plantel' },
+  finanzas: { label: 'Finanzas', sec: 'sec-finanzas', icon: 'finanzas' },
+  liga: { label: 'Liga', sec: 'sec-partidos', icon: 'liga' },
+  agenda: { label: 'Calendario', sec: 'sec-partidos', icon: 'agenda' },
+  rankings: { label: 'Rankings', sec: 'sec-partidos', icon: 'rankings' },
+  historia: { label: 'Historia', sec: 'sec-tablero', icon: 'historia' },
+  club: { label: 'El club', sec: 'sec-tablero', icon: 'inscripcion' },
+  semana: { label: 'La semana', sec: 'sec-partidos', icon: 'semana' },
+};
 
 /**
  * Portada del menú principal: `public/portada.webp`, versionada en el repo.
@@ -169,6 +173,9 @@ export default function App() {
   if (window.location.hash === '#retratos') return <AvatarGallery />;
   if (window.location.hash === '#escudos') return <CrestGallery />;
   const [tab, setTab] = useState<Tab>('resumen');
+  /* Ancla pedida por el tile del inicio: la vista la marca con `data-focus` y
+     el efecto de abajo la trae al centro apenas se monta. */
+  const [focus, setFocus] = useState<AppFocus | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
   const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -190,6 +197,23 @@ export default function App() {
     // Cada cambio de fase arranca desde arriba de la página.
     window.scrollTo({ top: 0 });
   }, [phase]);
+
+  // Al entrar desde un tile del inicio, ir directo a lo que el tile prometía.
+  useEffect(() => {
+    if (!focus) {
+      window.scrollTo({ top: 0 });
+      return;
+    }
+    const el = document.querySelector(`[data-focus="${focus}"]`);
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    else window.scrollTo({ top: 0 });
+  }, [tab, focus]);
+
+  /** Navegación de toda la app: pantalla y, si el tile lo pidió, su ancla. */
+  const navigate = (t: Tab, f?: AppFocus) => {
+    setTab(t);
+    setFocus(f ?? null);
+  };
 
   if (!state) {
     const startNew = (type: 'NEW_GAME' | 'NEW_GAME_PRESEASON', difficulty: AbsenceDifficulty) => {
@@ -230,7 +254,7 @@ export default function App() {
     <OpenWorldPlayerContext.Provider value={setWorldPlayerId}>
     <OpenLeagueContext.Provider value={setLeagueProfileId}>
     <OpenClubContext.Provider value={setClubProfileId}>
-    <NavigateTabContext.Provider value={setTab}>
+    <NavigateTabContext.Provider value={navigate}>
       {screen}
       {profileId && <PlayerProfile state={state} playerId={profileId} onClose={() => setProfileId(null)} />}
       {rivalProfileId && (
@@ -309,20 +333,22 @@ export default function App() {
             </div>
           </div>
 
-          <div className="tabs">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                className={`${t.sec} ${tab === t.id ? 'active' : ''}`}
-                onClick={() => setTab(t.id)}
-              >
-                <Icon name={t.icon} size={19} />
-                {t.label}
-              </button>
-            ))}
-          </div>
+          {/* Sin pestañas: el nombre de la pantalla dice dónde estás y el botón
+              Inicio es el único camino de vuelta, como en la referencia. */}
+          {tab !== 'resumen' && (
+            <div className={`pantalla-actual ${VIEWS[tab].sec}`}>
+              <Icon name={VIEWS[tab].icon} size={19} />
+              {VIEWS[tab].label}
+            </div>
+          )}
 
           <div className="spacer" />
+          {tab !== 'resumen' && (
+            <button className="inicio" title="Volver al inicio" onClick={() => navigate('resumen')}>
+              <Icon name="tablero" size={17} />
+              Inicio
+            </button>
+          )}
           {saveFailed && <span className="chip bad">⚠ No se pudo guardar</span>}
           <button
             className="salir"
@@ -357,10 +383,17 @@ export default function App() {
 
       {/* La clase de área envuelve a la vista: de ahí toman su color las bandas
           de todas sus cards, sin tocar los archivos de las vistas. */}
-      <div className="app-shell">
+      {/* En el inicio la barra de recursos sobra: la semana, la caja y el
+          récord están en el centro del panel. Sin ella, el menú entra entero. */}
+      <div className={`app-shell${tab === 'resumen' ? ' sin-recursos' : ''}`}>
         {tab === 'resumen' && (
           <div className="vista sec-tablero">
-            <Dashboard state={state} />
+            <Hub state={state} />
+          </div>
+        )}
+        {tab === 'club' && (
+          <div className="vista sec-tablero">
+            <ClubView state={state} />
           </div>
         )}
         {tab === 'plantilla' && (
@@ -401,7 +434,7 @@ export default function App() {
       </div>
 
       {/* Los números que mirás siempre, siempre en el mismo lugar. */}
-      <footer className="recursos">
+      <footer className="recursos" hidden={tab === 'resumen'}>
         <div className="recursos-inner">
           <div className="recurso">
             <span className="k">
@@ -441,7 +474,7 @@ export default function App() {
                 naranjas compitiendo rompen la regla de uno por pantalla. */}
             <button
               className={`avanzar ${tab === 'semana' ? '' : 'primary'}`}
-              onClick={() => setTab('semana')}
+              onClick={() => navigate('semana')}
             >
               » Avanzar semana
             </button>

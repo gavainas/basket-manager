@@ -39,7 +39,7 @@ const CAUSE_RANK: Record<GrievanceCause, number> = {
   grupo: 1,
 };
 
-const CAUSE_SHORT: Record<GrievanceCause, string> = {
+export const CAUSE_SHORT: Record<GrievanceCause, string> = {
   minutos: 'los minutos',
   promesa: 'la promesa incumplida',
   plata: 'la plata',

@@ -258,13 +258,30 @@ pantalla. Lo que se corrigió, y por qué cada uno no era ni acción ni dato cla
 | Camiseta por defecto naranja | azul de cancha | Ídem, multiplicado por plantel |
 | Botón de la barra en la semana | secundario | Dos primarios competían en pantalla |
 
-**Mapa de secciones → pestañas.** Liga, Agenda y Rankings comparten el azul de Partidos
+**Mapa de secciones → pantallas.** Liga, Agenda y Rankings comparten el azul de Partidos
 porque son la misma área: el color responde "¿qué parte del juego es esta?", no "¿qué
-pestaña toqué?". `semana` dejó de ser pestaña — es la acción, y vive en la barra de
-recursos.
+botón toqué?". `semana` no es una pantalla más — es la acción.
+
+### El inicio como menú (ago 2026)
+
+La barra de pestañas se retiró: el inicio (`src/ui/Hub.tsx`) es la navegación, con cuatro
+bloques de tiles, el escudo y la fecha que viene en el medio, y la tira del plantel abajo.
+La barra superior quedó mínima — club, nombre de la pantalla actual con el filete de su
+área, **Inicio** y **Salir** —, y en el inicio la barra de recursos se oculta porque el
+centro ya dice semana, caja y récord.
+
+Reglas que esto agrega al sistema:
+
+- **Un tile es un botón de pantalla, no una card**: ícono en cuadro, nombre en display y
+  una línea de estado de hasta dos renglones. Sin sombra propia: la superficie es el bloque.
+- **El estado se cuelga del tile que lo resuelve.** El semáforo vive en el texto y en un
+  punto de 8 px a la derecha; nunca en el cabezal del bloque ni en el ícono.
+- **El naranja sigue siendo dos por pantalla**: la caja del club y el botón de avanzar. El
+  foco del teclado usa el color de área, no el acento.
+- `.tabs` sigue documentado en el kit como componente, aunque el shell ya no lo use.
 
 Pendiente del paso 4: las cards todavía no llevan banda de color (la clase `.card.banda`
-ya existe), y el Resumen duplica Semana, Récord y Dinero, que ahora están fijos abajo.
+ya existe).
 
 ## Cómo volver atrás
 

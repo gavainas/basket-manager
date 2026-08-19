@@ -31,8 +31,14 @@ export function RosterView({ state, dispatch }: { state: GameState; dispatch: (a
 
   return (
     <div>
-      <CoachCard state={state} dispatch={dispatch} />
-      <VestuarioCard state={state} />
+      {/* Anclas de los tiles del inicio (ver ui/nav.ts): entrar por "Vestuario"
+          tiene que dejarte en el vestuario, no arriba de la pantalla. */}
+      <div data-focus="cuerpo-tecnico">
+        <CoachCard state={state} dispatch={dispatch} />
+      </div>
+      <div data-focus="vestuario">
+        <VestuarioCard state={state} />
+      </div>
       <div className="roster-head">
         <p className="muted" style={{ marginTop: 0 }}>
           La valoración (≈) es una estimación: el rendimiento real depende del físico, la motivación, la confianza y el
