@@ -467,6 +467,17 @@ button.danger {
   gap: 0.45rem;
 }
 
+/* Banda ilustrada de card (ver ui/Cabecera.tsx). Va pegada abajo del cabezal de
+   color y sangra hasta los bordes: la ilustración es la card, no un adorno
+   dentro de ella. El encuadre baja el centro para no cortar cabezas. */
+.cabecera-arte {
+  margin: -0.9rem -1rem 0.9rem;
+  background-color: var(--sec);
+  background-size: cover;
+  background-position: center 34%;
+  border-bottom: 1px solid var(--border);
+}
+
 /* ---------- Inicio (hub) ---------- */
 
 /* El inicio es el panel del club de la referencia: dos columnas de accesos,

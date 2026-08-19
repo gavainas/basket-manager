@@ -2,6 +2,7 @@ import type { GameState, Player } from '../game/types';
 import { buildSocialMap } from '../game/socialMap';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
+import { Cabecera } from './Cabecera';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 
@@ -31,6 +32,7 @@ export function VestuarioCard({ state }: { state: GameState }) {
       <h3>
         <Icon name="vestuario" size={17} /> El vestuario por dentro
       </h3>
+      <Cabecera art="cab-vestuario.webp" alt="El vestuario del club quince minutos antes del partido" />
       <div style={{ maxWidth: 320, marginBottom: '0.6rem' }}>
         <Bar
           label="Unión del grupo"

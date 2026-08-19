@@ -15,6 +15,7 @@ import type { GameState, KnowledgeLevel, MarketPlayer, Player } from '../game/ty
 import type { GameAction } from '../state/gameReducer';
 import { formatMoney, starsFor } from './helpers';
 import { Avatar } from './Avatar';
+import { Cabecera } from './Cabecera';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
@@ -443,6 +444,7 @@ function MarketSection({ state, dispatch }: Props) {
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
       <h3>Mercado de fichajes ({available.length} disponibles)</h3>
+      <Cabecera art="cab-bar.webp" alt="Convenciendo a un jugador en la mesa de un bar" />
       <div className="player-grid">{available.map(renderCard)}</div>
       {gone.length > 0 && (
         <>

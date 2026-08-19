@@ -13,6 +13,14 @@ La estructura técnica existente puede conservarse y evolucionar, pero no se deb
 que un sistema está artísticamente aprobado solo porque ya funciona, está documentado o fue
 integrado en varias pantallas.
 
+**Lote de escena, ago 2026** (`public/arte/`, ver su LEEME): dos cabeceras — el vestuario
+antes del partido y el fichaje en el bar — integradas en Plantilla y en el Mercado de la
+pretemporada, y seis retratos de arquetipo **sin integrar**, como lámina de prueba de la
+puerta de personajes. Todo generado con Higgsfield usando la portada como referencia de
+estilo. Son propuestas: la decisión de pasar la ficha del jugador de SVG procedural a
+retrato ilustrado está abierta y arrastra el problema de escala (un plantel tiene catorce
+jugadores y el mundo cientos, la lámina tiene seis caras).
+
 ## Principio central
 
 > No se genera ni se integra en masa nada que no haya sido aprobado primero en pequeño.
