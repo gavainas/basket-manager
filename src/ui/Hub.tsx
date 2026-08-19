@@ -5,11 +5,11 @@ import { rivalryWith } from '../game/leagueLife';
 import { activePlayers, clubPosition } from '../game/match';
 import { CAUSE_SHORT } from '../game/mood';
 import { clubByLegacyId, USER_CLUB_ID, userFixtureOfWeek } from '../game/world';
-import { Avatar } from './Avatar';
 import { ClubLink } from './ClubLink';
 import { Crest } from './Crest';
 import { Icon, type IconName } from './Icon';
 import { OpenProfileContext } from './PlayerLink';
+import { Retrato } from './Retrato';
 import { RivalLink } from './RivalLink';
 import { StyleChip } from './StyleChip';
 import { NavigateTabContext, type AppFocus, type AppTab } from './nav';
@@ -257,8 +257,11 @@ function PlantelStrip({ state }: { state: GameState }) {
         <span className="hub-plantel-leyenda">ánimo · cuota · físico</span>
       </h3>
       <div className="hub-plantel-row">
-        {active.map((p) => {
+        {active.map((p, i) => {
           const signals = playerSignals(p);
+          // Cuántos del mismo arquetipo vienen antes: el segundo veterano de la
+          // fila no puede ser idéntico al primero.
+          const repetido = active.slice(0, i).filter((x) => x.personality === p.personality).length;
           return (
             <button
               key={p.id}
@@ -266,9 +269,7 @@ function PlantelStrip({ state }: { state: GameState }) {
               onClick={() => open(p.id)}
               title={`${p.name} — ${signals.map((s) => s.label).join(' · ')}`}
             >
-              <span className="hub-jug-retrato">
-                <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} size={62} />
-              </span>
+              <Retrato personality={p.personality} title={p.name} variante={repetido} />
               <span className="hub-jug-pos">{POS_ABBR[p.position] ?? p.position.slice(0, 3).toUpperCase()}</span>
               <span className="hub-jug-nombre">{shortName(p.name)}</span>
               <span className="hub-jug-estado">

@@ -22,13 +22,16 @@ El encuadre lo decide `.cabecera-arte` en `src/styles.css` (`background-position
 34%`): la banda muestra una franja, así que al cambiar una ilustración hay que mirar que
 las caras no queden cortadas.
 
-## Retratos de arquetipo (1:1, 640 px)
+## Retratos de arquetipo (1:1, 512 px, **sin fondo**)
 
-**Todavía no los usa el juego.** Los retratos del plantel siguen siendo los SVG
-procedurales (`design/AVATAR_SYSTEM.md`), que dan una cara distinta para cada jugador sin
-límite. Estas seis son la lámina de prueba de la puerta de personajes: sirven para decidir
-si la ficha pasa a ilustración, y en ese caso hay que producir el set completo y resolver
-cómo se asigna una cara a cada jugador.
+Uno por personalidad del juego, recortados con alfa: el fondo azul lo pone la caja
+(`.retrato` en `src/styles.css`), no la ilustración. Cambiar ese azul —o pasarlo al color
+del club— es tocar una línea de CSS.
+
+Los usa `<Retrato personality={…} />` (`src/ui/Retrato.tsx`) en **la tira del plantel del
+inicio**. El resto del juego —ficha, plantilla, vestuario, convocatoria— sigue con los
+retratos SVG procedurales (`design/AVATAR_SYSTEM.md`), que dan una cara distinta por
+jugador sin límite.
 
 | Archivo | Arquetipo (`Personality`) |
 | --- | --- |
@@ -38,5 +41,18 @@ cómo se asigna una cara a cada jugador.
 | `p-cumplidor.webp` | `cumplidor` |
 | `p-competitivo.webp` | `competitivo` |
 | `p-protagonista.webp` | `protagonista` |
+| `p-leal.webp` | `leal` |
+| `p-mercenario.webp` | `mercenario` |
 
-Faltan `leal` y `mercenario`.
+**Ocho caras para catorce jugadores**: dos del mismo arquetipo comparten retrato. Se
+disimula con `variante` (espeja la ilustración y cambia el tono del azul), que es un
+parche, no una solución. La solución es un set con varias caras por arquetipo asignadas
+por seed — y ahí conviene revisar si el retrato tiene que salir de la personalidad o de la
+apariencia persistida del jugador, que ya existe y ya define edad, pelo y barba.
+
+## Cómo se hicieron
+
+Generadas con `nano_banana_pro` pasando `portada.webp` como `image_references`, recortadas
+con el quitafondos del mismo servicio y reencodeadas a WebP. Los PNG de 2k no están en el
+repo. Si hay que rehacer una, lo que mantiene la familia es la referencia: sin ella el
+estilo se va.

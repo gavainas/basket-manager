@@ -824,15 +824,36 @@ button.danger {
   outline-offset: 1px;
 }
 
-.hub-jug-retrato {
-  width: 62px;
-  height: 62px;
-  display: grid;
-  place-items: center;
+/* Retrato ilustrado (ver ui/Retrato.tsx). El arte viene recortado, sin fondo:
+   el azul lo pone esta caja, plano y siempre el mismo — no es el color del club
+   ni el de una sección, es el fondo de la foto de ficha. */
+.retrato {
+  display: block;
+  flex: none;
   border-radius: var(--radius);
-  background: linear-gradient(180deg, var(--panel), var(--bg-soft));
   border: 1px solid var(--border);
+  background: linear-gradient(180deg, #3c6e9e 0%, #2a5075 100%);
   overflow: hidden;
+}
+
+.retrato img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+/* Variantes para los repetidos del mismo arquetipo (ver ui/Retrato.tsx). */
+.retrato.v1 {
+  background: linear-gradient(180deg, #4a7a94 0%, #2f5a6d 100%);
+}
+
+.retrato.v1 img {
+  transform: scaleX(-1);
+}
+
+.retrato.v2 {
+  background: linear-gradient(180deg, #3a5d92 0%, #27406b 100%);
 }
 
 .hub-jug-pos {
