@@ -467,6 +467,38 @@ button.danger {
   gap: 0.45rem;
 }
 
+/* ---------- Lienzo ---------- */
+
+/* La cancha del club detrás de toda la app (ver FONDO en App.tsx). Fija: no
+   scrollea con el contenido, así se lee como el piso sobre el que están
+   apoyados los paneles y no como una imagen larga que pasa. */
+.fondo-app {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--bg);
+  background-size: cover;
+  background-position: center;
+}
+
+/* El velo. Sin él los paneles claros flotan sobre un piso del mismo valor y se
+   pierde el borde; con él, el fondo es atmósfera y la lectura sigue siendo la
+   de un manager. */
+.fondo-app::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(32, 28, 24, 0.42), rgba(24, 21, 19, 0.62));
+}
+
+/* Sobre un fondo oscuro los paneles necesitan despegarse un poco más. */
+.vista .card,
+.hub-block,
+.hub-plantel,
+.hub-centro {
+  box-shadow: 0 2px 10px rgba(20, 18, 16, 0.28);
+}
+
 /* Banda ilustrada de card (ver ui/Cabecera.tsx). Va pegada abajo del cabezal de
    color y sangra hasta los bordes: la ilustración es la card, no un adorno
    dentro de ella. El encuadre baja el centro para no cortar cabezas. */

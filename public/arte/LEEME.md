@@ -22,6 +22,19 @@ El encuadre lo decide `.cabecera-arte` en `src/styles.css` (`background-position
 34%`): la banda muestra una franja, así que al cambiar una ilustración hay que mirar que
 las caras no queden cortadas.
 
+## Fondo de pantalla (16:9, 1920 px)
+
+El lienzo de todas las pantallas del juego (no el del menú, que usa `portada.webp`). Va en
+un `div` fijo detrás de todo — `.fondo-app` en `src/styles.css` — con un velo oscuro
+encima: sin el velo, los paneles claros flotan sobre un piso del mismo valor.
+
+| Archivo | Qué es |
+| --- | --- |
+| `fondo-cancha.webp` | **En uso.** El parqué gastado visto desde arriba: parejo, sin foco, no compite |
+| `fondo-gimnasio.webp` | Alternativa: la cancha desde la tribuna al atardecer. Más carácter, más detalle |
+
+Cambiar de fondo es cambiar la constante `FONDO` en `src/App.tsx`.
+
 ## Retratos de arquetipo (1:1, 512 px, **sin fondo**)
 
 Uno por personalidad del juego, recortados con alfa: el fondo azul lo pone la caja

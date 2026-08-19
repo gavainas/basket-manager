@@ -68,6 +68,14 @@ const VIEWS: Record<Tab, { label: string; sec: string; icon: IconName }> = {
  */
 const PORTADA = `${import.meta.env.BASE_URL}portada.webp`;
 
+/**
+ * Fondo de todas las pantallas del juego (no del menú, que tiene su portada).
+ * Alternativa lista en `public/arte/`: `fondo-gimnasio.webp`, la cancha vista
+ * desde la tribuna — tiene más carácter y también más detalle compitiendo con
+ * los paneles. Cambiar de fondo es cambiar este nombre.
+ */
+const FONDO = 'fondo-cancha.webp';
+
 const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }> = {
   facil: { label: 'Fácil', desc: 'Casi siempre están todos: la vida molesta poco.' },
   medio: { label: 'Medio', desc: 'La vida pasa: enfermos, viajes y algún lesionado.' },
@@ -255,6 +263,14 @@ export default function App() {
     <OpenLeagueContext.Provider value={setLeagueProfileId}>
     <OpenClubContext.Provider value={setClubProfileId}>
     <NavigateTabContext.Provider value={navigate}>
+      {/* El lienzo: la cancha del club detrás de todo, con un velo encima para
+          que los paneles claros se despeguen. Antes era gris plano y los
+          paneles quedaban gris sobre gris. Va acá y no en el body porque el
+          proyecto usa base relativa: la ruta se arma con BASE_URL. */}
+      <div
+        className="fondo-app"
+        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}arte/${FONDO})` }}
+      />
       {screen}
       {profileId && <PlayerProfile state={state} playerId={profileId} onClose={() => setProfileId(null)} />}
       {rivalProfileId && (
