@@ -2,7 +2,7 @@
 
 **Metodología.** Equipo multidisciplinario simulado (game design, UX, UI, arte, systems design, database/content, QA, jugador nuevo, jugador hardcore de FM, dirección). Trabajo realizado: **una temporada completa jugada de verdad** en el navegador (pretemporada T1 → 9 fechas → playoffs → título de Copa de Plata → pretemporada T2), un **stress test** de 3 semanas en Difícil con manejo hostil, **cuatro auditorías de código en profundidad** (partido/postpartido, sistemas sociales/economía/meta, mundo/base de datos, UI/CSS/arte), `npm run sim` (40 temporadas × 3 estrategias), **análisis cuantitativo del mundo generado** (1.824 jugadores medidos en 8 seeds, 5 temporadas simuladas para medir persistencia y tamaño de save), y ~40 capturas de pantalla. **No se modificó nada del juego.** Todos los ejemplos citados ocurrieron de verdad en la partida de prueba.
 
-**Contexto crítico previo a todo:** esta auditoría se hizo sobre la rama de trabajo actual (la que tiene el Hub-menú, el tema claro "club de barrio", los escudos, el arte de Higgsfield y los iconos propios). **`main` — lo que está publicado en GitHub Pages y lo que juega cualquiera que entre al link — sigue siendo el tema oscuro viejo, sin nada de eso.** El 100% del valor visual construido en el último mes está sin publicar. Varias notas del scorecard serían 2-3 puntos más bajas si se auditara lo publicado.
+**Nota de alcance (corregida):** la auditoría se hizo sobre el estado actual del juego (Hub-menú, tema claro "club de barrio", escudos, arte, iconos), que **es lo mismo que está publicado en GitHub Pages** — verificado: `origin/main` y la rama auditada apuntan al mismo commit (`e99d67e`). Una versión anterior de este informe afirmaba que lo publicado era el tema oscuro viejo; ese hallazgo salió de una referencia local de `main` desactualizada en el entorno de auditoría y **era incorrecto**. Todo lo demás del informe aplica tal cual: lo auditado es lo que se juega.
 
 ---
 
@@ -34,8 +34,8 @@
 **Estado general**
 
 18. El juego ya **genera historias reales** (conté 4 memorables en una temporada, sin inventar ninguna) y el core loop semanal tiene tensión legible. La base sistémica post-informe-anterior está sólida: el problema ya no es de conexión, es de **persistencia del mundo, calibración y presentación**.
-19. **Lo publicado no representa el juego que existe.** La decisión más barata y de mayor impacto de esta auditoría es cerrar esa brecha.
-20. Veredicto de dirección: **prototipo avanzado con alma de juego bueno**; para "10 horas y recomendarlo a un amigo" faltan sobre todo memoria entre temporadas (personas persistentes) y una identidad visual única publicada.
+19. **La dirección visual ya está en producción pero formalmente sigue "provisional"** (la Puerta 2 de ART_PIPELINE nunca se cerró): eso frena la expansión de arte (eventos ilustrados, set de retratos) que es justo lo que las pantallas piden.
+20. Veredicto de dirección: **prototipo avanzado con alma de juego bueno**; para "10 horas y recomendarlo a un amigo" faltan sobre todo memoria entre temporadas (personas persistentes) y terminar de aplicar la identidad visual que ya existe.
 
 ---
 
@@ -54,14 +54,14 @@
 | Base de datos | **4** | Mundo regenerado por temporada, ids de slot, distribuciones uniformes (edad plana 19-38: rivales "corredores" con cinco de 35), ~12 nombres duplicados por mundo, atributos decorativos (altura, profesión, mano). |
 | UX | **7** | "Qué mirar hoy" colgado de los tiles es de lo mejor del género. Faltan: orden/filtro en tablas, rankings completos (top-5 no responde "quién juega poco"), vocabulario emoción≠estado ("Molesto" en el informe / "no hay molestos" en la acción). |
 | UI | **7** | Hub y Planilla agrupada muy bien; jerarquía tile/valor/subtexto consistente. Contras: WeekView columna mobile en un juego de PC, tres escalas de nivel conviviendo (≈67 + ★★★★ + 💪🔥), 32 tamaños de fuente, radios mezclados. |
-| Dirección de arte | **6.5** | Existe una dirección candidata (portada, cabeceras, parquet, grafito+naranja) y es correcta. Sin aprobar, sin publicar, con doble identidad de retratos y 95% de pantallas sin un pixel ilustrado. |
-| Identidad visual | **6** | En esta rama: escudos+Oswald+planilla ya leen "manager de barrio". La diluyen ~75 emojis de cromo y la monotonía de cards blancas. En `main` (lo publicado): 3. |
+| Dirección de arte | **6.5** | Existe una dirección real (portada, cabeceras, parquet, grafito+naranja), ya en producción y correcta. Formalmente sigue "provisional" (Puerta 2 de ART_PIPELINE sin cerrar), con doble identidad de retratos y 95% de pantallas sin un pixel ilustrado. |
+| Identidad visual | **6** | Escudos+Oswald+planilla ya leen "manager de barrio". La diluyen ~75 emojis de cromo y la monotonía de cards blancas dentro de las vistas. |
 | Humor | **8.5** | El mejor activo. "Días como hoy son los que le explican a mi mujer por qué juego." Enemigo: repetición (la excusa "quedé muerto del laburo" ×2 en la misma lista de asado). |
 | Mundo amateur | **8** | Guardias, sistemas caídos, picados en otros clubes que lesionan, Uber al que trabaja, árbitros con nombre. Falta: profesión→mecánica, cuerpo/panza, multi-equipo humano. |
 | Replayability | **5** | La temporada corta ayuda y la T2 hereda plantel/promesas/rencores. Pero el mundo se resetea (rivales amnésicos), una sola liga jugable en serio y objetivos sin variedad real. |
 | Claridad | **7.5** | Fases numeradas, hints por fase, frases junto a los números. Contras puntuales: "recibe el alta" por una ausencia laboral, "Semifinales · Sin partido esta semana" con la semi programada. |
 | Polish | **6** | El flujo aguantó una temporada completa sin trabarse (gran señal), pero la lista de incoherencias narrativas y textos rotos ("Viene de Trabaja de noche") es larga para un playtest externo. |
-| Potencial comercial | **6** | Pitch diferenciado y captable en una imagen (la portada). Para Steam faltan: identidad publicada, memoria entre temporadas, ~10h de contenido con variedad, y decisiones de producto (idioma/localización, nombre). |
+| Potencial comercial | **6** | Pitch diferenciado y captable en una imagen (la portada). Para Steam faltan: terminar de aplicar la identidad, memoria entre temporadas, ~10h de contenido con variedad, y decisiones de producto (idioma/localización, nombre). |
 
 ---
 
@@ -72,7 +72,6 @@
 |---|---|---|
 | P0-1 | **Forfeit con banco disponible**: descansar a un fundido que era titular sugerido lo vuelve 'ausente' pero no lo saca de `state.starters`; nada re-sugiere y el partido arranca con 4 → forfeit. | `callup.ts:171-176`, `gameReducer.ts:193-196`, `match.ts:351-353` |
 | P0-2 | **Soft-lock por "llega al 2do tiempo"**: con exactamente 5 disponibles de los cuales alguno es llegada tardía, no se pueden completar 5 titulares y el botón queda deshabilitado para siempre (los late no pueden ser titulares pero sí cuentan como disponibles). | `WeekView.tsx:594-608,863`, `gameReducer.ts:205-206` |
-| P0-3 | **La brecha rama↔publicado**: todo el sistema visual nuevo (Hub, tema claro, escudos, arte, iconos) vive fuera de `main`. No es un bug de código: es el bloqueante de dirección. Decidir (Puerta 2 de `ART_PIPELINE.md`) y mergear, o dejar de construir sobre una rama. | `git show main:` no tiene `crest.ts`, `Icon.tsx`, `Hub.tsx`, `public/arte/` |
 
 ### P1 — Crítico
 1. **Mundo sin personas persistentes** (regeneración anual total + ids por slot + cara pegada al slot). Medido: T1→T2 228/228 reemplazados. Bloquea el ítem del ROADMAP "el conocimiento es de la persona". — `world.ts:241`, `preseason.ts:1014-1015`
@@ -115,7 +114,7 @@
 2. **Notas infladas** — aplana el postpartido entero: emociones que no disparan, confianza-trinquete, un 10/10 que sale 9% de las veces.
 3. **Los dos bloqueos de alineación** (P0-1/P0-2) — la peor experiencia posible (perder por UI) al alcance de cualquier partida con fundidos o plantel justo.
 4. **Objetivos decorativos** — la mitad del meta promete y no paga; en mi partida cumplí los 3 sin pensarlos y la evaluación ni los mencionó.
-5. **Nada de lo bueno está publicado** — la build que prueba Gabi (y cualquiera) es otro juego, visualmente peor en todas las dimensiones.
+5. **La economía deja de generar decisiones en la segunda mitad** — con la caja holgada, la plata sobrante no compra nada estratégico y las acciones semanales pierden interés (fecha 5+).
 6. **Doble cara por jugador** — rompe la identificación en el punto exacto donde el juego la construye (la ficha).
 7. **Repetición + incoherencia narrativa en el partido** — strings fijos por cuarto, claves que contradicen el marcador, "saco y corbata" del que jugó: erosiona la confianza en el mejor activo (la escritura).
 8. **El castigo social llega tarde** — 3-0 hostil en Difícil; motivación saturada ganando; el jugador aprende que rotar es opcional.
@@ -124,16 +123,16 @@
 
 ## 5. TOP 10 oportunidades (máximo efecto / menor costo)
 
-1. **Publicar la rama** (decisión + merge): el salto visual más grande posible cuesta cero código nuevo.
-2. **Recalibrar `computeRating`** (1 archivo, medible con el Monte Carlo ya hecho): pendiente más baja, banda 3-6 viva, media ~6.5. Destraba emociones y frena el trinquete.
-3. **Arreglar los 2 bloqueos de alineación** + `isSelectable` en el cambio por técnica: una tarde.
-4. **Objetivos con dientes** (~1 día): meterlos en la evaluación final + una reacción de la comisión a mitad de temporada. `objectiveStatus` ya se computa; falta que alguien cobre.
-5. **Una sola cara por jugador** (una línea de swap): volver al SVG en la tira del Hub hasta que exista el set ilustrado por seed.
-6. **Pools de 2-3 variantes para las notas tácticas del vivo + dedupe por partido** (patrón `usedIncidents` ya existe) y **claves filtradas por resultado** (perdiste → la primera clave explica la derrota).
-7. **Persistir a las personas del mundo** (id propio + guardar `world.players` + rotación anual 10-20% con noticias): costo medio, desbloquea medio ROADMAP.
-8. **Profesión→ausencias + agenda para el plantel fundador** (~30 líneas): el enfermero tiene guardias, el remisero llega tarde. Convierte un campo decorativo en la mecánica más amateur del juego.
-9. **Egos que crecen ganando** (reusar `grievance`): con racha de 3+, protagonistas/mercenarios suben exigencias. Ataca la saturación y la falta de presión descendente.
-10. **Cerrar el ciclo de la queja de plata** (2 horas): becar apaga 'plata', `cuota_impaga` anota de verdad, cobro al día suelta 'hechos'.
+1. **Recalibrar `computeRating`** (1 archivo, medible con el Monte Carlo ya hecho): pendiente más baja, banda 3-6 viva, media ~6.5. Destraba emociones y frena el trinquete.
+2. **Arreglar los 2 bloqueos de alineación** + `isSelectable` en el cambio por técnica: una tarde.
+3. **Objetivos con dientes** (~1 día): meterlos en la evaluación final + una reacción de la comisión a mitad de temporada. `objectiveStatus` ya se computa; falta que alguien cobre.
+4. **Una sola cara por jugador** (una línea de swap): volver al SVG en la tira del Hub hasta que exista el set ilustrado por seed.
+5. **Pools de 2-3 variantes para las notas tácticas del vivo + dedupe por partido** (patrón `usedIncidents` ya existe) y **claves filtradas por resultado** (perdiste → la primera clave explica la derrota).
+6. **Persistir a las personas del mundo** (id propio + guardar `world.players` + rotación anual 10-20% con noticias): costo medio, desbloquea medio ROADMAP.
+7. **Profesión→ausencias + agenda para el plantel fundador** (~30 líneas): el enfermero tiene guardias, el remisero llega tarde. Convierte un campo decorativo en la mecánica más amateur del juego.
+8. **Egos que crecen ganando** (reusar `grievance`): con racha de 3+, protagonistas/mercenarios suben exigencias. Ataca la saturación y la falta de presión descendente.
+9. **Cerrar el ciclo de la queja de plata** (2 horas): becar apaga 'plata', `cuota_impaga` anota de verdad, cobro al día suelta 'hechos'.
+10. **Cerrar la Puerta 2 y actualizar `DESIGN.md`** (una decisión + una tarde de docs): la dirección visual ya está en producción; formalizarla desbloquea la expansión de arte (eventos ilustrados, set de retratos) y elimina la doble fuente de verdad del design system.
 
 ## 6. Sistemas que NO tocaría
 
@@ -190,7 +189,7 @@
 - Cabecera de escena para la ficha de jugador.
 - Set de expresiones/cuerpos si se aprueba la dirección ilustrada.
 
-**Pregunta central ("¿lo reconozco sin el logo?")**: en el menú, sí — la portada es inconfundible. Dentro del juego, a medias: el Hub sí; una card blanca de WeekView, todavía no. En `main`: no (dashboard oscuro genérico).
+**Pregunta central ("¿lo reconozco sin el logo?")**: en el menú, sí — la portada es inconfundible. Dentro del juego, a medias: el Hub sí; una card blanca de WeekView, todavía no.
 
 ## 10. UI/UX
 
@@ -235,7 +234,7 @@
 ## 12. Roadmap recomendado (no implementar aún)
 
 **Fase 1 — Fundamentos (1-2 semanas de trabajo)**
-Bugs P0 de alineación · recalibrar notas · claves coherentes con el resultado · pools anti-repetición del vivo · textos rotos del mercado · becar apaga 'plata' · cooldown de eventos de pretemporada · ausencia laboral ≠ lesión · hub de playoffs · relato del informe completo · **decisión de Puerta 2 y merge a main**.
+Bugs P0 de alineación · recalibrar notas · claves coherentes con el resultado · pools anti-repetición del vivo · textos rotos del mercado · becar apaga 'plata' · cooldown de eventos de pretemporada · ausencia laboral ≠ lesión · hub de playoffs · relato del informe completo · **cerrar la Puerta 2 y actualizar DESIGN.md** (la dirección ya está en producción; formalizarla desbloquea la expansión de arte).
 
 **Fase 2 — Consolidar core loop**
 Objetivos con dientes (evaluación + reacción de comisión a mitad de temporada) · egos que crecen ganando · castigo más temprano y legible del sobreuso (que el fundido rinda visiblemente peor YA) · sumidero económico estratégico · crisis intermedia pre-game-over · una decisión para el suplementario.
@@ -285,7 +284,7 @@ Veredicto: **la profundidad sistémica ya genera historias contables.** Lo que f
 
 Diez horas son ~4 temporadas. Hoy el juego sostiene una temporada excelente y media buena; la tercera se parece demasiado a la primera porque el mundo no recuerda nada. Con el equipo haría exactamente esto, en orden:
 
-1. **Semana 1 — sacar la vergüenza y publicar.** Los dos bugs de alineación, la recalibración de notas, claves coherentes, pools anti-repetición, los 6 textos rotos. Y mergear la identidad visual a `main`: que el juego que existe sea el juego que se juega. Nada de esto es diseño nuevo; es cobrar lo ya construido.
+1. **Semana 1 — sacar la vergüenza.** Los dos bugs de alineación, la recalibración de notas, claves coherentes, pools anti-repetición, los 6 textos rotos. Y cerrar formalmente la Puerta 2: la dirección visual ya está en producción; aprobarla desbloquea la expansión de arte. Nada de esto es diseño nuevo; es cobrar lo ya construido.
 2. **Semanas 2-3 — que las promesas del meta paguen.** Objetivos de comisión en la evaluación + una reacción a mitad de temporada; egos que suben ganando; el fundido que rinde peor *hoy*, no en 6 semanas. Con eso, la segunda mitad de una buena temporada deja de jugarse sola — que es exactamente donde hoy se muere la tensión.
 3. **Semanas 4-6 — la apuesta estructural: personas en el mundo.** Id propio, el mundo persiste, rota 10-20% por año con noticias de pases. De ahí salen gratis: el rival con nombre que te volvió a ganar, el scouting que se acumula, el mercado alimentado por el mundo, y la T3 distinta de la T1. Es la única pieza cara de esta lista y es la que convierte 3 horas en 10.
 4. **En paralelo (arte) — una cara por jugador y eventos ilustrados.** Decidir la dirección de retratos (la candidata ilustrada es buena), unificar, y ponerle escena a los eventos sociales. El juego ya suena a club de barrio; que también se vea así en el 95% de las pantallas que hoy son cards blancas.
