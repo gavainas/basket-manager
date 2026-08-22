@@ -23,7 +23,9 @@ export function statusChip(p: Player): { label: string; cls: string } {
     case 'molesto':
       return { label: 'Molesto', cls: 'warn' };
     case 'lesionado':
-      return { label: `Lesionado (${p.injuryWeeks} sem.)`, cls: 'bad' };
+      return p.injuryReason === 'laboral'
+        ? { label: `Laburo (${p.injuryWeeks} sem.)`, cls: 'bad' }
+        : { label: `Lesionado (${p.injuryWeeks} sem.)`, cls: 'bad' };
     case 'al_borde':
       return { label: '¡Al borde de irse!', cls: 'bad' };
   }

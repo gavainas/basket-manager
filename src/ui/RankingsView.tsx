@@ -137,7 +137,7 @@ export function RankingsView({ state }: { state: GameState }) {
           title="Enfermería"
           icon="🚑"
           rows={top(
-            (p) => countTimeline(p, (k, text) => k === 'lesion' && !text.startsWith('Recibió')),
+            (p) => countTimeline(p, (k, text) => k === 'lesion' && !text.startsWith('Recibió') && !text.startsWith('Se acomodó')),
             (v) => `${v} lesi${v > 1 ? 'ones' : 'ón'}`
           )}
           empty="Sin lesionados: a tocar madera."

@@ -78,7 +78,10 @@ export function playerNotes(state: GameState, p: Player): HumanNote[] {
   } else if (p.status === 'lesionado') {
     notes.push({
       kind: 'fisico',
-      text: `Lesionado: le queda${p.injuryWeeks > 1 ? 'n' : ''} ${p.injuryWeeks} semana${p.injuryWeeks > 1 ? 's' : ''} de recuperación.`,
+      text:
+        p.injuryReason === 'laboral'
+          ? `Complicado con el laburo: le queda${p.injuryWeeks > 1 ? 'n' : ''} ${p.injuryWeeks} semana${p.injuryWeeks > 1 ? 's' : ''} sin poder venir.`
+          : `Lesionado: le queda${p.injuryWeeks > 1 ? 'n' : ''} ${p.injuryWeeks} semana${p.injuryWeeks > 1 ? 's' : ''} de recuperación.`,
       tone: 'bad',
     });
   }

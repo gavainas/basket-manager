@@ -148,6 +148,9 @@ export interface Player {
   status: PlayerStatus;
   /** Semanas restantes de lesión. */
   injuryWeeks: number;
+  /** Por qué está de baja: lesión de verdad o un tema de laburo. Los textos
+   *  ("recibió el alta") mienten si un trabajo se cuenta como lesión. */
+  injuryReason?: 'fisica' | 'laboral';
   /** Semanas seguidas con estado "molesto" o "al_borde". */
   weeksUpset: number;
   /** Queja activa: la fuente única del humor accionable (ver `mood.ts`). */
@@ -592,6 +595,9 @@ export interface PreseasonState {
   priorityUsed?: Record<string, boolean>;
   /** Desenlace de la última gestión, para mostrar en el modal. */
   actionOutcome: string | null;
+  /** Eventos ya disparados esta pretemporada: no se repiten ("la figura pide
+   *  beca" dos semanas seguidas era el chiste contado dos veces). */
+  eventLog?: string[];
   pendingEvent: PreseasonEventState | null;
   eventOutcome: string | null;
   /** Registro de todo lo que pasó en la pretemporada. */

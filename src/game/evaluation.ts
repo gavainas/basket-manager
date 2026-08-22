@@ -1,4 +1,5 @@
 import { activePlayers, clubPosition } from './match';
+import { objectiveStatus } from './objectives';
 import type { GameState } from './types';
 
 export type Grade = 'Excelente' | 'Buena' | 'Regular' | 'Mala';
@@ -45,6 +46,10 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   const financeScore = state.club.money < 0 ? 0 : Math.round(Math.min(100, moneyRatio * 55 + (state.club.money > 0 ? 25 : 0)));
   const retentionScore = Math.max(0, 100 - state.playersLeftCount * 20);
   const memorableScore = Math.min(100, state.memorableMoments.length * 25);
+  const objectivesMet = state.objectives.filter((o) => objectiveStatus(state, o, true) === 'cumplido').length;
+  const objectivesScore = state.objectives.length
+    ? Math.round((objectivesMet / state.objectives.length) * 100)
+    : 50;
 
   const dimensions: SeasonDimension[] = [
     {
@@ -72,6 +77,16 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
           : state.playersLeftCount === 1
             ? `1 jugador se fue. Plantel final: ${active.length}.`
             : `${state.playersLeftCount} jugadores se fueron. Plantel final: ${active.length}.`,
+    },
+    {
+      key: 'objectives',
+      label: 'Objetivos de la comisión',
+      score: objectivesScore,
+      grade: grade(objectivesScore),
+      detail:
+        state.objectives.length === 0
+          ? 'La comisión no encargó objetivos esta temporada.'
+          : `${objectivesMet} de ${state.objectives.length} objetivos cumplidos.`,
     },
     {
       key: 'sportPrestige',

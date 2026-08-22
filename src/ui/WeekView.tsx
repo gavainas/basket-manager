@@ -434,13 +434,14 @@ function CallUpPanel({ state, dispatch }: Props) {
                 <div className="avatar callup-avatar">
                   <Avatar seed={p.id} age={p.age} appearance={p.appearance} expressionOverride={3} title={p.name} />
                 </div>
-                <span className="callup-icon">🚑</span>
+                <span className="callup-icon">{p.injuryReason === 'laboral' ? '💼' : '🚑'}</span>
                 <div>
                   <div className="callup-name">
                     <PlayerLink id={p.id}>{p.name}</PlayerLink>
                   </div>
                   <div className="callup-note">
-                    Sigue lesionado: le queda{p.injuryWeeks > 1 ? 'n' : ''} {p.injuryWeeks} semana
+                    {p.injuryReason === 'laboral' ? 'Sigue a full con el laburo' : 'Sigue lesionado'}: le queda
+                    {p.injuryWeeks > 1 ? 'n' : ''} {p.injuryWeeks} semana
                     {p.injuryWeeks > 1 ? 's' : ''}.
                   </div>
                 </div>
@@ -761,7 +762,13 @@ function LineupPanel({ state, dispatch }: Props) {
                     <PlayerLink id={p.id}>{p.name}</PlayerLink>
                     {!avail && (
                       <span className="chip bad" style={{ marginLeft: '0.4rem' }}>
-                        {absent.has(p.id) ? 'No vino' : p.status === 'lesionado' ? `Lesión ${p.injuryWeeks} sem.` : 'No disponible'}
+                        {absent.has(p.id)
+                          ? 'No vino'
+                          : p.status === 'lesionado'
+                            ? p.injuryReason === 'laboral'
+                              ? `Laburo ${p.injuryWeeks} sem.`
+                              : `Lesión ${p.injuryWeeks} sem.`
+                            : 'No disponible'}
                       </span>
                     )}
                     {avail && p.status === 'molesto' && (

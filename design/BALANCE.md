@@ -163,6 +163,22 @@ significaba nada.
 - **Relato sin eco** (`freshLiveNote`): las notas de color del vivo salen de
   pools de 2-3 variantes y no se repiten dentro del mismo partido.
 
+## Sistemas de la 3ª pasada (agosto 2026, el meta cobra)
+
+- **Objetivos con dientes** (`objectives.ts`): al cierre de temporada cada
+  objetivo cumplido da +2 de prestigio social y +1 deportivo; cada fallado
+  resta 3 y 1, con noticia y asiento en la historia del club. En la semana 5
+  la comisión avisa cómo vienen. No toca el partido: el sim no se mueve.
+- **Egos que crecen ganando** (`advanceWeek`): con racha de 3 victorias, un
+  protagonista con <20' en el último partido (50%) o un mercenario que paga
+  cuota completa (30%) abre queja de minutos/plata. Máximo uno por semana.
+  En el piso sin gestión casi no dispara (los protagonistas del sim juegan
+  30'+ y el mercenario suele deber la cuota), así que los abandonos del
+  harness quedan igual (0.00 rotando / 1.76 sin tocar el banco, 120 temp.);
+  en una partida jugada con racha real es tensión nueva.
+- **Ausencia laboral** (`injuryReason`): mecánicamente sigue siendo una baja
+  de 1 semana; solo cambia cómo se cuenta (no infla el ranking de lesiones).
+
 ## Pendiente (ver ROADMAP)
 
 - Niveles de dificultad seleccionables (fácil/normal/difícil) como presets

@@ -6,8 +6,8 @@ import { getAction } from './actions';
 import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent, rollTrialPractice, takeScheduledEvent } from './events';
 import { maybeFriendMessage } from './friendsAbroad';
-import { decayGrievance, grievanceNote, isBurning, isHot } from './mood';
-import { generateObjectives } from './objectives';
+import { bumpGrievance, decayGrievance, grievanceNote, isBurning, isHot, sootheGrievance } from './mood';
+import { generateObjectives, midSeasonObjectiveCheck, settleObjectives } from './objectives';
 import { activePlayers, matchAbsentIds, noStartIds, suggestRotation, suggestStarters } from './match';
 import { rollCallUp } from './callup';
 import { buildCoachMarket, coachWeeklyTick } from './coach';
@@ -171,8 +171,14 @@ export function advanceWeek(state: GameState): GameState {
       if (p.injuryWeeks <= 0) {
         p.status = 'disponible';
         p.injuryWeeks = 0;
-        logPlayerEvent(p, s.seasonNumber, s.week, 'lesion', 'Recibió el alta: disponible otra vez.');
-        s.news.unshift({ week: s.week, text: `${p.name} vuelve a estar disponible.`, tone: 'good' });
+        if (p.injuryReason === 'laboral') {
+          logPlayerEvent(p, s.seasonNumber, s.week, 'lesion', 'Se acomodó con el laburo: vuelve a entrenar.');
+          s.news.unshift({ week: s.week, text: `${p.name} arregló el tema del trabajo: vuelve al equipo.`, tone: 'good' });
+        } else {
+          logPlayerEvent(p, s.seasonNumber, s.week, 'lesion', 'Recibió el alta: disponible otra vez.');
+          s.news.unshift({ week: s.week, text: `${p.name} vuelve a estar disponible.`, tone: 'good' });
+        }
+        p.injuryReason = undefined;
       }
     } else {
       p.physical = clamp(p.physical + BALANCE.weekly.physicalRecovery);
@@ -201,6 +207,12 @@ export function advanceWeek(state: GameState): GameState {
     }
     if (p.personality === 'leal' || p.personality === 'veterano') {
       if (p.motivation < 45) p.motivation = clamp(p.motivation + 2); // aguantan las malas
+    }
+
+    // Si la queja era por plata y el club ya lo becó, la bronca se queda sin
+    // argumento: se apaga con hechos, aunque el manager no diga nada.
+    if (p.grievance?.cause === 'plata' && (p.feeStatus === 'beca_total' || p.feeStatus === 'beca_parcial')) {
+      sootheGrievance(s, p, 'hechos');
     }
 
     // La bronca vieja se enfría sola si el motivo dejó de repetirse.
@@ -246,6 +258,50 @@ export function advanceWeek(state: GameState): GameState {
           s.club.socialPrestige = clamp(s.club.socialPrestige - 3);
           s.club.socialClimate = clamp(s.club.socialClimate - 4);
           s.news.unshift({ week: s.week, text: `${p.name} abandonó el club. "Esto ya no es para mí", dejó dicho.`, tone: 'bad' });
+        }
+      }
+    }
+  }
+
+  // --- Egos que crecen ganando: la racha también factura ---
+  // Con tres victorias seguidas, el protagonista que mira desde el banco
+  // siente que se pierde SU momento, y el mercenario que paga la cuota hace
+  // números. Máximo uno por semana: es un run-run de vestuario, no un motín.
+  const streakTail = s.history.slice(-3);
+  if (streakTail.length === 3 && streakTail.every((m) => m.won) && s.lastMatch && !s.lastMatch.forfeit) {
+    const box = s.lastMatch.box;
+    const egoCandidates = s.players.filter((p) => {
+      if (p.leftClub || p.status === 'lesionado') return false;
+      if (p.personality === 'protagonista') {
+        const line = box.find((b) => b.playerId === p.id);
+        return !!line && line.minutes < 20;
+      }
+      if (p.personality === 'mercenario') return p.feeStatus === 'pagada';
+      return false;
+    });
+    if (egoCandidates.length > 0) {
+      const ego = rng.pick(egoCandidates);
+      if (ego.personality === 'protagonista' && rng.chance(0.5)) {
+        const level = bumpGrievance(s, ego, 'minutos', {
+          note: 'El equipo está de racha y él la mira de afuera: quiere estar en la foto.',
+        });
+        if (level <= 1) {
+          s.news.unshift({
+            week: s.week,
+            text: `${ego.name} dejó caer que con el equipo ganando, él también quiere sus minutos. El éxito despierta egos.`,
+            tone: 'bad',
+          });
+        }
+      } else if (ego.personality === 'mercenario' && rng.chance(0.3)) {
+        const level = bumpGrievance(s, ego, 'plata', {
+          note: 'Con el equipo de racha hizo números: si él es parte del éxito, que no pague por jugar.',
+        });
+        if (level <= 1) {
+          s.news.unshift({
+            week: s.week,
+            text: `${ego.name} tiró en el vestuario que "un equipo que gana no le cobra la cuota a sus figuras". La racha también factura.`,
+            tone: 'bad',
+          });
         }
       }
     }
@@ -322,9 +378,14 @@ export function advanceWeek(state: GameState): GameState {
     } else {
       s.trialCandidate = null; // terminó la fase regular: el amigo a prueba siguió su camino
       s.phase = 'seasonEnd';
+      // La comisión cobra: los objetivos se liquidan una sola vez, acá.
+      // (En game over no: ahí ya se perdió todo lo que había que perder.)
+      settleObjectives(s);
     }
   } else {
     s.phase = 'planning';
+    // A mitad de temporada la comisión pasa a decir cómo vienen sus encargos.
+    if (s.week === 5) midSeasonObjectiveCheck(s);
     // Prioridad: el amigo a prueba, después las consecuencias encadenadas
     // (seguras), y recién ahí el sorteo semanal.
     s.pendingEvent = trialPlanningEvent(s, rng) ?? takeScheduledEvent(s) ?? rollEvent(s, rng);

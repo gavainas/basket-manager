@@ -156,15 +156,34 @@ export function resolveAsado(s: GameState, rng: Rng): AsadoReport {
   const attended: Player[] = [];
   const missed: { playerId: string; reason: string }[] = [];
 
+  // Pools de excusas: si se caen dos en la misma noche, que no digan lo mismo.
+  const BAILED_CONFIRMED = [
+    '"Fija que voy", había dicho. Se cayó a último momento.',
+    'Mandó audio a las 20:55: "no me lo vas a creer, se me complicó". Nadie le creyó.',
+    'Había confirmado y clavó el visto. Apareció recién al otro día con una historia larguísima.',
+  ];
+  const BAILED_DOUBT = [
+    'Al final no llegó: "quedé muerto del laburo, perdón".',
+    'Dijo que avisaba a la tarde. Avisó, pero que no.',
+    'Se quedó dormido en el sillón: "me senté un minuto y fue". Clásico.',
+  ];
+  const usedExcuses = new Set<string>();
+  const freshExcuse = (pool: string[]): string => {
+    const options = pool.filter((t) => !usedExcuses.has(t));
+    const pick = rng.pick(options.length > 0 ? options : pool);
+    usedExcuses.add(pick);
+    return pick;
+  };
+
   for (const rsvp of plan.rsvps) {
     const p = squad.find((x) => x.id === rsvp.playerId);
     if (!p) continue;
     if (rsvp.answer === 'va') {
       if (rng.chance(0.9)) attended.push(p);
-      else missed.push({ playerId: p.id, reason: '"Fija que voy", había dicho. Se cayó a último momento.' });
+      else missed.push({ playerId: p.id, reason: freshExcuse(BAILED_CONFIRMED) });
     } else if (rsvp.answer === 'duda') {
       if (rng.chance(0.5)) attended.push(p);
-      else missed.push({ playerId: p.id, reason: 'Al final no llegó: "quedé muerto del laburo, perdón".' });
+      else missed.push({ playerId: p.id, reason: freshExcuse(BAILED_DOUBT) });
     } else {
       if (rng.chance(0.08)) attended.push(p);
       else missed.push({ playerId: p.id, reason: rsvp.reason ?? 'No pudo.' });

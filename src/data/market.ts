@@ -239,6 +239,33 @@ const MARKET_SEEDS: MarketSeed[] = [
   },
 ];
 
+/**
+ * `previousTeam` mezcla clubes reales con situaciones de vida ("Trabaja de
+ * noche", "Sin club"). Para los clubes, "Viene de X" funciona; para las
+ * situaciones hace falta contarlas como lo que son, no como un equipo.
+ */
+export const ORIGIN_SITUATIONS: Record<string, string> = {
+  'Trabaja de noche': 'Trabaja de noche y juega cuando el laburo lo deja.',
+  'Se mudó de otra ciudad': 'Recién mudado desde otra ciudad, está buscando equipo.',
+  'Se mudó de otra provincia': 'Se mudó desde otra provincia hace apenas unas semanas.',
+  'Sin club': 'Está sin club: hace rato que solo juega picados.',
+  'Sin club este año': 'Este año se quedó sin club, aunque no dejó de entrenar.',
+  'Retirado hace un año': 'Se había retirado hace un año y le picó volver.',
+  'Volvió de estudiar afuera': 'Volvió de estudiar afuera y quiere cancha otra vez.',
+  'Club de su barrio': 'Viene del club de su barrio, de toda la vida.',
+};
+
+/** La frase de origen completa: "Viene de X." si X es un club, o la situación bien contada. */
+export function originSentence(previousTeam: string): string {
+  return ORIGIN_SITUATIONS[previousTeam] ?? `Viene de ${previousTeam}.`;
+}
+
+/** Línea de llegada para la historia personal del jugador. */
+export function arrivalLine(previousTeam: string): string {
+  const situation = ORIGIN_SITUATIONS[previousTeam];
+  return situation ? `Fichó para el club. ${situation}` : `Fichó para el club llegando de ${previousTeam}.`;
+}
+
 /** Amplitud del ruido en las estimaciones según el nivel de conocimiento. */
 const KNOWLEDGE_NOISE: Record<KnowledgeLevel, number> = {
   muy_conocido: 3,
@@ -329,7 +356,7 @@ export function marketToPlayer(
     social: mp.social,
     confidence: 55,
     personality: mp.personality,
-    description: `Llegó de ${mp.previousTeam}. ${mp.knowledgeSource}`,
+    description: `${originSentence(mp.previousTeam)} ${mp.knowledgeSource}`,
     feeStatus,
     weeksUnpaid: 0,
     expectedRole,
@@ -348,7 +375,7 @@ export function marketToPlayer(
     joinedSeason: season,
     matchLog: [],
     timeline: [
-      { season, week: 0, kind: 'llegada', text: `Fichó para el club llegando de ${mp.previousTeam}.` },
+      { season, week: 0, kind: 'llegada', text: arrivalLine(mp.previousTeam) },
     ],
   };
 }

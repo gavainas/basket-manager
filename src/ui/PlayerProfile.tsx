@@ -5,6 +5,7 @@ import { friendshipsOf } from '../game/friendsAbroad';
 import { worldPlayerName } from '../game/world';
 import { fragilityHint, fragilityOf } from '../game/injuries';
 import { playerNotes } from '../game/humanState';
+import { ORIGIN_SITUATIONS } from '../data/market';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { HumanNoteRow } from './HumanNoteRow';
@@ -65,7 +66,7 @@ function GeneralTab({ state, p }: { state: GameState; p: Player }) {
         <DataRow label="Altura">{p.height} cm</DataRow>
         <DataRow label="Mano hábil">{p.hand === 'zurda' ? 'Zurda' : 'Derecha'}</DataRow>
         <DataRow label="Profesión">{p.profession}</DataRow>
-        <DataRow label="Club anterior">{p.previousTeam}</DataRow>
+        <DataRow label={p.previousTeam in ORIGIN_SITUATIONS ? 'Antes de llegar' : 'Club anterior'}>{p.previousTeam}</DataRow>
         <DataRow label="En el club">
           Desde la temporada {p.joinedSeason} · {seasonsAtClub(p, state.seasonNumber)}
         </DataRow>

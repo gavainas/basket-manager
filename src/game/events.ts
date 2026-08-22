@@ -2,7 +2,7 @@ import { planAsado, weeksSinceAsado } from './asado';
 import { BALANCE, clamp } from './balance';
 import { affinity } from './relations';
 import { createRecruit } from '../data/recruits';
-import { bumpGrievance, easeGrievance } from './mood';
+import { bumpGrievance, easeGrievance, sootheGrievance } from './mood';
 import type { ActiveEvent, DelayedNote, GameState, Player, ScheduledEvent, TrialCandidate } from './types';
 import type { Rng } from './rng';
 
@@ -202,6 +202,7 @@ export const EVENTS: EventDef[] = [
         }
         p.motivation = clamp(p.motivation - 8);
         upset(p);
+        bumpGrievance(s, p, 'trato', { note: 'Le cobraron la cuota como a un cliente y lo tomó personal.' });
         return `${p.name} se ofendió: "¿Me estás cobrando como a un cliente?". Sigue debiendo y quedó molesto.`;
       }
       if (opt === 1) {
@@ -212,6 +213,7 @@ export const EVENTS: EventDef[] = [
       p.feeStatus = 'beca_parcial';
       p.weeksUnpaid = 0;
       p.motivation = clamp(p.motivation + 8);
+      if (p.grievance?.cause === 'plata') sootheGrievance(s, p, 'hechos');
       s.club.socialClimate = clamp(s.club.socialClimate - 3);
       return `${p.name} acepta pagar media cuota. Se queda tranquilo, aunque el arreglo no cayó bien en todos.`;
     },
@@ -346,8 +348,12 @@ export const EVENTS: EventDef[] = [
     weight: 7,
     canFire: (s) => actives(s).filter((p) => p.status !== 'lesionado').length >= 6,
     pickTargets: (s, rng) => {
-      const cands = actives(s).filter((p) => p.status !== 'lesionado' && p.technique >= 60);
-      return cands.length ? { playerId: rng.pick(cands).id } : null;
+      // Preferimos que la baja duela (una figura), pero si el plantel no tiene
+      // técnica alta, el laburo le complica la semana a cualquiera.
+      const sanos = actives(s).filter((p) => p.status !== 'lesionado');
+      const cands = sanos.filter((p) => p.technique >= 60);
+      const pool = cands.length ? cands : sanos;
+      return pool.length ? { playerId: rng.pick(pool).id } : null;
     },
     text: (s, ev) => `${byId(s, ev.playerId).name} avisa por audio: "No llego al partido de esta semana, me surgió algo del laburo. Perdón, en serio".`,
     options: () => [
@@ -358,6 +364,7 @@ export const EVENTS: EventDef[] = [
       const p = byId(s, ev.playerId);
       p.status = 'lesionado'; // no disponible esta semana
       p.injuryWeeks = 1;
+      p.injuryReason = 'laboral'; // no está roto: está laburando
       if (opt === 0) {
         p.social = clamp(p.social + 3);
         p.motivation = clamp(p.motivation + 2);
@@ -683,8 +690,11 @@ export const EVENTS: EventDef[] = [
     weight: 4,
     canFire: (s) => actives(s).length > 8,
     pickTargets: (s, rng) => {
+      // Los de bajo compromiso son los candidatos naturales, pero una mudanza
+      // le puede tocar a cualquiera: si no hay, se sortea entre todos.
       const cands = actives(s).filter((p) => p.commitment < 70);
-      return cands.length ? { playerId: rng.pick(cands).id } : null;
+      const pool = cands.length ? cands : actives(s);
+      return pool.length ? { playerId: rng.pick(pool).id } : null;
     },
     text: (s, ev) =>
       `${byId(s, ev.playerId).name} junta al grupo: consiguió trabajo en otra ciudad y se muda en dos semanas. Esta es su última semana en el club.`,
@@ -1277,18 +1287,26 @@ export function rollEvent(state: GameState, rng: Rng): ActiveEvent | null {
   // Si todo lo posible está en cooldown (plantel muy estable), se relaja el
   // filtro antes que dejar la semana muda.
   const fresh = fireable.filter((e) => !onCooldown.has(e.id));
-  const eligible = fresh.length > 0 ? fresh : fireable;
-  if (eligible.length === 0) return null;
-  const totalWeight = eligible.reduce((sum, e) => sum + e.weight, 0);
-  let roll = rng.range(0, totalWeight);
-  for (const def of eligible) {
-    roll -= def.weight;
-    if (roll <= 0) {
-      const targets = def.pickTargets ? def.pickTargets(state, rng) : {};
-      if (targets === null) return null;
+  let pool = fresh.length > 0 ? fresh : fireable;
+  // Si el sorteado no encuentra a quién tocarle (pickTargets null), no se
+  // pierde la semana: sale del pool y se vuelve a sortear entre los demás.
+  while (pool.length > 0) {
+    const totalWeight = pool.reduce((sum, e) => sum + e.weight, 0);
+    let roll = rng.range(0, totalWeight);
+    let def = pool[pool.length - 1];
+    for (const cand of pool) {
+      roll -= cand.weight;
+      if (roll <= 0) {
+        def = cand;
+        break;
+      }
+    }
+    const targets = def.pickTargets ? def.pickTargets(state, rng) : {};
+    if (targets !== null) {
       state.eventLog = [...(state.eventLog ?? []), { id: def.id, season: state.seasonNumber, week: state.week }].slice(-24);
       return { defId: def.id, ...targets };
     }
+    pool = pool.filter((e) => e !== def);
   }
   return null;
 }

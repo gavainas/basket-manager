@@ -36,16 +36,23 @@ Estado: ✅ hecho · ⬜ pendiente
 (ver nota de la 2ª pasada en `BALANCE.md`: el win% del piso baja unos puntos al morir el
 trinquete de confianza; los objetivos se actualizan ahí con el porqué).
 
-## Sprint 3 — Que el meta cobre ⬜
+## Sprint 3 — Que el meta cobre ✅
 
-- ⬜ 3.1 Objetivos de comisión en `computeSeasonEvaluation` + reacción de la comisión en la semana 5.
-- ⬜ 3.2 Cerrar el ciclo de la queja de plata (becar apaga 'plata'; `cuota_impaga` anota; cobrar al día suelta 'hechos').
-- ⬜ 3.3 Egos que crecen ganando (racha 3+ → protagonistas/mercenarios suben exigencias, reusa `grievance`).
-- ⬜ 3.4 Cooldown de eventos en pretemporada + re-sorteo cuando `pickTargets` da null.
-- ⬜ 3.5 Ausencia laboral ≠ estado 'lesionado' ("recibió el alta" por horas extra).
-- ⬜ 3.6 Hub muestra el partido de playoffs (hoy: "Semifinales · Sin partido esta semana").
-- ⬜ 3.7 Textos del mercado: separar "viene de <club>" de la situación ("Trabaja de noche").
-- ⬜ 3.8 Excusas del asado sin repetir en la misma lista.
+- ✅ 3.1 **Objetivos con dientes**: `settleObjectives()` al pasar a seasonEnd (cumplido: +2 prestigio social +1 deportivo con noticia; fallado: −3/−1, noticia y asiento en la historia del club; línea extra si salen 3/3), `midSeasonObjectiveCheck()` en la semana 5 (la comisión pasa por el entrenamiento y dice cómo viene cada encargo), dimensión "Objetivos de la comisión" en `computeSeasonEvaluation`, y aviso en el radar de inicio (tile Objetivos) desde la semana 3 cuando alguno viene flojo.
+- ✅ 3.2 **Ciclo de la queja de plata cerrado**: becar (acción o evento `cuota_impaga` opción beca) apaga la queja 'plata' con hechos; exigir el pago y que se ofenda ahora anota queja de 'trato'; y una red de seguridad semanal en `advanceWeek` apaga 'plata' si el jugador ya quedó becado por cualquier camino.
+- ✅ 3.3 **Egos que crecen ganando**: con racha de 3 victorias, un protagonista con <20 minutos en el último partido (chance 50%) o un mercenario que paga cuota completa (30%) levanta la mano — reusa `bumpGrievance` ('minutos'/'plata') con noticia propia; máximo uno por semana. Verificado con test dirigido: 14/30 y 9/30 disparos.
+- ✅ 3.4 **Eventos que no se repiten ni se pierden**: la pretemporada registra `preseason.eventLog` y no repite la misma escena en la misma pretemporada (si se agota el pool, se relaja); y `rollEvent`/`rollPreseasonEvent` re-sortean entre los demás eventos cuando el elegido no tiene a quién tocarle (antes la semana quedaba muda). `ausencia_clave` y `mudanza` además tienen fallback de target.
+- ✅ 3.5 **Ausencia laboral ≠ lesión**: `injuryReason: 'fisica' | 'laboral'` en el jugador; `ausencia_clave` marca 'laboral' y toda la UI lo cuenta distinto (chip "Laburo (X sem.)", 💼 en la lista, "Sigue a full con el laburo", ficha, Hub y radar), y el alta dice "arregló el tema del trabajo" en vez de "recibió el alta". El ranking de Enfermería no lo cuenta como lesión.
+- ✅ 3.6 **Hub muestra el partido de playoffs**: `nextRivalId` lee `schedule[semana-1]` sin el tope de fase regular (advancePlayoffs escribe ahí el rival de semis/final), así el centro del Hub muestra el cruce en vez de "Sin partido esta semana".
+- ✅ 3.7 **Origen del mercado bien contado**: `ORIGIN_SITUATIONS` + `originSentence()`/`arrivalLine()` en `market.ts` separan clubes ("Viene de Cilindro Viejo") de situaciones ("Trabaja de noche y juega cuando el laburo lo deja."). Aplicado en las cartas y el perfil del mercado, el modal de negociación, la descripción y timeline del fichado, el log de pretemporada y la ficha ("Antes de llegar" en vez de "Club anterior").
+- ✅ 3.8 **Excusas del asado sin eco**: pools de 3 variantes para el confirmado que se cae y el dudoso que no llega, con dedupe dentro de la misma noche.
+
+**Validación del sprint**: `npm run build` limpio · suite funcional de 13 chequeos sobre la
+lógica compilada (origen, alta laboral, visita semana 5, cobro al cierre 3/3, dimensión en
+la evaluación, egos 14/30 y 9/30) · `sim:notas` estable (media 6.91 · 1-5: 15.0% · 9-10:
+8.2%) · `npm run sim -- 120` sin cambios de balance (presión 52.4% / mixta 50.3% / zona
+42.6%, abandonos 0.00/0.88/1.76) · smoke test en navegador sin errores de consola y con
+los textos nuevos del mercado a la vista.
 
 ## Sprint 4 — Que se vea como un solo juego ⬜
 
@@ -67,8 +74,8 @@ trinquete de confianza; los objetivos se actualizan ahí con el porqué).
 
 1. ⬜ Imposible bloquearse: los 2 P0 muertos (✅) + una temporada simulada completa sin excepciones (✅ hoy) — falta re-verificar tras cada sprint.
 2. ✅ Notas honestas: media ~6.9, banda 4-6 viva, un 9 significa algo.
-3. 🔶 Cero frases repetidas en un mismo partido (✅ en el vivo) — pantallas de informe/asado quedan para el Sprint 3.
-4. ⬜ En una partida ganadora típica, al menos un objetivo y un ego generan tensión real en la 2ª mitad.
+3. ✅ Cero frases repetidas en un mismo partido (vivo, Sprint 2) ni en un mismo asado (Sprint 3).
+4. 🔶 Objetivos y egos con dientes (✅ mecánica del Sprint 3) — falta confirmarlo en una partida jugada de verdad: que la tensión se sienta, no solo que exista.
 5. ⬜ En la T2 reconocés rivales por nombre y cara; la T3 no se parece a la T1.
 6. ⬜ Una sola cara por jugador; cero emojis de cromo.
 7. ✅ `npm run sim` como vara tras cada sprint (objetivos actualizados en `BALANCE.md`, 2ª pasada).

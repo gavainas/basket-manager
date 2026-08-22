@@ -4,6 +4,7 @@ import { refereeOfWeek } from '../game/leagueLife';
 import { activePlayers } from '../game/match';
 import type { NoteKind } from '../game/humanState';
 import { aggrieved, grievanceWarning } from '../game/mood';
+import { objectiveStatus } from '../game/objectives';
 
 /**
  * Qué mirar hoy, repartido por tile del inicio.
@@ -84,22 +85,48 @@ export function watchItems(state: GameState): WatchItem[] {
       tile: 'vestuario',
     });
   }
+  // "Lesionado" junta dos historias distintas: el que está roto de verdad y el
+  // que no viene porque el laburo no lo deja. Cada una con su texto.
   const returning = active.filter((x) => x.status === 'lesionado' && x.injuryWeeks === 1);
   const injured = active.filter((x) => x.status === 'lesionado');
   if (returning.length > 0) {
-    items.push({
-      kind: 'fisico',
-      cls: 'good',
-      text: `${returning.map((p) => p.name).join(' y ')} ${returning.length > 1 ? 'reciben' : 'recibe'} el alta la próxima semana.`,
-      tile: 'plantilla',
-    });
+    const backPhys = returning.filter((p) => p.injuryReason !== 'laboral');
+    const backWork = returning.filter((p) => p.injuryReason === 'laboral');
+    if (backPhys.length > 0) {
+      items.push({
+        kind: 'fisico',
+        cls: 'good',
+        text: `${backPhys.map((p) => p.name).join(' y ')} ${backPhys.length > 1 ? 'reciben' : 'recibe'} el alta la próxima semana.`,
+        tile: 'plantilla',
+      });
+    }
+    if (backWork.length > 0) {
+      items.push({
+        kind: 'fisico',
+        cls: 'good',
+        text: `${backWork.map((p) => p.name).join(' y ')} ${backWork.length > 1 ? 'se sacan' : 'se saca'} el laburo de encima: la semana que viene ${backWork.length > 1 ? 'vuelven' : 'vuelve'}.`,
+        tile: 'plantilla',
+      });
+    }
   } else if (injured.length > 0) {
-    items.push({
-      kind: 'fisico',
-      cls: 'warn',
-      text: `${injured.length === 1 ? `${injured[0].name} sigue` : `${injured.length} jugadores siguen`} en la enfermería.`,
-      tile: 'plantilla',
-    });
+    const phys = injured.filter((p) => p.injuryReason !== 'laboral');
+    const work = injured.filter((p) => p.injuryReason === 'laboral');
+    if (phys.length > 0) {
+      items.push({
+        kind: 'fisico',
+        cls: 'warn',
+        text: `${phys.length === 1 ? `${phys[0].name} sigue` : `${phys.length} jugadores siguen`} en la enfermería.`,
+        tile: 'plantilla',
+      });
+    }
+    if (work.length > 0) {
+      items.push({
+        kind: 'fisico',
+        cls: 'warn',
+        text: `${work.length === 1 ? `${work[0].name} sigue enredado` : `${work.length} jugadores siguen enredados`} con el laburo: básquet, por ahora, nada.`,
+        tile: 'plantilla',
+      });
+    }
   }
   const suspended = active.filter((x) => (x.suspendedWeeks ?? 0) > 0);
   for (const p of suspended) {
@@ -143,6 +170,24 @@ export function watchItems(state: GameState): WatchItem[] {
       text: `${debtors.length === 1 ? `${debtors[0].name} debe` : `${debtors.length} jugadores deben`} la cuota hace ${debtors.length === 1 ? `${debtors[0].weeksUnpaid} semanas` : 'rato'}: pasar la gorra cuesta caro después.`,
       tile: 'cuotas',
     });
+  }
+  // Los encargos de la comisión ahora se cobran al cierre: si alguno viene
+  // flojo, el radar lo avisa antes de que sea tarde. Recién desde la semana 3,
+  // que arrancar la temporada "en riesgo" no asusta a nadie.
+  if (state.week >= 3 && state.week <= state.seasonLength) {
+    const statuses = state.objectives.map((o) => ({ o, st: objectiveStatus(state, o, false) }));
+    const atRisk = statuses.filter(({ st }) => st === 'en_riesgo' || st === 'fallado');
+    if (atRisk.length > 0) {
+      items.push({
+        kind: 'alerta',
+        cls: atRisk.some(({ st }) => st === 'fallado') ? 'bad' : 'warn',
+        text:
+          atRisk.length === 1
+            ? `La comisión mira de reojo: "${atRisk[0].o.label}" viene flojo.`
+            : `${atRisk.length} objetivos de la comisión vienen flojos, y al cierre se cobran.`,
+        tile: 'objetivos',
+      });
+    }
   }
   if (state.secondTeam && !state.secondTeam.finished) {
     const fit = state.players.filter(

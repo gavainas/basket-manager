@@ -1,5 +1,5 @@
 import { BALANCE, clamp } from './balance';
-import { buildMarket, marketToPlayer } from '../data/market';
+import { buildMarket, marketToPlayer, ORIGIN_SITUATIONS } from '../data/market';
 import { createInitialRoster } from '../data/players';
 import { createRecruit } from '../data/recruits';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
@@ -616,8 +616,16 @@ export function signMarketPlayer(
     p.continuity[friend.id] = 'confirmado';
     extra = ` Y trajo a su amigo: se sumó ${friend.name} (${friend.position}).`;
   }
-  psLog(s, `Fichamos a ${mp.name} (${mp.position}, ${mp.previousTeam}).`);
-  logClubEvent(s, 'llegada', `Fichaje: llegó ${mp.name} (${mp.position}) desde ${mp.previousTeam}.`, 0);
+  const origin = ORIGIN_SITUATIONS[mp.previousTeam];
+  psLog(s, `Fichamos a ${mp.name} (${mp.position}).${origin ? ` ${origin}` : ` Viene de ${mp.previousTeam}.`}`);
+  logClubEvent(
+    s,
+    'llegada',
+    origin
+      ? `Fichaje: llegó ${mp.name} (${mp.position}). ${origin}`
+      : `Fichaje: llegó ${mp.name} (${mp.position}) desde ${mp.previousTeam}.`,
+    0
+  );
   s.news.unshift({ week: 0, text: `Se sumó ${mp.name} al plantel.`, tone: 'good' });
   return { ok: true, text: `¡${mp.name} es nuevo jugador del club!${extra}` };
 }

@@ -219,7 +219,9 @@ function playerSignals(p: Player): { cls: string; label: string }[] {
 
   const fisico =
     p.status === 'lesionado'
-      ? { cls: 'bad', label: `Lesionado (${p.injuryWeeks} semanas)` }
+      ? p.injuryReason === 'laboral'
+        ? { cls: 'bad', label: `Complicado con el laburo (${p.injuryWeeks} ${p.injuryWeeks === 1 ? 'semana' : 'semanas'})` }
+        : { cls: 'bad', label: `Lesionado (${p.injuryWeeks} ${p.injuryWeeks === 1 ? 'semana' : 'semanas'})` }
       : (p.suspendedWeeks ?? 0) > 0
         ? { cls: 'bad', label: 'Suspendido' }
         : p.physical <= BALANCE.callUp.exhaustedThreshold
@@ -301,7 +303,9 @@ export function Hub({ state }: { state: GameState }) {
 
   // Tras el partido (matchResult) la semana aún no avanzó: el "próximo" es el que sigue.
   const upcomingWeek = state.phase === 'matchResult' ? state.week + 1 : state.week;
-  const nextRivalId = upcomingWeek <= state.seasonLength ? state.schedule[upcomingWeek - 1] : null;
+  // En playoffs el rival de semis/final también vive en schedule (lo escribe
+  // advancePlayoffs), así que el Hub muestra ese cruce en vez de "sin partido".
+  const nextRivalId = state.schedule[upcomingWeek - 1] ?? null;
   const nextRival = nextRivalId ? state.rivals.find((r) => r.id === nextRivalId)! : null;
   const rivalClub = nextRivalId ? clubByLegacyId(state.world, nextRivalId) : undefined;
   const fixture = userFixtureOfWeek(state.world, upcomingWeek);

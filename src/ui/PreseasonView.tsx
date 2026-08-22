@@ -11,6 +11,7 @@ import {
 } from '../game/preseason';
 import { getPreseasonEvent } from '../game/preseasonEvents';
 import { DIVISIONS } from '../data/worldData';
+import { ORIGIN_SITUATIONS, originSentence } from '../data/market';
 import type { GameState, KnowledgeLevel, MarketPlayer, Player } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { formatMoney, starsFor } from './helpers';
@@ -124,6 +125,13 @@ function prevTeamNode(state: GameState, name: string) {
   ) : (
     <strong>{name}</strong>
   );
+}
+
+/** El origen completo: "Viene de <club>." o la situación de vida contada como tal. */
+function originNode(state: GameState, previousTeam: string) {
+  const situation = ORIGIN_SITUATIONS[previousTeam];
+  if (situation) return <>{situation}</>;
+  return <>Viene de {prevTeamNode(state, previousTeam)}.</>;
 }
 
 // ---------- Cabecera con la fecha límite ----------
@@ -402,7 +410,7 @@ function MarketSection({ state, dispatch }: Props) {
           </div>
         </div>
         <div className="player-desc">
-          Viene de {prevTeamNode(state, mp.previousTeam)}. {mp.knowledgeSource}
+          {originNode(state, mp.previousTeam)} {mp.knowledgeSource}
         </div>
         {(mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 && (
           <div className="human-note">
@@ -514,7 +522,7 @@ function MarketProfile({
 
         <div className="profile-body">
           <p style={{ margin: '0 0 0.6rem' }}>
-            Viene de {prevTeamNode(state, mp.previousTeam)}. {mp.knowledgeSource}
+            {originNode(state, mp.previousTeam)} {mp.knowledgeSource}
           </p>
 
           <h4 className="profile-subtitle">Lo que sabés (y lo que no)</h4>
@@ -618,7 +626,7 @@ function NegotiationModal({ state, dispatch }: Props) {
         <div className="modal">
           <h2>🤝 Negociación con {mp.name}</h2>
           <p className="event-text">
-            {mp.position} · {mp.age} años · {mp.height} cm · viene de {mp.previousTeam}.
+            {mp.position} · {mp.age} años · {mp.height} cm. {originSentence(mp.previousTeam)}
             <br />
             {mp.knowledgeSource}
             <br />

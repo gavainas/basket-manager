@@ -270,6 +270,7 @@ export const ACTIONS: ActionDef[] = [
       star.feeStatus = 'beca_total';
       star.weeksUnpaid = 0;
       star.motivation = clamp(star.motivation + A.scholarship.motivationBoost);
+      if (star.grievance?.cause === 'plata') sootheGrievance(s, star, 'hechos');
       if (star.status === 'molesto') {
         star.status = 'disponible';
         star.weeksUpset = 0;

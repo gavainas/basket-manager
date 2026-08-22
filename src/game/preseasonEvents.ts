@@ -308,17 +308,31 @@ export function getPreseasonEvent(id: string): PreseasonEventDef {
 
 /** Sortea el evento de la semana de pretemporada (o null). */
 export function rollPreseasonEvent(s: GameState, rng: Rng): PreseasonEventState | null {
-  const eligible = PRESEASON_EVENTS.filter((e) => e.canFire(s));
-  if (eligible.length === 0) return null;
-  const total = eligible.reduce((sum, e) => sum + e.weight, 0);
-  let roll = rng.range(0, total);
-  for (const def of eligible) {
-    roll -= def.weight;
-    if (roll <= 0) {
-      const targets = def.pickTargets ? def.pickTargets(s, rng) : [];
-      if (targets === null) continue;
+  const fireable = PRESEASON_EVENTS.filter((e) => e.canFire(s));
+  // La misma escena dos veces en la misma pretemporada rompe la ilusión: lo ya
+  // visto sale del sorteo. Solo si no queda nada fresco se relaja el filtro,
+  // antes que dejar la semana muda.
+  const used = new Set(s.preseason?.eventLog ?? []);
+  const fresh = fireable.filter((e) => !used.has(e.id));
+  let pool = fresh.length > 0 ? fresh : fireable;
+  // Y si el sorteado no tiene a quién tocarle, se re-sortea entre los demás.
+  while (pool.length > 0) {
+    const total = pool.reduce((sum, e) => sum + e.weight, 0);
+    let roll = rng.range(0, total);
+    let def = pool[pool.length - 1];
+    for (const cand of pool) {
+      roll -= cand.weight;
+      if (roll <= 0) {
+        def = cand;
+        break;
+      }
+    }
+    const targets = def.pickTargets ? def.pickTargets(s, rng) : [];
+    if (targets !== null) {
+      if (s.preseason) s.preseason.eventLog = [...(s.preseason.eventLog ?? []), def.id];
       return { defId: def.id, targetIds: targets };
     }
+    pool = pool.filter((e) => e !== def);
   }
   return null;
 }
