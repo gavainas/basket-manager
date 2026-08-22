@@ -145,6 +145,10 @@ function DeadlinePanel({ state, dispatch }: Props) {
   const fee = chosenOpt ? chosenOpt.fee : BALANCE.economy.inscriptionFee;
 
   const risks: string[] = [];
+  if (state.club.money < 0)
+    risks.push(
+      `La caja está en rojo ($${state.club.money}). Si cerrás así, la comisión va a tener que tapar el agujero, y eso cuesta prestigio.`
+    );
   if (confirmed.length < min)
     risks.push(`Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`);
   if (fee > 0 && state.club.money < fee)

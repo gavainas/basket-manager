@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useState } from 'react';
 import { gameReducer } from './state/gameReducer';
-import { clearSave, hasSave, loadGame, saveGame } from './persistence/storage';
+import { clearSave, loadGame, saveGame, saveStatus } from './persistence/storage';
 import { Hub } from './ui/Hub';
 import { ClubView } from './ui/ClubView';
 import { RosterView } from './ui/RosterView';
@@ -95,7 +95,8 @@ function MainMenu({
 }) {
   const [, forceRender] = useState(0);
   const [difficulty, setDifficulty] = useState<AbsenceDifficulty>('medio');
-  const saved = hasSave();
+  const status = saveStatus();
+  const saved = status === 'ok';
 
   return (
     <div className="menu-screen">
@@ -128,6 +129,12 @@ function MainMenu({
           <p className="menu-diff-desc">{DIFFICULTY_INFO[difficulty].desc}</p>
         </div>
         <div className="menu-buttons">
+          {status === 'incompatible' && (
+            <p style={{ color: 'var(--bad)', fontWeight: 600, margin: 0 }}>
+              ⚠ Hay una partida guardada de una versión que este juego ya no puede leer. No se va a cargar; si empezás
+              una nueva, se pierde.
+            </p>
+          )}
           {saved && (
             <button className="primary" onClick={onContinue}>
               Continuar partida
@@ -137,7 +144,7 @@ function MainMenu({
             Nueva partida · armá el plantel en la pretemporada
           </button>
           <button onClick={() => onNew(difficulty)}>Nueva partida directa · plantel ya armado</button>
-          {saved && (
+          {status !== 'none' && (
             <button
               className="danger"
               onClick={() =>
@@ -225,7 +232,8 @@ export default function App() {
 
   if (!state) {
     const startNew = (type: 'NEW_GAME' | 'NEW_GAME_PRESEASON', difficulty: AbsenceDifficulty) => {
-      if (hasSave()) {
+      // También avisa si el guardado es de una versión ilegible: pisa igual.
+      if (saveStatus() !== 'none') {
         setConfirmReq({
           title: 'Hay una partida guardada',
           message: 'Si empezás de nuevo, la partida guardada se sobrescribe y se pierde.',

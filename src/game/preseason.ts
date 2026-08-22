@@ -968,6 +968,19 @@ export function closePreseason(state: GameState): GameState {
     }
     psSpend(s, `Inscripción a ${target.leagueName}`, fee);
   }
+  // La liga de la plaza es gratis, pero la caja igual puede haber quedado en
+  // rojo por el mantenimiento: nadie arranca una temporada ya quebrado (antes
+  // se entraba con caja negativa y el game over caía en la primera semana,
+  // sin aviso). La comisión tapa el rojo, con el mismo costo de favores.
+  if (s.club.money < 0) {
+    const needed = -s.club.money;
+    psEarn(s, 'Aporte extraordinario de la comisión', needed);
+    s.club.socialPrestige = clamp(s.club.socialPrestige - BALANCE.preseason.bailoutSocialHit);
+    s.club.sportPrestige = clamp(s.club.sportPrestige - BALANCE.preseason.bailoutSportHit);
+    consequences.push(
+      `La caja quedó en rojo y la comisión tapó el agujero ($${needed}) para poder arrancar. El club empieza debiendo favores (prestigio -${BALANCE.preseason.bailoutSocialHit}).`
+    );
+  }
 
   const { strengths, risks } = computeStrengthsAndRisks(s);
   const seasonPromises = s.promises.filter((pr) => pr.season === s.seasonNumber);

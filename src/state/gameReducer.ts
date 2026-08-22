@@ -4,7 +4,9 @@ import {
   availableForMatch,
   finishLiveMatch,
   matchAbsentIds,
+  noStartIds,
   playQuarter,
+  sanitizeLineup,
   startLiveMatch,
   substitute,
   suggestRotation,
@@ -163,12 +165,19 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
     case 'CALLUP_ACTION': {
       if (state.phase !== 'callUp') return state;
       const rng = new Rng(state.seed);
-      return attemptAbsenceAction({ ...state, seed: rng.nextSeed() }, action.playerId, action.actionId, rng);
+      const next = attemptAbsenceAction({ ...state, seed: rng.nextSeed() }, action.playerId, action.actionId, rng);
+      // La disponibilidad pudo cambiar (vuelve, llega tarde): el quinteto se repara.
+      if (next !== state) sanitizeLineup(next);
+      return next;
     }
     case 'CALLUP_EXHAUSTED': {
       if (state.phase !== 'callUp') return state;
       const rng = new Rng(state.seed);
-      return resolveExhausted(state, action.playerId, action.decision, rng);
+      const next = resolveExhausted(state, action.playerId, action.decision, rng);
+      // Descansarlo lo saca del partido: si era titular sugerido, se repara el
+      // quinteto acá (antes quedaba "fantasma" y el partido arrancaba con 4).
+      if (next !== state) sanitizeLineup(next);
+      return next;
     }
     case 'REGISTER_SECOND_TEAM': {
       if (state.phase !== 'planning') return state;
@@ -192,7 +201,9 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
     }
     case 'PROCEED_TO_LINEUP': {
       if (state.phase !== 'callUp') return state;
-      return { ...state, phase: 'lineup' };
+      const next: GameState = { ...structuredClone(state), phase: 'lineup' };
+      sanitizeLineup(next);
+      return next;
     }
     case 'TOGGLE_STARTER': {
       if (state.phase !== 'lineup') return state;
@@ -228,12 +239,9 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
     }
     case 'AUTO_LINEUP': {
       if (state.phase !== 'lineup') return state;
-      const absent = matchAbsentIds(state);
       // Para sugerir titulares, los que llegan tarde cuentan como ausentes.
-      const noStart = new Set(absent);
-      for (const c of state.callUp) if (c.lateArrival) noStart.add(c.playerId);
-      const starters = suggestStarters(state.players, noStart);
-      return { ...state, starters, rotation: suggestRotation(state.players, starters, absent) };
+      const starters = suggestStarters(state.players, noStartIds(state));
+      return { ...state, starters, rotation: suggestRotation(state.players, starters, matchAbsentIds(state)) };
     }
     case 'CLEAR_LINEUP': {
       if (state.phase !== 'lineup') return state;
@@ -241,8 +249,12 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
     }
     case 'START_MATCH': {
       if (state.phase !== 'lineup') return state;
-      const rng = new Rng(state.seed);
-      return startLiveMatch({ ...state, seed: rng.nextSeed() }, rng);
+      // Última red antes del salto inicial: si algún titular quedó inválido
+      // por el camino, se repara acá en vez de regalar un forfeit.
+      const clean: GameState = structuredClone(state);
+      sanitizeLineup(clean);
+      const rng = new Rng(clean.seed);
+      return startLiveMatch({ ...clean, seed: rng.nextSeed() }, rng);
     }
     case 'SET_TACTIC': {
       if (state.phase !== 'match' || !state.live || state.live.finished) return state;

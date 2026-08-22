@@ -8,7 +8,7 @@ import { getEvent, rollEvent, rollTrialPractice, takeScheduledEvent } from './ev
 import { maybeFriendMessage } from './friendsAbroad';
 import { decayGrievance, grievanceNote, isBurning, isHot } from './mood';
 import { generateObjectives } from './objectives';
-import { activePlayers, matchAbsentIds, suggestRotation, suggestStarters } from './match';
+import { activePlayers, matchAbsentIds, noStartIds, suggestRotation, suggestStarters } from './match';
 import { rollCallUp } from './callup';
 import { buildCoachMarket, coachWeeklyTick } from './coach';
 import { advancePlayoffs } from './playoffs';
@@ -114,9 +114,9 @@ export function confirmActions(state: GameState): GameState {
   // Convocatoria: se confirma quién viene al partido (y quién falla).
   rollCallUp(s, rng);
   s.phase = 'callUp';
-  const absent = matchAbsentIds(s);
-  s.starters = suggestStarters(s.players, absent);
-  s.rotation = suggestRotation(s.players, s.starters, absent);
+  // Los que llegan al segundo tiempo no se sugieren de titulares: solo banco.
+  s.starters = suggestStarters(s.players, noStartIds(s));
+  s.rotation = suggestRotation(s.players, s.starters, matchAbsentIds(s));
   s.seed = rng.nextSeed();
   return s;
 }
@@ -138,9 +138,8 @@ export function resolveEvent(state: GameState, optionIndex: number): GameState {
     if (p) logPlayerEvent(p, s.seasonNumber, Math.min(s.week, s.seasonLength), 'social', `${def.title}. ${outcome}`);
   }
   s.pendingEvent = null;
-  const absent = matchAbsentIds(s);
-  s.starters = suggestStarters(s.players, absent);
-  s.rotation = suggestRotation(s.players, s.starters, absent);
+  s.starters = suggestStarters(s.players, noStartIds(s));
+  s.rotation = suggestRotation(s.players, s.starters, matchAbsentIds(s));
   s.seed = rng.nextSeed();
   return s;
 }

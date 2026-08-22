@@ -1,6 +1,7 @@
 // Nota del partido por jugador: producción según el rol, rendimiento respecto
 // a su nivel y contexto del resultado. Centraliza también las frases del informe.
 
+import { BALANCE } from './balance';
 import type { Position } from './types';
 
 export interface RatingInput {
@@ -33,22 +34,23 @@ const ROLE_WEIGHTS: Record<Position, { ast: number; reb: number }> = {
 };
 
 export function computeRating(input: RatingInput): PlayerRating {
+  const R = BALANCE.rating;
   const w = ROLE_WEIGHTS[input.position];
   const value = input.points + input.assists * w.ast + input.rebounds * w.reb;
   // Tope a la producción por minuto: un cameo caliente no vale un 10.
-  const perMin = Math.min(0.78, value / Math.max(1, input.minutes));
+  const perMin = Math.min(R.perMinCap, value / Math.max(1, input.minutes));
 
   // Producción por minuto llevada a nota; el día bueno/malo (perf vs nivel)
   // aproxima la eficiencia y la defensa que la planilla no registra.
   const hot = input.perf / Math.max(1, input.effective); // 0.78..1.22
-  let rating = 3.0 + perMin * 7.2 + (hot - 1) * 4 + (input.won ? 0.4 : -0.4);
-  if (input.won && input.margin > 15) rating += 0.2;
+  let rating = R.base + perMin * R.perMinSlope + (hot - 1) * R.hotSpan + (input.won ? R.winBonus : -R.winBonus);
+  if (input.won && input.margin > 15) rating += R.blowoutBonus;
 
   // Con pocos minutos la muestra es chica: la nota se acerca al "cumplió".
-  const sample = Math.min(1, input.minutes / 16);
-  rating = 5.6 * (1 - sample) + rating * sample;
+  const sample = Math.min(1, input.minutes / R.sampleMinutes);
+  rating = R.cameoAnchor * (1 - sample) + rating * sample;
 
-  if (input.mvp) rating = Math.max(rating, 8);
+  if (input.mvp) rating = Math.max(rating, R.mvpFloor);
   const final = Math.max(1, Math.min(10, Math.round(rating)));
   return { rating: final, comment: buildComment(input, final) };
 }

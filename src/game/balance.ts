@@ -30,6 +30,23 @@ export const BALANCE = {
     forfeitScore: [20, 60] as [number, number],
   },
 
+  // La nota del partido (1-10). Recalibrada en la 2ª pasada (ago 2026): con la
+  // fórmula vieja (base 3.0, pendiente 7.2, tope 0.78) la media de un titular
+  // era 8.2 y las notas 1-5 no existían (1.1% medido con sim:notas). Toda la
+  // producción del equipo se reparte entre 5, así que el tope por minuto se
+  // tocaba casi siempre. Objetivo: media ~6.5, la banda 3-6 viva, el 10 raro.
+  rating: {
+    perMinCap: 1.0, // tope de producción por minuto que puntúa (el 10 existe, pero es leyenda)
+    base: 2.4, // nota = base + perMin × pendiente + (día − 1) × hotSpan
+    perMinSlope: 5.6,
+    hotSpan: 4, // el día bueno/malo (perf vs nivel) aproxima eficiencia y defensa
+    winBonus: 0.4, // ganar/perder mueve la nota ±
+    blowoutBonus: 0.2, // paliza a favor
+    sampleMinutes: 16, // con menos muestra, la nota tira al "cumplió"
+    cameoAnchor: 5.4,
+    mvpFloor: 8, // la figura del partido nunca baja de esto
+  },
+
   // Dificultad de faltas (se elige al crear la partida): multiplica las
   // ausencias y lesiones. En difícil, armar el equipo con los que vinieron
   // es el juego; en fácil, casi siempre están todos.
@@ -147,6 +164,12 @@ export const BALANCE = {
   matchEffects: {
     winMotivation: 5,
     lossMotivation: -5,
+    // Techo blando del ánimo: ganar seguido ya no clava a todos en 99. El
+    // empujón positivo rinde menos cuanto más arriba está la motivación
+    // (factor = (100 − motivación) / span, nunca menos que minFactor).
+    // Las derrotas pegan completas: la mala racha no tiene amortiguador.
+    moraleSoftcapSpan: 45,
+    moraleSoftcapMinFactor: 0.5,
     winSportPrestige: 3,
     lossSportPrestige: -2,
     upsetWinBonus: 3, // extra por ganarle a un rival más fuerte

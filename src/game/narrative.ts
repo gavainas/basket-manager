@@ -113,9 +113,10 @@ export function rollRefIncident(
     return 'Los jueces dejaron jugar este cuarto y nadie se acordó de ellos. Bajó la temperatura.';
   }
 
-  const hothead =
-    onCourt.find((p) => p.personality === 'competitivo' || p.personality === 'protagonista') ??
-    rng.pick(onCourt);
+  // Entre los calentones en cancha se sortea: que no sea siempre el mismo el
+  // que acumula todas las técnicas de la temporada.
+  const hotheads = onCourt.filter((p) => p.personality === 'competitivo' || p.personality === 'protagonista');
+  const hothead = hotheads.length > 0 ? rng.pick(hotheads) : rng.pick(onCourt);
 
   const roll = rng.next();
   if (roll < 0.4 && qIndex < 3) {
@@ -141,7 +142,15 @@ export function rollRefIncident(
         ? `Técnica para ${hothead.name}… la tercera de la temporada. Los jueces anotan con ganas: se viene un informe a la liga.`
         : nth === 2
           ? `Otra técnica para ${hothead.name}, segunda en el año. En la mesa de control ya lo tienen fichado: una más y hay suspensión.`
-          : `Técnica para ${hothead.name} por protestar. El equipo siente que el fallo fue injusto; el árbitro, no.`;
+          : freshIncident(
+              live,
+              [
+                `Técnica para ${hothead.name} por protestar. El equipo siente que el fallo fue injusto; el árbitro, no.`,
+                `${hothead.name} le dijo a los jueces lo que nadie se anima: técnica y a callarse.`,
+                `Aplauso irónico de ${hothead.name} tras el fallo: el árbitro no se lo dejó pasar. Técnica.`,
+              ],
+              rng
+            );
     live.pendingIncident = {
       kind: 'tecnica',
       playerId: hothead.id,
@@ -169,6 +178,14 @@ export function resolveIncident(state: GameState, choice: number, rng: Rng): Gam
 
   const note = (text: string) => live.pendingSubNotes.push(text);
 
+  // Quién puede entrar de verdad: sano y, si avisó que llega al segundo
+  // tiempo, recién desde el 3er cuarto.
+  const canEnter = (id: string) => {
+    const p = s.players.find((x) => x.id === id);
+    if (!p || p.status === 'lesionado' || p.leftClub) return false;
+    return live.quarters.length >= 2 || !(live.lateIds ?? []).includes(id);
+  };
+
   if (inc.kind === 'falta_dudosa') {
     if (choice === 0) {
       live.refTension = Math.max(0, (live.refTension ?? 0) - 2);
@@ -183,7 +200,8 @@ export function resolveIncident(state: GameState, choice: number, rng: Rng): Gam
     }
   } else if (inc.kind === 'tecnica') {
     if (choice === 0 && inc.playerId) {
-      const bench = live.squad.filter((id) => !live.onCourt.includes(id));
+      // Un lesionado en este mismo partido no puede volver a entrar por acá.
+      const bench = live.squad.filter((id) => !live.onCourt.includes(id) && canEnter(id));
       const inId = bench.sort((a, b) => (live.playerFresh[b] ?? 0) - (live.playerFresh[a] ?? 0))[0];
       if (inId && live.onCourt.includes(inc.playerId)) {
         live.onCourt = live.onCourt.map((id) => (id === inc.playerId ? inId : id));

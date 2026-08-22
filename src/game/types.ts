@@ -311,8 +311,10 @@ export interface LiveMatchState {
   rageBoost?: boolean;
   /** Incidencia arbitral esperando una decisión del manager. */
   pendingIncident?: PendingRefIncident | null;
-  /** Textos de incidencia ya usados en este partido: no se repiten. */
+  /** Textos de incidencia y de color ya usados en este partido: no se repiten. */
   usedIncidents?: string[];
+  /** Citados que llegan para el segundo tiempo: hasta el 3er cuarto no entran. */
+  lateIds?: string[];
   /** Piloto automático de cambios entre cuartos. */
   autoRotation?: boolean;
   /** Directiva del piloto: ganar como sea o que todos sumen minutos. */

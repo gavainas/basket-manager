@@ -604,7 +604,14 @@ function LineupPanel({ state, dispatch }: Props) {
 
   const starters = state.players.filter((p) => state.starters.includes(p.id));
   const count = starters.length;
-  const canPlay = count === 5;
+  // Los que llegan al segundo tiempo cuentan para la planilla pero no pueden
+  // arrancar: si por ellos no se llega a 5 titulares, se arranca corto (nunca
+  // más el botón muerto sin explicación).
+  const lateIds = new Set(state.callUp.filter((c) => c.lateArrival && c.status === 'confirmado').map((c) => c.playerId));
+  const startable = available.filter((p) => !lateIds.has(p.id));
+  const maxStarters = Math.min(5, startable.length);
+  const shortStart = maxStarters < 5 && available.length >= 5;
+  const canPlay = count === 5 || (shortStart && count === maxStarters && count > 0);
   const forfeitRisk = available.length < 5;
 
   const rotationIds = state.rotation.filter(
@@ -673,7 +680,9 @@ function LineupPanel({ state, dispatch }: Props) {
             {style.label}
           </span>
           <Tip text={TIPS.titulares}>
-            <span className={`chip ${count === 5 ? 'good' : 'warn'}`}>Titulares: {count}/5</span>
+            <span className={`chip ${count === 5 || (shortStart && count === maxStarters) ? 'good' : 'warn'}`}>
+              Titulares: {count}/{shortStart ? maxStarters : 5}
+            </span>
           </Tip>
           <Tip text={TIPS.banco}>
             <span className={`chip ${rotationIds.length > 0 ? 'good' : 'warn'}`}>
@@ -701,6 +710,19 @@ function LineupPanel({ state, dispatch }: Props) {
         <div className="card" style={{ borderColor: 'var(--bad)', marginBottom: '1rem' }}>
           <strong style={{ color: 'var(--bad)' }}>
             Solo hay {available.length} jugadores disponibles: no llega a 5. Si jugás así, se pierde por forfeit.
+          </strong>
+        </div>
+      )}
+      {shortStart && (
+        <div className="card" style={{ borderColor: 'var(--warn)', marginBottom: '1rem' }}>
+          <strong style={{ color: 'var(--warn)' }}>
+            Solo {maxStarters} pueden arrancar:{' '}
+            {available
+              .filter((p) => lateIds.has(p.id))
+              .map((p) => p.name)
+              .join(' y ')}{' '}
+            llega{available.filter((p) => lateIds.has(p.id)).length > 1 ? 'n' : ''} para el segundo tiempo. Se arranca
+            corto y entra{available.filter((p) => lateIds.has(p.id)).length > 1 ? 'n' : ''} en el 3er cuarto.
           </strong>
         </div>
       )}
@@ -752,6 +774,11 @@ function LineupPanel({ state, dispatch }: Props) {
                         Al borde
                       </span>
                     )}
+                    {avail && lateIds.has(p.id) && (
+                      <span className="chip warn" style={{ marginLeft: '0.4rem' }} title="Solo puede entrar desde el banco, en el segundo tiempo">
+                        🕘 2do tiempo
+                      </span>
+                    )}
                   </div>
                   <div className="lp-meta">
                     <span title="Físico">💪 {Math.round(p.physical)}</span>
@@ -766,8 +793,8 @@ function LineupPanel({ state, dispatch }: Props) {
                 <div className="lp-btns">
                   <button
                     className={`mini${isStarter ? ' on' : ''}`}
-                    title="Titular"
-                    disabled={!avail || (starterFull && !isStarter)}
+                    title={lateIds.has(p.id) ? 'Llega al segundo tiempo: no puede ser titular' : 'Titular'}
+                    disabled={!avail || lateIds.has(p.id) || (starterFull && !isStarter)}
                     onClick={() => dispatch({ type: 'TOGGLE_STARTER', id: p.id })}
                   >
                     T
@@ -865,7 +892,13 @@ function LineupPanel({ state, dispatch }: Props) {
         >
           {forfeitRisk && !canPlay ? 'Presentarse igual (forfeit) →' : '🏀 Ir al partido →'}
         </button>
-        {!canPlay && !forfeitRisk && <span className="hint">Elegí exactamente 5 titulares (botón T).</span>}
+        {!canPlay && !forfeitRisk && (
+          <span className="hint">
+            {shortStart
+              ? `Marcá como titulares a los ${maxStarters} que pueden arrancar (botón T).`
+              : 'Elegí exactamente 5 titulares (botón T).'}
+          </span>
+        )}
         {canPlay && (
           <span className="hint">
             Arrastrá jugadores a los puestos de la cancha o al banco (también sirven los botones T/R). Click en la
@@ -1275,7 +1308,8 @@ function LiveMatchPanel({ state, dispatch }: Props) {
               <div className="quarter-head">
                 {q.overtime ? 'Suplementario' : `${Q_LABELS[i]} cuarto`} · {q.for}-{q.against}
                 <span className="chip" style={{ marginLeft: '0.5rem' }}>
-                  {q.defense === 'hombre' ? 'Hombre' : 'Zona'} · {q.attack === 'estrella' ? 'Estrella' : 'Equipo'}
+                  {q.defense === 'presion' ? 'Presión' : q.defense === 'hombre' ? 'Hombre' : 'Zona'} ·{' '}
+                  {q.attack === 'estrella' ? 'Estrella' : q.attack === 'correr' ? 'Correr' : 'Equipo'}
                 </span>
               </div>
               <ul className="reason-list">
