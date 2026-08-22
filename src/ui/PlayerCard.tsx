@@ -5,7 +5,7 @@ import { Bar } from './Bar';
 import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
 import { Tip, TIPS } from './Tip';
-import { feeChip, roleLabel, starsFor, statusChip } from './helpers';
+import { feeChip, roleLabel, statusChip } from './helpers';
 
 interface Props {
   player: Player;
@@ -61,7 +61,6 @@ export function PlayerCard({ player: p, state, selectable, selected, inRotation,
           <Tip text={TIPS.valoracion}>
             <div className="num">≈{p.visibleRating}</div>
           </Tip>
-          <div className="approx">{starsFor(p.visibleRating)}</div>
         </div>
       </div>
 
@@ -83,7 +82,7 @@ export function PlayerCard({ player: p, state, selectable, selected, inRotation,
         <span className={`chip ${fee.cls}`}>{fee.label}</span>
         <span className="chip">{roleLabel(p)}</span>
         {p.lastRating !== null && <span className="chip accent">Último partido: {p.lastRating}/10</span>}
-        {(mvpCount ?? 0) > 0 && <span className="chip accent">⭐ MVP ×{mvpCount}</span>}
+        {(mvpCount ?? 0) > 0 && <span className="chip accent">MVP ×{mvpCount}</span>}
         {selectable && selected && <span className="chip accent">Titular</span>}
         {selectable && inRotation && <span className="chip rotation-chip">Rotación</span>}
       </div>

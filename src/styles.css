@@ -77,7 +77,7 @@ button {
   border: 1px solid var(--border);
   background: var(--panel-2);
   color: var(--text);
-  border-radius: 8px;
+  border-radius: var(--radius);
   padding: 0.55rem 1rem;
   font-size: 0.95rem;
   transition: background 0.15s, border-color 0.15s, transform 0.05s;
@@ -179,7 +179,7 @@ button.danger {
   font-family: var(--display);
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   color: var(--text-faint);
   margin-top: 0.2rem;
 }
@@ -206,7 +206,7 @@ button.danger {
   color: var(--text-light);
   font-family: var(--display);
   font-weight: 500;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -276,7 +276,7 @@ button.danger {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   padding: 0.5rem 0.8rem 0.45rem;
   display: flex;
   align-items: center;
@@ -358,7 +358,7 @@ button.danger {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.11em;
-  font-size: 0.66rem;
+  font-size: 0.65rem;
   color: var(--text-faint);
   display: flex;
   align-items: center;
@@ -373,7 +373,7 @@ button.danger {
 .recursos .recurso .v {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 1.45rem;
+  font-size: 1.5rem;
   line-height: 1.15;
   color: var(--text-light);
   font-variant-numeric: tabular-nums;
@@ -385,7 +385,7 @@ button.danger {
 .recursos .recurso .v.bad { color: var(--bad); }
 
 .recursos .recurso .s {
-  font-size: 0.66rem;
+  font-size: 0.65rem;
   color: var(--text-faint);
   line-height: 1.25;
 }
@@ -408,7 +408,7 @@ button.danger {
   font-family: var(--display);
   text-transform: uppercase;
   letter-spacing: 0.09em;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   padding: 0.6rem 1.2rem;
   white-space: nowrap;
 }
@@ -452,8 +452,12 @@ button.danger {
 .sec-ajustes { --sec: var(--sec-ajustes); }
 
 /* La banda sangra hasta el borde con márgenes negativos: así ninguna card
-   necesita un div nuevo envolviendo su cuerpo. */
-.vista .card > h3:first-child {
+   necesita un div nuevo envolviendo su cuerpo. El :first-child sigue andando
+   solo, pero la clase explícita `card-band` es el gancho robusto: si la card
+   arranca con otra cosa (una cabecera ilustrada, un aviso), el h3 la declara
+   y la banda no se pierde en silencio. */
+.vista .card > h3:first-child,
+.vista .card > h3.card-band {
   background: var(--sec);
   color: var(--text-light);
   font-weight: 600;
@@ -461,7 +465,7 @@ button.danger {
   letter-spacing: 0.08em;
   margin: -1rem -1rem 0.9rem;
   padding: 0.5rem 0.9rem;
-  border-radius: 3px 3px 0 0;
+  border-radius: var(--radius) var(--radius) 0 0;
   display: flex;
   align-items: center;
   gap: 0.45rem;
@@ -618,7 +622,7 @@ button.danger {
 .hub-tile-label {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 1.02rem;
+  font-size: 1rem;
   line-height: 1.1;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -627,7 +631,7 @@ button.danger {
 /* Dos líneas: el aviso tiene que poder leerse sin entrar, y con una sola
    "La caja no cubre la semana: $90 contra…" se cortaba justo en el número. */
 .hub-tile-note {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   line-height: 1.3;
   color: var(--text-dim);
   display: -webkit-box;
@@ -677,7 +681,7 @@ button.danger {
   margin: 0;
   font-family: var(--display);
   font-weight: 600;
-  font-size: 1.55rem;
+  font-size: 1.5rem;
   line-height: 1.05;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -708,7 +712,7 @@ button.danger {
 
 .hub-rival-nombre {
   font-family: var(--display);
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
@@ -728,7 +732,7 @@ button.danger {
 
 .hub-caja-k {
   display: block;
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -752,7 +756,7 @@ button.danger {
 
 .hub-cifras .k {
   display: block;
-  font-size: 0.66rem;
+  font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -856,9 +860,10 @@ button.danger {
   outline-offset: 1px;
 }
 
-/* Retrato ilustrado (ver ui/Retrato.tsx). El arte viene recortado, sin fondo:
-   el azul lo pone esta caja, plano y siempre el mismo — no es el color del club
-   ni el de una sección, es el fondo de la foto de ficha. */
+/* La placa de foto carnet de la tira del plantel: azul plano y siempre el
+   mismo — no es el color del club ni el de una sección, es el fondo de la
+   foto de ficha. Adentro va el retrato SVG por seed (la única cara del
+   jugador en todo el juego; el set ilustrado por arquetipo se retiró). */
 .retrato {
   display: block;
   flex: none;
@@ -868,28 +873,12 @@ button.danger {
   overflow: hidden;
 }
 
-.retrato img {
-  width: 100%;
-  height: 100%;
+.retrato svg {
   display: block;
-  object-fit: cover;
-}
-
-/* Variantes para los repetidos del mismo arquetipo (ver ui/Retrato.tsx). */
-.retrato.v1 {
-  background: linear-gradient(180deg, #4a7a94 0%, #2f5a6d 100%);
-}
-
-.retrato.v1 img {
-  transform: scaleX(-1);
-}
-
-.retrato.v2 {
-  background: linear-gradient(180deg, #3a5d92 0%, #27406b 100%);
 }
 
 .hub-jug-pos {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   letter-spacing: 0.1em;
   color: var(--text-faint);
 }
@@ -1003,14 +992,14 @@ button.danger {
 .stat-tile .label {
   font-family: var(--display);
   color: var(--text-faint);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.13em;
 }
 
 .stat-tile .value {
   font-family: var(--display);
-  font-size: 1.55rem;
+  font-size: 1.5rem;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
   margin-top: 0.1rem;
@@ -1072,7 +1061,7 @@ button.danger {
   display: inline-block;
   padding: 0.12rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   border: 1px solid var(--border);
   color: var(--text-dim);
@@ -1180,9 +1169,10 @@ button.danger {
 }
 
 .player-head .rating .num {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 800;
-  color: var(--accent);
+  /* Tinta, no naranja: el acento es de la acción, no de cada fila. */
+  color: var(--text);
 }
 
 .player-head .rating .approx {
@@ -1214,7 +1204,7 @@ button.danger {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
 }
 
 th, td {
@@ -1226,7 +1216,7 @@ th, td {
 
 th {
   color: var(--text-dim);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -1251,7 +1241,7 @@ td.num, th.num {
 .news-list li {
   padding: 0.45rem 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   display: flex;
   gap: 0.6rem;
 }
@@ -1446,6 +1436,7 @@ td.num, th.num {
   border-radius: 50%;
   background: var(--accent-soft);
   border: 1px solid var(--accent);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1460,7 +1451,7 @@ td.num, th.num {
 
 .event-person {
   text-align: center;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-dim);
   max-width: 76px;
 }
@@ -1548,7 +1539,7 @@ td.num, th.num {
 }
 
 .chat-name {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--accent);
   margin-bottom: 0.1rem;
@@ -1578,6 +1569,41 @@ td.num, th.num {
 table.planilla th {
   border-bottom: 3px double var(--text-dim);
   color: var(--text);
+}
+
+/* El glifo grande de las pantallas de cierre (temporada, pretemporada). */
+.outcome-glyph {
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+}
+
+/* La tarjeta roja de la suspensión: el objeto de verdad, no un emoji. */
+.tarjeta-roja {
+  display: inline-block;
+  width: 11px;
+  height: 15px;
+  background: var(--bad);
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+/* Encabezados ordenables de la planilla: click y la tabla responde. */
+table.planilla th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+table.planilla th.sortable:hover {
+  color: var(--sec-plantel);
+}
+
+table.planilla th.sorted {
+  color: var(--sec-plantel);
+}
+
+.sort-arrow {
+  margin-left: 0.2rem;
+  font-size: 0.6rem;
 }
 
 table.planilla tr:last-child td {
@@ -1656,11 +1682,17 @@ tr.sheet-group td {
 
 .sheet-name .sheet-mvp {
   margin-left: 0.3rem;
-  font-size: 0.7rem;
+  color: var(--text-dim);
 }
 
+.sheet-name .sheet-mvp .ico {
+  vertical-align: -2px;
+}
+
+/* Tinta, no naranja: el acento está reservado para la acción y catorce
+   valoraciones por pantalla se lo comían (ver SISTEMA_VISUAL.md). */
 .sheet-rating {
-  color: var(--accent);
+  color: var(--text);
   font-weight: 700;
 }
 
@@ -1687,7 +1719,7 @@ tr.sheet-group td {
 }
 
 .sheet-media-num {
-  font-size: 1.9rem;
+  font-size: 2rem;
   font-weight: 800;
   color: var(--accent);
   line-height: 1;
@@ -1719,14 +1751,14 @@ tr.sheet-group td {
 }
 
 .court-slot .court-name {
-  font-size: 0.66rem;
+  font-size: 0.65rem;
   color: var(--text-light);
   white-space: nowrap;
   text-shadow: 0 1px 3px rgba(20, 32, 44, 0.85);
 }
 
 .court-slot .court-rating {
-  font-size: 0.66rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: #ffc078; /* el naranja no llega sobre la cancha; se aclara para leerse */
   text-shadow: 0 1px 3px rgba(20, 32, 44, 0.85);
@@ -1762,7 +1794,7 @@ tr.sheet-group td {
 
 .modal h2 {
   color: var(--accent);
-  font-size: 1.15rem;
+  font-size: 1.1rem;
 }
 
 .modal .event-text {
@@ -1868,7 +1900,7 @@ tr.sheet-group td {
 
 /* Versión del build (hash + fecha del commit): para saber qué se está jugando. */
 .menu-screen .menu-version {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   opacity: 0.65;
   margin-top: 0.4rem;
 }
@@ -1903,7 +1935,7 @@ tr.sheet-group td {
 
 .menu-screen .menu-buttons button {
   padding: 0.8rem;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
 }
 
 .season-end {
@@ -1953,7 +1985,7 @@ tr.sheet-group td {
 
 .section-title {
   margin: 1.4rem 0 0.7rem;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
 }
 
 .muted {
@@ -2038,7 +2070,7 @@ tr.sheet-group td {
 }
 
 .gallery-tile .g-name {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -2046,7 +2078,7 @@ tr.sheet-group td {
 }
 
 .gallery-tile .g-age {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-dim);
 }
 
@@ -2077,7 +2109,7 @@ tr.sheet-group td {
   position: relative;
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 0.7rem 0.4rem 0.6rem;
   display: flex;
   flex-direction: column;
@@ -2095,7 +2127,7 @@ tr.sheet-group td {
   left: 0;
   background: var(--bg-soft);
   color: var(--text-dim);
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.3px;
   padding: 0.15rem 0.45rem;
@@ -2130,7 +2162,7 @@ tr.sheet-group td {
 }
 .qs-name {
   margin-top: 0.35rem;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   line-height: 1.15;
   min-height: 2.1em;
@@ -2142,7 +2174,7 @@ tr.sheet-group td {
   font-weight: 500;
 }
 .qs-ht {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   color: var(--text-dim);
   margin-bottom: 0.4rem;
 }
@@ -2162,14 +2194,9 @@ tr.sheet-group td {
   height: 100%;
   background: var(--good);
 }
-.qs-stars {
-  color: var(--accent);
-  font-size: 0.8rem;
-  letter-spacing: 1px;
-}
 .qs-media {
   margin-top: 0.25rem;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: var(--text);
 }
@@ -2185,7 +2212,7 @@ tr.sheet-group td {
     height: 44px;
   }
   .qs-name {
-    font-size: 0.68rem;
+    font-size: 0.7rem;
   }
 }
 
@@ -2224,7 +2251,7 @@ button.small {
   gap: 0.6rem;
   align-items: center;
   padding: 0.45rem 0.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius);
   border: 1px solid transparent;
   border-bottom: 1px solid var(--border);
 }
@@ -2249,7 +2276,7 @@ button.small {
   font-weight: 800;
   color: var(--text-dim);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius);
   text-align: center;
   padding: 0.2rem 0;
 }
@@ -2260,7 +2287,7 @@ button.small {
 
 .lp-name {
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2280,7 +2307,7 @@ button.small {
 
 .lp-rating .num {
   font-weight: 800;
-  color: var(--accent);
+  color: var(--text);
   font-size: 1rem;
 }
 
@@ -2300,7 +2327,7 @@ button.mini {
   padding: 0;
   font-weight: 800;
   font-size: 0.85rem;
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 
 button.mini.on {
@@ -2518,7 +2545,7 @@ button.mini.blue.on {
 }
 
 .tactic-label {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-dim);
@@ -2528,7 +2555,7 @@ button.mini.blue.on {
 .segmented {
   display: flex;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   overflow: hidden;
   width: fit-content;
   max-width: 100%;
@@ -2575,17 +2602,17 @@ button.mini.blue.on {
   gap: 0.5rem;
   align-items: center;
   padding: 0.32rem 0.45rem;
-  border-radius: 8px;
+  border-radius: var(--radius);
   border: 1px solid transparent;
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
 }
 
 .sub-pts {
   text-align: right;
   color: var(--text);
   font-variant-numeric: tabular-nums;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   white-space: nowrap;
 }
 
@@ -2652,7 +2679,7 @@ button.mini.blue.on {
   width: 280px;
   background: var(--panel-2);
   border: 1px solid var(--accent);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 0.7rem 0.85rem;
   z-index: 70;
   box-shadow: var(--sombra-alta);
@@ -2672,7 +2699,7 @@ button.mini.blue.on {
 }
 
 .hc-rating {
-  color: var(--accent);
+  color: var(--text);
   font-weight: 800;
 }
 
@@ -2682,7 +2709,7 @@ button.mini.blue.on {
 }
 
 .hc-desc {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-style: italic;
   color: var(--text-dim);
   margin: 0.35rem 0 0.5rem;
@@ -2701,7 +2728,7 @@ button.mini.blue.on {
 }
 
 .slot-pos-label {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-dim);
@@ -2749,7 +2776,7 @@ button.mini.blue.on {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 0.45rem 0.65rem;
-  border-radius: 8px;
+  border-radius: var(--radius);
   width: max-content;
   max-width: 250px;
   font-size: 0.75rem;
@@ -2887,7 +2914,7 @@ button.mini.blue.on {
 
 .data-label {
   color: var(--text-dim);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -2974,7 +3001,7 @@ button.mini.blue.on {
 /* ---------- Scouting ---------- */
 
 .scout-title {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-dim);
@@ -3023,7 +3050,7 @@ button.mini.blue.on {
 .rk-value {
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   white-space: nowrap;
 }
 

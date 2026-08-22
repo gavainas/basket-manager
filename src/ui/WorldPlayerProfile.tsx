@@ -11,7 +11,6 @@ import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
-import { starsFor } from './helpers';
 
 interface Props {
   state: GameState;
@@ -68,7 +67,6 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
             <div className="num" style={knowsWell ? undefined : { fontSize: '0.85rem' }}>
               {perceivedLevel(state, p, knowledge)}
             </div>
-            {knowsWell && <div className="approx">{starsFor(p.level)}</div>}
           </div>
           <button className="profile-close" onClick={onClose} title="Cerrar">
             ✕

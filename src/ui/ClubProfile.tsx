@@ -155,7 +155,7 @@ export function ClubProfile({ state, clubId, onClose }: Props) {
                         <span className="data-value">
                           <WorldPlayerLink id={p.id}>{worldPlayerName(p)}</WorldPlayerLink>{' '}
                           <span className="muted">
-                            {starsFor(p.level)} · {p.age} años{p.injuryWeeks > 0 ? ' · 🚑' : ''}
+                            {starsFor(p.level)} · {p.age} años{p.injuryWeeks > 0 ? ' · lesionado' : ''}
                           </span>
                         </span>
                       </div>

@@ -4,6 +4,7 @@ import { divisionStandings, USER_TEAM_ID } from '../game/world';
 import { ClubLink } from './ClubLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
+import { Icon } from './Icon';
 
 interface Props {
   state: GameState;
@@ -46,7 +47,7 @@ export function LeagueProfile({ state, leagueId, onClose }: Props) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="profile" onClick={(e) => e.stopPropagation()}>
         <div className="profile-head">
-          <div className="avatar profile-avatar">🏆</div>
+          <div className="avatar profile-avatar"><Icon name="liga" size={30} /></div>
           <div className="profile-who">
             <div className="profile-name">{league.name}</div>
             <div className="profile-chips">

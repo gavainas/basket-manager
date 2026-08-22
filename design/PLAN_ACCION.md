@@ -54,15 +54,15 @@ la evaluación, egos 14/30 y 9/30) · `sim:notas` estable (media 6.91 · 1-5: 15
 42.6%, abandonos 0.00/0.88/1.76) · smoke test en navegador sin errores de consola y con
 los textos nuevos del mercado a la vista.
 
-## Sprint 4 — Que se vea como un solo juego ⬜
+## Sprint 4 — Que se vea como un solo juego ✅
 
-- ⬜ 4.1 Una cara por jugador (tira del Hub → Avatar SVG hasta tener set ilustrado por seed).
-- ⬜ 4.2 Una sola escala de nivel por fila (≈ + estado; estrellas solo con scouting grueso).
-- ⬜ 4.3 Purga de emojis de cromo → `Icon.tsx`.
-- ⬜ 4.4 Planilla ordenable + rankings completos ("quién juega poco" en 2 clicks).
-- ⬜ 4.5 Vocabulario emoción ≠ estado ("masticando bronca" nivel 1 / "molesto" accionable).
-- ⬜ 4.6 Pasada CSS de un día (radios 4px, ~8 tamaños, banda de sección por clase, naranja reservado).
-- ⬜ 4.7 Cerrar la Puerta 2 de `ART_PIPELINE.md` + marcar `DESIGN.md` superseded.
+- ✅ 4.1 **Una cara por jugador**: la tira del Hub pasó del retrato ilustrado por arquetipo (8 caras para 14 jugadores) al **Avatar SVG por seed** — la misma cara que la ficha, la pizarra y los eventos, sobre la placa azul de foto carnet. `Retrato.tsx` se retiró; el arte ilustrado queda en `public/arte/` como referencia para el set grande por seed (Puerta 3).
+- ✅ 4.2 **Una sola escala de nivel por fila**: quedó `≈` + estado. Las estrellas se fueron de PlayerCard, PlayerProfile, la pizarra del quinteto, el hover del vivo, RivalProfile y WorldPlayerProfile; sobreviven solo donde el scouting es grueso y son LA escala (mercado de pretemporada, plantel de la otra divisional). Los 💪🔥 de la pizarra pasaron a iconos de línea con el número.
+- ✅ 4.3 **Purga de emojis de cromo → `Icon.tsx`**: el set creció de 26 a 34 iconos (pelota, estrella, reloj, corazón, enfermería, laburo, cruz, rayo) y ahora cubre timeline, rankings, familias de evento, confirmaciones, estados de pasar lista (incluida una tarjeta roja CSS de verdad para el suspendido) y los cierres de temporada/pretemporada. Donde el glifo era decoración de título o botón, se eliminó. Se conservan a propósito: los ✓ ✕ ★ → tipográficos, el 🧨 del rencor (marca semántica documentada), los emojis-contenido de noticias/chat del vestuario y las galerías de debug.
+- ✅ 4.4 **Planilla ordenable + rankings completos**: la Planilla ordena por cualquier columna (click en el encabezado; segundo click invierte; tercero vuelve a los grupos por rol) y sumó columnas **Min** y **Falt** de la temporada — "quién juega poco / falta más / debe" se contesta en 2 clicks. Rankings sumó la card **"Menos cancha"** (minutos de esta temporada, lesionados excluidos).
+- ✅ 4.5 **Vocabulario emoción ≠ estado**: "Molesto" queda reservado para el ESTADO accionable (`status`). La queja nivel 1 ahora dice **"Masticando los minutos"** en ficha/plantilla (`grievanceNote`) y el informe postpartido dice **"Masticando bronca por sus minutos"** — nunca más el informe diciendo "molesto" con el menú contestando que no hay molestos.
+- ✅ 4.6 **Pasada CSS de consistencia**: radios de caja normalizados a `var(--radius)` (4px; se preservan píldoras, círculos y las dos formas orgánicas a propósito), **escala tipográfica colapsada de 32 tamaños a 9 pasos de cuerpo + display** (corrimientos ≤0.05rem), banda de sección con **clase explícita `card-band`** además del `:first-child` (si la card no arranca por el h3, la banda no se pierde en silencio), y **naranja reservado**: las valoraciones por fila (cards, pizarra, hover, planilla) volvieron a tinta — el acento queda para la acción y los momentos únicos.
+- ✅ 4.7 **Puertas 1-2 de `ART_PIPELINE.md` cerradas**: la dirección en producción (papel claro, Oswald, bandas de sección, iconos de línea, naranja reservado) queda aprobada formalmente, con el retrato SVG por seed como identidad única vigente del jugador; las Puertas 3-6 gobiernan la expansión. `DESIGN.md` quedó marcado **SUPERSEDED** apuntando a `SISTEMA_VISUAL.md` — una sola fuente de verdad.
 
 ## Sprint 5 — La apuesta: personas en el mundo ✅
 
@@ -78,5 +78,5 @@ los textos nuevos del mercado a la vista.
 3. ✅ Cero frases repetidas en un mismo partido (vivo, Sprint 2) ni en un mismo asado (Sprint 3).
 4. 🔶 Objetivos y egos con dientes (✅ mecánica del Sprint 3) — falta confirmarlo en una partida jugada de verdad: que la tensión se sienta, no solo que exista.
 5. ✅ En la T2 reconocés rivales por nombre y cara (91% de caras repetidas, identidad de club congelada); la T3 no se parece a la T1 (rotación 15-20% con noticias). Falta que Gabi lo sienta jugando.
-6. ⬜ Una sola cara por jugador; cero emojis de cromo.
+6. ✅ Una sola cara por jugador (Avatar SVG en todo el juego); cero emojis de cromo en la UI (quedan los tipográficos, el 🧨 del rencor como marca semántica y los emojis-contenido del chat/noticias).
 7. ✅ `npm run sim` como vara tras cada sprint (objetivos actualizados en `BALANCE.md`, 2ª pasada).

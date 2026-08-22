@@ -2,6 +2,8 @@
 // colgaban el panel en algunos navegadores y en el celular son fáciles de
 // tocar mal (ver design/INFORME_TESTING_GD.md, apéndice técnico).
 
+import { Icon, type IconName } from './Icon';
+
 export interface ConfirmRequest {
   title: string;
   message: string;
@@ -9,7 +11,7 @@ export interface ConfirmRequest {
   confirmLabel: string;
   /** Acción destructiva: el botón de confirmar se pinta en rojo. */
   danger?: boolean;
-  icon?: string;
+  icon?: IconName;
   onConfirm: () => void;
 }
 
@@ -24,7 +26,9 @@ export function ConfirmDialog({ req, onClose }: Props) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="event-head">
-          <div className="event-icon">{req.icon ?? '❓'}</div>
+          <div className="event-icon">
+            <Icon name={req.icon ?? 'alerta'} size={30} />
+          </div>
           <h2>{req.title}</h2>
         </div>
         <p className="event-text">{req.message}</p>

@@ -105,7 +105,7 @@ function agendaFit(state: GameState, mp: MarketPlayer): { cls: string; text: str
   const d = verdictDivision(state);
   if (!d) return null;
   if (mp.agenda.blockedDays.includes(d.gameDay)) {
-    return { cls: 'bad', text: `⛔ No puede los ${dayLabel(d.gameDay)} — justo nuestro día de partido` };
+    return { cls: 'bad', text: `✕ No puede los ${dayLabel(d.gameDay)} — justo nuestro día de partido` };
   }
   const missed =
     mp.agenda.onlyTimes.length > 0 ? d.gameTimes.filter((t) => !mp.agenda!.onlyTimes.includes(t)) : [];
@@ -171,14 +171,14 @@ function DeadlinePanel({ state, dispatch }: Props) {
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h2 style={{ margin: 0, flex: 1 }}>🗓 Pretemporada · Temporada {state.seasonNumber}</h2>
+        <h2 style={{ margin: 0, flex: 1 }}>Pretemporada · Temporada {state.seasonNumber}</h2>
         <button
           onClick={() =>
             setConfirmReq({
               title: 'Volver al menú',
               message: 'La partida queda guardada automáticamente: retomás cuando quieras.',
               confirmLabel: 'Volver al menú',
-              icon: '🚪',
+              icon: 'salir',
               onConfirm: () => dispatch({ type: 'QUIT_TO_MENU' }),
             })
           }
@@ -193,11 +193,11 @@ function DeadlinePanel({ state, dispatch }: Props) {
         </span>
         {chosenOpt ? (
           <span className="chip accent">
-            🏆 {chosenOpt.leagueName} · {chosenOpt.divisionName} — se juega los {dayLabel(chosenOpt.gameDay)} (
+            {chosenOpt.leagueName} · {chosenOpt.divisionName} — se juega los {dayLabel(chosenOpt.gameDay)} (
             {chosenOpt.gameTimes.join(' / ')})
           </span>
         ) : (
-          <span className="chip warn">📝 Inscripción abierta: elegí en qué liga jugar</span>
+          <span className="chip warn">Inscripción abierta: elegí en qué liga jugar</span>
         )}
         <span className={`chip ${ps.gestionesLeft > 0 ? 'good' : 'warn'}`}>Gestiones: {ps.gestionesLeft}/{BALANCE.preseason.gestionesPerWeek}</span>
         <span className={`chip ${confirmed.length >= min ? 'good' : 'bad'}`}>
@@ -268,12 +268,12 @@ function InscriptionSection({ state, dispatch }: Props) {
         </p>
         {blocked.length > 0 && (
           <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--bad)' }}>
-            ⛔ No podrían los {dayLabel(opt.gameDay)}: {blocked.map((p) => p.name).join(', ')}
+            ✕ No podrían los {dayLabel(opt.gameDay)}: {blocked.map((p) => p.name).join(', ')}
           </p>
         )}
         {late.length > 0 && (
           <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--warn)' }}>
-            🕗 Llegarían tarde a los de{' '}
+            Llegarían tarde a los de{' '}
             {opt.gameTimes.filter((t) => late.some((p) => !p.agenda!.onlyTimes.includes(t))).join(' y ')}:{' '}
             {late.map((p) => p.name).join(', ')}
           </p>
@@ -345,7 +345,7 @@ function RosterSection({ state, dispatch }: Props) {
               <span className={`chip ${cont.cls}`}>{cont.label}</span>
               {needsTalk && (
                 <button disabled={noGestiones} onClick={() => dispatch({ type: 'PS_TALK', id: p.id })}>
-                  💬 Hablar
+                  Hablar
                 </button>
               )}
               {st === 'pide_condicion' && (
@@ -354,7 +354,7 @@ function RosterSection({ state, dispatch }: Props) {
                   className="primary"
                   onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: p.id, isMarket: false })}
                 >
-                  🤝 Negociar
+                  Negociar
                 </button>
               )}
               {st === 'confirmado' && <span style={{ color: 'var(--good)', fontWeight: 700 }}>✓</span>}
@@ -414,7 +414,7 @@ function MarketSection({ state, dispatch }: Props) {
         </div>
         {(mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 && (
           <div className="human-note">
-            <span className="hn-icon">🗓</span> {mp.agenda!.notes.join(' ')}
+            <span className="hn-icon"><Icon name="agenda" size={14} /></span> {mp.agenda!.notes.join(' ')}
           </div>
         )}
         <div className="player-chips">
@@ -446,7 +446,7 @@ function MarketSection({ state, dispatch }: Props) {
             disabled={noGestiones}
             onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true })}
           >
-            📞 {mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
+            {mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
           </button>
         )}
       </div>
@@ -599,7 +599,7 @@ function MarketProfile({
                 dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true });
               }}
             >
-              📞 {mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
+              {mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
             </button>
           )}
         </div>
@@ -624,7 +624,7 @@ function NegotiationModal({ state, dispatch }: Props) {
     return (
       <div className="modal-backdrop">
         <div className="modal">
-          <h2>🤝 Negociación con {mp.name}</h2>
+          <h2>Negociación con {mp.name}</h2>
           <p className="event-text">
             {mp.position} · {mp.age} años · {mp.height} cm. {originSentence(mp.previousTeam)}
             <br />
@@ -634,7 +634,7 @@ function NegotiationModal({ state, dispatch }: Props) {
             <br />
             {(mp.agenda?.notes.length ?? 0) > 0 && (
               <>
-                🗓 {mp.agenda!.notes.join(' ')}
+                {mp.agenda!.notes.join(' ')}
                 <br />
               </>
             )}
@@ -665,7 +665,7 @@ function NegotiationModal({ state, dispatch }: Props) {
               (mp.agenda.blockedDays.length > 0 || mp.agenda.onlyTimes.length > 0 || mp.agenda.distanceKm > 50) &&
               !ps.priorityUsed?.[mp.id] && (
                 <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'priority' })}>
-                  🗓 Pedirle que priorice al club
+                  Pedirle que priorice al club
                   <span className="opt-hint">Puede comprometerse a acomodar su agenda… o ser honesto (una sola vez)</span>
                 </button>
               )}
@@ -693,7 +693,7 @@ function NegotiationModal({ state, dispatch }: Props) {
   return (
     <div className="modal-backdrop">
       <div className="modal">
-        <h2>🤝 <PlayerLink id={player.id}>{player.name}</PlayerLink> pide una condición</h2>
+        <h2><PlayerLink id={player.id}>{player.name}</PlayerLink> pide una condición</h2>
         <p className="event-text">
           {player.name} ({player.position}, {player.age} años) quiere seguir en el club, pero pide:{' '}
           <strong>{DEMAND_LABELS[demand].toLowerCase()}</strong>.
@@ -754,7 +754,7 @@ function PreseasonModals({ state, dispatch }: Props) {
     return (
       <div className="modal-backdrop">
         <div className="modal">
-          <h2>📣 {def.title}</h2>
+          <h2>{def.title}</h2>
           <p className="event-text">{def.text(state, ps.pendingEvent.targetIds)}</p>
           <div className="options">
             {def.options(state, ps.pendingEvent.targetIds).map((opt, i) => (
@@ -817,7 +817,7 @@ export function PreseasonView({ state, dispatch }: Props) {
           className="primary"
           onClick={() => dispatch({ type: isLastWeek ? 'PS_CLOSE' : 'PS_ADVANCE' })}
         >
-          {isLastWeek ? '🏁 Cerrar pretemporada e inscribir al club →' : `Avanzar a la semana ${ps.week + 1} →`}
+          {isLastWeek ? 'Cerrar pretemporada e inscribir al club →' : `Avanzar a la semana ${ps.week + 1} →`}
         </button>
         <span className="hint">
           {isLastWeek

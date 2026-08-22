@@ -238,7 +238,11 @@ export function grievanceNote(p: Player, week: number): string | null {
   const g = p.grievance;
   if (!g) return null;
   const weeks = Math.max(1, week - g.sinceWeek + 1);
-  const head = g.level >= 3 ? 'Al límite por' : g.level === 2 ? 'Caliente por' : 'Molesto por';
+  // "Molesto" queda reservado para el ESTADO accionable (p.status): el nivel 1
+  // es una anotación en la ficha, no un jugador molesto — el vocabulario lo
+  // tiene que decir (el informe decía "molesto" y el menú contestaba que no
+  // había molestos; ver auditoría §10).
+  const head = g.level >= 3 ? 'Al límite por' : g.level === 2 ? 'Caliente por' : 'Masticando';
   return `${head} ${CAUSE_SHORT[g.cause]} · ${weeks} semana${weeks > 1 ? 's' : ''} con lo mismo`;
 }
 

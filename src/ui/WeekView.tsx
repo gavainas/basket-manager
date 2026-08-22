@@ -8,13 +8,13 @@ import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { lineupPromiseWarnings } from '../game/promises';
 import { courtFreshness, evaluateTeam, isSelectable } from '../game/match';
 import { Bar } from './Bar';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { StyleChip } from './StyleChip';
 import { RivalLink } from './RivalLink';
 import { ScoutingCard } from './ScoutingCard';
 import { Tip, TIPS } from './Tip';
-import { rivalDifficulty, rivalStyleInfo, starsFor, weekLabel } from './helpers';
+import { rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
 import { EMOTION_EXPRESSION } from '../game/humanState';
 import { Avatar } from './Avatar';
 
@@ -83,7 +83,7 @@ function AsadoRsvpPanel({ state }: { state: GameState }) {
       </h3>
       <p style={{ margin: '0.2rem 0 0.5rem' }}>
         <span className="chip good" style={{ marginRight: '0.4rem' }}>✓ Van {going.length}</span>
-        <span className="chip warn" style={{ marginRight: '0.4rem' }}>🤔 Dudan {maybe.length}</span>
+        <span className="chip warn" style={{ marginRight: '0.4rem' }}>Dudan {maybe.length}</span>
         <span className="chip bad">✗ No van {declined.length}</span>
       </p>
       {going.length > 0 && (
@@ -153,16 +153,16 @@ function PlanningPanel({ state, dispatch }: Props) {
             <StyleChip style={rival.style} />
             {rivalryWith(state, rival.id) && (
               <span className="chip bad" title={rivalryWith(state, rival.id)!.text}>
-                🔥 Revancha
+                Revancha
               </span>
             )}
             <span className="chip" title={refereeOfWeek(state).blurb}>
-              🧑‍⚖️ Dirige {refereeOfWeek(state).name}
+              Dirige {refereeOfWeek(state).name}
             </span>
           </div>
         )}
         {rival && rivalryWith(state, rival.id) && (
-          <p style={{ margin: '0.2rem 0 0.4rem' }}>🔥 {rivalryWith(state, rival.id)!.text}</p>
+          <p style={{ margin: '0.2rem 0 0.4rem' }}>{rivalryWith(state, rival.id)!.text}</p>
         )}
         {chosen.length > 0 && (
           <p style={{ margin: '0.3rem 0' }}>
@@ -179,7 +179,7 @@ function PlanningPanel({ state, dispatch }: Props) {
             ▶ Pasar lista e ir al partido
           </button>
           <button className="small" onClick={() => setShowActions((v) => !v)}>
-            {showActions ? 'Ocultar acciones' : `🗂 Acciones del club${chosen.length > 0 ? ` (${chosen.length}/${max})` : ''}`}
+            {showActions ? 'Ocultar acciones' : `Acciones del club${chosen.length > 0 ? ` (${chosen.length}/${max})` : ''}`}
           </button>
           <span className="hint">
             {chosen.length > 0
@@ -216,7 +216,7 @@ function PlanningPanel({ state, dispatch }: Props) {
                   </div>
                   <div className="action-desc">{a.description}</div>
                   {blocked ? (
-                    <div className="action-blocked">⛔ {check.reason}</div>
+                    <div className="action-blocked">✕ {check.reason}</div>
                   ) : (
                     <div className="action-cost">{a.costLabel}</div>
                   )}
@@ -230,11 +230,11 @@ function PlanningPanel({ state, dispatch }: Props) {
   );
 }
 
-const ASADO_TIER_INFO: Record<string, { icon: string; title: string; cls: string }> = {
-  fieston: { icon: '🔥', title: 'Asadazo', cls: 'good' },
-  bueno: { icon: '🍖', title: 'Buen asado', cls: 'good' },
-  flojo: { icon: '😕', title: 'Asado flojo', cls: 'warn' },
-  papelon: { icon: '🫗', title: 'Papelón', cls: 'bad' },
+const ASADO_TIER_INFO: Record<string, { icon: IconName; title: string; cls: string }> = {
+  fieston: { icon: 'asado', title: 'Asadazo', cls: 'good' },
+  bueno: { icon: 'asado', title: 'Buen asado', cls: 'good' },
+  flojo: { icon: 'animo', title: 'Asado flojo', cls: 'warn' },
+  papelon: { icon: 'alerta', title: 'Papelón', cls: 'bad' },
 };
 
 /** Crónica del asado: quiénes estuvieron en la mesa y qué dejó la noche. */
@@ -248,11 +248,11 @@ function AsadoReportCard({ state }: { state: GameState }) {
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
       <h3>
-        {info.icon} {info.title}
+        <Icon name={info.icon} size={16} /> {info.title}
         <span className={`chip ${info.cls}`} style={{ marginLeft: '0.5rem' }}>
           {attended.length} de {total} en la mesa
         </span>
-        {report.rained && <span className="chip" style={{ marginLeft: '0.3rem' }}>🌧 Con lluvia</span>}
+        {report.rained && <span className="chip" style={{ marginLeft: '0.3rem' }}>Con lluvia</span>}
       </h3>
       {attended.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', margin: '0.4rem 0' }}>
@@ -329,7 +329,7 @@ function CallUpPanel({ state, dispatch }: Props) {
         </h3>
         {outs.length === 0 && stillInjured.length === 0 && suspended.length === 0 ? (
           <p style={{ marginTop: 0 }}>
-            ✅ <strong>Vinieron todos.</strong> Semana tranquila: el grupo está entero para el partido.
+            ✓ <strong>Vinieron todos.</strong> Semana tranquila: el grupo está entero para el partido.
           </p>
         ) : (
           <p className="muted" style={{ marginTop: 0 }}>
@@ -359,7 +359,17 @@ function CallUpPanel({ state, dispatch }: Props) {
                     </div>
                   )}
                   <span className="callup-icon">
-                    {e.status === 'lesionado' ? '🚑' : e.exhausted && e.status === 'confirmado' ? '🥵' : e.lateArrival ? '🕘' : e.status === 'confirmado' ? '✔' : '❌'}
+                    {e.status === 'lesionado' ? (
+                      <Icon name="enfermeria" size={15} />
+                    ) : e.exhausted && e.status === 'confirmado' ? (
+                      <Icon name="fisico" size={15} />
+                    ) : e.lateArrival ? (
+                      <Icon name="reloj" size={15} />
+                    ) : e.status === 'confirmado' ? (
+                      '✓'
+                    ) : (
+                      '✕'
+                    )}
                   </span>
                   <div style={{ flex: 1 }}>
                     <div className="callup-name">
@@ -434,7 +444,7 @@ function CallUpPanel({ state, dispatch }: Props) {
                 <div className="avatar callup-avatar">
                   <Avatar seed={p.id} age={p.age} appearance={p.appearance} expressionOverride={3} title={p.name} />
                 </div>
-                <span className="callup-icon">{p.injuryReason === 'laboral' ? '💼' : '🚑'}</span>
+                <span className="callup-icon"><Icon name={p.injuryReason === 'laboral' ? 'laburo' : 'enfermeria'} size={15} /></span>
                 <div>
                   <div className="callup-name">
                     <PlayerLink id={p.id}>{p.name}</PlayerLink>
@@ -452,7 +462,7 @@ function CallUpPanel({ state, dispatch }: Props) {
                 <div className="avatar callup-avatar">
                   <Avatar seed={p.id} age={p.age} appearance={p.appearance} expressionOverride={2} title={p.name} />
                 </div>
-                <span className="callup-icon">🟥</span>
+                <span className="callup-icon"><i className="tarjeta-roja" title="Suspendido" /></span>
                 <div>
                   <div className="callup-name">
                     <PlayerLink id={p.id}>{p.name}</PlayerLink>
@@ -565,9 +575,6 @@ function QuintetoStrip({ slots }: { slots: (Player | null)[] }) {
                 </div>
                 <div className="qs-bar">
                   <i style={{ width: `${Math.round(p.physical)}%` }} />
-                </div>
-                <div className="qs-stars" title="Nivel estimado">
-                  {starsFor(p.visibleRating)}
                 </div>
                 <div className="qs-media">
                   ≈{p.visibleRating}
@@ -736,7 +743,7 @@ function LineupPanel({ state, dispatch }: Props) {
             <h3 style={{ margin: 0 }}>Plantel</h3>
             <div style={{ display: 'flex', gap: '0.4rem' }}>
               <button className="small" onClick={() => dispatch({ type: 'AUTO_LINEUP' })}>
-                ⚡ Sugerir
+                Sugerir
               </button>
               <button className="small" onClick={() => dispatch({ type: 'CLEAR_LINEUP' })}>
                 Limpiar
@@ -783,19 +790,22 @@ function LineupPanel({ state, dispatch }: Props) {
                     )}
                     {avail && lateIds.has(p.id) && (
                       <span className="chip warn" style={{ marginLeft: '0.4rem' }} title="Solo puede entrar desde el banco, en el segundo tiempo">
-                        🕘 2do tiempo
+                        <Icon name="reloj" size={11} /> 2do tiempo
                       </span>
                     )}
                   </div>
                   <div className="lp-meta">
-                    <span title="Físico">💪 {Math.round(p.physical)}</span>
-                    <span title="Motivación">🔥 {Math.round(p.motivation)}</span>
+                    <span title="Físico">
+                      <Icon name="fisico" size={12} /> {Math.round(p.physical)}
+                    </span>
+                    <span title="Motivación">
+                      <Icon name="animo" size={12} /> {Math.round(p.motivation)}
+                    </span>
                     {p.lastRating !== null && <span title="Último partido">Últ. {p.lastRating}/10</span>}
                   </div>
                 </div>
                 <div className="lp-rating">
                   <div className="num">≈{p.visibleRating}</div>
-                  <div className="stars">{starsFor(p.visibleRating)}</div>
                 </div>
                 <div className="lp-btns">
                   <button
@@ -887,7 +897,7 @@ function LineupPanel({ state, dispatch }: Props) {
 
       {lineupPromiseWarnings(state).map((w) => (
         <p key={w.playerId} style={{ color: w.breaksToday ? 'var(--bad)' : 'var(--warn, #c90)', fontWeight: 600, margin: '0.5rem 0 0' }}>
-          🤝 {w.text}
+          {w.text}
         </p>
       ))}
 
@@ -897,7 +907,7 @@ function LineupPanel({ state, dispatch }: Props) {
           disabled={!canPlay && !forfeitRisk}
           onClick={() => dispatch({ type: 'START_MATCH' })}
         >
-          {forfeitRisk && !canPlay ? 'Presentarse igual (forfeit) →' : '🏀 Ir al partido →'}
+          {forfeitRisk && !canPlay ? 'Presentarse igual (forfeit) →' : 'Ir al partido →'}
         </button>
         {!canPlay && !forfeitRisk && (
           <span className="hint">
@@ -1010,7 +1020,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         <span className="lp-pos">{POS_ABBR[p.position]}</span>
         <span className="sub-name">
           {p.name}
-          {live.starId === p.id && side === 'court' ? ' ⭐' : ''}
+          {live.starId === p.id && side === 'court' ? <Icon name="estrella" size={10} /> : ''}
         </span>
         <span className="sub-pts">{live.stats[p.id]?.pts ?? 0} pts</span>
         <span className="sub-mins">{minsOf(p.id)}&apos;</span>
@@ -1023,7 +1033,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
             <span className="hc-rating">≈{p.visibleRating}</span>
           </div>
           <div className="hc-meta">
-            {p.position} · {p.age} años · {starsFor(p.visibleRating)}
+            {p.position} · {p.age} años
           </div>
           <p className="hc-desc">{p.description}</p>
           <Bar label="Físico" value={p.physical} />
@@ -1073,12 +1083,12 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         {(hotStreak || coldStreak || comebackMode || holdMode) && (
           <div className="drama-row">
             {hotStreak && lastQ && (
-              <span className="chip good">🔥 Parcial de {lastQ.for}-{lastQ.against}: estamos en racha</span>
+              <span className="chip good">Parcial de {lastQ.for}-{lastQ.against}: estamos en racha</span>
             )}
             {coldStreak && lastQ && (
-              <span className="chip bad">🧊 Nos metieron un parcial de {lastQ.against}-{lastQ.for}</span>
+              <span className="chip bad">Nos metieron un parcial de {lastQ.against}-{lastQ.for}</span>
             )}
-            {comebackMode && <span className="chip warn">💪 {-diff} abajo: el equipo sale a morder cada pelota</span>}
+            {comebackMode && <span className="chip warn">{-diff} abajo: el equipo sale a morder cada pelota</span>}
             {holdMode && <span className="chip warn">⚠ Ojo: {rival.name} va a salir con todo a descontar</span>}
           </div>
         )}
@@ -1086,7 +1096,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         {injuryNote && <div className="match-alert">{injuryNote}</div>}
         {live.rivalSquad && live.rivalSquad.notes.length > 0 && (
           <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.4rem', fontSize: '0.82rem' }}>
-            📋 {live.rivalSquad.notes.join(' ')}
+            {live.rivalSquad.notes.join(' ')}
           </p>
         )}
         <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.6rem' }}>
@@ -1461,7 +1471,7 @@ function MatchResultPanel({ state, dispatch }: Props) {
         {m.mvpName && m.mvpId && (
           <p style={{ textAlign: 'center' }}>
             <span className="chip accent">
-              ⭐ Mejor jugador: <PlayerLink id={m.mvpId}>{m.mvpName}</PlayerLink>
+              <Icon name="estrella" size={13} /> Mejor jugador: <PlayerLink id={m.mvpId}>{m.mvpName}</PlayerLink>
             </span>
           </p>
         )}
@@ -1486,7 +1496,7 @@ function MatchResultPanel({ state, dispatch }: Props) {
                 {m.box.map((line) => (
                   <tr key={line.playerId}>
                     <td>
-                      <PlayerLink id={line.playerId}>{line.name}</PlayerLink> {line.mvp ? '⭐' : ''}
+                      <PlayerLink id={line.playerId}>{line.name}</PlayerLink> {line.mvp ? <Icon name="estrella" size={11} /> : ''}
                     </td>
                     <td className="num">{line.minutes}&apos;</td>
                     <td className="num" style={{ fontWeight: 700 }}>

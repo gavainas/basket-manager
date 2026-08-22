@@ -5,7 +5,7 @@ import { ClubLink } from './ClubLink';
 import { Jersey } from './ClubProfile';
 import { LeagueLink } from './LeagueLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
-import { initials, rivalDifficulty, rivalStyleInfo, starsFor } from './helpers';
+import { initials, rivalDifficulty, rivalStyleInfo } from './helpers';
 
 interface Props {
   state: GameState;
@@ -67,7 +67,7 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
           <h4 className="profile-subtitle">Cómo juegan</h4>
           <p style={{ margin: '0 0 0.4rem' }}>{style.desc}</p>
           <p className="muted" style={{ margin: 0 }}>
-            💡 {style.advice}
+            {style.advice}
           </p>
 
           {team && (
@@ -135,8 +135,8 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
                           <WorldPlayerLink id={p.id}>{worldPlayerName(p)}</WorldPlayerLink>{' '}
                           <span className="muted">
                             {perceivedLevel(state, p, knowledge)}
-                            {knowsWell ? ` ${starsFor(p.level)}` : ''} · {p.age} años
-                            {p.injuryWeeks > 0 ? ' · 🚑' : ''}
+                            {' · '}{p.age} años
+                            {p.injuryWeeks > 0 ? ' · lesionado' : ''}
                             {knowsWell && p.availability.distanceKm > 50 ? ` · ${p.availability.residence}` : ''}
                           </span>
                         </span>

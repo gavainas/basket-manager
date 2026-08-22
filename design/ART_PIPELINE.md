@@ -6,8 +6,17 @@ antes de confirmar que la dirección visual realmente funciona.
 
 ## Estado actual
 
-La UI, los retratos procedurales y los recursos visuales existentes deben considerarse
-**provisionales hasta superar las puertas de aprobación de este documento**.
+**Puertas 1 y 2: CERRADAS (ago 2026, Sprint 4 del plan de acción).** La dirección
+elegida es la que ya está en producción — club de barrio sobre papel claro
+(crema/grafito con el naranja reservado a la acción), Oswald como display, cards con
+banda de sección, la portada del asado y las cabeceras de escena, y el set propio de
+34 iconos de línea. Se formaliza porque la auditoría integral (2026-08) encontró que
+la dirección ya estaba en producción y funcionaba; mantenerla "provisional" solo
+frenaba la expansión de arte. El detalle de la aprobación está en la Puerta 2.
+
+Las puertas 3 a 6 (hoja maestra de personajes, vertical slice, prueba en juego y
+art bible) siguen **abiertas**: gobiernan la expansión que viene (set ilustrado de
+retratos, eventos ilustrados, más cabeceras).
 
 La estructura técnica existente puede conservarse y evolucionar, pero no se debe interpretar
 que un sistema está artísticamente aprobado solo porque ya funciona, está documentado o fue
@@ -165,6 +174,23 @@ No son opciones obligatorias ni finales: sirven para evitar variaciones demasiad
 qué combinar y qué descartar.
 
 ## Puerta 2 — Aprobación separada de UI y personajes
+
+> **CERRADA (ago 2026).**
+>
+> **UI: APROBADA.** La dirección en producción pasa a ser la oficial: paleta de papel
+> claro con tokens en `styles.css` (fuente de verdad: `SISTEMA_VISUAL.md`), Oswald como
+> display, navegación de menú (Hub) con bandas de sección por área, tablas estilo
+> planilla, el set propio de iconos de línea (`Icon.tsx`, hoy 34) como única
+> iconografía de cromo — la purga de emojis se ejecutó en este mismo sprint — y el
+> naranja `--naranja` reservado a la acción (las valoraciones por fila volvieron a
+> tinta).
+>
+> **Personajes: el retrato SVG procedural por seed es la identidad ÚNICA del jugador
+> en todo el juego** (aprobado como identidad vigente, no como techo artístico). El
+> lote ilustrado por arquetipo se retiró de la tira del Hub — con ocho caras para
+> catorce jugadores generaba la "doble identidad" que señaló la auditoría — y queda en
+> `public/arte/` como referencia de estilo para el set grande. Pasar del SVG a un set
+> ilustrado **por seed** es una decisión de la Puerta 3 (hoja maestra), no de esta.
 
 La UI y los personajes se aprueban como sistemas distintos.
 

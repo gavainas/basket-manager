@@ -2,6 +2,7 @@ import type { GameState, PreseasonSummaryEntry } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { PlayerLink } from './PlayerLink';
 import { formatMoney } from './helpers';
+import { Icon } from './Icon';
 
 interface Props {
   state: GameState;
@@ -20,7 +21,7 @@ export function PreseasonEndScreen({ state, dispatch }: Props) {
   return (
     <div className="season-end">
       <div className="outcome">
-        <div style={{ fontSize: '3rem' }}>📋</div>
+        <div className="outcome-glyph"><Icon name="inscripcion" size={52} /></div>
         <h1>Plantel inscripto</h1>
         <p>La lista quedó cerrada y el club está inscripto en la liga.</p>
         <p className="muted">Temporada {state.seasonNumber} · {summary.roster.length} jugadores</p>
@@ -95,7 +96,7 @@ export function PreseasonEndScreen({ state, dispatch }: Props) {
           <h3>Promesas del club</h3>
           <ul className="reason-list">
             {summary.promises.map((p, i) => (
-              <li key={i}>🤝 {p}</li>
+              <li key={i}>{p}</li>
             ))}
           </ul>
           <p className="muted" style={{ marginBottom: 0 }}>
@@ -112,7 +113,7 @@ export function PreseasonEndScreen({ state, dispatch }: Props) {
           ) : (
             <ul className="reason-list">
               {summary.strengths.map((s, i) => (
-                <li key={i}>💪 {s}</li>
+                <li key={i}>✓ {s}</li>
               ))}
             </ul>
           )}
@@ -133,7 +134,7 @@ export function PreseasonEndScreen({ state, dispatch }: Props) {
 
       <div className="confirm-bar" style={{ justifyContent: 'center' }}>
         <button className="primary" onClick={() => dispatch({ type: 'START_SEASON' })}>
-          🏀 Comenzar la temporada {state.seasonNumber} →
+          Comenzar la temporada {state.seasonNumber} →
         </button>
       </div>
     </div>

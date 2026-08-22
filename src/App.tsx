@@ -239,7 +239,7 @@ export default function App() {
           message: 'Si empezás de nuevo, la partida guardada se sobrescribe y se pierde.',
           confirmLabel: 'Empezar de nuevo',
           danger: true,
-          icon: '⚠️',
+          icon: 'alerta',
           onConfirm: () => dispatch({ type, difficulty }),
         });
         return;
@@ -386,14 +386,14 @@ export default function App() {
                       'El guardado automático no está funcionando (storage bloqueado o lleno). Si salís al menú, esta partida se pierde.',
                     confirmLabel: 'Salir igual',
                     danger: true,
-                    icon: '⚠️',
+                    icon: 'alerta',
                     onConfirm: () => dispatch({ type: 'QUIT_TO_MENU' }),
                   }
                 : {
                     title: 'Volver al menú',
                     message: 'La partida queda guardada automáticamente: retomás cuando quieras.',
                     confirmLabel: 'Volver al menú',
-                    icon: '🚪',
+                    icon: 'salir',
                     onConfirm: () => dispatch({ type: 'QUIT_TO_MENU' }),
                   }
             )

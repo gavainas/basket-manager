@@ -5,6 +5,7 @@ import { objectiveStatus } from '../game/objectives';
 import { BALANCE } from '../game/balance';
 import { PlayoffsCard } from './LeagueView';
 import { formatMoney } from './helpers';
+import { Icon } from './Icon';
 
 interface Props {
   state: GameState;
@@ -19,14 +20,17 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
   return (
     <div className="season-end">
       <div className="outcome">
-        <div style={{ fontSize: '3rem' }}>
-          {ev.isGameOver
-            ? '💥'
-            : state.playoffs?.champions.oro === 'club'
-              ? '🏆'
-              : state.playoffs?.champions.plata === 'club'
-                ? '🥈'
-                : '🏀'}
+        <div className="outcome-glyph">
+          <Icon
+            name={
+              ev.isGameOver
+                ? 'alerta'
+                : state.playoffs?.champions.oro === 'club' || state.playoffs?.champions.plata === 'club'
+                  ? 'liga'
+                  : 'pelota'
+            }
+            size={52}
+          />
         </div>
         <h1>{ev.outcomeTitle}</h1>
         <p>{ev.outcomeText}</p>
@@ -93,7 +97,7 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
       <div className="confirm-bar" style={{ justifyContent: 'center' }}>
         {canContinue && (
           <button className="primary" onClick={() => dispatch({ type: 'NEW_SEASON' })}>
-            ➡ Seguir con el club: pretemporada de la T{state.seasonNumber + 1}
+            → Seguir con el club: pretemporada de la T{state.seasonNumber + 1}
           </button>
         )}
         {canContinue && shortOnMoney && (
@@ -102,7 +106,7 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
           </span>
         )}
         <button className={canContinue ? '' : 'primary'} onClick={() => dispatch({ type: 'NEW_GAME' })}>
-          🔄 Empezar de cero
+          Empezar de cero
         </button>
         <button onClick={() => dispatch({ type: 'QUIT_TO_MENU' })}>Volver al menú</button>
       </div>

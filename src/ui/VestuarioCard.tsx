@@ -15,7 +15,7 @@ function PlayerChip({ p }: { p: Player }) {
   );
 }
 
-const PAIR_ICON = { intimos: '🍻', chocan: '🧨', roce: '⚡' } as const;
+const PAIR_ICON = { intimos: 'corazon', chocan: 'rayo', roce: 'alerta' } as const;
 
 /**
  * El mapa social del vestuario: los grupos reales del plantel, los puentes,
@@ -62,20 +62,20 @@ export function VestuarioCard({ state }: { state: GameState }) {
 
       {map.bridges.map(({ p, text }) => (
         <p key={p.id} style={{ margin: '0.35rem 0' }}>
-          🌉 <PlayerLink id={p.id}>{p.name}</PlayerLink>: {text}
+          <PlayerLink id={p.id}>{p.name}</PlayerLink>: {text}
         </p>
       ))}
 
       {map.pairs.map((pair) => (
         <p key={pair.a.id + pair.b.id} style={{ margin: '0.35rem 0' }}>
-          {PAIR_ICON[pair.kind]} <PlayerLink id={pair.a.id}>{pair.a.name}</PlayerLink> y{' '}
+          <Icon name={PAIR_ICON[pair.kind]} size={13} /> <PlayerLink id={pair.a.id}>{pair.a.name}</PlayerLink> y{' '}
           <PlayerLink id={pair.b.id}>{pair.b.name}</PlayerLink>: {pair.text}
         </p>
       ))}
 
       {map.loners.map(({ p, text }) => (
         <p key={p.id} style={{ margin: '0.35rem 0' }}>
-          🚶 <PlayerLink id={p.id}>{p.name}</PlayerLink>: {text}
+          <PlayerLink id={p.id}>{p.name}</PlayerLink>: {text}
         </p>
       ))}
     </div>

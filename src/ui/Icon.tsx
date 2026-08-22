@@ -38,7 +38,17 @@ export type IconName =
   | 'fisico'
   | 'plata'
   | 'social'
-  | 'cancha';
+  | 'cancha'
+  // La purga de emojis de cromo (Sprint 4): los estados y marcas que antes
+  // eran emoji pasan al set de línea.
+  | 'pelota'
+  | 'estrella'
+  | 'reloj'
+  | 'corazon'
+  | 'enfermeria'
+  | 'laburo'
+  | 'cruz'
+  | 'rayo';
 
 const PATHS: Record<IconName, string> = {
   // Tablero: la grilla del resumen.
@@ -99,6 +109,24 @@ const PATHS: Record<IconName, string> = {
   social: 'M9 4.5a3 3 0 100 6 3 3 0 000-6 M3.5 20.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5 M16 5.5h5v5h-1.5v3l-2.5-3H16z',
   // Cancha: el banco de suplentes.
   cancha: 'M3.5 11h17 M5.5 11v9.5 M18.5 11v9.5 M6.5 11V6.5h11V11 M12 6.5V11',
+
+  // ---- Marcas de estado (ex emojis de cromo) ----
+  // Pelota: el balón con sus gajos.
+  pelota: 'M12 3a9 9 0 100 18 9 9 0 000-18 M12 3v18 M3 12h18 M5.6 5.8c2.4 1.8 2.4 10.6 0 12.4 M18.4 5.8c-2.4 1.8-2.4 10.6 0 12.4',
+  // Estrella: la figura del partido.
+  estrella: 'M12 3.5l2.5 5.4 5.9.7-4.4 4 1.2 5.9-5.2-3-5.2 3 1.2-5.9-4.4-4 5.9-.7z',
+  // Reloj: llegadas, minutos y esperas.
+  reloj: 'M12 3.5a8.5 8.5 0 100 17 8.5 8.5 0 000-17 M12 7.5V12l3.5 2.5',
+  // Corazón: el más querido del vestuario.
+  corazon: 'M12 20.5S3.5 15 3.5 9.2A4.4 4.4 0 018 4.8c1.8 0 3.2 1 4 2.4.8-1.4 2.2-2.4 4-2.4a4.4 4.4 0 014.5 4.4c0 5.8-8.5 11.3-8.5 11.3z',
+  // Enfermería: la cruz del botiquín.
+  enfermeria: 'M4 6.5h16v13H4z M4 6.5l2-3h12l2 3 M12 9.5v7 M8.5 13h7',
+  // Laburo: el maletín del que no llega por trabajo.
+  laburo: 'M3.5 8h17v12h-17z M3.5 13h17 M9.5 8V5.5h5V8 M10.5 13v2.5h3V13',
+  // Cruz: el faltazo (no vino).
+  cruz: 'M12 3.5a8.5 8.5 0 100 17 8.5 8.5 0 000-17 M9 9l6 6 M15 9l-6 6',
+  // Rayo: el roce que salta chispas.
+  rayo: 'M13.5 3L5.5 13.5H11L9.5 21l8-10.5H12z',
 };
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {

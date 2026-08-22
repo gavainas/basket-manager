@@ -35,7 +35,8 @@ const LABELS: Record<PlayerEmotion, string> = {
   conforme: 'Conforme',
   indiferente: 'Indiferente',
   frustrado: 'Frustrado',
-  molesto_minutos: 'Molesto por sus minutos',
+  // "Molesto" es el ESTADO accionable (status); acá recién está masticando.
+  molesto_minutos: 'Masticando bronca por sus minutos',
   decepcionado: 'Decepcionado consigo',
 };
 

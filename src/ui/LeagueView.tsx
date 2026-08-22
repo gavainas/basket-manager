@@ -39,7 +39,7 @@ export function PlayoffsCard({ state }: { state: GameState }) {
           return (
             <div key={cup}>
               <h4 className="profile-subtitle">
-                {cup === 'oro' ? '🥇 Copa de Oro' : '🥈 Copa de Plata'}
+                {cup === 'oro' ? 'Copa de Oro' : 'Copa de Plata'}
                 {champ && (
                   <span className="chip accent" style={{ marginLeft: '0.5rem' }}>
                     Campeón: <LegacyTeamName state={state} id={champ} />
@@ -383,7 +383,7 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
           </table>
         </div>
         <p className="muted" style={{ marginBottom: 0 }}>
-          Al cierre de la fase regular: 1°-4° juegan la 🥇 Copa de Oro, 5°-8° la 🥈 Copa de Plata. Los últimos dos
+          Al cierre de la fase regular: 1°-4° juegan la Copa de Oro, 5°-8° la Copa de Plata. Los últimos dos
           se van a casa.
         </p>
       </div>
