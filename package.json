@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "design:sync": "node scripts/design-sync.mjs",
-    "sim": "node scripts/sim-balance.cjs"
+    "sim": "node scripts/sim-balance.cjs",
+    "sim:notas": "node scripts/sim-notas.cjs"
   },
   "dependencies": {
     "@fontsource/oswald": "^5.3.0",
