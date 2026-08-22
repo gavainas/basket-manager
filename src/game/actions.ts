@@ -34,6 +34,7 @@ const CAUSE_TALK: Record<GrievanceCause, string> = {
   plata: 'el tema de la cuota',
   trato: 'cómo se manejó lo suyo',
   grupo: 'cómo se siente en el grupo',
+  proyecto: 'el nivel de la liga en la que estamos jugando',
 };
 
 function actives(s: GameState): Player[] {

@@ -427,6 +427,46 @@ function simulateForfeit(s: GameState, rival: Rival, rng: Rng): GameState {
 }
 
 /**
+ * La liga no habilitó al club por el fiado impago: los puntos se pierden en
+ * la mesa. Es la consecuencia deportiva de la deuda — cae una sola vez por
+ * temporada, avisada la semana anterior, y evitable pagando sobre la hora.
+ */
+function simulateDebtForfeit(
+  s: GameState,
+  rival: Rival,
+  debt: NonNullable<GameState['inscriptionDebt']>,
+  rng: Rng
+): GameState {
+  const [low, high] = BALANCE.match.forfeitScore;
+  debt.sanctionPending = false;
+  debt.sanctioned = true;
+  const result: MatchResult = {
+    week: s.week,
+    rivalId: rival.id,
+    rivalName: rival.name,
+    scoreFor: low,
+    scoreAgainst: high,
+    quarters: [],
+    highlights: [],
+    won: false,
+    forfeit: true,
+    mvpId: null,
+    mvpName: null,
+    summary: `La ${debt.leagueName} no habilitó al club por el fiado impago de la inscripción: los puntos se los llevó ${rival.name} sin jugar.`,
+    reasons: [`El club debía $${debt.remaining} del fiado y la liga cortó por lo sano.`],
+    lockerRoom: ['El plantel se enteró en la puerta del gimnasio: vinieron a jugar y los mandaron de vuelta. Nadie entendía nada.'],
+    effects: ['Motivación general -7', 'Prestigio deportivo -4', 'Prestigio social -4'],
+    box: [],
+  };
+  s.players = s.players.map((p) => (p.leftClub ? p : { ...p, motivation: clamp(p.motivation - 7) }));
+  s.club.sportPrestige = clamp(s.club.sportPrestige - 4);
+  s.club.socialPrestige = clamp(s.club.socialPrestige - 4);
+  logClubEvent(s, 'ausencia', `Vergüenza administrativa: la liga no habilitó al club por la deuda y perdimos con ${rival.name} en la mesa.`);
+  concludeMatch(s, result, rng);
+  return s;
+}
+
+/**
  * Arranca el partido de la semana: sortea el rendimiento del día de cada
  * jugador y deja el estado en fase 'match' para jugarlo cuarto a cuarto.
  * Si no hay quinteto completo, resuelve el forfeit directamente.
@@ -435,6 +475,29 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
   const s: GameState = structuredClone(state);
   const rivalId = s.schedule[s.week - 1];
   const rival = s.rivals.find((r) => r.id === rivalId)!;
+
+  // El fiado impago se cobra acá: con la sanción encima, la liga exige ponerse
+  // al día ANTES del partido. Si la caja llega (una rifa a tiempo salva la
+  // fecha), se paga sobre la hora; si no, los puntos se pierden en la mesa.
+  const debt = s.inscriptionDebt;
+  if (debt?.sanctionPending && s.week <= s.seasonLength) {
+    const overdue = Math.min(debt.remaining, BALANCE.economy.debtInstallment * Math.max(1, debt.missedWeeks));
+    if (s.club.money >= overdue) {
+      s.club.money -= overdue;
+      debt.remaining -= overdue;
+      debt.missedWeeks = 0;
+      debt.sanctionPending = false;
+      s.ledger.push({ week: s.week, concept: `Fiado de la inscripción: pago sobre la hora (${debt.leagueName})`, amount: -overdue });
+      s.news.unshift({
+        week: s.week,
+        text: `Sobre la hora, el club juntó $${overdue} y se puso al día con el fiado: la ${debt.leagueName} habilitó la fecha.`,
+        tone: 'good',
+      });
+    } else {
+      return simulateDebtForfeit(s, rival, debt, rng);
+    }
+  }
+
   const absent = matchAbsentIds(s);
   const noStart = noStartIds(s);
   // El forfeit es no juntar 5 en la planilla. Los que llegan al segundo tiempo

@@ -94,7 +94,7 @@ export interface PlayerMood {
 // ---------- Estado emocional unificado (mood.ts) ----------
 
 /** Por qué está caliente. La causa manda el texto y cómo se lo puede atender. */
-export type GrievanceCause = 'minutos' | 'promesa' | 'plata' | 'trato' | 'grupo';
+export type GrievanceCause = 'minutos' | 'promesa' | 'plata' | 'trato' | 'grupo' | 'proyecto';
 
 /**
  * La queja activa de un jugador: una sola por vez (la más grave). Es la
@@ -929,6 +929,25 @@ export interface GameState {
   affinityBonus?: Record<string, number>;
   /** La espina clavada: el rival que nos eliminó o nos ganó la final. Persiste hasta la revancha. */
   nemesis?: { rivalId: string; reason: string } | null;
+  /**
+   * Deuda de inscripción: la liga de siempre te fió porque te conoce (las
+   * nuevas cobran contado). Se paga en cuotas semanales automáticas; cada
+   * semana que la caja no llega hay presión, y a la tercera impaga la liga
+   * no te habilita la fecha. Opcional para no migrar saves.
+   */
+  inscriptionDebt?: {
+    /** Lo que la liga fió al cierre de la pretemporada. */
+    total: number;
+    /** Lo que falta devolver. */
+    remaining: number;
+    leagueName: string;
+    /** Semanas seguidas en que la cuota del fiado no se pudo pagar. */
+    missedWeeks: number;
+    /** La liga ya avisó: la próxima fecha no se habilita si no te ponés al día. */
+    sanctionPending?: boolean;
+    /** El castigo ya cayó una vez (los puntos se perdieron en la mesa). */
+    sanctioned?: boolean;
+  } | null;
 }
 
 // ---------- Asado con convocatoria ----------

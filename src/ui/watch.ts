@@ -61,6 +61,33 @@ export function watchItems(state: GameState): WatchItem[] {
       tile: 'gastos',
     });
   }
+  // El fiado de la inscripción: la liga no se olvida, y el radar tampoco.
+  const debt = state.inscriptionDebt;
+  if (debt && debt.remaining > 0) {
+    const overdue = Math.min(debt.remaining, BALANCE.economy.debtInstallment * Math.max(1, debt.missedWeeks));
+    if (debt.sanctionPending) {
+      items.push({
+        kind: 'plata',
+        cls: 'bad',
+        text: `La ${debt.leagueName} no te habilita la fecha por el fiado: juntá $${overdue} antes del partido o los puntos se pierden en la mesa.`,
+        tile: 'gastos',
+      });
+    } else if (debt.missedWeeks >= BALANCE.debt.weeksForSanction - 1 && !debt.sanctioned) {
+      items.push({
+        kind: 'plata',
+        cls: 'bad',
+        text: `Van ${debt.missedWeeks} semanas sin pagar el fiado ($${debt.remaining} pendientes): una más y la liga no te habilita la fecha.`,
+        tile: 'gastos',
+      });
+    } else {
+      items.push({
+        kind: 'plata',
+        cls: 'warn',
+        text: `El club debe $${debt.remaining} del fiado de la inscripción: la liga descuenta $${Math.min(BALANCE.economy.debtInstallment, debt.remaining)} por semana mientras la caja llegue.`,
+        tile: 'gastos',
+      });
+    }
+  }
   // Las quejas vivas primero, con nombre y motivo: es la misma lista que ve la
   // acción de hablar, así lo que dice el informe del sábado sigue estando acá.
   const week = Math.min(state.week, state.seasonLength);

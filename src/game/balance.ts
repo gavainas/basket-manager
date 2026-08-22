@@ -19,6 +19,8 @@ export const BALANCE = {
     mishapChance: 0.25,
     mishapMin: 30,
     mishapMax: 90,
+    // Fiado de la inscripción: la cuota semanal con que se devuelve.
+    debtInstallment: 80,
   },
 
   match: {
@@ -280,6 +282,23 @@ export const BALANCE = {
     lateInscriptionFee: 60, // recargo por no elegir liga: te anotan a último momento
     lateInscriptionPrestigeHit: 3, // y el barrio se entera de las corridas
     plazaPrestigeHit: 6, // bajarse a la plaza: el prestigio deportivo lo siente
+    fiadoSocialHit: 2, // pedir fiado se comenta, pero mucho menos que la gorra de antes
+  },
+
+  // Fiado de la inscripción: solo tu liga de siempre te lo da (te conocen).
+  debt: {
+    missPrestigeHit: 2, // prestigio social por semana con la cuota del fiado impaga
+    weeksForSanction: 3, // a la 3ª semana impaga seguida, la liga no te habilita la fecha
+  },
+
+  // La Liga de la Plaza: gratis en la caja, cara en todo lo demás.
+  plaza: {
+    weeklyPrestigeMelt: 1, // prestigio deportivo que se derrite por semana ahí
+    meltFloor: 22, // hasta dónde puede caer por este goteo
+    meltNewsEvery: 3, // cada tantas semanas, el barrio lo comenta
+    ambitionChance: 0.25, // prob. semanal de que un ambicioso se caliente por el nivel
+    ambitionMinTech: 58, // técnica desde la que un ambicioso siente que se desperdicia
+    figureRep: 60, // reputación deportiva desde la que un fichable "es figura" y no te atiende
   },
 } as const;
 

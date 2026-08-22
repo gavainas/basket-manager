@@ -6,6 +6,8 @@ import {
   DEMAND_LABELS,
   confirmedPlayers,
   inscriptionOffer,
+  isMarketFigure,
+  plazaBound,
   projectedWeeklyFees,
   type LeagueOption,
 } from '../game/preseason';
@@ -160,7 +162,11 @@ function DeadlinePanel({ state, dispatch }: Props) {
   if (confirmed.length < min)
     risks.push(`Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`);
   if (fee > 0 && state.club.money < fee)
-    risks.push(`La caja no cubre la inscripción ($${fee}): la comisión tendría que pasar la gorra, y eso cuesta prestigio.`);
+    risks.push(
+      chosenOpt?.trusts
+        ? `La caja no cubre la inscripción ($${fee}): en tu liga te conocen y te la van a fiar, pero arrancás la temporada con deuda y cuotas semanales.`
+        : `La caja no cubre la inscripción ($${fee}): la comisión tendría que pasar la gorra, y eso cuesta prestigio.`
+    );
   if (fees < costs && confirmed.length >= min)
     risks.push(`Las cuotas proyectadas ($${fees}/sem) no cubren los gastos fijos ($${costs}/sem).`);
   if (chosenOpt === null)
@@ -383,6 +389,9 @@ function MarketSection({ state, dispatch }: Props) {
     const know = KNOWLEDGE_LABELS[mp.knowledge];
     const active = mp.status === 'disponible';
     const fit = agendaFit(state, mp);
+    // La fama es pública: si el club apunta a la plaza, se sabe de antemano
+    // que este no va a atender el teléfono.
+    const snubs = plazaBound(state) && isMarketFigure(mp);
     return (
       <div key={mp.id} className={`player-card${active ? '' : ' dimmed'}`}>
         <div
@@ -425,6 +434,9 @@ function MarketSection({ state, dispatch }: Props) {
           {mp.availability === 'escuchando_ofertas' && active && (
             <span className="chip warn">Escucha otras ofertas</span>
           )}
+          {snubs && active && (
+            <span className="chip bad">Figura: no atiende a un club de la plaza</span>
+          )}
           {(mp.contacted || mp.knowledge === 'muy_conocido' || mp.knowledge === 'conocido') && (
             <span className="chip">{feeAttitudeLabel(mp)}</span>
           )}
@@ -446,7 +458,7 @@ function MarketSection({ state, dispatch }: Props) {
             disabled={noGestiones}
             onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true })}
           >
-            {mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
+            {snubs ? 'Llamarlo igual' : mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
           </button>
         )}
       </div>
@@ -589,6 +601,11 @@ function MarketProfile({
             </p>
           )}
 
+          {active && plazaBound(state) && isMarketFigure(mp) && (
+            <p className="muted" style={{ margin: '0.6rem 0 0', color: 'var(--bad)' }}>
+              Figura de la liga: mientras el club juegue en la plaza, no te va a atender.
+            </p>
+          )}
           {active && (
             <button
               className="primary"
@@ -599,7 +616,12 @@ function MarketProfile({
                 dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true });
               }}
             >
-              {mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
+              {plazaBound(state) && isMarketFigure(mp)
+                ? 'Llamarlo igual'
+                : mp.contacted
+                  ? 'Retomar negociación'
+                  : 'Contactar'}{' '}
+              (1 gestión)
             </button>
           )}
         </div>

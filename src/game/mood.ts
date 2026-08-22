@@ -35,6 +35,7 @@ const CAUSE_RANK: Record<GrievanceCause, number> = {
   promesa: 5,
   minutos: 4,
   trato: 3,
+  proyecto: 3, // "yo a la plaza no vine a pasear": pesa como un mal trato
   plata: 2,
   grupo: 1,
 };
@@ -45,6 +46,7 @@ export const CAUSE_SHORT: Record<GrievanceCause, string> = {
   plata: 'la plata',
   trato: 'cómo lo trataron',
   grupo: 'el clima del grupo',
+  proyecto: 'el nivel de la liga',
 };
 
 /**
@@ -267,6 +269,10 @@ export function grievanceWarning(p: Player, week: number): string {
         : `${p.name} quedó dolido por cómo se manejó lo suyo.`;
     case 'grupo':
       return `${p.name} no está cómodo en el vestuario. Si el clima no cambia, se despega.`;
+    case 'proyecto':
+      return g.level >= 3
+        ? `${p.name} ya lo dijo delante de todos: "yo a la plaza no vine a pasear". Si el club no vuelve a jugar en serio, se va.`
+        : `${p.name} siente que en esta liga se desperdicia (${weeks} semana${weeks > 1 ? 's' : ''} masticándolo). El nivel le queda chico.`;
   }
 }
 

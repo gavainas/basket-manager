@@ -1,7 +1,7 @@
 import { BALANCE, clamp } from './balance';
 import { createInitialRoster } from '../data/players';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
-import { INITIAL_OTHER_DIVISION, USER_DIVISION_ID } from '../data/worldData';
+import { INITIAL_OTHER_DIVISION, PLAZA_DIVISION_ID, USER_DIVISION_ID } from '../data/worldData';
 import { getAction } from './actions';
 import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent, rollTrialPractice, takeScheduledEvent } from './events';
@@ -326,6 +326,42 @@ export function advanceWeek(state: GameState): GameState {
 
   // --- Economía de la semana ---
   applyWeeklyEconomy(s, rng);
+
+  // --- La plaza se paga: cartel que se derrite y ambiciosos que mastican ---
+  // Lo barato lo paga el vestuario: el prestigio deportivo gotea semana a
+  // semana, y a los que juegan en serio el nivel les queda chico — la queja
+  // ('proyecto') entra al sistema de humor y escala como cualquier bronca.
+  if (s.divisionId === PLAZA_DIVISION_ID && s.week <= s.seasonLength) {
+    if (s.club.sportPrestige > BALANCE.plaza.meltFloor) {
+      s.club.sportPrestige = clamp(s.club.sportPrestige - BALANCE.plaza.weeklyPrestigeMelt);
+      if (s.week % BALANCE.plaza.meltNewsEvery === 0) {
+        s.news.unshift({
+          week: s.week,
+          text: 'En el barrio preguntan, medio en broma medio en serio, cuándo vuelven a jugar en serio. La plaza no suma cartel.',
+          tone: 'bad',
+        });
+      }
+    }
+    const ambitious = s.players.filter(
+      (p) =>
+        !p.leftClub &&
+        p.status !== 'lesionado' &&
+        (p.personality === 'competitivo' || p.personality === 'protagonista' || p.personality === 'mercenario') &&
+        p.technique >= BALANCE.plaza.ambitionMinTech
+    );
+    if (ambitious.length > 0 && rng.chance(BALANCE.plaza.ambitionChance)) {
+      // La bronca se concentra en la figura: la del mejor es la que escala y se lee.
+      const star = [...ambitious].sort((a, b) => b.technique - a.technique)[0];
+      const target = rng.chance(0.7) ? star : rng.pick(ambitious);
+      const grumble =
+        target.personality === 'competitivo'
+          ? 'Terminó el partido y lo dijo sin vueltas: "acá no me exige nadie, así me estanco".'
+          : target.personality === 'protagonista'
+            ? '"Yo para brillar en la plaza no me anoté", tiró medio en chiste. Medio.'
+            : 'Hizo cuentas en voz alta: "en una liga de verdad, a uno como yo lo becan; acá ni cartel hay".';
+      bumpGrievance(s, target, 'proyecto', { note: grumble });
+    }
+  }
 
   // --- Deriva del club ---
   s.club.organization = clamp(s.club.organization - 1);
