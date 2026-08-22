@@ -3,9 +3,11 @@ import { createInitialRoster } from '../data/players';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
 import { INITIAL_OTHER_DIVISION, PLAZA_DIVISION_ID, USER_DIVISION_ID } from '../data/worldData';
 import { getAction } from './actions';
+import { rollWeekBanter } from './banter';
 import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent, rollTrialPractice, takeScheduledEvent } from './events';
 import { maybeFriendMessage } from './friendsAbroad';
+import { rollWeekMoment } from './moments';
 import { bumpGrievance, decayGrievance, grievanceNote, isBurning, isHot, sootheGrievance } from './mood';
 import { generateObjectives, midSeasonObjectiveCheck, settleObjectives } from './objectives';
 import { activePlayers, matchAbsentIds, noStartIds, suggestRotation, suggestStarters } from './match';
@@ -92,13 +94,23 @@ export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'med
   };
   state.objectives = generateObjectives(1, state.club.sportPrestige, rng);
   state.world = buildWorld(state, rng);
+  // La primera semana también tiene pulso: momento del mundo y previa.
+  rollWeekMoment(state, rng);
+  rollWeekBanter(state, rng);
   state.seed = rng.nextSeed();
   return state;
 }
 
-/** Aplica las acciones elegidas y pasa a la convocatoria del partido. */
-export function confirmActions(state: GameState): GameState {
+/**
+ * Aplica las acciones elegidas y pasa a la convocatoria del partido.
+ * `timing` es cuándo se larga la lista: 2 días antes (default — hay margen
+ * para gestionar bajas, pero el día del partido alguno más se puede caer) o
+ * sobre la hora (lo que ves es definitivo y los excuseros no llegan a
+ * bajarse, pero sin margen para gestiones).
+ */
+export function confirmActions(state: GameState, timing: 'temprana' | 'tarde' = 'temprana'): GameState {
   const s: GameState = structuredClone(state);
+  s.callUpTiming = timing;
   const rng = new Rng(s.seed);
   for (const id of s.actionsChosen) {
     const def = getAction(id);
@@ -374,6 +386,7 @@ export function advanceWeek(state: GameState): GameState {
   s.actionsLog = [];
   s.eventOutcome = null;
   s.callUp = [];
+  s.callUpTiming = undefined; // cada semana se vuelve a elegir cuándo largar la lista
   s.live = null;
   s.lastMatch = state.lastMatch; // se conserva para referencia
   s.asadoPlan = null; // la convocatoria al asado vence con la semana
@@ -408,6 +421,9 @@ export function advanceWeek(state: GameState): GameState {
     // Fase regular terminada: arrancan (o siguen) los playoffs de las copas.
     if (advancePlayoffs(s, rng)) {
       s.phase = 'planning';
+      // En playoffs no hay momentos del mundo, pero la previa se pica MÁS.
+      rollWeekMoment(s, rng);
+      rollWeekBanter(s, rng);
       s.pendingEvent = trialPlanningEvent(s, rng) ?? takeScheduledEvent(s) ?? rollEvent(s, rng);
       s.starters = suggestStarters(s.players);
       s.rotation = suggestRotation(s.players, s.starters);
@@ -422,6 +438,10 @@ export function advanceWeek(state: GameState): GameState {
     s.phase = 'planning';
     // A mitad de temporada la comisión pasa a decir cómo vienen sus encargos.
     if (s.week === 5) midSeasonObjectiveCheck(s);
+    // La semana nueva arranca con su pulso: el momento del mundo (si lo hay)
+    // y la previa que se pica se anuncian ANTES de decidir nada.
+    rollWeekMoment(s, rng);
+    rollWeekBanter(s, rng);
     // Prioridad: el amigo a prueba, después las consecuencias encadenadas
     // (seguras), y recién ahí el sorteo semanal.
     s.pendingEvent = trialPlanningEvent(s, rng) ?? takeScheduledEvent(s) ?? rollEvent(s, rng);

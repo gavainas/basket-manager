@@ -291,6 +291,36 @@ export const BALANCE = {
     weeksForSanction: 3, // a la 3ª semana impaga seguida, la liga no te habilita la fecha
   },
 
+  // Momentos del mundo: la ciudad también juega (la Selección, el paro, el
+  // finde largo). Golpean la convocatoria de LOS DOS equipos sin mirar el
+  // compromiso de nadie, y se anuncian al arrancar la semana.
+  moments: {
+    chance: 0.35, // prob. semanal de que haya un momento (solo fase regular)
+    maxExtraOut: 3, // tope de bajas TUYAS extra por el momento (además de las normales)
+    rivalMaxExtraOut: 3, // tope de bajas extra del rival: espejo del tuyo, parejo
+    // El rival pierde fuerza con CUALQUIER baja de su top-8; vos tapás con el
+    // banco. Sin este factor, los momentos te regalaban ~2 puntos de winrate
+    // (medido con npm run sim, 120 temporadas).
+    rivalChanceFactor: 0.7,
+  },
+
+  // Cuándo se larga la lista: 2 días antes (con margen para gestionar, pero
+  // el día del partido alguno más se puede caer) o sobre la hora (lo que ves
+  // es definitivo y los excuseros no llegan a bajarse, pero sin gestiones).
+  callUpTiming: {
+    lateDropChance: 0.04, // prob. por confirmado de caerse a último momento (lista temprana)
+    lateDropMax: 2,
+    lateExcuseRelief: 0.55, // lista sobre la hora: las excusas flojas se achican (×)
+  },
+
+  // La previa que se pica: mensajes entre clubes y la apuesta del asado.
+  banter: {
+    chance: 0.55, // prob. semanal de que la previa se pique
+    betChance: 0.16, // prob. de que el delegado rival apueste un asado
+    betRivalryBonus: 0.2, // con rivalidad encima, la apuesta aparece mucho más
+    betStake: 60, // lo que sale el asado si la apuesta se pierde
+  },
+
   // La Liga de la Plaza: gratis en la caja, cara en todo lo demás.
   plaza: {
     weeklyPrestigeMelt: 1, // prestigio deportivo que se derrite por semana ahí

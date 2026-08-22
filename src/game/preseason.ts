@@ -12,6 +12,8 @@ import {
   USER_DIVISION_ID,
 } from '../data/worldData';
 import { applyPromotionRelegation } from './promotion';
+import { rollWeekBanter } from './banter';
+import { rollWeekMoment } from './moments';
 import { weeklyFee } from './economy';
 import { generateObjectives } from './objectives';
 import { clubPosition, suggestRotation, suggestStarters } from './match';
@@ -1156,6 +1158,9 @@ export function startSeasonFromPreseason(state: GameState): GameState {
   s.preseason = null;
   // El mundo se rearma cada temporada: planteles rivales nuevos y fixture nuevo.
   s.world = buildWorld(s, rng);
+  // Y la primera semana arranca con su pulso: momento del mundo y previa.
+  rollWeekMoment(s, rng);
+  rollWeekBanter(s, rng);
   s.seed = rng.nextSeed();
   return s;
 }

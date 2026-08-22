@@ -1,4 +1,5 @@
 import { addPairBonus } from './asado';
+import { settleAsadoBet } from './banter';
 import { BALANCE, clamp } from './balance';
 import { buildMoods, hasMinutesPromise, moodCauseFor, type EmotionContext } from './emotions';
 import { fragilityOf, MATCH_INJURY_NOTES, rollInjuryWeeks } from './injuries';
@@ -392,6 +393,9 @@ function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
   });
   // La liga habla: revanchas cumplidas y lo que pasó en las otras canchas.
   settleRivalryAfterMatch(s);
+  // La apuesta del asado se liquida acá: el que pierde paga, sin apelación.
+  const betLine = settleAsadoBet(s);
+  if (betLine) result.effects.push(betLine);
   leagueNewsForWeek(s, otherResults, rng);
   s.live = null;
   s.phase = 'matchResult';

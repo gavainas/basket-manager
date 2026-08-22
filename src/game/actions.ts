@@ -130,8 +130,15 @@ export const ACTIONS: ActionDef[] = [
     description:
       'Convocás al plantel a un asado: cada uno confirma según su momento. Si va la mayoría, el grupo sale otro; si van cuatro, es un papelón.',
     costLabel: `Cuesta $${A.asado.cost} (según quiénes vayan)`,
-    available: (s) => needMoney(s, A.asado.cost),
+    // Con una apuesta ganada en el bolsillo, este asado lo paga el rival.
+    available: (s) => (s.asadoBetPrize ? { ok: true } : needMoney(s, A.asado.cost)),
     apply: (s, rng) => {
+      const prize = s.asadoBetPrize;
+      if (prize) {
+        s.asadoBetPrize = null;
+        const report = resolveAsado(s, rng);
+        return `Lo pagó ${prize.rivalName}: la apuesta es la apuesta. ${asadoSummary(report, actives(s).length)}`;
+      }
       spend(s, 'Asado del plantel', A.asado.cost);
       const report = resolveAsado(s, rng);
       return asadoSummary(report, actives(s).length);

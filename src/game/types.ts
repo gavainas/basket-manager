@@ -242,6 +242,8 @@ export interface CallUpEntry {
   exhausted?: boolean;
   /** Decidiste jugarlo fundido: rinde menos y el físico puede decir basta. */
   playingExhausted?: boolean;
+  /** Se cayó DESPUÉS de largar la lista: baja de último momento, sin gestión posible. */
+  lastMinute?: boolean;
 }
 
 export type DefenseTactic = 'hombre' | 'zona' | 'presion';
@@ -504,6 +506,21 @@ export interface MarketPlayer {
   contacted: boolean;
   /** Si viene del mundo (agente libre real): el id de esa persona. */
   worldPlayerId?: string;
+}
+
+/** Un mensaje de la previa entre clubes (jugador rival real, tu vestuario o el delegado). */
+export interface BanterMessage {
+  side: 'rival' | 'own' | 'delegado';
+  name: string;
+  /** Para el retrato del rival (persona del mundo). */
+  worldPlayerId?: string;
+  /** Para el retrato del tuyo. */
+  playerId?: string;
+  personality?: Personality;
+  age?: number;
+  text: string;
+  /** Este mensaje es la apuesta del asado: la UI muestra los botones acá. */
+  isBet?: boolean;
 }
 
 /** Reacción diferida de un evento: se comunica y aplica semanas después. */
@@ -929,6 +946,36 @@ export interface GameState {
   affinityBonus?: Record<string, number>;
   /** La espina clavada: el rival que nos eliminó o nos ganó la final. Persiste hasta la revancha. */
   nemesis?: { rivalId: string; reason: string } | null;
+  /**
+   * Momento del mundo de esta semana: algo que pasa en la ciudad (juega la
+   * Selección, paro de ómnibus, finde largo) y golpea la convocatoria de LOS
+   * DOS equipos, sin mirar el compromiso de nadie. Se anuncia al arrancar la
+   * semana para poder planificar. Opcional: sin migración de saves.
+   */
+  weekMoment?: {
+    id: string;
+    title: string;
+    /** El anuncio de la previa ("El jueves juega la Selección…"). */
+    text: string;
+    /** Día del momento, para el calendario semanal. */
+    day: WeekDay;
+  } | null;
+  /** La previa que se pica: mensajes entre clubes esta semana (feed efímero). */
+  weekBanter?: {
+    week: number;
+    messages: BanterMessage[];
+  } | null;
+  /** Apuesta de asado con el rival de la semana (el que pierde lo paga). */
+  asadoBet?: {
+    week: number;
+    rivalId: string;
+    rivalName: string;
+    status: 'propuesta' | 'aceptada' | 'rechazada' | 'ganada' | 'perdida';
+  } | null;
+  /** Ganaste una apuesta: el próximo asado lo paga el rival (se consume al usarlo). */
+  asadoBetPrize?: { rivalName: string } | null;
+  /** Cuándo se largó la lista esta semana: 2 días antes (default) o sobre la hora. */
+  callUpTiming?: 'temprana' | 'tarde';
   /**
    * Deuda de inscripción: la liga de siempre te fió porque te conoce (las
    * nuevas cobran contado). Se paga en cuotas semanales automáticas; cada

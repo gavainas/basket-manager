@@ -103,6 +103,8 @@ export function planAsado(s: GameState, rng: Rng): AsadoPlan {
       s.club.socialClimate * 0.0015 +
       personalityPull(p) +
       streakAdj;
+    // Semana de Selección: el asado se convierte en juntada para verla — van más.
+    if (s.weekMoment?.id === 'seleccion') v += 0.15;
     if (p.status === 'molesto' || p.status === 'al_borde') v -= 0.3;
     // El lesionado va igual: está al pedo y extraña al grupo.
     if (p.status === 'lesionado') v += 0.05;

@@ -5,8 +5,11 @@ import { ABSENCE_ACTIONS, reasonById } from '../game/absences';
 import { ACTIONS } from '../game/actions';
 import { BALANCE } from '../game/balance';
 import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
+import { userGameDay } from '../game/moments';
 import { lineupPromiseWarnings } from '../game/promises';
 import { courtFreshness, evaluateTeam, isSelectable } from '../game/match';
+import { userFixtureOfWeek } from '../game/world';
+import type { WeekDay } from '../game/types';
 import { Bar } from './Bar';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
@@ -59,6 +62,145 @@ function Steps({ phase }: { phase: GameState['phase'] }) {
           {s.label}
         </span>
       ))}
+    </div>
+  );
+}
+
+// ---------- El calendario de la semana ----------
+
+const WEEK_DAYS: WeekDay[] = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+const DAY_ABBR: Record<WeekDay, string> = {
+  lunes: 'LUN',
+  martes: 'MAR',
+  miércoles: 'MIÉ',
+  jueves: 'JUE',
+  viernes: 'VIE',
+  sábado: 'SÁB',
+  domingo: 'DOM',
+};
+
+/** "14/9" desde la fecha ISO del fixture. */
+function shortDate(iso: string | undefined): string | null {
+  if (!iso) return null;
+  const [, m, d] = iso.split('-');
+  return `${Number(d)}/${Number(m)}`;
+}
+
+/**
+ * La semana como tira de días, contada hacia el partido: se planifica a 3
+ * días, la lista se larga a 2, y el día de la fecha se arma el quinteto y se
+ * juega. Los momentos del mundo y el asado caen en su día: verlos venir es
+ * poder planificar.
+ */
+function SemanaStrip({ state }: { state: GameState }) {
+  const gameDay = userGameDay(state);
+  const fx = userFixtureOfWeek(state.world, state.week);
+  const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1]);
+  const gi = WEEK_DAYS.indexOf(gameDay);
+  // Offset de cada fase respecto del partido (0 = día de la fecha).
+  const todayOffset =
+    state.phase === 'planning' ? -3 : state.phase === 'callUp' ? -2 : 0;
+  // La tira muestra 7 días terminando uno después del partido: una cuenta regresiva.
+  const offsets = [-5, -4, -3, -2, -1, 0, 1];
+  const momentOffset = state.weekMoment
+    ? ((WEEK_DAYS.indexOf(state.weekMoment.day) - gi + 7 + 5) % 7) - 5
+    : null;
+  const asadoOffset =
+    state.actionsChosen.includes('asado') || state.lastAsado?.week === state.week ? -1 : null;
+  const date = shortDate(fx?.date);
+
+  return (
+    <div className="semana-strip">
+      {offsets.map((off) => {
+        const day = WEEK_DAYS[(gi + off + 14) % 7];
+        const isToday = off === todayOffset;
+        const isMatch = off === 0;
+        const marks: { icon: IconName; text: string }[] = [];
+        if (isMatch && rival) marks.push({ icon: 'pelota', text: `vs ${rival.name}${fx?.time ? ` · ${fx.time}` : ''}` });
+        if (momentOffset === off && state.weekMoment) marks.push({ icon: 'destacado', text: state.weekMoment.title });
+        if (asadoOffset === off) marks.push({ icon: 'asado' as IconName, text: 'Asado del plantel' });
+        if (off === -2) marks.push({ icon: 'plantel', text: 'Se larga la lista' });
+        return (
+          <div key={off} className={`dia-cell${isToday ? ' dia-hoy' : ''}${isMatch ? ' dia-partido' : ''}`}>
+            <div className="dia-nombre">
+              {DAY_ABBR[day]}
+              {isMatch && date ? <span className="dia-fecha"> {date}</span> : null}
+            </div>
+            {isToday && <div className="dia-tag">HOY</div>}
+            {marks.map((m, i) => (
+              <div key={i} className="dia-marca" title={m.text}>
+                <Icon name={m.icon} size={12} /> <span>{m.text}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---------- La previa que se pica ----------
+
+/**
+ * El feed de la semana: un jugador real del rival tira la primera piedra, tu
+ * vestuario contesta y, algunas semanas, el delegado rival apuesta un asado.
+ */
+function PreviaFeed({ state, dispatch }: Props) {
+  const banter = state.weekBanter;
+  if (!banter || banter.week !== state.week || banter.messages.length === 0) return null;
+  const bet = state.asadoBet && state.asadoBet.week === state.week ? state.asadoBet : null;
+  return (
+    <div className="card sec-vestuario" style={{ marginBottom: '1rem' }}>
+      <h3>
+        <Icon name="chat" size={17} /> La previa se pica
+      </h3>
+      <div className="chat-list">
+        {banter.messages.map((m, i) => {
+          const own = m.playerId ? state.players.find((p) => p.id === m.playerId) : undefined;
+          return (
+            <div className="chat-row" key={i}>
+              {(m.worldPlayerId || own) && (
+                <div className="avatar chat-avatar">
+                  <Avatar
+                    seed={m.worldPlayerId ?? own!.id}
+                    age={m.age ?? own?.age}
+                    appearance={own?.appearance}
+                    title={m.name}
+                    personality={m.personality ?? own?.personality}
+                  />
+                </div>
+              )}
+              <div className="chat-bubble" style={m.side === 'own' ? undefined : { background: 'var(--panel-2)' }}>
+                <div className="chat-name">
+                  {m.name}
+                  {m.side === 'rival' && <span className="chip" style={{ marginLeft: '0.4rem' }}>rival</span>}
+                </div>
+                <div className="chat-text">{m.text}</div>
+                {m.isBet && bet?.status === 'propuesta' && (
+                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', flexWrap: 'wrap' }}>
+                    <button className="small" onClick={() => dispatch({ type: 'ASADO_BET', accept: true })}>
+                      🍖 Aceptar: el que pierde paga
+                    </button>
+                    <button className="small" onClick={() => dispatch({ type: 'ASADO_BET', accept: false })}>
+                      Ni loco
+                    </button>
+                  </div>
+                )}
+                {m.isBet && bet && bet.status === 'aceptada' && (
+                  <span className="chip accent" style={{ marginTop: '0.4rem' }}>
+                    Apuesta sellada: el que pierde paga el asado
+                  </span>
+                )}
+                {m.isBet && bet && bet.status === 'rechazada' && (
+                  <span className="chip" style={{ marginTop: '0.4rem' }}>
+                    La dejaste pasar
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -164,6 +306,15 @@ function PlanningPanel({ state, dispatch }: Props) {
         {rival && rivalryWith(state, rival.id) && (
           <p style={{ margin: '0.2rem 0 0.4rem' }}>{rivalryWith(state, rival.id)!.text}</p>
         )}
+        <SemanaStrip state={state} />
+        {state.weekMoment && (
+          <p style={{ margin: '0.4rem 0' }}>
+            <span className="chip accent" style={{ marginRight: '0.4rem' }}>
+              <Icon name="destacado" size={13} /> {state.weekMoment.title}
+            </span>
+            {state.weekMoment.text}
+          </p>
+        )}
         {chosen.length > 0 && (
           <p style={{ margin: '0.3rem 0' }}>
             Esta semana además:{' '}
@@ -175,8 +326,18 @@ function PlanningPanel({ state, dispatch }: Props) {
           </p>
         )}
         <div className="confirm-bar" style={{ marginTop: '0.6rem' }}>
-          <button className="primary" onClick={() => dispatch({ type: 'CONFIRM_ACTIONS' })}>
-            ▶ Pasar lista e ir al partido
+          <button
+            className="primary"
+            title="Ves las bajas con 2 días de margen y podés gestionarlas… pero el día del partido alguno más se puede caer."
+            onClick={() => dispatch({ type: 'CONFIRM_ACTIONS', timing: 'temprana' })}
+          >
+            ▶ Largar la lista (2 días antes)
+          </button>
+          <button
+            title="Nadie tiene tiempo de inventar excusas y lo que ves es definitivo… pero tampoco te queda margen para gestionar ninguna baja."
+            onClick={() => dispatch({ type: 'CONFIRM_ACTIONS', timing: 'tarde' })}
+          >
+            Pasarla sobre la hora
           </button>
           <button className="small" onClick={() => setShowActions((v) => !v)}>
             {showActions ? 'Ocultar acciones' : `Acciones del club${chosen.length > 0 ? ` (${chosen.length}/${max})` : ''}`}
@@ -184,10 +345,12 @@ function PlanningPanel({ state, dispatch }: Props) {
           <span className="hint">
             {chosen.length > 0
               ? 'Las acciones elegidas se aplican al pasar lista.'
-              : 'Si querés, antes podés entrenar, recaudar o mover el club (opcional).'}
+              : 'Temprana: margen para gestionar bajas, con riesgo de caídas de último momento. Sobre la hora: certeza, sin margen.'}
           </span>
         </div>
       </div>
+
+      <PreviaFeed state={state} dispatch={dispatch} />
 
       {state.actionsChosen.includes('asado') && <AsadoRsvpPanel state={state} />}
 
@@ -326,7 +489,24 @@ function CallUpPanel({ state, dispatch }: Props) {
           >
             Faltas: {BALANCE.absenceDifficulty[state.absenceDifficulty ?? 'medio'].label}
           </span>
+          <span
+            className={`chip ${state.callUpTiming === 'tarde' ? 'warn' : 'accent'}`}
+            style={{ marginLeft: '0.3rem' }}
+            title={
+              state.callUpTiming === 'tarde'
+                ? 'La pasaste sobre la hora: lo que ves es definitivo, pero no hay margen para gestionar bajas.'
+                : 'La largaste 2 días antes: podés gestionar las bajas, pero el día del partido alguno más se puede caer.'
+            }
+          >
+            {state.callUpTiming === 'tarde' ? 'Lista sobre la hora' : 'Lista 2 días antes'}
+          </span>
         </h3>
+        <SemanaStrip state={state} />
+        {state.callUpTiming === 'tarde' && state.callUp.some((e) => e.status === 'ausente') && (
+          <p className="muted" style={{ marginTop: 0, color: 'var(--warn)' }}>
+            Te enteraste sobre la hora: no queda margen para gestionar ninguna baja.
+          </p>
+        )}
         {outs.length === 0 && stillInjured.length === 0 && suspended.length === 0 ? (
           <p style={{ marginTop: 0 }}>
             ✓ <strong>Vinieron todos.</strong> Semana tranquila: el grupo está entero para el partido.
@@ -343,7 +523,7 @@ function CallUpPanel({ state, dispatch }: Props) {
           <div className="callup-list">
             {outs.map((e) => {
               const reason = e.reasonId ? reasonById(e.reasonId) : undefined;
-              const canAct = e.status === 'ausente' && reason && !e.resolved;
+              const canAct = e.status === 'ausente' && reason && !e.resolved && state.callUpTiming !== 'tarde';
               const pl = state.players.find((p) => p.id === e.playerId);
               return (
                 <div key={e.playerId} className="callup-row out">
@@ -713,6 +893,26 @@ function LineupPanel({ state, dispatch }: Props) {
           </p>
         )}
       </div>
+
+      {state.callUp.some((e) => e.lastMinute) && (
+        <div className="card" style={{ borderColor: 'var(--bad)', marginBottom: '1rem' }}>
+          <h3 style={{ color: 'var(--bad)' }}>
+            <Icon name="alerta" size={16} /> Baja{state.callUp.filter((e) => e.lastMinute).length > 1 ? 's' : ''} de
+            último momento
+          </h3>
+          {state.callUp
+            .filter((e) => e.lastMinute)
+            .map((e) => (
+              <p key={e.playerId} style={{ margin: '0.25rem 0' }}>
+                <PlayerLink id={e.playerId}>{e.playerName}</PlayerLink>: {e.note}
+              </p>
+            ))}
+          <p className="muted" style={{ margin: '0.3rem 0 0' }}>
+            La lista se largó hace dos días y la vida siguió pasando. No hay margen para gestiones: se arma con los que
+            están.
+          </p>
+        </div>
+      )}
 
       <QuintetoStrip slots={slots} />
 

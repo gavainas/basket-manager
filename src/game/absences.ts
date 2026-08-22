@@ -138,6 +138,16 @@ export const ABSENCE_REASONS: AbsenceReasonDef[] = [
     ],
     actions: ['segundo_tiempo', 'importancia'],
   },
+  {
+    // El momento del mundo (la Selección, el paro, el finde largo): la excusa
+    // la pone la ciudad, no el jugador. Se puede intentar darlo vuelta.
+    id: 'momento',
+    excuses: [
+      'Se sumó al plan del que se baja todo el mundo esta semana.',
+      'Cayó en la volteada de la semana: tenía el plan armado hace rato.',
+    ],
+    actions: ['convencer', 'importancia'],
+  },
   // --- Imprevistos de la vida: le pasan a cualquiera, hasta al capitán ---
   {
     id: 'enfermo',
@@ -211,6 +221,9 @@ export function attemptAbsenceAction(
   actionId: AbsenceActionId,
   rng: Rng
 ): GameState {
+  // Con la lista pasada sobre la hora no hay margen: te enteraste recién y el
+  // partido es ya. Aceptar la baja es lo único que queda.
+  if (state.callUpTiming === 'tarde' && actionId !== 'aceptar') return state;
   const s: GameState = structuredClone(state);
   const entry = s.callUp.find((c) => c.playerId === playerId && c.status === 'ausente' && !c.resolved);
   const player = s.players.find((p) => p.id === playerId);

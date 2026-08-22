@@ -27,7 +27,8 @@ import { resolvePreseasonEvent } from '../game/preseasonEvents';
 import { planAsado } from '../game/asado';
 import { Rng, randomSeed } from '../game/rng';
 import { attemptAbsenceAction, type AbsenceActionId } from '../game/absences';
-import { resolveExhausted } from '../game/callup';
+import { respondAsadoBet } from '../game/banter';
+import { resolveExhausted, rollLateDrops } from '../game/callup';
 import { appointPlayerCoach, fireCoach, hireCoach } from '../game/coach';
 import { resolveIncident } from '../game/narrative';
 import { registerSecondTeam } from '../game/secondTeam';
@@ -41,7 +42,8 @@ export type GameAction =
   | { type: 'LOAD'; state: GameState }
   | { type: 'QUIT_TO_MENU' }
   | { type: 'TOGGLE_ACTION'; id: string }
-  | { type: 'CONFIRM_ACTIONS' }
+  | { type: 'CONFIRM_ACTIONS'; timing?: 'temprana' | 'tarde' }
+  | { type: 'ASADO_BET'; accept: boolean }
   | { type: 'RESOLVE_EVENT'; optionIndex: number }
   | { type: 'DISMISS_EVENT_OUTCOME' }
   | { type: 'CALLUP_ACTION'; playerId: string; actionId: AbsenceActionId }
@@ -157,7 +159,11 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
     }
     case 'CONFIRM_ACTIONS':
       if (state.phase !== 'planning' || state.pendingEvent) return state;
-      return confirmActions(state);
+      return confirmActions(state, action.timing ?? 'temprana');
+    case 'ASADO_BET': {
+      if (state.phase !== 'planning') return state;
+      return respondAsadoBet(state, action.accept);
+    }
     case 'RESOLVE_EVENT':
       return resolveEvent(state, action.optionIndex);
     case 'DISMISS_EVENT_OUTCOME':
@@ -202,6 +208,11 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
     case 'PROCEED_TO_LINEUP': {
       if (state.phase !== 'callUp') return state;
       const next: GameState = { ...structuredClone(state), phase: 'lineup' };
+      // La letra chica de largar la lista 2 días antes: llegó el día del
+      // partido y la vida siguió pasando — alguno se puede caer sobre la hora.
+      const rng = new Rng(next.seed);
+      rollLateDrops(next, rng);
+      next.seed = rng.nextSeed();
       sanitizeLineup(next);
       return next;
     }

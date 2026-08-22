@@ -6,6 +6,7 @@
 import { BALANCE } from './balance';
 import { CLUB_COLORS, DIVISIONS, LEAGUES, USER_LEAGUE_ID } from '../data/worldData';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
+import { momentById } from './moments';
 import { Rng, seedFromString } from './rng';
 import type {
   AvailabilityProfile,
@@ -893,11 +894,28 @@ export function rollRivalMatchday(state: GameState, rivalLegacyId: string, rng: 
   const roster = teamRoster(world, team.id).sort((a, b) => b.level - a.level);
   if (roster.length === 0) return { presentIds: [], presentCount: 0, mod: 1, notes: [] };
 
-  const present = roster.filter((p) => rng.chance(attendChance(p, division, time)));
+  let present = roster.filter((p) => rng.chance(attendChance(p, division, time)));
+
+  // El momento del mundo golpea parejo: si juega la Selección o hay paro, al
+  // rival también se le baja gente — mismo motivo, misma semana, otra camiseta.
+  const notes: string[] = [];
+  const moment = momentById(state.weekMoment?.id);
+  if (moment) {
+    let momentOut = 0;
+    present = present.filter((p) => {
+      if (momentOut >= BALANCE.moments.rivalMaxExtraOut) return true;
+      if (rng.chance(moment.rivalChance(p) * BALANCE.moments.rivalChanceFactor)) {
+        momentOut += 1;
+        return false;
+      }
+      return true;
+    });
+    if (momentOut > 0) notes.push(moment.rivalNote(momentOut));
+  }
+
   const absent = roster.filter((p) => !present.some((x) => x.id === p.id));
 
   // Si no juntan cinco, rascan gente a último momento.
-  const notes: string[] = [];
   while (present.length < 5 && absent.length > 0) {
     const p = absent.pop()!;
     present.push(p);
