@@ -1,6 +1,7 @@
 import { BALANCE } from '../game/balance';
 import { appearanceFromSeed } from '../game/appearance';
 import { genAvailability } from '../game/world';
+import { Rng, seedFromString } from '../game/rng';
 import type {
   DemandType,
   ExpectedRole,
@@ -11,8 +12,8 @@ import type {
   Personality,
   Player,
   Position,
+  WorldPlayer,
 } from '../game/types';
-import type { Rng } from '../game/rng';
 import { rollBackground } from './backgrounds';
 
 interface MarketSeed {
@@ -289,9 +290,24 @@ function flexibilityFor(personality: Personality, rng: Rng): number {
   return Math.max(0.1, Math.min(0.75, base[personality] + rng.range(-0.08, 0.08)));
 }
 
-/** Sortea el mercado de una pretemporada a partir del pool. */
-export function buildMarket(rng: Rng): MarketPlayer[] {
-  const chosen = rng.shuffle([...MARKET_SEEDS]).slice(0, BALANCE.preseason.marketSize);
+/**
+ * Sortea el mercado de una pretemporada. Primero los agentes libres reales del
+ * mundo (si los hay), después el pool clásico para completar. `takenNames`
+ * evita que el mercado ofrezca a alguien que ya está en tu plantel: el mundo
+ * no duplica personas.
+ */
+export function buildMarket(
+  rng: Rng,
+  opts: { fromWorld?: MarketPlayer[]; takenNames?: string[] } = {}
+): MarketPlayer[] {
+  const taken = new Set(opts.takenNames ?? []);
+  const fromWorld = (opts.fromWorld ?? []).filter((m) => !taken.has(m.name));
+  const seedCount = Math.max(0, BALANCE.preseason.marketSize - fromWorld.length);
+  const chosen = rng.shuffle(MARKET_SEEDS.filter((s) => !taken.has(s.name))).slice(0, seedCount);
+  return [...fromWorld, ...buildFromSeeds(chosen, rng)];
+}
+
+function buildFromSeeds(chosen: MarketSeed[], rng: Rng): MarketPlayer[] {
   return chosen.map((seed, i) => {
     const noise = KNOWLEDGE_NOISE[seed.knowledge];
     return {
@@ -327,6 +343,78 @@ export function buildMarket(rng: Rng): MarketPlayer[] {
       contacted: false,
     };
   });
+}
+
+/**
+ * Convierte un agente libre real del mundo en fichable del mercado (Sprint 5).
+ * Su historia es verdadera: el club del que viene existe, y si lo enfrentaste
+ * lo conocés de la cancha — el conocimiento por persona ajusta el ruido.
+ */
+export function worldToMarket(wp: WorldPlayer, fromClub: string, rng: Rng): MarketPlayer {
+  // La identidad física sale del id de la persona: no cambia entre mercados.
+  const idRng = new Rng(seedFromString(`mkw_${wp.id}`));
+  const bg = rollBackground(wp.position, idRng);
+  const faced = wp.timesFaced ?? 0;
+  const knowledge: KnowledgeLevel =
+    faced >= 3 ? 'muy_conocido' : faced >= 1 ? 'conocido' : wp.prestige >= 65 ? 'referencias' : 'poco_conocido';
+  const knowledgeSource =
+    faced >= 1
+      ? `Lo enfrentaste ${faced === 1 ? 'una vez' : `${faced} veces`} con la camiseta de ${fromClub}: lo conocés de la cancha.`
+      : wp.prestige >= 65
+        ? `Nombre conocido de la liga: hizo su fama en ${fromClub}.`
+        : `Quedó libre de ${fromClub}. Poco se sabe: habría que verlo.`;
+  const noise = KNOWLEDGE_NOISE[knowledge];
+  const physical = Math.max(30, Math.min(90, 78 - Math.max(0, wp.age - 28) * 2 + idRng.int(-6, 6)));
+  const social = Math.max(25, Math.min(90, Math.round(wp.reliability * 0.4 + idRng.int(20, 55))));
+  const signingCost =
+    wp.level >= 72 ? 90 + idRng.int(0, 60) : wp.level >= 62 ? 30 + idRng.int(0, 60) : wp.level >= 52 ? idRng.int(0, 30) : 0;
+
+  let demand: DemandType | null = null;
+  let feeAttitude: FeeAttitude = 'completa';
+  if (wp.personality === 'mercenario') {
+    demand = wp.level >= 68 && rng.chance(0.5) ? 'fichaje_pagado' : 'beca';
+    feeAttitude = 'beca';
+  } else if (wp.personality === 'protagonista' && rng.chance(0.7)) {
+    demand = 'titularidad';
+  } else if (wp.personality === 'social' && rng.chance(0.4)) {
+    demand = 'ambiente';
+  } else if (wp.personality === 'talentoso_informal' && rng.chance(0.5)) {
+    demand = 'sin_entrenar';
+    feeAttitude = 'parcial';
+  } else if (wp.personality === 'competitivo' && wp.level >= 64 && rng.chance(0.4)) {
+    demand = 'competitivo';
+  } else if (wp.personality === 'veterano' && rng.chance(0.25)) {
+    demand = 'sin_entrenar';
+  }
+
+  return {
+    id: `mkw_${wp.id}`,
+    name: `${wp.firstName} ${wp.lastName}`,
+    age: wp.age,
+    height: bg.height,
+    position: wp.position,
+    previousTeam: fromClub,
+    technique: wp.level,
+    physical,
+    commitment: wp.commitment,
+    social,
+    personality: wp.personality,
+    sportRep: wp.prestige,
+    socialRep: social,
+    signingCost,
+    feeAttitude,
+    demand,
+    flexibility: flexibilityFor(wp.personality, rng),
+    knowledge,
+    knowledgeSource,
+    availability: wp.level >= 62 ? 'escuchando_ofertas' : 'libre',
+    agenda: wp.availability,
+    status: 'disponible',
+    estTechnique: Math.round(Math.max(20, Math.min(95, wp.level + rng.range(-noise, noise)))),
+    estPhysical: Math.round(Math.max(20, Math.min(95, physical + rng.range(-noise, noise)))),
+    contacted: false,
+    worldPlayerId: wp.id,
+  };
 }
 
 /** Convierte un fichable en jugador del plantel con las condiciones pactadas. */

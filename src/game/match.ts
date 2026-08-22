@@ -472,6 +472,12 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
 
   // La convocatoria del rival se sortea recién el día del partido.
   const rivalSquad = rollRivalMatchday(s, rivalId, rng);
+  // Conocimiento por persona: a los que pisan la cancha contra vos los vas
+  // conociendo de verdad, y eso persiste de temporada a temporada.
+  for (const wpId of rivalSquad.presentIds) {
+    const wp = s.world.players.find((x) => x.id === wpId);
+    if (wp) wp.timesFaced = (wp.timesFaced ?? 0) + 1;
+  }
 
   // La previa: el árbitro anunciado y la historia con este rival, si la hay.
   const ref = refereeOfWeek(s);

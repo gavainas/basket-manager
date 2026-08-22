@@ -1,5 +1,5 @@
 import { BALANCE, clamp } from './balance';
-import { buildMarket, marketToPlayer, ORIGIN_SITUATIONS } from '../data/market';
+import { buildMarket, marketToPlayer, ORIGIN_SITUATIONS, worldToMarket } from '../data/market';
 import { createInitialRoster } from '../data/players';
 import { createRecruit } from '../data/recruits';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
@@ -19,7 +19,7 @@ import { buildCoachMarket } from './coach';
 import { computeSeasonEvaluation } from './evaluation';
 import { rollPreseasonEvent } from './preseasonEvents';
 import { logClubEvent } from './timeline';
-import { buildWorld, emptyWorld } from './world';
+import { buildWorld, emptyWorld, evolveWorldOffseason } from './world';
 import { SAVE_VERSION } from './week';
 import { Rng } from './rng';
 import type {
@@ -172,7 +172,14 @@ function assignContinuity(
   }
 }
 
-function buildPreseasonState(players: Player[], club: Club, rng: Rng, firstSeason: boolean, seasonNumber = 1): PreseasonState {
+function buildPreseasonState(
+  players: Player[],
+  club: Club,
+  rng: Rng,
+  firstSeason: boolean,
+  seasonNumber = 1,
+  marketFromWorld: MarketPlayer[] = []
+): PreseasonState {
   const continuity: Record<string, ContinuityStatus> = {};
   const playerDemands: Record<string, DemandType> = {};
 
@@ -203,7 +210,7 @@ function buildPreseasonState(players: Player[], club: Club, rng: Rng, firstSeaso
     chosenDivisionId: null,
     continuity,
     playerDemands,
-    market: buildMarket(rng),
+    market: buildMarket(rng, { fromWorld: marketFromWorld, takenNames: active.map((x) => x.name) }),
     negotiation: null,
     counterUsed: {},
     actionOutcome: null,
@@ -404,6 +411,10 @@ export function startPreseason(state: GameState): GameState {
   const promoTone: NewsTone =
     promo.userMoved === 'ascenso' ? 'good' : promo.userMoved === 'descenso' ? 'bad' : 'neutral';
 
+  // El verano del mundo: las personas rivales siguen su vida (retiros, pases,
+  // libres). Corre ANTES de armar el mercado, que se alimenta de sus libres.
+  const summer = evolveWorldOffseason(state, rng);
+
   const seasonNumber = state.seasonNumber + 1;
 
   const next: GameState = {
@@ -442,6 +453,7 @@ export function startPreseason(state: GameState): GameState {
     history: [],
     news: [
       ...promo.notes.map((text) => ({ week: 0, text, tone: promoTone })),
+      ...summer.news.map((text) => ({ week: 0, text, tone: 'neutral' as NewsTone })),
       ...(state.secondTeam
         ? [{
             week: 0,
@@ -468,7 +480,9 @@ export function startPreseason(state: GameState): GameState {
     startingMoney: state.club.money,
     promises: [],
     preseason: null,
-    world: emptyWorld(),
+    // El mundo nuevo hereda las PERSONAS del verano; equipos y fixture se
+    // rearman recién al arrancar la temporada (buildWorld).
+    world: { ...emptyWorld(), players: summer.players, playerSeq: summer.playerSeq },
     playoffs: null,
     // El DT sigue en el club entre temporadas (si no se fue antes).
     coach: state.coach,
@@ -495,7 +509,14 @@ export function startPreseason(state: GameState): GameState {
         : `El club descendió a la Divisional B tras la temporada ${state.seasonNumber}.`,
     });
   }
-  next.preseason = buildPreseasonState(players, next.club, rng, false, next.seasonNumber);
+  next.preseason = buildPreseasonState(
+    players,
+    next.club,
+    rng,
+    false,
+    next.seasonNumber,
+    summer.freeAgents.map((fa) => worldToMarket(fa.player, fa.fromClub, rng))
+  );
   next.seed = rng.nextSeed();
   return next;
 }
@@ -604,6 +625,11 @@ export function signMarketPlayer(
   s.players.push(player);
   p.continuity[player.id] = 'confirmado';
   mp.status = 'fichado';
+  // Si venía del mundo, la persona se muda a tu plantel: sale del pool rival
+  // (el mundo no duplica gente).
+  if (mp.worldPlayerId) {
+    s.world.players = s.world.players.filter((wp) => wp.id !== mp.worldPlayerId);
+  }
 
   let extra = '';
   if (terms.demandApplied) {

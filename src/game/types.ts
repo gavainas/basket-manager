@@ -502,6 +502,8 @@ export interface MarketPlayer {
   estPhysical: number;
   /** Ya lo contactaste: su exigencia y su cuota son conocidas. */
   contacted: boolean;
+  /** Si viene del mundo (agente libre real): el id de esa persona. */
+  worldPlayerId?: string;
 }
 
 /** Reacción diferida de un evento: se comunica y aplica semanas después. */
@@ -710,6 +712,7 @@ export interface AvailabilityProfile {
 
 /** Jugador del mundo (rivales): persona independiente de sus equipos. */
 export interface WorldPlayer {
+  /** Id de persona, estable de por vida (no un slot de plantel). */
   id: string;
   firstName: string;
   lastName: string;
@@ -724,6 +727,17 @@ export interface WorldPlayer {
   prestige: number;
   availability: AvailabilityProfile;
   injuryWeeks: number;
+  /**
+   * Club actual, por NOMBRE (la clave estable entre temporadas: los slots
+   * r1/o1 se reasignan con los ascensos). undefined = quedó libre.
+   */
+  clubName?: string;
+  /** Temporada en la que llegó a su club actual. */
+  joinedSeason?: number;
+  /** Veces que jugó contra el club del usuario (conocimiento por persona). */
+  timesFaced?: number;
+  /** Pasó por el club del usuario antes de emigrar al mundo. */
+  exUserClub?: boolean;
 }
 
 export type FixtureStatus = 'programado' | 'jugado' | 'reprogramado' | 'suspendido';
@@ -781,11 +795,16 @@ export interface WorldState {
   venues: Venue[];
   clubs: WorldClub[];
   teams: Team[];
-  /** Solo rivales: los jugadores del usuario viven en GameState.players. */
+  /**
+   * Solo rivales: los jugadores del usuario viven en GameState.players.
+   * Persiste entre temporadas: las personas siguen, los equipos se rearman.
+   */
   players: WorldPlayer[];
   registrations: PlayerRegistration[];
   entries: CompetitionEntry[];
   fixtures: WorldFixture[];
+  /** Contador de ids de persona (crece de por vida, nunca se reusa). */
+  playerSeq?: number;
 }
 
 // ---------- Expansión del club: segundo equipo en otra liga (etapa 6) ----------

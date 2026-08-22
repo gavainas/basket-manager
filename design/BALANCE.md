@@ -42,17 +42,17 @@ una partida jugada de verdad.
 
 ## Objetivos de balance (qué mirar en el reporte)
 
-| Métrica | Objetivo | Última corrida (2ª pasada, 120 temp.) |
+| Métrica | Objetivo | Última corrida (3ª pasada, 240 temp.) |
 |---|---|---|
-| Presión vs otras tácticas | La mejor, pero no dominante (~10 pts sobre zona) | 52.4% vs 51.8% (mixta) vs 42.7% (zona) |
-| Remontadas propias (9+ abajo) | Raras pero reales (~5%) | 9/179 |
-| Nos remontan (9+ arriba) | Ninguna ventaja sellada (~7-10%) | 21/293 |
+| Mejor táctica vs zona | La agresiva la mejor, pero no dominante (~7-10 pts sobre zona) | 50.3% (presión) / 51.3% (mixta) vs 43.7% (zona) |
+| Remontadas propias (9+ abajo) | Raras pero reales (~5%) | 8/366 (2.2% — quedó corta: vigilar en la próxima pasada) |
+| Nos remontan (9+ arriba) | Ninguna ventaja sellada (~7-10%) | 44/551 (8%) |
 | Lesiones en partido / temporada | 1-2 | 1.3 |
-| Semanas sin ausencias | ~1/3 (que "vinieron todos" sea noticia) | ~33% |
+| Semanas sin ausencias | ~1/3 (que "vinieron todos" sea noticia) | ~35% |
 | Top faltador vs resto | Tato ~2/temp, resto ~0.7 (no siempre el mismo) | ✓ |
-| Caja final sin recaudar | Deriva leve, con riesgo real de quiebre | $276-371 y 8-17% de quiebras según estrategia |
-| Abandonos / temporada (sin gestión) | Castigar ignorar al plantel, no ser una masacre | 0.00 rotando · 1.67 sin tocar el banco |
-| Nota del partido (titulares 30'+) | Media ~6.5-7, banda 1-5 viva (~15%), 9-10 raro (<10%) | media 6.87 · 1-5: 17.5% · 9-10: 8.2% |
+| Caja final sin recaudar | Deriva leve, con riesgo real de quiebre | $274-377 y 10-16% de quiebras según estrategia |
+| Abandonos / temporada (sin gestión) | Castigar ignorar al plantel, no ser una masacre | 0.00 rotando · 1.78 sin tocar el banco |
+| Nota del partido (titulares 30'+) | Media ~6.5-7, banda 1-5 viva (~15%), 9-10 raro (<10%) | media 6.88 · 1-5: 15.6% · 9-10: 7.7% |
 
 Nota de la 2ª pasada: el piso de victorias bajó ~5 pts respecto de la 1ª
 (59.8% → 52.4% la presión). No es una regresión accidental: es la consecuencia
@@ -62,6 +62,14 @@ inflando la fuerza propia contra rivales estáticos toda la temporada). El
 gradiente que importa se mantiene: la mejor táctica le saca ~10 pts a la peor,
 y rotar sigue costando 0 abandonos contra ~1.7 sin tocar el banco. Una partida
 jugada con gestión queda ahora más lejos del piso, que es donde tiene que estar.
+
+Nota de la 3ª pasada: con los planteles rivales persistentes el piso quedó en
+~50-51 para las tácticas agresivas y el gradiente sobre zona en ~7-8 pts (ver
+`rivalModRecenter` más abajo: sin el recentrado, los planteles con arquetipos
+bajaban el piso otros ~2 pts sin que nadie lo decidiera). Presión y mixta
+quedaron parejas entre sí — "la mejor pero no dominante" se cumple mejor que
+nunca. Las remontadas propias midieron 2.2% (objetivo ~5%): anotado para
+vigilar en la próxima pasada de balance.
 
 ## Sistemas de la 1ª pasada
 
@@ -178,6 +186,16 @@ significaba nada.
   en una partida jugada con racha real es tensión nueva.
 - **Ausencia laboral** (`injuryReason`): mecánicamente sigue siendo una baja
   de 1 semana; solo cambia cómo se cuenta (no infla el ranking de lesiones).
+- **Personas en el mundo** (Sprint 5, `world.ts`): los planteles rivales
+  persisten entre temporadas (ids de persona de por vida, `clubName` como
+  vínculo), el verano los rota ~15-20% (retiros, pases, juveniles) y cada club
+  tiene un arquetipo de plantel (juvenil/veterano/estrella/parejo). Efecto
+  medido en el piso: los planteles con arquetipos son más parejos y se
+  degradan menos al faltar gente — el multiplicador de convocatoria rival
+  subió de 0.959 a 0.970 (+1.1% de fuerza rival en todos los partidos) y el
+  piso de presión caía a ~48%. `BALANCE.world.rivalModRecenter` (0.989) lo
+  devuelve a la media calibrada; ver la tabla de arriba para la corrida de
+  validación. Los egos, objetivos y `timesFaced` no tocan el partido.
 
 ## Pendiente (ver ROADMAP)
 

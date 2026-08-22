@@ -34,7 +34,10 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
   const freeLeagues = world.leagues.filter((l) => !findActiveRegistration(world, p.id, l.id, world.season.id));
   const interior = p.availability.distanceKm > 50;
   const knowledge = team?.legacyRivalId ? scoutingLevel(state, team.legacyRivalId) : 1;
-  const knowsWell = knowledge >= 3 || DEBUG_FULL_SCOUTING;
+  // El conocimiento por persona pesa igual que el del equipo: al que
+  // enfrentaste varias veces lo conocés, juegue donde juegue.
+  const faced = p.timesFaced ?? 0;
+  const knowsWell = knowledge >= 3 || faced >= 2 || DEBUG_FULL_SCOUTING;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -53,6 +56,10 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
                 </span>
               ))}
               <span className="chip">{p.age} años</span>
+              {faced > 0 && (
+                <span className="chip accent">Lo enfrentaste {faced === 1 ? 'una vez' : `${faced} veces`}</span>
+              )}
+              {p.exUserClub && <span className="chip">Ex jugador de tu club</span>}
               {p.injuryWeeks > 0 && <span className="chip bad">Lesionado ({p.injuryWeeks} sem.)</span>}
               {interior && <span className="chip warn">Vive en {p.availability.residence}</span>}
             </div>
@@ -110,6 +117,16 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
                   : 'Ninguna liga'}
               </span>
             </div>
+            {team && p.joinedSeason !== undefined && (
+              <div className="data-row">
+                <span className="data-label">En el equipo</span>
+                <span className="data-value">
+                  {p.joinedSeason >= world.season.number
+                    ? 'Llegó este año'
+                    : `Desde la temporada ${p.joinedSeason}`}
+                </span>
+              </div>
+            )}
             <div className="data-row">
               <span className="data-label">Residencia</span>
               <span className="data-value">

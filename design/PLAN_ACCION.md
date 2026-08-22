@@ -64,11 +64,12 @@ los textos nuevos del mercado a la vista.
 - ⬜ 4.6 Pasada CSS de un día (radios 4px, ~8 tamaños, banda de sección por clase, naranja reservado).
 - ⬜ 4.7 Cerrar la Puerta 2 de `ART_PIPELINE.md` + marcar `DESIGN.md` superseded.
 
-## Sprint 5 — La apuesta: personas en el mundo ⬜
+## Sprint 5 — La apuesta: personas en el mundo ✅
 
-- ⬜ 5A Identidad estable: ids de persona (no slots), `world.players` persiste entre temporadas, identidad institucional rival congelada (`seedFromString(clubId)`).
-- ⬜ 5B El mundo vive: rotación anual 10-20% con noticias de pases, retiros, pirámide de edades, arquetipos de plantel.
-- ⬜ 5C Conocimiento por persona + mercado alimentado por el mundo.
+- ✅ **5A Identidad estable**: los jugadores del mundo tienen id de persona de por vida (`wp_n<seq>`, contador que nunca se reusa) y `clubName` como vínculo persistente — la clave estable es el NOMBRE del club, porque los slots (`r1`/`o1`) se reasignan con los ascensos. `world.players` persiste entre temporadas: `buildWorld` hereda el pool y solo registra/completa (medido: **91% de caras repetidas** por plantel en la T2). La identidad institucional está congelada con `seedFromString(nombre)` (`clubIdentity()`): colores, fundación, delegado, barrio del gimnasio, DT y carácter del plantel no cambian de temporada a temporada ni dependen del slot. Saves viejos: el primer verano rescata el club de cada persona desde su ficha (93% anclados en el test; en un save real los ids matchean exacto).
+- ✅ **5B El mundo vive** (`evolveWorldOffseason`, corre en `startPreseason` antes del mercado): todos envejecen con curva de nivel por edad (los pibes crecen, los de 34+ caen), retiros por edad/nivel (con noticia si el nombre pesa), **pases entre clubes** con noticia ("Pase del verano: X deja Y y jugará en Z"), agentes libres, y los **ex jugadores del club del usuario emigran al mundo** ("X apareció con la camiseta de Z. El básquet es un pañuelo") — te los volvés a cruzar. La renovación entra por juveniles (82% de ≤24 medido), la pirámide de edades queda sana (media ~28, rango 18-39) y cada club tiene **arquetipo de plantel** (juvenil / veterano / estrella / parejo, parte de su identidad congelada). Rotación anual resultante: ~15-20% del pool cambia de camiseta o se va.
+- ✅ **5C Conocimiento por persona + mercado real**: `timesFaced` cuenta cuántas veces cada persona pisó la cancha contra vos y **persiste entre temporadas** (88 conocidos tras una temporada). El scouting achica el ruido por familiaridad (3+ cruces = lo conocés exacto, juegue donde juegue), y el perfil muestra "Lo enfrentaste N veces" y "En el equipo desde la temporada X". El **mercado se alimenta del mundo**: hasta 6 agentes libres reales por pretemporada, con club de origen verdadero (clickeable si es rival), conocimiento según cuánto lo enfrentaste y su agenda real de siempre; ficharlo lo saca del pool (el mundo no duplica personas) y el mercado ya no ofrece nombres que ya están en tu plantel.
+- ✅ **Balance re-anclado**: los planteles con arquetipos son más parejos y se degradan menos cuando les falta gente — el multiplicador de convocatoria rival subió +1.1% en promedio y el piso de victorias caía ~2-4 pts sin que nadie lo decidiera. `BALANCE.world.rivalModRecenter` (0.989) lo devuelve a la media con la que se calibró todo (validado con corridas de 240 temporadas).
 
 ## Checklist de salida ("versión jugable sin debilidades")
 
@@ -76,6 +77,6 @@ los textos nuevos del mercado a la vista.
 2. ✅ Notas honestas: media ~6.9, banda 4-6 viva, un 9 significa algo.
 3. ✅ Cero frases repetidas en un mismo partido (vivo, Sprint 2) ni en un mismo asado (Sprint 3).
 4. 🔶 Objetivos y egos con dientes (✅ mecánica del Sprint 3) — falta confirmarlo en una partida jugada de verdad: que la tensión se sienta, no solo que exista.
-5. ⬜ En la T2 reconocés rivales por nombre y cara; la T3 no se parece a la T1.
+5. ✅ En la T2 reconocés rivales por nombre y cara (91% de caras repetidas, identidad de club congelada); la T3 no se parece a la T1 (rotación 15-20% con noticias). Falta que Gabi lo sienta jugando.
 6. ⬜ Una sola cara por jugador; cero emojis de cromo.
 7. ✅ `npm run sim` como vara tras cada sprint (objetivos actualizados en `BALANCE.md`, 2ª pasada).

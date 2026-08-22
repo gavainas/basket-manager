@@ -256,6 +256,17 @@ export const BALANCE = {
     topFinishPrestige: 4, // terminar en el podio suma prestigio deportivo
   },
 
+  // El mundo (planteles rivales persistentes, 3ª pasada).
+  world: {
+    // Recentra el multiplicador de convocatoria rival (rollRivalMatchday).
+    // Los planteles con arquetipos son más parejos que los de la ruleta vieja:
+    // perder gente los degrada menos y el mod promedio subió de 0.959 a 0.970
+    // — un +1.1% de fuerza rival en TODOS los partidos que bajaba el piso de
+    // victorias sin que nadie lo decidiera. Esto lo devuelve a la media con la
+    // que se calibró el balance. Medido con scripts en `npm run sim`.
+    rivalModRecenter: 0.989,
+  },
+
   preseason: {
     weeks: 4,
     gestionesPerWeek: 3, // contactos/charlas por semana
