@@ -57,6 +57,7 @@ function EventPerson({ p, festive }: { p: Player; festive?: boolean }) {
     <div className="event-person">
       <div className="avatar">
         <Avatar
+          personality={p.personality}
           seed={p.id}
           age={p.age}
           appearance={p.appearance}

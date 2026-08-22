@@ -327,6 +327,7 @@ export function PlayerProfile({ state, playerId, onClose }: Props) {
         <div className="profile-head">
           <div className="avatar profile-avatar">
             <Avatar
+              personality={p.personality}
               seed={p.id}
               age={p.age}
               appearance={p.appearance}

@@ -268,11 +268,9 @@ function PlantelStrip({ state }: { state: GameState }) {
               onClick={() => open(p.id)}
               title={`${p.name} — ${signals.map((s) => s.label).join(' · ')}`}
             >
-              {/* Una sola cara por jugador en todo el juego: el mismo retrato
-                  SVG por seed que la ficha, sobre la placa azul de foto carnet. */}
-              <span className="retrato" style={{ width: 62, height: 62 }}>
-                <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={62} title={p.name} />
-              </span>
+              {/* La foto oficial: el retrato ilustrado por arquetipo, la misma
+                  en la tira, la ficha, la pizarra y los eventos. */}
+              <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={62} title={p.name} personality={p.personality} />
               <span className="hub-jug-pos">{POS_ABBR[p.position] ?? p.position.slice(0, 3).toUpperCase()}</span>
               <span className="hub-jug-nombre">{shortName(p.name)}</span>
               <span className="hub-jug-estado">

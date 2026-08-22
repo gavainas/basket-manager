@@ -164,6 +164,7 @@ export function RosterSheet({ state }: { state: GameState }) {
               p.status === 'molesto' || p.status === 'al_borde' ? 2 : p.status === 'lesionado' ? 3 : undefined
             }
             title={p.name}
+            personality={p.personality}
           />
         </td>
         <td className="sheet-name">
@@ -278,7 +279,7 @@ export function RosterSheet({ state }: { state: GameState }) {
           </svg>
           {five.map(({ player: p, spot }) => (
             <div key={p.id} className="court-slot" style={{ left: `${spot.x}%`, top: `${spot.y}%` }}>
-              <Avatar seed={p.id} age={p.age} size={34} appearance={p.appearance} title={p.name} />
+              <Avatar seed={p.id} age={p.age} size={34} appearance={p.appearance} title={p.name} personality={p.personality} />
               <div className="court-name">{shortName(p.name)}</div>
               <div className="court-rating">≈{p.visibleRating}</div>
             </div>

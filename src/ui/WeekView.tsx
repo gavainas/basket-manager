@@ -258,7 +258,7 @@ function AsadoReportCard({ state }: { state: GameState }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', margin: '0.4rem 0' }}>
           {attended.map((p) => (
             <span key={p.id} className="chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-              <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={22} title={p.name} />
+              <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={22} title={p.name} personality={p.personality} />
               <PlayerLink id={p.id}>{shortName(p.name)}</PlayerLink>
             </span>
           ))}
@@ -355,6 +355,7 @@ function CallUpPanel({ state, dispatch }: Props) {
                         appearance={pl.appearance}
                         expressionOverride={e.status === 'lesionado' ? 3 : 2}
                         title={pl.name}
+                        personality={pl.personality}
                       />
                     </div>
                   )}
@@ -442,7 +443,7 @@ function CallUpPanel({ state, dispatch }: Props) {
             {stillInjured.map((p) => (
               <div key={p.id} className="callup-row out dim">
                 <div className="avatar callup-avatar">
-                  <Avatar seed={p.id} age={p.age} appearance={p.appearance} expressionOverride={3} title={p.name} />
+                  <Avatar seed={p.id} age={p.age} appearance={p.appearance} expressionOverride={3} title={p.name} personality={p.personality} />
                 </div>
                 <span className="callup-icon"><Icon name={p.injuryReason === 'laboral' ? 'laburo' : 'enfermeria'} size={15} /></span>
                 <div>
@@ -460,7 +461,7 @@ function CallUpPanel({ state, dispatch }: Props) {
             {suspended.map((p) => (
               <div key={p.id} className="callup-row out dim">
                 <div className="avatar callup-avatar">
-                  <Avatar seed={p.id} age={p.age} appearance={p.appearance} expressionOverride={2} title={p.name} />
+                  <Avatar seed={p.id} age={p.age} appearance={p.appearance} expressionOverride={2} title={p.name} personality={p.personality} />
                 </div>
                 <span className="callup-icon"><i className="tarjeta-roja" title="Suspendido" /></span>
                 <div>
@@ -564,6 +565,7 @@ function QuintetoStrip({ slots }: { slots: (Player | null)[] }) {
                     appearance={p.appearance}
                     expressionOverride={p.status === 'molesto' || p.status === 'al_borde' ? 2 : undefined}
                     title={p.name}
+                    personality={p.personality}
                   />
                 </div>
                 <div className="qs-name">
@@ -855,7 +857,7 @@ function LineupPanel({ state, dispatch }: Props) {
                 >
                   <div className="slot-pos-label">{pos}</div>
                   <div className={`slot-avatar${oop ? ' oop' : ''}${pl ? '' : ' empty'}`}>
-                    {pl ? <Avatar seed={pl.id} age={pl.age} appearance={pl.appearance} title={pl.name} /> : '+'}
+                    {pl ? <Avatar seed={pl.id} age={pl.age} appearance={pl.appearance} title={pl.name} personality={pl.personality} /> : '+'}
                   </div>
                   <div className={`slot-name${pl ? '' : ' dim'}`}>{pl ? shortName(pl.name) : 'Libre'}</div>
                   {pl && (
@@ -880,7 +882,7 @@ function LineupPanel({ state, dispatch }: Props) {
                 onDragStart={dragStart(p.id)}
               >
                 <div className="slot-avatar small">
-                  <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} />
+                  <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} personality={p.personality} />
                 </div>
                 <div className="slot-name">{shortName(p.name)}</div>
                 <div className="slot-sub">{POS_ABBR[p.position]}</div>
@@ -1581,6 +1583,7 @@ function MatchResultPanel({ state, dispatch }: Props) {
                           appearance={moodPlayer.appearance}
                           expressionOverride={EMOTION_EXPRESSION[mood.emotion]}
                           title={mood.name}
+                          personality={moodPlayer.personality}
                         />
                       </span>
                     )}

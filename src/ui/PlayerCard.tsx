@@ -47,6 +47,7 @@ export function PlayerCard({ player: p, state, selectable, selected, inRotation,
               p.status === 'molesto' || p.status === 'al_borde' ? 2 : p.status === 'lesionado' ? 3 : undefined
             }
             title={p.name}
+            personality={p.personality}
           />
         </div>
         <div className="who">

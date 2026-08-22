@@ -43,7 +43,7 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
       <div className="profile" onClick={(e) => e.stopPropagation()}>
         <div className="profile-head">
           <div className="avatar profile-avatar">
-            <Avatar seed={p.id} age={p.age} jersey={club?.colors[0]} title={worldPlayerName(p)} />
+            <Avatar seed={p.id} age={p.age} jersey={club?.colors[0]} title={worldPlayerName(p)} personality={p.personality} />
           </div>
           <div className="profile-who">
             <div className="profile-name">{worldPlayerName(p)}</div>

@@ -1,5 +1,35 @@
 import type { Appearance } from '../game/appearance';
 import { appearanceFromSeed } from '../game/appearance';
+import type { Personality } from '../game/types';
+
+// La foto del jugador (decisión de dirección, ago 2026): con `personality`,
+// el componente muestra el RETRATO ILUSTRADO por arquetipo — esa es la foto
+// oficial del juego. El SVG procedural de abajo era el placeholder y queda
+// como generador de respaldo (galería #retratos y cualquier cara sin
+// personalidad conocida). Con ocho retratos para planteles enteros hay
+// repetidos: la variante (espejo + tono del fondo), estable por seed, los
+// separa hasta que exista el set grande por seed (Puerta 3 de ART_PIPELINE).
+
+const ARCHIVO: Record<Personality, string> = {
+  veterano: 'p-veterano.webp',
+  talentoso_informal: 'p-talentoso.webp',
+  social: 'p-social.webp',
+  cumplidor: 'p-cumplidor.webp',
+  competitivo: 'p-competitivo.webp',
+  protagonista: 'p-protagonista.webp',
+  leal: 'p-leal.webp',
+  mercenario: 'p-mercenario.webp',
+};
+
+/** Variante estable por persona: la misma seed muestra siempre la misma cara. */
+function varianteFor(seed: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) % 3;
+}
 
 // Retrato SVG por capas (ver design/AVATAR_SYSTEM.md). Plano, cálido y legible
 // en chico; mismo encuadre (cabeza y hombros, de frente) para todos.
@@ -52,14 +82,30 @@ interface Props {
   jersey?: string;
   /** Apariencia ya calculada/guardada; si falta se deriva de la seed. */
   appearance?: Appearance;
-  /** Pisa la expresión base: 0 neutro · 1 sonrisa · 2 malhumorado · 3 cansado · 4 confiado. */
+  /** Pisa la expresión base: 0 neutro · 1 sonrisa · 2 malhumorado · 3 cansado · 4 confiado.
+   *  (Solo aplica al SVG de respaldo: el retrato ilustrado es la foto fija.) */
   expressionOverride?: number;
-  /** Gorra (solo para contextos sociales, nunca en la ficha deportiva). */
+  /** Gorra (solo para contextos sociales; solo el SVG de respaldo). */
   cap?: boolean;
   title?: string;
+  /** Con personalidad, la foto es el retrato ilustrado por arquetipo. */
+  personality?: Personality;
 }
 
-export function Avatar({ seed, age, size = 42, jersey = 'var(--sec-partidos)', appearance, expressionOverride, cap, title }: Props) {
+export function Avatar({ seed, age, size = 42, jersey = 'var(--sec-partidos)', appearance, expressionOverride, cap, title, personality }: Props) {
+  if (personality) {
+    return (
+      <img
+        className={`retrato-img v${varianteFor(seed)}`}
+        src={`${import.meta.env.BASE_URL}arte/${ARCHIVO[personality]}`}
+        width={size}
+        height={size}
+        alt=""
+        title={title}
+        loading="lazy"
+      />
+    );
+  }
   const base = appearance ?? appearanceFromSeed(seed, age);
   const a = expressionOverride == null ? base : { ...base, expression: expressionOverride };
   const f = FACES[a.faceShape % FACES.length];

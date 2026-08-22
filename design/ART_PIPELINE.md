@@ -9,10 +9,10 @@ antes de confirmar que la dirección visual realmente funciona.
 **Puertas 1 y 2: CERRADAS (ago 2026, Sprint 4 del plan de acción).** La dirección
 elegida es la que ya está en producción — club de barrio sobre papel claro
 (crema/grafito con el naranja reservado a la acción), Oswald como display, cards con
-banda de sección, la portada del asado y las cabeceras de escena, y el set propio de
-34 iconos de línea. Se formaliza porque la auditoría integral (2026-08) encontró que
-la dirección ya estaba en producción y funcionaba; mantenerla "provisional" solo
-frenaba la expansión de arte. El detalle de la aprobación está en la Puerta 2.
+banda de sección, la portada del asado y las cabeceras de escena, el set propio de
+34 iconos de línea, y **el retrato ilustrado como la foto del jugador en todo el
+juego** (decisión de Gabi: los SVG procedurales eran placeholders y quedan de
+respaldo). El detalle de la aprobación está en la Puerta 2.
 
 Las puertas 3 a 6 (hoja maestra de personajes, vertical slice, prueba en juego y
 art bible) siguen **abiertas**: gobiernan la expansión que viene (set ilustrado de
@@ -24,11 +24,12 @@ integrado en varias pantallas.
 
 **Lote de escena, ago 2026** (`public/arte/`, ver su LEEME): dos cabeceras — el vestuario
 antes del partido y el fichaje en el bar — integradas en Plantilla y en el Mercado de la
-pretemporada, y seis retratos de arquetipo **sin integrar**, como lámina de prueba de la
-puerta de personajes. Todo generado con Higgsfield usando la portada como referencia de
-estilo. Son propuestas: la decisión de pasar la ficha del jugador de SVG procedural a
-retrato ilustrado está abierta y arrastra el problema de escala (un plantel tiene catorce
-jugadores y el mundo cientos, la lámina tiene seis caras).
+pretemporada, y los **ocho retratos de arquetipo, hoy INTEGRADOS como la foto oficial del
+jugador en todo el juego** (decisión de Gabi, ago 2026: el SVG procedural era el
+placeholder). Todo generado con Higgsfield usando la portada como referencia de estilo.
+El problema de escala sigue abierto y es el trabajo de la Puerta 3: un plantel tiene
+catorce jugadores y el mundo cientos; ocho caras con variante por persona (espejo +
+tono) lo tapan, no lo resuelven.
 
 ## Principio central
 
@@ -175,7 +176,7 @@ qué combinar y qué descartar.
 
 ## Puerta 2 — Aprobación separada de UI y personajes
 
-> **CERRADA (ago 2026).**
+> **CERRADA (ago 2026; personajes corregidos por decisión de Gabi).**
 >
 > **UI: APROBADA.** La dirección en producción pasa a ser la oficial: paleta de papel
 > claro con tokens en `styles.css` (fuente de verdad: `SISTEMA_VISUAL.md`), Oswald como
@@ -185,12 +186,15 @@ qué combinar y qué descartar.
 > naranja `--naranja` reservado a la acción (las valoraciones por fila volvieron a
 > tinta).
 >
-> **Personajes: el retrato SVG procedural por seed es la identidad ÚNICA del jugador
-> en todo el juego** (aprobado como identidad vigente, no como techo artístico). El
-> lote ilustrado por arquetipo se retiró de la tira del Hub — con ocho caras para
-> catorce jugadores generaba la "doble identidad" que señaló la auditoría — y queda en
-> `public/arte/` como referencia de estilo para el set grande. Pasar del SVG a un set
-> ilustrado **por seed** es una decisión de la Puerta 3 (hoja maestra), no de esta.
+> **Personajes: la foto oficial del jugador es el RETRATO ILUSTRADO** (dirección de
+> Gabi: "los SVG eran placeholders"). Los ocho retratos de arquetipo de
+> `public/arte/` son la cara del jugador en TODO el juego — tira del Hub, cards,
+> ficha, pizarra, pasar lista, vestuario, eventos y perfiles rivales — con una
+> variante estable por persona (espejo + tono del fondo) para separar a los
+> repetidos del mismo arquetipo. El retrato SVG procedural queda como **generador de
+> respaldo** (galería `#retratos` y cualquier cara sin personalidad conocida), no
+> como identidad. La limitación es conocida y aceptada: ocho caras para planteles
+> enteros — resolverla con el **set grande por seed** es exactamente la Puerta 3.
 
 La UI y los personajes se aprueban como sistemas distintos.
 

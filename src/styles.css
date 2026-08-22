@@ -860,21 +860,38 @@ button.danger {
   outline-offset: 1px;
 }
 
-/* La placa de foto carnet de la tira del plantel: azul plano y siempre el
-   mismo — no es el color del club ni el de una sección, es el fondo de la
-   foto de ficha. Adentro va el retrato SVG por seed (la única cara del
-   jugador en todo el juego; el set ilustrado por arquetipo se retiró). */
-.retrato {
+/* La foto del jugador: el retrato ilustrado (ver ui/Avatar.tsx). El arte
+   viene recortado con alfa; el azul de foto carnet lo pone la propia imagen —
+   plano y siempre el mismo, no es el color del club ni el de una sección.
+   Suelta trae su placa; adentro de un contenedor (.avatar, .qs-avatar) llena
+   el espacio y hereda la forma del contenedor. */
+img.retrato-img {
   display: block;
   flex: none;
+  object-fit: cover;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: linear-gradient(180deg, #3c6e9e 0%, #2a5075 100%);
-  overflow: hidden;
 }
 
-.retrato svg {
-  display: block;
+.avatar img.retrato-img,
+.qs-avatar img.retrato-img {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: inherit;
+}
+
+/* Variantes para los repetidos del mismo arquetipo: espejo y tono del fondo,
+   estables por persona. No los vuelve gente distinta — es el parche honesto
+   hasta el set grande por seed. */
+img.retrato-img.v1 {
+  background: linear-gradient(180deg, #4a7a94 0%, #2f5a6d 100%);
+  transform: scaleX(-1);
+}
+
+img.retrato-img.v2 {
+  background: linear-gradient(180deg, #3a5d92 0%, #27406b 100%);
 }
 
 .hub-jug-pos {

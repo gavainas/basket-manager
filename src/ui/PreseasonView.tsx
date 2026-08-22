@@ -330,7 +330,7 @@ function RosterSection({ state, dispatch }: Props) {
           return (
             <div key={p.id} className={`ps-row${st === 'retirado' ? ' dimmed' : ''}`}>
               <div className="avatar">
-                <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} />
+                <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} personality={p.personality} />
               </div>
               <div className="ps-who">
                 <div className="name">
@@ -392,7 +392,7 @@ function MarketSection({ state, dispatch }: Props) {
           onClick={() => setProfileId(mp.id)}
         >
           <div className="avatar">
-            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} />
+            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} personality={mp.personality} />
           </div>
           <div className="who">
             <div className="name">
@@ -494,7 +494,7 @@ function MarketProfile({
       <div className="profile" onClick={(e) => e.stopPropagation()}>
         <div className="profile-head">
           <div className="avatar profile-avatar">
-            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} />
+            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} personality={mp.personality} />
           </div>
           <div className="profile-who">
             <div className="profile-name">{mp.name}</div>

@@ -4,8 +4,10 @@ Ilustraciones generadas con Higgsfield (nano_banana_pro) usando `public/portada.
 como referencia de estilo, para que todo el juego se vea de la misma familia: 2D de
 película animada, paleta cálida saturada, cuerpos variados, club de barrio.
 
-**Estado: arte provisional, no aprobado** (ver `design/ART_PIPELINE.md`). Son propuestas.
-Se reemplazan pisando el archivo, sin tocar código.
+**Estado: APROBADO como dirección (ago 2026, Puertas 1-2 de `design/ART_PIPELINE.md`).**
+Los retratos `p-*.webp` son la foto oficial del jugador en todo el juego (los renderiza
+`src/ui/Avatar.tsx` cuando conoce la personalidad). Se reemplazan pisando el archivo,
+sin tocar código.
 
 ## Cabeceras (16:9, 1600 px de ancho)
 
