@@ -1,4 +1,5 @@
 import { addPairBonus } from './asado';
+import { settleAsadoBet } from './banter';
 import { BALANCE, clamp } from './balance';
 import { buildMoods, hasMinutesPromise, moodCauseFor, type EmotionContext } from './emotions';
 import { fragilityOf, MATCH_INJURY_NOTES, rollInjuryWeeks } from './injuries';
@@ -49,6 +50,64 @@ export function matchAbsentIds(state: GameState): Set<string> {
 /** Disponible para el partido de la semana: sano, en el club y sin excusa. */
 export function availableForMatch(state: GameState, p: Player): boolean {
   return isSelectable(p) && !matchAbsentIds(state).has(p.id);
+}
+
+/** Ids que no pueden ARRANCAR el partido: los ausentes y los que avisaron que
+ *  llegan para el segundo tiempo (esos solo entran desde el banco). */
+export function noStartIds(state: GameState): Set<string> {
+  const ids = matchAbsentIds(state);
+  for (const c of state.callUp) {
+    if (c.lateArrival && c.status === 'confirmado') ids.add(c.playerId);
+  }
+  return ids;
+}
+
+/**
+ * Repara titulares y rotación después de cualquier cambio de disponibilidad
+ * (descansar a un fundido, una gestión de ausencia, un evento). Saca a los que
+ * ya no pueden jugar y, si el quinteto quedó incompleto, lo vuelve a sugerir:
+ * nunca más un forfeit con banco de sobra por un titular que quedó "fantasma".
+ * Muta el estado recibido (que debe ser un clon).
+ */
+export function sanitizeLineup(s: GameState): void {
+  const absent = matchAbsentIds(s);
+  const noStart = noStartIds(s);
+  const byId = (id: string) => s.players.find((p) => p.id === id);
+
+  s.starters = s.starters.filter((id) => {
+    const p = byId(id);
+    return !!p && isSelectable(p) && !noStart.has(id);
+  });
+  if (s.starters.length < 5) {
+    s.starters = suggestStarters(s.players, noStart);
+    s.rotation = suggestRotation(s.players, s.starters, absent);
+    return;
+  }
+  s.rotation = s.rotation.filter((id) => {
+    const p = byId(id);
+    return !!p && isSelectable(p) && !absent.has(id) && !s.starters.includes(id);
+  });
+}
+
+/** ¿Puede pisar la cancha ahora? Los que llegan al segundo tiempo, recién
+ *  desde el 3er cuarto (con 2 cuartos ya jugados). */
+function canEnterCourt(live: LiveMatchState, playerId: string): boolean {
+  return live.quarters.length >= 2 || !(live.lateIds ?? []).includes(playerId);
+}
+
+/**
+ * Una nota de color que no se repite en el mismo partido: elige una variante
+ * libre del pool y la anota como usada. Si ya salieron todas, calla — el
+ * silencio es mejor que el eco ("La pelota se mueve sola…" tres veces por
+ * partido era la repetición más visible del juego).
+ */
+function freshLiveNote(live: LiveMatchState, pool: string[], rng: Rng): string | null {
+  const used = (live.usedIncidents ??= []);
+  const fresh = pool.filter((t) => !used.includes(t));
+  if (fresh.length === 0) return null;
+  const text = rng.pick(fresh);
+  used.push(text);
+  return text;
 }
 
 /** Minutos estimados de titulares y rotación según cuántos suplentes entran. */
@@ -127,35 +186,65 @@ export function evaluateTeam(state: GameState, starterIds: string[]): TeamEval {
   };
 }
 
+/** El signo de una clave: qué resultado explica. Un elogio no explica una
+ *  derrota (y viceversa): las claves que contradicen el marcador confunden
+ *  más de lo que cuentan, así que se filtran por resultado. */
+type ReasonSign = 'pro' | 'contra' | 'neutro';
+interface Reason {
+  weight: number;
+  text: string;
+  sign: ReasonSign;
+}
+
 function buildReasons(
   evalTeam: TeamEval,
   rivalStrength: number,
   luck: number,
   won: boolean,
-  extra: { weight: number; text: string }[] = []
+  extra: Reason[] = []
 ): string[] {
-  const reasons: { weight: number; text: string }[] = [...extra];
+  const reasons: Reason[] = [...extra];
   const gap = evalTeam.baseSkill - rivalStrength;
 
-  if (gap > 7) reasons.push({ weight: gap, text: 'La diferencia de nivel estuvo a favor nuestro.' });
-  if (gap < -7) reasons.push({ weight: -gap, text: 'El rival tenía un equipo superior en los papeles.' });
-  if (evalTeam.physicalAvg < 55) reasons.push({ weight: 60 - evalTeam.physicalAvg, text: 'El equipo llegó con las piernas pesadas.' });
-  if (evalTeam.physicalAvg > 78) reasons.push({ weight: evalTeam.physicalAvg - 70, text: 'La frescura física se notó en el último cuarto.' });
-  if (evalTeam.motivationAvg < 50) reasons.push({ weight: 60 - evalTeam.motivationAvg, text: 'Varios jugadores estaban desmotivados y se notó.' });
-  if (evalTeam.motivationAvg > 78) reasons.push({ weight: evalTeam.motivationAvg - 70, text: 'El equipo salió enchufado desde el arranque.' });
+  if (gap > 7) reasons.push({ weight: gap, text: 'La diferencia de nivel estuvo a favor nuestro.', sign: 'pro' });
+  if (gap < -7) reasons.push({ weight: -gap, text: 'El rival tenía un equipo superior en los papeles.', sign: 'contra' });
+  if (evalTeam.physicalAvg < 55)
+    reasons.push({ weight: 60 - evalTeam.physicalAvg, text: 'El equipo llegó con las piernas pesadas.', sign: 'contra' });
+  if (evalTeam.physicalAvg > 78)
+    reasons.push({ weight: evalTeam.physicalAvg - 70, text: 'La frescura física se notó en el último cuarto.', sign: 'pro' });
+  if (evalTeam.motivationAvg < 50)
+    reasons.push({ weight: 60 - evalTeam.motivationAvg, text: 'Varios jugadores estaban desmotivados y se notó.', sign: 'contra' });
+  if (evalTeam.motivationAvg > 78)
+    reasons.push({ weight: evalTeam.motivationAvg - 70, text: 'El equipo salió enchufado desde el arranque.', sign: 'pro' });
   if (evalTeam.missingPositions > 0)
     reasons.push({
       weight: evalTeam.missingPositions * 9,
       text: `Faltó cubrir ${evalTeam.missingPositions === 1 ? 'una posición natural' : `${evalTeam.missingPositions} posiciones naturales`} en el quinteto.`,
+      sign: 'contra',
     });
-  if (evalTeam.chemistry01 > 0.72) reasons.push({ weight: 8, text: 'La química del grupo empujó en los momentos calientes.' });
-  if (evalTeam.chemistry01 < 0.45) reasons.push({ weight: 10, text: 'El mal ambiente del vestuario se trasladó a la cancha.' });
-  if (luck > 6) reasons.push({ weight: luck, text: won ? 'La pelota entró en los momentos justos.' : 'Ni con suerte alcanzó.' });
-  if (luck < -6) reasons.push({ weight: -luck, text: 'La pelota no quiso entrar; hubo mala fortuna.' });
+  if (evalTeam.chemistry01 > 0.72)
+    reasons.push({ weight: 8, text: 'La química del grupo empujó en los momentos calientes.', sign: 'pro' });
+  if (evalTeam.chemistry01 < 0.45)
+    reasons.push({ weight: 10, text: 'El mal ambiente del vestuario se trasladó a la cancha.', sign: 'contra' });
+  if (luck > 6)
+    reasons.push(
+      won
+        ? { weight: luck, text: 'La pelota entró en los momentos justos.', sign: 'pro' }
+        : { weight: luck, text: 'Ni con suerte alcanzó: el rival fue más.', sign: 'contra' }
+    );
+  if (luck < -6)
+    reasons.push(
+      won
+        ? { weight: -luck, text: 'Ganamos hasta con la pelota esquiva: doble mérito.', sign: 'pro' }
+        : { weight: -luck, text: 'La pelota no quiso entrar; hubo mala fortuna.', sign: 'contra' }
+    );
 
-  reasons.sort((a, b) => b.weight - a.weight);
-  const top = reasons.slice(0, 3).map((r) => r.text);
-  if (top.length === 0) top.push(won ? 'Fue un partido parejo que se definió por detalles.' : 'Partido parejo que se escapó por detalles.');
+  // Solo claves que explican lo que pasó: elogios si ganaste, deudas si perdiste.
+  const fits = reasons.filter((r) => r.sign === 'neutro' || (won ? r.sign === 'pro' : r.sign === 'contra'));
+  fits.sort((a, b) => b.weight - a.weight);
+  const top = fits.slice(0, 3).map((r) => r.text);
+  if (top.length === 0)
+    top.push(won ? 'Fue un partido parejo que se definió por detalles.' : 'Partido parejo que se escapó por detalles.');
   return top;
 }
 
@@ -304,6 +393,9 @@ function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
   });
   // La liga habla: revanchas cumplidas y lo que pasó en las otras canchas.
   settleRivalryAfterMatch(s);
+  // La apuesta del asado se liquida acá: el que pierde paga, sin apelación.
+  const betLine = settleAsadoBet(s);
+  if (betLine) result.effects.push(betLine);
   leagueNewsForWeek(s, otherResults, rng);
   s.live = null;
   s.phase = 'matchResult';
@@ -339,6 +431,46 @@ function simulateForfeit(s: GameState, rival: Rival, rng: Rng): GameState {
 }
 
 /**
+ * La liga no habilitó al club por el fiado impago: los puntos se pierden en
+ * la mesa. Es la consecuencia deportiva de la deuda — cae una sola vez por
+ * temporada, avisada la semana anterior, y evitable pagando sobre la hora.
+ */
+function simulateDebtForfeit(
+  s: GameState,
+  rival: Rival,
+  debt: NonNullable<GameState['inscriptionDebt']>,
+  rng: Rng
+): GameState {
+  const [low, high] = BALANCE.match.forfeitScore;
+  debt.sanctionPending = false;
+  debt.sanctioned = true;
+  const result: MatchResult = {
+    week: s.week,
+    rivalId: rival.id,
+    rivalName: rival.name,
+    scoreFor: low,
+    scoreAgainst: high,
+    quarters: [],
+    highlights: [],
+    won: false,
+    forfeit: true,
+    mvpId: null,
+    mvpName: null,
+    summary: `La ${debt.leagueName} no habilitó al club por el fiado impago de la inscripción: los puntos se los llevó ${rival.name} sin jugar.`,
+    reasons: [`El club debía $${debt.remaining} del fiado y la liga cortó por lo sano.`],
+    lockerRoom: ['El plantel se enteró en la puerta del gimnasio: vinieron a jugar y los mandaron de vuelta. Nadie entendía nada.'],
+    effects: ['Motivación general -7', 'Prestigio deportivo -4', 'Prestigio social -4'],
+    box: [],
+  };
+  s.players = s.players.map((p) => (p.leftClub ? p : { ...p, motivation: clamp(p.motivation - 7) }));
+  s.club.sportPrestige = clamp(s.club.sportPrestige - 4);
+  s.club.socialPrestige = clamp(s.club.socialPrestige - 4);
+  logClubEvent(s, 'ausencia', `Vergüenza administrativa: la liga no habilitó al club por la deuda y perdimos con ${rival.name} en la mesa.`);
+  concludeMatch(s, result, rng);
+  return s;
+}
+
+/**
  * Arranca el partido de la semana: sortea el rendimiento del día de cada
  * jugador y deja el estado en fase 'match' para jugarlo cuarto a cuarto.
  * Si no hay quinteto completo, resuelve el forfeit directamente.
@@ -347,10 +479,38 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
   const s: GameState = structuredClone(state);
   const rivalId = s.schedule[s.week - 1];
   const rival = s.rivals.find((r) => r.id === rivalId)!;
-  const absent = matchAbsentIds(s);
-  const starters = s.players.filter((p) => s.starters.includes(p.id) && isSelectable(p) && !absent.has(p.id));
 
-  if (starters.length < 5) return simulateForfeit(s, rival, rng);
+  // El fiado impago se cobra acá: con la sanción encima, la liga exige ponerse
+  // al día ANTES del partido. Si la caja llega (una rifa a tiempo salva la
+  // fecha), se paga sobre la hora; si no, los puntos se pierden en la mesa.
+  const debt = s.inscriptionDebt;
+  if (debt?.sanctionPending && s.week <= s.seasonLength) {
+    const overdue = Math.min(debt.remaining, BALANCE.economy.debtInstallment * Math.max(1, debt.missedWeeks));
+    if (s.club.money >= overdue) {
+      s.club.money -= overdue;
+      debt.remaining -= overdue;
+      debt.missedWeeks = 0;
+      debt.sanctionPending = false;
+      s.ledger.push({ week: s.week, concept: `Fiado de la inscripción: pago sobre la hora (${debt.leagueName})`, amount: -overdue });
+      s.news.unshift({
+        week: s.week,
+        text: `Sobre la hora, el club juntó $${overdue} y se puso al día con el fiado: la ${debt.leagueName} habilitó la fecha.`,
+        tone: 'good',
+      });
+    } else {
+      return simulateDebtForfeit(s, rival, debt, rng);
+    }
+  }
+
+  const absent = matchAbsentIds(s);
+  const noStart = noStartIds(s);
+  // El forfeit es no juntar 5 en la planilla. Los que llegan al segundo tiempo
+  // cuentan para la planilla, pero no pueden arrancar: si por ellos el quinteto
+  // inicial queda corto, se arranca con menos y entran en el 3er cuarto.
+  const present = s.players.filter((p) => isSelectable(p) && !absent.has(p.id));
+  if (present.length < 5) return simulateForfeit(s, rival, rng);
+  const starters = s.players.filter((p) => s.starters.includes(p.id) && isSelectable(p) && !noStart.has(p.id));
+  if (starters.length === 0) return simulateForfeit(s, rival, rng);
 
   const M = BALANCE.liveMatch;
   const evalTeam = evaluateTeam(s, s.starters);
@@ -379,12 +539,33 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
 
   // La convocatoria del rival se sortea recién el día del partido.
   const rivalSquad = rollRivalMatchday(s, rivalId, rng);
+  // Conocimiento por persona: a los que pisan la cancha contra vos los vas
+  // conociendo de verdad, y eso persiste de temporada a temporada.
+  for (const wpId of rivalSquad.presentIds) {
+    const wp = s.world.players.find((x) => x.id === wpId);
+    if (wp) wp.timesFaced = (wp.timesFaced ?? 0) + 1;
+  }
 
   // La previa: el árbitro anunciado y la historia con este rival, si la hay.
   const ref = refereeOfWeek(s);
   const prematchNotes = [...rivalSquad.notes, `Dirige ${ref.name}: ${ref.blurb}.`];
   const rivalry = rivalryWith(s, rivalId);
   if (rivalry) prematchNotes.push(`🔥 ${rivalry.text}`);
+
+  // Los que avisaron que llegan al segundo tiempo: citados, pero sin pisar la
+  // cancha hasta el 3er cuarto. Si el arranque queda corto por ellos, se avisa.
+  const lateIds = squad
+    .filter((p) => s.callUp.some((c) => c.playerId === p.id && c.lateArrival && c.status === 'confirmado'))
+    .map((p) => p.id);
+  if (starters.length < 5) {
+    const lateNames = s.players
+      .filter((p) => lateIds.includes(p.id))
+      .map((p) => p.name)
+      .join(' y ');
+    prematchNotes.push(
+      `Arrancamos con ${starters.length}: ${lateNames || 'el resto'} llega${lateIds.length > 1 ? 'n' : ''} para el segundo tiempo.`
+    );
+  }
 
   s.live = {
     rivalId,
@@ -405,6 +586,7 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     refTension: 0,
     rageBoost: false,
     pendingIncident: null,
+    lateIds,
     // Con DT contratado, los cambios arrancan en sus manos y con su directiva.
     autoRotation: !!s.coach,
     directive: s.coach?.directive ?? 'ganar',
@@ -434,6 +616,8 @@ export function substitute(state: GameState, outId: string, inId: string): GameS
   const outP = state.players.find((p) => p.id === outId);
   const inP = state.players.find((p) => p.id === inId);
   if (!outP || !inP || !isSelectable(inP)) return state;
+  // El que llega al segundo tiempo no puede entrar antes del 3er cuarto.
+  if (!canEnterCourt(live, inId)) return state;
 
   const onCourt = live.onCourt.map((id) => (id === outId ? inId : id));
   const courtPlayers = state.players.filter((p) => onCourt.includes(p.id));
@@ -468,7 +652,7 @@ export const PRESET_LABELS: Record<LineupPreset, string> = {
 function presetFive(state: GameState, live: LiveMatchState, preset: LineupPreset): string[] {
   const squad = live.squad
     .map((id) => state.players.find((p) => p.id === id))
-    .filter((p): p is Player => !!p && isSelectable(p));
+    .filter((p): p is Player => !!p && isSelectable(p) && canEnterCourt(live, p.id));
   const freshOf = (id: string) => live.playerFresh[id] ?? 70;
   const originalStarters = new Set(state.starters);
 
@@ -536,7 +720,9 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
 
   if (live.directive === 'repartir' && qIndex <= 2) {
     // Que todos toquen la pelota: entran los que todavía no jugaron.
-    const cold = live.squad.filter((id) => !live.onCourt.includes(id) && (live.minutes[id] ?? 0) === 0).slice(0, 2);
+    const cold = live.squad
+      .filter((id) => !live.onCourt.includes(id) && (live.minutes[id] ?? 0) === 0 && canEnterCourt(live, id))
+      .slice(0, 2);
     for (const inId of cold) {
       const outId = [...live.onCourt].sort((a, b) => (live.minutes[b] ?? 0) - (live.minutes[a] ?? 0))[0];
       if (!outId) break;
@@ -557,7 +743,7 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
     for (const outId of [...live.onCourt]) {
       if (freshOf(outId) >= tiredThreshold) continue;
       const candidate = live.squad
-        .filter((id) => !live.onCourt.includes(id) && isSelectable(byId(id)))
+        .filter((id) => !live.onCourt.includes(id) && isSelectable(byId(id)) && canEnterCourt(live, id))
         .sort((a, b) => freshOf(b) - freshOf(a))[0];
       if (candidate && freshOf(candidate) > freshOf(outId) + 12) {
         live.onCourt = live.onCourt.map((id) => (id === outId ? candidate : id));
@@ -609,6 +795,30 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   // El piloto automático hace sus cambios antes de que arranque el cuarto.
   autoRotate(s, live);
 
+  // En el entretiempo caen los que venían del trabajo: ya pueden entrar.
+  if (qIndex === 2 && (live.lateIds ?? []).length > 0) {
+    const lateNames = (live.lateIds ?? [])
+      .map((id) => s.players.find((p) => p.id === id)?.name)
+      .filter(Boolean)
+      .join(' y ');
+    if (lateNames) live.pendingSubNotes.unshift(`🕘 Llegó ${lateNames} para el segundo tiempo: ya está para entrar.`);
+  }
+
+  // Si en cancha hay menos de 5 (arranque corto o lesión sin recambio), se
+  // completa con el banco disponible apenas se pueda.
+  while (live.onCourt.length < 5) {
+    const cand = live.squad
+      .filter((id) => {
+        const p = s.players.find((x) => x.id === id);
+        return !!p && isSelectable(p) && !live.onCourt.includes(id) && canEnterCourt(live, id);
+      })
+      .sort((a, b) => (live.playerFresh[b] ?? 70) - (live.playerFresh[a] ?? 70))[0];
+    if (!cand) break;
+    live.onCourt.push(cand);
+    const name = s.players.find((x) => x.id === cand)?.name;
+    if (name) live.pendingSubNotes.push(`Entra ${name}: el equipo completa el quinteto.`);
+  }
+
   // Cambios hechos en el descanso: abren el relato del cuarto.
   notes.push(...live.pendingSubNotes);
   live.pendingSubNotes = [];
@@ -633,10 +843,28 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
     const diff = sumFor - sumAgainst;
     if (diff <= -M.comebackDeficit) {
       momentumPts = Math.min(M.comebackMaxPoints, -diff * M.comebackFactor);
-      notes.push('Abajo en el marcador, el equipo salió con otra cara: a morder cada pelota.');
+      const n = freshLiveNote(
+        live,
+        [
+          'Abajo en el marcador, el equipo salió con otra cara: a morder cada pelota.',
+          'La desventaja despertó al equipo: otra intensidad, otra defensa.',
+          'Nadie quiere irse con esta derrota: el equipo aprieta los dientes y va.',
+        ],
+        rng
+      );
+      if (n) notes.push(n);
     } else if (diff >= M.comebackDeficit) {
       momentumPts = -Math.min(M.comebackMaxPoints, diff * M.comebackFactor);
-      notes.push(`${rival.name} no se entrega: salió a descontar con todo.`);
+      const n = freshLiveNote(
+        live,
+        [
+          `${rival.name} no se entrega: salió a descontar con todo.`,
+          `${rival.name} achica el partido a pura garra: nada está sellado.`,
+          `Del otro banco piden una más: ${rival.name} sigue vivo.`,
+        ],
+        rng
+      );
+      if (n) notes.push(n);
     }
   }
 
@@ -656,20 +884,65 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   const starEff = Math.max(1, playerEffective(star));
   const hot = (live.perfs[star.id] ?? starEff) / starEff; // 0.78..1.22
   let atkMult: number;
+  // Las notas de color no se repiten dentro del partido (freshLiveNote): si el
+  // pool se agota, el relato calla y hablan el marcador y las piernas.
+  let flavor: string | null = null;
   if (live.attack === 'estrella') {
     atkMult = M.estrellaBase + M.estrellaHotSpan * (hot - 0.78) - M.estrellaDecay * live.estrellaQuarters;
-    if (hot > 1.08) notes.push(`${star.name} está encendido: la pide y la mete.`);
-    else if (hot < 0.92) notes.push(`${star.name} no tiene la mano y el plan de dársela siempre a él hace agua.`);
-    else if (live.estrellaQuarters >= 2) notes.push(`El rival ya le tomó la mano a ${star.name}: lo esperan entre dos.`);
+    if (hot > 1.08)
+      flavor = freshLiveNote(
+        live,
+        [`${star.name} está encendido: la pide y la mete.`, `Todo pasa por ${star.name}, y hoy tiene la mano caliente.`],
+        rng
+      );
+    else if (hot < 0.92)
+      flavor = freshLiveNote(
+        live,
+        [
+          `${star.name} no tiene la mano y el plan de dársela siempre a él hace agua.`,
+          `Insistimos con ${star.name}, pero hoy no le cae una.`,
+        ],
+        rng
+      );
+    else if (live.estrellaQuarters >= 2)
+      flavor = freshLiveNote(live, [`El rival ya le tomó la mano a ${star.name}: lo esperan entre dos.`], rng);
   } else if (live.attack === 'correr') {
     atkMult = M.correrBase + M.correrFreshSpan * (teamFresh / 100);
-    if (teamFresh >= 60) notes.push('Corremos cada rebote: puntos fáciles de contraataque.');
-    else notes.push('Queremos correr pero no queda nafta: las contras las hacen ellos.');
+    flavor =
+      teamFresh >= 60
+        ? freshLiveNote(
+            live,
+            ['Corremos cada rebote: puntos fáciles de contraataque.', 'El partido se juega a nuestro ritmo: correr y correr.'],
+            rng
+          )
+        : freshLiveNote(
+            live,
+            ['Queremos correr pero no queda nafta: las contras las hacen ellos.'],
+            rng
+          );
   } else {
     atkMult = M.equipoBase + M.equipoChemBonus * live.eval.chemistry01;
-    if (live.eval.chemistry01 > 0.7 && rng.chance(0.5)) notes.push('La pelota se mueve sola: el equipo juega de memoria y de buen humor.');
+    if (live.eval.chemistry01 > 0.7 && rng.chance(0.5))
+      flavor = freshLiveNote(
+        live,
+        [
+          'La pelota se mueve sola: el equipo juega de memoria y de buen humor.',
+          'Tres pases de más en cada ataque, y siempre queda uno solo abajo del aro.',
+          'Se nota el buen clima: el que la mueve festeja igual que el que la mete.',
+        ],
+        rng
+      );
   }
-  if (missing > 0) notes.push(`Con este quinteto falta un ${ALL_POSITIONS.find((pos) => !covered.has(pos))} natural y se nota.`);
+  if (flavor) notes.push(flavor);
+  if (missing > 0) {
+    const pos = ALL_POSITIONS.find((p) => !covered.has(p));
+    const n = freshLiveNote(
+      live,
+      [`Con este quinteto falta un ${pos} natural y se nota.`, `Seguimos sin ${pos} de oficio en cancha, y el rival lo huele.`],
+      rng
+    );
+    if (n) notes.push(n);
+  }
 
   // Bronca canalizada y tensión con los jueces: pegan en la concentración.
   if (live.rageBoost) {
@@ -686,11 +959,18 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   const atk = effAvg * chemFactor * orgFactor * coverageFactor * atkMult;
 
   // --- Defensa ---
+  const pushDef = (pool: string[]) => {
+    const n = freshLiveNote(live, pool, rng);
+    if (n) notes.push(n);
+  };
   let defMult = 1;
   if (live.defense === 'presion') {
     if (teamFresh < M.presionTiredThreshold) {
       defMult = M.presionTiredMult;
-      notes.push('Presionamos sin piernas y nos pasan con dos pases: regalo tras regalo.');
+      pushDef([
+        'Presionamos sin piernas y nos pasan con dos pases: regalo tras regalo.',
+        'La presión sin nafta es un colador: cada salida rival termina en bandeja.',
+      ]);
     } else if (
       // La presión es una apuesta: un rival con buen manejo la puede romper.
       rng.chance(
@@ -700,39 +980,55 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
       )
     ) {
       defMult = M.presionBreakMult;
-      notes.push('Nos leyeron la presión: dos pases largos y bandeja. La apuesta salió cara.');
+      pushDef([
+        'Nos leyeron la presión: dos pases largos y bandeja. La apuesta salió cara.',
+        'Rompieron la presión de memoria: pase por arriba y dos puntos fáciles.',
+      ]);
     } else {
       defMult = M.presionRivalMult;
-      notes.push('La presión a toda cancha ahoga la salida del rival: pelotas recuperadas y bandejas.');
+      pushDef([
+        'La presión a toda cancha ahoga la salida del rival: pelotas recuperadas y bandejas.',
+        'La presión les hace contar los segundos: sacan la pelota a los tumbos.',
+      ]);
     }
     if (rival.style === 'tiradores') defMult *= M.tiradoresVsHombre;
   } else if (live.defense === 'hombre') {
     if (teamFresh >= M.hombreTiredThreshold) {
       defMult = M.hombreRivalMult;
-      notes.push('La marca individual asfixia la salida del rival.');
+      pushDef([
+        'La marca individual asfixia la salida del rival.',
+        'Cada uno con el suyo y sin regalar un centímetro: el rival no encuentra tiros cómodos.',
+      ]);
     } else {
       defMult = M.hombreTiredMult;
-      notes.push('Queremos presionar pero las piernas no llegan: quedan pasillos por todos lados.');
+      pushDef([
+        'Queremos presionar pero las piernas no llegan: quedan pasillos por todos lados.',
+      ]);
     }
     if (rival.style === 'tiradores') defMult *= M.tiradoresVsHombre;
-    if (rival.style === 'internos') notes.push('Chocar con sus grandotes cuesta doble: cada marca es una batalla.');
+    if (rival.style === 'internos')
+      pushDef(['Chocar con sus grandotes cuesta doble: cada marca es una batalla.']);
   } else {
     if (rival.style === 'tiradores') {
       defMult *= M.tiradoresVsZona;
-      notes.push('La zona les deja tiros abiertos y sus tiradores no perdonan.');
+      pushDef([
+        'La zona les deja tiros abiertos y sus tiradores no perdonan.',
+        'Mueven la pelota hasta encontrar al tirador libre contra la zona: y la meten.',
+      ]);
     }
     if (rival.style === 'internos') defMult *= M.internosVsZona;
   }
   if (rival.style === 'corredores') {
     defMult *= 1 + M.corredoresTiredBoost * (1 - teamFresh / 100);
-    if (teamFresh < 45) notes.push('Nos corren la cancha entera y llegamos siempre tarde a las marcas.');
+    if (teamFresh < 45)
+      pushDef(['Nos corren la cancha entera y llegamos siempre tarde a las marcas.']);
   }
   // El rival aprende: cuartos y cuartos de defensa agresiva le enseñan a salir.
   if ((live.defense === 'hombre' || live.defense === 'presion') && live.hombreQuarters >= 2) {
     defMult *= 1 + M.aggressiveAdapt * (live.hombreQuarters - 1);
-    notes.push('El rival ya sabe salir contra nuestra marca: la rompen de memoria.');
+    pushDef(['El rival ya sabe salir contra nuestra marca: la rompen de memoria.']);
   }
-  if (teamFresh < 30) notes.push('El equipo juega de memoria: no quedan piernas.');
+  if (teamFresh < 30) pushDef(['El equipo juega de memoria: no quedan piernas.']);
 
   const rivalFreshFactor = M.freshFactorMin + M.freshFactorSpan * (live.rivalFreshness / 100);
   const rivalEff =
@@ -756,11 +1052,30 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   let rivalRacha = 0;
   if (rng.chance(M.rachaChance)) {
     ourRacha = rng.int(M.rachaMin, M.rachaMax);
-    notes.push('Entramos en racha: cae un triple atrás de otro y el banco está de pie.');
+    notes.push(
+      freshLiveNote(
+        live,
+        [
+          'Entramos en racha: cae un triple atrás de otro y el banco está de pie.',
+          'Se prendió el aro nuestro: minutos de no fallar ni de espaldas.',
+          'Parcial nuestro a pura corrida: el gimnasio se vino abajo.',
+        ],
+        rng
+      ) ?? 'Otra racha nuestra: el aro está enorme.'
+    );
   }
   if (rng.chance(M.rachaChance)) {
     rivalRacha = rng.int(M.rachaMin, M.rachaMax);
-    notes.push(`A ${rival.name} se le prendió el aro: meten de todos lados.`);
+    notes.push(
+      freshLiveNote(
+        live,
+        [
+          `A ${rival.name} se le prendió el aro: meten de todos lados.`,
+          `Racha de ${rival.name}: tres ataques, tres canastas, y minuto pedido a tiempo.`,
+        ],
+        rng
+      ) ?? `${rival.name} vuelve a embocar todo.`
+    );
   }
 
   const ourQ = Math.max(4, Math.round(qBase + diffQ / 2 + rng.range(-1.5, 1.5)) + ourRacha);
@@ -845,7 +1160,7 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
 
     // Sale y entra el recambio con más piernas; sin banco, quedan cuatro.
     const sub = live.squad
-      .filter((id) => !live.onCourt.includes(id))
+      .filter((id) => !live.onCourt.includes(id) && canEnterCourt(live, id))
       .map((id) => s.players.find((x) => x.id === id)!)
       .filter((x) => isSelectable(x))
       .sort((a, b) => (live.playerFresh[b.id] ?? 70) - (live.playerFresh[a.id] ?? 70))[0];
@@ -1023,13 +1338,19 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       np.lastRating = ratings[p.id]?.rating ?? 5;
       np.physical = clamp(np.physical - wearFor(mins) + rng.range(-3, 3));
       np.weeksBenched = 0;
-      np.confidence = clamp(np.confidence + (np.lastRating >= 7 ? 5 : np.lastRating <= 3 ? -5 : 0));
+      // Con la nota recalibrada, el 7 es buen partido y el 4 noche floja: la
+      // confianza sube con lo bueno pero deja de ser un trinquete (las noches
+      // flojas ahora existen y descuentan).
+      np.confidence = clamp(np.confidence + (np.lastRating >= 7 ? 4 : np.lastRating <= 4 ? -4 : 0));
     } else if (mins > 0) {
       // Sumó minutos desde el banco.
       np.lastRating = ratings[p.id]?.rating ?? 5;
       np.physical = clamp(np.physical - wearFor(mins) + rng.range(-2, 2));
       np.weeksBenched = 0;
-      np.confidence = clamp(np.confidence + (np.lastRating >= 7 ? 3 : np.lastRating <= 3 ? -3 : 0));
+      // La vara del banco es la de su rol: con pocos minutos la nota ancla más
+      // abajo, así que un 6 ya es "cumplió y suma" (con la vara del titular,
+      // el suplente no crecía nunca y las estrategias que rotan lo pagaban).
+      np.confidence = clamp(np.confidence + (np.lastRating >= 6 ? 3 : np.lastRating <= 4 ? -3 : 0));
       if (np.personality === 'protagonista' || np.expectedRole === 'titular') {
         // Jugar poco no les alcanza, pero molesta menos que no jugar.
         np.motivation = clamp(np.motivation + B.rotationMotivationHit);
@@ -1086,7 +1407,13 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     const coachTouch = s.coach && s.coach.people >= 70 ? 1 : 0;
     const moraleDelta = baseMorale + coachTouch;
     const personalityScale = np.personality === 'competitivo' ? 1.5 : np.personality === 'social' ? 0.6 : 1;
-    np.motivation = clamp(np.motivation + moraleDelta * personalityScale);
+    // Techo blando: la alegría rinde menos cuanto más arriba está el ánimo
+    // (ganar seguido ya no clava a todo el plantel en 99). Perder pega entero.
+    const softcap =
+      moraleDelta > 0
+        ? Math.max(B.moraleSoftcapMinFactor, (100 - np.motivation) / B.moraleSoftcapSpan)
+        : 1;
+    np.motivation = clamp(np.motivation + moraleDelta * personalityScale * Math.min(1, softcap));
 
     if (np.id === mvp.id) {
       np.confidence = clamp(np.confidence + B.mvpConfidence);
@@ -1235,31 +1562,31 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   const hot = star ? (live.perfs[star.id] ?? starEff) / starEff : 1;
   const zonaQuarters = live.quarters.filter((q) => !q.overtime && q.defense === 'zona').length;
   const subsMade = played.filter((x) => !starters.some((st) => st.id === x.p.id)).length;
-  const extraReasons: { weight: number; text: string }[] = [];
+  const extraReasons: Reason[] = [];
   if (live.hombreQuarters >= 3) {
     if (endFresh < 35 && !won)
-      extraReasons.push({ weight: 11, text: 'La defensa agresiva todo el partido nos dejó sin piernas en el cierre.' });
-    else if (won) extraReasons.push({ weight: 8, text: 'La presión constante incomodó al rival de principio a fin.' });
+      extraReasons.push({ weight: 11, text: 'La defensa agresiva todo el partido nos dejó sin piernas en el cierre.', sign: 'contra' });
+    else if (won) extraReasons.push({ weight: 8, text: 'La presión constante incomodó al rival de principio a fin.', sign: 'pro' });
   }
   if (live.estrellaQuarters >= 3) {
-    if (hot < 0.92) extraReasons.push({ weight: 10, text: `Apostamos todo a ${live.starName} y no era su noche.` });
-    else if (hot > 1.08) extraReasons.push({ weight: 10, text: `${live.starName} cargó el equipo al hombro y respondió.` });
+    if (hot < 0.92) extraReasons.push({ weight: 10, text: `Apostamos todo a ${live.starName} y no era su noche.`, sign: 'contra' });
+    else if (hot > 1.08) extraReasons.push({ weight: 10, text: `${live.starName} cargó el equipo al hombro y respondió.`, sign: 'pro' });
   }
   if (rival.style === 'tiradores' && zonaQuarters >= 3)
-    extraReasons.push({ weight: 9, text: 'La zona les regaló tiros abiertos a sus tiradores toda la noche.' });
+    extraReasons.push({ weight: 9, text: 'La zona les regaló tiros abiertos a sus tiradores toda la noche.', sign: 'contra' });
   if (rival.style === 'corredores' && endFresh < 35)
-    extraReasons.push({ weight: 9, text: 'Su ritmo de contraataque castigó nuestras piernas gastadas.' });
+    extraReasons.push({ weight: 9, text: 'Su ritmo de contraataque castigó nuestras piernas gastadas.', sign: 'contra' });
   if (subsMade >= 3 && endFresh > 55)
-    extraReasons.push({ weight: 7, text: 'Los cambios mantuvieron piernas frescas hasta el final.' });
+    extraReasons.push({ weight: 7, text: 'Los cambios mantuvieron piernas frescas hasta el final.', sign: 'pro' });
   if (subsMade === 0 && endFresh < 35)
-    extraReasons.push({ weight: 8, text: 'Sin tocar el banco, el quinteto llegó fundido al cierre.' });
+    extraReasons.push({ weight: 8, text: 'Sin tocar el banco, el quinteto llegó fundido al cierre.', sign: 'contra' });
   if (s.lastAsado && s.lastAsado.week === s.week) {
     // Si hubo asado, su clave le gana a la genérica de química: es la misma
     // historia, contada con nombre y apellido.
     if (s.lastAsado.tier === 'fieston' || s.lastAsado.tier === 'bueno')
-      extraReasons.push({ weight: 11, text: 'El asado de la semana se notó: el grupo entró de buen humor y conectado.' });
+      extraReasons.push({ weight: 11, text: 'El asado de la semana se notó: el grupo entró de buen humor y conectado.', sign: 'pro' });
     else if (s.lastAsado.tier === 'papelon')
-      extraReasons.push({ weight: 11, text: 'Las caras largas del asado fallido entraron a la cancha con el equipo.' });
+      extraReasons.push({ weight: 11, text: 'Las caras largas del asado fallido entraron a la cancha con el equipo.', sign: 'contra' });
   }
 
   const summary = won
@@ -1272,14 +1599,14 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
 
   // El relato del informe sale de lo que realmente pasó cuarto a cuarto
   // (sin repetir la misma observación de cuartos consecutivos).
+  // Sin tope corto: el informe cuenta el partido entero (antes cortaba en el
+  // 2do cuarto y se perdía la racha del final, que es justo lo que se relee).
   const seenNotes = new Set<string>();
-  const highlights = live.quarters
-    .flatMap((q, i) =>
-      q.notes
-        .filter((n) => !seenNotes.has(n) && (seenNotes.add(n), true))
-        .map((n) => `${q.overtime ? 'Suplementario' : Q_NAMES[i]}: ${n}`)
-    )
-    .slice(0, 6);
+  const highlights = live.quarters.flatMap((q, i) =>
+    q.notes
+      .filter((n) => !seenNotes.has(n) && (seenNotes.add(n), true))
+      .map((n) => `${q.overtime ? 'Suplementario' : Q_NAMES[i]}: ${n}`)
+  );
   if (mvpFromBench) highlights.push(`${mvp.name} entró desde el banco y cambió el partido: figura inesperada.`);
 
   const lockerRoom = lockerRoomNotes(

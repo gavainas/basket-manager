@@ -46,9 +46,9 @@ export function ScoutingCard({ state }: { state: GameState }) {
       </ul>
       {view.knowledge >= 2 && (
         <div className="grid cols-3">
-          <ScoutList title="Probables" icon="✅" entries={view.probable} empty="Nadie confirmado. Raro." />
-          <ScoutList title="En duda" icon="❔" entries={view.doubtful} empty="Sin rumores esta semana." />
-          <ScoutList title="Bajas probables" icon="🚫" entries={view.out} empty="Vendrían todos." />
+          <ScoutList title="Probables" icon="✓" entries={view.probable} empty="Nadie confirmado. Raro." />
+          <ScoutList title="En duda" icon="?" entries={view.doubtful} empty="Sin rumores esta semana." />
+          <ScoutList title="Bajas probables" icon="✕" entries={view.out} empty="Vendrían todos." />
         </div>
       )}
       <p className="muted" style={{ margin: '0.5rem 0 0', fontSize: '0.78rem' }}>

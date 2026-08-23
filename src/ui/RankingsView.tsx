@@ -1,5 +1,6 @@
 import type { GameState, Player } from '../game/types';
 import { affinity, RIVALRY_THRESHOLD } from '../game/relations';
+import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
 
 interface Row {
@@ -8,11 +9,11 @@ interface Row {
   value: string;
 }
 
-function RankingCard({ title, icon, rows, empty }: { title: string; icon: string; rows: Row[]; empty?: string }) {
+function RankingCard({ title, icon, rows, empty }: { title: string; icon: IconName; rows: Row[]; empty?: string }) {
   return (
     <div className="card ranking-card">
       <h3>
-        {icon} {title}
+        <Icon name={icon} size={16} /> {title}
       </h3>
       {rows.length === 0 ? (
         <p className="muted" style={{ margin: 0 }}>
@@ -81,18 +82,42 @@ export function RankingsView({ state }: { state: GameState }) {
   const countTimeline = (p: Player, pred: (kind: string, text: string) => boolean) =>
     p.timeline.filter((e) => pred(e.kind, e.text)).length;
 
+  // Quién juega poco ESTA temporada: el dato que antes había que reconstruir
+  // de memoria (los demás rankings son de la carrera con el club; este habla
+  // del reparto de minutos de hoy). Los lesionados no cuentan como relegados.
+  const leastMinutes: Row[] =
+    state.history.length === 0
+      ? []
+      : players
+          .filter((p) => p.status !== 'lesionado')
+          .map((p) => ({
+            p,
+            v: p.matchLog.filter((m) => m.season === state.seasonNumber).reduce((t, m) => t + m.minutes, 0),
+          }))
+          .sort((a, b) => a.v - b.v)
+          .slice(0, 5)
+          .map((x) => ({ id: x.p.id, name: x.p.name, value: `${x.v}' esta temporada` }));
+
   return (
     <div>
-      <h2 className="section-title">🏀 Los números</h2>
+      <h2 className="section-title">
+        <Icon name="pelota" size={17} /> Los números
+      </h2>
       <div className="grid cols-3">
-        <RankingCard title="Goleadores" icon="🎯" rows={top((p) => sumLog(p, 'points'), (v) => `${v} pts`)} />
-        <RankingCard title="Reboteros" icon="🙌" rows={top((p) => sumLog(p, 'rebounds'), (v) => `${v} reb`)} />
-        <RankingCard title="Asistidores" icon="🤲" rows={top((p) => sumLog(p, 'assists'), (v) => `${v} ast`)} />
-        <RankingCard title="Nota media" icon="📊" rows={rated} empty="Se necesitan al menos 2 partidos jugados." />
-        <RankingCard title="Más minutos" icon="⏱" rows={top((p) => sumLog(p, 'minutes'), (v) => `${v}'`)} />
+        <RankingCard title="Goleadores" icon="tiradores" rows={top((p) => sumLog(p, 'points'), (v) => `${v} pts`)} />
+        <RankingCard title="Reboteros" icon="interior" rows={top((p) => sumLog(p, 'rebounds'), (v) => `${v} reb`)} />
+        <RankingCard title="Asistidores" icon="social" rows={top((p) => sumLog(p, 'assists'), (v) => `${v} ast`)} />
+        <RankingCard title="Nota media" icon="rankings" rows={rated} empty="Se necesitan al menos 2 partidos jugados." />
+        <RankingCard title="Más minutos" icon="reloj" rows={top((p) => sumLog(p, 'minutes'), (v) => `${v}'`)} />
+        <RankingCard
+          title="Menos cancha"
+          icon="cancha"
+          rows={leastMinutes}
+          empty="Todavía no se jugó: nadie quedó relegado."
+        />
         <RankingCard
           title="Figuras"
-          icon="⭐"
+          icon="estrella"
           rows={top(
             (p) => p.matchLog.filter((m) => m.mvp).length,
             (v) => `${v} ${v > 1 ? 'veces' : 'vez'} MVP`
@@ -100,24 +125,26 @@ export function RankingsView({ state }: { state: GameState }) {
         />
       </div>
 
-      <h2 className="section-title">🍻 El vestuario</h2>
+      <h2 className="section-title">
+        <Icon name="vestuario" size={17} /> El vestuario
+      </h2>
       <div className="grid cols-3">
-        <RankingCard title="Más querido" icon="❤" rows={lovedRows} />
+        <RankingCard title="Más querido" icon="corazon" rows={lovedRows} />
         <RankingCard
           title="Más conflictivo"
-          icon="⚡"
+          icon="rayo"
           rows={conflictive}
           empty="Por ahora el vestuario está en paz."
         />
         <RankingCard
           title="Más entrenamientos"
-          icon="💪"
+          icon="fisico"
           rows={top((p) => p.seasonTrainings, (v) => `${v} práctica${v > 1 ? 's' : ''}`)}
           empty="Nadie entrenó todavía esta temporada."
         />
         <RankingCard
           title="Alma de la fiesta"
-          icon="🍕"
+          icon="asado"
           rows={top(
             (p) => countTimeline(p, (k) => k === 'social'),
             (v) => `${v} movida${v > 1 ? 's' : ''}`
@@ -126,7 +153,7 @@ export function RankingsView({ state }: { state: GameState }) {
         />
         <RankingCard
           title="Más impuntual"
-          icon="❌"
+          icon="cruz"
           rows={top(
             (p) => countTimeline(p, (k) => k === 'ausencia'),
             (v) => `${v} faltazo${v > 1 ? 's' : ''}`
@@ -135,9 +162,9 @@ export function RankingsView({ state }: { state: GameState }) {
         />
         <RankingCard
           title="Enfermería"
-          icon="🚑"
+          icon="enfermeria"
           rows={top(
-            (p) => countTimeline(p, (k, text) => k === 'lesion' && !text.startsWith('Recibió')),
+            (p) => countTimeline(p, (k, text) => k === 'lesion' && !text.startsWith('Recibió') && !text.startsWith('Se acomodó')),
             (v) => `${v} lesi${v > 1 ? 'ones' : 'ón'}`
           )}
           empty="Sin lesionados: a tocar madera."

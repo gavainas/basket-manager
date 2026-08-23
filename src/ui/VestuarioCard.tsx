@@ -9,13 +9,13 @@ import { PlayerLink } from './PlayerLink';
 function PlayerChip({ p }: { p: Player }) {
   return (
     <span className="chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-      <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={22} title={p.name} />
+      <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={22} title={p.name} personality={p.personality} />
       <PlayerLink id={p.id}>{p.name.replace(/"[^"]*"\s*/g, '').split(/\s+/).pop()}</PlayerLink>
     </span>
   );
 }
 
-const PAIR_ICON = { intimos: '🍻', chocan: '🧨', roce: '⚡' } as const;
+const PAIR_ICON = { intimos: 'corazon', chocan: 'rayo', roce: 'alerta' } as const;
 
 /**
  * El mapa social del vestuario: los grupos reales del plantel, los puentes,
@@ -62,20 +62,20 @@ export function VestuarioCard({ state }: { state: GameState }) {
 
       {map.bridges.map(({ p, text }) => (
         <p key={p.id} style={{ margin: '0.35rem 0' }}>
-          🌉 <PlayerLink id={p.id}>{p.name}</PlayerLink>: {text}
+          <PlayerLink id={p.id}>{p.name}</PlayerLink>: {text}
         </p>
       ))}
 
       {map.pairs.map((pair) => (
         <p key={pair.a.id + pair.b.id} style={{ margin: '0.35rem 0' }}>
-          {PAIR_ICON[pair.kind]} <PlayerLink id={pair.a.id}>{pair.a.name}</PlayerLink> y{' '}
+          <Icon name={PAIR_ICON[pair.kind]} size={13} /> <PlayerLink id={pair.a.id}>{pair.a.name}</PlayerLink> y{' '}
           <PlayerLink id={pair.b.id}>{pair.b.name}</PlayerLink>: {pair.text}
         </p>
       ))}
 
       {map.loners.map(({ p, text }) => (
         <p key={p.id} style={{ margin: '0.35rem 0' }}>
-          🚶 <PlayerLink id={p.id}>{p.name}</PlayerLink>: {text}
+          <PlayerLink id={p.id}>{p.name}</PlayerLink>: {text}
         </p>
       ))}
     </div>

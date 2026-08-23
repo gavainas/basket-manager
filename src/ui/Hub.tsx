@@ -8,8 +8,8 @@ import { clubByLegacyId, USER_CLUB_ID, userFixtureOfWeek } from '../game/world';
 import { ClubLink } from './ClubLink';
 import { Crest } from './Crest';
 import { Icon, type IconName } from './Icon';
+import { Avatar } from './Avatar';
 import { OpenProfileContext } from './PlayerLink';
-import { Retrato } from './Retrato';
 import { RivalLink } from './RivalLink';
 import { StyleChip } from './StyleChip';
 import { NavigateTabContext, type AppFocus, type AppTab } from './nav';
@@ -219,7 +219,9 @@ function playerSignals(p: Player): { cls: string; label: string }[] {
 
   const fisico =
     p.status === 'lesionado'
-      ? { cls: 'bad', label: `Lesionado (${p.injuryWeeks} semanas)` }
+      ? p.injuryReason === 'laboral'
+        ? { cls: 'bad', label: `Complicado con el laburo (${p.injuryWeeks} ${p.injuryWeeks === 1 ? 'semana' : 'semanas'})` }
+        : { cls: 'bad', label: `Lesionado (${p.injuryWeeks} ${p.injuryWeeks === 1 ? 'semana' : 'semanas'})` }
       : (p.suspendedWeeks ?? 0) > 0
         ? { cls: 'bad', label: 'Suspendido' }
         : p.physical <= BALANCE.callUp.exhaustedThreshold
@@ -257,11 +259,8 @@ function PlantelStrip({ state }: { state: GameState }) {
         <span className="hub-plantel-leyenda">ánimo · cuota · físico</span>
       </h3>
       <div className="hub-plantel-row">
-        {active.map((p, i) => {
+        {active.map((p) => {
           const signals = playerSignals(p);
-          // Cuántos del mismo arquetipo vienen antes: el segundo veterano de la
-          // fila no puede ser idéntico al primero.
-          const repetido = active.slice(0, i).filter((x) => x.personality === p.personality).length;
           return (
             <button
               key={p.id}
@@ -269,7 +268,9 @@ function PlantelStrip({ state }: { state: GameState }) {
               onClick={() => open(p.id)}
               title={`${p.name} — ${signals.map((s) => s.label).join(' · ')}`}
             >
-              <Retrato personality={p.personality} title={p.name} variante={repetido} />
+              {/* La foto oficial: el retrato ilustrado por arquetipo, la misma
+                  en la tira, la ficha, la pizarra y los eventos. */}
+              <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={62} title={p.name} personality={p.personality} />
               <span className="hub-jug-pos">{POS_ABBR[p.position] ?? p.position.slice(0, 3).toUpperCase()}</span>
               <span className="hub-jug-nombre">{shortName(p.name)}</span>
               <span className="hub-jug-estado">
@@ -301,7 +302,9 @@ export function Hub({ state }: { state: GameState }) {
 
   // Tras el partido (matchResult) la semana aún no avanzó: el "próximo" es el que sigue.
   const upcomingWeek = state.phase === 'matchResult' ? state.week + 1 : state.week;
-  const nextRivalId = upcomingWeek <= state.seasonLength ? state.schedule[upcomingWeek - 1] : null;
+  // En playoffs el rival de semis/final también vive en schedule (lo escribe
+  // advancePlayoffs), así que el Hub muestra ese cruce en vez de "sin partido".
+  const nextRivalId = state.schedule[upcomingWeek - 1] ?? null;
   const nextRival = nextRivalId ? state.rivals.find((r) => r.id === nextRivalId)! : null;
   const rivalClub = nextRivalId ? clubByLegacyId(state.world, nextRivalId) : undefined;
   const fixture = userFixtureOfWeek(state.world, upcomingWeek);

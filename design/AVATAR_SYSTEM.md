@@ -1,5 +1,12 @@
 # Sistema de retratos — generador modular
 
+> **Rol actual (ago 2026, decisión de Gabi):** la foto oficial del jugador es el
+> **retrato ilustrado por arquetipo** (`public/arte/p-*.webp`, ver Puerta 2 de
+> `ART_PIPELINE.md`); este generador SVG era el placeholder y queda como
+> **respaldo** — la galería de validación `#retratos` y cualquier cara sin
+> personalidad conocida. La arquitectura (determinismo, seed, append-only) se
+> conserva: sigue siendo la base técnica si el set grande por seed se deriva de acá.
+
 Retratos procedurales de cabeza y hombros para todos los jugadores del juego.
 **Sin imágenes externas, sin IA en tiempo de ejecución, sin servicios de red**:
 todo es SVG dibujado por código, determinístico y serializable.

@@ -119,6 +119,7 @@ export function ClubView({ state }: { state: GameState }) {
                           appearance={pl.appearance}
                           expressionOverride={EMOTION_EXPRESSION[m.emotion]}
                           title={pl.name}
+                          personality={pl.personality}
                         />
                       </div>
                     )}

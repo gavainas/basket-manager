@@ -3,8 +3,10 @@
 // sistemas existentes (rivals/schedule/standings) siguen mandando en el partido
 // del usuario, y el mundo los espeja con entidades completas.
 
+import { BALANCE } from './balance';
 import { CLUB_COLORS, DIVISIONS, LEAGUES, USER_LEAGUE_ID } from '../data/worldData';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
+import { momentById } from './moments';
 import { Rng, seedFromString } from './rng';
 import type {
   AvailabilityProfile,
@@ -190,6 +192,7 @@ export function emptyWorld(): WorldState {
     registrations: [],
     entries: [],
     fixtures: [],
+    playerSeq: 1,
   };
 }
 
@@ -202,6 +205,56 @@ const ROSTER_TEMPLATE: Position[] = [
 ];
 
 const BLOCKABLE_DAYS: WeekDay[] = ['lunes', 'martes', 'jueves', 'viernes'];
+
+// ---------- Identidad institucional congelada ----------
+
+/**
+ * Cada plantel tiene un carácter: cambia cómo se arma y cómo se renueva.
+ * Sale del nombre del club, así el carácter también es parte de la identidad.
+ */
+export type ClubArchetype = 'juvenil' | 'veterano' | 'estrella' | 'parejo';
+
+export interface ClubIdentity {
+  colors: [string, string];
+  founded: number;
+  socialPrestige: number;
+  delegate: string;
+  neighborhood: string;
+  coachName: string;
+  archetype: ClubArchetype;
+  /** Tipo de DT cuando el club no es de los que pagan (fuerza < 68). */
+  modestCoachType: 'jugador' | 'honorario';
+}
+
+/**
+ * La chapa institucional de un club rival, derivada SOLO de su nombre
+ * (`seedFromString`): colores, fundación, delegado y carácter no cambian de
+ * temporada a temporada ni dependen de en qué divisional cayó. Antes salían
+ * del RNG del momento y del índice del slot: el mismo club cambiaba de
+ * camiseta y de año de fundación cada año.
+ */
+export function clubIdentity(name: string): ClubIdentity {
+  const rng = new Rng(seedFromString(`club_${name}`));
+  const archetypes: ClubArchetype[] = ['juvenil', 'veterano', 'estrella', 'parejo', 'parejo'];
+  return {
+    colors: CLUB_COLORS[rng.int(0, CLUB_COLORS.length - 1)],
+    founded: 2026 - rng.int(4, 60),
+    socialPrestige: rng.int(30, 80),
+    delegate: DELEGATE_NAMES[rng.int(0, DELEGATE_NAMES.length - 1)],
+    neighborhood: NEIGHBORHOODS[rng.int(0, NEIGHBORHOODS.length - 1)],
+    coachName: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
+    archetype: rng.pick(archetypes),
+    modestCoachType: rng.chance(0.25) ? 'jugador' : 'honorario',
+  };
+}
+
+/** Edad con pirámide: el grueso en 22-31, colas de pibes y veteranos. */
+function rollAge(rng: Rng, archetype: ClubArchetype): number {
+  const base = Math.round((rng.int(19, 36) + rng.int(19, 36)) / 2); // triangular ~27
+  if (archetype === 'juvenil') return Math.max(18, base - rng.int(3, 6));
+  if (archetype === 'veterano') return Math.min(39, base + rng.int(3, 6));
+  return base;
+}
 
 /** Genera la agenda personal de un jugador (también usada por el mercado de pases). */
 export function genAvailability(commitment: number, reliability: number, rng: Rng): AvailabilityProfile {
@@ -222,43 +275,145 @@ export function genAvailability(commitment: number, reliability: number, rng: Rn
   return { baseChance, blockedDays, onlyTimes, lateChance, residence: res.city, distanceKm: res.km, notes };
 }
 
-function genRoster(teamIdx: number, strength: number, rng: Rng): WorldPlayer[] {
-  const roster: WorldPlayer[] = [];
-  const used = new Set<string>();
-  ROSTER_TEMPLATE.forEach((position, i) => {
-    let first = rng.pick(FIRST_NAMES);
-    let last = rng.pick(LAST_NAMES);
-    for (let guard = 0; used.has(`${first} ${last}`) && guard < 10; guard++) {
-      first = rng.pick(FIRST_NAMES);
-      last = rng.pick(LAST_NAMES);
-    }
-    used.add(`${first} ${last}`);
-    const isStar = i === 0;
-    const level = Math.max(30, Math.min(92, Math.round(strength + (isStar ? rng.int(6, 14) : rng.int(-14, 8)))));
-    const commitment = rng.int(35, 95);
-    const reliability = rng.int(40, 95);
-    roster.push({
-      id: `wp_t${teamIdx}_${i}`,
-      firstName: first,
-      lastName: last,
-      age: rng.int(19, 38),
-      position,
-      secondaryPositions: rng.chance(0.35) ? [rng.pick(ROSTER_TEMPLATE.filter((p) => p !== position))] : [],
-      level,
-      personality: rng.pick(RIVAL_PERSONALITIES),
-      commitment,
-      reliability,
-      prestige: Math.max(10, Math.min(90, level + rng.int(-15, 10))),
-      availability: genAvailability(commitment, reliability, rng),
-      injuryWeeks: 0,
-    });
-  });
-  return roster;
+/** Id de persona nuevo, único de por vida (el contador nunca se reusa). */
+function nextPersonId(world: WorldState): string {
+  const seq = world.playerSeq ?? 1;
+  world.playerSeq = seq + 1;
+  return `wp_n${seq}`;
+}
+
+/** Crea una persona nueva para un club, respetando el carácter del plantel. */
+function newWorldPlayer(
+  world: WorldState,
+  clubName: string,
+  position: Position,
+  strength: number,
+  role: 'estrella' | 'plantel' | 'juvenil',
+  seasonNumber: number,
+  rng: Rng,
+  takenNames?: Set<string>
+): WorldPlayer {
+  const identity = clubIdentity(clubName);
+  let first = rng.pick(FIRST_NAMES);
+  let last = rng.pick(LAST_NAMES);
+  // Dos "Diego Sosa" en el mismo vestuario confunden: se re-sortea.
+  for (let guard = 0; takenNames?.has(`${first} ${last}`) && guard < 8; guard++) {
+    first = rng.pick(FIRST_NAMES);
+    last = rng.pick(LAST_NAMES);
+  }
+  takenNames?.add(`${first} ${last}`);
+  const age = role === 'juvenil' ? rng.int(18, 23) : rollAge(rng, identity.archetype);
+  let spread: number;
+  if (role === 'estrella') spread = rng.int(6, 14);
+  else if (role === 'juvenil') spread = rng.int(-18, -6);
+  else if (identity.archetype === 'estrella') spread = rng.int(-16, 0);
+  else if (identity.archetype === 'parejo') spread = rng.int(-7, 5);
+  else spread = rng.int(-14, 8);
+  const level = Math.max(28, Math.min(92, Math.round(strength + spread)));
+  const commitment = rng.int(35, 95);
+  const reliability = identity.archetype === 'veterano' ? rng.int(55, 95) : rng.int(40, 95);
+  return {
+    id: nextPersonId(world),
+    firstName: first,
+    lastName: last,
+    age,
+    position,
+    secondaryPositions: rng.chance(0.35) ? [rng.pick(ROSTER_TEMPLATE.filter((p) => p !== position))] : [],
+    level,
+    personality: rng.pick(RIVAL_PERSONALITIES),
+    commitment,
+    reliability,
+    prestige: Math.max(10, Math.min(90, level + rng.int(-15, 10))),
+    availability: genAvailability(commitment, reliability, rng),
+    injuryWeeks: 0,
+    clubName,
+    joinedSeason: seasonNumber,
+    timesFaced: 0,
+  };
+}
+
+/** Plantel entero desde cero (club nuevo en el mundo, o primer arranque). */
+function genRosterFor(world: WorldState, clubName: string, strength: number, seasonNumber: number, rng: Rng): WorldPlayer[] {
+  const taken = new Set<string>();
+  return ROSTER_TEMPLATE.map((position, i) =>
+    newWorldPlayer(world, clubName, position, strength, i === 0 ? 'estrella' : 'plantel', seasonNumber, rng, taken)
+  );
+}
+
+/**
+ * Completa un plantel que quedó corto tras el verano (retiros y pases): los
+ * clubes pescan juveniles y algún conocido del barrio. Es la renovación
+ * natural del mundo: los que llegan son mayormente pibes.
+ */
+function refillRoster(
+  world: WorldState,
+  clubName: string,
+  strength: number,
+  current: WorldPlayer[],
+  seasonNumber: number,
+  rng: Rng
+): WorldPlayer[] {
+  const added: WorldPlayer[] = [];
+  const target = 11;
+  const taken = new Set(current.map((p) => `${p.firstName} ${p.lastName}`));
+  const covered = new Set(current.map((p) => p.position));
+  const missing = (['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'] as Position[]).filter((pos) => !covered.has(pos));
+  while (current.length + added.length < target) {
+    const position = missing.shift() ?? rng.pick(ROSTER_TEMPLATE);
+    const role = rng.chance(0.7) ? 'juvenil' : 'plantel';
+    added.push(newWorldPlayer(world, clubName, position, strength, role, seasonNumber, rng, taken));
+  }
+  return added;
+}
+
+/**
+ * Alinea suavemente el plantel heredado con la fuerza actual del club (los
+ * ascensos/descensos la mueven): un empujón chico por jugador, no un reroll.
+ */
+function nudgeRosterTowards(roster: WorldPlayer[], strength: number, rng: Rng): void {
+  if (roster.length === 0) return;
+  const top = [...roster].sort((a, b) => b.level - a.level).slice(0, 8);
+  const avg = top.reduce((t, p) => t + p.level, 0) / top.length;
+  const diff = strength - avg;
+  if (Math.abs(diff) <= 8) return;
+  const step = diff > 0 ? 1 : -1;
+  for (const p of roster) {
+    p.level = Math.max(28, Math.min(92, p.level + step * rng.int(1, 3)));
+  }
+}
+
+/**
+ * Recupera (o crea) el plantel de un club por su NOMBRE desde el pool
+ * persistente, lo alinea con la fuerza actual y lo completa si quedó corto.
+ * Acá es donde el mundo deja de ser slots: las personas siguen siendo las
+ * mismas de una temporada a la otra.
+ */
+function rosterForClub(
+  world: WorldState,
+  clubName: string,
+  strength: number,
+  seasonNumber: number,
+  rng: Rng
+): WorldPlayer[] {
+  const current = world.players.filter((p) => p.clubName === clubName);
+  if (current.length === 0) {
+    const fresh = genRosterFor(world, clubName, strength, seasonNumber, rng);
+    world.players.push(...fresh);
+    return fresh;
+  }
+  nudgeRosterTowards(current, strength, rng);
+  if (current.length < 11) {
+    const extra = refillRoster(world, clubName, strength, current, seasonNumber, rng);
+    world.players.push(...extra);
+    return [...current, ...extra];
+  }
+  return current;
 }
 
 /**
  * Construye el mundo a partir del estado clásico (rivals + schedule).
- * Determinista para una misma semilla; se rearma en cada temporada nueva.
+ * Los equipos, fichas y fixture se rearman cada temporada; las PERSONAS
+ * (world.players) persisten: vienen del estado anterior y solo se completan.
  */
 export function buildWorld(state: GameState, rng: Rng): WorldState {
   const world = emptyWorld();
@@ -272,6 +427,12 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   };
   world.leagues = LEAGUES;
   world.divisions = DIVISIONS;
+  // El pool de personas se hereda del mundo anterior (Sprint 5). Los que
+  // quedaron libres siguen en el pool (sin ficha): el verano que viene se
+  // acomodan en algún club. Los slots de saves viejos ('wp_t...') sin club
+  // asignado no persisten: esa partida arranca su memoria del mundo acá.
+  world.players = (state.world.players ?? []).filter((p) => p.clubName !== undefined || !p.id.startsWith('wp_t'));
+  world.playerSeq = state.world.playerSeq ?? 1;
   const division = DIVISIONS.find((d) => d.id === state.divisionId)!;
   // La liga del usuario sale de su divisional (Universitaria o la plaza).
   const leagueId = division.leagueId;
@@ -282,7 +443,8 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
     id: USER_CLUB_ID,
     name: state.club.name,
     colors: CLUB_COLORS[0],
-    founded: 2026 - (state.seasonNumber - 1) - 1,
+    // El club nació el año anterior a su primera temporada, y esa fecha no se mueve.
+    founded: 2025,
     // El prestigio real del usuario vive en state.club; esto es un espejo.
     sportPrestige: state.club.sportPrestige,
     socialPrestige: state.club.socialPrestige,
@@ -299,23 +461,26 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
     legacyRivalId: 'club',
   });
 
-  // Clubes y equipos rivales (uno por rival del sistema clásico).
-  state.rivals.forEach((rival, i) => {
+  // Clubes y equipos rivales (uno por rival del sistema clásico). La chapa
+  // institucional (colores, fundación, delegado, DT) sale del NOMBRE, no del
+  // slot ni del RNG del momento: el mismo club es el mismo club todos los años.
+  state.rivals.forEach((rival) => {
     const clubId = `cl_${rival.id}`;
     const teamId = `tm_${rival.id}`;
     const venueId = `vn_${rival.id}`;
+    const identity = clubIdentity(rival.name);
     world.venues.push({
       id: venueId,
       name: `Gimnasio de ${rival.name.split(' ').slice(-1)[0]}`,
-      neighborhood: NEIGHBORHOODS[i % NEIGHBORHOODS.length],
+      neighborhood: identity.neighborhood,
     });
     world.clubs.push({
       id: clubId,
       name: rival.name,
-      colors: CLUB_COLORS[(i + 1) % CLUB_COLORS.length],
-      founded: year - rng.int(4, 45),
-      sportPrestige: Math.max(15, Math.min(90, Math.round(rival.strength + rng.int(-8, 8)))),
-      socialPrestige: rng.int(30, 80),
+      colors: identity.colors,
+      founded: identity.founded,
+      sportPrestige: Math.max(15, Math.min(90, Math.round(rival.strength))),
+      socialPrestige: identity.socialPrestige,
     });
     world.teams.push({
       id: teamId,
@@ -324,15 +489,14 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
       category: 'mayores',
       status: 'activo',
       venueId,
-      delegate: DELEGATE_NAMES[i % DELEGATE_NAMES.length],
+      delegate: identity.delegate,
       // Los grandes pagan DT; el resto se arregla con honorarios o un jugador.
-      coachName: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
-      coachType: rival.strength >= 68 ? 'pago' : rng.chance(0.25) ? 'jugador' : 'honorario',
+      coachName: identity.coachName,
+      coachType: rival.strength >= 68 ? 'pago' : identity.modestCoachType,
       legacyRivalId: rival.id,
     });
 
-    const roster = genRoster(i + 1, rival.strength, rng);
-    world.players.push(...roster);
+    const roster = rosterForClub(world, rival.name, rival.strength, state.seasonNumber, rng);
     for (const p of roster) {
       registerPlayer(world, { playerId: p.id, teamId, leagueId, seasonId, week: 0 });
     }
@@ -399,22 +563,23 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   // Se genera al final para no alterar el RNG ni el emparejamiento de la del usuario.
   const otherDivision = DIVISIONS.find((d) => d.leagueId === USER_LEAGUE_ID && d.id !== state.divisionId);
   if (otherDivision) {
-    state.otherDivisionTeams.forEach((seed, i) => {
+    state.otherDivisionTeams.forEach((seed) => {
       const clubId = `cl_${seed.id}`;
       const teamId = `tm_${seed.id}`;
       const venueId = `vn_${seed.id}`;
+      const identity = clubIdentity(seed.name);
       world.venues.push({
         id: venueId,
         name: `Gimnasio de ${seed.name.split(' ').slice(-1)[0]}`,
-        neighborhood: NEIGHBORHOODS[(i + 5) % NEIGHBORHOODS.length],
+        neighborhood: identity.neighborhood,
       });
       world.clubs.push({
         id: clubId,
         name: seed.name,
-        colors: CLUB_COLORS[(i + 3) % CLUB_COLORS.length],
-        founded: year - rng.int(6, 60),
-        sportPrestige: Math.max(20, Math.min(95, seed.strength + rng.int(-6, 6))),
-        socialPrestige: rng.int(35, 85),
+        colors: identity.colors,
+        founded: identity.founded,
+        sportPrestige: Math.max(20, Math.min(95, seed.strength)),
+        socialPrestige: identity.socialPrestige,
       });
       world.teams.push({
         id: teamId,
@@ -423,9 +588,9 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
         category: 'mayores',
         status: 'activo',
         venueId,
-        delegate: DELEGATE_NAMES[(i + 4) % DELEGATE_NAMES.length],
-        coachName: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
-        coachType: seed.strength >= 75 ? 'pago' : rng.chance(0.3) ? 'jugador' : 'honorario',
+        delegate: identity.delegate,
+        coachName: identity.coachName,
+        coachType: seed.strength >= 75 ? 'pago' : identity.modestCoachType,
         // Sin legacyRivalId: no es un rival del sistema clásico.
       });
       world.entries.push({
@@ -437,8 +602,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
         fee: 300,
         registeredWeek: 0,
       });
-      const roster = genRoster(100 + i, seed.strength, rng);
-      world.players.push(...roster);
+      const roster = rosterForClub(world, seed.name, seed.strength, state.seasonNumber, rng);
       for (const p of roster) {
         registerPlayer(world, { playerId: p.id, teamId, leagueId: USER_LEAGUE_ID, seasonId, week: 0 });
       }
@@ -450,6 +614,152 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   syncUserRegistrations(tempState);
 
   return world;
+}
+
+// ---------- El verano del mundo: las personas siguen su vida ----------
+
+export interface OffseasonWorldResult {
+  /** El pool de personas ya evolucionado, listo para heredar al mundo nuevo. */
+  players: WorldPlayer[];
+  playerSeq: number;
+  /** Los que quedaron libres este verano: alimentan el mercado de pases. */
+  freeAgents: { player: WorldPlayer; fromClub: string }[];
+  /** Noticias del verano (retiros y pases con nombre conocido), ya recortadas. */
+  news: string[];
+}
+
+const levelClamp = (v: number) => Math.max(25, Math.min(92, Math.round(v)));
+
+/** Con nombre en la liga: sus movimientos merecen noticia. */
+function isNotable(p: WorldPlayer): boolean {
+  return p.level >= 66 || (p.timesFaced ?? 0) >= 3 || p.prestige >= 70;
+}
+
+/**
+ * El verano del mundo (Sprint 5): entre temporada y temporada las personas
+ * siguen su vida — envejecen, mejoran o decaen, se retiran, cambian de club o
+ * quedan libres. La rotación anual queda en ~10-20% del pool, con noticias
+ * solo para los nombres que el usuario puede reconocer. Corre en
+ * startPreseason, ANTES de armar el mercado: los libres de acá son fichables.
+ */
+export function evolveWorldOffseason(state: GameState, rng: Rng): OffseasonWorldResult {
+  const finishedSeason = state.seasonNumber;
+  const pool: WorldPlayer[] = structuredClone(state.world.players ?? []);
+  const news: string[] = [];
+  const freeAgents: { player: WorldPlayer; fromClub: string }[] = [];
+
+  // Saves de antes de la persistencia: el club de cada uno se rescata de su
+  // ficha de la temporada que cerró, y desde acá la persona queda anclada.
+  const teamClub = new Map<string, string>();
+  for (const t of state.world.teams) {
+    const club = state.world.clubs.find((c) => c.id === t.clubId);
+    if (club && !club.isUser) teamClub.set(t.id, club.name);
+  }
+  for (const p of pool) {
+    if (p.clubName !== undefined) continue;
+    const reg = state.world.registrations.find((r) => r.playerId === p.id && r.status === 'activa');
+    const clubName = reg ? teamClub.get(reg.teamId) : undefined;
+    if (clubName) {
+      p.clubName = clubName;
+      p.joinedSeason = p.joinedSeason ?? finishedSeason;
+    }
+  }
+
+  const clubNames = [...new Set(pool.map((p) => p.clubName).filter((n): n is string => !!n))];
+  const survivors: WorldPlayer[] = [];
+
+  for (const p of pool) {
+    p.injuryWeeks = 0;
+    p.age += 1;
+    // La curva de la edad: los pibes crecen, los grandes aguantan lo que pueden.
+    if (p.age <= 24) p.level = levelClamp(p.level + rng.int(0, 4));
+    else if (p.age <= 29) p.level = levelClamp(p.level + rng.int(-1, 2));
+    else if (p.age <= 33) p.level = levelClamp(p.level + rng.int(-3, 1));
+    else p.level = levelClamp(p.level - rng.int(1, 5));
+    p.prestige = Math.max(10, Math.min(90, Math.round(p.prestige * 0.7 + p.level * 0.3)));
+
+    // Retiros: la edad no perdona, y al que ya no rinde se le nota.
+    const retireChance = p.age >= 40 ? 1 : p.age >= 36 ? 0.4 : p.age >= 33 && p.level < 48 ? 0.25 : 0;
+    if (retireChance > 0 && rng.chance(retireChance)) {
+      if (isNotable(p) && p.clubName) {
+        news.push(
+          `Se retira ${p.firstName} ${p.lastName} (${p.clubName}), a los ${p.age}. La liga pierde un nombre de los que se conocen.`
+        );
+      }
+      continue;
+    }
+
+    // El libre que nadie fichó el verano pasado se acomoda solo, sin ruido.
+    if (p.clubName === undefined) {
+      if (clubNames.length > 0) {
+        p.clubName = rng.pick(clubNames);
+        p.joinedSeason = finishedSeason + 1;
+      }
+      survivors.push(p);
+      continue;
+    }
+
+    // Pases y agentes libres: la rotación que hace que la T3 no sea la T1.
+    const roll = rng.range(0, 1);
+    if (roll < 0.04) {
+      freeAgents.push({ player: p, fromClub: p.clubName });
+      p.clubName = undefined;
+      survivors.push(p);
+      continue;
+    }
+    if (roll < 0.13 && clubNames.length > 1) {
+      const from = p.clubName;
+      const dest = rng.pick(clubNames.filter((n) => n !== from));
+      p.clubName = dest;
+      p.joinedSeason = finishedSeason + 1;
+      if (isNotable(p)) news.push(`Pase del verano: ${p.firstName} ${p.lastName} deja ${from} y jugará en ${dest}.`);
+      survivors.push(p);
+      continue;
+    }
+    survivors.push(p);
+  }
+
+  // Los que se fueron del club del usuario no se evaporan: emigran al mundo,
+  // y más de uno te lo vas a volver a cruzar con otra camiseta.
+  for (const ex of state.players.filter((x) => x.leftClub)) {
+    const wpId = `wp_x_${ex.id}`;
+    if (survivors.some((p) => p.id === wpId)) continue;
+    if (ex.age + 1 >= 35 || clubNames.length === 0 || !rng.chance(0.6)) continue;
+    const dest = rng.pick(clubNames);
+    const parts = ex.name.trim().split(' ');
+    const lastName = parts.pop() ?? ex.name;
+    const firstName = parts.join(' ') || lastName;
+    survivors.push({
+      id: wpId,
+      firstName,
+      lastName,
+      age: ex.age + 1,
+      position: ex.position,
+      secondaryPositions: [],
+      level: levelClamp(ex.technique),
+      personality: ex.personality,
+      commitment: ex.commitment,
+      reliability: Math.max(40, Math.min(95, ex.commitment)),
+      prestige: Math.max(10, Math.min(90, ex.technique + rng.int(-10, 10))),
+      availability: genAvailability(ex.commitment, ex.commitment, rng),
+      injuryWeeks: 0,
+      clubName: dest,
+      joinedSeason: finishedSeason + 1,
+      timesFaced: 0,
+      exUserClub: true,
+    });
+    news.push(`${ex.name}, que se fue del club, apareció con la camiseta de ${dest}. El básquet es un pañuelo.`);
+  }
+
+  // Los libres del mercado: mejor los reconocibles, y no más de un puñado.
+  freeAgents.sort((a, b) => (isNotable(b.player) ? 1 : 0) - (isNotable(a.player) ? 1 : 0) || b.player.level - a.player.level);
+
+  return {
+    players: survivors,
+    playerSeq: state.world.playerSeq ?? 1,
+    freeAgents: freeAgents.slice(0, 6),
+    news: news.slice(0, 6),
+  };
 }
 
 export interface DivStandingRow {
@@ -584,11 +894,28 @@ export function rollRivalMatchday(state: GameState, rivalLegacyId: string, rng: 
   const roster = teamRoster(world, team.id).sort((a, b) => b.level - a.level);
   if (roster.length === 0) return { presentIds: [], presentCount: 0, mod: 1, notes: [] };
 
-  const present = roster.filter((p) => rng.chance(attendChance(p, division, time)));
+  let present = roster.filter((p) => rng.chance(attendChance(p, division, time)));
+
+  // El momento del mundo golpea parejo: si juega la Selección o hay paro, al
+  // rival también se le baja gente — mismo motivo, misma semana, otra camiseta.
+  const notes: string[] = [];
+  const moment = momentById(state.weekMoment?.id);
+  if (moment) {
+    let momentOut = 0;
+    present = present.filter((p) => {
+      if (momentOut >= BALANCE.moments.rivalMaxExtraOut) return true;
+      if (rng.chance(moment.rivalChance(p) * BALANCE.moments.rivalChanceFactor)) {
+        momentOut += 1;
+        return false;
+      }
+      return true;
+    });
+    if (momentOut > 0) notes.push(moment.rivalNote(momentOut));
+  }
+
   const absent = roster.filter((p) => !present.some((x) => x.id === p.id));
 
   // Si no juntan cinco, rascan gente a último momento.
-  const notes: string[] = [];
   while (present.length < 5 && absent.length > 0) {
     const p = absent.pop()!;
     present.push(p);
@@ -599,7 +926,9 @@ export function rollRivalMatchday(state: GameState, rivalLegacyId: string, rng: 
     const top = [...list].sort((a, b) => b.level - a.level).slice(0, 8);
     return top.length ? top.reduce((t, p) => t + p.level, 0) / top.length : 1;
   };
-  let mod = Math.max(0.85, Math.min(1.05, topAvg(present) / topAvg(roster)));
+  // El recentrado compensa que los planteles con arquetipos se degradan menos
+  // al faltar gente (ver BALANCE.world.rivalModRecenter).
+  let mod = Math.max(0.85, Math.min(1.05, (topAvg(present) / topAvg(roster)) * BALANCE.world.rivalModRecenter));
 
   const star = roster[0];
   if (!present.some((p) => p.id === star.id)) {

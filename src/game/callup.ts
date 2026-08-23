@@ -6,6 +6,7 @@ import { ABSENCE_REASONS, LIFE_REASON_IDS, pickExcuse } from './absences';
 import { BALANCE, clamp } from './balance';
 import { fragilityOf, rollInjuryWeeks } from './injuries';
 import { isSelectable } from './match';
+import { momentById } from './moments';
 import { logPlayerEvent } from './timeline';
 import { dayLabel, userFixtureOfWeek } from './world';
 import type { CallUpEntry, GameState, WeekDay } from './types';
@@ -29,6 +30,13 @@ export function rollCallUp(s: GameState, rng: Rng): void {
   const C = BALANCE.callUp;
   // La dificultad elegida al crear la partida escala cuánto falta la gente.
   const D = BALANCE.absenceDifficulty[s.absenceDifficulty ?? 'medio'];
+  // Lista sobre la hora: los excuseros no llegan a bajarse… pero después no
+  // hay margen para gestionar nada (ver callUpTiming en el balance).
+  const late = s.callUpTiming === 'tarde';
+  // El momento del mundo de la semana (la Selección, el paro): golpea aparte
+  // del cupo normal de bajas y sin mirar el compromiso de nadie.
+  const moment = momentById(s.weekMoment?.id);
+  let momentOut = 0;
   const entries: CallUpEntry[] = [];
   let outCount = 0;
   // Nada se repite dentro de la misma lista: ni excusas, ni partes médicos,
@@ -60,6 +68,18 @@ export function rollCallUp(s: GameState, rng: Rng): void {
     // Los que viven lejos fallan un poco más: el viaje no siempre cierra.
     if (p.agenda && p.agenda.distanceKm > 50) excuseChance += 0.06;
     excuseChance *= D.excuse;
+    if (late) excuseChance *= BALANCE.callUpTiming.lateExcuseRelief;
+
+    // El momento del mundo primero: la Selección o el paro no miran el
+    // compromiso — le tocan al capitán igual que al colgado, con cupo propio.
+    if (moment && momentOut < BALANCE.moments.maxExtraOut && rng.chance(moment.userChance(p))) {
+      const player = s.players.find((x) => x.id === p.id)!;
+      const note = freshPick(moment.excuses);
+      entries.push({ playerId: p.id, playerName: p.name, status: 'ausente', note, reasonId: 'momento' });
+      logPlayerEvent(player, s.seasonNumber, s.week, 'ausencia', `Faltó al partido (${moment.title.toLowerCase()}). ${note}`);
+      momentOut += 1;
+      continue;
+    }
     // Romperse jugando en otro lado: los frágiles caen más, y jugar poco
     // comprometido en todos lados multiplica las chances.
     const injuryChance =
@@ -144,6 +164,54 @@ export function rollCallUp(s: GameState, rng: Rng): void {
   const rank = { lesionado: 0, ausente: 1, confirmado: 2 } as const;
   entries.sort((a, b) => rank[a.status] - rank[b.status] || a.playerName.localeCompare(b.playerName));
   s.callUp = entries;
+
+  if (moment && momentOut > 0) {
+    s.news.unshift({
+      week: s.week,
+      text: `${moment.title}: ${momentOut === 1 ? 'un jugador se baja' : `${momentOut} jugadores se bajan`} de la fecha por eso. Y ojo: al rival le pasa lo mismo.`,
+      tone: 'bad',
+    });
+  }
+}
+
+const LAST_MINUTE_NOTES = [
+  'Mensaje 40 minutos antes: "no llego, perdón, después te explico".',
+  'Se cayó a última hora: el nene con fiebre y la guardia llena.',
+  'Audio desde el auto: "estoy clavado en un embotellamiento terrible, no doy más".',
+  'Aviso sobre la hora: lo llamaron del laburo justo cuando salía con el bolso.',
+  '"Me quedé sin nafta a mitad de camino, no lo puedo creer", escribió. Nadie contestó.',
+];
+
+/**
+ * La letra chica de largar la lista 2 días antes: entre la lista y el salto
+ * inicial, la vida sigue pasando. Alguno de los confirmados se puede caer a
+ * último momento — sin margen para gestiones, solo la mala noticia. (Con la
+ * lista sobre la hora esto no corre: lo que viste era definitivo.)
+ */
+export function rollLateDrops(s: GameState, rng: Rng): void {
+  if (s.callUpTiming === 'tarde') return;
+  const D = BALANCE.absenceDifficulty[s.absenceDifficulty ?? 'medio'];
+  const T = BALANCE.callUpTiming;
+  let drops = 0;
+  const usedTexts = new Set<string>();
+  for (const e of rng.shuffle([...s.callUp])) {
+    if (drops >= T.lateDropMax) break;
+    if (e.status !== 'confirmado' || e.lateArrival || e.exhausted) continue;
+    if (!rng.chance(T.lateDropChance * D.life)) continue;
+    const entry = s.callUp.find((c) => c.playerId === e.playerId)!;
+    const player = s.players.find((p) => p.id === e.playerId);
+    if (!player) continue;
+    const fresh = LAST_MINUTE_NOTES.filter((n) => !usedTexts.has(n));
+    const note = rng.pick(fresh.length > 0 ? fresh : LAST_MINUTE_NOTES);
+    usedTexts.add(note);
+    entry.status = 'ausente';
+    entry.note = note;
+    entry.lastMinute = true;
+    entry.reasonId = undefined; // ya no hay tiempo de gestionar nada
+    logPlayerEvent(player, s.seasonNumber, s.week, 'ausencia', `Se bajó a último momento. ${note}`);
+    s.news.unshift({ week: s.week, text: `Baja de último momento: ${player.name} avisó sobre la hora que no llega.`, tone: 'bad' });
+    drops += 1;
+  }
 }
 
 const EXHAUSTED_NOTES = [

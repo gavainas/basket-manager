@@ -3,6 +3,7 @@ import { activePlayers } from '../game/match';
 import { PlayerLink } from './PlayerLink';
 import { Timeline } from './Timeline';
 import { formatMoney } from './helpers';
+import { Icon } from './Icon';
 
 export function HistoryView({ state }: { state: GameState }) {
   // Ranking de MVP de la temporada en curso.
@@ -69,7 +70,7 @@ export function HistoryView({ state }: { state: GameState }) {
                           <PlayerLink id={player!.id}>{player!.name}</PlayerLink>
                         </td>
                         <td className="num">
-                          ⭐ {count} {count === 1 ? 'vez MVP' : 'veces MVP'}
+                          <Icon name="estrella" size={12} /> {count} {count === 1 ? 'vez MVP' : 'veces MVP'}
                         </td>
                       </tr>
                     ))}

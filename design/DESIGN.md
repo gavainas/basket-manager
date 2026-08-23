@@ -1,13 +1,17 @@
 # Design system — Basket Manager
 
+> ⚠️ **SUPERSEDED (ago 2026).** Este documento describe el **tema oscuro original**, que
+> ya no es el que está en producción. La fuente de verdad del sistema visual vigente
+> (papel claro, grafito, naranja reservado, Oswald, bandas de sección) es
+> [`SISTEMA_VISUAL.md`](SISTEMA_VISUAL.md), con los tokens reales en `src/styles.css`.
+> La dirección quedó **aprobada formalmente** al cerrarse las Puertas 1-2 de
+> [`ART_PIPELINE.md`](ART_PIPELINE.md). Se conserva este archivo como registro de la
+> identidad conceptual (que sigue vigente: gestión amateur, humano y cálido) y del
+> proceso; ante cualquier contradicción con `SISTEMA_VISUAL.md`, manda el otro.
+
 El repositorio es la **fuente de verdad** del diseño: tokens, componentes, generadores y
 reglas viven acá. El proyecto **"Basket Manager UI"** en [claude.ai/design](https://claude.ai/design)
 es un espejo para explorar y visualizar el sistema, nunca el original.
-
-> **Estado de aprobación:** la UI y los retratos actuales son funcionales, pero todavía se
-> consideran provisionales como dirección artística final. Antes de expandir o generar arte
-> en masa, seguir las puertas de aprobación de
-> [`ART_PIPELINE.md`](ART_PIPELINE.md).
 
 ## Identidad: gestión amateur
 

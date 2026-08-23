@@ -1,4 +1,6 @@
+import { clamp } from './balance';
 import { activePlayers, clubPosition } from './match';
+import { logClubEvent } from './timeline';
 import type { GameState, Objective } from './types';
 import type { Rng } from './rng';
 
@@ -109,4 +111,60 @@ export function objectiveStatus(state: GameState, obj: Objective, seasonOver: bo
   const def = DEFS.find((d) => d.id === obj.id);
   if (!def) return 'en_curso';
   return def.status(state, obj.target, seasonOver);
+}
+
+/**
+ * La comisión cobra al cierre: los objetivos dejan de ser cartón pintado.
+ * Cumplir suma prestigio (la comisión te banca en el barrio); fallar lo resta
+ * y queda anotado en la historia del club. Se llama UNA vez, al pasar a
+ * seasonEnd (no en game over: ahí ya se perdió todo lo que había que perder).
+ */
+export function settleObjectives(s: GameState): void {
+  const week = Math.min(s.week, s.seasonLength);
+  for (const obj of s.objectives) {
+    const st = objectiveStatus(s, obj, true);
+    if (st === 'cumplido') {
+      s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
+      s.club.sportPrestige = clamp(s.club.sportPrestige + 1);
+      s.news.unshift({ week, text: `La comisión tilda el objetivo: ${obj.label}. Palabra cumplida.`, tone: 'good' });
+    } else {
+      s.club.socialPrestige = clamp(s.club.socialPrestige - 3);
+      s.club.sportPrestige = clamp(s.club.sportPrestige - 1);
+      s.news.unshift({ week, text: `La comisión no perdona: quedó incumplido "${obj.label}". Lo van a recordar.`, tone: 'bad' });
+      logClubEvent(s, 'hito', `Objetivo de la comisión incumplido: ${obj.label}.`, week);
+    }
+  }
+  const met = s.objectives.filter((o) => objectiveStatus(s, o, true) === 'cumplido').length;
+  if (met === s.objectives.length && s.objectives.length > 0) {
+    logClubEvent(s, 'hito', 'La comisión cerró el año conforme: los tres objetivos, cumplidos.', week);
+  }
+}
+
+/**
+ * La visita de mitad de temporada: la comisión pasa por el entrenamiento y
+ * dice en voz alta cómo viene cada objetivo. Es la reacción que faltaba entre
+ * "te los encargo en la semana 1" y "te los cobro en el cierre".
+ */
+export function midSeasonObjectiveCheck(s: GameState): void {
+  if (s.objectives.length === 0) return;
+  const week = Math.min(s.week, s.seasonLength);
+  const atRisk = s.objectives.filter((o) => {
+    const st = objectiveStatus(s, o, false);
+    return st === 'en_riesgo' || st === 'fallado';
+  });
+  if (atRisk.length === 0) {
+    s.news.unshift({
+      week,
+      text: 'La comisión pasó por el entrenamiento y se fue conforme: los objetivos vienen encaminados.',
+      tone: 'good',
+    });
+    return;
+  }
+  const labels = atRisk.map((o) => `"${o.label}"`).join(' y ');
+  s.news.unshift({
+    week,
+    text: `Visita de la comisión a mitad de temporada: ${labels} ${atRisk.length > 1 ? 'vienen flojos' : 'viene flojo'}. "Confiamos en vos, pero mirá el almanaque", dejaron dicho.`,
+    tone: 'bad',
+  });
+  logClubEvent(s, 'hito', `La comisión avisó a mitad de temporada: en riesgo ${labels}.`, week);
 }

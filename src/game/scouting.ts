@@ -31,12 +31,15 @@ export function scoutingLevel(state: GameState, rivalLegacyId: string): Knowledg
 }
 
 /** Etiqueta del nivel de un rival: nada de números salvo debug. Con poco
- *  conocimiento la estimación mete ruido y a veces directamente no sirve. */
+ *  conocimiento la estimación mete ruido y a veces directamente no sirve.
+ *  El conocimiento por PERSONA (Sprint 5) achica el ruido: al que enfrentaste
+ *  varias veces lo conocés de la cancha, más allá de lo que sepas del equipo. */
 export function perceivedLevel(state: GameState, wp: WorldPlayer, knowledge: KnowledgeLevel): string {
   if (DEBUG_FULL_SCOUTING) return `≈${wp.level}`;
-  const rng = new Rng(seedFromString(`lbl_${wp.id}_s${state.seasonNumber}_k${knowledge}`));
-  if (knowledge <= 1 && rng.chance(0.2)) return 'estimación poco confiable';
-  const noise = knowledge >= 3 ? 0 : rng.int(-9, 9);
+  const faced = Math.min(3, wp.timesFaced ?? 0);
+  const rng = new Rng(seedFromString(`lbl_${wp.id}_s${state.seasonNumber}_k${knowledge}_f${faced}`));
+  if (knowledge <= 1 && faced === 0 && rng.chance(0.2)) return 'estimación poco confiable';
+  const noise = knowledge >= 3 || faced >= 3 ? 0 : faced >= 1 ? rng.int(-4, 4) : rng.int(-9, 9);
   const v = wp.level + noise;
   if (v < 45) return 'flojo';
   if (v < 58) return 'correcto';

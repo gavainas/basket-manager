@@ -19,6 +19,8 @@ export const BALANCE = {
     mishapChance: 0.25,
     mishapMin: 30,
     mishapMax: 90,
+    // Fiado de la inscripción: la cuota semanal con que se devuelve.
+    debtInstallment: 80,
   },
 
   match: {
@@ -28,6 +30,23 @@ export const BALANCE = {
     physicalWearBench: 3,
     positionMissingPenalty: 0.055, // penalización por posición sin cubrir
     forfeitScore: [20, 60] as [number, number],
+  },
+
+  // La nota del partido (1-10). Recalibrada en la 2ª pasada (ago 2026): con la
+  // fórmula vieja (base 3.0, pendiente 7.2, tope 0.78) la media de un titular
+  // era 8.2 y las notas 1-5 no existían (1.1% medido con sim:notas). Toda la
+  // producción del equipo se reparte entre 5, así que el tope por minuto se
+  // tocaba casi siempre. Objetivo: media ~6.5, la banda 3-6 viva, el 10 raro.
+  rating: {
+    perMinCap: 1.0, // tope de producción por minuto que puntúa (el 10 existe, pero es leyenda)
+    base: 2.4, // nota = base + perMin × pendiente + (día − 1) × hotSpan
+    perMinSlope: 5.6,
+    hotSpan: 4, // el día bueno/malo (perf vs nivel) aproxima eficiencia y defensa
+    winBonus: 0.4, // ganar/perder mueve la nota ±
+    blowoutBonus: 0.2, // paliza a favor
+    sampleMinutes: 16, // con menos muestra, la nota tira al "cumplió"
+    cameoAnchor: 5.4,
+    mvpFloor: 8, // la figura del partido nunca baja de esto
   },
 
   // Dificultad de faltas (se elige al crear la partida): multiplica las
@@ -147,6 +166,12 @@ export const BALANCE = {
   matchEffects: {
     winMotivation: 5,
     lossMotivation: -5,
+    // Techo blando del ánimo: ganar seguido ya no clava a todos en 99. El
+    // empujón positivo rinde menos cuanto más arriba está la motivación
+    // (factor = (100 − motivación) / span, nunca menos que minFactor).
+    // Las derrotas pegan completas: la mala racha no tiene amortiguador.
+    moraleSoftcapSpan: 45,
+    moraleSoftcapMinFactor: 0.5,
     winSportPrestige: 3,
     lossSportPrestige: -2,
     upsetWinBonus: 3, // extra por ganarle a un rival más fuerte
@@ -233,6 +258,17 @@ export const BALANCE = {
     topFinishPrestige: 4, // terminar en el podio suma prestigio deportivo
   },
 
+  // El mundo (planteles rivales persistentes, 3ª pasada).
+  world: {
+    // Recentra el multiplicador de convocatoria rival (rollRivalMatchday).
+    // Los planteles con arquetipos son más parejos que los de la ruleta vieja:
+    // perder gente los degrada menos y el mod promedio subió de 0.959 a 0.970
+    // — un +1.1% de fuerza rival en TODOS los partidos que bajaba el piso de
+    // victorias sin que nadie lo decidiera. Esto lo devuelve a la media con la
+    // que se calibró el balance. Medido con scripts en `npm run sim`.
+    rivalModRecenter: 0.989,
+  },
+
   preseason: {
     weeks: 4,
     gestionesPerWeek: 3, // contactos/charlas por semana
@@ -246,6 +282,53 @@ export const BALANCE = {
     lateInscriptionFee: 60, // recargo por no elegir liga: te anotan a último momento
     lateInscriptionPrestigeHit: 3, // y el barrio se entera de las corridas
     plazaPrestigeHit: 6, // bajarse a la plaza: el prestigio deportivo lo siente
+    fiadoSocialHit: 2, // pedir fiado se comenta, pero mucho menos que la gorra de antes
+  },
+
+  // Fiado de la inscripción: solo tu liga de siempre te lo da (te conocen).
+  debt: {
+    missPrestigeHit: 2, // prestigio social por semana con la cuota del fiado impaga
+    weeksForSanction: 3, // a la 3ª semana impaga seguida, la liga no te habilita la fecha
+  },
+
+  // Momentos del mundo: la ciudad también juega (la Selección, el paro, el
+  // finde largo). Golpean la convocatoria de LOS DOS equipos sin mirar el
+  // compromiso de nadie, y se anuncian al arrancar la semana.
+  moments: {
+    chance: 0.35, // prob. semanal de que haya un momento (solo fase regular)
+    maxExtraOut: 3, // tope de bajas TUYAS extra por el momento (además de las normales)
+    rivalMaxExtraOut: 3, // tope de bajas extra del rival: espejo del tuyo, parejo
+    // El rival pierde fuerza con CUALQUIER baja de su top-8; vos tapás con el
+    // banco. Sin este factor, los momentos te regalaban ~2 puntos de winrate
+    // (medido con npm run sim, 120 temporadas).
+    rivalChanceFactor: 0.7,
+  },
+
+  // Cuándo se larga la lista: 2 días antes (con margen para gestionar, pero
+  // el día del partido alguno más se puede caer) o sobre la hora (lo que ves
+  // es definitivo y los excuseros no llegan a bajarse, pero sin gestiones).
+  callUpTiming: {
+    lateDropChance: 0.04, // prob. por confirmado de caerse a último momento (lista temprana)
+    lateDropMax: 2,
+    lateExcuseRelief: 0.55, // lista sobre la hora: las excusas flojas se achican (×)
+  },
+
+  // La previa que se pica: mensajes entre clubes y la apuesta del asado.
+  banter: {
+    chance: 0.55, // prob. semanal de que la previa se pique
+    betChance: 0.16, // prob. de que el delegado rival apueste un asado
+    betRivalryBonus: 0.2, // con rivalidad encima, la apuesta aparece mucho más
+    betStake: 60, // lo que sale el asado si la apuesta se pierde
+  },
+
+  // La Liga de la Plaza: gratis en la caja, cara en todo lo demás.
+  plaza: {
+    weeklyPrestigeMelt: 1, // prestigio deportivo que se derrite por semana ahí
+    meltFloor: 22, // hasta dónde puede caer por este goteo
+    meltNewsEvery: 3, // cada tantas semanas, el barrio lo comenta
+    ambitionChance: 0.25, // prob. semanal de que un ambicioso se caliente por el nivel
+    ambitionMinTech: 58, // técnica desde la que un ambicioso siente que se desperdicia
+    figureRep: 60, // reputación deportiva desde la que un fichable "es figura" y no te atiende
   },
 } as const;
 

@@ -6,11 +6,14 @@ import {
   DEMAND_LABELS,
   confirmedPlayers,
   inscriptionOffer,
+  isMarketFigure,
+  plazaBound,
   projectedWeeklyFees,
   type LeagueOption,
 } from '../game/preseason';
 import { getPreseasonEvent } from '../game/preseasonEvents';
 import { DIVISIONS } from '../data/worldData';
+import { ORIGIN_SITUATIONS, originSentence } from '../data/market';
 import type { GameState, KnowledgeLevel, MarketPlayer, Player } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { formatMoney, starsFor } from './helpers';
@@ -104,7 +107,7 @@ function agendaFit(state: GameState, mp: MarketPlayer): { cls: string; text: str
   const d = verdictDivision(state);
   if (!d) return null;
   if (mp.agenda.blockedDays.includes(d.gameDay)) {
-    return { cls: 'bad', text: `⛔ No puede los ${dayLabel(d.gameDay)} — justo nuestro día de partido` };
+    return { cls: 'bad', text: `✕ No puede los ${dayLabel(d.gameDay)} — justo nuestro día de partido` };
   }
   const missed =
     mp.agenda.onlyTimes.length > 0 ? d.gameTimes.filter((t) => !mp.agenda!.onlyTimes.includes(t)) : [];
@@ -126,6 +129,13 @@ function prevTeamNode(state: GameState, name: string) {
   );
 }
 
+/** El origen completo: "Viene de <club>." o la situación de vida contada como tal. */
+function originNode(state: GameState, previousTeam: string) {
+  const situation = ORIGIN_SITUATIONS[previousTeam];
+  if (situation) return <>{situation}</>;
+  return <>Viene de {prevTeamNode(state, previousTeam)}.</>;
+}
+
 // ---------- Cabecera con la fecha límite ----------
 
 function DeadlinePanel({ state, dispatch }: Props) {
@@ -145,10 +155,18 @@ function DeadlinePanel({ state, dispatch }: Props) {
   const fee = chosenOpt ? chosenOpt.fee : BALANCE.economy.inscriptionFee;
 
   const risks: string[] = [];
+  if (state.club.money < 0)
+    risks.push(
+      `La caja está en rojo ($${state.club.money}). Si cerrás así, la comisión va a tener que tapar el agujero, y eso cuesta prestigio.`
+    );
   if (confirmed.length < min)
     risks.push(`Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`);
   if (fee > 0 && state.club.money < fee)
-    risks.push(`La caja no cubre la inscripción ($${fee}): la comisión tendría que pasar la gorra, y eso cuesta prestigio.`);
+    risks.push(
+      chosenOpt?.trusts
+        ? `La caja no cubre la inscripción ($${fee}): en tu liga te conocen y te la van a fiar, pero arrancás la temporada con deuda y cuotas semanales.`
+        : `La caja no cubre la inscripción ($${fee}): la comisión tendría que pasar la gorra, y eso cuesta prestigio.`
+    );
   if (fees < costs && confirmed.length >= min)
     risks.push(`Las cuotas proyectadas ($${fees}/sem) no cubren los gastos fijos ($${costs}/sem).`);
   if (chosenOpt === null)
@@ -159,14 +177,14 @@ function DeadlinePanel({ state, dispatch }: Props) {
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h2 style={{ margin: 0, flex: 1 }}>🗓 Pretemporada · Temporada {state.seasonNumber}</h2>
+        <h2 style={{ margin: 0, flex: 1 }}>Pretemporada · Temporada {state.seasonNumber}</h2>
         <button
           onClick={() =>
             setConfirmReq({
               title: 'Volver al menú',
               message: 'La partida queda guardada automáticamente: retomás cuando quieras.',
               confirmLabel: 'Volver al menú',
-              icon: '🚪',
+              icon: 'salir',
               onConfirm: () => dispatch({ type: 'QUIT_TO_MENU' }),
             })
           }
@@ -181,11 +199,11 @@ function DeadlinePanel({ state, dispatch }: Props) {
         </span>
         {chosenOpt ? (
           <span className="chip accent">
-            🏆 {chosenOpt.leagueName} · {chosenOpt.divisionName} — se juega los {dayLabel(chosenOpt.gameDay)} (
+            {chosenOpt.leagueName} · {chosenOpt.divisionName} — se juega los {dayLabel(chosenOpt.gameDay)} (
             {chosenOpt.gameTimes.join(' / ')})
           </span>
         ) : (
-          <span className="chip warn">📝 Inscripción abierta: elegí en qué liga jugar</span>
+          <span className="chip warn">Inscripción abierta: elegí en qué liga jugar</span>
         )}
         <span className={`chip ${ps.gestionesLeft > 0 ? 'good' : 'warn'}`}>Gestiones: {ps.gestionesLeft}/{BALANCE.preseason.gestionesPerWeek}</span>
         <span className={`chip ${confirmed.length >= min ? 'good' : 'bad'}`}>
@@ -256,12 +274,12 @@ function InscriptionSection({ state, dispatch }: Props) {
         </p>
         {blocked.length > 0 && (
           <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--bad)' }}>
-            ⛔ No podrían los {dayLabel(opt.gameDay)}: {blocked.map((p) => p.name).join(', ')}
+            ✕ No podrían los {dayLabel(opt.gameDay)}: {blocked.map((p) => p.name).join(', ')}
           </p>
         )}
         {late.length > 0 && (
           <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--warn)' }}>
-            🕗 Llegarían tarde a los de{' '}
+            Llegarían tarde a los de{' '}
             {opt.gameTimes.filter((t) => late.some((p) => !p.agenda!.onlyTimes.includes(t))).join(' y ')}:{' '}
             {late.map((p) => p.name).join(', ')}
           </p>
@@ -318,7 +336,7 @@ function RosterSection({ state, dispatch }: Props) {
           return (
             <div key={p.id} className={`ps-row${st === 'retirado' ? ' dimmed' : ''}`}>
               <div className="avatar">
-                <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} />
+                <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} personality={p.personality} />
               </div>
               <div className="ps-who">
                 <div className="name">
@@ -333,7 +351,7 @@ function RosterSection({ state, dispatch }: Props) {
               <span className={`chip ${cont.cls}`}>{cont.label}</span>
               {needsTalk && (
                 <button disabled={noGestiones} onClick={() => dispatch({ type: 'PS_TALK', id: p.id })}>
-                  💬 Hablar
+                  Hablar
                 </button>
               )}
               {st === 'pide_condicion' && (
@@ -342,7 +360,7 @@ function RosterSection({ state, dispatch }: Props) {
                   className="primary"
                   onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: p.id, isMarket: false })}
                 >
-                  🤝 Negociar
+                  Negociar
                 </button>
               )}
               {st === 'confirmado' && <span style={{ color: 'var(--good)', fontWeight: 700 }}>✓</span>}
@@ -371,6 +389,9 @@ function MarketSection({ state, dispatch }: Props) {
     const know = KNOWLEDGE_LABELS[mp.knowledge];
     const active = mp.status === 'disponible';
     const fit = agendaFit(state, mp);
+    // La fama es pública: si el club apunta a la plaza, se sabe de antemano
+    // que este no va a atender el teléfono.
+    const snubs = plazaBound(state) && isMarketFigure(mp);
     return (
       <div key={mp.id} className={`player-card${active ? '' : ' dimmed'}`}>
         <div
@@ -380,7 +401,7 @@ function MarketSection({ state, dispatch }: Props) {
           onClick={() => setProfileId(mp.id)}
         >
           <div className="avatar">
-            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} />
+            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} personality={mp.personality} />
           </div>
           <div className="who">
             <div className="name">
@@ -398,11 +419,11 @@ function MarketSection({ state, dispatch }: Props) {
           </div>
         </div>
         <div className="player-desc">
-          Viene de {prevTeamNode(state, mp.previousTeam)}. {mp.knowledgeSource}
+          {originNode(state, mp.previousTeam)} {mp.knowledgeSource}
         </div>
         {(mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 && (
           <div className="human-note">
-            <span className="hn-icon">🗓</span> {mp.agenda!.notes.join(' ')}
+            <span className="hn-icon"><Icon name="agenda" size={14} /></span> {mp.agenda!.notes.join(' ')}
           </div>
         )}
         <div className="player-chips">
@@ -412,6 +433,9 @@ function MarketSection({ state, dispatch }: Props) {
           {fit && <span className={`chip ${fit.cls}`}>{fit.text}</span>}
           {mp.availability === 'escuchando_ofertas' && active && (
             <span className="chip warn">Escucha otras ofertas</span>
+          )}
+          {snubs && active && (
+            <span className="chip bad">Figura: no atiende a un club de la plaza</span>
           )}
           {(mp.contacted || mp.knowledge === 'muy_conocido' || mp.knowledge === 'conocido') && (
             <span className="chip">{feeAttitudeLabel(mp)}</span>
@@ -434,7 +458,7 @@ function MarketSection({ state, dispatch }: Props) {
             disabled={noGestiones}
             onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true })}
           >
-            📞 {mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
+            {snubs ? 'Llamarlo igual' : mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
           </button>
         )}
       </div>
@@ -482,7 +506,7 @@ function MarketProfile({
       <div className="profile" onClick={(e) => e.stopPropagation()}>
         <div className="profile-head">
           <div className="avatar profile-avatar">
-            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} />
+            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} personality={mp.personality} />
           </div>
           <div className="profile-who">
             <div className="profile-name">{mp.name}</div>
@@ -510,7 +534,7 @@ function MarketProfile({
 
         <div className="profile-body">
           <p style={{ margin: '0 0 0.6rem' }}>
-            Viene de {prevTeamNode(state, mp.previousTeam)}. {mp.knowledgeSource}
+            {originNode(state, mp.previousTeam)} {mp.knowledgeSource}
           </p>
 
           <h4 className="profile-subtitle">Lo que sabés (y lo que no)</h4>
@@ -577,6 +601,11 @@ function MarketProfile({
             </p>
           )}
 
+          {active && plazaBound(state) && isMarketFigure(mp) && (
+            <p className="muted" style={{ margin: '0.6rem 0 0', color: 'var(--bad)' }}>
+              Figura de la liga: mientras el club juegue en la plaza, no te va a atender.
+            </p>
+          )}
           {active && (
             <button
               className="primary"
@@ -587,7 +616,12 @@ function MarketProfile({
                 dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true });
               }}
             >
-              📞 {mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
+              {plazaBound(state) && isMarketFigure(mp)
+                ? 'Llamarlo igual'
+                : mp.contacted
+                  ? 'Retomar negociación'
+                  : 'Contactar'}{' '}
+              (1 gestión)
             </button>
           )}
         </div>
@@ -612,9 +646,9 @@ function NegotiationModal({ state, dispatch }: Props) {
     return (
       <div className="modal-backdrop">
         <div className="modal">
-          <h2>🤝 Negociación con {mp.name}</h2>
+          <h2>Negociación con {mp.name}</h2>
           <p className="event-text">
-            {mp.position} · {mp.age} años · {mp.height} cm · viene de {mp.previousTeam}.
+            {mp.position} · {mp.age} años · {mp.height} cm. {originSentence(mp.previousTeam)}
             <br />
             {mp.knowledgeSource}
             <br />
@@ -622,7 +656,7 @@ function NegotiationModal({ state, dispatch }: Props) {
             <br />
             {(mp.agenda?.notes.length ?? 0) > 0 && (
               <>
-                🗓 {mp.agenda!.notes.join(' ')}
+                {mp.agenda!.notes.join(' ')}
                 <br />
               </>
             )}
@@ -653,7 +687,7 @@ function NegotiationModal({ state, dispatch }: Props) {
               (mp.agenda.blockedDays.length > 0 || mp.agenda.onlyTimes.length > 0 || mp.agenda.distanceKm > 50) &&
               !ps.priorityUsed?.[mp.id] && (
                 <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'priority' })}>
-                  🗓 Pedirle que priorice al club
+                  Pedirle que priorice al club
                   <span className="opt-hint">Puede comprometerse a acomodar su agenda… o ser honesto (una sola vez)</span>
                 </button>
               )}
@@ -681,7 +715,7 @@ function NegotiationModal({ state, dispatch }: Props) {
   return (
     <div className="modal-backdrop">
       <div className="modal">
-        <h2>🤝 <PlayerLink id={player.id}>{player.name}</PlayerLink> pide una condición</h2>
+        <h2><PlayerLink id={player.id}>{player.name}</PlayerLink> pide una condición</h2>
         <p className="event-text">
           {player.name} ({player.position}, {player.age} años) quiere seguir en el club, pero pide:{' '}
           <strong>{DEMAND_LABELS[demand].toLowerCase()}</strong>.
@@ -742,7 +776,7 @@ function PreseasonModals({ state, dispatch }: Props) {
     return (
       <div className="modal-backdrop">
         <div className="modal">
-          <h2>📣 {def.title}</h2>
+          <h2>{def.title}</h2>
           <p className="event-text">{def.text(state, ps.pendingEvent.targetIds)}</p>
           <div className="options">
             {def.options(state, ps.pendingEvent.targetIds).map((opt, i) => (
@@ -805,7 +839,7 @@ export function PreseasonView({ state, dispatch }: Props) {
           className="primary"
           onClick={() => dispatch({ type: isLastWeek ? 'PS_CLOSE' : 'PS_ADVANCE' })}
         >
-          {isLastWeek ? '🏁 Cerrar pretemporada e inscribir al club →' : `Avanzar a la semana ${ps.week + 1} →`}
+          {isLastWeek ? 'Cerrar pretemporada e inscribir al club →' : `Avanzar a la semana ${ps.week + 1} →`}
         </button>
         <span className="hint">
           {isLastWeek

@@ -5,13 +5,15 @@ import { friendshipsOf } from '../game/friendsAbroad';
 import { worldPlayerName } from '../game/world';
 import { fragilityHint, fragilityOf } from '../game/injuries';
 import { playerNotes } from '../game/humanState';
+import { ORIGIN_SITUATIONS } from '../data/market';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
 import { Timeline } from './Timeline';
 import { TIPS } from './Tip';
-import { feeChip, roleLabel, starsFor, statusChip } from './helpers';
+import { feeChip, roleLabel, statusChip } from './helpers';
+import { Icon } from './Icon';
 
 type ProfileTab = 'general' | 'deportiva' | 'relaciones' | 'historia' | 'social';
 
@@ -65,7 +67,7 @@ function GeneralTab({ state, p }: { state: GameState; p: Player }) {
         <DataRow label="Altura">{p.height} cm</DataRow>
         <DataRow label="Mano hábil">{p.hand === 'zurda' ? 'Zurda' : 'Derecha'}</DataRow>
         <DataRow label="Profesión">{p.profession}</DataRow>
-        <DataRow label="Club anterior">{p.previousTeam}</DataRow>
+        <DataRow label={p.previousTeam in ORIGIN_SITUATIONS ? 'Antes de llegar' : 'Club anterior'}>{p.previousTeam}</DataRow>
         <DataRow label="En el club">
           Desde la temporada {p.joinedSeason} · {seasonsAtClub(p, state.seasonNumber)}
         </DataRow>
@@ -114,10 +116,10 @@ function DeportivaTab({ p }: { p: Player }) {
     recent.length < 2 || previous.length === 0
       ? { icon: '—', text: 'Todavía sin datos suficientes para marcar una tendencia.' }
       : avg(recent.map((m) => m.rating)) > avg(previous.map((m) => m.rating)) + 0.5
-        ? { icon: '📈', text: 'En alza: sus últimas notas vienen mejorando.' }
+        ? { icon: '▲', text: 'En alza: sus últimas notas vienen mejorando.' }
         : avg(recent.map((m) => m.rating)) < avg(previous.map((m) => m.rating)) - 0.5
-          ? { icon: '📉', text: 'En baja: sus últimos partidos estuvieron flojos.' }
-          : { icon: '➡', text: 'Estable: rinde parejo partido a partido.' };
+          ? { icon: '▼', text: 'En baja: sus últimos partidos estuvieron flojos.' }
+          : { icon: '—', text: 'Estable: rinde parejo partido a partido.' };
   const projection =
     p.age <= 25
       ? 'En edad de crecer: entrenando puede dar un salto.'
@@ -142,7 +144,7 @@ function DeportivaTab({ p }: { p: Player }) {
         <DataRow label="Rebotes">{played ? `${rebounds} (${perGame(rebounds)} por partido)` : '—'}</DataRow>
         <DataRow label="Asistencias">{played ? `${assists} (${perGame(assists)} por partido)` : '—'}</DataRow>
         <DataRow label="Nota media">{avgRating}</DataRow>
-        <DataRow label="Veces figura">{mvps > 0 ? `⭐ ×${mvps}` : '—'}</DataRow>
+        <DataRow label="Veces figura">{mvps > 0 ? `×${mvps}` : '—'}</DataRow>
         <DataRow label="Victorias">{winPct !== null ? `${winPct}%` : '—'}</DataRow>
       </div>
 
@@ -171,7 +173,7 @@ function DeportivaTab({ p }: { p: Player }) {
                     T{m.season} · S{m.week}
                   </td>
                   <td>
-                    {m.rivalName} {m.mvp ? '⭐' : ''}
+                    {m.rivalName} {m.mvp ? <Icon name="estrella" size={11} /> : ''}
                   </td>
                   <td className="num">{m.minutes}&apos;</td>
                   <td className="num" style={{ fontWeight: 700 }}>{m.points ?? 0}</td>
@@ -230,7 +232,7 @@ function RelacionesTab({ state, p }: { state: GameState; p: Player }) {
   return (
     <div>
       <div className="data-grid">
-        <DataRow label="🤝 Amigos">
+        <DataRow label="Amigos">
           {friends.length > 0
             ? friends.map((r, i) => (
                 <span key={r.t.id}>
@@ -251,7 +253,7 @@ function RelacionesTab({ state, p }: { state: GameState; p: Player }) {
             : 'Sin conflictos a la vista.'}
         </DataRow>
         {abroad.length > 0 && (
-          <DataRow label="🌍 En otros cuadros">
+          <DataRow label="En otros cuadros">
             {abroad.map((f, i) => (
               <span key={f.friend.id}>
                 {i > 0 && ', '}
@@ -325,6 +327,7 @@ export function PlayerProfile({ state, playerId, onClose }: Props) {
         <div className="profile-head">
           <div className="avatar profile-avatar">
             <Avatar
+              personality={p.personality}
               seed={p.id}
               age={p.age}
               appearance={p.appearance}
@@ -345,7 +348,6 @@ export function PlayerProfile({ state, playerId, onClose }: Props) {
           </div>
           <div className="rating">
             <div className="num">≈{p.visibleRating}</div>
-            <div className="approx">{starsFor(p.visibleRating)}</div>
           </div>
           <button className="profile-close" onClick={onClose} title="Cerrar">
             ✕

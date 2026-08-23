@@ -1,5 +1,5 @@
 import { BALANCE, clamp } from './balance';
-import { buildMarket, marketToPlayer } from '../data/market';
+import { buildMarket, marketToPlayer, ORIGIN_SITUATIONS, worldToMarket } from '../data/market';
 import { createInitialRoster } from '../data/players';
 import { createRecruit } from '../data/recruits';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
@@ -12,6 +12,8 @@ import {
   USER_DIVISION_ID,
 } from '../data/worldData';
 import { applyPromotionRelegation } from './promotion';
+import { rollWeekBanter } from './banter';
+import { rollWeekMoment } from './moments';
 import { weeklyFee } from './economy';
 import { generateObjectives } from './objectives';
 import { clubPosition, suggestRotation, suggestStarters } from './match';
@@ -19,7 +21,7 @@ import { buildCoachMarket } from './coach';
 import { computeSeasonEvaluation } from './evaluation';
 import { rollPreseasonEvent } from './preseasonEvents';
 import { logClubEvent } from './timeline';
-import { buildWorld, emptyWorld } from './world';
+import { buildWorld, emptyWorld, evolveWorldOffseason } from './world';
 import { SAVE_VERSION } from './week';
 import { Rng } from './rng';
 import type {
@@ -112,7 +114,8 @@ function assignContinuity(
   club: Club,
   rng: Rng,
   firstSeason: boolean,
-  seasonNumber: number
+  seasonNumber: number,
+  inPlaza: boolean
 ): { status: ContinuityStatus; demand?: DemandType } {
   if (firstSeason) {
     // Temporada 1: el grupo viene junto; solo algunos plantean cosas.
@@ -127,6 +130,24 @@ function assignContinuity(
   if (p.age >= 34 && p.physical < 55 && rng.chance(0.25)) return { status: 'retirado' };
   if (p.status === 'al_borde') return { status: 'quiere_irse' };
   if (p.motivation < 35) return rng.chance(0.6) ? { status: 'quiere_irse' } : { status: 'dudando' };
+
+  // La plaza se cobra en el vestuario: pasar el año ahí les queda chico a los
+  // que juegan al básquet en serio. El competitivo condiciona la vuelta, y el
+  // que vive de su cartel directamente arma el bolso.
+  if (inPlaza) {
+    if (p.personality === 'competitivo' && p.technique >= BALANCE.plaza.ambitionMinTech) {
+      const roll = rng.range(0, 1);
+      if (roll < 0.25) return { status: 'quiere_irse' };
+      if (roll < 0.75) return { status: 'pide_condicion', demand: 'competitivo' };
+    }
+    if (
+      (p.personality === 'protagonista' || p.personality === 'mercenario') &&
+      p.technique >= BALANCE.plaza.ambitionMinTech &&
+      rng.chance(0.4)
+    ) {
+      return { status: 'quiere_irse' };
+    }
+  }
 
   // La promesa rota del año pasado se cobra acá: el que quedó pagando vuelve
   // con condiciones duras… o directamente con el bolso armado.
@@ -172,13 +193,21 @@ function assignContinuity(
   }
 }
 
-function buildPreseasonState(players: Player[], club: Club, rng: Rng, firstSeason: boolean, seasonNumber = 1): PreseasonState {
+function buildPreseasonState(
+  players: Player[],
+  club: Club,
+  rng: Rng,
+  firstSeason: boolean,
+  seasonNumber = 1,
+  marketFromWorld: MarketPlayer[] = [],
+  inPlaza = false
+): PreseasonState {
   const continuity: Record<string, ContinuityStatus> = {};
   const playerDemands: Record<string, DemandType> = {};
 
   const active = players.filter((p) => !p.leftClub);
   for (const p of active) {
-    const r = assignContinuity(p, club, rng, firstSeason, seasonNumber);
+    const r = assignContinuity(p, club, rng, firstSeason, seasonNumber, inPlaza);
     continuity[p.id] = r.status;
     if (r.demand) playerDemands[p.id] = r.demand;
   }
@@ -203,7 +232,7 @@ function buildPreseasonState(players: Player[], club: Club, rng: Rng, firstSeaso
     chosenDivisionId: null,
     continuity,
     playerDemands,
-    market: buildMarket(rng),
+    market: buildMarket(rng, { fromWorld: marketFromWorld, takenNames: active.map((x) => x.name) }),
     negotiation: null,
     counterUsed: {},
     actionOutcome: null,
@@ -230,6 +259,11 @@ export interface LeagueOption {
   note: string;
   isCurrent: boolean;
   isPlaza: boolean;
+  /**
+   * Acá te conocen: si no llegás con la inscripción, te la fían (deuda que
+   * se devuelve durante la temporada). Las ligas nuevas cobran contado.
+   */
+  trusts: boolean;
 }
 
 function levelLabelFor(avgStrength: number): string {
@@ -253,12 +287,15 @@ function optionFor(s: GameState, divisionId: string, rivals: { strength: number 
     fee: isPlaza ? 0 : BALANCE.economy.inscriptionFee,
     levelLabel: levelLabelFor(avg),
     note: isPlaza
-      ? 'Gratis y los sábados puede todo el mundo. Sin ascensos, y el prestigio deportivo lo siente.'
+      ? 'Gratis y los sábados puede todo el mundo. Sin ascensos, el prestigio deportivo se derrite semana a semana, los ambiciosos del plantel se calientan y las figuras del mercado ni te atienden.'
       : held
-        ? 'Te guardaron el lugar: el dueño de la liga te conoce.'
-        : 'Tu liga de siempre: acá te conocen, y si no llegás con la plata, la comisión banca.',
+        ? 'Te guardaron el lugar: el dueño de la liga te conoce, y si no llegás con la plata, te la fía.'
+        : 'Tu liga de siempre: acá te conocen, y si no llegás con la plata, te la fían (deuda que se paga en temporada).',
     isCurrent: divisionId === s.divisionId,
     isPlaza,
+    // Hoy toda opción con inscripción es la Universitaria que ya te conoce
+    // (actual o guardada); cuando la oferta sume ligas nuevas, esas cobran contado.
+    trusts: !isPlaza,
   };
 }
 
@@ -358,6 +395,13 @@ export function startPreseason(state: GameState): GameState {
   const rng = new Rng(state.seed);
   const survivors = state.players.filter((p) => !p.leftClub);
 
+  // El fiado no cruza el verano: al cerrar el año, la liga pasa a cobrar lo
+  // que haya quedado en el cuaderno. Si la caja no llega, queda en rojo y la
+  // pretemporada lo va a hacer doler (la comisión tapa agujeros con prestigio).
+  const oldDebt = state.inscriptionDebt;
+  const debtSettled = oldDebt && oldDebt.remaining > 0 ? oldDebt.remaining : 0;
+  const inheritedMoney = state.club.money - debtSettled;
+
   const finishedRow = state.standings.find((r) => r.teamId === 'club')!;
   const finishedSeason = {
     season: state.seasonNumber,
@@ -404,6 +448,10 @@ export function startPreseason(state: GameState): GameState {
   const promoTone: NewsTone =
     promo.userMoved === 'ascenso' ? 'good' : promo.userMoved === 'descenso' ? 'bad' : 'neutral';
 
+  // El verano del mundo: las personas rivales siguen su vida (retiros, pases,
+  // libres). Corre ANTES de armar el mercado, que se alimenta de sus libres.
+  const summer = evolveWorldOffseason(state, rng);
+
   const seasonNumber = state.seasonNumber + 1;
 
   const next: GameState = {
@@ -417,6 +465,7 @@ export function startPreseason(state: GameState): GameState {
     phase: 'preseason',
     club: {
       ...state.club,
+      money: inheritedMoney,
       socialClimate: clamp(Math.round(state.club.socialClimate * 0.5 + 30)),
       organization: clamp(state.club.organization - 3),
       sportPrestige: clamp(state.club.sportPrestige - 2),
@@ -441,7 +490,15 @@ export function startPreseason(state: GameState): GameState {
     lastMatch: null,
     history: [],
     news: [
+      ...(debtSettled > 0
+        ? [{
+            week: 0,
+            text: `La ${oldDebt!.leagueName} pasó a cobrar lo que quedaba del fiado de la inscripción: $${debtSettled}. Cuentas claras antes del año nuevo.`,
+            tone: 'neutral' as NewsTone,
+          }]
+        : []),
       ...promo.notes.map((text) => ({ week: 0, text, tone: promoTone })),
+      ...summer.news.map((text) => ({ week: 0, text, tone: 'neutral' as NewsTone })),
       ...(state.secondTeam
         ? [{
             week: 0,
@@ -451,7 +508,12 @@ export function startPreseason(state: GameState): GameState {
         : []),
       { week: 0, text: `Termina la temporada ${state.seasonNumber}. Arranca la pretemporada: hay que rearmar el plantel.`, tone: 'neutral' as NewsTone },
     ],
-    ledger: [{ week: 0, concept: `Caja heredada de la temporada ${state.seasonNumber}`, amount: state.club.money }],
+    ledger: [
+      { week: 0, concept: `Caja heredada de la temporada ${state.seasonNumber}`, amount: state.club.money },
+      ...(debtSettled > 0
+        ? [{ week: 0, concept: `Liquidación del fiado de la inscripción (${oldDebt!.leagueName})`, amount: -debtSettled }]
+        : []),
+    ],
     memorableMoments: [],
     clubTimeline: [
       ...state.clubTimeline,
@@ -465,10 +527,12 @@ export function startPreseason(state: GameState): GameState {
     playersLeftCount: 0,
     sponsorWeeks: 0,
     gameOverReason: null,
-    startingMoney: state.club.money,
+    startingMoney: inheritedMoney,
     promises: [],
     preseason: null,
-    world: emptyWorld(),
+    // El mundo nuevo hereda las PERSONAS del verano; equipos y fixture se
+    // rearman recién al arrancar la temporada (buildWorld).
+    world: { ...emptyWorld(), players: summer.players, playerSeq: summer.playerSeq },
     playoffs: null,
     // El DT sigue en el club entre temporadas (si no se fue antes).
     coach: state.coach,
@@ -495,7 +559,15 @@ export function startPreseason(state: GameState): GameState {
         : `El club descendió a la Divisional B tras la temporada ${state.seasonNumber}.`,
     });
   }
-  next.preseason = buildPreseasonState(players, next.club, rng, false, next.seasonNumber);
+  next.preseason = buildPreseasonState(
+    players,
+    next.club,
+    rng,
+    false,
+    next.seasonNumber,
+    summer.freeAgents.map((fa) => worldToMarket(fa.player, fa.fromClub, rng)),
+    next.divisionId === PLAZA_DIVISION_ID
+  );
   next.seed = rng.nextSeed();
   return next;
 }
@@ -554,18 +626,49 @@ export function talkToPlayer(state: GameState, playerId: string): GameState {
   return s;
 }
 
+/**
+ * ¿Esta pretemporada apunta a la plaza? Vale la liga elegida, o la actual
+ * mientras no se haya elegido otra (un club de la plaza sigue ahí por defecto).
+ */
+export function plazaBound(s: GameState): boolean {
+  const chosen = s.preseason?.chosenDivisionId;
+  if (chosen) return chosen === PLAZA_DIVISION_ID;
+  return s.divisionId === PLAZA_DIVISION_ID;
+}
+
+/** Figura del mercado: cartel deportivo con el que la plaza ni se discute. */
+export function isMarketFigure(mp: MarketPlayer): boolean {
+  return mp.sportRep >= BALANCE.plaza.figureRep;
+}
+
+/** Frases con las que una figura te corta el teléfono si jugás en la plaza. */
+const FIGURE_SNUBS = [
+  '¿La plaza? No, flaco. Cuando vuelvan a jugar en serio, hablamos.',
+  'Me hablaron bien de ustedes, pero yo los sábados a la tarde juego campeonatos, no picados.',
+  'Sin ofender: a mí me llaman de ligas de verdad. Suerte con eso.',
+];
+
 /** Abre una negociación (con jugador del plantel o fichable). Consume una gestión. */
 export function openNegotiation(state: GameState, targetId: string, isMarket: boolean): GameState {
   const s: GameState = structuredClone(state);
   const p = ps(s);
   if (p.gestionesLeft <= 0) return state;
   p.gestionesLeft -= 1;
-  p.negotiation = { targetId, isMarket };
   if (isMarket) {
     const mp = p.market.find((m) => m.id === targetId);
     if (!mp || mp.status !== 'disponible') return state;
+    // Las figuras ni te atienden mientras el club juegue en la plaza: el
+    // llamado se hace (gestión gastada), pero del otro lado cortan.
+    if (plazaBound(s) && isMarketFigure(mp)) {
+      const rng = new Rng(s.seed);
+      p.actionOutcome = `${mp.name} atendió, escuchó "Liga de la Plaza" y cortó: "${rng.pick(FIGURE_SNUBS)}"`;
+      psLog(s, `${mp.name} no quiso ni hablar: el club juega en la plaza.`);
+      s.seed = rng.nextSeed();
+      return s;
+    }
     mp.contacted = true;
   }
+  p.negotiation = { targetId, isMarket };
   return s;
 }
 
@@ -604,6 +707,11 @@ export function signMarketPlayer(
   s.players.push(player);
   p.continuity[player.id] = 'confirmado';
   mp.status = 'fichado';
+  // Si venía del mundo, la persona se muda a tu plantel: sale del pool rival
+  // (el mundo no duplica gente).
+  if (mp.worldPlayerId) {
+    s.world.players = s.world.players.filter((wp) => wp.id !== mp.worldPlayerId);
+  }
 
   let extra = '';
   if (terms.demandApplied) {
@@ -616,8 +724,16 @@ export function signMarketPlayer(
     p.continuity[friend.id] = 'confirmado';
     extra = ` Y trajo a su amigo: se sumó ${friend.name} (${friend.position}).`;
   }
-  psLog(s, `Fichamos a ${mp.name} (${mp.position}, ${mp.previousTeam}).`);
-  logClubEvent(s, 'llegada', `Fichaje: llegó ${mp.name} (${mp.position}) desde ${mp.previousTeam}.`, 0);
+  const origin = ORIGIN_SITUATIONS[mp.previousTeam];
+  psLog(s, `Fichamos a ${mp.name} (${mp.position}).${origin ? ` ${origin}` : ` Viene de ${mp.previousTeam}.`}`);
+  logClubEvent(
+    s,
+    'llegada',
+    origin
+      ? `Fichaje: llegó ${mp.name} (${mp.position}). ${origin}`
+      : `Fichaje: llegó ${mp.name} (${mp.position}) desde ${mp.previousTeam}.`,
+    0
+  );
   s.news.unshift({ week: 0, text: `Se sumó ${mp.name} al plantel.`, tone: 'good' });
   return { ok: true, text: `¡${mp.name} es nuevo jugador del club!${extra}` };
 }
@@ -956,17 +1072,46 @@ export function closePreseason(state: GameState): GameState {
     );
   }
   if (fee > 0) {
-    // Si no alcanza la plata, la comisión pasa la gorra (acá te conocen: te fían el resto).
-    if (s.club.money < fee) {
-      const needed = fee - s.club.money;
-      psEarn(s, 'Aporte extraordinario de la comisión', needed);
-      s.club.socialPrestige = clamp(s.club.socialPrestige - BALANCE.preseason.bailoutSocialHit);
-      s.club.sportPrestige = clamp(s.club.sportPrestige - BALANCE.preseason.bailoutSportHit);
+    if (s.club.money < fee && target.trusts) {
+      // Fiado solo donde te conocen: entregás lo que hay en caja y el resto
+      // queda anotado en el cuaderno de la liga. Se devuelve en temporada,
+      // con presión semanal — y a la tercera cuota impaga, sanción deportiva.
+      const cash = Math.max(0, s.club.money);
+      const owed = fee - cash;
+      if (cash > 0) psSpend(s, `Inscripción a ${target.leagueName} (entrega a cuenta)`, cash);
+      s.inscriptionDebt = { total: owed, remaining: owed, leagueName: target.leagueName, missedWeeks: 0 };
+      s.club.socialPrestige = clamp(s.club.socialPrestige - BALANCE.preseason.fiadoSocialHit);
       consequences.push(
-        `No alcanzaba la caja para la inscripción: la comisión puso $${needed} de su bolsillo. El club arranca debiendo favores (prestigio -${BALANCE.preseason.bailoutSocialHit}).`
+        `No alcanzaba para la inscripción y la liga te fió $${owed}: acá te conocen. Se devuelve en cuotas de $${BALANCE.economy.debtInstallment} por semana durante la temporada — y si no pagás, la liga aprieta (prestigio social -${BALANCE.preseason.fiadoSocialHit}).`
       );
+      logClubEvent(s, 'hito', `La ${target.leagueName} le fió al club $${owed} de la inscripción: acá lo conocen.`, 0);
+    } else {
+      // Liga que no te conoce (cuando la oferta las sume): cobra contado; si
+      // no hay, queda la gorra de la comisión como último recurso, bien cara.
+      if (s.club.money < fee) {
+        const needed = fee - s.club.money;
+        psEarn(s, 'Aporte extraordinario de la comisión', needed);
+        s.club.socialPrestige = clamp(s.club.socialPrestige - BALANCE.preseason.bailoutSocialHit);
+        s.club.sportPrestige = clamp(s.club.sportPrestige - BALANCE.preseason.bailoutSportHit);
+        consequences.push(
+          `${target.leagueName} cobra contado: acá no te conocen. La comisión puso $${needed} de su bolsillo y el club arranca debiendo favores (prestigio -${BALANCE.preseason.bailoutSocialHit}).`
+        );
+      }
+      psSpend(s, `Inscripción a ${target.leagueName}`, fee);
     }
-    psSpend(s, `Inscripción a ${target.leagueName}`, fee);
+  }
+  // La liga de la plaza es gratis, pero la caja igual puede haber quedado en
+  // rojo por el mantenimiento: nadie arranca una temporada ya quebrado (antes
+  // se entraba con caja negativa y el game over caía en la primera semana,
+  // sin aviso). La comisión tapa el rojo, con el mismo costo de favores.
+  if (s.club.money < 0) {
+    const needed = -s.club.money;
+    psEarn(s, 'Aporte extraordinario de la comisión', needed);
+    s.club.socialPrestige = clamp(s.club.socialPrestige - BALANCE.preseason.bailoutSocialHit);
+    s.club.sportPrestige = clamp(s.club.sportPrestige - BALANCE.preseason.bailoutSportHit);
+    consequences.push(
+      `La caja quedó en rojo y la comisión tapó el agujero ($${needed}) para poder arrancar. El club empieza debiendo favores (prestigio -${BALANCE.preseason.bailoutSocialHit}).`
+    );
   }
 
   const { strengths, risks } = computeStrengthsAndRisks(s);
@@ -1013,6 +1158,9 @@ export function startSeasonFromPreseason(state: GameState): GameState {
   s.preseason = null;
   // El mundo se rearma cada temporada: planteles rivales nuevos y fixture nuevo.
   s.world = buildWorld(s, rng);
+  // Y la primera semana arranca con su pulso: momento del mundo y previa.
+  rollWeekMoment(s, rng);
+  rollWeekBanter(s, rng);
   s.seed = rng.nextSeed();
   return s;
 }

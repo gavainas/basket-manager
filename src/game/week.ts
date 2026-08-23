@@ -1,14 +1,16 @@
 import { BALANCE, clamp } from './balance';
 import { createInitialRoster } from '../data/players';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
-import { INITIAL_OTHER_DIVISION, USER_DIVISION_ID } from '../data/worldData';
+import { INITIAL_OTHER_DIVISION, PLAZA_DIVISION_ID, USER_DIVISION_ID } from '../data/worldData';
 import { getAction } from './actions';
+import { rollWeekBanter } from './banter';
 import { applyWeeklyEconomy } from './economy';
 import { getEvent, rollEvent, rollTrialPractice, takeScheduledEvent } from './events';
 import { maybeFriendMessage } from './friendsAbroad';
-import { decayGrievance, grievanceNote, isBurning, isHot } from './mood';
-import { generateObjectives } from './objectives';
-import { activePlayers, matchAbsentIds, suggestRotation, suggestStarters } from './match';
+import { rollWeekMoment } from './moments';
+import { bumpGrievance, decayGrievance, grievanceNote, isBurning, isHot, sootheGrievance } from './mood';
+import { generateObjectives, midSeasonObjectiveCheck, settleObjectives } from './objectives';
+import { activePlayers, matchAbsentIds, noStartIds, suggestRotation, suggestStarters } from './match';
 import { rollCallUp } from './callup';
 import { buildCoachMarket, coachWeeklyTick } from './coach';
 import { advancePlayoffs } from './playoffs';
@@ -92,13 +94,23 @@ export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'med
   };
   state.objectives = generateObjectives(1, state.club.sportPrestige, rng);
   state.world = buildWorld(state, rng);
+  // La primera semana también tiene pulso: momento del mundo y previa.
+  rollWeekMoment(state, rng);
+  rollWeekBanter(state, rng);
   state.seed = rng.nextSeed();
   return state;
 }
 
-/** Aplica las acciones elegidas y pasa a la convocatoria del partido. */
-export function confirmActions(state: GameState): GameState {
+/**
+ * Aplica las acciones elegidas y pasa a la convocatoria del partido.
+ * `timing` es cuándo se larga la lista: 2 días antes (default — hay margen
+ * para gestionar bajas, pero el día del partido alguno más se puede caer) o
+ * sobre la hora (lo que ves es definitivo y los excuseros no llegan a
+ * bajarse, pero sin margen para gestiones).
+ */
+export function confirmActions(state: GameState, timing: 'temprana' | 'tarde' = 'temprana'): GameState {
   const s: GameState = structuredClone(state);
+  s.callUpTiming = timing;
   const rng = new Rng(s.seed);
   for (const id of s.actionsChosen) {
     const def = getAction(id);
@@ -114,9 +126,9 @@ export function confirmActions(state: GameState): GameState {
   // Convocatoria: se confirma quién viene al partido (y quién falla).
   rollCallUp(s, rng);
   s.phase = 'callUp';
-  const absent = matchAbsentIds(s);
-  s.starters = suggestStarters(s.players, absent);
-  s.rotation = suggestRotation(s.players, s.starters, absent);
+  // Los que llegan al segundo tiempo no se sugieren de titulares: solo banco.
+  s.starters = suggestStarters(s.players, noStartIds(s));
+  s.rotation = suggestRotation(s.players, s.starters, matchAbsentIds(s));
   s.seed = rng.nextSeed();
   return s;
 }
@@ -138,9 +150,8 @@ export function resolveEvent(state: GameState, optionIndex: number): GameState {
     if (p) logPlayerEvent(p, s.seasonNumber, Math.min(s.week, s.seasonLength), 'social', `${def.title}. ${outcome}`);
   }
   s.pendingEvent = null;
-  const absent = matchAbsentIds(s);
-  s.starters = suggestStarters(s.players, absent);
-  s.rotation = suggestRotation(s.players, s.starters, absent);
+  s.starters = suggestStarters(s.players, noStartIds(s));
+  s.rotation = suggestRotation(s.players, s.starters, matchAbsentIds(s));
   s.seed = rng.nextSeed();
   return s;
 }
@@ -172,8 +183,14 @@ export function advanceWeek(state: GameState): GameState {
       if (p.injuryWeeks <= 0) {
         p.status = 'disponible';
         p.injuryWeeks = 0;
-        logPlayerEvent(p, s.seasonNumber, s.week, 'lesion', 'Recibió el alta: disponible otra vez.');
-        s.news.unshift({ week: s.week, text: `${p.name} vuelve a estar disponible.`, tone: 'good' });
+        if (p.injuryReason === 'laboral') {
+          logPlayerEvent(p, s.seasonNumber, s.week, 'lesion', 'Se acomodó con el laburo: vuelve a entrenar.');
+          s.news.unshift({ week: s.week, text: `${p.name} arregló el tema del trabajo: vuelve al equipo.`, tone: 'good' });
+        } else {
+          logPlayerEvent(p, s.seasonNumber, s.week, 'lesion', 'Recibió el alta: disponible otra vez.');
+          s.news.unshift({ week: s.week, text: `${p.name} vuelve a estar disponible.`, tone: 'good' });
+        }
+        p.injuryReason = undefined;
       }
     } else {
       p.physical = clamp(p.physical + BALANCE.weekly.physicalRecovery);
@@ -202,6 +219,12 @@ export function advanceWeek(state: GameState): GameState {
     }
     if (p.personality === 'leal' || p.personality === 'veterano') {
       if (p.motivation < 45) p.motivation = clamp(p.motivation + 2); // aguantan las malas
+    }
+
+    // Si la queja era por plata y el club ya lo becó, la bronca se queda sin
+    // argumento: se apaga con hechos, aunque el manager no diga nada.
+    if (p.grievance?.cause === 'plata' && (p.feeStatus === 'beca_total' || p.feeStatus === 'beca_parcial')) {
+      sootheGrievance(s, p, 'hechos');
     }
 
     // La bronca vieja se enfría sola si el motivo dejó de repetirse.
@@ -252,6 +275,50 @@ export function advanceWeek(state: GameState): GameState {
     }
   }
 
+  // --- Egos que crecen ganando: la racha también factura ---
+  // Con tres victorias seguidas, el protagonista que mira desde el banco
+  // siente que se pierde SU momento, y el mercenario que paga la cuota hace
+  // números. Máximo uno por semana: es un run-run de vestuario, no un motín.
+  const streakTail = s.history.slice(-3);
+  if (streakTail.length === 3 && streakTail.every((m) => m.won) && s.lastMatch && !s.lastMatch.forfeit) {
+    const box = s.lastMatch.box;
+    const egoCandidates = s.players.filter((p) => {
+      if (p.leftClub || p.status === 'lesionado') return false;
+      if (p.personality === 'protagonista') {
+        const line = box.find((b) => b.playerId === p.id);
+        return !!line && line.minutes < 20;
+      }
+      if (p.personality === 'mercenario') return p.feeStatus === 'pagada';
+      return false;
+    });
+    if (egoCandidates.length > 0) {
+      const ego = rng.pick(egoCandidates);
+      if (ego.personality === 'protagonista' && rng.chance(0.5)) {
+        const level = bumpGrievance(s, ego, 'minutos', {
+          note: 'El equipo está de racha y él la mira de afuera: quiere estar en la foto.',
+        });
+        if (level <= 1) {
+          s.news.unshift({
+            week: s.week,
+            text: `${ego.name} dejó caer que con el equipo ganando, él también quiere sus minutos. El éxito despierta egos.`,
+            tone: 'bad',
+          });
+        }
+      } else if (ego.personality === 'mercenario' && rng.chance(0.3)) {
+        const level = bumpGrievance(s, ego, 'plata', {
+          note: 'Con el equipo de racha hizo números: si él es parte del éxito, que no pague por jugar.',
+        });
+        if (level <= 1) {
+          s.news.unshift({
+            week: s.week,
+            text: `${ego.name} tiró en el vestuario que "un equipo que gana no le cobra la cuota a sus figuras". La racha también factura.`,
+            tone: 'bad',
+          });
+        }
+      }
+    }
+  }
+
   // --- Promesas: lo que prometiste en la pretemporada se cobra acá ---
   // (después de la evolución semanal, para que el enojo no se pise con la recuperación)
   checkPromises(s);
@@ -272,6 +339,42 @@ export function advanceWeek(state: GameState): GameState {
   // --- Economía de la semana ---
   applyWeeklyEconomy(s, rng);
 
+  // --- La plaza se paga: cartel que se derrite y ambiciosos que mastican ---
+  // Lo barato lo paga el vestuario: el prestigio deportivo gotea semana a
+  // semana, y a los que juegan en serio el nivel les queda chico — la queja
+  // ('proyecto') entra al sistema de humor y escala como cualquier bronca.
+  if (s.divisionId === PLAZA_DIVISION_ID && s.week <= s.seasonLength) {
+    if (s.club.sportPrestige > BALANCE.plaza.meltFloor) {
+      s.club.sportPrestige = clamp(s.club.sportPrestige - BALANCE.plaza.weeklyPrestigeMelt);
+      if (s.week % BALANCE.plaza.meltNewsEvery === 0) {
+        s.news.unshift({
+          week: s.week,
+          text: 'En el barrio preguntan, medio en broma medio en serio, cuándo vuelven a jugar en serio. La plaza no suma cartel.',
+          tone: 'bad',
+        });
+      }
+    }
+    const ambitious = s.players.filter(
+      (p) =>
+        !p.leftClub &&
+        p.status !== 'lesionado' &&
+        (p.personality === 'competitivo' || p.personality === 'protagonista' || p.personality === 'mercenario') &&
+        p.technique >= BALANCE.plaza.ambitionMinTech
+    );
+    if (ambitious.length > 0 && rng.chance(BALANCE.plaza.ambitionChance)) {
+      // La bronca se concentra en la figura: la del mejor es la que escala y se lee.
+      const star = [...ambitious].sort((a, b) => b.technique - a.technique)[0];
+      const target = rng.chance(0.7) ? star : rng.pick(ambitious);
+      const grumble =
+        target.personality === 'competitivo'
+          ? 'Terminó el partido y lo dijo sin vueltas: "acá no me exige nadie, así me estanco".'
+          : target.personality === 'protagonista'
+            ? '"Yo para brillar en la plaza no me anoté", tiró medio en chiste. Medio.'
+            : 'Hizo cuentas en voz alta: "en una liga de verdad, a uno como yo lo becan; acá ni cartel hay".';
+      bumpGrievance(s, target, 'proyecto', { note: grumble });
+    }
+  }
+
   // --- Deriva del club ---
   s.club.organization = clamp(s.club.organization - 1);
   if (s.club.socialClimate > 55) s.club.socialClimate = clamp(s.club.socialClimate - 1);
@@ -283,6 +386,7 @@ export function advanceWeek(state: GameState): GameState {
   s.actionsLog = [];
   s.eventOutcome = null;
   s.callUp = [];
+  s.callUpTiming = undefined; // cada semana se vuelve a elegir cuándo largar la lista
   s.live = null;
   s.lastMatch = state.lastMatch; // se conserva para referencia
   s.asadoPlan = null; // la convocatoria al asado vence con la semana
@@ -317,15 +421,27 @@ export function advanceWeek(state: GameState): GameState {
     // Fase regular terminada: arrancan (o siguen) los playoffs de las copas.
     if (advancePlayoffs(s, rng)) {
       s.phase = 'planning';
+      // En playoffs no hay momentos del mundo, pero la previa se pica MÁS.
+      rollWeekMoment(s, rng);
+      rollWeekBanter(s, rng);
       s.pendingEvent = trialPlanningEvent(s, rng) ?? takeScheduledEvent(s) ?? rollEvent(s, rng);
       s.starters = suggestStarters(s.players);
       s.rotation = suggestRotation(s.players, s.starters);
     } else {
       s.trialCandidate = null; // terminó la fase regular: el amigo a prueba siguió su camino
       s.phase = 'seasonEnd';
+      // La comisión cobra: los objetivos se liquidan una sola vez, acá.
+      // (En game over no: ahí ya se perdió todo lo que había que perder.)
+      settleObjectives(s);
     }
   } else {
     s.phase = 'planning';
+    // A mitad de temporada la comisión pasa a decir cómo vienen sus encargos.
+    if (s.week === 5) midSeasonObjectiveCheck(s);
+    // La semana nueva arranca con su pulso: el momento del mundo (si lo hay)
+    // y la previa que se pica se anuncian ANTES de decidir nada.
+    rollWeekMoment(s, rng);
+    rollWeekBanter(s, rng);
     // Prioridad: el amigo a prueba, después las consecuencias encadenadas
     // (seguras), y recién ahí el sorteo semanal.
     s.pendingEvent = trialPlanningEvent(s, rng) ?? takeScheduledEvent(s) ?? rollEvent(s, rng);

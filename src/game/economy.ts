@@ -38,6 +38,13 @@ export function weeklyEstimate(state: GameState): { income: { concept: string; a
     { concept: 'Alquiler de cancha', amount: -BALANCE.economy.courtRentWeekly },
     { concept: 'Árbitros y planilla', amount: -BALANCE.economy.refereeWeekly },
   ];
+  const debt = state.inscriptionDebt;
+  if (debt && debt.remaining > 0) {
+    expenses.push({
+      concept: `Cuota del fiado de la inscripción (debés $${debt.remaining})`,
+      amount: -Math.min(BALANCE.economy.debtInstallment, debt.remaining),
+    });
+  }
   return { income, expenses };
 }
 
@@ -84,6 +91,49 @@ export function applyWeeklyEconomy(s: GameState, rng: Rng): void {
   if (s.coach && s.coach.weeklyWage > 0) {
     s.club.money -= s.coach.weeklyWage;
     s.ledger.push({ week: s.week, concept: `Sueldo del DT (${s.coach.name})`, amount: -s.coach.weeklyWage });
+  }
+
+  // El fiado de la inscripción: la liga pasa a cobrar su cuota semanal. Si la
+  // caja no llega, no hay descubierto — hay presión: prestigio que se va, y a
+  // la tercera semana impaga la liga no te habilita la fecha (ver match.ts).
+  const debt = s.inscriptionDebt;
+  if (debt && debt.remaining > 0) {
+    const cuota = Math.min(BALANCE.economy.debtInstallment, debt.remaining);
+    if (s.club.money >= cuota) {
+      s.club.money -= cuota;
+      debt.remaining -= cuota;
+      debt.missedWeeks = 0;
+      debt.sanctionPending = false;
+      s.ledger.push({ week: s.week, concept: `Cuota del fiado de la inscripción (${debt.leagueName})`, amount: -cuota });
+      if (debt.remaining <= 0) {
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
+        s.news.unshift({
+          week: s.week,
+          text: `El club saldó el fiado de la inscripción con la ${debt.leagueName}. Deuda cero: en la liga lo tomaron nota.`,
+          tone: 'good',
+        });
+      }
+    } else {
+      debt.missedWeeks += 1;
+      s.club.socialPrestige = clamp(s.club.socialPrestige - BALANCE.debt.missPrestigeHit);
+      if (debt.missedWeeks >= BALANCE.debt.weeksForSanction && !debt.sanctioned) {
+        debt.sanctionPending = true;
+        s.news.unshift({
+          week: s.week,
+          text: `La ${debt.leagueName} se cansó de esperar el fiado: si antes del próximo partido no te ponés al día, no te habilitan la fecha y los puntos se pierden en la mesa.`,
+          tone: 'bad',
+        });
+      } else {
+        s.news.unshift({
+          week: s.week,
+          text:
+            debt.missedWeeks === 1
+              ? `No hubo caja para la cuota del fiado: el tesorero de la ${debt.leagueName} te cruzó en la cancha y "te lo recordó".`
+              : `Van ${debt.missedWeeks} semanas sin pagar el fiado de la inscripción: en la ${debt.leagueName} ya lo comentan en voz alta.`,
+          tone: 'bad',
+        });
+      }
+    }
   }
 
   // Imprevistos: la infraestructura del club también juega su partido.

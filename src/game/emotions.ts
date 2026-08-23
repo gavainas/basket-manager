@@ -35,7 +35,8 @@ const LABELS: Record<PlayerEmotion, string> = {
   conforme: 'Conforme',
   indiferente: 'Indiferente',
   frustrado: 'Frustrado',
-  molesto_minutos: 'Molesto por sus minutos',
+  // "Molesto" es el ESTADO accionable (status); acá recién está masticando.
+  molesto_minutos: 'Masticando bronca por sus minutos',
   decepcionado: 'Decepcionado consigo',
 };
 
@@ -224,6 +225,21 @@ function moodText(
               '"Ni citado. Alguna explicación en algún momento me van a tener que dar."',
             ]);
       }
+      // El que JUGÓ y está caliente por la derrota no puede hablar como el que
+      // miró de traje: las voces por arquetipo de acá abajo están escritas para
+      // el que quedó afuera ("de saco y corbata", "miré perder"). Si pisó la
+      // cancha, la bronca es por el partido, no por los minutos.
+      if (!ctx.won && ctx.minutes > 0) {
+        return pick([
+          '"Así no. Algo tenemos que cambiar, y rápido."',
+          '"Perder se pierde, pero así duele el doble."',
+          '"Me voy caliente. Mejor no me hablen hasta el jueves."',
+          '"Hoy no me consuela nadie. Mañana sí, hoy no."',
+          '"¿Alguien anotó la patente del camión que nos pasó por arriba?"',
+          '"Esto no se arregla hablando, se arregla entrenando."',
+          '"No me molesta perder. Me molesta perder así."',
+        ]);
+      }
       return ctx.won
         ? voiced(FRUSTRADO_GANANDO, [
             '"Ganamos, bárbaro. Pero yo mirando de afuera no sumo nada."',
@@ -233,13 +249,9 @@ function moodText(
             '"Sí, ganamos, aplaudo. ¿Se nota mucho que aplaudo con bronca?"',
           ])
         : voiced(FRUSTRADO_PERDIENDO, [
-            '"Así no. Algo tenemos que cambiar, y rápido."',
-            '"Perder se pierde, pero así duele el doble."',
-            '"Me voy caliente. Mejor no me hablen hasta el jueves."',
-            '"Hoy no me consuela nadie. Mañana sí, hoy no."',
-            '"¿Alguien anotó la patente del camión que nos pasó por arriba?"',
-            '"Esto no se arregla hablando, se arregla entrenando."',
-            '"No me molesta perder. Me molesta perder así."',
+            '"Perdimos y yo mirando: doble bronca."',
+            '"Ver perder al equipo desde afuera es lo peor que hay."',
+            '"Ni jugué ni ganamos. Semana redonda."',
           ]);
     case 'molesto_minutos':
       if ((ctx.grievanceLevel ?? 0) >= 3) {

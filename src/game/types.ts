@@ -94,7 +94,7 @@ export interface PlayerMood {
 // ---------- Estado emocional unificado (mood.ts) ----------
 
 /** Por qué está caliente. La causa manda el texto y cómo se lo puede atender. */
-export type GrievanceCause = 'minutos' | 'promesa' | 'plata' | 'trato' | 'grupo';
+export type GrievanceCause = 'minutos' | 'promesa' | 'plata' | 'trato' | 'grupo' | 'proyecto';
 
 /**
  * La queja activa de un jugador: una sola por vez (la más grave). Es la
@@ -148,6 +148,9 @@ export interface Player {
   status: PlayerStatus;
   /** Semanas restantes de lesión. */
   injuryWeeks: number;
+  /** Por qué está de baja: lesión de verdad o un tema de laburo. Los textos
+   *  ("recibió el alta") mienten si un trabajo se cuenta como lesión. */
+  injuryReason?: 'fisica' | 'laboral';
   /** Semanas seguidas con estado "molesto" o "al_borde". */
   weeksUpset: number;
   /** Queja activa: la fuente única del humor accionable (ver `mood.ts`). */
@@ -239,6 +242,8 @@ export interface CallUpEntry {
   exhausted?: boolean;
   /** Decidiste jugarlo fundido: rinde menos y el físico puede decir basta. */
   playingExhausted?: boolean;
+  /** Se cayó DESPUÉS de largar la lista: baja de último momento, sin gestión posible. */
+  lastMinute?: boolean;
 }
 
 export type DefenseTactic = 'hombre' | 'zona' | 'presion';
@@ -311,8 +316,10 @@ export interface LiveMatchState {
   rageBoost?: boolean;
   /** Incidencia arbitral esperando una decisión del manager. */
   pendingIncident?: PendingRefIncident | null;
-  /** Textos de incidencia ya usados en este partido: no se repiten. */
+  /** Textos de incidencia y de color ya usados en este partido: no se repiten. */
   usedIncidents?: string[];
+  /** Citados que llegan para el segundo tiempo: hasta el 3er cuarto no entran. */
+  lateIds?: string[];
   /** Piloto automático de cambios entre cuartos. */
   autoRotation?: boolean;
   /** Directiva del piloto: ganar como sea o que todos sumen minutos. */
@@ -497,6 +504,23 @@ export interface MarketPlayer {
   estPhysical: number;
   /** Ya lo contactaste: su exigencia y su cuota son conocidas. */
   contacted: boolean;
+  /** Si viene del mundo (agente libre real): el id de esa persona. */
+  worldPlayerId?: string;
+}
+
+/** Un mensaje de la previa entre clubes (jugador rival real, tu vestuario o el delegado). */
+export interface BanterMessage {
+  side: 'rival' | 'own' | 'delegado';
+  name: string;
+  /** Para el retrato del rival (persona del mundo). */
+  worldPlayerId?: string;
+  /** Para el retrato del tuyo. */
+  playerId?: string;
+  personality?: Personality;
+  age?: number;
+  text: string;
+  /** Este mensaje es la apuesta del asado: la UI muestra los botones acá. */
+  isBet?: boolean;
 }
 
 /** Reacción diferida de un evento: se comunica y aplica semanas después. */
@@ -590,6 +614,9 @@ export interface PreseasonState {
   priorityUsed?: Record<string, boolean>;
   /** Desenlace de la última gestión, para mostrar en el modal. */
   actionOutcome: string | null;
+  /** Eventos ya disparados esta pretemporada: no se repiten ("la figura pide
+   *  beca" dos semanas seguidas era el chiste contado dos veces). */
+  eventLog?: string[];
   pendingEvent: PreseasonEventState | null;
   eventOutcome: string | null;
   /** Registro de todo lo que pasó en la pretemporada. */
@@ -702,6 +729,7 @@ export interface AvailabilityProfile {
 
 /** Jugador del mundo (rivales): persona independiente de sus equipos. */
 export interface WorldPlayer {
+  /** Id de persona, estable de por vida (no un slot de plantel). */
   id: string;
   firstName: string;
   lastName: string;
@@ -716,6 +744,17 @@ export interface WorldPlayer {
   prestige: number;
   availability: AvailabilityProfile;
   injuryWeeks: number;
+  /**
+   * Club actual, por NOMBRE (la clave estable entre temporadas: los slots
+   * r1/o1 se reasignan con los ascensos). undefined = quedó libre.
+   */
+  clubName?: string;
+  /** Temporada en la que llegó a su club actual. */
+  joinedSeason?: number;
+  /** Veces que jugó contra el club del usuario (conocimiento por persona). */
+  timesFaced?: number;
+  /** Pasó por el club del usuario antes de emigrar al mundo. */
+  exUserClub?: boolean;
 }
 
 export type FixtureStatus = 'programado' | 'jugado' | 'reprogramado' | 'suspendido';
@@ -773,11 +812,16 @@ export interface WorldState {
   venues: Venue[];
   clubs: WorldClub[];
   teams: Team[];
-  /** Solo rivales: los jugadores del usuario viven en GameState.players. */
+  /**
+   * Solo rivales: los jugadores del usuario viven en GameState.players.
+   * Persiste entre temporadas: las personas siguen, los equipos se rearman.
+   */
   players: WorldPlayer[];
   registrations: PlayerRegistration[];
   entries: CompetitionEntry[];
   fixtures: WorldFixture[];
+  /** Contador de ids de persona (crece de por vida, nunca se reusa). */
+  playerSeq?: number;
 }
 
 // ---------- Expansión del club: segundo equipo en otra liga (etapa 6) ----------
@@ -902,6 +946,55 @@ export interface GameState {
   affinityBonus?: Record<string, number>;
   /** La espina clavada: el rival que nos eliminó o nos ganó la final. Persiste hasta la revancha. */
   nemesis?: { rivalId: string; reason: string } | null;
+  /**
+   * Momento del mundo de esta semana: algo que pasa en la ciudad (juega la
+   * Selección, paro de ómnibus, finde largo) y golpea la convocatoria de LOS
+   * DOS equipos, sin mirar el compromiso de nadie. Se anuncia al arrancar la
+   * semana para poder planificar. Opcional: sin migración de saves.
+   */
+  weekMoment?: {
+    id: string;
+    title: string;
+    /** El anuncio de la previa ("El jueves juega la Selección…"). */
+    text: string;
+    /** Día del momento, para el calendario semanal. */
+    day: WeekDay;
+  } | null;
+  /** La previa que se pica: mensajes entre clubes esta semana (feed efímero). */
+  weekBanter?: {
+    week: number;
+    messages: BanterMessage[];
+  } | null;
+  /** Apuesta de asado con el rival de la semana (el que pierde lo paga). */
+  asadoBet?: {
+    week: number;
+    rivalId: string;
+    rivalName: string;
+    status: 'propuesta' | 'aceptada' | 'rechazada' | 'ganada' | 'perdida';
+  } | null;
+  /** Ganaste una apuesta: el próximo asado lo paga el rival (se consume al usarlo). */
+  asadoBetPrize?: { rivalName: string } | null;
+  /** Cuándo se largó la lista esta semana: 2 días antes (default) o sobre la hora. */
+  callUpTiming?: 'temprana' | 'tarde';
+  /**
+   * Deuda de inscripción: la liga de siempre te fió porque te conoce (las
+   * nuevas cobran contado). Se paga en cuotas semanales automáticas; cada
+   * semana que la caja no llega hay presión, y a la tercera impaga la liga
+   * no te habilita la fecha. Opcional para no migrar saves.
+   */
+  inscriptionDebt?: {
+    /** Lo que la liga fió al cierre de la pretemporada. */
+    total: number;
+    /** Lo que falta devolver. */
+    remaining: number;
+    leagueName: string;
+    /** Semanas seguidas en que la cuota del fiado no se pudo pagar. */
+    missedWeeks: number;
+    /** La liga ya avisó: la próxima fecha no se habilita si no te ponés al día. */
+    sanctionPending?: boolean;
+    /** El castigo ya cayó una vez (los puntos se perdieron en la mesa). */
+    sanctioned?: boolean;
+  } | null;
 }
 
 // ---------- Asado con convocatoria ----------

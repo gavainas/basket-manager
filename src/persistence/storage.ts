@@ -235,6 +235,23 @@ export function hasSave(): boolean {
   return loadGame() !== null;
 }
 
+export type SaveStatus = 'none' | 'ok' | 'incompatible';
+
+/**
+ * Estado del guardado sin exponer el contenido: distingue "no hay partida"
+ * de "hay una partida que esta versión no puede leer". Antes ese caso se
+ * comportaba como si no hubiera nada y un click en "Nueva partida" la pisaba
+ * sin aviso; ahora el menú lo cuenta y deja la decisión en manos del jugador.
+ */
+export function saveStatus(): SaveStatus {
+  try {
+    if (!localStorage.getItem(KEY)) return 'none';
+  } catch {
+    return 'none';
+  }
+  return loadGame() !== null ? 'ok' : 'incompatible';
+}
+
 export function clearSave(): void {
   try {
     localStorage.removeItem(KEY);

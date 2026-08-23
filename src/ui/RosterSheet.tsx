@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import type { GameState, Player, Position } from '../game/types';
 import { activePlayers } from '../game/match';
 import { Avatar } from './Avatar';
+import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { feeChip, statusChip } from './helpers';
 
@@ -85,11 +87,122 @@ function probableFive(players: Player[]): { player: Player; spot: { x: number; y
   return [...bySpot.entries()].map(([pos, player]) => ({ player, spot: COURT_SPOTS[pos] }));
 }
 
+/** Columnas ordenables: la pregunta "¿quién juega poco / falta más / debe?" se contesta en un click. */
+type SortKey = 'nombre' | 'pos' | 'edad' | 'rating' | 'fis' | 'mot' | 'com' | 'afi' | 'ult' | 'min' | 'faltas' | 'cuota';
+
 export function RosterSheet({ state }: { state: GameState }) {
   const active = activePlayers(state.players);
   const mvpCount = (id: string) => state.history.filter((m) => m.mvpId === id).length;
   const five = probableFive(active);
   const media = avgRating(five.map((f) => f.player));
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 } | null>(null);
+
+  const seasonMinutes = (p: Player) =>
+    p.matchLog.filter((m) => m.season === state.seasonNumber).reduce((t, m) => t + m.minutes, 0);
+  const seasonAbsences = (p: Player) =>
+    p.timeline.filter((e) => e.season === state.seasonNumber && e.kind === 'ausencia').length;
+  const owed = (p: Player) => (p.feeStatus === 'pendiente' ? Math.max(p.weeksUnpaid, 1) : 0);
+
+  const VALUE: Record<SortKey, (p: Player) => number | string> = {
+    nombre: (p) => p.name.replace(/"/g, ''),
+    pos: (p) => POSITION_ORDER.indexOf(p.position),
+    edad: (p) => p.age,
+    rating: (p) => p.visibleRating,
+    fis: (p) => p.physical,
+    mot: (p) => p.motivation,
+    com: (p) => p.commitment,
+    afi: (p) => p.social,
+    ult: (p) => p.lastRating ?? -1,
+    min: (p) => seasonMinutes(p),
+    faltas: (p) => seasonAbsences(p),
+    cuota: (p) => owed(p),
+  };
+
+  // Click en un encabezado: ordena (numéricos de mayor a menor primero);
+  // segundo click invierte; tercero vuelve al orden natural por grupos.
+  const clickSort = (key: SortKey) => {
+    const natural: 1 | -1 = key === 'nombre' || key === 'pos' ? 1 : -1;
+    if (sort?.key !== key) setSort({ key, dir: natural });
+    else if (sort.dir === natural) setSort({ key, dir: (natural * -1) as 1 | -1 });
+    else setSort(null);
+  };
+
+  const Th = ({
+    k,
+    label,
+    title,
+    num,
+  }: {
+    k: SortKey;
+    label: string;
+    title?: string;
+    num?: boolean;
+  }) => (
+    <th
+      className={`sortable${num ? ' num' : ''}${sort?.key === k ? ' sorted' : ''}`}
+      title={title ? `${title} — click para ordenar` : 'Click para ordenar'}
+      onClick={() => clickSort(k)}
+    >
+      {label}
+      {sort?.key === k && <span className="sort-arrow">{sort.dir === 1 ? '▲' : '▼'}</span>}
+    </th>
+  );
+
+  const renderRow = (p: Player) => {
+    const status = statusChip(p);
+    const fee = feeChip(p);
+    const mvp = mvpCount(p.id);
+    return (
+      <tr key={p.id}>
+        <td className="sheet-avatar">
+          <Avatar
+            seed={p.id}
+            age={p.age}
+            size={24}
+            appearance={p.appearance}
+            expressionOverride={
+              p.status === 'molesto' || p.status === 'al_borde' ? 2 : p.status === 'lesionado' ? 3 : undefined
+            }
+            title={p.name}
+            personality={p.personality}
+          />
+        </td>
+        <td className="sheet-name">
+          <PlayerLink id={p.id}>{p.name}</PlayerLink>
+          {mvp > 0 && (
+            <span className="sheet-mvp" title={`MVP ×${mvp}`}>
+              <Icon name="estrella" size={12} />
+            </span>
+          )}
+        </td>
+        <td title={p.position}>{POSITION_SHORT[p.position]}</td>
+        <td className="num">{p.age}</td>
+        <td className="num sheet-rating">≈{p.visibleRating}</td>
+        <td className={`num ${statCls(p.physical)}`}>{p.physical}</td>
+        <td className={`num ${statCls(p.motivation)}`}>{p.motivation}</td>
+        <td className={`num ${statCls(p.commitment)}`}>{p.commitment}</td>
+        <td className={`num ${statCls(p.social)}`}>{p.social}</td>
+        <td className={`num ${lastCls(p.lastRating)}`}>{p.lastRating ?? '—'}</td>
+        <td className="num">{seasonMinutes(p)}&apos;</td>
+        <td className="num">{seasonAbsences(p) || '—'}</td>
+        <td>
+          <span className={`sheet-tag ${status.cls}`}>{status.label}</span>
+        </td>
+        <td>
+          <span className={`sheet-tag ${fee.cls}`}>{fee.label}</span>
+        </td>
+      </tr>
+    );
+  };
+
+  const sorted = sort
+    ? [...active].sort((a, b) => {
+        const va = VALUE[sort.key](a);
+        const vb = VALUE[sort.key](b);
+        const cmp = typeof va === 'string' ? va.localeCompare(vb as string) : (va as number) - (vb as number);
+        return cmp * sort.dir;
+      })
+    : null;
 
   return (
     <div className="sheet-layout">
@@ -98,101 +211,55 @@ export function RosterSheet({ state }: { state: GameState }) {
           <thead>
             <tr>
               <th></th>
-              <th>Jugador</th>
-              <th title="Posición">Pos</th>
-              <th className="num">Edad</th>
-              <th className="num" title="Valoración estimada">
-                ≈
-              </th>
-              <th className="num" title="Físico">
-                Fís
-              </th>
-              <th className="num" title="Motivación">
-                Mot
-              </th>
-              <th className="num" title="Compromiso">
-                Com
-              </th>
-              <th className="num" title="Afinidad social">
-                Afi
-              </th>
-              <th className="num" title="Nota del último partido">
-                Últ
-              </th>
+              <Th k="nombre" label="Jugador" />
+              <Th k="pos" label="Pos" title="Posición" />
+              <Th k="edad" label="Edad" num />
+              <Th k="rating" label="≈" title="Valoración estimada" num />
+              <Th k="fis" label="Fís" title="Físico" num />
+              <Th k="mot" label="Mot" title="Motivación" num />
+              <Th k="com" label="Com" title="Compromiso" num />
+              <Th k="afi" label="Afi" title="Afinidad social" num />
+              <Th k="ult" label="Últ" title="Nota del último partido" num />
+              <Th k="min" label="Min" title="Minutos jugados esta temporada" num />
+              <Th k="faltas" label="Falt" title="Faltazos de la temporada" num />
               <th>Estado</th>
-              <th>Cuota</th>
+              <Th k="cuota" label="Cuota" title="Semanas de cuota adeudadas" />
             </tr>
           </thead>
-          {GROUPS.map((g) => {
-            const rows = active
-              .filter((p) => p.expectedRole === g.role)
-              .sort(
-                (a, b) =>
-                  POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) ||
-                  b.visibleRating - a.visibleRating
+          {sorted ? (
+            // Con un orden activo, la planilla es una sola lista: la pregunta
+            // que trae el click ("¿quién juega poco?") no entiende de grupos.
+            <tbody>{sorted.map(renderRow)}</tbody>
+          ) : (
+            GROUPS.map((g) => {
+              const rows = active
+                .filter((p) => p.expectedRole === g.role)
+                .sort(
+                  (a, b) =>
+                    POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) ||
+                    b.visibleRating - a.visibleRating
+                );
+              if (rows.length === 0) return null;
+              return (
+                <tbody key={g.role}>
+                  <tr className="sheet-group">
+                    <td colSpan={14}>
+                      {g.label} ({rows.length}) · media ≈{avgRating(rows)}
+                      {/* Si se creen titulares más de los que entran, la planilla lo
+                          dice en voz alta: es de donde salen las quejas por minutos. */}
+                      {g.role === 'titular' && rows.length > 5 && (
+                        <span className="sheet-tension">
+                          {' '}
+                          · en la cancha entran 5: {rows.length - 5} van a mirar desde el banco
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                  {rows.map(renderRow)}
+                </tbody>
               );
-            if (rows.length === 0) return null;
-            return (
-              <tbody key={g.role}>
-                <tr className="sheet-group">
-                  <td colSpan={12}>
-                    {g.label} ({rows.length}) · media ≈{avgRating(rows)}
-                    {/* Si se creen titulares más de los que entran, la planilla lo
-                        dice en voz alta: es de donde salen las quejas por minutos. */}
-                    {g.role === 'titular' && rows.length > 5 && (
-                      <span className="sheet-tension">
-                        {' '}
-                        · en la cancha entran 5: {rows.length - 5} van a mirar desde el banco
-                      </span>
-                    )}
-                  </td>
-                </tr>
-                {rows.map((p) => {
-                  const status = statusChip(p);
-                  const fee = feeChip(p);
-                  const mvp = mvpCount(p.id);
-                  return (
-                    <tr key={p.id}>
-                      <td className="sheet-avatar">
-                        <Avatar
-                          seed={p.id}
-                          age={p.age}
-                          size={24}
-                          appearance={p.appearance}
-                          expressionOverride={
-                            p.status === 'molesto' || p.status === 'al_borde' ? 2 : p.status === 'lesionado' ? 3 : undefined
-                          }
-                          title={p.name}
-                        />
-                      </td>
-                      <td className="sheet-name">
-                        <PlayerLink id={p.id}>{p.name}</PlayerLink>
-                        {mvp > 0 && (
-                          <span className="sheet-mvp" title={`MVP ×${mvp}`}>
-                            ⭐
-                          </span>
-                        )}
-                      </td>
-                      <td title={p.position}>{POSITION_SHORT[p.position]}</td>
-                      <td className="num">{p.age}</td>
-                      <td className="num sheet-rating">≈{p.visibleRating}</td>
-                      <td className={`num ${statCls(p.physical)}`}>{p.physical}</td>
-                      <td className={`num ${statCls(p.motivation)}`}>{p.motivation}</td>
-                      <td className={`num ${statCls(p.commitment)}`}>{p.commitment}</td>
-                      <td className={`num ${statCls(p.social)}`}>{p.social}</td>
-                      <td className={`num ${lastCls(p.lastRating)}`}>{p.lastRating ?? '—'}</td>
-                      <td>
-                        <span className={`sheet-tag ${status.cls}`}>{status.label}</span>
-                      </td>
-                      <td>
-                        <span className={`sheet-tag ${fee.cls}`}>{fee.label}</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            );
-          })}
+            })
+          )}
         </table>
       </div>
 
@@ -212,7 +279,7 @@ export function RosterSheet({ state }: { state: GameState }) {
           </svg>
           {five.map(({ player: p, spot }) => (
             <div key={p.id} className="court-slot" style={{ left: `${spot.x}%`, top: `${spot.y}%` }}>
-              <Avatar seed={p.id} age={p.age} size={34} appearance={p.appearance} title={p.name} />
+              <Avatar seed={p.id} age={p.age} size={34} appearance={p.appearance} title={p.name} personality={p.personality} />
               <div className="court-name">{shortName(p.name)}</div>
               <div className="court-rating">≈{p.visibleRating}</div>
             </div>

@@ -2,6 +2,7 @@ import type { GameState, Player } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { getEvent } from '../game/events';
 import { Avatar } from './Avatar';
+import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
 
 interface Props {
@@ -9,27 +10,27 @@ interface Props {
   dispatch: (action: GameAction) => void;
 }
 
-// Ícono por familia de evento (ver design/SOCIAL_UI.md). Default: 📣.
-const EVENT_ICONS: Record<string, string> = {
-  minutos: '⏱',
-  discusion: '🗯',
-  cuota_impaga: '💸',
-  sponsor_local: '🤝',
-  camiseta_perdida: '👕',
-  amigo_talentoso: '🏀',
-  ausencia_clave: '📵',
-  quiere_abandonar: '🚪',
-  lesion_leve: '🩹',
-  donacion: '🎁',
-  queja_organizacion: '📋',
-  festejo_espontaneo: '🍻',
-  oferta_rival: '📞',
-  cancha_ocupada: '🔒',
-  arbitro_polemico: '🟨',
-  cumpleanos: '🎂',
-  periodista_barrial: '📰',
-  mudanza: '📦',
-  sobrino_socio: '🧒',
+// Ícono por familia de evento (ver design/SOCIAL_UI.md), del set de línea.
+const EVENT_ICONS: Record<string, IconName> = {
+  minutos: 'reloj',
+  discusion: 'rayo',
+  cuota_impaga: 'plata',
+  sponsor_local: 'caja',
+  camiseta_perdida: 'vestuario',
+  amigo_talentoso: 'pelota',
+  ausencia_clave: 'laburo',
+  quiere_abandonar: 'salir',
+  lesion_leve: 'enfermeria',
+  donacion: 'plata',
+  queja_organizacion: 'inscripcion',
+  festejo_espontaneo: 'social',
+  oferta_rival: 'chat',
+  cancha_ocupada: 'gimnasio',
+  arbitro_polemico: 'alerta',
+  cumpleanos: 'destacado',
+  periodista_barrial: 'historia',
+  mudanza: 'salir',
+  sobrino_socio: 'plantel',
 };
 
 // Eventos festivos: acá la gorra está permitida (nunca en la ficha deportiva).
@@ -56,6 +57,7 @@ function EventPerson({ p, festive }: { p: Player; festive?: boolean }) {
     <div className="event-person">
       <div className="avatar">
         <Avatar
+          personality={p.personality}
           seed={p.id}
           age={p.age}
           appearance={p.appearance}
@@ -80,7 +82,9 @@ export function EventModal({ state, dispatch }: Props) {
       <div className="modal-backdrop">
         <div className="modal">
           <div className="event-head">
-            <div className="event-icon">{EVENT_ICONS[def.id] ?? '📣'}</div>
+            <div className="event-icon">
+              <Icon name={EVENT_ICONS[def.id] ?? 'destacado'} size={30} />
+            </div>
             <h2>{def.title}</h2>
           </div>
           {people.length > 0 && (
@@ -112,7 +116,9 @@ export function EventModal({ state, dispatch }: Props) {
       <div className="modal-backdrop">
         <div className="modal">
           <div className="event-head">
-            <div className="event-icon">💬</div>
+            <div className="event-icon">
+              <Icon name="chat" size={30} />
+            </div>
             <h2>Desenlace</h2>
           </div>
           {people.length > 0 && (
