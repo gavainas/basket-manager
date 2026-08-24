@@ -32,6 +32,9 @@ export function LeagueProfile({ state, leagueId, onClose }: Props) {
     (e) => e.leagueId === league.id && e.teamId === USER_TEAM_ID && e.status === 'activa'
   );
 
+  // La categoría del club en esta liga (undefined si no juega acá).
+  const ourLevel = userEntry ? divisions.find((x) => x.id === userEntry.divisionId)?.level : undefined;
+
   const recordOf = (legacyId?: string) => {
     const row = legacyId ? state.standings.find((r) => r.teamId === legacyId) : undefined;
     return row ? `${row.wins}-${row.losses}` : null;
@@ -100,11 +103,14 @@ export function LeagueProfile({ state, leagueId, onClose }: Props) {
                       nuestra divisional
                     </span>
                   ) : (
-                    orderedTeams.length > 0 && (
+                    // "Arriba" y "abajo" solo tienen sentido si el club juega
+                    // en esta liga; si no, la categoría se cuenta sola.
+                    orderedTeams.length > 0 &&
+                    ourLevel !== undefined && (
                       <span className="chip" style={{ marginLeft: '0.5rem' }}>
-                        {d.level < (userEntry ? divisions.find((x) => x.id === userEntry.divisionId)?.level ?? 99 : 99)
-                          ? 'la de arriba'
-                          : 'la de abajo'}
+                        {d.level < ourLevel
+                          ? `${ourLevel - d.level} categoría${ourLevel - d.level > 1 ? 's' : ''} arriba`
+                          : `${d.level - ourLevel} categoría${d.level - ourLevel > 1 ? 's' : ''} abajo`}
                       </span>
                     )
                   )}

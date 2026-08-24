@@ -4,14 +4,24 @@ import { createInitialRoster } from '../data/players';
 import { createRecruit } from '../data/recruits';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
 import {
-  DIVISIONS,
-  INITIAL_OTHER_DIVISION,
   LEAGUES,
+  LEAGUE_ENTRIES,
   PLAZA_DIVISION_ID,
-  PLAZA_RIVALS,
   USER_DIVISION_ID,
+  leagueEntryOf,
 } from '../data/worldData';
-import { applyPromotionRelegation } from './promotion';
+import type { LeaguePrize } from '../data/worldData';
+import {
+  applyPromotionRelegation,
+  divisionById,
+  divisionsOfLeague,
+  initialWorldDivisions,
+  joinDivision,
+  leagueOfDivision,
+  leaguePromotes,
+  rivalsForDivision,
+  scheduleFor,
+} from './pyramid';
 import { rollWeekBanter } from './banter';
 import { rollWeekMoment } from './moments';
 import { weeklyFee } from './economy';
@@ -21,7 +31,7 @@ import { buildCoachMarket } from './coach';
 import { computeSeasonEvaluation } from './evaluation';
 import { rollPreseasonEvent } from './preseasonEvents';
 import { logClubEvent } from './timeline';
-import { buildWorld, emptyWorld, evolveWorldOffseason } from './world';
+import { buildWorld, dayLabel, emptyWorld, evolveWorldOffseason } from './world';
 import { SAVE_VERSION } from './week';
 import { Rng } from './rng';
 import type {
@@ -248,6 +258,7 @@ function buildPreseasonState(
 
 export interface LeagueOption {
   divisionId: string;
+  leagueId: string;
   leagueName: string;
   divisionName: string;
   gameDay: WeekDay;
@@ -264,6 +275,18 @@ export interface LeagueOption {
    * se devuelve durante la temporada). Las ligas nuevas cobran contado.
    */
   trusts: boolean;
+  /** Fechas de la fase regular: los torneos cortos tienen menos. */
+  weeks: number;
+  /** La liga mueve equipos entre divisionales al cierre de la temporada. */
+  promotes: boolean;
+  /** Te guardaron el lugar: volvés a la categoría que dejaste. */
+  isHeld: boolean;
+  /** Premio en plata del podio, si la liga reparte. */
+  prize?: LeaguePrize;
+  /** Lo que mueve anotarse acá (una sola vez, al inscribirse). */
+  prestigeOnJoin?: { sport?: number; social?: number };
+  /** Si el club no puede anotarse, por qué. */
+  locked?: string;
 }
 
 function levelLabelFor(avgStrength: number): string {
@@ -273,46 +296,110 @@ function levelLabelFor(avgStrength: number): string {
   return 'Nivel para pasear';
 }
 
-function optionFor(s: GameState, divisionId: string, rivals: { strength: number }[], held: boolean): LeagueOption {
-  const division = DIVISIONS.find((d) => d.id === divisionId)!;
+/**
+ * Arma una opción de la oferta. Los rivales salen del mundo vivo: la
+ * divisional que te guardaron siguió teniendo ascensos y descensos sin vos,
+ * y el nivel que se muestra es el de este año, no el del año que te fuiste.
+ */
+function optionFor(s: GameState, divisionId: string, opts: { held?: boolean } = {}): LeagueOption {
+  const division = divisionById(divisionId)!;
   const league = LEAGUES.find((l) => l.id === division.leagueId)!;
+  const entry = leagueEntryOf(league.id);
+  const isCurrent = divisionId === s.divisionId;
   const isPlaza = divisionId === PLAZA_DIVISION_ID;
+  const held = !!opts.held;
+  const rivals = isCurrent ? s.rivals : rivalsForDivision(s, divisionId);
   const avg = rivals.reduce((sum, r) => sum + r.strength, 0) / Math.max(1, rivals.length);
+  const known = isCurrent || held;
+  const below = divisionsOfLeague(league.id).find((d) => d.level === division.level + 1);
+  const above = divisionsOfLeague(league.id).find((d) => d.level === division.level - 1);
+  const movimientos: string[] = [];
+  if (above) movimientos.push(`los dos finalistas de la Copa de Oro ascienden a la ${above.name}`);
+  if (below) movimientos.push(`los dos últimos se van a la ${below.name}`);
+  const remate = !above
+    ? ' Arriba no hay nada: es la categoría más alta de la liga.'
+    : !below
+      ? ' Abajo no hay nada: de acá no se baja.'
+      : '';
+  const note = isCurrent
+    ? leaguePromotes(league.id)
+      ? `Tu categoría de siempre: acá te conocen y te fían la ficha si no llegás con la plata. La categoría se mueve: ${movimientos.join(' y ')}.${remate}`
+      : 'Tu liga de siempre: acá te conocen, y si no llegás con la plata, te la fían (deuda que se paga en temporada).'
+    : held
+      ? 'Te guardaron el lugar: el dueño de la liga te conoce, y si no llegás con la plata, te la fía. Volvés a la categoría que dejaste.'
+      : entry?.note ?? 'Una liga nueva para el club.';
+
+  const minPrestige = entry?.minSportPrestige;
+  const locked =
+    !isCurrent && !held && minPrestige !== undefined && s.club.sportPrestige < minPrestige
+      ? `Piden antecedentes: al menos ${minPrestige} de prestigio deportivo y el club tiene ${Math.round(s.club.sportPrestige)}.`
+      : undefined;
+
   return {
     divisionId,
+    leagueId: league.id,
     leagueName: league.name,
     divisionName: division.name,
     gameDay: division.gameDay,
     gameTimes: division.gameTimes,
-    fee: isPlaza ? 0 : BALANCE.economy.inscriptionFee,
+    fee: isPlaza ? 0 : entry?.fee ?? BALANCE.economy.inscriptionFee,
     levelLabel: levelLabelFor(avg),
-    note: isPlaza
-      ? 'Gratis y los sábados puede todo el mundo. Sin ascensos, el prestigio deportivo se derrite semana a semana, los ambiciosos del plantel se calientan y las figuras del mercado ni te atienden.'
-      : held
-        ? 'Te guardaron el lugar: el dueño de la liga te conoce, y si no llegás con la plata, te la fía.'
-        : 'Tu liga de siempre: acá te conocen, y si no llegás con la plata, te la fían (deuda que se paga en temporada).',
-    isCurrent: divisionId === s.divisionId,
+    note,
+    isCurrent,
     isPlaza,
-    // Hoy toda opción con inscripción es la Universitaria que ya te conoce
-    // (actual o guardada); cuando la oferta sume ligas nuevas, esas cobran contado.
-    trusts: !isPlaza,
+    // Te fía la liga donde ya estás y la que te guarda el lugar; las nuevas
+    // cobran contado hasta que te conozcan.
+    trusts: known ? true : entry?.trusts ?? false,
+    weeks: rivals.length,
+    promotes: leaguePromotes(league.id),
+    isHeld: held,
+    prize: entry?.prize,
+    prestigeOnJoin: !isCurrent && !held ? entry?.prestigeOnJoin : undefined,
+    locked,
   };
 }
 
 /**
- * La oferta de ligas de esta pretemporada: tu divisional actual, la plaza y,
- * si el club está en la plaza, la divisional de la Universitaria que le
- * guardaron. La elección se hace con PS_CHOOSE_LEAGUE y se paga al cierre.
+ * La oferta de ligas de esta pretemporada: tu divisional actual, las que te
+ * guardan el lugar y las ligas donde el club puede entrar de afuera. La
+ * elección se hace con PS_CHOOSE_LEAGUE y se paga al cierre.
  */
 export function inscriptionOffer(s: GameState): LeagueOption[] {
-  const options: LeagueOption[] = [optionFor(s, s.divisionId, s.rivals, false)];
-  if (s.heldDivision && s.heldDivision.divisionId !== s.divisionId) {
-    options.push(optionFor(s, s.heldDivision.divisionId, s.heldDivision.rivals, true));
+  const options: LeagueOption[] = [optionFor(s, s.divisionId)];
+  for (const heldId of s.heldDivisionIds ?? []) {
+    if (heldId !== s.divisionId && divisionById(heldId)) options.push(optionFor(s, heldId, { held: true }));
   }
-  if (s.divisionId !== PLAZA_DIVISION_ID) {
-    options.push(optionFor(s, PLAZA_DIVISION_ID, PLAZA_RIVALS, false));
+  const currentLeagueId = leagueOfDivision(s.divisionId)?.id;
+  for (const entry of LEAGUE_ENTRIES) {
+    if (entry.leagueId === currentLeagueId) continue;
+    if (options.some((o) => o.leagueId === entry.leagueId)) continue;
+    options.push(optionFor(s, entry.entryDivisionId));
   }
   return options;
+}
+
+/**
+ * El premio en plata del podio: las ligas que lo reparten lo pagan al cierre
+ * de la temporada (hoy, el torneo corto del Comercio).
+ */
+export function seasonPrize(state: GameState): { amount: number; text: string } | null {
+  const leagueId = leagueOfDivision(state.divisionId)?.id;
+  const prize = leagueId ? leagueEntryOf(leagueId)?.prize : undefined;
+  if (!prize) return null;
+  const P = state.playoffs;
+  if (!P) return null;
+  const leagueName = LEAGUES.find((l) => l.id === leagueId)?.name ?? 'la liga';
+  if (P.champions.oro === 'club') {
+    return { amount: prize.champion, text: `Premio de campeón de la ${leagueName}: $${prize.champion} que pusieron los auspiciantes.` };
+  }
+  const finalOro = P.ties.find((t) => t.cup === 'oro' && t.round === 'final');
+  if (finalOro && (finalOro.homeId === 'club' || finalOro.awayId === 'club')) {
+    return { amount: prize.runnerUp, text: `Premio de finalista de la ${leagueName}: $${prize.runnerUp}.` };
+  }
+  if (P.champions.plata === 'club') {
+    return { amount: prize.silver, text: `Premio por ganar la Copa de Plata de la ${leagueName}: $${prize.silver}.` };
+  }
+  return null;
 }
 
 // ---------- Arranques ----------
@@ -378,8 +465,8 @@ export function createPreseasonNewGame(seed: number, difficulty: AbsenceDifficul
     coachMarket: buildCoachMarket(1, seed),
     trialCandidate: null,
     divisionId: USER_DIVISION_ID,
-    otherDivisionTeams: INITIAL_OTHER_DIVISION.map((t) => ({ ...t })),
-    heldDivision: null,
+    worldDivisions: initialWorldDivisions(USER_DIVISION_ID),
+    heldDivisionIds: [],
     absenceDifficulty: difficulty,
   };
   state.preseason = buildPreseasonState(players, state.club, rng, true);
@@ -400,7 +487,9 @@ export function startPreseason(state: GameState): GameState {
   // pretemporada lo va a hacer doler (la comisión tapa agujeros con prestigio).
   const oldDebt = state.inscriptionDebt;
   const debtSettled = oldDebt && oldDebt.remaining > 0 ? oldDebt.remaining : 0;
-  const inheritedMoney = state.club.money - debtSettled;
+  // El premio del podio (las ligas que reparten) entra en la caja del verano.
+  const prize = seasonPrize(state);
+  const inheritedMoney = state.club.money - debtSettled + (prize?.amount ?? 0);
 
   const finishedRow = state.standings.find((r) => r.teamId === 'club')!;
   const finishedSeason = {
@@ -442,7 +531,8 @@ export function startPreseason(state: GameState): GameState {
     return np;
   });
 
-  // Ascensos y descensos: rearma las dos divisionales y, si toca, mueve al club.
+  // Ascensos y descensos: mueve toda la pirámide (divisional por divisional,
+  // la juegue el club o no) y, si toca, cambia de categoría al club.
   const promo = applyPromotionRelegation(state);
   const rivals = promo.nextRivals;
   const promoTone: NewsTone =
@@ -461,7 +551,8 @@ export function startPreseason(state: GameState): GameState {
     objectives: [],
     pastSeasons: [...state.pastSeasons, finishedSeason],
     week: 1,
-    seasonLength: BALANCE.season.weeks,
+    // El largo del torneo lo pone la liga: los rivales que tenés son las fechas.
+    seasonLength: rivals.length,
     phase: 'preseason',
     club: {
       ...state.club,
@@ -473,7 +564,7 @@ export function startPreseason(state: GameState): GameState {
     },
     players,
     rivals,
-    schedule: SCHEDULE_ORDER,
+    schedule: scheduleFor(rivals),
     standings: [
       { teamId: 'club', wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 },
       ...rivals.map((r) => ({ teamId: r.id, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 })),
@@ -497,6 +588,7 @@ export function startPreseason(state: GameState): GameState {
             tone: 'neutral' as NewsTone,
           }]
         : []),
+      ...(prize ? [{ week: 0, text: prize.text, tone: 'good' as NewsTone }] : []),
       ...promo.notes.map((text) => ({ week: 0, text, tone: promoTone })),
       ...summer.news.map((text) => ({ week: 0, text, tone: 'neutral' as NewsTone })),
       ...(state.secondTeam
@@ -513,6 +605,7 @@ export function startPreseason(state: GameState): GameState {
       ...(debtSettled > 0
         ? [{ week: 0, concept: `Liquidación del fiado de la inscripción (${oldDebt!.leagueName})`, amount: -debtSettled }]
         : []),
+      ...(prize ? [{ week: 0, concept: 'Premio del podio', amount: prize.amount }] : []),
     ],
     memorableMoments: [],
     clubTimeline: [
@@ -539,9 +632,9 @@ export function startPreseason(state: GameState): GameState {
     coachMarket: buildCoachMarket(seasonNumber, state.seed),
     trialCandidate: null,
     divisionId: promo.nextDivisionId,
-    otherDivisionTeams: promo.nextOtherTeams,
-    // El lugar guardado en la Universitaria (si el club anda por la plaza) se hereda.
-    heldDivision: state.heldDivision ?? null,
+    worldDivisions: promo.nextWorldDivisions,
+    // Los lugares que las ligas le guardan al club (si anda jugando en otra).
+    heldDivisionIds: [...(state.heldDivisionIds ?? [])],
     // La dificultad de faltas acompaña al club toda la carrera.
     absenceDifficulty: state.absenceDifficulty,
     // Lo vivido entre compañeros (asados, sociedades, peleas) no se resetea.
@@ -550,13 +643,15 @@ export function startPreseason(state: GameState): GameState {
     nemesis: state.nemesis ?? null,
   };
   if (promo.userMoved) {
+    const fromName = divisionById(state.divisionId)?.name ?? 'su divisional';
+    const toName = divisionById(promo.nextDivisionId)?.name ?? 'otra divisional';
     next.clubTimeline.push({
       season: state.seasonNumber,
       week: state.seasonLength,
       kind: 'hito',
       text: promo.userMoved === 'ascenso'
-        ? `¡El club ascendió a la Divisional A tras la temporada ${state.seasonNumber}!`
-        : `El club descendió a la Divisional B tras la temporada ${state.seasonNumber}.`,
+        ? `¡El club ascendió de la ${fromName} a la ${toName} tras la temporada ${state.seasonNumber}!`
+        : `El club descendió de la ${fromName} a la ${toName} tras la temporada ${state.seasonNumber}.`,
     });
   }
   next.preseason = buildPreseasonState(
@@ -1035,29 +1130,44 @@ export function closePreseason(state: GameState): GameState {
   const offer = inscriptionOffer(s);
   // undefined = save de antes de que existiera la oferta: se inscribe como siempre, sin recargo.
   const late = p.chosenDivisionId === null;
-  const target = offer.find((o) => o.divisionId === p.chosenDivisionId) ?? offer.find((o) => o.isCurrent)!;
+  const chosen = offer.find((o) => o.divisionId === p.chosenDivisionId && !o.locked);
+  const target = chosen ?? offer.find((o) => o.isCurrent)!;
 
-  // Cambio de divisional: rivales y tabla nuevos, y el lugar que corresponda guardado.
+  // Cambio de liga o divisional: rivales, tabla, fixture y largo de torneo
+  // nuevos, y el lugar guardado donde corresponda (lo maneja joinDivision).
   if (target.divisionId !== s.divisionId) {
+    const fromLeagueName = leagueOfDivision(s.divisionId)?.name ?? 'su liga';
+    const move = joinDivision(s, target.divisionId);
     if (target.isPlaza) {
-      s.heldDivision = { divisionId: s.divisionId, rivals: s.rivals.map((r) => ({ ...r })) };
-      s.rivals = PLAZA_RIVALS.map((r) => ({ ...r }));
       s.club.sportPrestige = clamp(s.club.sportPrestige - BALANCE.preseason.plazaPrestigeHit);
       consequences.push(
-        `El club se anotó en la Liga de la Plaza: gratis y los sábados a la tarde, pero el barrio lo lee como un paso atrás (prestigio deportivo -${BALANCE.preseason.plazaPrestigeHit}). La Universitaria te guarda el lugar.`
+        `El club se anotó en la Liga de la Plaza: gratis y los sábados a la tarde, pero el barrio lo lee como un paso atrás (prestigio deportivo -${BALANCE.preseason.plazaPrestigeHit}).${
+          move.held ? ` La ${fromLeagueName} te guarda el lugar.` : ''
+        }`
       );
-      logClubEvent(s, 'hito', 'El club dejó la Universitaria y se anotó en la Liga de la Plaza.', 0);
+      logClubEvent(s, 'hito', `El club dejó la ${fromLeagueName} y se anotó en la Liga de la Plaza.`, 0);
+    } else if (target.isHeld) {
+      consequences.push(
+        `El club vuelve a la ${target.leagueName}: el lugar en la ${target.divisionName} estaba guardado y la vuelta se firmó sin drama.`
+      );
+      logClubEvent(s, 'hito', `El club volvió a la ${target.leagueName} (${target.divisionName}).`, 0);
     } else {
-      s.rivals = (s.heldDivision?.rivals ?? RIVALS).map((r) => ({ ...r }));
-      s.heldDivision = null;
-      consequences.push('El club vuelve a la Liga Universitaria: el lugar estaba guardado y la vuelta se firmó sin drama.');
-      logClubEvent(s, 'hito', 'El club volvió a la Liga Universitaria tras su paso por la plaza.', 0);
+      const moves: string[] = [];
+      if (target.prestigeOnJoin?.sport) {
+        s.club.sportPrestige = clamp(s.club.sportPrestige + target.prestigeOnJoin.sport);
+        moves.push(`prestigio deportivo +${target.prestigeOnJoin.sport}`);
+      }
+      if (target.prestigeOnJoin?.social) {
+        s.club.socialPrestige = clamp(s.club.socialPrestige + target.prestigeOnJoin.social);
+        moves.push(`prestigio social +${target.prestigeOnJoin.social}`);
+      }
+      consequences.push(
+        `El club se anotó en la ${target.leagueName} (${target.divisionName}): se juega los ${dayLabel(target.gameDay)} y son ${target.weeks} fechas${
+          moves.length ? ` (${moves.join(', ')})` : ''
+        }.${move.held ? ` La ${fromLeagueName} te guarda el lugar.` : ''}`
+      );
+      logClubEvent(s, 'hito', `El club se pasó a la ${target.leagueName}: juega la ${target.divisionName}.`, 0);
     }
-    s.divisionId = target.divisionId;
-    s.standings = [
-      { teamId: 'club', wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 },
-      ...s.rivals.map((r) => ({ teamId: r.id, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 })),
-    ];
   }
 
   // El costo: la plaza es gratis; no elegir a tiempo tiene recargo y mala imagen.
@@ -1144,7 +1254,7 @@ export function startSeasonFromPreseason(state: GameState): GameState {
   const s: GameState = structuredClone(state);
   const rng = new Rng(s.seed);
 
-  s.objectives = generateObjectives(s.seasonNumber, s.club.sportPrestige, rng);
+  s.objectives = generateObjectives(s.seasonNumber, s.club.sportPrestige, rng, s.seasonLength);
   s.week = 1;
   s.phase = 'planning';
   s.starters = suggestStarters(s.players);

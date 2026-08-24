@@ -19,10 +19,18 @@ import type { GameState, League, Player, SecondTeamRow, SecondTeamState } from '
 
 export const SECOND_TEAM_ID = 'tm_user2';
 
-/** La liga donde compite el equipo principal no admite un segundo equipo (por ahora). */
+/**
+ * Las ligas donde el club puede inscribir un SEGUNDO equipo: las que abren cupo
+ * (tienen divisional con lugares libres) y no son la del equipo principal —
+ * un jugador no puede tener dos fichas en la misma liga.
+ */
 export function expansionLeagues(state: GameState): League[] {
   const userLeagueId = state.world.entries.find((e) => e.teamId === 'tm_user' && e.status === 'activa')?.leagueId;
-  return state.world.leagues.filter((l) => l.id !== userLeagueId);
+  return state.world.leagues.filter(
+    (l) =>
+      l.id !== userLeagueId &&
+      state.world.divisions.some((d) => d.leagueId === l.id && EXPANSION_DIVISION_TEAMS[d.id])
+  );
 }
 
 export function eligibleForLeague(p: Player, league: League): boolean {
@@ -43,7 +51,8 @@ export interface ExpansionCheck {
 export function checkExpansion(state: GameState, leagueId: string): ExpansionCheck {
   const E = BALANCE.expansion;
   const league = state.world.leagues.find((l) => l.id === leagueId);
-  const division = state.world.divisions.find((d) => d.leagueId === leagueId);
+  // La divisional con cupo para un equipo nuevo (una liga puede tener varias).
+  const division = state.world.divisions.find((d) => d.leagueId === leagueId && EXPANSION_DIVISION_TEAMS[d.id]);
   const eligibleIds = league
     ? state.players.filter((p) => eligibleForLeague(p, league)).map((p) => p.id)
     : [];

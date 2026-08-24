@@ -1,8 +1,16 @@
 import { useContext, useState } from 'react';
 import { BALANCE } from '../game/balance';
-import { checkExpansion, eligibleForLeague, SECOND_TEAM_ID, secondTeamPosition } from '../game/secondTeam';
+import {
+  checkExpansion,
+  eligibleForLeague,
+  expansionLeagues,
+  SECOND_TEAM_ID,
+  secondTeamPosition,
+} from '../game/secondTeam';
 import type { CupTier, GameState, League } from '../game/types';
-import { clubByLegacyId, divisionStandings, USER_TEAM_ID } from '../game/world';
+import { clubByLegacyId, divisionStandings, rosterDivisionIds, USER_TEAM_ID } from '../game/world';
+import { leaguePromotes, MOVE_COUNT } from '../game/pyramid';
+import { WORLD_DIVISION_IDS } from '../data/worldData';
 import type { GameAction } from '../state/gameReducer';
 import { ClubLink } from './ClubLink';
 import { Crest } from './Crest';
@@ -251,6 +259,8 @@ function SecondTeamCard({ state }: { state: GameState }) {
 
 export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (action: GameAction) => void }) {
   const [expandLeague, setExpandLeague] = useState<string | null>(null);
+  // Qué otra divisional de la pirámide se está mirando (null = la primera).
+  const [pyramidTab, setPyramidTab] = useState<string | null>(null);
   const sorted = [...state.standings].sort(
     (a, b) => b.wins - a.wins || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
   );
@@ -271,9 +281,22 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
   const userEntry = world.entries.find((e) => e.teamId === USER_TEAM_ID && e.status === 'activa');
   const userDivision = world.divisions.find((d) => d.id === userEntry?.divisionId);
   const userLeague = world.leagues.find((l) => l.id === userEntry?.leagueId);
-  // La otra divisional de la liga (la de arriba mientras jugamos en B): tabla simulada.
-  const otherDivision = world.divisions.find((d) => d.leagueId === userLeague?.id && d.id !== userDivision?.id);
-  const otherRows = otherDivision ? divisionStandings(world, otherDivision.id, state.week, state.seasonNumber) : [];
+  // La pirámide de nuestra liga: todas sus divisionales, de la más alta a la
+  // más baja. La nuestra tiene tabla real; las otras, tabla simulada.
+  const pyramid = world.divisions
+    .filter((d) => d.leagueId === userLeague?.id && WORLD_DIVISION_IDS.includes(d.id))
+    .sort((a, b) => a.level - b.level);
+  const ourLevel = userDivision?.level ?? 0;
+  const divisionAbove = pyramid.find((d) => d.level === ourLevel - 1);
+  const divisionBelow = pyramid.find((d) => d.level === ourLevel + 1);
+  const promotes = userLeague ? leaguePromotes(userLeague.id) : false;
+  const scoutable = rosterDivisionIds(state.divisionId);
+  // Ligas que aceptan un SEGUNDO equipo del club (las otras se juegan con el
+  // equipo principal, y eso se decide en la inscripción de la pretemporada).
+  const expansible = expansionLeagues(state).map((l) => l.id);
+  const otherDivisions = pyramid.filter((d) => d.id !== userDivision?.id);
+  const shownDivision = otherDivisions.find((d) => d.id === pyramidTab) ?? otherDivisions[0];
+  const otherRows = shownDivision ? divisionStandings(world, shownDivision.id, state.week, state.seasonNumber) : [];
 
   return (
     <div>
@@ -312,11 +335,18 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
                       <>
                         <span className="muted">
                           {divisions.length} divisional{divisions.length !== 1 ? 'es' : ''}
-                          {l.minAge ? ` · desde ${l.minAge} años` : ''} · el club todavía no tiene equipo acá
+                          {l.minAge ? ` · desde ${l.minAge} años` : ''}
+                          {expansible.includes(l.id)
+                            ? ' · el club todavía no tiene equipo acá'
+                            : ' · el equipo principal se puede anotar acá en la próxima pretemporada'}
                         </span>{' '}
-                        <button className="small" onClick={() => setExpandLeague(l.id)}>
-                          Inscribir equipo…
-                        </button>
+                        {/* Segundo equipo: solo en las ligas que abren cupo. En
+                            las demás, la puerta es la inscripción del principal. */}
+                        {expansible.includes(l.id) && (
+                          <button className="small" onClick={() => setExpandLeague(l.id)}>
+                            Inscribir equipo…
+                          </button>
+                        )}
                       </>
                     )}
                   </span>
@@ -385,6 +415,21 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
         <p className="muted" style={{ marginBottom: 0 }}>
           Al cierre de la fase regular: 1°-4° juegan la Copa de Oro, 5°-8° la Copa de Plata. Los últimos dos
           se van a casa.
+          {promotes && divisionAbove && (
+            <>
+              {' '}
+              Los <strong>{MOVE_COUNT} finalistas de la Copa de Oro ascienden</strong> a la {divisionAbove.name}.
+            </>
+          )}
+          {promotes && divisionBelow && (
+            <>
+              {' '}
+              Los <strong>{MOVE_COUNT} últimos de esta tabla descienden</strong> a la {divisionBelow.name}.
+            </>
+          )}
+          {promotes && !divisionBelow && ' Abajo no hay nada: de acá no se baja.'}
+          {promotes && !divisionAbove && ' Es la categoría más alta de la liga: no hay a dónde subir.'}
+          {!promotes && ' En esta liga no hay ascensos ni descensos.'}
         </p>
       </div>
 
@@ -429,14 +474,33 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
       </div>
       </div>
 
-      {otherDivision && otherRows.length > 0 && (
+      {shownDivision && otherRows.length > 0 && (
         <div className="card" style={{ marginTop: '1rem' }}>
-          <h3>
-            La otra divisional · {userLeague?.name} {otherDivision.name}
-          </h3>
+          <h3>La pirámide · {userLeague?.name}</h3>
           <p className="muted" style={{ marginTop: 0 }}>
-            La divisional de arriba: equipos más fuertes. Tocá un nombre para ver su plantel.
+            {promotes
+              ? `De la ${pyramid[0]?.name} a la ${pyramid[pyramid.length - 1]?.name}: todos los años ${MOVE_COUNT} suben y ${MOVE_COUNT} bajan entre categorías vecinas.`
+              : 'Las divisionales de la liga.'}{' '}
+            Jugamos en la <strong>{userDivision?.name}</strong>.
           </p>
+          {/* Un botón por categoría, en orden: la escalera se lee de un vistazo. */}
+          <div className="division-tabs" style={{ marginBottom: '0.6rem' }}>
+            {pyramid.map((d) => {
+              const ours = d.id === userDivision?.id;
+              const active = !ours && d.id === shownDivision.id;
+              return (
+                <button
+                  key={d.id}
+                  className={`small${active ? ' primary' : ''}`}
+                  disabled={ours}
+                  onClick={() => setPyramidTab(d.id)}
+                  title={ours ? 'Es nuestra divisional' : `Ver la tabla de la ${d.name}`}
+                >
+                  {ours ? `▸ ${d.name} (nosotros)` : d.name}
+                </button>
+              );
+            })}
+          </div>
           <div className="table-wrap">
             <table>
               <thead>
@@ -451,11 +515,13 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
               <tbody>
                 {otherRows.map((row, i) => {
                   const clubId = world.teams.find((t) => t.id === row.teamId)?.clubId;
+                  const sube = promotes && i < MOVE_COUNT && shownDivision.level > 1;
+                  const baja = promotes && i >= otherRows.length - MOVE_COUNT && !!pyramid.find((d) => d.level === shownDivision.level + 1);
                   return (
                     <tr key={row.teamId}>
                       <td
                         style={{
-                          color: i >= otherRows.length - 2 ? 'var(--bad)' : 'var(--text-dim)',
+                          color: sube ? 'var(--good)' : baja ? 'var(--bad)' : 'var(--text-dim)',
                           fontWeight: 700,
                         }}
                       >
@@ -472,8 +538,11 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
             </table>
           </div>
           <p className="muted" style={{ marginBottom: 0 }}>
-            Los 2 últimos descienden a nuestra divisional al cierre; de la nuestra ascienden los 2 finalistas de la
-            Copa de Oro.
+            {shownDivision.level === ourLevel - 1 && `Los ${MOVE_COUNT} últimos de acá bajan a nuestra divisional; de la nuestra suben los ${MOVE_COUNT} finalistas de la Copa de Oro. `}
+            {shownDivision.level === ourLevel + 1 && `Los ${MOVE_COUNT} finalistas de la Copa de Oro de acá suben a nuestra divisional; nuestros ${MOVE_COUNT} últimos se vienen para acá. `}
+            {scoutable.includes(shownDivision.id)
+              ? 'Tocá un nombre para ver su plantel: a estos los tenemos scouteados.'
+              : 'Está demasiado lejos de nuestra categoría: sabemos quiénes son, no cómo juegan. Sus planteles aparecen cuando el club se les acerca.'}
           </p>
         </div>
       )}

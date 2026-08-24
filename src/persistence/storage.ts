@@ -6,9 +6,21 @@ import { buildWorld } from '../game/world';
 import { Rng, seedFromString as seedFrom } from '../game/rng';
 import { FIRST_NAMES, LAST_NAMES } from '../data/names';
 import { RIVALS } from '../data/rivals';
-import { INITIAL_OTHER_DIVISION, USER_DIVISION_ID } from '../data/worldData';
+import { DIVISION_SEEDS, USER_DIVISION_ID } from '../data/worldData';
+import { initialWorldDivisions, reslot } from '../game/pyramid';
 import { rollBackground } from '../data/backgrounds';
-import type { GameState } from '../game/types';
+import type { GameState, Rival } from '../game/types';
+
+/**
+ * Campos que existieron en saves viejos y ya no viven en GameState. Las
+ * migraciones los leen desde acá para poder convertirlos sin ensuciar el tipo.
+ */
+interface LegacySave {
+  /** Hasta v23: la única "otra" divisional del mundo. Hoy: worldDivisions. */
+  otherDivisionTeams?: Rival[];
+  /** Hasta v23: foto del lugar guardado. Hoy: heldDivisionIds + el mundo vivo. */
+  heldDivision?: { divisionId: string; rivals: Rival[] } | null;
+}
 
 const KEY = 'basket-manager-save-v1';
 
@@ -28,6 +40,7 @@ export function loadGame(): GameState | null {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as GameState;
+    const legacy = parsed as unknown as LegacySave;
     // Migración liviana: v2 solo carece del palmarés.
     if (parsed.saveVersion === 2) {
       parsed.pastSeasons = parsed.pastSeasons ?? [];
@@ -181,7 +194,7 @@ export function loadGame(): GameState | null {
     }
     // v19 → v20: la otra divisional pasa a ser estado (persisten los ascensos/descensos).
     if (parsed.saveVersion === 19) {
-      parsed.otherDivisionTeams = parsed.otherDivisionTeams ?? INITIAL_OTHER_DIVISION.map((t) => ({ ...t }));
+      legacy.otherDivisionTeams = legacy.otherDivisionTeams ?? DIVISION_SEEDS['dv_lu_a'].map((t) => ({ ...t }));
       parsed.world = buildWorld(parsed, new Rng(seedFrom(`world_${parsed.seed}`)));
       parsed.saveVersion = 20;
     }
@@ -221,6 +234,40 @@ export function loadGame(): GameState | null {
         if (typeof parsed.club?.[k] === 'number') parsed.club[k] = Math.round(parsed.club[k]);
       }
       parsed.saveVersion = 23;
+    }
+    // v23 → v24: la pirámide. El mundo pasa de dos divisionales a nueve, con
+    // ascensos y descensos en toda la Universitaria y dos ligas nuevas.
+    //
+    // - `otherDivisionTeams` (la única "otra" divisional) pasa a ser una
+    //   entrada más de `worldDivisions`, con los slots de esa divisional.
+    // - El lugar guardado deja de ser una foto de rivales: ahora es el id de
+    //   la divisional, y sus rivales viven en el mundo (siguen sin vos).
+    // - Las divisionales que antes no existían entran con su composición
+    //   original; el mundo se rearma para que aparezcan con equipos y tabla.
+    if (parsed.saveVersion === 23) {
+      const userDivisionId: string = parsed.divisionId ?? USER_DIVISION_ID;
+      const divisions = initialWorldDivisions(userDivisionId);
+      // La otra divisional de la Universitaria que traía el save manda sobre
+      // la composición original: ahí están asentados sus ascensos previos.
+      const otherId = userDivisionId === 'dv_lu_a' ? 'dv_lu_b' : 'dv_lu_a';
+      if (Array.isArray(legacy.otherDivisionTeams) && legacy.otherDivisionTeams.length > 0) {
+        divisions[otherId] = reslot(legacy.otherDivisionTeams, otherId, false);
+      }
+      // El lugar guardado (el club andaba por la plaza): sus rivales vuelven a
+      // la divisional que le espera, y de ahí en más se mueven solos.
+      const held = legacy.heldDivision;
+      parsed.heldDivisionIds = [];
+      if (held?.divisionId) {
+        if (Array.isArray(held.rivals) && held.rivals.length > 0) {
+          divisions[held.divisionId] = reslot(held.rivals, held.divisionId, false);
+        }
+        parsed.heldDivisionIds = [held.divisionId];
+      }
+      delete legacy.otherDivisionTeams;
+      delete legacy.heldDivision;
+      parsed.worldDivisions = divisions;
+      parsed.world = buildWorld(parsed, new Rng(seedFrom(`world_${parsed.seed}`)));
+      parsed.saveVersion = 24;
     }
     // scheduledEvents (eventos encadenados) es opcional y se accede con ?? []:
     // los saves viejos cargan sin migración.

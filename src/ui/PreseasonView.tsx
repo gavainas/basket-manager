@@ -267,7 +267,16 @@ function InscriptionSection({ state, dispatch }: Props) {
             {opt.fee > 0 ? `Inscripción: $${opt.fee}` : 'Inscripción gratis'}
           </span>
           <span className="chip accent">{opt.levelLabel}</span>
-          {opt.isPlaza && <span className="chip warn">Sin ascensos · prestigio -{BALANCE.preseason.plazaPrestigeHit}</span>}
+          <span className="chip">{opt.weeks} fechas</span>
+          {opt.promotes ? (
+            <span className="chip good">Con ascensos y descensos</span>
+          ) : (
+            <span className={`chip ${opt.isPlaza ? 'warn' : ''}`}>Sin ascensos</span>
+          )}
+          {opt.prize && <span className="chip good">Premio al campeón: ${opt.prize.champion}</span>}
+          {opt.fee > 0 && !opt.trusts && <span className="chip warn">Se paga contado: no fían</span>}
+          {opt.isPlaza && <span className="chip warn">Prestigio deportivo -{BALANCE.preseason.plazaPrestigeHit}</span>}
+          {opt.isHeld && <span className="chip good">Te guardan el lugar</span>}
         </div>
         <p className="muted" style={{ margin: '0.5rem 0' }}>
           {opt.note}
@@ -289,13 +298,18 @@ function InscriptionSection({ state, dispatch }: Props) {
             ✓ Todos los confirmados pueden los {dayLabel(opt.gameDay)}
           </p>
         )}
+        {opt.locked && (
+          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--warn)' }}>
+            ✕ {opt.locked}
+          </p>
+        )}
         <button
           className={chosen ? '' : 'primary'}
           style={{ width: '100%', marginTop: '0.4rem' }}
-          disabled={chosen}
+          disabled={chosen || !!opt.locked}
           onClick={() => dispatch({ type: 'PS_CHOOSE_LEAGUE', divisionId: opt.divisionId })}
         >
-          {chosen ? '✓ Inscripto acá (se paga al cierre)' : 'Anotarse acá'}
+          {opt.locked ? 'No nos aceptan todavía' : chosen ? '✓ Inscripto acá (se paga al cierre)' : 'Anotarse acá'}
         </button>
       </div>
     );

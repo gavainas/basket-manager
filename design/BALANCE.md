@@ -197,6 +197,42 @@ significaba nada.
   devuelve a la media calibrada; ver la tabla de arriba para la corrida de
   validación. Los egos, objetivos y `timesFaced` no tocan el partido.
 
+## Sistemas de la 4ª pasada (agosto 2026, la pirámide)
+
+- **Ligas, divisionales y ascensos** (`pyramid.ts`, ver
+  [`LIGAS.md`](LIGAS.md)): el mundo pasó de 2 divisionales a 8 y el club puede
+  subir, bajar y cambiar de liga. **No toca el partido**: la composición de la
+  Divisional B (donde arranca el club) es la misma de siempre, y la vida del
+  resto del mundo corre con su propia tirada de azar (`worldRng`) para no
+  correr el hilo de la temporada del usuario.
+- **Control contra la versión anterior**, 200 temporadas por estrategia con las
+  mismas semillas (el mundo nuevo vs. `234244f`):
+
+  | Métrica | Antes | Con la pirámide |
+  |---|---|---|
+  | Victorias (presión / zona / mixta) | 50.0% / 43.1% / 51.1% | 50.2% / 44.0% / 51.9% |
+  | Lesiones en partido por temporada | 1.31 / 1.20 / 1.28 | 1.28 / 1.21 / 1.29 |
+  | Abandonos por temporada | 0.00 / 1.42 / 0.68 | 0.00 / 1.54 / 0.66 |
+  | Semanas sin ausencias (presión) | 26.7% | 28.1% |
+
+  Todo dentro del ruido de la muestra: la pirámide no movió el balance del
+  partido. (De paso queda medido que "semanas sin ausencias" hoy ronda el 27%,
+  no el ~35% que dice la tabla de objetivos de arriba: la bajaron los
+  **momentos del mundo** de la semana viva, no este cambio. Anotado para la
+  próxima pasada — o se acepta el 27% como el nuevo normal, o los momentos
+  necesitan un cupo más chico.)
+- **El nivel por categoría no se licúa**: al moverse entre divisionales, la
+  fuerza de cada equipo se encaja en la banda de su nueva categoría (mínimo y
+  máximo de su composición original, ±3). Sin eso, diez temporadas de deriva
+  aleatoria terminan con todas las divisionales en el mismo nivel.
+- **Torneos cortos**: `seasonLength` sale de la cantidad de rivales, así que
+  una liga de 8 equipos son 7 fechas. Menos fechas = menos cuotas cobradas
+  (~2 semanas de ingreso), compensado con el premio del podio de esa liga
+  ($400 / $200 / $100). Los objetivos de la comisión se recortan al torneo.
+- **Fin de semana sin horarios**: la penalización por "solo llega a los de
+  22:00" no aplica sábado ni domingo. Eso hace que la plaza y el Comercio
+  sean, de verdad, las ligas donde viene todo el mundo.
+
 ## Pendiente (ver ROADMAP)
 
 - Niveles de dificultad seleccionables (fácil/normal/difícil) como presets

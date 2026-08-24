@@ -1212,6 +1212,22 @@ img.retrato-img.v2 {
   margin-top: 0.55rem;
 }
 
+/* La escalera de divisionales: un botón por categoría, de la más alta a la más
+   baja. La nuestra va deshabilitada pero marcada — no es un botón muerto, es
+   dónde estamos parados. */
+.division-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.division-tabs button:disabled {
+  opacity: 1;
+  cursor: default;
+  border-color: var(--text);
+  color: var(--text);
+  font-weight: 700;
+}
+
 /* ---------- Tables ---------- */
 
 .table-wrap {
