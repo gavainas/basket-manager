@@ -1,7 +1,7 @@
 import { BALANCE, clamp } from './balance';
 import { createInitialRoster } from '../data/players';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
-import { INITIAL_OTHER_DIVISION, PLAZA_DIVISION_ID, USER_DIVISION_ID } from '../data/worldData';
+import { PLAZA_DIVISION_ID, USER_DIVISION_ID } from '../data/worldData';
 import { getAction } from './actions';
 import { rollWeekBanter } from './banter';
 import { applyWeeklyEconomy } from './economy';
@@ -17,11 +17,12 @@ import { advancePlayoffs } from './playoffs';
 import { checkPromises } from './promises';
 import { secondTeamWeeklyTick } from './secondTeam';
 import { logClubEvent, logPlayerEvent } from './timeline';
+import { initialWorldDivisions } from './pyramid';
 import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
 import type { AbsenceDifficulty, ActiveEvent, GameState } from './types';
 
-export const SAVE_VERSION = 23;
+export const SAVE_VERSION = 24;
 
 export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'medio'): GameState {
   const rng = new Rng(seed);
@@ -88,8 +89,8 @@ export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'med
     coachMarket: buildCoachMarket(1, seed),
     trialCandidate: null,
     divisionId: USER_DIVISION_ID,
-    otherDivisionTeams: INITIAL_OTHER_DIVISION.map((t) => ({ ...t })),
-    heldDivision: null,
+    worldDivisions: initialWorldDivisions(USER_DIVISION_ID),
+    heldDivisionIds: [],
     absenceDifficulty: difficulty,
   };
   state.objectives = generateObjectives(1, state.club.sportPrestige, rng);

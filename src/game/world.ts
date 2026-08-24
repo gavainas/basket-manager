@@ -4,7 +4,7 @@
 // del usuario, y el mundo los espeja con entidades completas.
 
 import { BALANCE } from './balance';
-import { CLUB_COLORS, DIVISIONS, LEAGUES, USER_LEAGUE_ID } from '../data/worldData';
+import { CLUB_COLORS, DIVISIONS, LEAGUES, USER_LEAGUE_ID, WORLD_DIVISION_IDS } from '../data/worldData';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
 import { momentById } from './moments';
 import { Rng, seedFromString } from './rng';
@@ -411,6 +411,24 @@ function rosterForClub(
 }
 
 /**
+ * Las divisionales cuyos planteles se materializan: la del club y sus vecinas
+ * de categoría (la de arriba y la de abajo de su misma liga). Son las que se
+ * pueden scoutear y entre las que se mueven los ascensos y descensos. Las
+ * demás viven como tabla hasta que el club se les acerca — así el mundo puede
+ * tener nueve divisionales sin triplicar el tamaño del save.
+ */
+export function rosterDivisionIds(userDivisionId: string): string[] {
+  const own = DIVISIONS.find((d) => d.id === userDivisionId);
+  if (!own) return [userDivisionId];
+  return DIVISIONS.filter(
+    (d) =>
+      WORLD_DIVISION_IDS.includes(d.id) &&
+      d.leagueId === own.leagueId &&
+      Math.abs(d.level - own.level) <= 1
+  ).map((d) => d.id);
+}
+
+/**
  * Construye el mundo a partir del estado clásico (rivals + schedule).
  * Los equipos, fichas y fixture se rearman cada temporada; las PERSONAS
  * (world.players) persisten: vienen del estado anterior y solo se completan.
@@ -558,12 +576,26 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
     }
   }
 
-  // La otra divisional de la liga (la de arriba mientras el usuario juega en B):
-  // equipos completos con plantel, para scoutear y para los ascensos/descensos.
-  // Se genera al final para no alterar el RNG ni el emparejamiento de la del usuario.
-  const otherDivision = DIVISIONS.find((d) => d.leagueId === USER_LEAGUE_ID && d.id !== state.divisionId);
-  if (otherDivision) {
-    state.otherDivisionTeams.forEach((seed) => {
+  // El resto del mundo: TODAS las demás divisionales de todas las ligas, con
+  // sus equipos y su chapa institucional. Se genera al final para no alterar
+  // el RNG ni el emparejamiento de la divisional del usuario.
+  //
+  // Planteles completos solo para las divisionales vecinas (la de arriba y la
+  // de abajo de la del club, en su misma liga): son las que se pueden scoutear
+  // y a las que se puede subir o bajar el año que viene. Las lejanas viven
+  // como tabla — nombre, escudo y nivel —; sus planteles se generan recién
+  // cuando el club se les acerca.
+  //
+  // Usa su PROPIA tirada (`worldRng`): la vida del resto del mundo no puede
+  // correr el azar de la temporada del usuario. Si compartieran el hilo,
+  // agregar una divisional cambiaría la convocatoria del primer partido.
+  const withRosters = rosterDivisionIds(state.divisionId);
+  const worldRng = new Rng(seedFromString(`mundo_${seasonId}_${state.seed}`));
+  for (const divisionId of WORLD_DIVISION_IDS) {
+    const teams = state.worldDivisions?.[divisionId];
+    const worldDiv = DIVISIONS.find((d) => d.id === divisionId);
+    if (!teams || !worldDiv) continue;
+    for (const seed of teams) {
       const clubId = `cl_${seed.id}`;
       const teamId = `tm_${seed.id}`;
       const venueId = `vn_${seed.id}`;
@@ -595,18 +627,19 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
       });
       world.entries.push({
         teamId,
-        leagueId: USER_LEAGUE_ID,
-        divisionId: otherDivision.id,
+        leagueId: worldDiv.leagueId,
+        divisionId,
         seasonId,
         status: 'activa',
         fee: 300,
         registeredWeek: 0,
       });
-      const roster = rosterForClub(world, seed.name, seed.strength, state.seasonNumber, rng);
+      if (!withRosters.includes(divisionId)) continue;
+      const roster = rosterForClub(world, seed.name, seed.strength, state.seasonNumber, worldRng);
       for (const p of roster) {
-        registerPlayer(world, { playerId: p.id, teamId, leagueId: USER_LEAGUE_ID, seasonId, week: 0 });
+        registerPlayer(world, { playerId: p.id, teamId, leagueId: worldDiv.leagueId, seasonId, week: 0 });
       }
-    });
+    }
   }
 
   // Fichas del plantel del usuario (regla central incluida).
@@ -838,7 +871,7 @@ export function addCupFixture(
   world.fixtures.push({
     id: opts.id,
     seasonId: world.season.id,
-    leagueId: USER_LEAGUE_ID,
+    leagueId: division.leagueId,
     divisionId: state.divisionId,
     week: opts.week,
     date: fixtureDate(world.season.year, opts.week, division.gameDay),
@@ -854,12 +887,26 @@ export function addCupFixture(
 
 // ---------- Disponibilidad y convocatoria rival ----------
 
+/**
+ * El finde el laburo no manda: el que "solo llega a los de 22:00" lo dice por
+ * el turno de la semana, y un partido de sábado a la tarde o domingo de
+ * mañana no le pisa nada. Vale para las dos capas (mundo y plantel propio).
+ */
+export function timeMattersOn(day: WeekDay): boolean {
+  return day !== 'sábado' && day !== 'domingo';
+}
+
 /** Probabilidad de que un jugador del mundo esté para un partido dado. */
 export function attendChance(p: WorldPlayer, division: Division, time: string): number {
   if (p.injuryWeeks > 0) return 0;
   let c = p.availability.baseChance;
   if (p.availability.blockedDays.includes(division.gameDay)) c *= 0.15;
-  if (p.availability.onlyTimes.length > 0 && !p.availability.onlyTimes.includes(time)) c *= 0.35;
+  if (
+    timeMattersOn(division.gameDay) &&
+    p.availability.onlyTimes.length > 0 &&
+    !p.availability.onlyTimes.includes(time)
+  )
+    c *= 0.35;
   if (p.availability.distanceKm > 50) c *= 0.5;
   return Math.max(0.02, Math.min(0.98, c));
 }

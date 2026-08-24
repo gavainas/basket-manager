@@ -1,6 +1,7 @@
 import type { GameState } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { computeSeasonEvaluation } from '../game/evaluation';
+import { userSeasonFate } from '../game/pyramid';
 import { objectiveStatus } from '../game/objectives';
 import { BALANCE } from '../game/balance';
 import { PlayoffsCard } from './LeagueView';
@@ -14,6 +15,8 @@ interface Props {
 
 export function SeasonEndScreen({ state, dispatch }: Props) {
   const ev = computeSeasonEvaluation(state);
+  // Sube, baja o se queda: con las copas jugadas ya está decidido.
+  const fate = userSeasonFate(state);
   const canContinue = !ev.isGameOver;
   const shortOnMoney = state.club.money < BALANCE.economy.inscriptionFee;
 
@@ -35,8 +38,19 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
         <h1>{ev.outcomeTitle}</h1>
         <p>{ev.outcomeText}</p>
         <p className="muted">Temporada {state.seasonNumber}</p>
+        {fate && (
+          <p style={{ marginTop: '0.8rem' }}>
+            <span className={`chip ${fate.kind === 'ascenso' ? 'good' : 'bad'}`}>
+              {fate.kind === 'ascenso'
+                ? `¡Ascendemos a la ${fate.division.name}!`
+                : `Descendemos a la ${fate.division.name}.`}
+            </span>
+          </p>
+        )}
         <p style={{ marginTop: '0.8rem' }}>
-          <span className="chip accent">Posición final: {ev.position}° de 10</span>{' '}
+          <span className="chip accent">
+            Posición final: {ev.position}° de {state.standings.length}
+          </span>{' '}
           <span className="chip">Récord: {ev.record}</span>{' '}
           <span className={`chip ${state.club.money >= 0 ? 'good' : 'bad'}`}>Caja: {formatMoney(state.club.money)}</span>
         </p>

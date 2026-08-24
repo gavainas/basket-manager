@@ -144,7 +144,16 @@ export function ClubProfile({ state, clubId, onClose }: Props) {
             .filter((t) => !t.legacyRivalId && t.id !== USER_TEAM_ID)
             .map((t) => {
               const roster = teamRoster(world, t.id).sort((a, b) => b.level - a.level);
-              if (roster.length === 0) return null;
+              // Los clubes de categorías lejanas viven como tabla: sabemos
+              // quiénes son, no quién juega. El plantel aparece cuando el club
+              // se les acerca (una categoría arriba o abajo de la nuestra).
+              if (roster.length === 0) {
+                return (
+                  <p className="muted" key={t.id}>
+                    Juegan demasiado lejos de nuestra categoría: nadie del club los vio jugar todavía.
+                  </p>
+                );
+              }
               return (
                 <div key={t.id}>
                   <h4 className="profile-subtitle">Plantel</h4>

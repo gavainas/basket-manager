@@ -57,7 +57,7 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
       label: 'Resultado deportivo',
       score: sportScore,
       grade: grade(sportScore),
-      detail: `${row.wins} ${row.wins === 1 ? 'ganado' : 'ganados'}, ${row.losses} ${row.losses === 1 ? 'perdido' : 'perdidos'}. Posición final: ${position}° de 10.`,
+      detail: `${row.wins} ${row.wins === 1 ? 'ganado' : 'ganados'}, ${row.losses} ${row.losses === 1 ? 'perdido' : 'perdidos'}. Posición final: ${position}° de ${state.standings.length}.`,
     },
     {
       key: 'finance',

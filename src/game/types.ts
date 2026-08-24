@@ -925,13 +925,20 @@ export interface GameState {
   trialCandidate: TrialCandidate | null;
   /** Divisional donde compite el club (id de world Divisions). Cambia con ascensos/descensos. */
   divisionId: string;
-  /** Los 10 equipos de la divisional que el usuario NO juega (persisten los ascensos/descensos). */
-  otherDivisionTeams: Rival[];
   /**
-   * Si el club se fue a la plaza, la Universitaria le guarda el lugar: la
-   * divisional que dejó y sus rivales, para poder volver en otra pretemporada.
+   * La composición de TODAS las demás divisionales del mundo (la del club son
+   * `rivals`). Clave: id de divisional. Persiste entre temporadas: acá quedan
+   * asentados los ascensos y descensos de toda la pirámide, jueguen donde
+   * jueguen el club y sus rivales.
    */
-  heldDivision?: { divisionId: string; rivals: Rival[] } | null;
+  worldDivisions: Record<string, Rival[]>;
+  /**
+   * Ligas que le guardan el lugar al club porque se fue a jugar a otra: la
+   * divisional donde estaba te espera para la pretemporada siguiente. Los
+   * rivales de esa divisional siguen su vida en `worldDivisions` mientras
+   * tanto (suben y bajan sin vos).
+   */
+  heldDivisionIds?: string[];
   /** Segundo equipo del club en otra liga (etapa 6); opcional para no migrar saves. */
   secondTeam?: SecondTeamState | null;
   /** Dificultad de faltas y lesiones (elegida al crear la partida; saves viejos = medio). */

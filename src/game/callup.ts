@@ -8,7 +8,7 @@ import { fragilityOf, rollInjuryWeeks } from './injuries';
 import { isSelectable } from './match';
 import { momentById } from './moments';
 import { logPlayerEvent } from './timeline';
-import { dayLabel, userFixtureOfWeek } from './world';
+import { dayLabel, timeMattersOn, userFixtureOfWeek } from './world';
 import type { CallUpEntry, GameState, WeekDay } from './types';
 import type { Rng } from './rng';
 
@@ -99,7 +99,10 @@ export function rollCallUp(s: GameState, rng: Rng): void {
     if (
       p.agenda &&
       matchTime &&
-      ((p.agenda.onlyTimes.length > 0 && !p.agenda.onlyTimes.includes(matchTime) && rng.chance(0.7)) ||
+      ((p.agenda.onlyTimes.length > 0 &&
+        !p.agenda.onlyTimes.includes(matchTime) &&
+        (!matchDay || timeMattersOn(matchDay)) &&
+        rng.chance(0.7)) ||
         rng.chance(p.agenda.lateChance * 0.5))
     ) {
       entries.push({

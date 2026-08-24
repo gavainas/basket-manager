@@ -13,6 +13,8 @@ interface ObjectiveDef {
   makeTarget: (ambition: number, rng: Rng) => number;
   /** Evalúa el estado actual del objetivo. */
   status: (state: GameState, target: number, seasonOver: boolean) => ObjectiveStatus;
+  /** El target no puede pasarse de las fechas que tiene la liga. */
+  fitToSeason?: boolean;
 }
 
 const DEFS: ObjectiveDef[] = [
@@ -30,6 +32,7 @@ const DEFS: ObjectiveDef[] = [
     id: 'wins',
     label: (t) => `Ganar al menos ${t} partidos`,
     makeTarget: (ambition, rng) => Math.min(8, 3 + ambition + rng.int(0, 1)),
+    fitToSeason: true,
     status: (s, t, over) => {
       const row = s.standings.find((r) => r.teamId === 'club')!;
       if (row.wins >= t) return 'cumplido';
@@ -98,11 +101,23 @@ const DEFS: ObjectiveDef[] = [
 ];
 
 /** Genera 3 objetivos distintos. La ambición crece con las temporadas y el prestigio. */
-export function generateObjectives(seasonNumber: number, sportPrestige: number, rng: Rng): Objective[] {
+/**
+ * Los tres encargos de la comisión. `seasonLength` importa porque no todas las
+ * ligas tienen la misma cantidad de fechas: pedir 8 victorias en un torneo
+ * corto de 7 partidos sería un objetivo imposible de fábrica.
+ */
+export function generateObjectives(
+  seasonNumber: number,
+  sportPrestige: number,
+  rng: Rng,
+  seasonLength = 9
+): Objective[] {
   const ambition = Math.min(4, seasonNumber - 1 + Math.floor(sportPrestige / 35));
   const picked = rng.shuffle(DEFS).slice(0, 3);
   return picked.map((def) => {
-    const target = def.makeTarget(ambition, rng);
+    const target = def.fitToSeason
+      ? Math.min(def.makeTarget(ambition, rng), Math.max(1, seasonLength - 1))
+      : def.makeTarget(ambition, rng);
     return { id: def.id, label: def.label(target), target };
   });
 }

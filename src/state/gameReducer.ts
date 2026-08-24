@@ -133,8 +133,9 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
     }
     case 'PS_CHOOSE_LEAGUE': {
       if (state.phase !== 'preseason' || !state.preseason) return state;
-      // Solo se puede elegir una liga de la oferta real de esta pretemporada.
-      if (!inscriptionOffer(state).some((o) => o.divisionId === action.divisionId)) return state;
+      // Solo se puede elegir una liga de la oferta real de esta pretemporada,
+      // y solo si el club cumple lo que esa liga pide (prestigio, antecedentes).
+      if (!inscriptionOffer(state).some((o) => o.divisionId === action.divisionId && !o.locked)) return state;
       return { ...state, preseason: { ...state.preseason, chosenDivisionId: action.divisionId } };
     }
     case 'START_SEASON': {
