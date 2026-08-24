@@ -105,6 +105,54 @@ mantiene la curva "arranca accesible, termina bravo"), la tabla, los playoffs
 y los objetivos de la comisión — que ahora se recortan al torneo, porque pedir
 8 victorias en 7 fechas sería un objetivo imposible de fábrica.
 
+## El calendario de la semana
+
+Cada divisional tiene su día y sus dos horarios; el club juega en el día de la
+divisional donde está inscripto.
+
+| Liga | Divisional | Día | Horarios |
+|---|---|---|---|
+| Universitaria | A | martes | 20:00 / 22:00 |
+| Universitaria | **B** (arranque) | **lunes** | 20:00 / 22:00 |
+| Universitaria | C | miércoles | 20:00 / 22:00 |
+| Universitaria | D | martes | 21:00 / 22:45 |
+| Centro | Primera | miércoles | 21:30 / 23:00 |
+| Centro | Segunda | martes | 21:30 / 23:00 |
+| Comercio | Única | domingo | 10:00 / 11:30 |
+| Plaza | Única | sábado | 17:00 / 19:00 |
+| Montevideo (2º equipo) | F | viernes | 20:00 / 22:00 |
+| +35 (2º equipo) | C | jueves | 20:30 / 22:15 |
+
+**Un jugador, una ficha por LIGA** — la divisional no habilita otra
+(`registerPlayer`: la clave es `playerId + leagueId + seasonId`). Jugar en la A
+de la Universitaria te deja jugar en la Segunda del Centro, pero **no** en la C
+de la Universitaria.
+
+Por eso hoy **no hay choques de días posibles**: el equipo principal juega en
+una sola liga a la vez (lunes a miércoles, o el finde), y el segundo equipo
+solo puede anotarse en Montevideo (viernes) o +35 (jueves) — las dos ligas que
+abren cupo, y que nunca son la del principal. Los días están elegidos para que
+las dos agendas no se toquen, y la oferta de inscripción no ofrece la liga
+donde el club ya tiene su segundo equipo (si lo hiciera, los dos equipos se
+pelearían por las mismas fichas y ninguno podría inscribir a nadie).
+
+Los choques que **van a existir** cuando llegue la etapa 7 (doble partido y
+fatiga) ya están dibujados a propósito:
+
+- **martes**: Universitaria A (20:00 / 22:00) contra Centro Segunda (21:30 /
+  23:00) — y la D de la Universitaria en el medio (21:00 / 22:45).
+- **miércoles**: Universitaria C (20:00 / 22:00) contra Centro Primera (21:30 /
+  23:00).
+
+Los horarios están escalonados a propósito: 20:00 y 23:00 el mismo martes es
+exactamente el doble partido de la vida real — llegar al segundo con las
+piernas de otro. Lo que falta para que eso pase es que un mismo jugador pueda
+tener ficha en las dos ligas y que el cansancio cruce entre ellas.
+
+Los `altDays` de cada divisional (reprogramaciones) hoy son decorativos: se
+muestran en la ficha de la liga, pero ningún partido se reprograma todavía
+(etapa 8).
+
 ## Qué se paga y qué se cobra
 
 - **Fiado solo donde te conocen**: tu liga actual y la que te guarda el lugar

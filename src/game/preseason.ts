@@ -373,6 +373,11 @@ export function inscriptionOffer(s: GameState): LeagueOption[] {
   for (const entry of LEAGUE_ENTRIES) {
     if (entry.leagueId === currentLeagueId) continue;
     if (options.some((o) => o.leagueId === entry.leagueId)) continue;
+    // Regla central de inscripción: un jugador saca UNA ficha por liga, sin
+    // importar la divisional. Si el equipo principal se anotara en la liga
+    // donde el club ya tiene su segundo equipo, ninguno de los dos podría
+    // fichar a la misma gente: esa puerta no se ofrece.
+    if (s.secondTeam?.leagueId === entry.leagueId) continue;
     options.push(optionFor(s, entry.entryDivisionId));
   }
   return options;
