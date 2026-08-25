@@ -79,8 +79,8 @@ export function PlayerCard({ player: p, state, selectable, selected, inRotation,
       {note && <HumanNoteRow note={note} />}
 
       <div className="player-chips">
-        <span className={`chip ${status.cls}`}>{status.label}</span>
-        <span className={`chip ${fee.cls}`}>{fee.label}</span>
+        {status && <span className={`chip ${status.cls}`}>{status.label}</span>}
+        {fee && <span className={`chip ${fee.cls}`}>{fee.label}</span>}
         <span className="chip">{roleLabel(p)}</span>
         {p.lastRating !== null && <span className="chip accent">Último partido: {p.lastRating}/10</span>}
         {(mvpCount ?? 0) > 0 && <span className="chip accent">MVP ×{mvpCount}</span>}

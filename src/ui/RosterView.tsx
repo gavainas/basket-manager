@@ -40,7 +40,7 @@ export function RosterView({ state, dispatch }: { state: GameState; dispatch: (a
         <VestuarioCard state={state} />
       </div>
       <div className="roster-head">
-        <p className="muted" style={{ marginTop: 0 }}>
+        <p className="muted sobre-lienzo" style={{ marginTop: 0 }}>
           La valoración (≈) es una estimación: el rendimiento real depende del físico, la motivación, la confianza y el
           encaje en el equipo. Nadie muestra todas sus cartas.
         </p>
@@ -65,7 +65,7 @@ export function RosterView({ state, dispatch }: { state: GameState; dispatch: (a
       {gone.length > 0 && (
         <>
           <h3 className="section-title">Se fueron del club</h3>
-          <div className="muted">
+          <div className="muted sobre-lienzo">
             {gone.map((p, i) => (
               <span key={p.id}>
                 {i > 0 && ' · '}

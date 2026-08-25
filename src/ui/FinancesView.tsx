@@ -1,7 +1,7 @@
 import type { GameState } from '../game/types';
 import { activePlayers } from '../game/match';
 import { weeklyEstimate } from '../game/economy';
-import { feeChip, formatMoney } from './helpers';
+import { feeChipAlways, formatMoney } from './helpers';
 import { PlayerLink } from './PlayerLink';
 
 export function FinancesView({ state }: { state: GameState }) {
@@ -99,7 +99,8 @@ export function FinancesView({ state }: { state: GameState }) {
               </thead>
               <tbody>
                 {active.map((p) => {
-                  const fee = feeChip(p);
+                  // Acá la columna ES el estado de la cuota: se muestra siempre.
+                  const fee = feeChipAlways(p);
                   return (
                     <tr key={p.id}>
                       <td><PlayerLink id={p.id}>{p.name}</PlayerLink></td>

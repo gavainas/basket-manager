@@ -48,6 +48,10 @@
 
   /* Alto de la barra de recursos fija, para el padding del body */
   --recursos-alto: 68px;
+  /* Alto de la barra superior. Lo necesita todo lo que se pega abajo de ella
+     (el cabezal del partido): `.topbar` es sticky en top:0 y no hay forma de
+     preguntarle su alto desde CSS. Medido, no estimado. */
+  --topbar-alto: 55px;
 }
 
 * {
@@ -1367,6 +1371,15 @@ td.num, th.num {
 .action-card .action-title {
   font-weight: 700;
   margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* El ícono no compite con el nombre: hereda el color pero no el peso. */
+.action-card .action-title .ico {
+  flex-shrink: 0;
+  color: var(--sec);
 }
 
 .action-card .action-desc {
@@ -1396,6 +1409,35 @@ td.num, th.num {
 .confirm-bar .hint {
   color: var(--text-dim);
   font-size: 0.85rem;
+}
+
+/* ---------- Cabezal del partido ---------- */
+
+/* Se pega abajo de la barra superior mientras se juega. Solo lleva lo que hay
+   que tener siempre a la vista: marcador, cuarto y racha. Va por debajo de
+   `.topbar` (z-index 30) para que la barra le pase por encima al scrollear. */
+.partido-cabezal {
+  position: sticky;
+  top: var(--topbar-alto);
+  z-index: 20;
+  margin-bottom: 1rem;
+}
+
+/* En vivo el marcador respira menos: el cabezal es una franja, no una pantalla. */
+.partido-cabezal .scoreboard.live {
+  padding: 0.7rem 1rem 0.4rem;
+}
+
+.partido-cabezal-fila {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.partido-cabezal .drama-row {
+  margin-bottom: 0;
 }
 
 /* ---------- Scoreboard ---------- */
@@ -1803,6 +1845,8 @@ tr.sheet-group td {
 .sheet-tag.warn { color: var(--warn); }
 .sheet-tag.bad { color: var(--bad); }
 .sheet-tag.accent { color: var(--accent); }
+/* Sin novedad. Ocupa la celda para no romper la grilla, sin llamar la atención. */
+.sheet-nada { font-size: 0.75rem; color: var(--text-faint); }
 
 .sheet-side {
   border: 1px solid var(--border);
@@ -2083,7 +2127,27 @@ tr.sheet-group td {
 
 .section-title {
   margin: 1.4rem 0 0.7rem;
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   font-size: 1.1rem;
+}
+
+/* Lo que se apoya directo sobre la cancha, sin panel debajo, necesita tinta
+   clara: el fondo lleva un velo oscuro (ver .fondo-app::after) y la tinta
+   normal desaparece. Le pasaba a los dos títulos de Rankings, que eran
+   invisibles. Va acotado a `.vista` a propósito: las galerías de validación
+   (/#retratos, /#escudos) no tienen fondo y ahí la tinta oscura es la correcta. */
+.vista .section-title,
+.vista .sobre-lienzo {
+  color: var(--text-light);
+  text-shadow: 0 1px 3px rgba(20, 18, 16, 0.55);
+}
+
+.vista .sobre-lienzo .plink {
+  color: inherit;
+  border-bottom-color: rgba(246, 244, 241, 0.45);
 }
 
 .muted {
