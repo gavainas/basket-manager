@@ -10,7 +10,8 @@
     "design:sync": "node scripts/design-sync.mjs",
     "sim": "node scripts/sim-balance.cjs",
     "sim:ligas": "node scripts/sim-ligas.cjs",
-    "sim:notas": "node scripts/sim-notas.cjs"
+    "sim:notas": "node scripts/sim-notas.cjs",
+    "sim:margenes": "node scripts/sim-margenes.cjs"
   },
   "dependencies": {
     "@fontsource/oswald": "^5.3.0",
