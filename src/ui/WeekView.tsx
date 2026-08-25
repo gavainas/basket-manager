@@ -961,8 +961,9 @@ function LineupPanel({ state, dispatch }: Props) {
         </div>
       )}
 
-      <ScoutingCard state={state} />
-
+      {/* El scouting del rival baja debajo de la pizarra: es informacion util,
+          pero se comia 180px justo arriba del drag & drop, que es la accion de
+          esta pantalla. Primero armas el quinteto, despues lees al rival. */}
       <div className="lineup-layout">
         <div className="lineup-list card" onDragOver={allowDrop} onDrop={dropOnList}>
           <div className="lineup-toolbar">
@@ -1120,6 +1121,8 @@ function LineupPanel({ state, dispatch }: Props) {
           </div>
         </div>
       </div>
+
+      <ScoutingCard state={state} />
 
       {lineupPromiseWarnings(state).map((w) => (
         <p key={w.playerId} style={{ color: w.breaksToday ? 'var(--bad)' : 'var(--warn, #c90)', fontWeight: 600, margin: '0.5rem 0 0' }}>
