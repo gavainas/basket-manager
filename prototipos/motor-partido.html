@@ -1,0 +1,2038 @@
+<title>Motor de Posesiones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+
+<style>
+:root {
+  --chrome: #32353a;
+  --chrome-alto: #3d4147;
+  --lienzo: #e2dfd9;
+  --panel: #f6f4f1;
+  --panel-alt: #eceae6;
+  --linea: #d2cec8;
+  --tinta: #25282c;
+  --tinta-media: #6a6f76;
+  --tinta-suave: #9a9fa6;
+  --naranja: #e07a2a;
+  --sec: #2d5c8a;
+  --bien: #4a9160;
+  --ojo: #c69320;
+  --mal: #b8443a;
+  --radio: 4px;
+  --parquet: #c9a26a;
+  --parquet-linea: #8a6a3d;
+  --nos: #2d5c8a;
+  --ellos: #9d3b3b;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --cuerpo: "Source Sans 3", system-ui, -apple-system, sans-serif;
+}
+:root:not([data-theme="light"]) {
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chrome: #1b1d20;
+    --chrome-alto: #2a2d31;
+    --lienzo: #16181a;
+    --panel: #232629;
+    --panel-alt: #2b2e32;
+    --linea: #383c41;
+    --tinta: #e6e3de;
+    --tinta-media: #9aa0a7;
+    --tinta-suave: #6d737a;
+    --naranja: #f08c3a;
+    --sec: #4a80b4;
+    --bien: #5faa74;
+    --ojo: #d9a838;
+    --mal: #d15a4e;
+    --parquet: #6d5433;
+    --parquet-linea: #b08d55;
+    --nos: #5b8fc4;
+    --ellos: #c46560;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --chrome: #1b1d20;
+  --chrome-alto: #2a2d31;
+  --lienzo: #16181a;
+  --panel: #232629;
+  --panel-alt: #2b2e32;
+  --linea: #383c41;
+  --tinta: #e6e3de;
+  --tinta-media: #9aa0a7;
+  --tinta-suave: #6d737a;
+  --naranja: #f08c3a;
+  --sec: #4a80b4;
+  --bien: #5faa74;
+  --ojo: #d9a838;
+  --mal: #d15a4e;
+  --parquet: #6d5433;
+  --parquet-linea: #b08d55;
+  --nos: #5b8fc4;
+  --ellos: #c46560;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--lienzo);
+  color: var(--tinta);
+  font-family: var(--cuerpo);
+  font-size: 15px;
+  line-height: 1.5;
+}
+h1, h2, h3 { font-family: var(--display); text-transform: uppercase; margin: 0; font-weight: 600; text-wrap: balance; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- Chrome superior ---------- */
+.chrome {
+  background: var(--chrome);
+  color: #e6e3de;
+  padding: 0.7rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  border-bottom: 3px solid var(--sec);
+}
+.chrome h1 { font-size: 1.35rem; letter-spacing: 0.06em; color: #fff; }
+.chrome .sub {
+  font-size: 0.78rem;
+  color: #9aa0a7;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-family: var(--display);
+}
+.marcador {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: var(--display);
+}
+.marcador .eq { text-align: center; min-width: 118px; }
+.marcador .eq-nom {
+  font-size: 0.76rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: #9aa0a7; white-space: nowrap;
+}
+.marcador .pts {
+  font-size: 2.5rem; line-height: 1; font-weight: 700; color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.marcador .pts.gana { color: var(--naranja); }
+.marcador .reloj {
+  text-align: center; min-width: 92px;
+  padding: 0.3rem 0.55rem;
+  background: var(--chrome-alto);
+  border-radius: var(--radio);
+}
+.marcador .reloj .q { font-size: 0.72rem; letter-spacing: 0.1em; color: #9aa0a7; }
+.marcador .reloj .t { font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---------- Estructura ---------- */
+.wrap { max-width: 1480px; margin: 0 auto; padding: 1.1rem 1.25rem 3rem; }
+.principal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 316px;
+  gap: 1.1rem;
+  align-items: start;
+}
+@media (max-width: 1080px) { .principal { grid-template-columns: minmax(0, 1fr); } }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+.panel > header {
+  background: var(--sec);
+  color: #f6f4f1;
+  padding: 0.45rem 0.8rem;
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.92rem;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+}
+.panel > header .der { margin-left: auto; font-size: 0.76rem; opacity: 0.85; letter-spacing: 0.06em; }
+.panel .cuerpo { padding: 0.85rem; }
+
+/* ---------- Cancha ---------- */
+.cancha-caja { padding: 0; background: var(--panel); }
+canvas#cancha { display: block; width: 100%; height: auto; background: var(--parquet); }
+
+.transporte {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  padding: 0.6rem 0.8rem;
+  border-top: 1px solid var(--linea);
+  background: var(--panel-alt);
+}
+button {
+  font-family: var(--cuerpo); font-size: 0.86rem; font-weight: 600;
+  padding: 0.36rem 0.72rem;
+  border: 1px solid var(--linea);
+  background: var(--panel);
+  color: var(--tinta);
+  border-radius: var(--radio);
+  cursor: pointer;
+}
+button:hover:not(:disabled) { background: var(--panel-alt); border-color: var(--tinta-suave); }
+button:focus-visible { outline: 2px solid var(--naranja); outline-offset: 2px; }
+button:disabled { opacity: 0.4; cursor: default; }
+button.on { background: var(--sec); border-color: var(--sec); color: #f6f4f1; }
+button.principal-btn {
+  background: var(--naranja); border-color: var(--naranja); color: #fff;
+  text-transform: uppercase; font-family: var(--display); letter-spacing: 0.07em;
+  font-size: 0.95rem; padding: 0.4rem 0.95rem;
+}
+button.principal-btn:hover:not(:disabled) { filter: brightness(1.08); background: var(--naranja); }
+.sep { width: 1px; align-self: stretch; background: var(--linea); margin: 0 0.2rem; }
+
+.relato-vivo {
+  padding: 0.55rem 0.85rem;
+  border-top: 1px solid var(--linea);
+  font-size: 0.93rem;
+  min-height: 2.9rem;
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.jugada-tag {
+  font-family: var(--display); text-transform: uppercase; letter-spacing: 0.08em;
+  font-size: 0.72rem; padding: 0.1rem 0.42rem; border-radius: var(--radio);
+  background: var(--panel-alt); border: 1px solid var(--linea); color: var(--tinta-media);
+  white-space: nowrap;
+}
+.jugada-tag.anota { background: var(--bien); border-color: var(--bien); color: #fff; }
+.jugada-tag.falla { background: var(--panel-alt); }
+.jugada-tag.perdida { background: var(--mal); border-color: var(--mal); color: #fff; }
+
+/* ---------- Riel de control ---------- */
+.grupo { margin-bottom: 0.9rem; }
+.grupo:last-child { margin-bottom: 0; }
+.etq {
+  font-family: var(--display); text-transform: uppercase; letter-spacing: 0.11em;
+  font-size: 0.73rem; color: var(--tinta-suave); margin-bottom: 0.3rem; display: block;
+}
+.botonera { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.botonera button { flex: 1; min-width: 62px; padding: 0.33rem 0.4rem; font-size: 0.82rem; }
+.nota-tactica { font-size: 0.81rem; color: var(--tinta-media); margin: 0.32rem 0 0; line-height: 1.35; }
+
+.slider-fila { display: flex; align-items: center; gap: 0.6rem; }
+.slider-fila input[type=range] { flex: 1; accent-color: var(--naranja); }
+.slider-fila .val {
+  font-family: var(--display); font-size: 1.15rem; font-weight: 700;
+  min-width: 2.1rem; text-align: right; font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Quinteto en cancha ---------- */
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+th, td { padding: 0.24rem 0.4rem; text-align: left; }
+thead th {
+  font-family: var(--display); text-transform: uppercase; letter-spacing: 0.07em;
+  font-size: 0.73rem; color: var(--tinta-suave); font-weight: 600;
+  border-bottom: 1px solid var(--linea); white-space: nowrap;
+}
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr { border-bottom: 1px solid var(--linea); }
+tbody tr:last-child { border-bottom: 0; }
+tbody tr.banco { color: var(--tinta-media); background: var(--panel-alt); }
+tbody tr.fuera { opacity: 0.5; }
+tbody tr.total td { font-weight: 700; border-top: 2px solid var(--linea); }
+.dorsal {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.4rem; height: 1.4rem; border-radius: 50%;
+  font-family: var(--display); font-size: 0.78rem; font-weight: 700;
+  color: #fff; margin-right: 0.35rem; font-variant-numeric: tabular-nums;
+}
+.dorsal.nos { background: var(--nos); }
+.dorsal.ellos { background: var(--ellos); }
+.faltas-pip { color: var(--ojo); letter-spacing: -0.08em; }
+.faltas-pip.max { color: var(--mal); }
+.barra-piernas { display: inline-block; width: 34px; height: 5px; background: var(--linea); border-radius: 2px; overflow: hidden; vertical-align: middle; }
+.barra-piernas i { display: block; height: 100%; background: var(--bien); }
+.barra-piernas i.baja { background: var(--ojo); }
+.barra-piernas i.critica { background: var(--mal); }
+
+/* ---------- Pestañas ---------- */
+.pestanas { display: flex; gap: 0.25rem; margin: 1.1rem 0 0; flex-wrap: wrap; }
+.pestanas button {
+  font-family: var(--display); text-transform: uppercase; letter-spacing: 0.08em;
+  font-size: 0.9rem; border-bottom: none; border-radius: var(--radio) var(--radio) 0 0;
+}
+.pestanas button.on { background: var(--sec); border-color: var(--sec); color: #f6f4f1; }
+.hoja { border: 1px solid var(--linea); border-radius: 0 var(--radio) var(--radio) var(--radio); background: var(--panel); padding: 0.9rem; }
+.tabla-wrap { overflow-x: auto; }
+.dos-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+@media (max-width: 900px) { .dos-col { grid-template-columns: 1fr; } }
+.sub-titulo {
+  font-family: var(--display); text-transform: uppercase; letter-spacing: 0.08em;
+  font-size: 0.95rem; margin: 0 0 0.4rem; padding-bottom: 0.2rem;
+  border-bottom: 2px solid var(--linea);
+}
+.sub-titulo.nos { border-color: var(--nos); }
+.sub-titulo.ellos { border-color: var(--ellos); }
+
+/* ---------- Relato ---------- */
+.pbp { max-height: 460px; overflow-y: auto; font-size: 0.87rem; }
+.pbp-fila { display: flex; gap: 0.6rem; padding: 0.22rem 0.3rem; border-bottom: 1px solid var(--linea); align-items: baseline; }
+.pbp-fila:nth-child(even) { background: var(--panel-alt); }
+.pbp-reloj { font-variant-numeric: tabular-nums; color: var(--tinta-suave); font-size: 0.8rem; min-width: 3.1rem; }
+.pbp-marc { font-variant-numeric: tabular-nums; color: var(--tinta-media); font-size: 0.8rem; min-width: 3.4rem; text-align: right; }
+.pbp-txt { flex: 1; }
+.pbp-fila.nos .pbp-txt { border-left: 3px solid var(--nos); padding-left: 0.45rem; }
+.pbp-fila.ellos .pbp-txt { border-left: 3px solid var(--ellos); padding-left: 0.45rem; }
+.pbp-q {
+  font-family: var(--display); text-transform: uppercase; letter-spacing: 0.1em;
+  font-size: 0.78rem; background: var(--chrome); color: #e6e3de;
+  padding: 0.18rem 0.5rem; margin-top: 0.3rem;
+}
+
+/* ---------- Balance ---------- */
+.tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 0.6rem; margin-bottom: 1rem; }
+.tarjeta { background: var(--panel-alt); border: 1px solid var(--linea); border-radius: var(--radio); padding: 0.6rem 0.7rem; }
+.tarjeta .k { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.72rem; color: var(--tinta-suave); }
+.tarjeta .v { font-family: var(--display); font-size: 1.75rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tarjeta .v.clave { color: var(--naranja); }
+.tarjeta .n { font-size: 0.78rem; color: var(--tinta-media); }
+.barra-margen { position: relative; height: 16px; background: var(--panel-alt); border-radius: 2px; overflow: hidden; min-width: 130px; }
+.barra-margen i { position: absolute; top: 0; bottom: 0; }
+.barra-margen i.pos { background: var(--bien); }
+.barra-margen i.neg { background: var(--mal); }
+.barra-margen .cero { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--tinta-suave); left: 50%; }
+.leyenda { font-size: 0.84rem; color: var(--tinta-media); line-height: 1.5; }
+.leyenda code { background: var(--panel-alt); padding: 0.05rem 0.28rem; border-radius: 2px; font-size: 0.92em; }
+.aviso {
+  border-left: 3px solid var(--naranja); background: var(--panel-alt);
+  padding: 0.55rem 0.75rem; font-size: 0.87rem; border-radius: 0 var(--radio) var(--radio) 0;
+}
+.corriendo { color: var(--naranja); font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="chrome">
+  <div>
+    <h1>Motor de posesiones</h1>
+    <div class="sub">Prototipo · fuera del juego</div>
+  </div>
+  <div class="marcador">
+    <div class="eq">
+      <div class="eq-nom" id="nomNos">Barrio Sur</div>
+      <div class="pts num" id="ptsNos">0</div>
+    </div>
+    <div class="reloj">
+      <div class="q" id="perLbl">—</div>
+      <div class="t num" id="relojLbl">10:00</div>
+    </div>
+    <div class="eq">
+      <div class="eq-nom" id="nomEllos">Los Andes</div>
+      <div class="pts num" id="ptsEllos">0</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="principal">
+    <div>
+      <div class="panel cancha-caja">
+        <header>
+          Cancha
+          <span class="der" id="defRivalLbl"></span>
+        </header>
+        <canvas id="cancha" width="1120" height="600"></canvas>
+        <div class="transporte">
+          <button id="btnPlay" class="principal-btn">▶ Reproducir</button>
+          <div class="sep"></div>
+          <span class="etq" style="margin:0">Velocidad</span>
+          <button class="vel" data-v="1">1×</button>
+          <button class="vel on" data-v="2">2×</button>
+          <button class="vel" data-v="4">4×</button>
+          <button class="vel" data-v="8">8×</button>
+          <div class="sep"></div>
+          <button id="btnCuarto">Saltar cuarto ⏭</button>
+          <button id="btnFinal">Ir al final ⏭⏭</button>
+        </div>
+        <div class="relato-vivo">
+          <span class="jugada-tag" id="jugadaTag">—</span>
+          <span id="jugadaTxt">Elegí las tácticas y dale a Reproducir. El marcador ya está simulado entero: la cancha solo lo muestra.</span>
+        </div>
+      </div>
+
+      <div class="pestanas">
+        <button class="tab on" data-t="planilla">Planilla</button>
+        <button class="tab" data-t="relato">Relato</button>
+        <button class="tab" data-t="balance">Balance</button>
+        <button class="tab" data-t="como">Cómo funciona</button>
+      </div>
+      <div class="hoja">
+        <div id="tab-planilla">
+          <div class="dos-col">
+            <div>
+              <h3 class="sub-titulo nos" id="planNosTit">Barrio Sur</h3>
+              <div class="tabla-wrap"><table id="boxNos"></table></div>
+            </div>
+            <div>
+              <h3 class="sub-titulo ellos" id="planEllosTit">Los Andes</h3>
+              <div class="tabla-wrap"><table id="boxEllos"></table></div>
+            </div>
+          </div>
+          <p class="leyenda" style="margin-top:0.9rem">
+            <strong>T2/T3/TL</strong> convertidos-intentados · <strong>RO/RD</strong> rebotes ofensivos y defensivos ·
+            <strong>AS</strong> asistencias · <strong>PE</strong> pérdidas · <strong>RE</strong> recuperos ·
+            <strong>TP</strong> tapas · <strong>FP</strong> faltas personales (a la 5ª, afuera).
+            Todo sale de posesiones simuladas una por una, para los dos equipos.
+          </p>
+        </div>
+        <div id="tab-relato" hidden><div class="pbp" id="pbp"></div></div>
+        <div id="tab-balance" hidden>
+          <p class="leyenda" style="margin-top:0">
+            La prueba que importa: ¿el marcador da real y una diferencia de nivel se paga como corresponde?
+            Simula partidos completos sin animación contra rivales de distinto nivel.
+            <strong>Objetivo</strong>: ~63 puntos por equipo, y que un rival muy superior gane por ~20.
+          </p>
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin:0.8rem 0">
+            <button id="btnBatch" class="principal-btn">Simular 300 partidos por nivel</button>
+            <span id="batchEstado" class="leyenda"></span>
+          </div>
+          <div id="batchOut"></div>
+        </div>
+        <div id="tab-como" hidden><div id="comoOut"></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <header>Tu banco</header>
+        <div class="cuerpo">
+          <div class="grupo">
+            <span class="etq">Ataque</span>
+            <div class="botonera" id="atkBtns">
+              <button data-a="equipo" class="on">Equipo</button>
+              <button data-a="estrella">Estrella</button>
+              <button data-a="correr">Correr</button>
+            </div>
+            <p class="nota-tactica" id="atkNota"></p>
+          </div>
+          <div class="grupo">
+            <span class="etq">Defensa</span>
+            <div class="botonera" id="defBtns">
+              <button data-d="zona" class="on">Zona</button>
+              <button data-d="hombre">Hombre</button>
+              <button data-d="presion">Presión</button>
+            </div>
+            <p class="nota-tactica" id="defNota"></p>
+          </div>
+          <div class="grupo">
+            <span class="etq">Nivel de tu equipo</span>
+            <div class="slider-fila">
+              <input type="range" id="nivNos" min="35" max="95" value="58">
+              <span class="val num" id="nivNosVal">58</span>
+            </div>
+          </div>
+          <div class="grupo">
+            <span class="etq">Nivel del rival</span>
+            <div class="slider-fila">
+              <input type="range" id="nivEllos" min="35" max="95" value="60">
+              <span class="val num" id="nivEllosVal">60</span>
+            </div>
+          </div>
+          <div class="grupo">
+            <span class="etq">Defensa del rival</span>
+            <div class="botonera" id="defRivalBtns">
+              <button data-d="hombre" class="on">Hombre</button>
+              <button data-d="zona">Zona</button>
+              <button data-d="presion">Presión</button>
+            </div>
+            <p class="nota-tactica">Ponelo en zona y mirá cómo se acomodan los cinco en bloque en vez de seguir cada uno al suyo.</p>
+          </div>
+          <button id="btnNuevo" class="principal-btn" style="width:100%">Nuevo partido</button>
+          <p class="nota-tactica" style="margin-top:0.5rem">
+            Cambiar cualquier cosa vuelve a simular el partido entero desde cero.
+          </p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:1.1rem">
+        <header>En cancha <span class="der" id="cuartoLbl"></span></header>
+        <div class="cuerpo" style="padding:0.5rem 0.6rem">
+          <table id="quinteto"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="motor">
+// ===========================================================================
+//  MOTOR DE POSESIONES — prototipo
+//  Cada punto sale de una posesión simulada: quién la trae, si la pierde,
+//  quién tira, desde dónde, contra quién, si entra, quién toma el rebote.
+//  Nada se reparte hacia atrás. El marcador es la suma de lo que pasó.
+// ===========================================================================
+
+// ---------- Azar reproducible ----------
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+class Rng {
+  constructor(seed) { this.f = mulberry32(seed >>> 0); }
+  next() { return this.f(); }
+  range(a, b) { return a + this.f() * (b - a); }
+  int(a, b) { return Math.floor(this.range(a, b + 1)); }
+  chance(p) { return this.f() < p; }
+  pick(arr) { return arr[Math.floor(this.f() * arr.length)]; }
+  /** Elige un índice con pesos (los pesos negativos cuentan como 0). */
+  weighted(weights) {
+    let sum = 0;
+    for (const w of weights) sum += Math.max(0, w);
+    if (sum <= 0) return Math.floor(this.f() * weights.length);
+    let r = this.f() * sum;
+    for (let i = 0; i < weights.length; i++) {
+      r -= Math.max(0, weights[i]);
+      if (r <= 0) return i;
+    }
+    return weights.length - 1;
+  }
+}
+
+// ---------- Jugadores ----------
+const POSICIONES = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
+const POS_CORTA = { 'Base': 'B', 'Escolta': 'E', 'Alero': 'A', 'Ala-Pívot': 'AP', 'Pívot': 'P' };
+
+// El perfil de cada puesto: cuánto se despega de su nivel en cada cosa.
+// Es la derivación que el diseño propone — de UN número salen los atributos.
+const PERFIL = {
+  'Base':      { tiro3:  4, media:  2, cerca: -7, libres:  5, rebO: -11, rebD: -9, pase:  15, manejo:  15, defExt:  4, defInt: -11, robo:  6, tapa: -12, uso: 1.00, p3: 0.38 },
+  'Escolta':   { tiro3:  9, media:  5, cerca: -2, libres:  4, rebO:  -8, rebD: -5, pase:   3, manejo:   8, defExt:  3, defInt:  -8, robo:  4, tapa:  -9, uso: 1.15, p3: 0.45 },
+  'Alero':     { tiro3:  2, media:  2, cerca:  2, libres:  0, rebO:  -1, rebD:  0, pase:   1, manejo:   1, defExt:  1, defInt:  -1, robo:  2, tapa:  -3, uso: 1.10, p3: 0.33 },
+  'Ala-Pívot': { tiro3: -9, media: -1, cerca:  6, libres: -3, rebO:   8, rebD:  7, pase:  -4, manejo:  -8, defExt: -4, defInt:   7, robo: -2, tapa:   6, uso: 0.95, p3: 0.16 },
+  'Pívot':     { tiro3:-17, media: -6, cerca: 11, libres: -9, rebO:  13, rebD: 12, pase:  -7, manejo: -14, defExt: -9, defInt:  12, robo: -3, tapa:  12, uso: 0.85, p3: 0.05 },
+};
+
+const NOMBRES = [
+  'Sosa', 'Pereyra', 'Cabrera', 'Rodríguez', 'Silva', 'Martínez', 'Fernández', 'Núñez',
+  'Bentancor', 'Olivera', 'Píriz', 'Correa', 'Suárez', 'Machado', 'Techera', 'Larrosa',
+  'Ferreira', 'Da Silva', 'Acosta', 'Vázquez',
+];
+
+const clamp = (v, a = 1, b = 99) => Math.max(a, Math.min(b, v));
+
+function crearPlantel(nivel, rng, prefijoId) {
+  const jugadores = [];
+  const nombres = [...NOMBRES];
+  const dorsales = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  // Cinco puestos + tres de banco: un plantel amateur, corto.
+  const puestos = [...POSICIONES, 'Alero', 'Base', 'Pívot'];
+  puestos.forEach((pos, i) => {
+    const perf = PERFIL[pos];
+    // Los titulares son mejores que el banco: el nivel del equipo es el del quinteto.
+    const ajuste = i < 5 ? rng.range(-2, 4) : rng.range(-13, -4);
+    const base = nivel + ajuste;
+    const at = (off) => clamp(Math.round(base + off + rng.range(-4, 4)));
+    const idx = rng.int(0, nombres.length - 1);
+    const nombre = nombres.splice(idx, 1)[0];
+    const dIdx = rng.int(0, dorsales.length - 1);
+    jugadores.push({
+      id: `${prefijoId}${i}`,
+      nombre,
+      dorsal: dorsales.splice(dIdx, 1)[0],
+      pos,
+      posCorta: POS_CORTA[pos],
+      nivel: Math.round(base),
+      titular: i < 5,
+      tiro3: at(perf.tiro3), media: at(perf.media), cerca: at(perf.cerca), libres: at(perf.libres),
+      rebO: at(perf.rebO), rebD: at(perf.rebD), pase: at(perf.pase), manejo: at(perf.manejo),
+      defExt: at(perf.defExt), defInt: at(perf.defInt), robo: at(perf.robo), tapa: at(perf.tapa),
+      aguante: clamp(Math.round(base + rng.range(-12, 12))),
+      uso: perf.uso, p3base: perf.p3,
+    });
+  });
+  return jugadores;
+}
+
+function planillaVacia() {
+  return {
+    pts: 0, t2c: 0, t2i: 0, t3c: 0, t3i: 0, tlc: 0, tli: 0,
+    rebO: 0, rebD: 0, ast: 0, per: 0, rec: 0, tap: 0, fal: 0, seg: 0,
+  };
+}
+
+// ---------- Un equipo dentro del partido ----------
+function crearEquipo(nombre, jugadores, tacticas, lado) {
+  const box = {};
+  const piernas = {};
+  for (const j of jugadores) { box[j.id] = planillaVacia(); piernas[j.id] = 100; }
+  return {
+    nombre, lado, jugadores, box, piernas,
+    enCancha: jugadores.filter((j) => j.titular).map((j) => j.id),
+    ataque: tacticas.ataque, defensa: tacticas.defensa,
+    puntos: 0, faltasCuarto: 0, expulsados: new Set(),
+    porCuarto: [0, 0, 0, 0],
+  };
+}
+
+const jugOf = (eq, id) => eq.jugadores.find((j) => j.id === id);
+const enCanchaJug = (eq) => eq.enCancha.map((id) => jugOf(eq, id));
+
+/** La figura del quinteto: la que recibe la pelota con ataque "estrella". */
+function figuraDe(eq) {
+  const c = enCanchaJug(eq);
+  return c.reduce((m, j) => (j.nivel > m.nivel ? j : m), c[0]);
+}
+
+/**
+ * Emparejamiento defensivo: cada atacante tiene enfrente al defensor de su
+ * puesto. Si no está ese puesto, el más parecido. Contra zona el emparejamiento
+ * se diluye (por eso la zona regala tiros de afuera y cierra la pintura).
+ */
+function defensorDe(atacante, defEq) {
+  const cancha = enCanchaJug(defEq);
+  const iAtk = POSICIONES.indexOf(atacante.pos);
+  let mejor = cancha[0], dist = 99;
+  for (const d of cancha) {
+    const dd = Math.abs(POSICIONES.indexOf(d.pos) - iAtk);
+    if (dd < dist) { dist = dd; mejor = d; }
+  }
+  return mejor;
+}
+</script>
+
+<script id="motor2">
+// ---------- Números del motor (el equivalente a balance.ts) ----------
+const M = {
+  segundosCuarto: 600,
+  segundosSupl: 300,
+  duracionMin: 14, duracionMax: 25,          // segundos por posesión
+  duracionCorrerMin: 11, duracionCorrerMax: 19,
+  duracionTransicion: [6, 12],
+
+  perdidaBase: 0.128,
+  perdidaHombre: 0.014,
+  perdidaPresion: 0.082,
+  presionRotaBase: 0.20,                      // salir jugando y quedar de frente al aro
+  presionRotaManejo: 0.0065,                  // …y el que sabe manejarla te la rompe
+  presionPiernasUmbral: 70,                   // presionar fundido es un colador
+  presionFundidaPenal: 0.055,
+
+  // Porcentajes con nivel 60 contra defensa 60.
+  cercaBase: 0.594, mediaBase: 0.414, tripleBase: 0.343, libreBase: 0.695,
+  pesoTirador: 0.0014, pesoDefensor: 0.0010,
+
+  zonaTriplesMas: 0.090,                      // la zona regala tiros de afuera…
+  zonaTripleBonus: 0.022,
+  zonaCercaPenal: -0.070,                     // …y cierra la pintura
+  hombreTriplePenal: -0.016,
+  hombreCercaPenal: -0.010,
+  transicionCercaBonus: 0.095,
+
+  equipoTiroBonus: 0.013,                     // mover la pelota = mejores tiros
+  equipoAsistMas: 0.10,
+  estrellaUso: 2.8,
+  estrellaDefensaExtra: 6,                    // al que la pide siempre le ponen al mejor
+  estrellaDesgaste: 0.010,                    // y cuarto a cuarto le van tomando la mano
+
+  faltaTiroCerca: 0.158, faltaTiroMedia: 0.055, faltaTiroTriple: 0.030,
+  faltaSinTiro: 0.130,
+  faltasBonus: 5,                             // 5ª falta de equipo por cuarto → libres
+  faltasExpulsion: 5,
+
+  tapaCerca: 0.052, tapaMedia: 0.017,
+  rebOfensivoBase: 0.275,
+  asistCerca: 0.42, asistMedia: 0.52, asistTriple: 0.82,
+
+  desgastePorPosesion: 0.62,
+  desgasteHombre: 0.26,
+  desgastePresion: 0.55,
+  desgasteCorrer: 0.35,
+  recuperaBanco: 0.55,
+  recuperaEntretiempo: 10,
+  pesoPiernas: 0.0013,                        // piernas gastadas = menos tiro
+  umbralCambio: 62,
+};
+
+const relojTxt = (s) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.floor(Math.max(0, s) % 60)).padStart(2, '0')}`;
+
+/** Cuánto rinde hoy: el atributo, castigado por las piernas que quedan. */
+function conPiernas(valor, piernas) { return valor + (piernas - 78) * 0.10; }
+
+// ---------- Una posesión ----------
+function jugarPosesion(atk, def, ctx, rng) {
+  const eventos = [];
+  const figura = figuraDe(atk);
+  const cancha = enCanchaJug(atk);
+  const empujar = (e) => eventos.push(e);
+
+  // --- Quién la trae ---
+  const handler = cancha[rng.weighted(cancha.map((j) => Math.pow(Math.max(1, j.manejo + j.pase - 70), 1.6)))];
+  const marcaHandler = defensorDe(handler, def);
+
+  let transicion = ctx.transicion;
+  let presionRota = false;
+
+  // --- Pérdida ---
+  let pPerdida = M.perdidaBase
+    - (conPiernas(handler.manejo, atk.piernas[handler.id]) - 60) * 0.0008
+    + (marcaHandler.robo - 60) * 0.0006;
+  if (def.defensa === 'hombre') pPerdida += M.perdidaHombre;
+  if (def.defensa === 'presion') {
+    // La presión rinde con piernas: fundida, deja de robar y empieza a regalar.
+    const piernasDef = enCanchaJug(def).reduce((t, j) => t + def.piernas[j.id], 0) / Math.max(1, def.enCancha.length);
+    pPerdida += M.perdidaPresion * Math.min(1.15, piernasDef / M.presionPiernasUmbral);
+  }
+  if (atk.ataque === 'correr') pPerdida += 0.016;
+
+  if (rng.chance(pPerdida)) {
+    atk.box[handler.id].per += 1;
+    const robo = rng.chance(0.56);
+    let ladron = null;
+    if (robo) {
+      const cd = enCanchaJug(def);
+      ladron = cd[rng.weighted(cd.map((j) => Math.max(1, j.robo - 35)))];
+      def.box[ladron.id].rec += 1;
+    }
+    empujar({
+      tipo: 'perdida', jugada: def.defensa === 'presion' ? 'presion' : 'movimiento',
+      conPelota: handler, defensor: ladron ?? marcaHandler, puntos: 0,
+      texto: ladron
+        ? `${ladron.nombre} le roba la pelota a ${handler.nombre}.`
+        : `Pérdida de ${handler.nombre}: la pelota se va afuera.`,
+      generaContra: robo,
+    });
+    return eventos;
+  }
+
+  // La presión que no roba, a veces se rompe: dos pases y quedás de frente al aro.
+  const piernasPresion = def.defensa === 'presion'
+    ? enCanchaJug(def).reduce((t, j) => t + def.piernas[j.id], 0) / Math.max(1, def.enCancha.length)
+    : 100;
+  const pRota = M.presionRotaBase
+    + (handler.manejo - 60) * M.presionRotaManejo
+    + (piernasPresion < M.presionPiernasUmbral ? M.presionFundidaPenal : 0);
+  if (def.defensa === 'presion' && rng.chance(pRota)) {
+    presionRota = true; transicion = true;
+  }
+
+  // --- Quién tira ---
+  const pesos = cancha.map((j) => {
+    let w = j.uso * Math.pow(Math.max(6, conPiernas(j.nivel, atk.piernas[j.id]) - 28), 1.5);
+    if (atk.ataque === 'estrella' && j.id === figura.id) w *= M.estrellaUso;
+    if (atk.ataque === 'equipo') w = Math.pow(w, 0.82);           // se reparte más parejo
+    if (atk.ataque === 'correr' && (j.pos === 'Base' || j.pos === 'Escolta' || j.pos === 'Alero')) w *= 1.25;
+    return w;
+  });
+  const tirador = cancha[rng.weighted(pesos)];
+  const defensor = defensorDe(tirador, def);
+  const esFigura = tirador.id === figura.id;
+
+  // --- Desde dónde ---
+  let p3 = tirador.p3base + (tirador.tiro3 - tirador.cerca) * 0.0018;
+  if (def.defensa === 'zona') p3 += M.zonaTriplesMas;
+  if (transicion) p3 -= 0.05;
+  if (atk.ataque === 'correr') p3 += 0.02;
+  p3 = Math.max(0.02, Math.min(0.62, p3));
+
+  let tipoTiro;
+  if (rng.chance(p3)) tipoTiro = 'triple';
+  else {
+    const pCerca = tirador.pos === 'Pívot' ? 0.80 : tirador.pos === 'Ala-Pívot' ? 0.70
+      : tirador.pos === 'Alero' ? 0.58 : 0.50;
+    tipoTiro = rng.chance(transicion ? pCerca + 0.22 : pCerca) ? 'cerca' : 'media';
+  }
+
+  // --- ¿Entra? ---
+  const piernasT = atk.piernas[tirador.id];
+  let pEntra, atrib, defAtrib, pFalta, pTapa;
+  if (tipoTiro === 'cerca') {
+    pEntra = M.cercaBase; atrib = tirador.cerca; defAtrib = defensor.defInt;
+    pFalta = M.faltaTiroCerca; pTapa = M.tapaCerca;
+    if (def.defensa === 'zona') pEntra += M.zonaCercaPenal;
+    if (def.defensa === 'hombre') pEntra += M.hombreCercaPenal;
+    if (transicion) pEntra += M.transicionCercaBonus;
+  } else if (tipoTiro === 'media') {
+    pEntra = M.mediaBase; atrib = tirador.media; defAtrib = defensor.defExt;
+    pFalta = M.faltaTiroMedia; pTapa = M.tapaMedia;
+  } else {
+    pEntra = M.tripleBase; atrib = tirador.tiro3; defAtrib = defensor.defExt;
+    pFalta = M.faltaTiroTriple; pTapa = 0;
+    if (def.defensa === 'zona') pEntra += M.zonaTripleBonus;
+    if (def.defensa === 'hombre') pEntra += M.hombreTriplePenal;
+  }
+  pEntra += (conPiernas(atrib, piernasT) - 60) * M.pesoTirador;
+  let defEfectivo = defAtrib;
+  if (atk.ataque === 'estrella' && esFigura) defEfectivo += M.estrellaDefensaExtra + ctx.cuarto * M.estrellaDesgaste * 100;
+  pEntra -= (conPiernas(defEfectivo, def.piernas[defensor.id]) - 60) * M.pesoDefensor;
+  if (atk.ataque === 'equipo') pEntra += M.equipoTiroBonus;
+  if (presionRota) pEntra += 0.06;
+  pEntra += (piernasT - 78) * M.pesoPiernas;
+  pEntra = Math.max(0.06, Math.min(0.92, pEntra));
+
+  // --- Tapa ---
+  if (pTapa > 0) {
+    const pT = pTapa + (defensor.tapa - 60) * 0.0022;
+    if (rng.chance(Math.max(0, pT))) {
+      def.box[defensor.id].tap += 1;
+      atk.box[tirador.id].t2i += 1;   // tapada: cerca y media valen 2
+      empujar({
+        tipo: 'falla', jugada: tipoTiro === 'cerca' ? 'poste' : 'pickroll', tapado: true,
+        conPelota: tirador, defensor, puntos: 0,
+        texto: `¡${defensor.nombre} le tapa el tiro a ${tirador.nombre}!`,
+      });
+      return eventos.concat(resolverRebote(atk, def, tirador, rng, ctx));
+    }
+  }
+
+  // --- Falta en el tiro ---
+  const jugada = clasificarJugada(atk, tirador, tipoTiro, transicion, presionRota, esFigura, rng);
+  if (rng.chance(pFalta)) {
+    def.box[defensor.id].fal += 1;
+    def.faltasCuarto += 1;
+    const entra = rng.chance(pEntra * 0.62);        // la falta suele cortar el tiro
+    const nLibres = entra ? 1 : (tipoTiro === 'triple' ? 3 : 2);
+    if (entra) {
+      const val = tipoTiro === 'triple' ? 3 : 2;
+      anotarTiro(atk, tirador, tipoTiro, true);
+      atk.puntos += val;
+      empujar({
+        tipo: 'anota', jugada, conPelota: tirador, defensor, puntos: val, tipoTiro,
+        texto: `${tirador.nombre} la mete con falta de ${defensor.nombre}. Va al libre adicional.`,
+      });
+    } else {
+      anotarTiro(atk, tirador, tipoTiro, false);
+      empujar({
+        tipo: 'falta', jugada, conPelota: tirador, defensor, puntos: 0, tipoTiro,
+        texto: `Falta de ${defensor.nombre} sobre ${tirador.nombre}: ${nLibres} tiros libres.`,
+      });
+    }
+    const anotados = tirarLibres(atk, tirador, nLibres, rng);
+    if (anotados > 0 || nLibres > 0) {
+      empujar({
+        tipo: anotados > 0 ? 'anota' : 'falla', jugada: 'libres', conPelota: tirador,
+        defensor, puntos: anotados, tipoTiro: 'libre', sinAnimacion: true,
+        texto: `${tirador.nombre} convierte ${anotados} de ${nLibres} desde la línea.`,
+      });
+    }
+    revisarExpulsion(def, defensor, eventos);
+    // Si erró el último libre, la pelota se disputa.
+    if (anotados < nLibres && rng.chance(M.rebOfensivoBase * 0.7)) {
+      return eventos.concat(resolverRebote(atk, def, tirador, rng, ctx, true));
+    }
+    return eventos;
+  }
+
+  // --- Tiro normal ---
+  if (rng.chance(pEntra)) {
+    const val = tipoTiro === 'triple' ? 3 : 2;
+    anotarTiro(atk, tirador, tipoTiro, true);
+    atk.puntos += val;
+    // Asistencia
+    let asistente = null;
+    const pAst = (tipoTiro === 'triple' ? M.asistTriple : tipoTiro === 'media' ? M.asistMedia : M.asistCerca)
+      + (atk.ataque === 'equipo' ? M.equipoAsistMas : 0)
+      - (atk.ataque === 'estrella' && esFigura ? 0.14 : 0);
+    const otros = cancha.filter((j) => j.id !== tirador.id);
+    if (otros.length && rng.chance(pAst)) {
+      asistente = otros[rng.weighted(otros.map((j) => Math.max(1, j.pase - 30)))];
+      atk.box[asistente.id].ast += 1;
+    }
+    empujar({
+      tipo: 'anota', jugada, conPelota: tirador, asistente, defensor, puntos: val, tipoTiro,
+      texto: textoAnota(tirador, asistente, tipoTiro, jugada),
+    });
+    return eventos;
+  }
+
+  anotarTiro(atk, tirador, tipoTiro, false);
+  empujar({
+    tipo: 'falla', jugada, conPelota: tirador, defensor, puntos: 0, tipoTiro,
+    texto: textoFalla(tirador, tipoTiro, defensor),
+  });
+  return eventos.concat(resolverRebote(atk, def, tirador, rng, ctx));
+}
+
+function anotarTiro(eq, j, tipo, entro) {
+  const b = eq.box[j.id];
+  if (tipo === 'triple') { b.t3i += 1; if (entro) { b.t3c += 1; b.pts += 3; } }
+  else { b.t2i += 1; if (entro) { b.t2c += 1; b.pts += 2; } }
+}
+
+function tirarLibres(eq, j, n, rng) {
+  const b = eq.box[j.id];
+  let hechos = 0;
+  const p = Math.max(0.30, Math.min(0.95, M.libreBase + (j.libres - 60) * 0.0048));
+  for (let i = 0; i < n; i++) {
+    b.tli += 1;
+    if (rng.chance(p)) { b.tlc += 1; b.pts += 1; eq.puntos += 1; hechos += 1; }
+  }
+  return hechos;
+}
+
+function revisarExpulsion(eq, j, eventos) {
+  if (eq.box[j.id].fal < M.faltasExpulsion || eq.expulsados.has(j.id)) return;
+  eq.expulsados.add(j.id);
+  eventos.push({
+    tipo: 'falta', jugada: 'libres', conPelota: j, puntos: 0, sinAnimacion: true,
+    expulsion: true,
+    texto: `🟥 ${j.nombre} cometió su 5ª falta y se va a la banca.`,
+  });
+  // Entra el mejor disponible del banco.
+  const banco = eq.jugadores.filter((x) => !eq.enCancha.includes(x.id) && !eq.expulsados.has(x.id));
+  const idx = eq.enCancha.indexOf(j.id);
+  if (banco.length && idx >= 0) {
+    const entra = banco.reduce((m, x) => (x.nivel > m.nivel ? x : m), banco[0]);
+    eq.enCancha[idx] = entra.id;
+    eventos.push({
+      tipo: 'falta', jugada: 'libres', conPelota: entra, puntos: 0, sinAnimacion: true,
+      texto: `Entra ${entra.nombre} en su lugar.`,
+    });
+  } else if (idx >= 0) {
+    eq.enCancha.splice(idx, 1);
+    eventos.push({
+      tipo: 'falta', jugada: 'libres', conPelota: j, puntos: 0, sinAnimacion: true,
+      texto: 'No queda recambio: seguimos con cuatro en cancha.',
+    });
+  }
+}
+
+function resolverRebote(atk, def, tirador, rng, ctx, esLibre = false) {
+  const eventos = [];
+  const atkC = enCanchaJug(atk), defC = enCanchaJug(def);
+  const fuerzaO = atkC.reduce((t, j) => t + j.rebO, 0) / Math.max(1, atkC.length);
+  const fuerzaD = defC.reduce((t, j) => t + j.rebD, 0) / Math.max(1, defC.length);
+  let pOfensivo = M.rebOfensivoBase + (fuerzaO - fuerzaD) * 0.0014;
+  if (esLibre) pOfensivo *= 0.75;
+  if (def.defensa === 'zona') pOfensivo += 0.030;   // la zona deja mal repartido el rebote
+  pOfensivo = Math.max(0.10, Math.min(0.50, pOfensivo));
+
+  if (rng.chance(pOfensivo) && atkC.length) {
+    const r = atkC[rng.weighted(atkC.map((j) => Math.max(1, j.rebO - 25)))];
+    atk.box[r.id].rebO += 1;
+    eventos.push({
+      tipo: 'rebote', jugada: 'poste', conPelota: r, puntos: 0, ofensivo: true,
+      texto: `Rebote ofensivo de ${r.nombre}: segunda oportunidad.`,
+    });
+    ctx.segundaOportunidad = true;
+  } else if (defC.length) {
+    const r = defC[rng.weighted(defC.map((j) => Math.max(1, j.rebD - 25)))];
+    def.box[r.id].rebD += 1;
+    eventos.push({
+      tipo: 'rebote', jugada: 'poste', conPelota: r, puntos: 0, ofensivo: false,
+      texto: `${r.nombre} baja el rebote defensivo.`,
+    });
+  }
+  return eventos;
+}
+
+// ---------- Clasificación de jugada (lo que después se anima) ----------
+function clasificarJugada(atk, tirador, tipoTiro, transicion, presionRota, esFigura, rng) {
+  if (presionRota) return 'presionRota';
+  if (transicion) return 'transicion';
+  if (atk.ataque === 'estrella' && esFigura) return 'aislamiento';
+  if (tipoTiro === 'cerca' && (tirador.pos === 'Pívot' || tirador.pos === 'Ala-Pívot')) return 'poste';
+  if (tipoTiro === 'cerca') return 'penetracion';
+  if (tipoTiro === 'triple' && atk.ataque === 'equipo') return 'movimiento';
+  if (tipoTiro === 'triple') return rng.chance(0.5) ? 'movimiento' : 'pickroll';
+  return 'pickroll';
+}
+
+const TXT_JUGADA = {
+  transicion: 'Contraataque', presionRota: 'Presión rota', aislamiento: 'Uno contra uno',
+  poste: 'Juego de poste', penetracion: 'Penetración', movimiento: 'Movimiento de pelota',
+  pickroll: 'Bloqueo y continuación', libres: 'Tiros libres', presion: 'Presión',
+};
+
+function textoAnota(t, ast, tipo, jugada) {
+  const como = tipo === 'triple' ? 'un triple' : tipo === 'media' ? 'un tiro de media distancia' : 'una bandeja';
+  const base = jugada === 'transicion' || jugada === 'presionRota'
+    ? `${t.nombre} corre la cancha y anota ${como}.`
+    : jugada === 'poste' ? `${t.nombre} la pide abajo y la mete de espaldas al aro.`
+    : jugada === 'aislamiento' ? `${t.nombre} se la juega mano a mano y clava ${como}.`
+    : `${t.nombre} mete ${como}.`;
+  return ast ? `${base} Asistencia de ${ast.nombre}.` : base;
+}
+function textoFalla(t, tipo, def) {
+  if (tipo === 'triple') return `${t.nombre} tira de tres y la pelota da en el aro.`;
+  if (tipo === 'media') return `Se le va larga a ${t.nombre} desde media distancia.`;
+  return `${t.nombre} entra al aro pero ${def.nombre} lo incomoda y la falla.`;
+}
+</script>
+
+<script id="motor3">
+// ---------- Cambios por piernas ----------
+function revisarCambios(eq, eventos, rapido) {
+  const cansado = enCanchaJug(eq)
+    .filter((j) => eq.piernas[j.id] < M.umbralCambio)
+    .sort((a, b) => eq.piernas[a.id] - eq.piernas[b.id])[0];
+  if (!cansado) return;
+  const banco = eq.jugadores.filter((j) => !eq.enCancha.includes(j.id) && !eq.expulsados.has(j.id));
+  if (!banco.length) return;
+  const entra = banco.sort((a, b) => eq.piernas[b.id] - eq.piernas[a.id])[0];
+  if (eq.piernas[entra.id] < eq.piernas[cansado.id] + 14) return;
+  eq.enCancha[eq.enCancha.indexOf(cansado.id)] = entra.id;
+  if (!rapido) {
+    eventos.push({
+      tipo: 'cambio', jugada: 'libres', conPelota: entra, puntos: 0, sinAnimacion: true,
+      texto: `Cambio en ${eq.nombre}: entra ${entra.nombre} por ${cansado.nombre}, que pedía la salida.`,
+    });
+  }
+}
+
+function aplicarDesgaste(eq) {
+  let drenaje = M.desgastePorPosesion;
+  if (eq.defensa === 'hombre') drenaje += M.desgasteHombre;
+  if (eq.defensa === 'presion') drenaje += M.desgastePresion;
+  if (eq.ataque === 'correr') drenaje += M.desgasteCorrer;
+  for (const j of eq.jugadores) {
+    if (eq.enCancha.includes(j.id)) {
+      const propio = drenaje * (1 - (j.aguante - 60) * 0.004);
+      eq.piernas[j.id] = Math.max(12, eq.piernas[j.id] - propio);
+      eq.box[j.id].seg += 1;
+    } else {
+      eq.piernas[j.id] = Math.min(100, eq.piernas[j.id] + M.recuperaBanco);
+    }
+  }
+}
+
+// ---------- Falta sin tiro (y el bonus) ----------
+function faltaSinTiro(atk, def, eventos, rng) {
+  const defC = enCanchaJug(def);
+  const atkC = enCanchaJug(atk);
+  if (!defC.length || !atkC.length) return false;
+  const comete = defC[rng.weighted(defC.map((j) =>
+    Math.max(1, 100 - j.defExt) * (j.pos === 'Pívot' ? 1.5 : j.pos === 'Ala-Pívot' ? 1.3 : 1)))];
+  def.box[comete.id].fal += 1;
+  def.faltasCuarto += 1;
+  const enBonus = def.faltasCuarto > M.faltasBonus;
+  const victima = atkC[rng.weighted(atkC.map((j) => Math.max(1, j.manejo - 30)))];
+  if (enBonus) {
+    const hechos = tirarLibres(atk, victima, 2, rng);
+    eventos.push({
+      tipo: hechos > 0 ? 'anota' : 'falla', jugada: 'libres', conPelota: victima,
+      defensor: comete, puntos: hechos, tipoTiro: 'libre', sinAnimacion: true,
+      texto: `Falta de ${comete.nombre} con el equipo en bonus: ${victima.nombre} mete ${hechos} de 2.`,
+    });
+    revisarExpulsion(def, comete, eventos);
+    return true;
+  }
+  eventos.push({
+    tipo: 'falta', jugada: 'libres', conPelota: victima, defensor: comete, puntos: 0,
+    sinAnimacion: true,
+    texto: `Falta de ${comete.nombre} (${def.faltasCuarto}ª del equipo en el cuarto). Saca ${atk.nombre}.`,
+  });
+  revisarExpulsion(def, comete, eventos);
+  return false;
+}
+
+/** Copia del estado de un equipo en este instante (para la reproducción). */
+function fotoEquipo(eq) {
+  const box = {};
+  for (const j of eq.jugadores) box[j.id] = { ...eq.box[j.id] };
+  return {
+    box, piernas: { ...eq.piernas },
+    enCancha: [...eq.enCancha],
+    expulsados: new Set(eq.expulsados),
+    puntos: eq.puntos,
+    porCuarto: [...eq.porCuarto],
+    faltasCuarto: eq.faltasCuarto,
+  };
+}
+
+// ---------- Partido completo ----------
+function simularPartido(cfg, rapido = false) {
+  const rng = new Rng(cfg.seed >>> 0);
+  const nos = crearEquipo(cfg.nombreNos, crearPlantel(cfg.nivelNos, rng, 'n'),
+    { ataque: cfg.ataque, defensa: cfg.defensa }, 'nos');
+  const ellos = crearEquipo(cfg.nombreEllos, crearPlantel(cfg.nivelEllos, rng, 'e'),
+    { ataque: cfg.ataqueRival ?? 'equipo', defensa: cfg.defensaRival }, 'ellos');
+
+  const eventos = [];
+  const otro = (eq) => (eq === nos ? ellos : nos);
+  let posesionDe = rng.chance(0.5) ? nos : ellos;   // el salto inicial
+  let periodos = 4;
+
+  for (let q = 0; q < periodos; q++) {
+    nos.faltasCuarto = 0; ellos.faltasCuarto = 0;
+    if (nos.porCuarto.length <= q) { nos.porCuarto.push(0); ellos.porCuarto.push(0); }
+    let reloj = q < 4 ? M.segundosCuarto : M.segundosSupl;
+    const antesNos = nos.puntos, antesEllos = ellos.puntos;
+    if (!rapido) eventos.push({ marcaCuarto: q, texto: q < 4 ? `${q + 1}º cuarto` : `Suplementario ${q - 3}` });
+
+    let seguidas = 0;
+    let contra = false;
+    let nPos = 0;
+
+    while (reloj > 0) {
+      const atk = posesionDe, def = otro(posesionDe);
+      const ctx = { cuarto: q, transicion: contra || (atk.ataque === 'correr' && rng.chance(0.34)) };
+      contra = false;
+
+      if (++nPos % 4 === 0) { revisarCambios(nos, eventos, rapido); revisarCambios(ellos, eventos, rapido); }
+
+      // Falta sin tiro antes de que arranque la jugada.
+      const evs = [];
+      let cortada = false;
+      if (rng.chance(M.faltaSinTiro)) cortada = faltaSinTiro(atk, def, evs, rng);
+
+      if (!cortada) evs.push(...jugarPosesion(atk, def, ctx, rng));
+
+      // Duración: correr y contraatacar comen menos reloj.
+      let dur;
+      if (ctx.transicion) dur = rng.range(M.duracionTransicion[0], M.duracionTransicion[1]);
+      else if (atk.ataque === 'correr') dur = rng.range(M.duracionCorrerMin, M.duracionCorrerMax);
+      else dur = rng.range(M.duracionMin, M.duracionMax);
+      reloj -= dur;
+
+      aplicarDesgaste(nos); aplicarDesgaste(ellos);
+
+      if (!rapido) {
+        // Foto del estado al cerrar la posesión: la vista es un reproductor y
+        // tiene que poder mostrar la planilla y el quinteto DE ESE MOMENTO,
+        // no el del final del partido. Una foto por posesión, compartida por
+        // sus eventos.
+        const foto = { nos: fotoEquipo(nos), ellos: fotoEquipo(ellos) };
+        for (const e of evs) {
+          e.reloj = Math.max(0, reloj);
+          e.cuarto = q;
+          e.equipo = atk.lado;
+          e.marcadorNos = nos.puntos;
+          e.marcadorEllos = ellos.puntos;
+          e.ataque = atk.ataque;
+          e.defensaRival = def.defensa;
+          e.foto = foto;
+          eventos.push(e);
+        }
+      }
+
+      // ¿Sigue la misma? Solo con rebote ofensivo, y no más de tres seguidas.
+      const ultimo = evs[evs.length - 1];
+      const sigue = ultimo && ultimo.tipo === 'rebote' && ultimo.ofensivo && seguidas < 2;
+      if (sigue) { seguidas += 1; }
+      else {
+        seguidas = 0;
+        if (ultimo && ultimo.generaContra) contra = true;
+        if (ultimo && ultimo.tipo === 'rebote' && !ultimo.ofensivo && atk.ataque !== 'correr') contra = false;
+        // El que baja el rebote defensivo y corre, sale de contra.
+        if (ultimo && ultimo.tipo === 'rebote' && !ultimo.ofensivo && def.ataque === 'correr') contra = true;
+        posesionDe = def;
+      }
+    }
+
+    nos.porCuarto[q] = nos.puntos - antesNos;
+    ellos.porCuarto[q] = ellos.puntos - antesEllos;
+
+    if (q === 1) {   // entretiempo
+      for (const eq of [nos, ellos]) {
+        for (const j of eq.jugadores) eq.piernas[j.id] = Math.min(100, eq.piernas[j.id] + M.recuperaEntretiempo);
+      }
+    }
+    // Empate al final: suplementario (hasta 3, después se define por nivel).
+    if (q === periodos - 1 && nos.puntos === ellos.puntos && periodos < 7) periodos += 1;
+  }
+
+  return { nos, ellos, eventos, periodos };
+}
+
+// ---------- Batch: la prueba de que el tanteador da real ----------
+function simularBatch(cfgBase, nivelesRival, n) {
+  const filas = [];
+  const totalesPuntos = [];
+  for (const nivel of nivelesRival) {
+    const margenes = [];
+    let ganados = 0, puntosNos = 0, puntosEllos = 0;
+    for (let i = 0; i < n; i++) {
+      const r = simularPartido({ ...cfgBase, nivelEllos: nivel, seed: 90210 + i * 7919 + nivel * 131 }, true);
+      const m = r.nos.puntos - r.ellos.puntos;
+      margenes.push(m);
+      if (m > 0) ganados += 1;
+      puntosNos += r.nos.puntos; puntosEllos += r.ellos.puntos;
+      totalesPuntos.push(r.nos.puntos, r.ellos.puntos);
+    }
+    margenes.sort((a, b) => a - b);
+    filas.push({
+      nivel,
+      victorias: ganados / n,
+      margen: margenes.reduce((t, v) => t + v, 0) / n,
+      p15: margenes.filter((m) => Math.abs(m) >= 15).length / n,
+      p20: margenes.filter((m) => Math.abs(m) >= 20).length / n,
+      peor: margenes[0],
+      mejor: margenes[margenes.length - 1],
+      ptsNos: puntosNos / n,
+      ptsEllos: puntosEllos / n,
+    });
+  }
+  totalesPuntos.sort((a, b) => a - b);
+  return {
+    filas,
+    mediaPuntos: totalesPuntos.reduce((t, v) => t + v, 0) / totalesPuntos.length,
+    p10: totalesPuntos[Math.floor(totalesPuntos.length * 0.1)],
+    p90: totalesPuntos[Math.floor(totalesPuntos.length * 0.9)],
+    min: totalesPuntos[0],
+    max: totalesPuntos[totalesPuntos.length - 1],
+  };
+}
+
+if (typeof module !== 'undefined') {
+  module.exports = { simularPartido, simularBatch, M, Rng, crearPlantel };
+}
+</script>
+
+<script id="vista">
+// ===========================================================================
+//  VISTA TOP-DOWN — reproductor del stream de posesiones.
+//  Regla dura: acá NO se decide nada del partido. El marcador ya está
+//  simulado entero; esto solo lo muestra. Por eso se puede ir a 8× o saltear.
+// ===========================================================================
+
+const CANCHA = { largo: 28, ancho: 15, aroX: 1.575, aroY: 7.5, radio3: 6.75, areaAncho: 4.9, areaLargo: 5.8 };
+const cv = document.getElementById('cancha');
+const cx = cv.getContext('2d');
+let escala = 40, offX = 0, offY = 0;
+
+function ajustarCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const ancho = cv.clientWidth || 1120;
+  const alto = ancho * (CANCHA.ancho / CANCHA.largo);
+  cv.width = Math.round(ancho * dpr);
+  cv.height = Math.round(alto * dpr);
+  cv.style.height = `${alto}px`;
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  escala = ancho / CANCHA.largo;
+  offX = 0; offY = 0;
+}
+const px = (m) => offX + m * escala;
+const py = (m) => offY + m * escala;
+
+function tk(nombre) {
+  return getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
+}
+
+function dibujarCancha() {
+  const w = CANCHA.largo * escala, h = CANCHA.ancho * escala;
+  cx.clearRect(0, 0, w, h);
+  cx.fillStyle = tk('--parquet');
+  cx.fillRect(0, 0, w, h);
+
+  const linea = tk('--parquet-linea');
+  cx.strokeStyle = linea;
+  cx.lineWidth = Math.max(1.2, escala * 0.045);
+  cx.lineJoin = 'round';
+
+  // Perímetro
+  cx.strokeRect(px(0.3), py(0.3), (CANCHA.largo - 0.6) * escala, (CANCHA.ancho - 0.6) * escala);
+  // Mitad
+  cx.beginPath();
+  cx.moveTo(px(14), py(0.3)); cx.lineTo(px(14), py(14.7)); cx.stroke();
+  cx.beginPath();
+  cx.arc(px(14), py(7.5), 1.8 * escala, 0, Math.PI * 2); cx.stroke();
+
+  for (const lado of [0, 1]) {
+    const aroX = lado === 0 ? CANCHA.aroX : CANCHA.largo - CANCHA.aroX;
+    const dir = lado === 0 ? 1 : -1;
+    const baseX = lado === 0 ? 0.3 : CANCHA.largo - 0.3;
+
+    // Pintura
+    cx.strokeRect(
+      px(lado === 0 ? 0.3 : CANCHA.largo - 0.3 - CANCHA.areaLargo),
+      py(7.5 - CANCHA.areaAncho / 2),
+      CANCHA.areaLargo * escala, CANCHA.areaAncho * escala
+    );
+    // Círculo de tiros libres
+    cx.beginPath();
+    cx.arc(px(baseX + dir * CANCHA.areaLargo), py(7.5), 1.8 * escala, 0, Math.PI * 2);
+    cx.stroke();
+
+    // Línea de tres: rectas en las esquinas + arco
+    const yCorner = 0.9;
+    const dx = Math.sqrt(Math.max(0, CANCHA.radio3 ** 2 - (7.5 - yCorner) ** 2));
+    cx.beginPath();
+    cx.moveTo(px(baseX), py(yCorner));
+    cx.lineTo(px(aroX + dir * dx), py(yCorner));
+    const a0 = Math.atan2(yCorner - 7.5, dir * dx);
+    const a1 = Math.atan2(CANCHA.ancho - yCorner - 7.5, dir * dx);
+    cx.arc(px(aroX), py(7.5), CANCHA.radio3 * escala,
+      lado === 0 ? a0 : Math.PI - a0, lado === 0 ? a1 : Math.PI - a1, lado !== 0);
+    cx.lineTo(px(baseX), py(CANCHA.ancho - yCorner));
+    cx.stroke();
+
+    // Aro
+    cx.beginPath();
+    cx.arc(px(aroX), py(7.5), 0.32 * escala, 0, Math.PI * 2);
+    cx.strokeStyle = tk('--naranja');
+    cx.lineWidth = Math.max(1.6, escala * 0.06);
+    cx.stroke();
+    cx.strokeStyle = linea;
+    cx.lineWidth = Math.max(1.2, escala * 0.045);
+  }
+}
+
+// ---------- Formaciones ----------
+// Los cinco puestos, en metros, para el que ataca el aro DERECHO.
+// El que ataca a la izquierda usa el espejo.
+const FORMACIONES = {
+  movimiento:  [[18.6, 7.5], [20.6, 2.4], [20.6, 12.6], [23.4, 3.6], [24.0, 10.6]],
+  pickroll:    [[19.4, 6.2], [20.2, 2.1], [20.2, 12.9], [23.4, 12.4], [21.6, 6.6]],
+  poste:       [[19.0, 7.5], [20.6, 2.1], [20.6, 12.9], [22.2, 11.6], [24.4, 6.0]],
+  aislamiento: [[21.2, 7.5], [19.4, 1.9], [19.4, 13.1], [24.6, 2.0], [24.6, 13.0]],
+  penetracion: [[20.0, 7.5], [20.4, 2.2], [20.4, 12.8], [23.6, 3.2], [24.2, 11.4]],
+  transicion:  [[22.4, 7.5], [24.6, 3.0], [24.6, 12.0], [19.2, 5.2], [19.2, 9.8]],
+  presionRota: [[22.8, 7.5], [24.8, 3.4], [24.8, 11.6], [18.6, 5.6], [18.6, 9.4]],
+  libres:      [[19.6, 7.5], [22.5, 5.0], [22.5, 10.0], [23.8, 6.2], [23.8, 8.8]],
+  presion:     [[16.0, 7.5], [17.5, 3.0], [17.5, 12.0], [19.5, 5.0], [19.5, 10.0]],
+};
+// La zona 2-3 del que defiende el aro derecho.
+const ZONA_23 = [[21.6, 5.3], [21.6, 9.7], [24.4, 2.6], [24.4, 12.4], [25.6, 7.5]];
+
+const espejo = ([x, y]) => [CANCHA.largo - x, y];
+
+/** Los 5 puestos ordenados como POSICIONES, para que cada slot sea coherente. */
+function ordenarPorPuesto(jugadores) {
+  return [...jugadores].sort((a, b) => POSICIONES.indexOf(a.pos) - POSICIONES.indexOf(b.pos));
+}
+
+function formacionAtaque(jugadores, jugada, atacaDerecha) {
+  const spots = FORMACIONES[jugada] ?? FORMACIONES.movimiento;
+  const orden = ordenarPorPuesto(jugadores);
+  const out = {};
+  orden.forEach((j, i) => {
+    const s = spots[Math.min(i, spots.length - 1)];
+    out[j.id] = atacaDerecha ? [...s] : espejo(s);
+  });
+  return out;
+}
+
+function formacionDefensa(defensores, atacantes, posAtk, esquema, atacaDerecha, balon, pares) {
+  const out = {};
+  const aroX = atacaDerecha ? CANCHA.largo - CANCHA.aroX : CANCHA.aroX;
+  const ordenD = ordenarPorPuesto(defensores);
+  const ordenA = ordenarPorPuesto(atacantes);
+
+  if (esquema === 'zona') {
+    // Bloque 2-3 que se corre hacia donde está la pelota: se ve el bloque.
+    const corrimiento = balon ? Math.max(-1.6, Math.min(1.6, (balon[1] - 7.5) * 0.32)) : 0;
+    ordenD.forEach((j, i) => {
+      const s = ZONA_23[Math.min(i, ZONA_23.length - 1)];
+      const p = atacaDerecha ? [...s] : espejo(s);
+      out[j.id] = [p[0], p[1] + corrimiento];
+    });
+    return out;
+  }
+
+  if (esquema === 'presion') {
+    // Cada uno arriba con el suyo, a toda cancha: la salida se ahoga.
+    ordenD.forEach((j, i) => {
+      const rival = ordenA[Math.min(i, ordenA.length - 1)];
+      const pa = rival ? posAtk[rival.id] : null;
+      if (pares && rival) pares[j.id] = rival.id;
+      if (!pa) { out[j.id] = [14, 7.5]; return; }
+      const haciaMedio = atacaDerecha ? -1 : 1;
+      out[j.id] = [pa[0] + haciaMedio * 1.3, pa[1] + (i % 2 === 0 ? -0.7 : 0.7)];
+    });
+    return out;
+  }
+
+  // Hombre a hombre: cada uno entre el suyo y el aro.
+  ordenD.forEach((j, i) => {
+    const rival = ordenA[Math.min(i, ordenA.length - 1)];
+    const pa = rival ? posAtk[rival.id] : null;
+    if (pares && rival) pares[j.id] = rival.id;
+    if (!pa) { out[j.id] = [aroX, 7.5]; return; }
+    const dx = aroX - pa[0], dy = 7.5 - pa[1];
+    const d = Math.max(0.1, Math.hypot(dx, dy));
+    out[j.id] = [pa[0] + (dx / d) * 1.65, pa[1] + (dy / d) * 1.65];
+  });
+  return out;
+}
+
+/** De dónde sale el tiro, según el tipo. */
+function puntoTiro(tipoTiro, atacaDerecha, spot) {
+  const aroX = atacaDerecha ? CANCHA.largo - CANCHA.aroX : CANCHA.aroX;
+  if (tipoTiro === 'cerca') return [aroX + (atacaDerecha ? -1.6 : 1.6), 7.5 + (Math.random() - 0.5) * 1.6];
+  if (tipoTiro === 'libre') return [aroX + (atacaDerecha ? -5.8 : 5.8), 7.5];
+  return spot;
+}
+</script>
+
+<script id="vista2">
+// ---------- Estado del reproductor ----------
+const V = {
+  partido: null, cfg: null,
+  pasos: [], idx: 0, t: 0, jugando: false, vel: 2,
+  pos: {}, balon: [14, 7.5], ultimoTiro: null, destello: 0,
+};
+
+/** Arma la lista de pasos animables a partir de los eventos del motor. */
+function armarPasos(partido) {
+  const pasos = [];
+  let cuarto = -1;
+  for (const e of partido.eventos) {
+    if (e.marcaCuarto !== undefined) { cuarto = e.marcaCuarto; pasos.push({ marca: e.texto, cuarto }); continue; }
+    pasos.push({ ev: e, cuarto: e.cuarto });
+  }
+  return pasos;
+}
+
+/**
+ * El estado del partido en el paso que se está mirando. Si el paso no trae
+ * foto (marca de cuarto), busca hacia atrás. Antes del primer evento devuelve
+ * el arranque: marcador en cero y los titulares en cancha.
+ */
+function estadoEn(idx) {
+  for (let i = Math.min(idx, V.pasos.length - 1); i >= 0; i--) {
+    const f = V.pasos[i]?.ev?.foto;
+    if (f) return f;
+  }
+  const inicial = (eq) => {
+    const box = {};
+    for (const j of eq.jugadores) box[j.id] = planillaVacia();
+    return {
+      box, piernas: Object.fromEntries(eq.jugadores.map((j) => [j.id, 100])),
+      enCancha: eq.jugadores.filter((j) => j.titular).map((j) => j.id),
+      expulsados: new Set(), puntos: 0, porCuarto: [0, 0, 0, 0], faltasCuarto: 0,
+    };
+  };
+  return { nos: inicial(V.partido.nos), ellos: inicial(V.partido.ellos) };
+}
+
+/** Los jugadores que estaban en cancha en ese momento. */
+function enCanchaEn(eq, foto) {
+  const ids = (eq.lado === 'nos' ? foto.nos : foto.ellos).enCancha;
+  return ids.map((id) => jugOf(eq, id)).filter(Boolean);
+}
+
+const lerp = (a, b, t) => a + (b - a) * t;
+const suave = (t) => t * t * (3 - 2 * t);
+
+function posicionesIniciales(partido) {
+  const p = {};
+  const nosC = enCanchaJug(partido.nos), ellosC = enCanchaJug(partido.ellos);
+  ordenarPorPuesto(nosC).forEach((j, i) => { p[j.id] = [11 - i * 0.7, 3.5 + i * 2]; });
+  ordenarPorPuesto(ellosC).forEach((j, i) => { p[j.id] = [17 + i * 0.7, 3.5 + i * 2]; });
+  return p;
+}
+
+/** Prepara el paso actual: adónde va cada ficha y por dónde pasa la pelota. */
+function prepararPaso(paso) {
+  const e = paso.ev;
+  if (!e) return null;
+  const P = V.partido;
+  const atk = e.equipo === 'nos' ? P.nos : P.ellos;
+  const def = e.equipo === 'nos' ? P.ellos : P.nos;
+  const atacaDerecha = e.equipo === 'nos';
+  const jugada = e.jugada ?? 'movimiento';
+
+  const foto = e.foto ?? estadoEn(V.idx);
+  const atkC = enCanchaEn(atk, foto), defC = enCanchaEn(def, foto);
+  const fAtk = formacionAtaque(atkC, jugada, atacaDerecha);
+  // El que tiene la pelota se corre al lugar del tiro.
+  // Si el que tiene la pelota no está en la formación (caso raro de cambio),
+  // se lo agrega al slot de su puesto para que la jugada no quede sin dueño.
+  if (e.conPelota && !fAtk[e.conPelota.id]) {
+    const spots = FORMACIONES[jugada] ?? FORMACIONES.movimiento;
+    const i = Math.min(POSICIONES.indexOf(e.conPelota.pos), spots.length - 1);
+    fAtk[e.conPelota.id] = atacaDerecha ? [...spots[i]] : espejo(spots[i]);
+  }
+  const spotTirador = fAtk[e.conPelota?.id] ?? [14, 7.5];
+  const tiro = e.tipoTiro ? puntoTiro(e.tipoTiro, atacaDerecha, spotTirador) : null;
+  if (tiro && e.conPelota) fAtk[e.conPelota.id] = tiro;
+
+  const pares = {};
+  const fDef = formacionDefensa(defC, atkC, fAtk, def.defensa, atacaDerecha, spotTirador, pares);
+  const idsDef = defC.map((j) => j.id);
+  const idsZona = def.defensa === 'zona' ? ordenarPorPuesto(defC).map((j) => j.id) : null;
+
+  // Recorrido de la pelota: uno o dos pases antes del tiro.
+  const otros = atkC.filter((j) => j.id !== e.conPelota?.id);
+  void foto;
+  const cadena = [];
+  if (e.asistente) cadena.push(e.asistente.id);
+  else if (otros.length && jugada !== 'aislamiento' && jugada !== 'transicion') cadena.push(otros[0].id);
+  if (e.conPelota) cadena.push(e.conPelota.id);
+
+  return {
+    fAtk, fDef, cadena, tiro, atacaDerecha, pares, idsDef, idsZona, esquema: def.defensa,
+    aro: atacaDerecha ? [CANCHA.largo - CANCHA.aroX, 7.5] : [CANCHA.aroX, 7.5],
+    anota: e.tipo === 'anota', esTiro: !!e.tipoTiro && e.tipoTiro !== 'libre',
+  };
+}
+
+/** Empuja las fichas que quedaron encima, sin moverlas de su zona. */
+function separarFichas(fichas, minimo = 1.5, vueltas = 5) {
+  for (let it = 0; it < vueltas; it++) {
+    let movio = false;
+    for (let i = 0; i < fichas.length; i++) {
+      for (let k = i + 1; k < fichas.length; k++) {
+        const a = fichas[i].p, b = fichas[k].p;
+        let dx = b[0] - a[0], dy = b[1] - a[1];
+        let d = Math.hypot(dx, dy);
+        if (d >= minimo) continue;
+        if (d < 0.001) { dx = (i % 2 ? 1 : -1) * 0.1; dy = 0.1; d = Math.hypot(dx, dy); }
+        const empuje = minimo - d;
+        const ux = dx / d, uy = dy / d;
+        // El que está firme (la zona) cede menos que el que se mueve.
+        const pa = fichas[i].firme ? 0.15 : 0.5;
+        const pb = fichas[k].firme ? 0.15 : 0.5;
+        const tot = pa + pb || 1;
+        a[0] -= ux * empuje * (pa / tot); a[1] -= uy * empuje * (pa / tot);
+        b[0] += ux * empuje * (pb / tot); b[1] += uy * empuje * (pb / tot);
+        movio = true;
+      }
+    }
+    // Que nadie se vaya de la cancha.
+    for (const f of fichas) {
+      f.p[0] = Math.max(0.9, Math.min(CANCHA.largo - 0.9, f.p[0]));
+      f.p[1] = Math.max(0.9, Math.min(CANCHA.ancho - 0.9, f.p[1]));
+    }
+    if (!movio) break;
+  }
+}
+
+/**
+ * Hace visible la defensa. Sin esto, "te están marcando zona" es una palabra
+ * en un cartel; con esto se ve el bloque acomodarse con la pelota.
+ */
+function dibujarEsquema(prep, fichas) {
+  const punto = (id) => fichas.find((f) => f.j.id === id)?.p;
+  cx.save();
+  if (prep.esquema === 'zona' && prep.idsZona) {
+    const pts = prep.idsZona.map(punto).filter(Boolean);
+    if (pts.length >= 3) {
+      // El polígono se dibuja en el orden 2-3: dos arriba, tres atrás.
+      const orden = [0, 2, 4, 3, 1];
+      cx.beginPath();
+      orden.forEach((i, k) => {
+        const q = pts[i] ?? pts[0];
+        if (k === 0) cx.moveTo(px(q[0]), py(q[1])); else cx.lineTo(px(q[0]), py(q[1]));
+      });
+      cx.closePath();
+      cx.fillStyle = 'rgba(37, 40, 44, 0.15)';
+      cx.fill();
+      cx.setLineDash([6, 5]);
+      cx.strokeStyle = 'rgba(37, 40, 44, 0.55)';
+      cx.lineWidth = 2;
+      cx.stroke();
+    }
+  } else {
+    // Hombre y presión: una línea de cada marca a su marcado.
+    cx.setLineDash(prep.esquema === 'presion' ? [3, 4] : [2, 4]);
+    cx.strokeStyle = 'rgba(37, 40, 44, 0.42)';
+    cx.lineWidth = prep.esquema === 'presion' ? 2.2 : 1.6;
+    for (const [idDef, idAtk] of Object.entries(prep.pares)) {
+      const a = punto(idDef), b = punto(idAtk);
+      if (!a || !b) continue;
+      cx.beginPath();
+      cx.moveTo(px(a[0]), py(a[1]));
+      cx.lineTo(px(b[0]), py(b[1]));
+      cx.stroke();
+    }
+  }
+  cx.restore();
+}
+
+function render() {
+  ajustarCanvas();
+  dibujarCancha();
+  if (!V.partido) return;
+
+  const paso = V.pasos[V.idx];
+  const prep = paso && paso.ev ? prepararPaso(paso) : null;
+  const t = suave(Math.min(1, V.t));
+
+  // --- Fichas: interpolar hacia la formación del paso ---
+  const destinos = prep ? { ...prep.fAtk, ...prep.fDef } : {};
+  const dibujables = [];
+  const foto = estadoEn(V.idx);
+  const extra = paso?.ev?.conPelota ? [paso.ev.conPelota.id] : [];
+  for (const [lado, eq] of [['nos', V.partido.nos], ['ellos', V.partido.ellos]]) {
+    const enC = enCanchaEn(eq, foto);
+    for (const id of extra) {
+      const j = jugOf(eq, id);
+      if (j && !enC.some((x) => x.id === id)) enC.push(j);
+    }
+    for (const j of enC) {
+      const desde = V.pos[j.id] ?? [14, 7.5];
+      const hasta = destinos[j.id] ?? desde;
+      // Las fichas llegan a su lugar en la primera mitad del paso.
+      const k = Math.min(1, t / 0.55);
+      const p = [lerp(desde[0], hasta[0], suave(k)), lerp(desde[1], hasta[1], suave(k))];
+      dibujables.push({
+        j, p, lado,
+        conPelota: prep && paso.ev?.conPelota?.id === j.id,
+        // Los de la zona casi no se corren: si los empujás, deja de leerse el bloque.
+        firme: !!(prep && prep.idsZona && prep.idsZona.includes(j.id)),
+      });
+    }
+  }
+
+  // Separación: dos fichas nunca ocupan el mismo lugar. Sin esto, atacante y
+  // defensor se superponen y no se entiende quién es quién.
+  separarFichas(dibujables);
+
+  // --- Pelota ---
+  let balon = V.balon;
+  if (prep) {
+    const cad = prep.cadena.length ? prep.cadena : [paso.ev.conPelota?.id].filter(Boolean);
+    const puntoDe = (id) => dibujables.find((d) => d.j.id === id)?.p ?? [14, 7.5];
+    if (t < 0.62 && cad.length > 1) {
+      const seg = Math.min(cad.length - 2, Math.floor((t / 0.62) * (cad.length - 1)));
+      const local = ((t / 0.62) * (cad.length - 1)) - seg;
+      const a = puntoDe(cad[seg]), b = puntoDe(cad[seg + 1]);
+      balon = [lerp(a[0], b[0], local), lerp(a[1], b[1], local)];
+    } else if (prep.esTiro && t >= 0.62) {
+      const k = Math.min(1, (t - 0.62) / 0.28);
+      const a = puntoDe(cad[cad.length - 1]), b = prep.aro;
+      // Parábola: la pelota sube y baja camino al aro.
+      balon = [lerp(a[0], b[0], k), lerp(a[1], b[1], k) - Math.sin(k * Math.PI) * 1.4];
+      if (k >= 1 && !prep.anota) {
+        const rebote = Math.min(1, (t - 0.9) / 0.1);
+        balon = [b[0] + (prep.atacaDerecha ? -1 : 1) * rebote * 1.8, b[1] + rebote * 0.8];
+      }
+    } else {
+      balon = puntoDe(cad[cad.length - 1]);
+    }
+    // Trayectoria del tiro, punteada
+    if (prep.esTiro && t >= 0.62) {
+      const a = puntoDe(cad[cad.length - 1]);
+      cx.save();
+      cx.setLineDash([4, 5]);
+      cx.strokeStyle = prep.anota ? tk('--bien') : tk('--tinta-suave');
+      cx.lineWidth = 2;
+      cx.globalAlpha = 0.75;
+      cx.beginPath();
+      cx.moveTo(px(a[0]), py(a[1]));
+      for (let s = 0.05; s <= 1.001; s += 0.05) {
+        cx.lineTo(px(lerp(a[0], prep.aro[0], s)), py(lerp(a[1], prep.aro[1], s) - Math.sin(s * Math.PI) * 1.4));
+      }
+      cx.stroke();
+      cx.restore();
+    }
+    // Destello en el aro al convertir
+    if (prep.anota && t > 0.86) {
+      cx.save();
+      cx.globalAlpha = Math.max(0, 1 - (t - 0.86) / 0.14) * 0.85;
+      cx.fillStyle = tk('--bien');
+      cx.beginPath();
+      cx.arc(px(prep.aro[0]), py(prep.aro[1]), escala * (0.4 + (t - 0.86) * 6), 0, Math.PI * 2);
+      cx.fill();
+      cx.restore();
+    }
+  }
+  V.balon = balon;
+
+  // --- El esquema defensivo, dibujado ---
+  if (prep) dibujarEsquema(prep, dibujables);
+
+  // La mitad sin pelota queda apenas velada: se lee de un vistazo dónde se juega.
+  if (prep) {
+    cx.save();
+    cx.fillStyle = 'rgba(0,0,0,0.13)';
+    cx.fillRect(prep.atacaDerecha ? 0 : px(14), 0, 14 * escala, CANCHA.ancho * escala);
+    cx.restore();
+  }
+
+  // --- Fichas encima ---
+  const r = Math.max(9, escala * 0.42);
+  for (const d of dibujables) {
+    const x = px(d.p[0]), y = py(d.p[1]);
+    if (d.conPelota) {
+      cx.beginPath();
+      cx.arc(x, y, r + 4, 0, Math.PI * 2);
+      cx.strokeStyle = tk('--naranja');
+      cx.lineWidth = 2.5;
+      cx.stroke();
+    }
+    cx.beginPath();
+    cx.arc(x, y, r, 0, Math.PI * 2);
+    cx.fillStyle = d.lado === 'nos' ? tk('--nos') : tk('--ellos');
+    cx.fill();
+    cx.strokeStyle = 'rgba(0,0,0,0.35)';
+    cx.lineWidth = 1.5;
+    cx.stroke();
+    cx.fillStyle = '#fff';
+    cx.font = `700 ${Math.round(r * 1.05)}px "Barlow Condensed", sans-serif`;
+    cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.fillText(String(d.j.dorsal), x, y + 1);
+    // Nombre debajo, chiquito
+    cx.font = `600 ${Math.round(r * 0.68)}px "Source Sans 3", sans-serif`;
+    const yn = y + r + Math.round(r * 0.68);
+    cx.lineWidth = 3;
+    cx.strokeStyle = 'rgba(255,255,255,0.82)';
+    cx.lineJoin = 'round';
+    cx.strokeText(d.j.nombre, x, yn);
+    cx.fillStyle = '#25282c';
+    cx.fillText(d.j.nombre, x, yn);
+  }
+
+  // --- Pelota ---
+  cx.beginPath();
+  cx.arc(px(balon[0]), py(balon[1]), Math.max(4, escala * 0.16), 0, Math.PI * 2);
+  cx.fillStyle = tk('--naranja');
+  cx.fill();
+  cx.strokeStyle = 'rgba(0,0,0,0.45)';
+  cx.lineWidth = 1.2;
+  cx.stroke();
+
+  // Al terminar el paso, las fichas quedan donde llegaron.
+  if (V.t >= 1 && prep) {
+    for (const d of dibujables) V.pos[d.j.id] = d.p;
+  }
+}
+</script>
+
+<script id="ui">
+// ---------- Configuración y arranque ----------
+const NOTAS_ATK = {
+  equipo: 'La pelota se mueve: más asistencias y mejores tiros, pero nadie se echa el equipo al hombro.',
+  estrella: 'Todo pasa por la figura. Le ponen al mejor marcador encima y cuarto a cuarto le van tomando la mano.',
+  correr: 'Contraataque permanente: muchas más posesiones para los dos y bandejas fáciles, a costa de piernas y pérdidas.',
+};
+const NOTAS_DEF = {
+  zona: 'Cierra la pintura y ahorra piernas, pero regala tiros de afuera y deja mal repartido el rebote.',
+  hombre: 'Aprieta la salida y fuerza pérdidas. Es la que más piernas come: llegás al último cuarto fundido.',
+  presion: 'La apuesta: roba muchas pelotas con piernas frescas. Si te la rompen o te fundís, son bandejas de regalo.',
+};
+
+const cfg = {
+  nombreNos: 'Barrio Sur', nombreEllos: 'Los Andes',
+  nivelNos: 58, nivelEllos: 60,
+  ataque: 'equipo', defensa: 'zona', defensaRival: 'hombre',
+  seed: 1234,
+};
+
+const $ = (id) => document.getElementById(id);
+
+function nuevoPartido(nuevaSemilla = true) {
+  if (nuevaSemilla) cfg.seed = Math.floor(Math.random() * 1e9);
+  V.partido = simularPartido(cfg);
+  V.cfg = { ...cfg };
+  V.pasos = armarPasos(V.partido);
+  V.idx = 0; V.t = 0; V.jugando = false;
+  V.pos = posicionesIniciales(V.partido);
+  V.balon = [14, 7.5];
+  // El marcador arranca en cero aunque el partido ya esté resuelto.
+  $('btnPlay').textContent = '▶ Reproducir';
+  pintarTodo();
+  render();
+}
+
+/** El marcador que corresponde al paso en el que estamos. */
+function marcadorActual() {
+  let n = 0, e = 0, q = 0;
+  for (let i = 0; i <= Math.min(V.idx, V.pasos.length - 1); i++) {
+    const p = V.pasos[i];
+    if (p.marca !== undefined) { q = p.cuarto; continue; }
+    if (p.ev) { n = p.ev.marcadorNos; e = p.ev.marcadorEllos; q = p.ev.cuarto; }
+  }
+  return { n, e, q };
+}
+
+function pintarMarcador() {
+  const { n, e, q } = marcadorActual();
+  $('ptsNos').textContent = n;
+  $('ptsEllos').textContent = e;
+  $('ptsNos').className = `pts num ${n > e ? 'gana' : ''}`;
+  $('ptsEllos').className = `pts num ${e > n ? 'gana' : ''}`;
+  $('nomNos').textContent = cfg.nombreNos;
+  $('nomEllos').textContent = cfg.nombreEllos;
+  const paso = V.pasos[Math.min(V.idx, V.pasos.length - 1)];
+  const fin = V.idx >= V.pasos.length - 1;
+  $('perLbl').textContent = fin ? 'FINAL' : q < 4 ? `${q + 1}º cuarto` : `Supl. ${q - 3}`;
+  $('relojLbl').textContent = fin ? relojTxt(0) : relojTxt(paso?.ev?.reloj ?? 600);
+  $('cuartoLbl').textContent = fin ? 'Final' : q < 4 ? `${q + 1}º C` : 'PR';
+  $('defRivalLbl').textContent =
+    `Nosotros: ${cfg.ataque} / ${cfg.defensa} · ${cfg.nombreEllos}: defensa ${cfg.defensaRival}`;
+}
+
+function pintarRelatoVivo() {
+  const paso = V.pasos[Math.min(V.idx, V.pasos.length - 1)];
+  if (!paso) return;
+  if (paso.marca !== undefined) {
+    $('jugadaTag').textContent = paso.marca;
+    $('jugadaTag').className = 'jugada-tag';
+    $('jugadaTxt').textContent = 'Arranca el cuarto.';
+    return;
+  }
+  const e = paso.ev;
+  $('jugadaTag').textContent = TXT_JUGADA[e.jugada] ?? '—';
+  $('jugadaTag').className = `jugada-tag ${e.tipo === 'anota' ? 'anota' : e.tipo === 'perdida' ? 'perdida' : 'falla'}`;
+  const quien = e.equipo === 'nos' ? cfg.nombreNos : cfg.nombreEllos;
+  $('jugadaTxt').textContent = `${quien}: ${e.texto}`;
+}
+
+// ---------- Planilla ----------
+function filaBox(eq, j, lado, fe) {
+  const b = fe.box[j.id];
+  const fuera = fe.expulsados.has(j.id);
+  const enCancha = fe.enCancha.includes(j.id);
+  const pips = '●'.repeat(Math.min(5, b.fal));
+  const mins = Math.round((b.seg / 136) * 40);
+  return `<tr class="${fuera ? 'fuera' : enCancha ? '' : 'banco'}">
+    <td><span class="dorsal ${lado}">${j.dorsal}</span>${j.nombre}
+      <span style="color:var(--tinta-suave);font-size:0.85em"> ${j.posCorta}</span></td>
+    <td class="n">${mins}</td>
+    <td class="n" style="font-weight:700">${b.pts}</td>
+    <td class="n">${b.t2c}/${b.t2i}</td>
+    <td class="n">${b.t3c}/${b.t3i}</td>
+    <td class="n">${b.tlc}/${b.tli}</td>
+    <td class="n">${b.rebO}+${b.rebD}</td>
+    <td class="n">${b.ast}</td>
+    <td class="n">${b.per}</td>
+    <td class="n">${b.rec}</td>
+    <td class="n">${b.tap}</td>
+    <td class="n"><span class="faltas-pip ${b.fal >= 5 ? 'max' : ''}" title="${b.fal} faltas">${pips || '·'}</span></td>
+  </tr>`;
+}
+
+function pintarPlanilla() {
+  if (!V.partido) return;
+  const foto = estadoEn(V.idx);
+  for (const [lado, eq, tabla, tit, fe] of [
+    ['nos', V.partido.nos, 'boxNos', 'planNosTit', foto.nos],
+    ['ellos', V.partido.ellos, 'boxEllos', 'planEllosTit', foto.ellos],
+  ]) {
+    const T = planillaVacia();
+    for (const j of eq.jugadores) {
+      const b = fe.box[j.id];
+      for (const k of Object.keys(T)) T[k] += b[k];
+    }
+    const orden = [...eq.jugadores].sort((a, b) => fe.box[b.id].pts - fe.box[a.id].pts);
+    $(tabla).innerHTML = `
+      <thead><tr>
+        <th>Jugador</th><th class="n">Min</th><th class="n">Pts</th><th class="n">T2</th><th class="n">T3</th>
+        <th class="n">TL</th><th class="n">RO+RD</th><th class="n">AS</th><th class="n">PE</th>
+        <th class="n">RE</th><th class="n">TP</th><th class="n">FP</th>
+      </tr></thead>
+      <tbody>
+        ${orden.map((j) => filaBox(eq, j, lado, fe)).join('')}
+        <tr class="total"><td>Total</td><td class="n">${Math.round((T.seg / 136) * 40)}</td><td class="n">${T.pts}</td>
+          <td class="n">${T.t2c}/${T.t2i}</td><td class="n">${T.t3c}/${T.t3i}</td><td class="n">${T.tlc}/${T.tli}</td>
+          <td class="n">${T.rebO}+${T.rebD}</td><td class="n">${T.ast}</td><td class="n">${T.per}</td>
+          <td class="n">${T.rec}</td><td class="n">${T.tap}</td><td class="n">${T.fal}</td></tr>
+      </tbody>`;
+    $(tit).textContent = `${eq.nombre} — ${fe.puntos} (${fe.porCuarto.filter((v, i) => i < 4 || v > 0).join(' · ')})`;
+  }
+}
+
+function pintarQuinteto() {
+  if (!V.partido) return;
+  const eq = V.partido.nos;
+  const fe = estadoEn(V.idx).nos;
+  const orden = [...eq.jugadores].sort((a, b) =>
+    (fe.enCancha.includes(b.id) ? 1 : 0) - (fe.enCancha.includes(a.id) ? 1 : 0));
+  const filas = orden.map((j) => {
+    const b = fe.box[j.id];
+    const p = Math.round(fe.piernas[j.id]);
+    const cls = p < 40 ? 'critica' : p < 65 ? 'baja' : '';
+    const fuera = fe.expulsados.has(j.id);
+    const enC = fe.enCancha.includes(j.id);
+    return `<tr class="${fuera ? 'fuera' : enC ? '' : 'banco'}">
+      <td><span class="dorsal nos">${j.dorsal}</span>${j.nombre}</td>
+      <td class="n">${j.posCorta}</td>
+      <td class="n">${b.pts}</td>
+      <td class="n"><span class="faltas-pip ${b.fal >= 5 ? 'max' : ''}">${'●'.repeat(Math.min(5, b.fal)) || '·'}</span></td>
+      <td class="n"><span class="barra-piernas"><i class="${cls}" style="width:${p}%"></i></span></td>
+    </tr>`;
+  }).join('');
+  $('quinteto').innerHTML =
+    `<thead><tr><th>En cancha / banco</th><th class="n">Pos</th><th class="n">Pts</th><th class="n">FP</th><th class="n">Piernas</th></tr></thead><tbody>${filas}</tbody>`;
+}
+
+// ---------- Relato ----------
+function pintarRelato() {
+  if (!V.partido) return;
+  const html = [];
+  for (const p of V.pasos) {
+    if (p.marca !== undefined) { html.push(`<div class="pbp-q">${p.marca}</div>`); continue; }
+    const e = p.ev;
+    html.push(`<div class="pbp-fila ${e.equipo}">
+      <span class="pbp-reloj">${relojTxt(e.reloj)}</span>
+      <span class="pbp-txt">${e.texto}</span>
+      <span class="pbp-marc">${e.marcadorNos}-${e.marcadorEllos}</span>
+    </div>`);
+  }
+  $('pbp').innerHTML = html.join('');
+}
+
+function pintarTodo() { pintarMarcador(); pintarRelatoVivo(); pintarPlanilla(); pintarQuinteto(); pintarRelato(); }
+
+// ---------- Bucle de reproducción ----------
+const DURACION_PASO = 1.6;   // segundos a 1×
+let ultimo = performance.now();
+function bucle(ahora) {
+  const dt = Math.min(0.1, (ahora - ultimo) / 1000);
+  ultimo = ahora;
+  if (V.jugando && V.partido) {
+    const paso = V.pasos[V.idx];
+    // Los cambios y los libres pasan rápido: no tienen jugada que mirar.
+    const dur = (paso?.marca !== undefined || paso?.ev?.sinAnimacion) ? 0.45 : DURACION_PASO;
+    V.t += (dt * V.vel) / dur;
+    while (V.t >= 1) {
+      V.t -= 1;
+      if (V.idx >= V.pasos.length - 1) { V.jugando = false; V.t = 1; $('btnPlay').textContent = '↺ De nuevo'; break; }
+      V.idx += 1;
+      pintarMarcador(); pintarRelatoVivo(); pintarQuinteto();
+    }
+    render();
+  }
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+
+// ---------- Controles ----------
+$('btnPlay').addEventListener('click', () => {
+  if (V.idx >= V.pasos.length - 1 && !V.jugando) { nuevoPartido(false); }
+  V.jugando = !V.jugando;
+  $('btnPlay').textContent = V.jugando ? '❚❚ Pausa' : '▶ Reproducir';
+});
+document.querySelectorAll('.vel').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('.vel').forEach((x) => x.classList.remove('on'));
+  b.classList.add('on');
+  V.vel = Number(b.dataset.v);
+}));
+$('btnCuarto').addEventListener('click', () => {
+  const qActual = marcadorActual().q;
+  while (V.idx < V.pasos.length - 1 && (V.pasos[V.idx].cuarto ?? 0) <= qActual) V.idx += 1;
+  V.t = 1; pintarTodo(); render();
+});
+$('btnFinal').addEventListener('click', () => {
+  V.idx = V.pasos.length - 1; V.t = 1; V.jugando = false;
+  $('btnPlay').textContent = '↺ De nuevo';
+  pintarTodo(); render();
+});
+$('btnNuevo').addEventListener('click', () => nuevoPartido(true));
+
+function conectarBotonera(contenedor, campo, notaId, notas) {
+  document.querySelectorAll(`#${contenedor} button`).forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll(`#${contenedor} button`).forEach((x) => x.classList.remove('on'));
+    b.classList.add('on');
+    cfg[campo] = b.dataset.a ?? b.dataset.d;
+    if (notaId) $(notaId).textContent = notas[cfg[campo]];
+    nuevoPartido(false);
+  }));
+}
+conectarBotonera('atkBtns', 'ataque', 'atkNota', NOTAS_ATK);
+conectarBotonera('defBtns', 'defensa', 'defNota', NOTAS_DEF);
+conectarBotonera('defRivalBtns', 'defensaRival', null, null);
+
+for (const [slider, campo, val] of [['nivNos', 'nivelNos', 'nivNosVal'], ['nivEllos', 'nivelEllos', 'nivEllosVal']]) {
+  $(slider).addEventListener('input', () => { $(val).textContent = $(slider).value; });
+  $(slider).addEventListener('change', () => { cfg[campo] = Number($(slider).value); nuevoPartido(false); });
+}
+
+// ---------- Pestañas ----------
+document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach((x) => x.classList.remove('on'));
+  b.classList.add('on');
+  for (const t of ['planilla', 'relato', 'balance', 'como']) $(`tab-${t}`).hidden = t !== b.dataset.t;
+}));
+
+// ---------- Pestaña Balance ----------
+$('btnBatch').addEventListener('click', () => {
+  $('btnBatch').disabled = true;
+  $('batchEstado').innerHTML = '<span class="corriendo">Simulando…</span>';
+  setTimeout(() => {
+    const t0 = performance.now();
+    const r = simularBatch({ ...cfg }, [45, 55, 65, 75, 85, 95], 300);
+    const ms = Math.round(performance.now() - t0);
+    const maxAbs = Math.max(...r.filas.map((f) => Math.abs(f.margen)), 20);
+    const barra = (m) => {
+      const ancho = (Math.abs(m) / maxAbs) * 50;
+      return `<span class="barra-margen">
+        <i class="${m >= 0 ? 'pos' : 'neg'}" style="${m >= 0 ? 'left:50%' : `right:50%`};width:${ancho}%"></i>
+        <span class="cero"></span></span>`;
+    };
+    $('batchOut').innerHTML = `
+      <div class="tarjetas">
+        <div class="tarjeta"><div class="k">Puntos por equipo</div>
+          <div class="v clave">${r.mediaPuntos.toFixed(1)}</div>
+          <div class="n">p10 ${r.p10} · p90 ${r.p90}</div></div>
+        <div class="tarjeta"><div class="k">Contra nivel 95</div>
+          <div class="v">${r.filas[5].margen.toFixed(1)}</div>
+          <div class="n">${(r.filas[5].p20 * 100).toFixed(0)}% de palizas 20+</div></div>
+        <div class="tarjeta"><div class="k">Contra nivel parejo</div>
+          <div class="v">${(r.filas[1].victorias * 100).toFixed(0)}%</div>
+          <div class="n">margen ${r.filas[1].margen.toFixed(1)}</div></div>
+        <div class="tarjeta"><div class="k">1800 partidos en</div>
+          <div class="v">${ms}<span style="font-size:0.55em"> ms</span></div>
+          <div class="n">~130 posesiones cada uno</div></div>
+      </div>
+      <div class="tabla-wrap"><table>
+        <thead><tr><th>Nivel rival</th><th class="n">% victorias</th><th>Margen medio</th>
+          <th class="n"></th><th class="n">Nuestros pts</th><th class="n">Sus pts</th>
+          <th class="n">|m| ≥ 20</th><th class="n">Peor</th><th class="n">Mejor</th></tr></thead>
+        <tbody>${r.filas.map((f) => `<tr>
+          <td class="n" style="font-weight:700">${f.nivel}</td>
+          <td class="n">${(f.victorias * 100).toFixed(0)}%</td>
+          <td>${barra(f.margen)}</td>
+          <td class="n" style="font-weight:700;color:${f.margen >= 0 ? 'var(--bien)' : 'var(--mal)'}">${f.margen > 0 ? '+' : ''}${f.margen.toFixed(1)}</td>
+          <td class="n">${f.ptsNos.toFixed(1)}</td><td class="n">${f.ptsEllos.toFixed(1)}</td>
+          <td class="n">${(f.p20 * 100).toFixed(0)}%</td>
+          <td class="n">${f.peor}</td><td class="n">+${f.mejor}</td></tr>`).join('')}</tbody>
+      </table></div>
+      <div class="aviso" style="margin-top:0.9rem">
+        <strong>Comparación con el motor de hoy</strong> (medido con <code>npm run sim:margenes</code>, tu equipo en 55.6):
+        contra un rival de 95 el juego actual pierde por <strong>12.4</strong> con solo <strong>14%</strong> de palizas de 20+.
+        Acá, sin ninguna prótesis de remontada, la diferencia de nivel se paga sola.
+      </div>`;
+    $('btnBatch').disabled = false;
+    $('batchEstado').textContent = `Nuestro nivel: ${cfg.nivelNos} · tácticas actuales · 300 partidos por fila.`;
+  }, 30);
+});
+
+// ---------- Pestaña Cómo funciona ----------
+$('comoOut').innerHTML = `
+  <div class="dos-col">
+    <div>
+      <h3 class="sub-titulo">Una posesión, paso a paso</h3>
+      <p class="leyenda">Esto es lo que corre ~130 veces por partido. Ningún número se reparte hacia atrás.</p>
+      <ol class="leyenda" style="padding-left:1.1rem">
+        <li><strong>Quién la trae</strong> — sorteado por manejo y pase.</li>
+        <li><strong>¿La pierde?</strong> — según su manejo, el robo del que lo marca y la defensa rival.
+          La presión roba mucho más… si le quedan piernas.</li>
+        <li><strong>¿Le rompen la presión?</strong> — un base con manejo la parte y queda de frente al aro.</li>
+        <li><strong>Quién tira</strong> — por uso y nivel. "Estrella" multiplica ×2.8 el peso de la figura;
+          "equipo" aplana el reparto.</li>
+        <li><strong>Desde dónde</strong> — perfil de tiro del puesto. Contra zona, +9 puntos de triples.</li>
+        <li><strong>¿Entra?</strong> — base por tipo de tiro ± su atributo ± el del defensor que le tocó,
+          ± táctica ± piernas.</li>
+        <li><strong>¿Falta?</strong> — se anota al defensor. 5ª falta de equipo por cuarto = bonus;
+          5ª personal = afuera.</li>
+        <li><strong>Rebote</strong> — disputado entre los diez, con peso por puesto.</li>
+      </ol>
+    </div>
+    <div>
+      <h3 class="sub-titulo">Lo que el prototipo prueba</h3>
+      <ul class="leyenda" style="padding-left:1.1rem">
+        <li><strong>El tanteador da real</strong> sin fórmulas de marcador: ~63 puntos por equipo,
+          2P ~50%, 3P ~34%, TL ~68%, 14 faltas por equipo.</li>
+        <li><strong>La diferencia de nivel se paga sola.</strong> No hay remontada automática ni suerte
+          por cuarto: la varianza sale de los tiros que entran y los que no.</li>
+        <li><strong>La táctica se lee en la cancha.</strong> Poné "correr" y mirá la transición;
+          poné al rival en zona y mirá el bloque 2-3 acomodarse con la pelota.</li>
+        <li><strong>Ninguna táctica domina.</strong> Entre equipos parejos, las nueve combinaciones de
+          defensa caen entre −1.3 y +1.3 puntos de margen.</li>
+        <li><strong>La animación no manda.</strong> 1800 partidos se resuelven en milisegundos porque
+          el motor no depende de la vista. La cancha es un reproductor.</li>
+      </ul>
+      <h3 class="sub-titulo" style="margin-top:1rem">Lo que no está</h3>
+      <p class="leyenda">
+        Atributos reales por jugador (acá se derivan de un solo nivel, como propone el diseño),
+        matchups finos, jugadas con nombre propio, y todo el enganche con el resto del juego
+        (ánimo, notas, lesiones, cansancio entre fechas).
+      </p>
+    </div>
+  </div>`;
+
+// ---------- Arranque ----------
+$('atkNota').textContent = NOTAS_ATK[cfg.ataque];
+$('defNota').textContent = NOTAS_DEF[cfg.defensa];
+window.addEventListener('resize', () => render());
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => render());
+nuevoPartido(true);
+</script>

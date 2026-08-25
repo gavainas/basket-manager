@@ -1,8 +1,12 @@
 # Motor de partido: posesiones, estadísticas y vista top-down
 
 **Estado: ToDo, para más adelante** (idea de Gabi, ago 2026). Este documento es
-el diseño acordado y el diagnóstico medido del motor actual. No hay nada
-implementado todavía.
+el diseño acordado y el diagnóstico medido del motor actual. **En el juego no
+hay nada implementado**: lo que sí existe es un **prototipo funcionando fuera
+del juego** en [`prototipos/motor-partido.html`](../prototipos/motor-partido.html)
+(publicado en <https://claude.ai/code/artifact/57996554-285f-44f2-a50b-eb4967d7f886>),
+que valida las decisiones de abajo con números medidos. Ver
+[`prototipos/LEEME.md`](../prototipos/LEEME.md).
 
 El objetivo, en palabras de Gabi: *"que el partido no sea solamente hacer
 cambios en cada cuarto y elegir la táctica"*. Y una restricción dura que manda
@@ -192,6 +196,43 @@ obligatoria, cambia el género del juego.
    con las prótesis de remontada y suerte apagadas o muy reducidas.
 3. **La vista top-down** como reproductor del stream de posesiones, opcional.
 4. **Atributos reales por jugador**, si la derivación se queda corta.
+
+## 5 bis. Lo que el prototipo ya probó (ago 2026)
+
+El prototipo implementa las etapas 1 y 3 fuera del juego. Lo que quedó medido:
+
+| Métrica | Prototipo | Objetivo | Motor de hoy |
+| --- | --- | --- | --- |
+| Puntos por equipo | 62.5 | ~63 | 63.5 |
+| 2P / 3P / TL | 50% / 34% / 68% | de básquet | no existen |
+| Faltas por equipo | 13.6 | 12-18 | no existen |
+| Expulsados por 5 faltas | 0.34 por equipo | que pase | no existen |
+| **Margen vs. rival de 95** | **−21.9** | ~−20 | **−12.4** |
+| **Palizas de 20+ vs. 95** | **58%** | frecuente | **14%** |
+| Desvío del margen entre parejos | 12.2 | 12-13 | 12 (con prótesis) |
+| 1800 partidos completos | 1.4 s | que no moleste | — |
+
+Las cuatro conclusiones que importan:
+
+1. **La hipótesis central se confirma.** Sin remontada automática, sin suerte
+   por cuarto y sin rachas inyectadas, la diferencia de nivel se paga sola y la
+   varianza entre equipos parejos queda donde tiene que estar. Las prótesis del
+   motor actual no son necesarias cuando hay posesiones.
+2. **La derivación de atributos desde un solo número alcanza para empezar.** El
+   prototipo saca doce atributos de `nivel` + puesto + ruido fijo y produce
+   planillas creíbles. Abrir atributos de verdad puede esperar.
+3. **Ninguna táctica domina.** Las nueve combinaciones de defensa entre equipos
+   parejos caen entre −1.3 y +1.3 puntos de margen. Para llegar ahí hubo que
+   darle a la marca hombre un costo de piernas y a la presión una recompensa
+   que escale con las piernas que quedan: sin eso, la presión quedaba dominada
+   (perdía contra las tres defensas) y hombre ganaba siempre.
+4. **La regla de la animación se sostiene en la práctica.** 1800 partidos en
+   1.4 s es la prueba de que el motor no depende de la vista: la cancha puede ir
+   a 8× o saltearse entera sin tocar el marcador.
+
+Lo que el prototipo **no** despeja: el re-balance de `BALANCE.liveMatch` contra
+los objetivos de [`BALANCE.md`](BALANCE.md), el enganche con ánimo/notas/
+lesiones, y el motor abstracto para las divisionales sin plantel generado.
 
 ## 6. Qué NO hace este ToDo
 
