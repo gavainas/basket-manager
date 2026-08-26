@@ -65,11 +65,16 @@ function feeAttitudeLabel(mp: MarketPlayer): string {
   }
 }
 
-function playerFeeLabel(p: Player): { label: string; cls: string } {
+/**
+ * La cuota del jugador — solo cuando no es la corriente. Que aporte la cuota
+ * completa es lo que hacen casi todos: doce chips iguales diciendo lo mismo
+ * tapaban a los dos que sí tienen una beca. Devuelve `null` para el caso normal.
+ */
+function playerFeeLabel(p: Player): { label: string; cls: string } | null {
   const fee = weeklyFee(p);
   if (p.feeStatus === 'beca_total') return { label: 'Becado · $0/sem', cls: 'accent' };
   if (p.feeStatus === 'beca_parcial') return { label: `Media beca · $${fee}/sem`, cls: 'accent' };
-  return { label: `Aporta $${fee}/sem`, cls: 'good' };
+  return null;
 }
 
 // ---------- Liga, día de partido y agendas ----------
@@ -361,8 +366,11 @@ function RosterSection({ state, dispatch }: Props) {
                   <div className="muted">Pide: {DEMAND_LABELS[demand].toLowerCase()}</div>
                 )}
               </div>
-              <span className={`chip ${feeInfo.cls}`}>{feeInfo.label}</span>
-              <span className={`chip ${cont.cls}`}>{cont.label}</span>
+              {feeInfo && <span className={`chip ${feeInfo.cls}`}>{feeInfo.label}</span>}
+              {/* El confirmado ya lleva su ✓ al final de la fila: el chip repetía
+                  la misma información diez veces y escondía a los dos que sí
+                  necesitaban una decisión. */}
+              {st !== 'confirmado' && <span className={`chip ${cont.cls}`}>{cont.label}</span>}
               {needsTalk && (
                 <button disabled={noGestiones} onClick={() => dispatch({ type: 'PS_TALK', id: p.id })}>
                   Hablar

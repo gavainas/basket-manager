@@ -36,6 +36,30 @@ interface Props {
   dispatch: (action: GameAction) => void;
 }
 
+/**
+ * Ícono de cada acción del club. Vive acá y no en `game/actions.ts` porque cómo
+ * se dibuja una acción es presentación, y la lógica del juego no depende de
+ * React (ver CLAUDE.md). Antes eran emoji hardcodeados en el archivo de lógica,
+ * que además es justo lo que `Icon.tsx` pide no hacer.
+ */
+const ACTION_ICON: Record<string, IconName> = {
+  training: 'gimnasio',
+  asado: 'asado',
+  raffle: 'rifa',
+  sponsor: 'comercio',
+  talk: 'chat',
+  collect: 'plata',
+  scholarship: 'beca',
+  jerseys: 'camiseta',
+  rest: 'descanso',
+  recruit: 'lupa',
+};
+
+/** Si aparece una acción nueva sin ícono, cae en uno neutro en vez de romper. */
+function actionIcon(id: string): IconName {
+  return ACTION_ICON[id] ?? 'inscripcion';
+}
+
 function shortName(name: string): string {
   const parts = name.replace(/"[^"]*"\s*/g, '').trim().split(/\s+/);
   return parts[parts.length - 1];
@@ -320,7 +344,7 @@ function PlanningPanel({ state, dispatch }: Props) {
             Esta semana además:{' '}
             {chosen.map((a) => (
               <span key={a.id} className="chip accent" style={{ marginRight: '0.3rem' }}>
-                {a.icon} {a.name}
+                <Icon name={actionIcon(a.id)} size={12} /> {a.name}
               </span>
             ))}
           </p>
@@ -356,7 +380,7 @@ function PlanningPanel({ state, dispatch }: Props) {
 
       {showActions && (
         <>
-          <p className="muted" style={{ marginTop: 0 }}>
+          <p className="muted sobre-lienzo" style={{ marginTop: 0 }}>
             Hasta {max} acciones por semana. Cada una tiene costos, beneficios y algún riesgo. Ninguna es obligatoria.
           </p>
           <div className="action-grid">
@@ -375,7 +399,7 @@ function PlanningPanel({ state, dispatch }: Props) {
                   }}
                 >
                   <div className="action-title">
-                    {a.icon} {a.name}
+                    <Icon name={actionIcon(a.id)} size={17} /> {a.name}
                   </div>
                   <div className="action-desc">{a.description}</div>
                   {blocked ? (
@@ -937,8 +961,9 @@ function LineupPanel({ state, dispatch }: Props) {
         </div>
       )}
 
-      <ScoutingCard state={state} />
-
+      {/* El scouting del rival baja debajo de la pizarra: es informacion util,
+          pero se comia 180px justo arriba del drag & drop, que es la accion de
+          esta pantalla. Primero armas el quinteto, despues lees al rival. */}
       <div className="lineup-layout">
         <div className="lineup-list card" onDragOver={allowDrop} onDrop={dropOnList}>
           <div className="lineup-toolbar">
@@ -1097,6 +1122,8 @@ function LineupPanel({ state, dispatch }: Props) {
         </div>
       </div>
 
+      <ScoutingCard state={state} />
+
       {lineupPromiseWarnings(state).map((w) => (
         <p key={w.playerId} style={{ color: w.breaksToday ? 'var(--bad)' : 'var(--warn, #c90)', fontWeight: 600, margin: '0.5rem 0 0' }}>
           {w.text}
@@ -1252,8 +1279,13 @@ function LiveMatchPanel({ state, dispatch }: Props) {
 
   return (
     <div>
-      <div className="card" style={{ marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
+      {/* El cabezal del partido va pegado abajo de la barra: antes, al jugar
+          cada cuarto la página no volvía arriba y terminabas el 4to mirando
+          suplentes con 0 pts, con el resultado seiscientos píxeles más arriba.
+          Acá vive solo lo que hay que tener siempre a la vista — marcador,
+          cuarto y la racha. El relato y la planilla quedan abajo. */}
+      <div className="card partido-cabezal">
+        <div className="partido-cabezal-fila">
           <h3 style={{ margin: 0 }}>
             {weekLabel(state.week, state.seasonLength)} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
           </h3>
@@ -1296,6 +1328,9 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         )}
 
         {injuryNote && <div className="match-alert">{injuryNote}</div>}
+      </div>
+
+      <div className="card" style={{ marginBottom: '1rem' }}>
         {live.rivalSquad && live.rivalSquad.notes.length > 0 && (
           <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.4rem', fontSize: '0.82rem' }}>
             {live.rivalSquad.notes.join(' ')}

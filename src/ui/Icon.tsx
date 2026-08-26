@@ -48,7 +48,14 @@ export type IconName =
   | 'enfermeria'
   | 'laburo'
   | 'cruz'
-  | 'rayo';
+  | 'rayo'
+  // Acciones del club (ver game/actions.ts). Antes eran emoji: 🎟️ 🤝 🎓 👕 😴 🔎.
+  | 'rifa'
+  | 'comercio'
+  | 'beca'
+  | 'camiseta'
+  | 'descanso'
+  | 'lupa';
 
 const PATHS: Record<IconName, string> = {
   // Tablero: la grilla del resumen.
@@ -127,6 +134,20 @@ const PATHS: Record<IconName, string> = {
   cruz: 'M12 3.5a8.5 8.5 0 100 17 8.5 8.5 0 000-17 M9 9l6 6 M15 9l-6 6',
   // Rayo: el roce que salta chispas.
   rayo: 'M13.5 3L5.5 13.5H11L9.5 21l8-10.5H12z',
+
+  // Rifa: el talón con el troquel al medio.
+  rifa: 'M3 7h18v3.5a1.5 1.5 0 000 3V17H3v-3.5a1.5 1.5 0 000-3z M14 7v1.5 M14 11.2v1.6 M14 15.5V17',
+  // Comercio: la puerta del negocio del barrio, con el toldo.
+  comercio: 'M3.5 8.5h17V20h-17z M3.5 8.5L5 4h14l1.5 4.5 M10 20v-6h4v6 M3.5 8.5c1.9 2 4.4 2 6 0 1.6 2 4.1 2 5.7 0 1.6 2 3.6 2 5.3 0',
+  // Beca: el birrete, que es como el juego habla de bancar a alguien.
+  beca: 'M12 4L2.5 8.5 12 13l9.5-4.5z M6.5 10.5v5c0 1.7 2.5 3 5.5 3s5.5-1.3 5.5-3v-5 M21 9v5.5',
+  // Camiseta: la del club, con el número. El ícono de vestuario es la misma
+  // prenda pero significa otra cosa, así que esta lleva el dorsal.
+  camiseta: 'M8.5 4L4 6.5V11h3v10h10V11h3V6.5L15.5 4 M8.5 4a3.5 3.5 0 007 0 M11 14h2v4 M11 18h3',
+  // Descanso: la luna de la semana liviana.
+  descanso: 'M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 102 16.5 8.5 8.5 0 008.5-6z',
+  // Lupa: correr la voz, preguntar por ahí.
+  lupa: 'M10.5 3.5a7 7 0 100 14 7 7 0 000-14 M15.5 15.5L21 21',
 };
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {

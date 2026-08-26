@@ -3,6 +3,7 @@ import { DEBUG_FULL_SCOUTING, perceivedLevel, scoutingLevel } from '../game/scou
 import { divisionOfTeam, teamByLegacyRival, teamRoster, worldPlayerName } from '../game/world';
 import { ClubLink } from './ClubLink';
 import { Jersey } from './ClubProfile';
+import { Crest } from './Crest';
 import { LeagueLink } from './LeagueLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { initials, rivalDifficulty, rivalStyleInfo } from './helpers';
@@ -48,7 +49,22 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="profile" onClick={(e) => e.stopPropagation()}>
         <div className="profile-head">
-          <div className="avatar profile-avatar">{initials(rival.name)}</div>
+          {/* El escudo, no las iniciales: el generador procedural está pensado
+              justo para estos dos tamaños — 18px en la fila de una tabla y
+              grande en la ficha del club (ver design/SISTEMA_VISUAL.md). Si el
+              rival no tiene club en el mundo (partidas viejas), caen las
+              iniciales como antes. */}
+          {worldClub ? (
+            <Crest
+              seed={worldClub.id}
+              name={worldClub.name}
+              colors={worldClub.colors}
+              founded={worldClub.founded}
+              size={64}
+            />
+          ) : (
+            <div className="avatar profile-avatar">{initials(rival.name)}</div>
+          )}
           <div className="profile-who">
             <div className="profile-name">{rival.name}</div>
             <div className="profile-chips">

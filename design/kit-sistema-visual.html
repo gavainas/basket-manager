@@ -1,6 +1,19 @@
 <title>Kit Club de Barrio</title>
 
 <style>
+  /* ------------------------------------------------------------------ *
+   * Tokens — copiados de src/styles.css, no inventados acá.
+   *
+   * Este archivo y el CSS del juego venían con dos vocabularios distintos
+   * para los mismos colores (--tinta contra --text, --naranja contra
+   * --accent, --lienzo #e2dfd9 contra --bg #d8d4cc). Cualquiera que leyera
+   * el repo — una persona o Claude Design, que lo lee para armar el design
+   * system — veía valores en conflicto.
+   *
+   * Ahora manda el código: los nombres canónicos son los de styles.css.
+   * Los nombres viejos quedan abajo como alias para que las ~800 líneas de
+   * kit que siguen no haya que tocarlas.
+   * ------------------------------------------------------------------ */
   :root {
     /* Chrome — neutro, nunca lleva color de club */
     --chrome: #32353a;
@@ -8,22 +21,29 @@
     --chrome-linea: #4a4e55;
 
     /* Superficies */
-    --lienzo: #e2dfd9;
+    --bg: #d8d4cc;
+    --bg-soft: #e6e3dd;
     --panel: #f6f4f1;
-    --panel-alt: #eceae6;
-    --linea: #d2cec8;
+    --panel-2: #eceae6;
+    --border: #d2cec8;
 
     /* Tinta */
-    --tinta: #25282c;
-    --tinta-media: #6a6f76;
-    --tinta-suave: #9a9fa6;
-    --tinta-clara: #f6f4f1;
+    --text: #25282c;
+    --text-dim: #6a6f76;
+    --text-faint: #9a9fa6;
+    --text-light: #f6f4f1;
 
-    /* Acción — reservado */
-    --naranja: #e07a2a;
-    --naranja-hover: #ef8a39;
+    /* Acción — reservado: máximo dos por pantalla */
+    --accent: #e07a2a;
+    --accent-soft: rgba(224, 122, 42, 0.14);
+    --on-accent: #2a1a08;
 
-    /* Secciones */
+    /* Semáforo — vive dentro de los datos, nunca en un cabezal */
+    --good: #4a9160;
+    --warn: #c69320;
+    --bad: #b8443a;
+
+    /* Secciones — señalización, no decoración */
     --sec-tablero: #2f6b4f;
     --sec-partidos: #2d5c8a;
     --sec-vestuario: #9d3b3b;
@@ -32,15 +52,54 @@
     --sec-scouting: #456470;
     --sec-ajustes: #565b62;
 
-    /* Semáforo */
-    --bien: #4a9160;
-    --ojo: #c69320;
-    --mal: #b8443a;
+    /* Escala tipográfica — nueve pasos, la razón se abre hacia arriba */
+    --fs-2xs: 0.62rem;
+    --fs-xs: 0.72rem;
+    --fs-sm: 0.82rem;
+    --fs-base: 0.95rem;
+    --fs-md: 1.15rem;
+    --fs-lg: 1.5rem;
+    --fs-xl: 2rem;
+    --fs-2xl: 2.6rem;
+    --fs-3xl: 3rem;
 
-    --radio: 4px;
-    --display: 'Bahnschrift SemiBold Condensed', 'Bahnschrift', 'Oswald',
-               'Barlow Condensed', 'Arial Narrow', 'Segoe UI', sans-serif;
+    /* Escala de espaciado — seis pasos */
+    --sp-1: 0.25rem;
+    --sp-2: 0.5rem;
+    --sp-3: 0.75rem;
+    --sp-4: 1rem;
+    --sp-5: 1.5rem;
+    --sp-6: 2.25rem;
+
+    /* Medidas del shell */
+    --ancho-app: 1360px;
+    --topbar-alto: 55px;
+    --recursos-alto: 68px;
+
+    --radius: 4px;
+    --sombra: 0 1px 2px rgba(37, 40, 44, 0.1);
+    --sombra-alta: 0 8px 28px rgba(37, 40, 44, 0.22);
+
+    /* Oswald primero: es la que viaja empaquetada en el build (SIL OFL, ver
+       src/main.tsx). Bahnschrift solo existe en Windows y no puede mandar. */
+    --display: 'Oswald', 'Bahnschrift SemiBold Condensed', 'Arial Narrow', sans-serif;
     --cuerpo: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+    /* --- Alias de los nombres viejos del kit --- */
+    --lienzo: var(--bg);
+    --panel-alt: var(--panel-2);
+    --linea: var(--border);
+    --tinta: var(--text);
+    --tinta-media: var(--text-dim);
+    --tinta-suave: var(--text-faint);
+    --tinta-clara: var(--text-light);
+    --naranja: var(--accent);
+    --bien: var(--good);
+    --ojo: var(--warn);
+    --mal: var(--bad);
+    --radio: var(--radius);
+    /* Solo del kit: el juego aclara el naranja con filter, no con un token. */
+    --naranja-hover: #ef8a39;
   }
 
   * { box-sizing: border-box; }
@@ -365,8 +424,8 @@
       <div class="swatch">
         <div class="muestra" style="background: var(--lienzo)"></div>
         <div class="pie">
-          <div class="token">--lienzo</div>
-          <div class="hex">#e2dfd9</div>
+          <div class="token">--bg</div>
+          <div class="hex">#d8d4cc</div>
           <div class="rol">El campo donde apoyan los paneles.</div>
         </div>
       </div>
@@ -381,7 +440,7 @@
       <div class="swatch">
         <div class="muestra" style="background: var(--panel-alt); border-bottom: 1px solid var(--linea)"></div>
         <div class="pie">
-          <div class="token">--panel-alt</div>
+          <div class="token">--panel-2</div>
           <div class="hex">#eceae6</div>
           <div class="rol">Bloque interno, fila alterna, tu fila en la tabla.</div>
         </div>
@@ -389,7 +448,7 @@
       <div class="swatch">
         <div class="muestra" style="background: var(--tinta)"></div>
         <div class="pie">
-          <div class="token">--tinta</div>
+          <div class="token">--text</div>
           <div class="hex">#25282c</div>
           <div class="rol">Texto principal.</div>
         </div>
@@ -397,7 +456,7 @@
       <div class="swatch">
         <div class="muestra" style="background: var(--tinta-media)"></div>
         <div class="pie">
-          <div class="token">--tinta-media</div>
+          <div class="token">--text-dim</div>
           <div class="hex">#6a6f76</div>
           <div class="rol">Texto secundario y frases de contexto.</div>
         </div>
@@ -405,7 +464,7 @@
       <div class="swatch">
         <div class="muestra" style="background: var(--naranja)"></div>
         <div class="pie">
-          <div class="token">--naranja</div>
+          <div class="token">--accent</div>
           <div class="hex">#e07a2a</div>
           <div class="rol"><strong>Reservado.</strong> Acción y dato clave, nada más.</div>
         </div>
@@ -523,18 +582,18 @@
       <div class="specimen">
         <div>
           <div class="etiqueta">Display · cabezales</div>
-          <div class="display muestra-tipo" style="font-size: 2rem">Posiciones</div>
-          <div class="detalle">1.15rem · 0.10em · mayúsculas</div>
+          <div class="display muestra-tipo" style="font-size: var(--fs-xl)">Posiciones</div>
+          <div class="detalle">--fs-xl · 0.10em · mayúsculas</div>
         </div>
         <div>
           <div class="etiqueta">Display · cifras grandes</div>
-          <div class="display muestra-tipo num" style="font-size: 2.6rem">18:30</div>
+          <div class="display muestra-tipo num" style="font-size: var(--fs-2xl)">18:30</div>
           <div class="detalle">tabular-nums siempre</div>
         </div>
         <div>
           <div class="etiqueta">Etiqueta chica</div>
-          <div class="etiqueta" style="font-size: 0.68rem">Cuotas al día</div>
-          <div class="detalle">0.68rem · 0.14em · --tinta-suave</div>
+          <div class="etiqueta" style="font-size: var(--fs-2xs)">Cuotas al día</div>
+          <div class="detalle">--fs-2xs · 0.14em · --text-faint</div>
         </div>
       </div>
       <div class="specimen">

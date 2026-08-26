@@ -40,6 +40,37 @@
   --sec-scouting: #456470;
   --sec-ajustes: #565b62;
 
+  /* Escala tipográfica. Antes había 18 tamaños distintos y 82 de las 133
+     declaraciones caían entre 0.6 y 0.9rem: nada era grande, nada era chico,
+     todo era casi igual. El sistema promete "densidad con jerarquía" (ver
+     design/SISTEMA_VISUAL.md) y el CSS solo entregaba la densidad.
+     Nueve pasos, la razón se abre hacia arriba: los tres últimos son display
+     (cifra destacada, marcador en vivo, marcador final) y necesitan aire
+     entre sí para leerse como escalones y no como un mismo tamaño. */
+  --fs-2xs: 0.62rem;  /* etiqueta mayúscula mínima */
+  --fs-xs: 0.72rem;   /* chip, sub-etiqueta */
+  --fs-sm: 0.82rem;   /* texto secundario, tabla densa */
+  --fs-base: 0.95rem; /* cuerpo */
+  --fs-md: 1.15rem;   /* subtítulo, dato de ficha */
+  --fs-lg: 1.5rem;    /* título grande */
+  --fs-xl: 2rem;      /* cifra destacada */
+  --fs-2xl: 2.6rem;   /* marcador en vivo */
+  --fs-3xl: 3rem;     /* marcador final */
+
+  /* Escala de espaciado. Mismo problema: ~25 valores de padding y 15 de gap.
+     Seis pasos alcanzan para todo el juego. */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2.25rem;
+
+  /* Ancho de la app. Lo comparten la barra superior, el contenido y la barra
+     de recursos: si se desincronizan, el chrome deja de alinear con lo de
+     abajo. Un solo lugar donde se decide. */
+  --ancho-app: 1360px;
+
   --radius: 4px; /* esta dirección es cuadrada */
   --sombra: 0 1px 2px rgba(37, 40, 44, 0.1);
   --sombra-alta: 0 8px 28px rgba(37, 40, 44, 0.22);
@@ -48,6 +79,10 @@
 
   /* Alto de la barra de recursos fija, para el padding del body */
   --recursos-alto: 68px;
+  /* Alto de la barra superior. Lo necesita todo lo que se pega abajo de ella
+     (el cabezal del partido): `.topbar` es sticky en top:0 y no hay forma de
+     preguntarle su alto desde CSS. Medido, no estimado. */
+  --topbar-alto: 55px;
 }
 
 * {
@@ -78,8 +113,8 @@ button {
   background: var(--panel-2);
   color: var(--text);
   border-radius: var(--radius);
-  padding: 0.55rem 1rem;
-  font-size: 0.95rem;
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-base);
   transition: background 0.15s, border-color 0.15s, transform 0.05s;
 }
 
@@ -114,11 +149,13 @@ button.danger {
 
 /* ---------- Layout ---------- */
 
+/* El formato objetivo del juego es PC (Steam): 1280px o más. Con 1200 quedaban
+   márgenes muertos a los costados en cualquier monitor normal. */
 .app-shell {
-  max-width: 1200px;
+  max-width: var(--ancho-app);
   margin: 0 auto;
   /* Deja aire para la barra de recursos fija. */
-  padding: 0 1rem calc(var(--recursos-alto) + 2rem);
+  padding: 0 var(--sp-4) calc(var(--recursos-alto) + var(--sp-6));
 }
 
 /* ---------- Chrome: barra superior ---------- */
@@ -134,9 +171,9 @@ button.danger {
 }
 
 .topbar-inner {
-  max-width: 1200px;
+  max-width: var(--ancho-app);
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 var(--sp-4);
   display: flex;
   align-items: stretch;
   overflow-x: auto;
@@ -158,7 +195,7 @@ button.danger {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 1.2rem;
+  font-size: var(--fs-md);
   line-height: 1.05;
   color: var(--text-light);
   white-space: nowrap;
@@ -179,7 +216,7 @@ button.danger {
   font-family: var(--display);
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   color: var(--text-faint);
   margin-top: 0.2rem;
 }
@@ -206,7 +243,7 @@ button.danger {
   color: var(--text-light);
   font-family: var(--display);
   font-weight: 500;
-  font-size: 1.1rem;
+  font-size: var(--fs-md);
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -222,7 +259,7 @@ button.danger {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.09em;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   padding: 0.4rem 0.9rem;
   display: flex;
   align-items: center;
@@ -247,7 +284,7 @@ button.danger {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.09em;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   padding: 0.4rem 0.9rem;
   display: flex;
   align-items: center;
@@ -276,7 +313,7 @@ button.danger {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   padding: 0.5rem 0.8rem 0.45rem;
   display: flex;
   align-items: center;
@@ -336,9 +373,9 @@ button.danger {
 }
 
 .recursos-inner {
-  max-width: 1200px;
+  max-width: var(--ancho-app);
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 var(--sp-4);
   display: flex;
   align-items: stretch;
   overflow-x: auto;
@@ -358,7 +395,7 @@ button.danger {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.11em;
-  font-size: 0.65rem;
+  font-size: var(--fs-2xs);
   color: var(--text-faint);
   display: flex;
   align-items: center;
@@ -373,7 +410,7 @@ button.danger {
 .recursos .recurso .v {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 1.5rem;
+  font-size: var(--fs-lg);
   line-height: 1.15;
   color: var(--text-light);
   font-variant-numeric: tabular-nums;
@@ -385,7 +422,7 @@ button.danger {
 .recursos .recurso .v.bad { color: var(--bad); }
 
 .recursos .recurso .s {
-  font-size: 0.65rem;
+  font-size: var(--fs-2xs);
   color: var(--text-faint);
   line-height: 1.25;
 }
@@ -408,7 +445,7 @@ button.danger {
   font-family: var(--display);
   text-transform: uppercase;
   letter-spacing: 0.09em;
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   padding: 0.6rem 1.2rem;
   white-space: nowrap;
 }
@@ -419,7 +456,7 @@ button.danger {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1rem;
+  padding: var(--sp-4);
   box-shadow: var(--sombra);
 }
 
@@ -432,7 +469,7 @@ button.danger {
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.11em;
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   margin-bottom: 0.75rem;
 }
 
@@ -461,7 +498,7 @@ button.danger {
   background: var(--sec);
   color: var(--text-light);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--fs-base);
   letter-spacing: 0.08em;
   margin: -1rem -1rem 0.9rem;
   padding: 0.5rem 0.9rem;
@@ -555,7 +592,7 @@ button.danger {
   color: var(--text-light);
   font-family: var(--display);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--fs-base);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 0.5rem 0.9rem;
@@ -622,7 +659,7 @@ button.danger {
 .hub-tile-label {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: var(--fs-base);
   line-height: 1.1;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -631,7 +668,7 @@ button.danger {
 /* Dos líneas: el aviso tiene que poder leerse sin entrar, y con una sola
    "La caja no cubre la semana: $90 contra…" se cortaba justo en el número. */
 .hub-tile-note {
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   line-height: 1.3;
   color: var(--text-dim);
   display: -webkit-box;
@@ -681,7 +718,7 @@ button.danger {
   margin: 0;
   font-family: var(--display);
   font-weight: 600;
-  font-size: 1.5rem;
+  font-size: var(--fs-lg);
   line-height: 1.05;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -689,7 +726,7 @@ button.danger {
 
 .hub-semana {
   font-family: var(--display);
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -712,13 +749,13 @@ button.danger {
 
 .hub-rival-nombre {
   font-family: var(--display);
-  font-size: 1.1rem;
+  font-size: var(--fs-md);
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
 .hub-rival-cuando {
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
 }
 
@@ -732,7 +769,7 @@ button.danger {
 
 .hub-caja-k {
   display: block;
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -740,7 +777,7 @@ button.danger {
 
 .hub-caja-v {
   font-family: var(--display);
-  font-size: 2rem;
+  font-size: var(--fs-xl);
   line-height: 1.05;
   color: var(--accent);
 }
@@ -756,7 +793,7 @@ button.danger {
 
 .hub-cifras .k {
   display: block;
-  font-size: 0.65rem;
+  font-size: var(--fs-2xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -764,7 +801,7 @@ button.danger {
 
 .hub-cifras .v {
   font-family: var(--display);
-  font-size: 1.2rem;
+  font-size: var(--fs-md);
 }
 
 .hub-avanzar {
@@ -776,7 +813,7 @@ button.danger {
   border: 0;
   border-radius: var(--radius);
   font-family: var(--display);
-  font-size: 1.1rem;
+  font-size: var(--fs-md);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -799,7 +836,7 @@ button.danger {
   gap: 0.25rem;
   padding: 0.2rem 0.35rem;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   background: none;
   border: 0;
@@ -820,7 +857,7 @@ button.danger {
 .hub-plantel-leyenda {
   margin-left: auto;
   font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   letter-spacing: 0.04em;
   text-transform: none;
   opacity: 0.85;
@@ -895,7 +932,7 @@ img.retrato-img.v2 {
 }
 
 .hub-jug-pos {
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   letter-spacing: 0.1em;
   color: var(--text-faint);
 }
@@ -903,7 +940,7 @@ img.retrato-img.v2 {
 .hub-jug-nombre {
   max-width: 100%;
   font-family: var(--display);
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   line-height: 1.1;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1009,21 +1046,21 @@ img.retrato-img.v2 {
 .stat-tile .label {
   font-family: var(--display);
   color: var(--text-faint);
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   text-transform: uppercase;
   letter-spacing: 0.13em;
 }
 
 .stat-tile .value {
   font-family: var(--display);
-  font-size: 1.5rem;
+  font-size: var(--fs-lg);
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
   margin-top: 0.1rem;
 }
 
 .stat-tile .sub {
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
 }
 
@@ -1039,7 +1076,7 @@ img.retrato-img.v2 {
   align-items: center;
   gap: 0.6rem;
   margin: 0.3rem 0;
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
 }
 
 .bar-row .bar-label {
@@ -1076,9 +1113,9 @@ img.retrato-img.v2 {
 
 .chip {
   display: inline-block;
-  padding: 0.12rem 0.55rem;
+  padding: 0.12rem var(--sp-2);
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   border: 1px solid var(--border);
   color: var(--text-dim);
@@ -1154,7 +1191,7 @@ img.retrato-img.v2 {
   justify-content: center;
   font-weight: 800;
   color: var(--text-dim);
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   overflow: hidden;
 }
 
@@ -1178,7 +1215,7 @@ img.retrato-img.v2 {
 
 .player-head .pos {
   color: var(--text-dim);
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
 }
 
 .player-head .rating {
@@ -1186,19 +1223,19 @@ img.retrato-img.v2 {
 }
 
 .player-head .rating .num {
-  font-size: 1.2rem;
+  font-size: var(--fs-md);
   font-weight: 800;
   /* Tinta, no naranja: el acento es de la acción, no de cada fila. */
   color: var(--text);
 }
 
 .player-head .rating .approx {
-  font-size: 0.65rem;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
 }
 
 .player-desc {
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   font-style: italic;
   margin: 0.4rem 0 0.6rem;
@@ -1237,19 +1274,19 @@ img.retrato-img.v2 {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
 }
 
 th, td {
   text-align: left;
-  padding: 0.45rem 0.6rem;
+  padding: var(--sp-2) var(--sp-3);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
 th {
   color: var(--text-dim);
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -1274,7 +1311,7 @@ td.num, th.num {
 .news-list li {
   padding: 0.45rem 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   display: flex;
   gap: 0.6rem;
 }
@@ -1288,7 +1325,7 @@ td.num, th.num {
 
 .news-week {
   color: var(--text-dim);
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   min-width: 42px;
   padding-top: 0.1rem;
 }
@@ -1319,7 +1356,7 @@ td.num, th.num {
   border-radius: 999px;
   border: 1px solid var(--border);
   color: var(--text-dim);
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
 }
 
 /* El paso en curso es señalización, no acción: lleva el azul de Partidos. */
@@ -1367,21 +1404,30 @@ td.num, th.num {
 .action-card .action-title {
   font-weight: 700;
   margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* El ícono no compite con el nombre: hereda el color pero no el peso. */
+.action-card .action-title .ico {
+  flex-shrink: 0;
+  color: var(--sec);
 }
 
 .action-card .action-desc {
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   margin-bottom: 0.4rem;
 }
 
 .action-card .action-cost {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--warn);
 }
 
 .action-card .action-blocked {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--bad);
 }
 
@@ -1395,7 +1441,36 @@ td.num, th.num {
 
 .confirm-bar .hint {
   color: var(--text-dim);
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
+}
+
+/* ---------- Cabezal del partido ---------- */
+
+/* Se pega abajo de la barra superior mientras se juega. Solo lleva lo que hay
+   que tener siempre a la vista: marcador, cuarto y racha. Va por debajo de
+   `.topbar` (z-index 30) para que la barra le pase por encima al scrollear. */
+.partido-cabezal {
+  position: sticky;
+  top: var(--topbar-alto);
+  z-index: 20;
+  margin-bottom: 1rem;
+}
+
+/* En vivo el marcador respira menos: el cabezal es una franja, no una pantalla. */
+.partido-cabezal .scoreboard.live {
+  padding: 0.7rem 1rem 0.4rem;
+}
+
+.partido-cabezal-fila {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.partido-cabezal .drama-row {
+  margin-bottom: 0;
 }
 
 /* ---------- Scoreboard ---------- */
@@ -1416,12 +1491,12 @@ td.num, th.num {
 
 .scoreboard .team .tname {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: var(--fs-base);
   margin-bottom: 0.3rem;
 }
 
 .scoreboard .score {
-  font-size: 3rem;
+  font-size: var(--fs-3xl);
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -1431,7 +1506,7 @@ td.num, th.num {
 
 .result-badge {
   display: inline-block;
-  font-size: 1rem;
+  font-size: var(--fs-base);
   font-weight: 800;
   padding: 0.3rem 1.2rem;
   border-radius: 999px;
@@ -1447,7 +1522,7 @@ td.num, th.num {
 
 .reason-list li {
   margin-bottom: 0.3rem;
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
 }
 
 /* ---------- Eventos sociales ---------- */
@@ -1473,7 +1548,7 @@ td.num, th.num {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: var(--fs-lg);
 }
 
 .event-people {
@@ -1484,7 +1559,7 @@ td.num, th.num {
 
 .event-person {
   text-align: center;
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   max-width: 76px;
 }
@@ -1511,7 +1586,7 @@ td.num, th.num {
 /* ---------- Estados humanos: la frase al lado del número ---------- */
 
 .human-note {
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   margin: 0.5rem 0 0.1rem;
   line-height: 1.35;
@@ -1564,7 +1639,7 @@ td.num, th.num {
   background: var(--panel-2);
   padding: 0.3rem 0.35rem 0.35rem;
   min-height: 3rem;
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
 }
 
 .dia-cell.dia-hoy {
@@ -1581,7 +1656,7 @@ td.num, th.num {
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--text-dim);
-  font-size: 0.68rem;
+  font-size: var(--fs-xs);
 }
 
 .dia-fecha {
@@ -1591,7 +1666,7 @@ td.num, th.num {
 
 .dia-tag {
   display: inline-block;
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--accent);
@@ -1637,14 +1712,14 @@ td.num, th.num {
 }
 
 .chat-name {
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   color: var(--accent);
   margin-bottom: 0.1rem;
 }
 
 .chat-text {
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   line-height: 1.35;
 }
 
@@ -1701,7 +1776,7 @@ table.planilla th.sorted {
 
 .sort-arrow {
   margin-left: 0.2rem;
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
 }
 
 table.planilla tr:last-child td {
@@ -1732,7 +1807,7 @@ table.planilla tr:last-child td {
   border-radius: 0;
   color: var(--text-dim);
   padding: 0.3rem 0.9rem;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
 }
 
 .view-toggle button.active {
@@ -1766,7 +1841,7 @@ tr.sheet-group td {
   background: var(--bg-soft);
   color: var(--text);
   font-family: var(--display);
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.09em;
@@ -1798,11 +1873,13 @@ tr.sheet-group td {
 .stat-warn { color: var(--warn); }
 .stat-bad { color: var(--bad); }
 
-.sheet-tag { font-size: 0.75rem; }
+.sheet-tag { font-size: var(--fs-xs); }
 .sheet-tag.good { color: var(--good); }
 .sheet-tag.warn { color: var(--warn); }
 .sheet-tag.bad { color: var(--bad); }
 .sheet-tag.accent { color: var(--accent); }
+/* Sin novedad. Ocupa la celda para no romper la grilla, sin llamar la atención. */
+.sheet-nada { font-size: var(--fs-xs); color: var(--text-faint); }
 
 .sheet-side {
   border: 1px solid var(--border);
@@ -1817,14 +1894,14 @@ tr.sheet-group td {
 }
 
 .sheet-media-num {
-  font-size: 2rem;
+  font-size: var(--fs-xl);
   font-weight: 800;
   color: var(--accent);
   line-height: 1;
 }
 
 .sheet-media-label {
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1849,21 +1926,21 @@ tr.sheet-group td {
 }
 
 .court-slot .court-name {
-  font-size: 0.65rem;
+  font-size: var(--fs-2xs);
   color: var(--text-light);
   white-space: nowrap;
   text-shadow: 0 1px 3px rgba(20, 32, 44, 0.85);
 }
 
 .court-slot .court-rating {
-  font-size: 0.65rem;
+  font-size: var(--fs-2xs);
   font-weight: 700;
   color: #ffc078; /* el naranja no llega sobre la cancha; se aclara para leerse */
   text-shadow: 0 1px 3px rgba(20, 32, 44, 0.85);
 }
 
 .sheet-court-note {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   margin: 0.6rem 0 0;
 }
 
@@ -1892,13 +1969,13 @@ tr.sheet-group td {
 
 .modal h2 {
   color: var(--accent);
-  font-size: 1.1rem;
+  font-size: var(--fs-md);
 }
 
 .modal .event-text {
   margin: 0.8rem 0 1.2rem;
   line-height: 1.5;
-  font-size: 0.95rem;
+  font-size: var(--fs-base);
 }
 
 .modal .options {
@@ -1914,7 +1991,7 @@ tr.sheet-group td {
 
 .modal .options .opt-hint {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   margin-top: 0.2rem;
 }
@@ -1998,7 +2075,7 @@ tr.sheet-group td {
 
 /* Versión del build (hash + fecha del commit): para saber qué se está jugando. */
 .menu-screen .menu-version {
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   opacity: 0.65;
   margin-top: 0.4rem;
 }
@@ -2012,7 +2089,7 @@ tr.sheet-group td {
 
 .menu-diff-label {
   font-family: var(--display);
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   text-transform: uppercase;
   letter-spacing: 0.13em;
   color: var(--text-faint);
@@ -2020,7 +2097,7 @@ tr.sheet-group td {
 
 .menu-diff-desc {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   min-height: 2.2em;
 }
@@ -2033,7 +2110,7 @@ tr.sheet-group td {
 
 .menu-screen .menu-buttons button {
   padding: 0.8rem;
-  font-size: 1.1rem;
+  font-size: var(--fs-md);
 }
 
 .season-end {
@@ -2049,7 +2126,7 @@ tr.sheet-group td {
 
 .season-end .outcome h1 {
   color: var(--accent);
-  font-size: 2rem;
+  font-size: var(--fs-xl);
 }
 
 .season-end .outcome p {
@@ -2066,7 +2143,7 @@ tr.sheet-group td {
   align-items: center;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
 }
 
 .dim-row:last-child { border-bottom: none; }
@@ -2078,17 +2155,37 @@ tr.sheet-group td {
   .dim-row .bar-track { display: none; }
   .bar-row { grid-template-columns: 90px 1fr 34px; }
   .scoreboard { gap: 1rem; }
-  .scoreboard .score { font-size: 2.2rem; }
+  .scoreboard .score { font-size: var(--fs-xl); }
 }
 
 .section-title {
   margin: 1.4rem 0 0.7rem;
-  font-size: 1.1rem;
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--fs-md);
+}
+
+/* Lo que se apoya directo sobre la cancha, sin panel debajo, necesita tinta
+   clara: el fondo lleva un velo oscuro (ver .fondo-app::after) y la tinta
+   normal desaparece. Le pasaba a los dos títulos de Rankings, que eran
+   invisibles. Va acotado a `.vista` a propósito: las galerías de validación
+   (/#retratos, /#escudos) no tienen fondo y ahí la tinta oscura es la correcta. */
+.vista .section-title,
+.vista .sobre-lienzo {
+  color: var(--text-light);
+  text-shadow: 0 1px 3px rgba(20, 18, 16, 0.55);
+}
+
+.vista .sobre-lienzo .plink {
+  color: inherit;
+  border-bottom-color: rgba(246, 244, 241, 0.45);
 }
 
 .muted {
   color: var(--text-dim);
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
 }
 
 .log-list {
@@ -2098,7 +2195,7 @@ tr.sheet-group td {
 
 .log-list li {
   margin-bottom: 0.4rem;
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   line-height: 1.4;
 }
 
@@ -2130,7 +2227,7 @@ tr.sheet-group td {
 }
 
 .callup-icon {
-  font-size: 1.1rem;
+  font-size: var(--fs-md);
   padding-top: 0.05rem;
 }
 
@@ -2139,7 +2236,7 @@ tr.sheet-group td {
 }
 
 .callup-note {
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   font-style: italic;
   margin-top: 0.15rem;
@@ -2168,7 +2265,7 @@ tr.sheet-group td {
 }
 
 .gallery-tile .g-name {
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -2176,7 +2273,7 @@ tr.sheet-group td {
 }
 
 .gallery-tile .g-age {
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
 }
 
@@ -2225,7 +2322,7 @@ tr.sheet-group td {
   left: 0;
   background: var(--bg-soft);
   color: var(--text-dim);
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   font-weight: 700;
   letter-spacing: 0.3px;
   padding: 0.15rem 0.45rem;
@@ -2244,7 +2341,7 @@ tr.sheet-group td {
   justify-content: center;
   overflow: hidden;
   color: var(--text-dim);
-  font-size: 1.1rem;
+  font-size: var(--fs-md);
 }
 .qs-avatar svg {
   width: 100%;
@@ -2260,7 +2357,7 @@ tr.sheet-group td {
 }
 .qs-name {
   margin-top: 0.35rem;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   font-weight: 700;
   line-height: 1.15;
   min-height: 2.1em;
@@ -2272,7 +2369,7 @@ tr.sheet-group td {
   font-weight: 500;
 }
 .qs-ht {
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   margin-bottom: 0.4rem;
 }
@@ -2294,12 +2391,12 @@ tr.sheet-group td {
 }
 .qs-media {
   margin-top: 0.25rem;
-  font-size: 1.1rem;
+  font-size: var(--fs-md);
   font-weight: 800;
   color: var(--text);
 }
 .qs-media small {
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
   font-weight: 500;
   margin-left: 0.15rem;
@@ -2310,15 +2407,36 @@ tr.sheet-group td {
     height: 44px;
   }
   .qs-name {
-    font-size: 0.7rem;
+    font-size: var(--fs-xs);
   }
 }
 
+/* La lista y la pizarra son las dos mitades de un mismo drag & drop: tienen que
+   verse juntas o estás arrastrando a ciegas. Por eso el par comparte alto y el
+   scroll vive adentro de la lista, no en la página. */
 .lineup-layout {
   display: grid;
   grid-template-columns: minmax(340px, 1fr) minmax(300px, 420px);
-  gap: 1rem;
+  gap: var(--sp-4);
   align-items: start;
+}
+
+.lineup-list {
+  /* Alto de la ventana menos la barra superior, la de recursos y el aire de la
+     confirmación: lo que queda es lo que se puede usar sin scrollear. */
+  max-height: calc(100vh - var(--topbar-alto) - var(--recursos-alto) - 7rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* La barra de la lista queda fija arriba mientras se scrollea adentro: los
+   botones de Sugerir y Limpiar no se van de vista. */
+.lineup-list .lineup-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
+  padding-top: 0.15rem;
 }
 
 @media (max-width: 900px) {
@@ -2340,7 +2458,7 @@ tr.sheet-group td {
 
 button.small {
   padding: 0.3rem 0.7rem;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
 }
 
 .lp-row {
@@ -2370,7 +2488,7 @@ button.small {
 }
 
 .lp-pos {
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   font-weight: 800;
   color: var(--text-dim);
   border: 1px solid var(--border);
@@ -2385,7 +2503,7 @@ button.small {
 
 .lp-name {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2394,7 +2512,7 @@ button.small {
 .lp-meta {
   display: flex;
   gap: 0.7rem;
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   margin-top: 0.1rem;
 }
@@ -2406,11 +2524,11 @@ button.small {
 .lp-rating .num {
   font-weight: 800;
   color: var(--text);
-  font-size: 1rem;
+  font-size: var(--fs-base);
 }
 
 .lp-rating .stars {
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
 }
 
@@ -2424,7 +2542,7 @@ button.mini {
   height: 32px;
   padding: 0;
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   border-radius: var(--radius);
 }
 
@@ -2500,7 +2618,7 @@ button.mini.blue.on {
   justify-content: center;
   font-weight: 800;
   color: var(--text-dim);
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   box-shadow: 0 3px 10px rgba(20, 32, 44, 0.45);
   overflow: hidden;
 }
@@ -2527,12 +2645,12 @@ button.mini.blue.on {
 .slot-avatar.small {
   width: 34px;
   height: 34px;
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
 }
 
 .slot-name {
   margin-top: 0.25rem;
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -2546,7 +2664,7 @@ button.mini.blue.on {
 }
 
 .slot-sub {
-  font-size: 0.65rem;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
   text-shadow: 0 1px 3px rgba(20, 32, 44, 0.8);
 }
@@ -2560,7 +2678,7 @@ button.mini.blue.on {
 }
 
 .bench-label {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2579,7 +2697,7 @@ button.mini.blue.on {
 }
 
 .bench-slot .slot-name {
-  font-size: 0.65rem;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   text-shadow: none;
 }
@@ -2591,7 +2709,7 @@ button.mini.blue.on {
 }
 
 .scoreboard.live .score {
-  font-size: 2.6rem;
+  font-size: var(--fs-2xl);
 }
 
 /* Drama del partido: el marcador salta al actualizarse y las alertas entran. */
@@ -2643,7 +2761,7 @@ button.mini.blue.on {
 }
 
 .tactic-label {
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-dim);
@@ -2664,7 +2782,7 @@ button.mini.blue.on {
   border-radius: 0;
   background: transparent;
   padding: 0.5rem 0.9rem;
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
 }
 
 .segmented button + button {
@@ -2678,7 +2796,7 @@ button.mini.blue.on {
 }
 
 .tactic-hint {
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   margin: 0.4rem 0 0;
   line-height: 1.4;
@@ -2687,7 +2805,7 @@ button.mini.blue.on {
 /* Cambios entre cuartos */
 
 .sub-group-label {
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-dim);
@@ -2703,14 +2821,14 @@ button.mini.blue.on {
   border-radius: var(--radius);
   border: 1px solid transparent;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
 }
 
 .sub-pts {
   text-align: right;
   color: var(--text);
   font-variant-numeric: tabular-nums;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   white-space: nowrap;
 }
 
@@ -2743,7 +2861,7 @@ button.mini.blue.on {
   text-align: right;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
 }
 
 .legs-mini {
@@ -2802,12 +2920,12 @@ button.mini.blue.on {
 }
 
 .hc-meta {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
 }
 
 .hc-desc {
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   font-style: italic;
   color: var(--text-dim);
   margin: 0.35rem 0 0.5rem;
@@ -2826,7 +2944,7 @@ button.mini.blue.on {
 }
 
 .slot-pos-label {
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-dim);
@@ -2850,7 +2968,7 @@ button.mini.blue.on {
 
 .quarter-head {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   margin-bottom: 0.2rem;
 }
 
@@ -2877,7 +2995,7 @@ button.mini.blue.on {
   border-radius: var(--radius);
   width: max-content;
   max-width: 250px;
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 400;
   line-height: 1.4;
   white-space: normal;
@@ -2921,7 +3039,7 @@ button.mini.blue.on {
   width: 58px;
   height: 58px;
   min-width: 58px;
-  font-size: 1.2rem;
+  font-size: var(--fs-md);
 }
 
 .profile-who {
@@ -2930,7 +3048,7 @@ button.mini.blue.on {
 }
 
 .profile-name {
-  font-size: 1.2rem;
+  font-size: var(--fs-md);
   font-weight: 800;
 }
 
@@ -2943,7 +3061,7 @@ button.mini.blue.on {
 
 .profile-close {
   padding: 0.3rem 0.7rem;
-  font-size: 1rem;
+  font-size: var(--fs-base);
   line-height: 1;
 }
 
@@ -2957,7 +3075,7 @@ button.mini.blue.on {
 .profile-tabs button {
   border-radius: 999px;
   padding: 0.35rem 0.9rem;
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   background: transparent;
 }
 
@@ -2981,7 +3099,7 @@ button.mini.blue.on {
 
 .profile-subtitle {
   margin: 1.1rem 0 0.5rem;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-dim);
@@ -3002,7 +3120,7 @@ button.mini.blue.on {
   gap: 0.8rem;
   padding: 0.4rem 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   align-items: baseline;
 }
 
@@ -3012,7 +3130,7 @@ button.mini.blue.on {
 
 .data-label {
   color: var(--text-dim);
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -3028,7 +3146,7 @@ button.mini.blue.on {
   gap: 0.6rem;
   padding: 0.45rem 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   align-items: baseline;
 }
 
@@ -3038,7 +3156,7 @@ button.mini.blue.on {
 
 .timeline-when {
   color: var(--text-dim);
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   white-space: nowrap;
 }
 
@@ -3049,7 +3167,7 @@ button.mini.blue.on {
   align-items: center;
   padding: 0.32rem 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
 }
 
 .aff-row:last-child {
@@ -3066,7 +3184,7 @@ button.mini.blue.on {
   text-align: right;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
 }
 
 @media (max-width: 560px) {
@@ -3099,7 +3217,7 @@ button.mini.blue.on {
 /* ---------- Scouting ---------- */
 
 .scout-title {
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-dim);
@@ -3122,7 +3240,7 @@ button.mini.blue.on {
   align-items: baseline;
   padding: 0.35rem 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
 }
 
 .ranking-list li:last-child {
@@ -3148,7 +3266,7 @@ button.mini.blue.on {
 .rk-value {
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   white-space: nowrap;
 }
 
