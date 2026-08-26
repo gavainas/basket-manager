@@ -43,22 +43,57 @@ afinan al pasarlos a `styles.css`.
 
 ## Tokens
 
-Reemplazan el `:root` actual de [`src/styles.css`](../src/styles.css), que es tema oscuro
-azul ("partido nocturno") y queda descartado.
+> **Manda el código.** Los nombres canónicos son los del `:root` de
+> [`src/styles.css`](../src/styles.css); esta tabla los refleja, no al revés. Los nombres
+> que este documento usaba antes (`--lienzo`, `--tinta`, `--naranja`, `--radio`…) quedaron
+> como alias en el kit para no romperlo, pero no se usan en código nuevo.
 
 | Token | Valor | Uso |
 | --- | --- | --- |
 | `--chrome` | `#32353a` | Barra superior y barra de recursos |
 | `--chrome-alto` | `#3d4147` | Pestaña activa, superficies elevadas del chrome |
-| `--lienzo` | `#e2dfd9` | Campo detrás de los paneles |
+| `--bg` | `#d8d4cc` | Campo detrás de los paneles |
+| `--bg-soft` | `#e6e3dd` | Pistas de barra, filas hundidas |
 | `--panel` | `#f6f4f1` | Cuerpo de panel |
-| `--panel-alt` | `#eceae6` | Bloque interno, fila alterna |
-| `--linea` | `#d2cec8` | Filetes y bordes |
-| `--tinta` | `#25282c` | Texto principal |
-| `--tinta-media` | `#6a6f76` | Texto secundario |
-| `--tinta-suave` | `#9a9fa6` | Etiquetas, texto deshabilitado |
-| `--naranja` | `#e07a2a` | **Reservado**: acción y dato clave |
-| `--radio` | `4px` | Radio estándar — esta dirección es cuadrada |
+| `--panel-2` | `#eceae6` | Bloque interno, fila alterna |
+| `--border` | `#d2cec8` | Filetes y bordes |
+| `--text` | `#25282c` | Texto principal |
+| `--text-dim` | `#6a6f76` | Texto secundario |
+| `--text-faint` | `#9a9fa6` | Etiquetas, texto deshabilitado |
+| `--text-light` | `#f6f4f1` | Sobre chrome y sobre la cancha |
+| `--accent` | `#e07a2a` | **Reservado**: acción y dato clave |
+| `--on-accent` | `#2a1a08` | Tinta sobre naranja (5:1, pasa AA en texto chico) |
+| `--radius` | `4px` | Radio estándar — esta dirección es cuadrada |
+
+### Escalas
+
+Antes había 18 tamaños de fuente distintos y 82 de las 133 declaraciones caían entre 0.6 y
+0.9rem: nada era grande, nada era chico. El sistema promete "densidad con jerarquía" y el
+CSS solo entregaba la densidad. Nueve pasos, la razón se abre hacia arriba porque los tres
+últimos son display y necesitan aire entre sí para leerse como escalones.
+
+| Token | Valor | Uso |
+| --- | --- | --- |
+| `--fs-2xs` | `0.62rem` | Etiqueta mayúscula mínima |
+| `--fs-xs` | `0.72rem` | Chip, sub-etiqueta |
+| `--fs-sm` | `0.82rem` | Texto secundario, tabla densa |
+| `--fs-base` | `0.95rem` | Cuerpo |
+| `--fs-md` | `1.15rem` | Subtítulo, dato de ficha |
+| `--fs-lg` | `1.5rem` | Título grande |
+| `--fs-xl` | `2rem` | Cifra destacada |
+| `--fs-2xl` | `2.6rem` | Marcador en vivo |
+| `--fs-3xl` | `3rem` | Marcador final |
+
+Espaciado: `--sp-1` `0.25rem` · `--sp-2` `0.5rem` · `--sp-3` `0.75rem` · `--sp-4` `1rem` ·
+`--sp-5` `1.5rem` · `--sp-6` `2.25rem`.
+
+### Medidas del shell
+
+| Token | Valor | Uso |
+| --- | --- | --- |
+| `--ancho-app` | `1360px` | Lo comparten el contenido y las dos barras de chrome |
+| `--topbar-alto` | `55px` | Medido: lo necesita todo lo que se pega abajo de la barra |
+| `--recursos-alto` | `68px` | Barra de recursos fija |
 
 El radio de `10px` de la dirección anterior y los `14px` de la cálida no aplican: los
 paneles de esta dirección son casi rectos. Es parte de lo que la hace leer como manager
@@ -280,12 +315,13 @@ Reglas que esto agrega al sistema:
   foco del teclado usa el color de área, no el acento.
 - `.tabs` sigue documentado en el kit como componente, aunque el shell ya no lo use.
 
-Pendiente del paso 4: las cards todavía no llevan banda de color (la clase `.card.banda`
-ya existe).
+**Paso 4 hecho**: las cards llevan banda de color (ver `.vista .card > h3` en
+`styles.css`). El `h3` que abre una card se pinta con el color de su área; si la card
+arranca con otra cosa, se declara con la clase `card-band`.
 
 ## Cómo volver atrás
 
-Cada paso queda en un commit propio en `claude/basket-manager-mockup-vm5xak`. El arte
+Cada paso queda en un commit propio. El arte
 anterior no se borra:
 
 - La dirección cálida sigue viva en su artifact y en la maqueta HTML de las 24 pantallas.
