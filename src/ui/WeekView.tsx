@@ -296,7 +296,11 @@ function AsadoRsvpPanel({ state }: { state: GameState }) {
  */
 function PlanningPanel({ state, dispatch }: Props) {
   const max = BALANCE.actions.maxPerWeek;
-  const [showActions, setShowActions] = useState(state.actionsChosen.length > 0);
+  // Abiertas de entrada. Colapsadas eran invisibles: buscar un sponsor, becar a
+  // la figura o cobrar las cuotas atrasadas vivían detrás de un botón gris al
+  // lado de "Pasarla sobre la hora", y quien no lo tocaba nunca jugaba con la
+  // mitad del juego. El botón sigue estando para plegarlas.
+  const [showActions, setShowActions] = useState(true);
   const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1]);
   const chosen = state.actionsChosen
     .map((id) => ACTIONS.find((a) => a.id === id))
@@ -363,9 +367,6 @@ function PlanningPanel({ state, dispatch }: Props) {
           >
             Pasarla sobre la hora
           </button>
-          <button className="small" onClick={() => setShowActions((v) => !v)}>
-            {showActions ? 'Ocultar acciones' : `Acciones del club${chosen.length > 0 ? ` (${chosen.length}/${max})` : ''}`}
-          </button>
           <span className="hint">
             {chosen.length > 0
               ? 'Las acciones elegidas se aplican al pasar lista.'
@@ -378,41 +379,55 @@ function PlanningPanel({ state, dispatch }: Props) {
 
       {state.actionsChosen.includes('asado') && <AsadoRsvpPanel state={state} />}
 
-      {showActions && (
-        <>
-          <p className="muted sobre-lienzo" style={{ marginTop: 0 }}>
-            Hasta {max} acciones por semana. Cada una tiene costos, beneficios y algún riesgo. Ninguna es obligatoria.
-          </p>
-          <div className="action-grid">
-            {ACTIONS.map((a) => {
-              const check = a.available(state);
-              const selected = state.actionsChosen.includes(a.id);
-              const blocked = !check.ok && !selected;
-              const full = !selected && state.actionsChosen.length >= max;
-              return (
-                <div
-                  key={a.id}
-                  className={`action-card${selected ? ' selected' : ''}${blocked || full ? ' disabled' : ''}`}
-                  onClick={() => {
-                    if (!blocked && !full) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
-                    else if (selected) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
-                  }}
-                >
-                  <div className="action-title">
-                    <Icon name={actionIcon(a.id)} size={17} /> {a.name}
+      {/* Las acciones son una sección de la pantalla, no un cajón escondido:
+          card con su cabezal, como todo lo demás del juego. */}
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <h3 className="card-band">
+          <Icon name="tablero" size={17} /> Acciones del club
+          <span className="chip band-right">
+            {chosen.length}/{max} esta semana
+          </span>
+          <button className="small band-btn" onClick={() => setShowActions((v) => !v)}>
+            {showActions ? 'Ocultar' : 'Ver'}
+          </button>
+        </h3>
+        {showActions && (
+          <>
+            <p className="hint" style={{ marginTop: 0 }}>
+              Hasta {max} acciones por semana. Cada una tiene costos, beneficios y algún riesgo. Ninguna es obligatoria:
+              se aplican al pasar lista.
+            </p>
+            <div className="action-grid">
+              {ACTIONS.map((a) => {
+                const check = a.available(state);
+                const selected = state.actionsChosen.includes(a.id);
+                const blocked = !check.ok && !selected;
+                const full = !selected && state.actionsChosen.length >= max;
+                return (
+                  <div
+                    key={a.id}
+                    className={`action-card${selected ? ' selected' : ''}${blocked || full ? ' disabled' : ''}`}
+                    onClick={() => {
+                      if (!blocked && !full) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
+                      else if (selected) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
+                    }}
+                  >
+                    <div className="action-title">
+                      <Icon name={actionIcon(a.id)} size={17} /> {a.name}
+                    </div>
+                    <div className="action-desc">{a.description}</div>
+                    {blocked ? (
+                      <div className="action-blocked">✕ {check.reason}</div>
+                    ) : (
+                      <div className="action-cost">{a.costLabel}</div>
+                    )}
                   </div>
-                  <div className="action-desc">{a.description}</div>
-                  {blocked ? (
-                    <div className="action-blocked">✕ {check.reason}</div>
-                  ) : (
-                    <div className="action-cost">{a.costLabel}</div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

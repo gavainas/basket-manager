@@ -508,6 +508,35 @@ button.danger {
   gap: 0.45rem;
 }
 
+/* Lo que va del lado derecho de un cabezal de card: el contador y el botón de
+   plegar. Sobre el color de sección la tinta es clara, así que el borde y el
+   texto se apagan en vez de dibujar una caja blanca encima. */
+.vista .card > h3 > .band-right {
+  margin-left: auto;
+  border-color: rgba(246, 244, 241, 0.45);
+  color: var(--text-light);
+  font-weight: 400;
+}
+
+.vista .card > h3 > .band-right ~ .band-btn {
+  margin-left: 0.4rem;
+}
+
+.vista .card > h3 > .band-btn {
+  margin-left: auto;
+  background: transparent;
+  border-color: rgba(246, 244, 241, 0.45);
+  color: var(--text-light);
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.vista .card > h3 > .band-btn:hover:not(:disabled) {
+  background: rgba(246, 244, 241, 0.16);
+  border-color: var(--text-light);
+}
+
 /* ---------- Lienzo ---------- */
 
 /* La cancha del club detrás de toda la app (ver FONDO en App.tsx). Fija: no
@@ -1439,9 +1468,13 @@ td.num, th.num {
   flex-wrap: wrap;
 }
 
-.confirm-bar .hint {
+/* La letra chica de una pantalla: explica, no compite. Antes solo existía
+   dentro de `.confirm-bar`, así que las otras veinte `.hint` del juego salían
+   con el mismo cuerpo que el texto principal. */
+.hint {
   color: var(--text-dim);
   font-size: var(--fs-sm);
+  line-height: 1.45;
 }
 
 /* ---------- Cabezal del partido ---------- */
@@ -3301,4 +3334,221 @@ button.mini.blue.on {
 
 .ps-who .name {
   font-weight: 600;
+}
+
+/* La pretemporada usa el mismo cromo que la temporada (barra arriba, barra de
+   recursos abajo). Lo de acá abajo es solo lo suyo: el estado del club, las
+   pestañas y las dos listas del plantel. */
+
+.ps-estado {
+  margin-bottom: var(--sp-4);
+}
+
+/* La liga en la que quedaste anotado, en una línea que se lee de un saque:
+   es el dato del que dependen todos los fichajes (día de partido). */
+.ps-estado-liga {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: var(--fs-md);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--sp-2);
+}
+
+.ps-estado-liga .muted {
+  font-size: var(--fs-sm);
+}
+
+.ps-estado-k {
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+}
+
+.ps-veredicto {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.ps-veredicto.good {
+  color: var(--good);
+}
+
+/* Los riesgos son una lista, no cinco párrafos rojos apilados: así se cuentan
+   de un vistazo y se leen como el checklist que son. */
+.ps-riesgos {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: var(--fs-sm);
+  color: var(--bad);
+  line-height: 1.45;
+}
+
+.ps-riesgos li + li {
+  margin-top: 0.2rem;
+}
+
+/* Pestañas de la pretemporada. La pantalla eran tres metros de scroll con
+   inscripción, plantel y mercado apilados: ahora es una cosa por vez. */
+.ps-tabs {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+}
+
+.ps-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-base);
+  padding: 0.45rem 1rem;
+  background: var(--panel);
+  border-bottom: 3px solid transparent;
+}
+
+.ps-tabs button:hover:not(:disabled) {
+  border-color: var(--border);
+  border-bottom-color: var(--sec);
+}
+
+.ps-tabs button.on {
+  background: var(--sec);
+  border-color: var(--sec);
+  color: var(--text-light);
+}
+
+.ps-tabs button.on .chip {
+  border-color: rgba(246, 244, 241, 0.5);
+  color: var(--text-light);
+}
+
+/* Subtítulo dentro de una card de pretemporada: separa "a resolver" de
+   "confirmados" sin gastar otra card. */
+.ps-subtitulo {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  margin: var(--sp-4) 0 var(--sp-2);
+}
+
+/* Los confirmados no necesitan una fila cada uno: ya está resuelto. Son una
+   tira de fichas, como la lista de convocados de la semana. */
+.ps-fichas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ps-ficha {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem 0.25rem 0.25rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: var(--fs-sm);
+}
+
+.ps-ficha small {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Filtros del mercado: dieciséis fichables en una grilla sin orden eran una
+   pared. Puesto y criterio de orden, en la misma línea. */
+.ps-filtros {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding-bottom: var(--sp-3);
+  margin-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.ps-filtros-k {
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  margin-right: 0.2rem;
+}
+
+.ps-filtros button.on {
+  background: var(--sec);
+  border-color: var(--sec);
+  color: var(--text-light);
+}
+
+.ps-filtros button small {
+  opacity: 0.7;
+}
+
+/* Las cards de liga y de fichable tienen textos de largo distinto: sin esto el
+   botón de cada una queda a una altura diferente y la grilla se lee como un
+   serrucho. */
+.ps-grid .player-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.ps-grid .player-card > button:last-child {
+  margin-top: auto;
+  width: 100%;
+}
+
+/* El nombre de una liga no es el de un jugador: "Liga Universitaria ·
+   Divisional B" no se puede cortar con puntos suspensivos, es justo el dato que
+   se está eligiendo. */
+.ps-liga .player-head .name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.2;
+}
+
+/* Anotarse en una liga es la decisión de su pestaña, pero no es EL botón de la
+   pantalla: ese es "avanzar semana", abajo. Cuatro naranjas en fila hacían que
+   ninguno significara nada (ver design/SISTEMA_VISUAL.md: el acento se
+   reserva). Este lleva el color del área. */
+.ps-elegir {
+  font-weight: 600;
+  border-color: var(--sec);
+  color: var(--sec);
+}
+
+.ps-elegir:hover:not(:disabled) {
+  background: var(--sec);
+  color: var(--text-light);
+  border-color: var(--sec);
+}
+
+.ps-elegir.on {
+  background: var(--good);
+  border-color: var(--good);
+  color: var(--text-light);
+  opacity: 1;
+}
+
+.ps-elegir.on:disabled {
+  opacity: 1;
 }

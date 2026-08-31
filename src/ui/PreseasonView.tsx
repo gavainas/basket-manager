@@ -14,14 +14,16 @@ import {
 import { getPreseasonEvent } from '../game/preseasonEvents';
 import { DIVISIONS } from '../data/worldData';
 import { ORIGIN_SITUATIONS, originSentence } from '../data/market';
-import type { GameState, KnowledgeLevel, MarketPlayer, Player } from '../game/types';
+import type { GameState, KnowledgeLevel, MarketPlayer, Player, Position } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { formatMoney, starsFor } from './helpers';
 import { Avatar } from './Avatar';
 import { Cabecera } from './Cabecera';
+import { Crest } from './Crest';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
+import { USER_CLUB_ID } from '../game/world';
 import { dayLabel } from '../game/world';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
 import { useState } from 'react';
@@ -141,18 +143,19 @@ function originNode(state: GameState, previousTeam: string) {
   return <>Viene de {prevTeamNode(state, previousTeam)}.</>;
 }
 
-// ---------- Cabecera con la fecha límite ----------
+// ---------- Los riesgos de cerrar así ----------
 
-function DeadlinePanel({ state, dispatch }: Props) {
-  const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
+/**
+ * Lo que hoy está mal para inscribirse. Vive suelto (y no dentro de un panel)
+ * porque lo miran dos lugares: el aviso de arriba y el botón de cerrar.
+ */
+function closingRisks(state: GameState): string[] {
   const ps = state.preseason!;
   const confirmed = confirmedPlayers(state);
   const min = BALANCE.preseason.minPlayers;
-  const weeksLeft = ps.totalWeeks - ps.week;
   const fees = projectedWeeklyFees(state);
   const costs = BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly;
   const offer = inscriptionOffer(state);
-  // Save viejo (sin oferta): sigue inscripto en la de siempre. null = falta elegir.
   const chosenOpt =
     ps.chosenDivisionId === undefined
       ? offer.find((o) => o.isCurrent)!
@@ -165,7 +168,9 @@ function DeadlinePanel({ state, dispatch }: Props) {
       `La caja está en rojo ($${state.club.money}). Si cerrás así, la comisión va a tener que tapar el agujero, y eso cuesta prestigio.`
     );
   if (confirmed.length < min)
-    risks.push(`Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`);
+    risks.push(
+      `Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`
+    );
   if (fee > 0 && state.club.money < fee)
     risks.push(
       chosenOpt?.trusts
@@ -178,12 +183,49 @@ function DeadlinePanel({ state, dispatch }: Props) {
     risks.push(
       `Todavía no elegiste liga: si cerrás la pretemporada así, la comisión te anota a último momento en la de siempre (recargo $${BALANCE.preseason.lateInscriptionFee} y mala imagen).`
     );
+  return risks;
+}
+
+/** La liga en la que quedó anotado el club, si ya eligió. */
+function chosenLeague(state: GameState): LeagueOption | null {
+  const ps = state.preseason!;
+  const offer = inscriptionOffer(state);
+  if (ps.chosenDivisionId === undefined) return offer.find((o) => o.isCurrent) ?? null;
+  return offer.find((o) => o.divisionId === ps.chosenDivisionId) ?? null;
+}
+
+// ---------- Chrome: la barra de arriba y la de abajo ----------
+
+/**
+ * La pretemporada es el mismo juego que la temporada, así que lleva el mismo
+ * cromo: escudo, nombre del club y el área en la que estás. Antes era una
+ * pantalla suelta sin barra ni color de sección — se leía como otra aplicación
+ * pegada adelante del juego.
+ */
+function PreseasonTopbar({ state, dispatch }: Props) {
+  const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
+  const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
 
   return (
-    <div className="card" style={{ marginBottom: '1rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h2 style={{ margin: 0, flex: 1 }}>Pretemporada · Temporada {state.seasonNumber}</h2>
+    <header className="topbar">
+      <div className="topbar-inner">
+        <div className="marca">
+          {userClub && (
+            <Crest seed={userClub.id} name={userClub.name} colors={userClub.colors} founded={userClub.founded} size={38} />
+          )}
+          <div>
+            <div className="club-name">{state.club.name}</div>
+            <div className="temporada">Temporada {state.seasonNumber} · antes de la primera fecha</div>
+          </div>
+        </div>
+        <div className="pantalla-actual sec-plantel">
+          <Icon name="inscripcion" size={19} />
+          Pretemporada
+        </div>
+        <div className="spacer" />
         <button
+          className="salir"
+          title="Volver al menú"
           onClick={() =>
             setConfirmReq({
               title: 'Volver al menú',
@@ -194,41 +236,135 @@ function DeadlinePanel({ state, dispatch }: Props) {
             })
           }
         >
-          Menú
+          <Icon name="salir" size={17} />
+          Salir
         </button>
-        <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
       </div>
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', margin: '0.6rem 0' }}>
-        <span className={`chip ${weeksLeft === 0 ? 'bad' : 'accent'}`}>
-          {weeksLeft === 0 ? '¡Última semana! Al avanzar, se cierra la inscripción' : `Semana ${ps.week}/${ps.totalWeeks} · quedan ${weeksLeft + 1} semanas`}
-        </span>
-        {chosenOpt ? (
-          <span className="chip accent">
-            {chosenOpt.leagueName} · {chosenOpt.divisionName} — se juega los {dayLabel(chosenOpt.gameDay)} (
-            {chosenOpt.gameTimes.join(' / ')})
+      <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
+    </header>
+  );
+}
+
+/**
+ * Los números que mirás todo el tiempo, en la misma barra fija que en
+ * temporada. Antes eran siete chips en fila arriba de todo: todos del mismo
+ * tamaño, así que ninguno se leía primero.
+ */
+function PreseasonRecursos({ state, dispatch }: Props) {
+  const ps = state.preseason!;
+  const confirmed = confirmedPlayers(state);
+  const min = BALANCE.preseason.minPlayers;
+  const weeksLeft = ps.totalWeeks - ps.week;
+  const fees = projectedWeeklyFees(state);
+  const costs = BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly;
+  const opt = chosenLeague(state);
+  const fee = opt ? opt.fee : BALANCE.economy.inscriptionFee;
+  const isLastWeek = ps.week >= ps.totalWeeks;
+
+  return (
+    <footer className="recursos">
+      <div className="recursos-inner">
+        <div className="recurso">
+          <span className="k">
+            <Icon name="agenda" size={14} /> Semana
           </span>
-        ) : (
-          <span className="chip warn">Inscripción abierta: elegí en qué liga jugar</span>
-        )}
-        <span className={`chip ${ps.gestionesLeft > 0 ? 'good' : 'warn'}`}>Gestiones: {ps.gestionesLeft}/{BALANCE.preseason.gestionesPerWeek}</span>
-        <span className={`chip ${confirmed.length >= min ? 'good' : 'bad'}`}>
-          Confirmados: {confirmed.length} (mín. {min})
-        </span>
-        <span className={`chip ${state.club.money >= fee ? 'good' : 'bad'}`}>Caja: {formatMoney(state.club.money)}</span>
-        <span className="chip">
-          {chosenOpt ? (fee > 0 ? `Inscripción: $${fee}` : 'Inscripción: gratis') : `Inscripción: $0 a $${BALANCE.economy.inscriptionFee}`}
-        </span>
-        <span className="chip">Cuotas proyectadas: ${fees}/sem · Gastos fijos: ${costs}/sem</span>
+          <div className={`v ${weeksLeft === 0 ? 'bad' : ''}`}>{ps.week}</div>
+          <div className="s">de {ps.totalWeeks} · {weeksLeft === 0 ? 'última' : `quedan ${weeksLeft + 1}`}</div>
+        </div>
+        <div className="recurso">
+          <span className="k">
+            <Icon name="plantel" size={14} /> Confirmados
+          </span>
+          <div className={`v ${confirmed.length >= min ? 'good' : 'bad'}`}>{confirmed.length}</div>
+          <div className="s">
+            {confirmed.length >= min ? `mínimo ${min}: cubierto` : `faltan ${min - confirmed.length} para el mínimo`}
+          </div>
+        </div>
+        <div className="recurso">
+          <span className="k">
+            <Icon name="caja" size={14} /> Caja del club
+          </span>
+          <div className={`v ${state.club.money >= fee ? '' : 'bad'}`}>{formatMoney(state.club.money)}</div>
+          <div className="s">{opt ? (fee > 0 ? `inscripción $${fee}` : 'inscripción gratis') : 'liga sin elegir'}</div>
+        </div>
+        <div className="recurso">
+          <span className="k">
+            <Icon name="finanzas" size={14} /> Cuotas
+          </span>
+          <div className={`v ${fees >= costs ? 'good' : 'warn'}`}>${fees}</div>
+          <div className="s">por semana · gastos ${costs}</div>
+        </div>
+        <div className="recurso">
+          <span className="k">
+            <Icon name="chat" size={14} /> Gestiones
+          </span>
+          <div className={`v ${ps.gestionesLeft > 0 ? '' : 'warn'}`}>
+            {ps.gestionesLeft} / {BALANCE.preseason.gestionesPerWeek}
+          </div>
+          <div className="s">charlas de esta semana</div>
+        </div>
+        <div className="recurso accion">
+          <span className="s">
+            {isLastWeek
+              ? 'Se cierra la lista y se paga la inscripción'
+              : 'Las gestiones se renuevan cada semana'}
+          </span>
+          <button
+            className="avanzar primary"
+            onClick={() => dispatch({ type: isLastWeek ? 'PS_CLOSE' : 'PS_ADVANCE' })}
+          >
+            {isLastWeek ? '» Cerrar e inscribir' : `» Semana ${ps.week + 1}`}
+          </button>
+        </div>
       </div>
-      {risks.map((r, i) => (
-        <p key={i} className="muted" style={{ margin: '0.2rem 0', color: 'var(--bad)' }}>
-          ⚠ {r}
-        </p>
-      ))}
-      {risks.length === 0 && (
-        <p className="muted" style={{ margin: '0.2rem 0', color: 'var(--good)' }}>
-          ✓ Con lo que hay hoy, el club llega a inscribirse sin problemas.
-        </p>
+    </footer>
+  );
+}
+
+// ---------- El estado del club, arriba de todo ----------
+
+/**
+ * Dos cosas y nada más: en qué liga quedaste anotado (con su día de partido,
+ * que es lo que decide cada fichaje) y qué está mal para cerrar.
+ */
+function EstadoPanel({ state, onFixLeague }: Props & { onFixLeague: () => void }) {
+  const risks = closingRisks(state);
+  const opt = chosenLeague(state);
+
+  return (
+    <div className="card ps-estado">
+      <h3 className="card-band">
+        <Icon name="inscripcion" size={17} /> Cómo llega el club a la inscripción
+      </h3>
+      <div className="ps-estado-liga">
+        {opt ? (
+          <>
+            <span className="ps-estado-k">Anotado en</span>
+            <strong>
+              {opt.leagueName} · {opt.divisionName}
+            </strong>
+            <span className="muted">
+              se juega los {dayLabel(opt.gameDay)} ({opt.gameTimes.join(' / ')})
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="ps-estado-k">Sin liga</span>
+            <strong style={{ color: 'var(--warn)' }}>La inscripción está abierta y todavía no elegiste dónde jugar</strong>
+            <button className="small" onClick={onFixLeague}>
+              Elegir liga
+            </button>
+          </>
+        )}
+      </div>
+      {risks.length === 0 ? (
+        <p className="ps-veredicto good">✓ Con lo que hay hoy, el club llega a inscribirse sin problemas.</p>
+      ) : (
+        <ul className="ps-riesgos">
+          {risks.map((r, i) => (
+            <li key={i}>{r}</li>
+          ))}
+        </ul>
       )}
     </div>
   );
@@ -238,8 +374,6 @@ function DeadlinePanel({ state, dispatch }: Props) {
 
 function InscriptionSection({ state, dispatch }: Props) {
   const ps = state.preseason!;
-  // Saves de antes de la oferta: siguen inscriptos en la de siempre, sin pantalla.
-  if (ps.chosenDivisionId === undefined) return null;
   const offer = inscriptionOffer(state);
   const confirmed = confirmedPlayers(state);
 
@@ -256,7 +390,7 @@ function InscriptionSection({ state, dispatch }: Props) {
         opt.gameTimes.some((t) => !p.agenda!.onlyTimes.includes(t))
     );
     return (
-      <div key={opt.divisionId} className={`player-card${chosen ? ' selected' : ''}`}>
+      <div key={opt.divisionId} className={`player-card ps-liga${chosen ? ' selected' : ''}`}>
         <div className="player-head">
           <div className="who">
             <div className="name">
@@ -309,8 +443,7 @@ function InscriptionSection({ state, dispatch }: Props) {
           </p>
         )}
         <button
-          className={chosen ? '' : 'primary'}
-          style={{ width: '100%', marginTop: '0.4rem' }}
+          className={`ps-elegir${chosen ? ' on' : ''}`}
           disabled={chosen || !!opt.locked}
           onClick={() => dispatch({ type: 'PS_CHOOSE_LEAGUE', divisionId: opt.divisionId })}
         >
@@ -322,90 +455,172 @@ function InscriptionSection({ state, dispatch }: Props) {
 
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
-      <h3>
-        <Icon name="inscripcion" size={17} /> Inscripción: ¿dónde jugamos este año?
+      <h3 className="card-band">
+        <Icon name="inscripcion" size={17} /> ¿Dónde jugamos este año?
       </h3>
-      <div className="player-grid">{offer.map(renderOption)}</div>
-      <p className="hint" style={{ marginBottom: 0 }}>
+      <Cabecera art="cab-comision.webp" alt="La comisión del club reunida alrededor de una mesa" alto={150} />
+      <p className="hint" style={{ marginTop: 0 }}>
         Elegir liga es elegir tu día de partido: mirá qué día puede tu gente antes de firmar. Podés cambiar hasta el
         cierre. Si no elegís, la comisión te anota a último momento en la de siempre (recargo $
         {BALANCE.preseason.lateInscriptionFee} y mala imagen).
       </p>
+      <div className="player-grid ps-grid">{offer.map(renderOption)}</div>
     </div>
   );
 }
 
 // ---------- Plantel: continuidad ----------
 
-function RosterSection({ state, dispatch }: Props) {
+function RosterRow({ state, dispatch, p }: Props & { p: Player }) {
   const ps = state.preseason!;
-  const roster = state.players.filter((p) => !p.leftClub);
+  const st = ps.continuity[p.id];
+  const cont = CONTINUITY_LABELS[st];
+  const feeInfo = playerFeeLabel(p);
+  const demand = ps.playerDemands[p.id];
+  const needsTalk = st === 'dudando' || st === 'no_respondio' || st === 'quiere_irse';
   const noGestiones = ps.gestionesLeft <= 0;
 
   return (
-    <div className="card" style={{ marginBottom: '1rem' }}>
-      <h3>Plantel: ¿quiénes siguen?</h3>
-      <div className="ps-list">
-        {roster.map((p) => {
-          const st = ps.continuity[p.id];
-          const cont = CONTINUITY_LABELS[st];
-          const feeInfo = playerFeeLabel(p);
-          const demand = ps.playerDemands[p.id];
-          const needsTalk = st === 'dudando' || st === 'no_respondio' || st === 'quiere_irse';
-          return (
-            <div key={p.id} className={`ps-row${st === 'retirado' ? ' dimmed' : ''}`}>
-              <div className="avatar">
-                <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} personality={p.personality} />
-              </div>
-              <div className="ps-who">
-                <div className="name">
-                  <PlayerLink id={p.id}>{p.name}</PlayerLink>{' '}
-                  <span className="muted">· {p.position} · {p.age} años · ≈{p.visibleRating}</span>
-                </div>
-                {st === 'pide_condicion' && demand && (
-                  <div className="muted">Pide: {DEMAND_LABELS[demand].toLowerCase()}</div>
-                )}
-              </div>
-              {feeInfo && <span className={`chip ${feeInfo.cls}`}>{feeInfo.label}</span>}
-              {/* El confirmado ya lleva su ✓ al final de la fila: el chip repetía
-                  la misma información diez veces y escondía a los dos que sí
-                  necesitaban una decisión. */}
-              {st !== 'confirmado' && <span className={`chip ${cont.cls}`}>{cont.label}</span>}
-              {needsTalk && (
-                <button disabled={noGestiones} onClick={() => dispatch({ type: 'PS_TALK', id: p.id })}>
-                  Hablar
-                </button>
-              )}
-              {st === 'pide_condicion' && (
-                <button
-                  disabled={noGestiones}
-                  className="primary"
-                  onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: p.id, isMarket: false })}
-                >
-                  Negociar
-                </button>
-              )}
-              {st === 'confirmado' && <span style={{ color: 'var(--good)', fontWeight: 700 }}>✓</span>}
-            </div>
-          );
-        })}
+    <div className={`ps-row${st === 'retirado' ? ' dimmed' : ''}`}>
+      <div className="avatar">
+        <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} personality={p.personality} />
       </div>
-      <p className="hint" style={{ marginBottom: 0 }}>
-        Cada charla o negociación consume 1 gestión. Los que no estén confirmados al cierre, no juegan la temporada.
-      </p>
+      <div className="ps-who">
+        <div className="name">
+          <PlayerLink id={p.id}>{p.name}</PlayerLink>{' '}
+          <span className="muted">
+            · {p.position} · {p.age} años · ≈{p.visibleRating}
+          </span>
+        </div>
+        {st === 'pide_condicion' && demand && <div className="muted">Pide: {DEMAND_LABELS[demand].toLowerCase()}</div>}
+      </div>
+      {feeInfo && <span className={`chip ${feeInfo.cls}`}>{feeInfo.label}</span>}
+      <span className={`chip ${cont.cls}`}>{cont.label}</span>
+      {needsTalk && (
+        <button disabled={noGestiones} onClick={() => dispatch({ type: 'PS_TALK', id: p.id })}>
+          Hablar
+        </button>
+      )}
+      {st === 'pide_condicion' && (
+        <button
+          disabled={noGestiones}
+          onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: p.id, isMarket: false })}
+        >
+          Negociar
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * El plantel en dos tiempos: arriba los que necesitan una decisión tuya, abajo
+ * los confirmados como una tira de fichas. Antes eran doce filas idénticas de
+ * alto completo y los dos que sí había que resolver se perdían en el medio.
+ */
+function RosterSection({ state, dispatch }: Props) {
+  const ps = state.preseason!;
+  const roster = state.players.filter((p) => !p.leftClub);
+  const pending = roster.filter((p) => {
+    const st = ps.continuity[p.id];
+    return st !== 'confirmado' && st !== 'retirado';
+  });
+  const confirmed = roster.filter((p) => ps.continuity[p.id] === 'confirmado');
+  const retired = roster.filter((p) => ps.continuity[p.id] === 'retirado');
+
+  return (
+    <div className="card" style={{ marginBottom: '1rem' }}>
+      <h3 className="card-band">
+        <Icon name="vestuario" size={17} /> El plantel: ¿quiénes siguen?
+      </h3>
+      <Cabecera art="cab-vestuario.webp" alt="El vestuario del club antes del partido" alto={150} />
+
+      {pending.length > 0 ? (
+        <>
+          <h4 className="ps-subtitulo">
+            <span className="chip warn">{pending.length}</span> esperan una respuesta tuya
+          </h4>
+          <div className="ps-list">
+            {pending.map((p) => (
+              <RosterRow key={p.id} state={state} dispatch={dispatch} p={p} />
+            ))}
+          </div>
+          <p className="hint">Cada charla o negociación consume 1 gestión. Los que no estén confirmados al cierre, no juegan la temporada.</p>
+        </>
+      ) : (
+        <p className="ps-veredicto good">✓ Todo el plantel que sigue ya está confirmado. No queda nadie por convencer.</p>
+      )}
+
+      {confirmed.length > 0 && (
+        <>
+          <h4 className="ps-subtitulo">
+            <span className="chip good">{confirmed.length}</span> confirmados para la temporada
+          </h4>
+          <div className="ps-fichas">
+            {confirmed.map((p) => (
+              <span key={p.id} className="ps-ficha" title={`${p.position} · ${p.age} años · ≈${p.visibleRating}`}>
+                <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={26} title={p.name} personality={p.personality} />
+                <PlayerLink id={p.id}>{p.name}</PlayerLink>
+                <small>≈{p.visibleRating}</small>
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+
+      {retired.length > 0 && (
+        <>
+          <h4 className="ps-subtitulo">
+            <span className="chip bad">{retired.length}</span> colgaron las zapatillas
+          </h4>
+          <div className="ps-list">
+            {retired.map((p) => (
+              <RosterRow key={p.id} state={state} dispatch={dispatch} p={p} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
 // ---------- Mercado de fichajes ----------
 
+const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
+
+/** Cómo ordenar la vidriera del mercado. */
+type MarketSort = 'nivel' | 'conocido' | 'posicion';
+
+const KNOWLEDGE_RANK: Record<KnowledgeLevel, number> = {
+  muy_conocido: 0,
+  conocido: 1,
+  referencias: 2,
+  poco_conocido: 3,
+  desconocido: 4,
+};
+
 function MarketSection({ state, dispatch }: Props) {
   const ps = state.preseason!;
   const noGestiones = ps.gestionesLeft <= 0;
-  const available = ps.market.filter((m) => m.status === 'disponible');
-  const gone = ps.market.filter((m) => m.status !== 'disponible');
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [posFilter, setPosFilter] = useState<Position | null>(null);
+  const [sort, setSort] = useState<MarketSort>('nivel');
   const profileMp = ps.market.find((m) => m.id === profileId) ?? null;
+
+  const all = ps.market.filter((m) => m.status === 'disponible');
+  const gone = ps.market.filter((m) => m.status !== 'disponible');
+  const available = all
+    .filter((m) => !posFilter || m.position === posFilter)
+    .sort((a, b) => {
+      if (sort === 'conocido') return KNOWLEDGE_RANK[a.knowledge] - KNOWLEDGE_RANK[b.knowledge];
+      if (sort === 'posicion') return POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position);
+      // Del que no sabés nada no se puede decir que sea mejor ni peor: va al
+      // final en vez de encabezar la lista con un "?" que no ordena nada (y
+      // que además delataría el número que el juego todavía te esconde).
+      const blindA = a.knowledge === 'desconocido' ? 1 : 0;
+      const blindB = b.knowledge === 'desconocido' ? 1 : 0;
+      return blindA - blindB || b.estTechnique - a.estTechnique;
+    });
 
   const renderCard = (mp: MarketPlayer) => {
     const know = KNOWLEDGE_LABELS[mp.knowledge];
@@ -445,7 +660,10 @@ function MarketSection({ state, dispatch }: Props) {
         </div>
         {(mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 && (
           <div className="human-note">
-            <span className="hn-icon"><Icon name="agenda" size={14} /></span> {mp.agenda!.notes.join(' ')}
+            <span className="hn-icon">
+              <Icon name="agenda" size={14} />
+            </span>{' '}
+            {mp.agenda!.notes.join(' ')}
           </div>
         )}
         <div className="player-chips">
@@ -453,12 +671,8 @@ function MarketSection({ state, dispatch }: Props) {
           <span className="chip">Físico: {estimateLabel(mp.estPhysical, mp.knowledge)}</span>
           <span className="chip">{mp.signingCost > 0 ? `Pase: $${mp.signingCost}` : 'Pase libre'}</span>
           {fit && <span className={`chip ${fit.cls}`}>{fit.text}</span>}
-          {mp.availability === 'escuchando_ofertas' && active && (
-            <span className="chip warn">Escucha otras ofertas</span>
-          )}
-          {snubs && active && (
-            <span className="chip bad">Figura: no atiende a un club de la plaza</span>
-          )}
+          {mp.availability === 'escuchando_ofertas' && active && <span className="chip warn">Escucha otras ofertas</span>}
+          {snubs && active && <span className="chip bad">Figura: no atiende a un club de la plaza</span>}
           {(mp.contacted || mp.knowledge === 'muy_conocido' || mp.knowledge === 'conocido') && (
             <span className="chip">{feeAttitudeLabel(mp)}</span>
           )}
@@ -475,9 +689,8 @@ function MarketSection({ state, dispatch }: Props) {
         </div>
         {active && (
           <button
-            className="primary"
-            style={{ marginTop: '0.6rem', width: '100%' }}
             disabled={noGestiones}
+            title={noGestiones ? 'No te quedan gestiones esta semana' : undefined}
             onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true })}
           >
             {snubs ? 'Llamarlo igual' : mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
@@ -489,18 +702,59 @@ function MarketSection({ state, dispatch }: Props) {
 
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
-      <h3>Mercado de fichajes ({available.length} disponibles)</h3>
-      <Cabecera art="cab-bar.webp" alt="Convenciendo a un jugador en la mesa de un bar" />
-      <div className="player-grid">{available.map(renderCard)}</div>
+      <h3 className="card-band">
+        <Icon name="lupa" size={17} /> Mercado de fichajes
+        <span className="chip band-right">
+          {available.length} de {all.length} disponibles
+        </span>
+      </h3>
+      <Cabecera art="cab-bar.webp" alt="Convenciendo a un jugador en la mesa de un bar" alto={150} />
+
+      <div className="ps-filtros">
+        <span className="ps-filtros-k">Puesto</span>
+        <button className={posFilter === null ? 'small on' : 'small'} onClick={() => setPosFilter(null)}>
+          Todos
+        </button>
+        {POSITION_ORDER.map((pos) => {
+          const n = all.filter((m) => m.position === pos).length;
+          return (
+            <button
+              key={pos}
+              className={posFilter === pos ? 'small on' : 'small'}
+              disabled={n === 0}
+              onClick={() => setPosFilter(posFilter === pos ? null : pos)}
+            >
+              {pos} <small>({n})</small>
+            </button>
+          );
+        })}
+        <span className="ps-filtros-k" style={{ marginLeft: 'auto' }}>
+          Ordenar
+        </span>
+        <button className={sort === 'nivel' ? 'small on' : 'small'} onClick={() => setSort('nivel')}>
+          Por nivel
+        </button>
+        <button className={sort === 'conocido' ? 'small on' : 'small'} onClick={() => setSort('conocido')}>
+          Por cuánto lo conocés
+        </button>
+        <button className={sort === 'posicion' ? 'small on' : 'small'} onClick={() => setSort('posicion')}>
+          Por puesto
+        </button>
+      </div>
+
+      {available.length === 0 ? (
+        <p className="muted">No queda nadie disponible con ese filtro.</p>
+      ) : (
+        <div className="player-grid ps-grid">{available.map(renderCard)}</div>
+      )}
+
       {gone.length > 0 && (
         <>
-          <h4 className="muted" style={{ margin: '1rem 0 0.5rem' }}>Ya no disponibles</h4>
-          <div className="player-grid">{gone.map(renderCard)}</div>
+          <h4 className="ps-subtitulo">Ya no disponibles</h4>
+          <div className="player-grid ps-grid">{gone.map(renderCard)}</div>
         </>
       )}
-      {profileMp && (
-        <MarketProfile state={state} dispatch={dispatch} mp={profileMp} onClose={() => setProfileId(null)} />
-      )}
+      {profileMp && <MarketProfile state={state} dispatch={dispatch} mp={profileMp} onClose={() => setProfileId(null)} />}
     </div>
   );
 }
@@ -834,43 +1088,81 @@ function PreseasonModals({ state, dispatch }: Props) {
 
 // ---------- Vista principal ----------
 
+type PsTab = 'inscripcion' | 'plantel' | 'mercado';
+
 export function PreseasonView({ state, dispatch }: Props) {
   const ps = state.preseason!;
-  const isLastWeek = ps.week >= ps.totalWeeks;
+  // Saves de antes de la oferta de ligas: siguen inscriptos en la de siempre y
+  // no tienen pestaña de inscripción.
+  const hasInscription = ps.chosenDivisionId !== undefined;
+  const [tab, setTab] = useState<PsTab>(hasInscription && ps.chosenDivisionId === null ? 'inscripcion' : 'plantel');
+
+  const roster = state.players.filter((p) => !p.leftClub);
+  const pending = roster.filter((p) => {
+    const st = ps.continuity[p.id];
+    return st !== 'confirmado' && st !== 'retirado';
+  }).length;
+  const disponibles = ps.market.filter((m) => m.status === 'disponible').length;
+
+  const tabs: { id: PsTab; label: string; badge?: { text: string; cls: string } }[] = [
+    ...(hasInscription
+      ? [
+          {
+            id: 'inscripcion' as PsTab,
+            label: 'Inscripción',
+            badge:
+              ps.chosenDivisionId === null
+                ? { text: 'sin elegir', cls: 'warn' }
+                : { text: '✓', cls: 'good' },
+          },
+        ]
+      : []),
+    {
+      id: 'plantel',
+      label: 'Plantel',
+      badge: pending > 0 ? { text: `${pending} a resolver`, cls: 'warn' } : { text: '✓', cls: 'good' },
+    },
+    { id: 'mercado', label: 'Mercado', badge: { text: `${disponibles}`, cls: '' } },
+  ];
 
   return (
-    <div className="app-shell">
-      <DeadlinePanel state={state} dispatch={dispatch} />
-      <InscriptionSection state={state} dispatch={dispatch} />
-      <RosterSection state={state} dispatch={dispatch} />
-      <MarketSection state={state} dispatch={dispatch} />
+    <>
+      <PreseasonTopbar state={state} dispatch={dispatch} />
 
-      {ps.log.length > 0 && (
-        <div className="card" style={{ marginBottom: '1rem' }}>
-          <h3>Lo que pasó en la pretemporada</h3>
-          <ul className="log-list">
-            {ps.log.slice(0, 10).map((l, i) => (
-              <li key={i}>{l}</li>
+      <div className="app-shell">
+        <div className="vista sec-plantel">
+          <EstadoPanel state={state} dispatch={dispatch} onFixLeague={() => setTab('inscripcion')} />
+
+          <nav className="ps-tabs">
+            {tabs.map((t) => (
+              <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
+                {t.label}
+                {t.badge && <span className={`chip ${t.badge.cls}`}>{t.badge.text}</span>}
+              </button>
             ))}
-          </ul>
-        </div>
-      )}
+          </nav>
 
-      <div className="confirm-bar">
-        <button
-          className="primary"
-          onClick={() => dispatch({ type: isLastWeek ? 'PS_CLOSE' : 'PS_ADVANCE' })}
-        >
-          {isLastWeek ? 'Cerrar pretemporada e inscribir al club →' : `Avanzar a la semana ${ps.week + 1} →`}
-        </button>
-        <span className="hint">
-          {isLastWeek
-            ? 'Se cierra la lista: los no confirmados quedan afuera y se paga la inscripción.'
-            : `Al llegar a la semana ${ps.totalWeeks} se cierra la inscripción.`}
-        </span>
+          {tab === 'inscripcion' && hasInscription && <InscriptionSection state={state} dispatch={dispatch} />}
+          {tab === 'plantel' && <RosterSection state={state} dispatch={dispatch} />}
+          {tab === 'mercado' && <MarketSection state={state} dispatch={dispatch} />}
+
+          {ps.log.length > 0 && (
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <h3 className="card-band">
+                <Icon name="historia" size={17} /> Lo que pasó en la pretemporada
+              </h3>
+              <ul className="log-list">
+                {ps.log.slice(0, 10).map((l, i) => (
+                  <li key={i}>{l}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
 
+      <PreseasonRecursos state={state} dispatch={dispatch} />
       <PreseasonModals state={state} dispatch={dispatch} />
-    </div>
+    </>
   );
 }
