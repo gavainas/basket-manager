@@ -13,3 +13,6 @@ scripts/.sim-out/
 # Se regenera desde los .dc.html + canvas.json de al lado: ver design/canvas/LEEME.md
 design/canvas/*.html
 !design/canvas/*.dc.html
+
+# Capturas sueltas de los scripts de verificación (van al scratchpad, no al repo)
+/*.png

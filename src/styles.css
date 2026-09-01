@@ -74,6 +74,23 @@
   --radius: 4px; /* esta dirección es cuadrada */
   --sombra: 0 1px 2px rgba(37, 40, 44, 0.1);
   --sombra-alta: 0 8px 28px rgba(37, 40, 44, 0.22);
+
+  /* Relieve (dirección D, aprobada sep 2026 — ver design/SISTEMA_VISUAL.md).
+     El diagnóstico era que en 3300 líneas no había ni una textura ni un bisel:
+     todo panel era el mismo rectángulo liso, y eso es lo que se lee como
+     "hecho con IA". Estos tres tokens son la materia, y viven acá para que
+     ninguna pantalla se invente la suya.
+
+     --grano: chapa esmaltada. Va con `background-blend-mode: multiply` sobre
+       el color del panel, así que oscurece un pelo: la opacidad está elegida
+       para que --panel siga leyéndose como --panel.
+     --relieve: luz arriba, línea de sombra abajo y sombra proyectada. Una
+       superficie apoyada, no un borde dibujado.
+     --hundido: lo contrario, para pistas y pozos donde va un dato. */
+  --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.3'/%3E%3C/svg%3E");
+  --relieve: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(120, 100, 70, 0.2),
+    0 6px 16px rgba(20, 14, 8, 0.2);
+  --hundido: inset 0 1px 2px rgba(120, 100, 70, 0.32);
   /* Empaquetada en el build (ver main.tsx): no depende de la fuente del sistema. */
   --display: 'Oswald', 'Bahnschrift SemiBold Condensed', 'Arial Narrow', sans-serif;
 
@@ -453,11 +470,13 @@ button.danger {
 /* ---------- Cards & grids ---------- */
 
 .card {
-  background: var(--panel);
+  background-color: var(--panel);
+  background-image: var(--grano);
+  background-blend-mode: multiply;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: var(--sp-4);
-  box-shadow: var(--sombra);
+  box-shadow: var(--relieve);
 }
 
 .card + .card {
@@ -1115,16 +1134,36 @@ img.retrato-img.v2 {
   text-overflow: ellipsis;
 }
 
+/* Medidor segmentado (dirección D). Cuatro barras continuas por ficha eran
+   cuatro manchas iguales; en cinco bloques el valor se lee de un golpe, como
+   un tablero. La segmentación la pinta un overlay de huecos, así que el relleno
+   sigue siendo continuo: un 82 muestra cuatro bloques y un pedacito del quinto,
+   que es más honesto que redondear al bloque. */
 .bar-track {
+  position: relative;
   height: 8px;
   background: var(--bg-soft);
-  border-radius: 999px;
+  border-radius: 2px;
   overflow: hidden;
+  box-shadow: var(--hundido);
+}
+
+.bar-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 calc(20% - 3px),
+    var(--panel) calc(20% - 3px) 20%
+  );
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: 999px;
+  border-radius: 1px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
   transition: width 0.3s;
 }
 
@@ -1168,10 +1207,13 @@ img.retrato-img.v2 {
 }
 
 .player-card {
-  background: var(--panel);
+  background-color: var(--panel);
+  background-image: var(--grano);
+  background-blend-mode: multiply;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.9rem;
+  box-shadow: var(--relieve);
 }
 
 .player-card.selected {

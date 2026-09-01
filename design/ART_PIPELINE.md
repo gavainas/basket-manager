@@ -18,11 +18,13 @@ Las puertas 3 a 6 (hoja maestra de personajes, vertical slice, prueba en juego y
 art bible) siguen **abiertas**: gobiernan la expansión que viene (set ilustrado de
 retratos, eventos ilustrados, más cabeceras).
 
-**Sep 2026 — hay una propuesta de materia y estructura sin aprobar.** Dentro de la
-dirección ya aprobada (no la reabre), y por una queja concreta de Gabi sobre lo plano de
-los paneles, se exploraron tres tratamientos sobre la pantalla de Plantel y salió una
-propuesta: **D · La planilla del club**. Está presentada, **no aprobada**. Ver el registro
-del 2026-09-01 al final de este documento.
+**Sep 2026 — la materia y la estructura quedaron aprobadas.** Dentro de la dirección ya
+aprobada (no la reabre), y por una queja concreta de Gabi sobre lo plano de los paneles, se
+exploraron tres tratamientos sobre la pantalla de Plantel. Gabi eligió dos y de ahí salió
+**D · La planilla del club**, **aprobada el 2026-09-01**: superficie con relieve en vez de
+rectángulo plano, y la lista como una sola planilla con renglones en vez de una card por
+jugador. Ver el registro al final de este documento y la
+[anatomía de panel](SISTEMA_VISUAL.md#anatomía-de-panel) en el sistema visual.
 
 La estructura técnica existente puede conservarse y evolucionar, pero no se debe interpretar
 que un sistema está artísticamente aprobado solo porque ya funciona, está documentado o fue
@@ -406,10 +408,13 @@ Formato sugerido:
   bueno, y **la paleta ya está aprobada** (Puerta 2). D se rehízo en papel claro. La
   versión oscura queda en el canvas como `DPizarron`, sólo para mostrar que la paleta es
   un eje aparte; no es una propuesta.
-- Aprobado: **nada todavía.** D está presentado, no aprobado. B queda archivada.
-- Próximo paso autorizado: sólo revisión del canvas. **No** tocar `src/styles.css` hasta
-  que Gabi apruebe D explícitamente — rige la regla de este documento: ninguna herramienta
-  asume aprobación por silencio.
+- **Aprobado por Gabi el 2026-09-01: D · La planilla del club.** Palabra textual:
+  "aprobado". Pasa a ser la anatomía oficial de panel y de lista del juego.
+- No aprobado: **B** (archivada) y **la paleta oscura** (`DPizarron`), que no estaba en
+  discusión y sigue sin estarlo.
+- Próximo paso autorizado: implementar en `src/styles.css`, **de a tandas**, empezando por
+  los tokens de relieve y siguiendo pantalla por pantalla. Cada tanda commiteada por
+  separado para poder pedir volver a cualquier punto.
 
 ## Estado de aprobación actual
 

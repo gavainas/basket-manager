@@ -172,13 +172,18 @@ ni en Mac. Para publicar en Steam hay que empaquetar una condensada real con lic
 
 - Cabezal: fondo del color de la sección, texto `--panel`, ícono a la izquierda.
 - Cuerpo: `--panel`, filete `--linea` cuando hay filas.
-- Sombra mínima, un solo nivel. Sin biseles, sin degradados.
+- **El panel tiene relieve** (sep 2026): `--grano` de chapa esmaltada, `--relieve` de luz
+  arriba y sombra abajo, y sombra proyectada. Los pozos donde va un dato —pistas de
+  medidor, celdas hundidas— llevan `--hundido`.
 - Tu fila en una tabla se marca con fondo tenue y el número en `--naranja`.
 
-> ⚠ **La tercera regla tiene una propuesta en contra, sin aprobar.** "Sin biseles, sin
-> degradados" es exactamente lo que hace que los paneles se lean planos. Ver
-> [Propuesta pendiente: relieve y planilla](#propuesta-pendiente-relieve-y-planilla-sep-2026).
-> Mientras no se apruebe, la regla de arriba es la que rige.
+> **Cambio de regla, sep 2026.** Hasta acá este documento decía *"sombra mínima, un solo
+> nivel; sin biseles, sin degradados"*. Eso era exactamente lo que hacía que todo panel
+> fuera el mismo rectángulo liso — la queja que abrió la
+> [dirección D](#relieve-y-planilla-la-dirección-d-sep-2026), aprobada el 2026-09-01. La
+> regla vieja queda registrada acá para que se entienda qué cambió y por qué; no rige más.
+> Lo que **no** cambió: la sombra sigue siendo de un solo nivel y no hay degradados de
+> color. El relieve es luz y sombra, no decoración.
 
 ## Barra superior
 
@@ -358,11 +363,12 @@ reclutar) arrancaban colapsadas todas las semanas detrás de un botón gris chic
 una card con su banda de sección, abierta de entrada, ocupando el medio metro de fondo
 vacío que quedaba abajo del calendario.
 
-## Propuesta pendiente: relieve y planilla (sep 2026)
+## Relieve y planilla: la dirección D (sep 2026)
 
-> **Estado: presentada, NO aprobada.** No tocar `src/styles.css` por esto hasta que Gabi
-> apruebe. Canvas: <https://claude.ai/code/artifact/8f61cad0-5265-4bfc-a5a3-0bed93a14876>;
-> fuentes en [`canvas/`](canvas/); registro en [ART_PIPELINE.md](ART_PIPELINE.md).
+> **Estado: APROBADA por Gabi el 2026-09-01.** Canvas:
+> <https://claude.ai/code/artifact/8f61cad0-5265-4bfc-a5a3-0bed93a14876>; fuentes en
+> [`canvas/`](canvas/); registro en [ART_PIPELINE.md](ART_PIPELINE.md). Se implementa por
+> tandas: ver [estado](#estado-de-implementación-de-d) al final de esta sección.
 
 Gabi dijo que "todos los paneles lisos parece un juego hecho con Claude e IA". Medido en
 `src/styles.css`: **6 transiciones, 2 animaciones y cero texturas o gradientes en los
@@ -389,9 +395,28 @@ sube sin perder jerarquía. **Sí contradice** "sin biseles, sin degradados" de
 [Anatomía de panel](#anatomía-de-panel) — es el punto de la propuesta, y por eso hay que
 aprobarla o rechazarla en vez de aplicarla de a poco.
 
-Queda **fuera** de la propuesta, aunque el boceto original lo tenía: la paleta oscura.
-El canvas guarda esa versión (`DPizarron`) sólo para mostrar que la paleta es un eje
-aparte. El papel claro está aprobado y no se reabre.
+Queda **fuera**, aunque el boceto original lo tenía: la paleta oscura. El canvas guarda
+esa versión (`DPizarron`) sólo para mostrar que la paleta es un eje aparte. El papel claro
+está aprobado y no se reabre.
+
+### Estado de implementación de D
+
+**Tanda 1 — la materia: hecha.** Tres tokens nuevos en el `:root` de `src/styles.css`, para
+que ninguna pantalla se invente la suya:
+
+| Token | Qué es |
+| --- | --- |
+| `--grano` | Chapa esmaltada. Va con `background-blend-mode: multiply` sobre el color del panel; la opacidad está elegida para que `--panel` siga leyéndose como `--panel` |
+| `--relieve` | Luz arriba, línea de sombra abajo y sombra proyectada. Una superficie apoyada, no un borde dibujado |
+| `--hundido` | Lo contrario, para pistas y pozos donde va un dato |
+
+Aplicados a `.card` y `.player-card`. Y **las barras pasaron a medidores segmentados**: la
+segmentación la pinta un overlay de huecos sobre `.bar-track`, así que el relleno sigue
+siendo continuo y un 82 muestra cuatro bloques y un pedacito del quinto — más honesto que
+redondear al bloque, y sin tocar `Bar.tsx`, que lo usa medio juego.
+
+**Tanda 2 — la planilla: pendiente.** La lista de jugadores como una sola hoja con
+renglones en vez de una card por jugador.
 
 ## Cómo volver atrás
 
