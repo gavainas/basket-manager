@@ -1,0 +1,290 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+      background: #14181d;
+      color: #e7ebf0;
+    }
+    a { color: #f08a34; } a:hover { color: #ffa45c; }
+
+    /* La materia: chapa esmaltada sobre pizarrón. Bisel arriba, sombra
+       proyectada abajo: el panel es una placa atornillada, no un div. */
+    .placa {
+      position: relative;
+      background: linear-gradient(180deg, #262f38 0%, #1c242b 46%, #171e24 100%);
+      border-radius: 3px;
+      padding: 0 0 11px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+        0 12px 26px rgba(0, 0, 0, 0.55);
+      overflow: hidden;
+    }
+    .filo { height: 4px; }
+    /* Dos líneas siempre: con los nombres largos partidos y los cortos no, las
+       placas de una misma fila arrancaban los medidores a alturas distintas. */
+    .nombre { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; font-size: 1.32rem; line-height: 1.05; color: #f4f7fa; min-height: 2.1em; }
+    .puesto { font-family: 'Oswald', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.62rem; color: #7e8b99; margin-top: 4px; }
+    /* Alto fijo de tres renglones: si cada frase mide lo que mide, los
+       medidores de una fila arrancan cada uno a su altura y la grilla se
+       desarma. */
+    .dicho { font-size: 0.82rem; font-style: italic; color: #97a4b2; line-height: 1.4; height: 4.2em; overflow: hidden; }
+    /* Marcador segmentado: se lee de un golpe de vista, como un tablero. */
+    .medidor { display: grid; grid-template-columns: 34px 1fr 26px; align-items: center; gap: 9px; margin: 5px 0; }
+    .medidor .k { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.62rem; color: #7e8b99; }
+    .medidor .v { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 0.95rem; text-align: right; font-variant-numeric: tabular-nums; color: #e7ebf0; }
+    .segs { display: flex; gap: 3px; }
+    .segs i { flex: 1; height: 9px; border-radius: 1px; background: rgba(255, 255, 255, 0.08); }
+    .segs i.on { background: #4fa96c; box-shadow: 0 0 6px rgba(79, 169, 108, 0.45); }
+    .segs i.on.tibio { background: #d9a52d; box-shadow: 0 0 6px rgba(217, 165, 45, 0.45); }
+    .segs i.on.frio { background: #cf5044; box-shadow: 0 0 6px rgba(207, 80, 68, 0.45); }
+    .aviso { font-size: 0.82rem; line-height: 1.35; color: #97a4b2; }
+    .aviso.mal { color: #ef8378; }
+    .aviso.bien { color: #7fd39a; }
+    .rating { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 2.2rem; line-height: 0.9; color: #f08a34; }
+    .rating small { display: block; font-family: 'Oswald', sans-serif; font-weight: 400; font-size: 0.62rem; letter-spacing: 0.14em; color: #7e8b99; margin-top: 3px; }
+    .retrato {
+      width: 78px; height: 78px; flex-shrink: 0;
+      border-radius: 3px;
+      overflow: hidden;
+      background: #0f1317;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .retrato img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .marca { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.62rem; padding: 2px 8px; border-radius: 2px; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1000px; overflow: hidden; position: relative; background: #14181d;">
+  <!-- El pizarrón: verde grafito con polvo de tiza -->
+  <div style="position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% -10%, #27333a 0%, #171e23 55%, #0f1317 100%);"></div>
+  <div style="position: absolute; inset: 0; opacity: 0.5; background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23c)' opacity='0.28'/%3E%3C/svg%3E&quot;);"></div>
+
+  <div style="position: relative;">
+    <div style="background: #0e1317; border-bottom: 1px solid #262f38;">
+      <div style="max-width: 1360px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: stretch;">
+        <div style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 1.1rem 0.5rem 0; border-right: 1px solid #262f38; margin-right: 0.4rem;">
+          <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
+            <path d="M4 4 H34 V22 Q34 32 19 36 Q4 32 4 22 Z" fill="#2d5c8a" stroke="#e7ebf0" stroke-width="2"></path>
+            <path d="M4 15 H34" stroke="#e7ebf0" stroke-width="1.5"></path>
+            <text x="19" y="13" font-family="Oswald, sans-serif" font-size="9" fill="#e7ebf0" text-anchor="middle">EP</text>
+          </svg>
+          <div>
+            <div style="font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; font-size: 1.15rem; line-height: 1.05; color: #f4f7fa;">Atlético El Parque</div>
+            <div style="font-family: 'Oswald', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.62rem; color: #7e8b99; margin-top: 0.2rem;">Temporada 1 · fundado en 2025</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.45rem; margin-left: 1rem; padding-left: 0.7rem; border-left: 3px solid #d9a52d; color: #f4f7fa; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; font-size: 1.15rem; letter-spacing: 0.07em; text-transform: uppercase;">Plantilla</div>
+        <div style="flex: 1;"></div>
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="border: 1px solid #2c3742; border-radius: 3px; color: #7e8b99; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.82rem; padding: 0.4rem 0.9rem;">Inicio</span>
+          <span style="border: 1px solid #2c3742; border-radius: 3px; color: #7e8b99; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.82rem; padding: 0.4rem 0.9rem;">Salir</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width: 1360px; margin: 0 auto; padding: 22px 1rem 0;">
+      <div style="display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px;">
+        <h2 style="margin: 0; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 1.5rem; color: #f4f7fa;">El plantel</h2>
+        <span style="font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.13em; font-size: 0.62rem; color: #7e8b99;">12 fichas · 11 al día con la cuota</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px;">
+
+        <div class="placa">
+          <div class="filo" style="background: #2d5c8a;"></div>
+          <div style="display: flex; gap: 13px; padding: 14px 15px 12px;">
+            <span class="retrato"><img src="p-protagonista.webp" alt=""></span>
+            <div style="flex: 1; min-width: 0;">
+              <div class="nombre">Facundo Silva</div>
+              <div class="puesto">Base · 22 años</div>
+              <div class="rating" style="margin-top: 10px;">66<small>Valoración</small></div>
+            </div>
+          </div>
+          <div style="padding: 0 15px;">
+            <p class="dicho" style="margin: 0 0 8px;">Rápido y encarador. Quiere la pelota en las manos y se nota cuando no la tiene.</p>
+            <div class="medidor"><span class="k">Fís</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="v">82</span></div>
+            <div class="medidor"><span class="k">Mot</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="v">70</span></div>
+            <div class="medidor"><span class="k">Com</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="v">70</span></div>
+            <div class="medidor"><span class="k">Soc</span><span class="segs"><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i></i><i></i><i></i><i></i><i></i></span><span class="v">55</span></div>
+            <p class="aviso mal" style="margin: 12px 0 0;">No se banca a Agustín Lemos: mejor no dejarlos marcándose en la práctica.</p>
+            <div style="margin-top: 12px;"><span class="marca" style="background: rgba(240, 138, 52, 0.16); color: #f08a34;">Titular · ~30 min</span></div>
+          </div>
+        </div>
+
+        <div class="placa">
+          <div class="filo" style="background: #2d5c8a;"></div>
+          <div style="display: flex; gap: 13px; padding: 14px 15px 12px;">
+            <span class="retrato"><img src="p-veterano.webp" alt=""></span>
+            <div style="flex: 1; min-width: 0;">
+              <div class="nombre">"Chino" Rodríguez</div>
+              <div class="puesto">Base · 34 años</div>
+              <div class="rating" style="margin-top: 10px;">63<small>Valoración</small></div>
+            </div>
+          </div>
+          <div style="padding: 0 15px;">
+            <p class="dicho" style="margin: 0 0 8px;">Fundador del equipo. Ya no corre como antes, pero ordena al grupo adentro y afuera de la cancha.</p>
+            <div class="medidor"><span class="k">Fís</span><span class="segs"><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i></i><i></i><i></i><i></i><i></i></span><span class="v">55</span></div>
+            <div class="medidor"><span class="k">Mot</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="v">75</span></div>
+            <div class="medidor"><span class="k">Com</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="v">90</span></div>
+            <div class="medidor"><span class="k">Soc</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="v">85</span></div>
+            <p class="aviso bien" style="margin: 12px 0 0;">Íntimo de Rodri Batista: donde va uno, va el otro.</p>
+            <div style="margin-top: 12px;"><span class="marca" style="background: rgba(240, 138, 52, 0.16); color: #f08a34;">Titular · ~30 min</span></div>
+          </div>
+        </div>
+
+        <div class="placa">
+          <div class="filo" style="background: #9d3b3b;"></div>
+          <div style="display: flex; gap: 13px; padding: 14px 15px 12px;">
+            <span class="retrato"><img src="p-competitivo.webp" alt=""></span>
+            <div style="flex: 1; min-width: 0;">
+              <div class="nombre">Martín Techera</div>
+              <div class="puesto">Escolta · 27 años</div>
+              <div class="rating" style="margin-top: 10px;">75<small>Valoración</small></div>
+            </div>
+          </div>
+          <div style="padding: 0 15px;">
+            <p class="dicho" style="margin: 0 0 8px;">Vino a ganar. Entrena aparte, mira los rivales y sufre cada derrota más que nadie.</p>
+            <div class="medidor"><span class="k">Fís</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="v">78</span></div>
+            <div class="medidor"><span class="k">Mot</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="v">80</span></div>
+            <div class="medidor"><span class="k">Com</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="v">80</span></div>
+            <div class="medidor"><span class="k">Soc</span><span class="segs"><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i></i><i></i><i></i><i></i></span><span class="v">60</span></div>
+            <p class="aviso mal" style="margin: 12px 0 0;">No se banca a Agustín Lemos: mejor no dejarlos marcándose en la práctica.</p>
+            <div style="margin-top: 12px;"><span class="marca" style="background: rgba(240, 138, 52, 0.16); color: #f08a34;">Titular · ~30 min</span></div>
+          </div>
+        </div>
+
+        <div class="placa">
+          <div class="filo" style="background: #2f6b4f;"></div>
+          <div style="display: flex; gap: 13px; padding: 14px 15px 12px;">
+            <span class="retrato"><img src="p-talentoso.webp" alt=""></span>
+            <div style="flex: 1; min-width: 0;">
+              <div class="nombre">"Tato" Fernández</div>
+              <div class="puesto">Alero · 24 años</div>
+              <div class="rating" style="margin-top: 10px;">74<small>Valoración</small></div>
+            </div>
+          </div>
+          <div style="padding: 0 15px;">
+            <p class="dicho" style="margin: 0 0 8px;">El más talentoso del plantel, cuando aparece. Debe cuotas y a veces avisa una hora antes.</p>
+            <div class="medidor"><span class="k">Fís</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="v">75</span></div>
+            <div class="medidor"><span class="k">Mot</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></span><span class="v">65</span></div>
+            <div class="medidor"><span class="k">Com</span><span class="segs"><i class="on frio"></i><i class="on frio"></i><i class="on frio"></i><i class="on frio"></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v">40</span></div>
+            <div class="medidor"><span class="k">Soc</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="v">70</span></div>
+            <p class="aviso mal" style="margin: 12px 0 0;">Cuota atrasada: dice que la semana que viene se pone al día.</p>
+            <div style="margin-top: 12px; display: flex; gap: 6px;">
+              <span class="marca" style="background: rgba(207, 80, 68, 0.2); color: #ef8378;">Debe 1 sem.</span>
+              <span class="marca" style="background: rgba(240, 138, 52, 0.16); color: #f08a34;">Titular · ~30 min</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="placa">
+          <div class="filo" style="background: #9d3b3b;"></div>
+          <div style="display: flex; gap: 13px; padding: 14px 15px 12px;">
+            <span class="retrato"><img src="p-social.webp" alt=""></span>
+            <div style="flex: 1; min-width: 0;">
+              <div class="nombre">Diego Núñez</div>
+              <div class="puesto">Escolta · 25 años</div>
+              <div class="rating" style="margin-top: 10px;">50<small>Valoración</small></div>
+            </div>
+          </div>
+          <div style="padding: 0 15px;">
+            <p class="dicho" style="margin: 0 0 8px;">El que organiza los asados y arma el grupo de WhatsApp. Juega porque están sus amigos.</p>
+            <div class="medidor"><span class="k">Fís</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></span><span class="v">65</span></div>
+            <div class="medidor"><span class="k">Mot</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="v">78</span></div>
+            <div class="medidor"><span class="k">Com</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="v">75</span></div>
+            <div class="medidor"><span class="k">Soc</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="v">92</span></div>
+            <p class="aviso bien" style="margin: 12px 0 0;">Íntimo de "Flaco" Morales: donde va uno, va el otro.</p>
+            <div style="margin-top: 12px;"><span class="marca" style="background: rgba(255, 255, 255, 0.07); color: #97a4b2;">Rotación · ~18 min</span></div>
+          </div>
+        </div>
+
+        <div class="placa">
+          <div class="filo" style="background: #2f6b4f;"></div>
+          <div style="display: flex; gap: 13px; padding: 14px 15px 12px;">
+            <span class="retrato"><img src="p-cumplidor.webp" alt=""></span>
+            <div style="flex: 1; min-width: 0;">
+              <div class="nombre">Nacho Pereyra</div>
+              <div class="puesto">Alero · 29 años</div>
+              <div class="rating" style="margin-top: 10px;">68<small>Valoración</small></div>
+            </div>
+          </div>
+          <div style="padding: 0 15px;">
+            <p class="dicho" style="margin: 0 0 8px;">Paga el primero, llega temprano y avisa si falta. Le molesta el desorden más que perder.</p>
+            <div class="medidor"><span class="k">Fís</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="v">72</span></div>
+            <div class="medidor"><span class="k">Mot</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="v">72</span></div>
+            <div class="medidor"><span class="k">Com</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="v">88</span></div>
+            <div class="medidor"><span class="k">Soc</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></span><span class="v">65</span></div>
+            <p class="aviso bien" style="margin: 12px 0 0;">Íntimo de "Chino" Rodríguez: donde va uno, va el otro.</p>
+            <div style="margin-top: 12px;"><span class="marca" style="background: rgba(240, 138, 52, 0.16); color: #f08a34;">Titular · ~30 min</span></div>
+          </div>
+        </div>
+
+        <div class="placa">
+          <div class="filo" style="background: #6a4a86;"></div>
+          <div style="display: flex; gap: 13px; padding: 14px 15px 12px;">
+            <span class="retrato"><img src="p-mercenario.webp" alt=""></span>
+            <div style="flex: 1; min-width: 0;">
+              <div class="nombre">Seba Cardozo</div>
+              <div class="puesto">Ala-Pívot · 31 años</div>
+              <div class="rating" style="margin-top: 10px;">72<small>Valoración</small></div>
+            </div>
+          </div>
+          <div style="padding: 0 15px;">
+            <p class="dicho" style="margin: 0 0 8px;">Jugó federado. Rinde mucho, pero deja claro que en otros clubes no le cobraban la cuota.</p>
+            <div class="medidor"><span class="k">Fís</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="v">76</span></div>
+            <div class="medidor"><span class="k">Mot</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></span><span class="v">62</span></div>
+            <div class="medidor"><span class="k">Com</span><span class="segs"><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i></i><i></i><i></i><i></i><i></i></span><span class="v">55</span></div>
+            <div class="medidor"><span class="k">Soc</span><span class="segs"><i class="on frio"></i><i class="on frio"></i><i class="on frio"></i><i class="on frio"></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v">45</span></div>
+            <p class="aviso" style="margin: 12px 0 0;">Juega con beca: el club lo banca para que esté.</p>
+            <div style="margin-top: 12px; display: flex; gap: 6px;">
+              <span class="marca" style="background: rgba(138, 106, 190, 0.2); color: #b598e0;">Media beca</span>
+              <span class="marca" style="background: rgba(240, 138, 52, 0.16); color: #f08a34;">Titular · ~30 min</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="placa">
+          <div class="filo" style="background: #456470;"></div>
+          <div style="display: flex; gap: 13px; padding: 14px 15px 12px;">
+            <span class="retrato"><img src="p-competitivo.webp" alt=""></span>
+            <div style="flex: 1; min-width: 0;">
+              <div class="nombre">Gonzalo Viera</div>
+              <div class="puesto">Pívot · 28 años</div>
+              <div class="rating" style="margin-top: 10px;">67<small>Valoración</small></div>
+            </div>
+          </div>
+          <div style="padding: 0 15px;">
+            <p class="dicho" style="margin: 0 0 8px;">Pelea cada rebote como una final. Se calienta cuando el equipo no toma en serio los partidos.</p>
+            <div class="medidor"><span class="k">Fís</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="v">80</span></div>
+            <div class="medidor"><span class="k">Mot</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="v">76</span></div>
+            <div class="medidor"><span class="k">Com</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="v">78</span></div>
+            <div class="medidor"><span class="k">Soc</span><span class="segs"><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i></i><i></i><i></i><i></i><i></i></span><span class="v">58</span></div>
+            <p class="aviso mal" style="margin: 12px 0 0;">No se banca a "Tato" Fernández: mejor no dejarlos marcándose en la práctica.</p>
+            <div style="margin-top: 12px;"><span class="marca" style="background: rgba(240, 138, 52, 0.16); color: #f08a34;">Titular · ~30 min</span></div>
+          </div>
+        </div>
+
+      </div>
+
+      <p style="margin: 20px 2px 0; font-size: 0.8rem; color: #97a4b2;">
+        <strong style="font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.72rem; color: #e7ebf0;">C · Pizarra del vestuario</strong>
+        &nbsp;— chapa esmaltada sobre pizarrón: alto contraste, retrato grande, medidores segmentados de tablero y el naranja por fin gritando. Es la que menos parece una web y mejor va a quedar en las capturas de Steam. Cuesta: contradice el papel claro ya aprobado — habría que rehacer el contraste de todas las pantallas.
+      </p>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
