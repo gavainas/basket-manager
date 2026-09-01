@@ -91,6 +91,14 @@
   --relieve: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(120, 100, 70, 0.2),
     0 6px 16px rgba(20, 14, 8, 0.2);
   --hundido: inset 0 1px 2px rgba(120, 100, 70, 0.32);
+  /* Cinco bloques: la máscara que convierte cualquier barra en un medidor de
+     tablero. Va como máscara y no como overlay de color para que los huecos
+     dejen ver la superficie que haya atrás, sea la que sea. */
+  --segmentos: repeating-linear-gradient(
+    90deg,
+    #000 0 calc(20% - 3px),
+    transparent calc(20% - 3px) 20%
+  );
   /* Empaquetada en el build (ver main.tsx): no depende de la fuente del sistema. */
   --display: 'Oswald', 'Bahnschrift SemiBold Condensed', 'Arial Narrow', sans-serif;
 
@@ -1148,16 +1156,12 @@ img.retrato-img.v2 {
   box-shadow: var(--hundido);
 }
 
-.bar-track::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0 calc(20% - 3px),
-    var(--panel) calc(20% - 3px) 20%
-  );
+/* Los huecos se recortan con máscara y no se pintan con el color del panel:
+   la barra vive sobre --panel, sobre --panel-2 (la hover-card del partido) y
+   sobre la cancha, y con un color fijo los huecos cantaban en dos de los tres. */
+.bar-track {
+  -webkit-mask-image: var(--segmentos);
+  mask-image: var(--segmentos);
 }
 
 .bar-fill {
@@ -3593,4 +3597,204 @@ button.mini.blue.on {
 
 .ps-elegir.on:disabled {
   opacity: 1;
+}
+
+/* ---------- La planilla del plantel (dirección D) ---------- */
+
+/* Una sola hoja con renglones, no una card por jugador. Las cifras quedan en
+   columna y se comparan de arriba abajo — que es lo que hace un manager — y el
+   "por qué" de cada uno tiene su propia columna, así la parte humana no se
+   pierde al ganar densidad. Ver design/SISTEMA_VISUAL.md. */
+.planilla {
+  position: relative;
+  background-color: var(--panel);
+  background-image: var(--grano);
+  background-blend-mode: multiply;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--relieve);
+}
+
+/* Los tornillos: lo que hace que la placa pese. Cuatro detalles hechos a mano
+   valen más que cualquier sombra genérica. */
+.planilla .tornillo {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #c3b69c, #6b5f4b 72%);
+  box-shadow: 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 0 0 1px rgba(60, 50, 34, 0.45);
+}
+
+.planilla .tornillo-si { top: 9px; left: 9px; }
+.planilla .tornillo-sd { top: 9px; right: 9px; }
+.planilla .tornillo-ii { bottom: 9px; left: 9px; }
+.planilla .tornillo-id { bottom: 9px; right: 9px; }
+
+.planilla-cab,
+.planilla-fila {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 74px 74px 74px 74px minmax(200px, 280px) 152px 62px;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: 0.55rem 1.4rem;
+}
+
+.planilla-cab {
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  padding-top: 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* El `.tip` es el hijo de la grilla, así que la alineación va en él: si no, el
+   punteado del tooltip cruza toda la columna en vez de subrayar la palabra. */
+.planilla-cab > * { justify-self: start; }
+.planilla-cab > .tip:has(.num),
+.planilla-cab > .num { justify-self: end; }
+
+.planilla-fila + .planilla-fila,
+.planilla-cab + .planilla-fila {
+  border-top: 1px solid var(--border);
+}
+
+/* Se tiñe sólo la fila que tiene algo que resolver. */
+.planilla-fila.alerta { background: rgba(184, 68, 58, 0.06); }
+
+.planilla-foto .avatar,
+.planilla-foto {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  border-radius: 2px;
+  overflow: hidden;
+  display: block;
+}
+
+.planilla-quien { min-width: 0; }
+
+.planilla-nombre {
+  display: block;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: var(--fs-md);
+  line-height: 1.15;
+}
+
+.planilla-pos {
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  margin-left: 0.5rem;
+}
+
+.planilla-dicho {
+  display: block;
+  font-size: var(--fs-sm);
+  font-style: italic;
+  color: var(--text-dim);
+  line-height: 1.3;
+  /* Aire suficiente para que el punteado del nombre no toque la frase. */
+  margin-top: 0.3rem;
+}
+
+/* Cifra grande y tabular con su medidor debajo: se comparan las columnas de un
+   vistazo, sin cuatro barras gordas por ficha. */
+.planilla-cifra { display: block; }
+
+.planilla-cifra b {
+  display: block;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--fs-base);
+  line-height: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.planilla-cifra b.ojo { color: var(--warn); }
+.planilla-cifra b.mal { color: var(--bad); }
+
+.mini-medidor {
+  position: relative;
+  display: block;
+  height: 5px;
+  margin-top: 0.35rem;
+  background: var(--bg-soft);
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: var(--hundido);
+}
+
+.mini-medidor i {
+  display: block;
+  height: 100%;
+  border-radius: 1px;
+}
+
+.mini-medidor i.good { background: var(--good); }
+.mini-medidor i.warn { background: var(--warn); }
+.mini-medidor i.bad { background: var(--bad); }
+
+.mini-medidor {
+  -webkit-mask-image: var(--segmentos);
+  mask-image: var(--segmentos);
+}
+
+/* La nota humana ya trae su ícono y su color; acá sólo se le da la caja. */
+.planilla-nota .human-note { margin: 0; }
+.planilla-nada { color: var(--text-faint); }
+
+.planilla-rol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+/* El dato que la pantalla existe para mostrar: el único naranja de acá. */
+.planilla-valor {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  line-height: 1;
+  text-align: right;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* El ≈ es la promesa que hace el juego: la valoración es una estimación. Va
+   chico para no competir con la cifra, pero va. */
+.planilla-valor small {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  opacity: 0.75;
+  margin-right: 0.05em;
+}
+
+/* Debajo del ancho de escritorio la columna de la nota es lo primero que sobra:
+   sin ella la fila sigue contestando "quién es y cómo está". */
+@media (max-width: 1180px) {
+  .planilla-cab,
+  .planilla-fila {
+    grid-template-columns: 52px minmax(0, 1fr) 64px 64px 64px 64px 132px 62px;
+  }
+
+  .planilla-cab > :nth-child(7),
+  .planilla-nota {
+    display: none;
+  }
 }

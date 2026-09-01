@@ -409,14 +409,32 @@ que ninguna pantalla se invente la suya:
 | `--grano` | Chapa esmaltada. Va con `background-blend-mode: multiply` sobre el color del panel; la opacidad está elegida para que `--panel` siga leyéndose como `--panel` |
 | `--relieve` | Luz arriba, línea de sombra abajo y sombra proyectada. Una superficie apoyada, no un borde dibujado |
 | `--hundido` | Lo contrario, para pistas y pozos donde va un dato |
+| `--segmentos` | La máscara de cinco bloques que convierte cualquier barra en un medidor de tablero |
 
 Aplicados a `.card` y `.player-card`. Y **las barras pasaron a medidores segmentados**: la
-segmentación la pinta un overlay de huecos sobre `.bar-track`, así que el relleno sigue
-siendo continuo y un 82 muestra cuatro bloques y un pedacito del quinto — más honesto que
-redondear al bloque, y sin tocar `Bar.tsx`, que lo usa medio juego.
+segmentación se recorta con `mask-image` y no se pinta con un overlay de color, porque la
+barra vive sobre `--panel`, sobre `--panel-2` (la hover-card del partido) y sobre la
+cancha, y con un color fijo los huecos cantaban en dos de los tres. El relleno sigue siendo
+continuo, así que un 82 muestra cuatro bloques y un pedacito del quinto — más honesto que
+redondear al bloque — y no hubo que tocar `Bar.tsx`, que lo usa medio juego.
 
-**Tanda 2 — la planilla: pendiente.** La lista de jugadores como una sola hoja con
-renglones en vez de una card por jugador.
+**Tanda 2 — la planilla: hecha.** `ui/RosterList.tsx`: el plantel es una sola placa con
+renglones, con las cifras en columna (comparables de arriba abajo), el retrato de 52 px, la
+frase del jugador bajo el nombre, **el "por qué" en su propia columna** —la nota humana que
+antes sólo estaba en la card— el rol previsto, y la valoración como único naranja. Los
+cuatro tornillos van en el DOM y no en un gradiente, para no pelearse con el grano.
+
+Entran doce jugadores donde antes entraban cuatro. Por debajo de 1180 px la columna del
+vestuario es la primera que se cae: sin ella la fila sigue contestando "quién es y cómo
+está".
+
+El toggle de la pantalla pasó a **"Plantel"** (esta planilla) y **"Estadísticas"** (la tabla
+densa y ordenable de `RosterSheet`, sin cambios: minutos, faltas, último partido). Son dos
+preguntas distintas y las dos valen.
+
+`ui/PlayerCard.tsx` se borró: era el único lugar que lo usaba, y una card de jugador sin
+pantalla que la muestre es código muerto que el próximo que pase va a tener que leer para
+descubrir que no corre. Sigue en la historia de git si alguna vez hace falta.
 
 ## Cómo volver atrás
 

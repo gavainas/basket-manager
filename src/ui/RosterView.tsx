@@ -3,7 +3,7 @@ import type { GameState, Position } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { activePlayers } from '../game/match';
 import { CoachCard } from './CoachCard';
-import { PlayerCard } from './PlayerCard';
+import { RosterList } from './RosterList';
 import { PlayerLink } from './PlayerLink';
 import { RosterSheet } from './RosterSheet';
 import { VestuarioCard } from './VestuarioCard';
@@ -45,22 +45,22 @@ export function RosterView({ state, dispatch }: { state: GameState; dispatch: (a
           encaje en el equipo. Nadie muestra todas sus cartas.
         </p>
         <div className="view-toggle">
+          {/* "Fichas" pasó a ser la planilla de la dirección D: sigue siendo la
+              vista humana (retrato, frase y el "por qué"), pero en renglones.
+              La otra es la tabla densa y ordenable de siempre, que contesta otra
+              pregunta — minutos, faltas, último partido. */}
           <button className={view === 'fichas' ? 'active' : ''} onClick={() => choose('fichas')}>
-            Fichas
+            Plantel
           </button>
           <button className={view === 'planilla' ? 'active' : ''} onClick={() => choose('planilla')}>
-            Planilla
+            Estadísticas
           </button>
         </div>
       </div>
       {view === 'planilla' ? (
         <RosterSheet state={state} />
       ) : (
-        <div className="player-grid">
-          {active.map((p) => (
-            <PlayerCard key={p.id} player={p} state={state} mvpCount={state.history.filter((m) => m.mvpId === p.id).length} />
-          ))}
-        </div>
+        <RosterList state={state} players={active} />
       )}
       {gone.length > 0 && (
         <>
