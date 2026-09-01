@@ -175,6 +175,11 @@ ni en Mac. Para publicar en Steam hay que empaquetar una condensada real con lic
 - Sombra mínima, un solo nivel. Sin biseles, sin degradados.
 - Tu fila en una tabla se marca con fondo tenue y el número en `--naranja`.
 
+> ⚠ **La tercera regla tiene una propuesta en contra, sin aprobar.** "Sin biseles, sin
+> degradados" es exactamente lo que hace que los paneles se lean planos. Ver
+> [Propuesta pendiente: relieve y planilla](#propuesta-pendiente-relieve-y-planilla-sep-2026).
+> Mientras no se apruebe, la regla de arriba es la que rige.
+
 ## Barra superior
 
 Identidad del club a la izquierda — escudo, nombre, año de fundación — y después las
@@ -318,6 +323,75 @@ Reglas que esto agrega al sistema:
 **Paso 4 hecho**: las cards llevan banda de color (ver `.vista .card > h3` en
 `styles.css`). El `h3` que abre una card se pinta con el color de su área; si la card
 arranca con otra cosa, se declara con la clase `card-band`.
+
+### La pretemporada entra al sistema (sep 2026)
+
+La pretemporada era la única pantalla del juego **fuera** del sistema: sin barra superior,
+sin escudo, sin color de área y sin barra de recursos. Se leía como otra aplicación pegada
+adelante del juego — y el propio mapa de secciones de este documento ya decía que
+"Pretemporada y Mercado van con Plantel". Ahora lo cumple:
+
+- Barra superior con escudo y nombre del club, y `--sec-plantel` como color de área.
+- La barra de recursos fija abajo, con los mismos módulos que en temporada (semana,
+  confirmados, caja, cuotas contra gastos, gestiones) y el botón de avanzar como único
+  naranja. Antes esos siete números eran siete chips del mismo tamaño arriba de todo: al
+  ser todos iguales, ninguno se leía primero.
+- Tres pestañas (Inscripción · Plantel · Mercado) en vez de tres metros de scroll: **3105
+  px medidos pasaron a 1002 / 905 / 1806**.
+- Pasada de la regla del naranja, que ahí estaba rota del todo: había **quince** botones
+  naranjas en una pantalla. "Anotarse acá" y "Contactar" pasaron al color del área; la
+  liga elegida queda en `--good`. Queda uno solo: avanzar la semana.
+
+Dos arreglos de sistema que salieron de ahí y valen para todo el juego:
+
+- **`.hint` no tenía estilo propio.** Sólo existía dentro de `.confirm-bar`, así que la
+  letra chica de las otras veinte pantallas salía con el mismo cuerpo que el texto
+  principal. Ahora es `--fs-sm` en `--text-dim`, como corresponde a la letra chica.
+- **`.band-right` y `.band-btn`**: el contador y el botón de plegar que van del lado
+  derecho de una banda de cabezal, con la tinta apagada que pide el fondo de color.
+
+**Y las acciones del club volvieron a existir.** No es diseño, es una regresión que costó
+media mecánica: desde el commit de la semana estilo PC Fútbol, las diez acciones
+(entrenar, asado, rifa, **buscar sponsor**, becar, cobrar cuotas, camisetas, descansar,
+reclutar) arrancaban colapsadas todas las semanas detrás de un botón gris chico al lado de
+"Pasarla sobre la hora". Gabi las buscó y concluyó que el sponsor ya no se podía. Ahora son
+una card con su banda de sección, abierta de entrada, ocupando el medio metro de fondo
+vacío que quedaba abajo del calendario.
+
+## Propuesta pendiente: relieve y planilla (sep 2026)
+
+> **Estado: presentada, NO aprobada.** No tocar `src/styles.css` por esto hasta que Gabi
+> apruebe. Canvas: <https://claude.ai/code/artifact/8f61cad0-5265-4bfc-a5a3-0bed93a14876>;
+> fuentes en [`canvas/`](canvas/); registro en [ART_PIPELINE.md](ART_PIPELINE.md).
+
+Gabi dijo que "todos los paneles lisos parece un juego hecho con Claude e IA". Medido en
+`src/styles.css`: **6 transiciones, 2 animaciones y cero texturas o gradientes en los
+paneles**, sobre 3304 líneas. El problema no es el arte —`public/arte/` tiene carácter—
+es que el 95% de los píxeles son rectángulos crema iguales.
+
+De tres tratamientos comparados sobre la pantalla de Plantel, Gabi eligió dos, y resultó
+que no competían: uno era **estructura** y el otro **relieve**. La propuesta los compone.
+
+**Lo que cambiaría. La paleta no está en esta lista:** sigue siendo la aprobada.
+
+| | Hoy | Propuesta |
+| --- | --- | --- |
+| Superficie | `--panel` plano, borde 1px, sombra de un nivel | Chapa esmaltada: grano fino, `inset` claro arriba, línea de sombra abajo y sombra proyectada. Se apoya sobre la cancha en vez de flotar |
+| Lista de jugadores | Una card por jugador | Una sola planilla con renglones: las cifras quedan en columna y se comparan de arriba abajo |
+| Diales | Cuatro barras iguales por card | Cifra tabular + medidor de cinco segmentos con la pista hundida |
+| Semáforo | En las cuatro barras siempre | Sólo cuando el dato está mal. El resto es tinta |
+| Densidad | 4 jugadores por pantalla | 8 en la misma altura |
+| Detalle físico | ninguno | Tornillos en las esquinas de la placa |
+
+Nada de esto contradice los cinco principios: el chrome sigue neutro, el color sigue
+siendo dato, el naranja sigue siendo uno solo por pantalla (la valoración) y la densidad
+sube sin perder jerarquía. **Sí contradice** "sin biseles, sin degradados" de
+[Anatomía de panel](#anatomía-de-panel) — es el punto de la propuesta, y por eso hay que
+aprobarla o rechazarla en vez de aplicarla de a poco.
+
+Queda **fuera** de la propuesta, aunque el boceto original lo tenía: la paleta oscura.
+El canvas guarda esa versión (`DPizarron`) sólo para mostrar que la paleta es un eje
+aparte. El papel claro está aprobado y no se reabre.
 
 ## Cómo volver atrás
 
