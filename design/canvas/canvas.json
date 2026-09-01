@@ -1,18 +1,33 @@
 {
+  "pages": [
+    { "id": "page-1", "name": "La propuesta" },
+    { "id": "page-2", "name": "Las tres direcciones" }
+  ],
   "artboards": [
-    { "file": "Actual.dc.html", "x": 0, "y": 0, "w": 1440, "h": 1000, "title": "Hoy · lo que está publicado" },
-    { "file": "Main.dc.html", "x": 1560, "y": 0, "w": 1440, "h": 1000, "title": "A · Planilla del club" },
-    { "file": "Cartulina.dc.html", "x": 0, "y": 1160, "w": 1440, "h": 1000, "title": "B · Carpeta de cartulina" },
-    { "file": "Pizarra.dc.html", "x": 1560, "y": 1160, "w": 1440, "h": 1000, "title": "C · Pizarra del vestuario" }
+    { "file": "Main.dc.html", "page": "page-1", "x": 0, "y": 0, "w": 1440, "h": 1000, "title": "D · La planilla sobre el pizarrón (A + C)" },
+    { "file": "Actual.dc.html", "page": "page-1", "x": 1560, "y": 0, "w": 1440, "h": 1000, "title": "Hoy · lo que está publicado" },
+
+    { "file": "Planilla.dc.html", "page": "page-2", "x": 0, "y": 0, "w": 1440, "h": 1000, "title": "A · Planilla del club" },
+    { "file": "Pizarra.dc.html", "page": "page-2", "x": 1560, "y": 0, "w": 1440, "h": 1000, "title": "C · Pizarra del vestuario" },
+    { "file": "Cartulina.dc.html", "page": "page-2", "x": 0, "y": 1160, "w": 1440, "h": 1000, "title": "B · Carpeta de cartulina" }
   ],
   "annotations": [
     {
-      "id": "puerta-1",
+      "id": "propuesta",
       "x": 0,
-      "y": -250,
-      "w": 900,
-      "text": "Puerta 1 del ART_PIPELINE — la misma pantalla de Plantel, los mismos ocho jugadores, cuatro materiales.\n\nArriba a la izquierda está lo publicado hoy. Las otras tres NO cambian la dirección \"club de barrio\" ya aprobada: cambian de qué está hecha la interfaz. Elegí una mirando, y esa se implementa en CSS.\n\nCada una dice abajo qué gana y qué cuesta."
+      "y": -280,
+      "w": 980,
+      "page": "page-1",
+      "text": "Elegiste A y C, y no compiten: A es ESTRUCTURA (una planilla, columnas comparables, el \"por qué\" en su propia columna) y C es MATERIA (chapa, contraste, el naranja gritando). Se componen.\n\nD es esa composición, al lado de lo publicado hoy para comparar. Las tres direcciones sueltas quedaron en la otra página.\n\nQueda una decisión: si TODO el juego va en pizarrón, o si el papel claro se queda para las pantallas de gestión y el pizarrón es la semana y el partido."
+    },
+    {
+      "id": "sketches",
+      "x": 0,
+      "y": -190,
+      "w": 700,
+      "page": "page-2",
+      "text": "Las tres direcciones originales, como quedaron. A y C son las elegidas; B queda archivada."
     }
   ],
-  "launch": { "view": "canvas" }
+  "launch": { "view": "canvas", "page": "page-1" }
 }
