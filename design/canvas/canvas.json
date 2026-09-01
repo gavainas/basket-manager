@@ -4,8 +4,9 @@
     { "id": "page-2", "name": "Las tres direcciones" }
   ],
   "artboards": [
-    { "file": "Main.dc.html", "page": "page-1", "x": 0, "y": 0, "w": 1440, "h": 1000, "title": "D · La planilla sobre el pizarrón (A + C)" },
+    { "file": "Main.dc.html", "page": "page-1", "x": 0, "y": 0, "w": 1440, "h": 1000, "title": "D · La planilla del club (A + C)" },
     { "file": "Actual.dc.html", "page": "page-1", "x": 1560, "y": 0, "w": 1440, "h": 1000, "title": "Hoy · lo que está publicado" },
+    { "file": "DPizarron.dc.html", "page": "page-1", "x": 3120, "y": 0, "w": 1440, "h": 1000, "title": "D en pizarrón · la misma UI, paleta oscura" },
 
     { "file": "Planilla.dc.html", "page": "page-2", "x": 0, "y": 0, "w": 1440, "h": 1000, "title": "A · Planilla del club" },
     { "file": "Pizarra.dc.html", "page": "page-2", "x": 1560, "y": 0, "w": 1440, "h": 1000, "title": "C · Pizarra del vestuario" },
@@ -15,10 +16,10 @@
     {
       "id": "propuesta",
       "x": 0,
-      "y": -280,
-      "w": 980,
+      "y": -300,
+      "w": 1100,
       "page": "page-1",
-      "text": "Elegiste A y C, y no compiten: A es ESTRUCTURA (una planilla, columnas comparables, el \"por qué\" en su propia columna) y C es MATERIA (chapa, contraste, el naranja gritando). Se componen.\n\nD es esa composición, al lado de lo publicado hoy para comparar. Las tres direcciones sueltas quedaron en la otra página.\n\nQueda una decisión: si TODO el juego va en pizarrón, o si el papel claro se queda para las pantallas de gestión y el pizarrón es la semana y el partido."
+      "text": "Elegiste A y C, y no compiten: A es ESTRUCTURA (una planilla, columnas comparables, el \"por qué\" en su propia columna) y C es RELIEVE (superficie con bisel y sombra real, medidores de tablero, un solo acento). Las dos son decisiones de UI, y se componen: eso es D.\n\nQue el boceto C fuera oscuro era un detalle del boceto, no lo que lo hacía bueno. El PAPEL CLARO YA ESTÁ APROBADO (Puerta 2, ago 2026) y nada de esto lo reabre — así que D va en la paleta aprobada, al lado de lo publicado hoy.\n\nEl tercer artboard es exactamente la misma UI con la paleta oscura, sólo para que se vea que la paleta es un eje aparte. No hay que decidirla ahora."
     },
     {
       "id": "sketches",
