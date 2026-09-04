@@ -307,7 +307,11 @@ function PlanningPanel({ state, dispatch }: Props) {
     .filter((a): a is (typeof ACTIONS)[number] => !!a);
 
   return (
-    <div>
+    /* Dos columnas (tanda B del marco fijo): a la izquierda la decisión de la
+       semana —rival, calendario, previa— y a la derecha las acciones del club,
+       que son diez cards y antes empujaban la pantalla 279px abajo del pliegue. */
+    <div className="semana-planning">
+      <div className="semana-izq">
       <div className="card" style={{ marginBottom: '1rem' }}>
         <h3>
           {weekLabel(state.week, state.seasonLength)}
@@ -378,10 +382,12 @@ function PlanningPanel({ state, dispatch }: Props) {
       <PreviaFeed state={state} dispatch={dispatch} />
 
       {state.actionsChosen.includes('asado') && <AsadoRsvpPanel state={state} />}
+      </div>
 
       {/* Las acciones son una sección de la pantalla, no un cajón escondido:
-          card con su cabezal, como todo lo demás del juego. */}
-      <div className="card" style={{ marginBottom: '1rem' }}>
+          card con su cabezal, como todo lo demás del juego. Desde la tanda B es
+          un panel con el cabezal quieto y las diez cards scrolleando adentro. */}
+      <div className={`card semana-acciones${showActions ? ' pane' : ''}`}>
         <h3 className="card-band">
           <Icon name="tablero" size={17} /> Acciones del club
           <span className="chip band-right">
@@ -392,7 +398,7 @@ function PlanningPanel({ state, dispatch }: Props) {
           </button>
         </h3>
         {showActions && (
-          <>
+          <div className="pane-body">
             <p className="hint" style={{ marginTop: 0 }}>
               Hasta {max} acciones por semana. Cada una tiene costos, beneficios y algún riesgo. Ninguna es obligatoria:
               se aplican al pasar lista.
@@ -425,7 +431,7 @@ function PlanningPanel({ state, dispatch }: Props) {
                 );
               })}
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -503,7 +509,9 @@ function CallUpPanel({ state, dispatch }: Props) {
   const availableCount = entries.filter((e) => e.status === 'confirmado').length;
 
   return (
-    <div>
+    /* Ya entraba en la ventana; con el marco fijo scrollea adentro de sí misma
+       si una semana brava trae seis ausencias con sus gestiones. */
+    <div className="semana-scroll">
       {state.actionsLog.length > 0 && (
         <div className="card" style={{ marginBottom: '1rem' }}>
           <h3>Resultado de tus decisiones</h3>
@@ -1860,8 +1868,14 @@ function MatchResultPanel({ state, dispatch }: Props) {
 }
 
 export function WeekView({ state, dispatch }: Props) {
+  /* Migración al marco fijo (design/PLAN_MARCO_FIJO.md): las fases ya
+     convertidas ocupan el alto exacto de la ventana y scrollean por panel; las
+     que todavía no, siguen creciendo hacia abajo y las scrollea `.app-shell`.
+     La lista crece tanda a tanda y desaparece en la E, cuando estén todas. */
+  const fija = state.phase === 'planning' || state.phase === 'callUp';
+
   return (
-    <div>
+    <div className={fija ? 'semana-vista pantalla' : undefined}>
       <Steps phase={state.phase} />
       {state.phase === 'planning' && <PlanningPanel state={state} dispatch={dispatch} />}
       {state.phase === 'callUp' && <CallUpPanel state={state} dispatch={dispatch} />}

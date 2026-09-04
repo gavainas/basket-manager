@@ -41,9 +41,7 @@ type Tab = AppTab;
    Partidos porque son la misma área — el color responde "¿qué parte del juego
    es esta?", no "¿qué botón toqué?".
    `sec` nombra la clase de área: la usan el cabezal de la pantalla y las bandas
-   de sus cards. Un solo lugar donde se decide.
-   Las pestañas se fueron: la navegación es el inicio (ver ui/Hub.tsx), y de
-   cualquier pantalla se vuelve con el botón Inicio de la barra. */
+   de sus cards. Un solo lugar donde se decide. */
 const VIEWS: Record<Tab, { label: string; sec: string; icon: IconName }> = {
   resumen: { label: 'Inicio', sec: 'sec-tablero', icon: 'tablero' },
   plantilla: { label: 'Plantilla', sec: 'sec-plantel', icon: 'plantel' },
@@ -55,6 +53,31 @@ const VIEWS: Record<Tab, { label: string; sec: string; icon: IconName }> = {
   club: { label: 'El club', sec: 'sec-tablero', icon: 'inscripcion' },
   semana: { label: 'La semana', sec: 'sec-partidos', icon: 'semana' },
 };
+
+/**
+ * La barra de secciones (tanda B del marco fijo).
+ *
+ * En agosto las pestañas se sacaron y la navegación pasó a ser el Tablero: de
+ * cualquier pantalla se volvía con Inicio. Funcionaba, pero costaba dos clicks
+ * llegar a cualquier lado. La maqueta que aprobó Gabi tiene las dos cosas a la
+ * vez —el Tablero es UNA de las secciones—, así que se recupera el acceso
+ * directo sin perder el menú, que sigue siendo el que se enciende con los
+ * avisos de `watch.ts`.
+ *
+ * Siete secciones, no nueve: Calendario y Rankings no son áreas propias, son
+ * preguntas de la Liga (en la tanda E pasan a ser pestañas de adentro). Hasta
+ * entonces siguen siendo pantallas y la barra ilumina Liga cuando estás en
+ * ellas — el color dice "en qué parte del juego estás", no "qué botón tocaste".
+ */
+const SECCIONES: { tab: Tab; label: string; icon: IconName; incluye?: Tab[] }[] = [
+  { tab: 'resumen', label: 'Tablero', icon: 'tablero' },
+  { tab: 'semana', label: 'Partidos', icon: 'semana' },
+  { tab: 'liga', label: 'Liga', icon: 'liga', incluye: ['agenda', 'rankings'] },
+  { tab: 'plantilla', label: 'Plantel', icon: 'plantel' },
+  { tab: 'finanzas', label: 'Finanzas', icon: 'finanzas' },
+  { tab: 'club', label: 'El club', icon: 'inscripcion' },
+  { tab: 'historia', label: 'Historia', icon: 'historia' },
+];
 
 /**
  * Portada del menú principal: `public/portada.webp`, versionada en el repo.
@@ -376,22 +399,25 @@ export default function App() {
             </div>
           </div>
 
-          {/* Sin pestañas: el nombre de la pantalla dice dónde estás y el botón
-              Inicio es el único camino de vuelta, como en la referencia. */}
-          {tab !== 'resumen' && (
-            <div className={`pantalla-actual ${VIEWS[tab].sec}`}>
-              <Icon name={VIEWS[tab].icon} size={19} />
-              {VIEWS[tab].label}
-            </div>
-          )}
+          <nav className="secciones">
+            {SECCIONES.map((s) => {
+              const activa = tab === s.tab || (s.incluye?.includes(tab) ?? false);
+              return (
+                <button
+                  key={s.tab}
+                  className={`seccion ${VIEWS[s.tab].sec}${activa ? ' on' : ''}`}
+                  onClick={() => navigate(s.tab)}
+                  aria-current={activa ? 'page' : undefined}
+                >
+                  <span className="seccion-punto" />
+                  <span className="seccion-label">{s.label}</span>
+                  <Icon name={s.icon} size={22} />
+                </button>
+              );
+            })}
+          </nav>
 
           <div className="spacer" />
-          {tab !== 'resumen' && (
-            <button className="inicio" title="Volver al inicio" onClick={() => navigate('resumen')}>
-              <Icon name="tablero" size={17} />
-              Inicio
-            </button>
-          )}
           {saveFailed && <span className="chip bad">⚠ No se pudo guardar</span>}
           <button
             className="salir"
