@@ -867,6 +867,160 @@ button.danger {
   .semana-planning { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
+/* ---------- El quinteto (tanda C) ---------- */
+
+/* Cómo llega el partido arriba · la pizarra en el medio · confirmar abajo. */
+.quinteto-pantalla {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--sp-4);
+  min-height: 0;
+  height: 100%;
+}
+
+/* La cabecera no puede comerse el cuerpo: una semana con tres bajas de último
+   momento apilaba avisos hasta dejar la pizarra en treinta píxeles. */
+.quinteto-cabecera {
+  /* En `vh` y no en `%`: el porcentaje se resolvería contra una fila `auto`, que
+     se dimensiona por su contenido — la referencia es circular y el resultado
+     es que la card queda con el cuerpo en cero. */
+  max-height: 30vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.quinteto-cabecera > .card { margin-bottom: 0.6rem; }
+.quinteto-cabecera > .card:last-child { margin-bottom: 0; }
+
+.quinteto-pie { min-height: 0; }
+.quinteto-pie .confirm-bar { margin-top: 0; }
+
+/* El cuerpo: el plantel a la izquierda, la pizarra a la derecha. La pizarra deja
+   de estar abajo del pliegue —era LA acción de la pantalla y había que buscarla
+   scrolleando— y pasa a estar siempre a la vista. */
+.quinteto-pantalla .lineup-layout {
+  min-height: 0;
+  align-items: stretch;
+}
+
+.lineup-izq {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 0.2rem;
+}
+
+.lineup-izq > * { flex: none; }
+
+/* La lista ya no calcula su alto con `100vh` menos las barras: vive adentro de
+   una columna que ya sabe cuánto mide. */
+.quinteto-pantalla .lineup-list {
+  max-height: none;
+  overflow: visible;
+}
+
+.quinteto-pantalla .lineup-court {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  margin-bottom: 0;
+}
+
+/* ---------- El partido (tanda C) ---------- */
+
+/* Marcador arriba · el juego en tres columnas · el botón del cuarto abajo. */
+.partido-pantalla {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--sp-4);
+  min-height: 0;
+  height: 100%;
+}
+
+/* Marcador y tabla de cuartos LADO A LADO, no apilados: apilados se comían 410
+   de los 530px que hay a 720p y las tres columnas del cuerpo quedaban en
+   setenta. Son la misma pregunta ("cómo va") y ocupan la misma franja. */
+.partido-cabecera {
+  display: grid;
+  grid-template-columns: minmax(300px, 1.1fr) minmax(280px, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+  max-height: 34vh;
+}
+
+.partido-cabecera > .card {
+  margin-bottom: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 1100px) {
+  .partido-cabecera { grid-template-columns: 1fr; }
+}
+
+/* Ya no es sticky: es una fila de la grilla. Por eso dejó de cortar las filas de
+   "En cancha" y "Banco" cuando el contenido pasaba por debajo. */
+.partido-pantalla .partido-cabezal {
+  position: static;
+  margin-bottom: 0.6rem;
+}
+
+.partido-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.85fr) minmax(280px, 1fr) minmax(300px, 1.25fr);
+  gap: var(--sp-4);
+  min-height: 0;
+}
+
+/* Columna que scrollea entera (táctica + piernas). En flex y no en grilla: en
+   una grilla con `min-height: 0` los hijos aceptan achicarse por debajo de su
+   contenido y la card de táctica se recortaba a la mitad. `flex: none` les
+   devuelve su alto natural y el que scrollea es el contenedor. */
+.partido-col-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 0.2rem;
+}
+
+.partido-col-scroll > .card {
+  flex: none;
+  margin-bottom: 0;
+}
+
+.partido-cambios,
+.partido-relato {
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+/* El relato crece cuarto a cuarto: es el que más gana con scrollear adentro. */
+.partido-relato .pane-body { padding-top: 0.5rem; }
+
+.partido-relato-vacio {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.partido-pie { min-height: 0; }
+.partido-pie .confirm-bar { margin-top: 0; }
+.partido-pie > .card { margin-bottom: 0.6rem; }
+
+@media (max-width: 1240px) {
+  /* Sin ancho para tres, la táctica y los cambios comparten columna. */
+  .partido-cuerpo { grid-template-columns: minmax(280px, 1fr) minmax(300px, 1.15fr); }
+  .partido-col-scroll { grid-row: span 2; }
+}
+
 /* ---------- El Tablero encoge con la ventana ---------- */
 
 /* Todo lo de arriba entra cómodo a 1080p. A 720p —el piso de diseño— hay 250px
