@@ -343,3 +343,101 @@ de aprobaciones de Gabi, no de código) y **T4 en cualquier hueco**.
 T2 va antes que T3 a propósito: el compromiso oculto cambia **cómo se fichan amigos** (sin
 número, fichar es confiar en una referencia). Si el modo carrera se construye primero, se
 construye dos veces.
+
+---
+
+## 6. La pantalla de PC: pasar al formato Steam (addendum, pedido de Gabi)
+
+Gabi mandó una maqueta de tablero que "se siente más juego" y preguntó dos cosas: cuándo se
+pasa a eso, y cómo transicionamos para que no scrollee para abajo. Son la misma tarea.
+
+### Qué tiene la maqueta que el juego no
+
+Desarmada contra el código actual, la brecha es menor de lo que parece:
+
+| Lo que la hace sentir juego | Estado real |
+|---|---|
+| Escudos por club en la tabla | **Ya existe**: `crest.ts` + `Crest.tsx` (escudo SVG por capas, detalle por umbral de tamaño, legible de 18 a 96 px). Falta usarlo en la fila de la tabla. |
+| Cabeceras de card con color por sección | **Ya existe.** |
+| Barra de recursos con cifras grandes | **Ya existe**, casi idéntica. |
+| Vestuario como chat con hora | Existe "el grupo del club"; falta la hora y traerlo al tablero. |
+| Barra superior fija con 7 secciones | **Layout** + revertir una decisión de ago 2026 (se sacaron las pestañas a propósito). |
+| Todo en una pantalla, sin scroll | **Layout.** Es la parte grande. |
+| Personaje ilustrado de cuerpo entero | **Una ilustración.** Es una *escena*, la misma categoría que `cab-vestuario.webp`, que ya está aprobada e integrada: **no depende de la Puerta 3.** |
+
+De las siete, tres ya están, tres son maquetado y una es arte nuevo. El salto no está
+esperando al sistema de retratos por capas.
+
+**La advertencia:** la maqueta es linda en parte porque muestra menos — 8 equipos, 3
+mensajes, un partido. La liga real tiene 10 equipos, 14 jugadores, 9 fechas, playoffs, una
+pirámide de 4 divisionales y un mercado de 16. Pasar a ese formato no es "que se vea así":
+es **decidir qué se gana un lugar en pantalla y qué se va detrás de una pestaña**.
+
+### La deuda de scroll, medida
+
+Alto de cada pantalla contra el viewport, en una partida real:
+
+| Pantalla | 1920×1080 | 1366×768 |
+|---|---|---|
+| Informe | +91% | +153% |
+| Plantilla / Vestuario | +90% | +167% |
+| Partido (final) | +58% | +111% |
+| Quinteto | +46% | +98% |
+| Liga / tabla | +44% | +103% |
+| Semana (acciones) | +2% | +43% |
+| Rankings | entra | +23% |
+| Finanzas | entra | +12% |
+| Tablero | entra | +14% |
+| El club · Convocatoria | entran | entran |
+
+**8 de 13 pantallas scrollean a 1080p; 11 de 13 a 1366×768.** La Plantilla mide dos
+pantallas y media. Eso, más que cualquier asset, es lo que se lee como "web" y no como juego.
+
+### Cómo se transiciona
+
+1. **El shell pasa a ser una grilla de alto fijo.** Hoy `.app-shell` reserva `padding-bottom`
+   para una barra *fija*; pasa a ser la tercera fila de la grilla:
+   ```css
+   .app { height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
+   .app > main { min-height: 0; }   /* sin esto los hijos no encogen y la página scrollea igual */
+   ```
+   Esto solo mata tres hallazgos de la sección 1: la barra de recursos que tapa el pie, el
+   marcador sticky que corta las filas de En cancha, y el scroll de página.
+2. **El scroll deja de ser de la página y pasa a ser del panel.** Cada pantalla es una grilla
+   de 2-3 zonas; la zona que desborda scrollea sola con su encabezado quieto. Es lo que hace
+   Football Manager: nunca scrollea la pantalla, scrollea la tabla.
+3. **Escalar con el viewport en vez de centrar.** `--ancho-app: 1360px` fijo se reemplaza por
+   una unidad fluida —`--u: clamp(12px, 1.15vh + 0.25vw, 19px)`— y tipografía, gaps y alturas
+   se expresan en múltiplos de ella. A 1080p el juego se agranda; a 768p entra. Sin agregar
+   una sola media query.
+4. **Plan B por pantalla** (candidata: el Informe): maquetar a 1280×720 y escalar el shell con
+   `transform: scale(min(100vw/1280, 100vh/720))`. Cero scroll garantizado a cualquier
+   resolución; el costo es texto un poco más blando en escalas fraccionarias. Excepción, no regla.
+5. **La barra superior resuelve la navegación de paso.** Hoy, sin pestañas, de cada pantalla
+   hay que volver a Inicio. En la maqueta TABLERO es *una* de las siete pestañas: se recupera
+   el acceso directo sin perder el menú que ya funciona.
+
+### Tandas de la transición
+
+Se **fusiona con T1**, porque tres de sus arreglos se resuelven solos al hacer el shell.
+
+- **A · El shell** (1 sesión): grilla de alto fijo, unidad fluida, barra superior de 7
+  secciones, barra de recursos como fila. No cambia el contenido de ninguna pantalla.
+- **B · El Tablero** (1 sesión): columna del héroe ilustrado, escudos en la tabla, próximo
+  partido y vestuario abajo. **Esto es la maqueta.**
+- **C · Partido + Informe** (1-2 sesiones): las que más desbordan y las que más ganan.
+- **D · Plantilla, Quinteto, Liga** (1-2 sesiones).
+- **E · Pretemporada** (1 sesión): donde además va a caer el modo "club desde cero" (T3).
+
+### Pendiente de decisión de Gabi
+
+- **Confirmar que la barra superior vuelve** (revierte la decisión de ago 2026 de que "la
+  navegación es el inicio").
+- **Registrar la maqueta como aprobación** en `ART_PIPELINE.md` con fecha, alcance y qué
+  queda fuera. Es exactamente la disciplina que hoy falta.
+- **Pedir la ilustración del héroe** (una sola, categoría escena) — se puede hacer en
+  paralelo a la tanda A.
+
+*Nota de higiene documental:* `ART_PIPELINE.md` afirma que "el generador de escudos de club
+no existe y es la pieza procedural que falta". Existe (`crest.ts`, 136 líneas + `Crest.tsx`,
+240). Es la segunda contradicción del mismo documento, después del "tema oscuro azul".
