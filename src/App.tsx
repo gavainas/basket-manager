@@ -76,6 +76,19 @@ const PORTADA = `${import.meta.env.BASE_URL}portada.webp`;
  */
 const FONDO = 'fondo-cancha.webp';
 
+/**
+ * Llevar el contenido al principio.
+ *
+ * Con el marco fijo (tanda A) el que scrollea ya no es la ventana sino el área
+ * de contenido, así que `window.scrollTo` dejó de hacer nada. Se llama a los dos
+ * porque las pantallas de cierre (fin de temporada, fin de pretemporada) todavía
+ * viven en el flujo del documento.
+ */
+function scrollContenidoArriba() {
+  document.querySelector('.app-shell')?.scrollTo({ top: 0 });
+  window.scrollTo({ top: 0 });
+}
+
 const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }> = {
   facil: { label: 'Fácil', desc: 'Casi siempre están todos: la vida molesta poco.' },
   medio: { label: 'Medio', desc: 'La vida pasa: enfermos, viajes y algún lesionado.' },
@@ -209,19 +222,21 @@ export default function App() {
   useEffect(() => {
     if (phase === 'callUp' || phase === 'lineup' || phase === 'match' || phase === 'matchResult') setTab('semana');
     if (phase === 'planning') setTab('resumen');
-    // Cada cambio de fase arranca desde arriba de la página.
-    window.scrollTo({ top: 0 });
+    // Cada cambio de fase arranca desde arriba.
+    scrollContenidoArriba();
   }, [phase]);
 
   // Al entrar desde un tile del inicio, ir directo a lo que el tile prometía.
   useEffect(() => {
     if (!focus) {
-      window.scrollTo({ top: 0 });
+      scrollContenidoArriba();
       return;
     }
     const el = document.querySelector(`[data-focus="${focus}"]`);
+    // `scrollIntoView` busca solo el scroller que corresponda: con el marco fijo
+    // ese pasó a ser `.app-shell`, y no hay que decírselo.
     if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    else window.scrollTo({ top: 0 });
+    else scrollContenidoArriba();
   }, [tab, focus]);
 
   /** Navegación de toda la app: pantalla y, si el tile lo pidió, su ancla. */
@@ -334,6 +349,10 @@ export default function App() {
 
   return withProviders(
     <>
+      {/* El marco fijo (design/PLAN_MARCO_FIJO.md): tres filas de alto de
+          ventana —barra superior, contenido, barra de recursos—. Las dos barras
+          dejaron de ser `sticky`/`fixed` y ya no le tapan el pie a nadie. */}
+      <div className="marco">
       <header className="topbar">
         <div className="topbar-inner">
           <div className="marca">
@@ -505,7 +524,11 @@ export default function App() {
           </div>
         </div>
       </footer>
+      </div>
 
+      {/* Los modales viven FUERA del marco: el marco tiene `overflow: hidden` y
+          aunque `position: fixed` se le escapa igual, dejarlos afuera evita que
+          mañana un `transform` en el marco los convierta en recortables. */}
       <EventModal state={state} dispatch={dispatch} />
       <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
     </>

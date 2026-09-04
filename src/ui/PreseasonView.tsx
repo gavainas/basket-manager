@@ -1127,6 +1127,9 @@ export function PreseasonView({ state, dispatch }: Props) {
 
   return (
     <>
+      {/* Mismo marco fijo que la temporada (design/PLAN_MARCO_FIJO.md): la
+          pretemporada tiene la misma anatomía de tres partes. */}
+      <div className="marco">
       <PreseasonTopbar state={state} dispatch={dispatch} />
 
       <div className="app-shell">
@@ -1162,6 +1165,9 @@ export function PreseasonView({ state, dispatch }: Props) {
       </div>
 
       <PreseasonRecursos state={state} dispatch={dispatch} />
+      </div>
+
+      {/* Fuera del marco, como en App.tsx: los modales no son parte del layout. */}
       <PreseasonModals state={state} dispatch={dispatch} />
     </>
   );

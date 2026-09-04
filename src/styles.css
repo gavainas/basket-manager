@@ -66,10 +66,23 @@
   --sp-5: 1.5rem;
   --sp-6: 2.25rem;
 
+  /* La unidad del juego (marco fijo, tanda A — ver design/PLAN_MARCO_FIJO.md).
+     El formato objetivo es una ventana, no una página: el layout tiene que
+     AGRANDARSE en un monitor grande, no quedar centrado con fondo a los
+     costados. Esta unidad crece con el alto de la ventana (que es el recurso
+     escaso: el piso de diseño es 1280x720) y un poco con el ancho.
+       1280x720  -> 12px (piso)      1366x768 -> 12.3px
+       1920x1080 -> 17.2px           2560x1440 -> 19px (techo)
+     Las tandas B a E expresan tipografía, gaps y alturas en múltiplos de `--u`. */
+  --u: clamp(12px, 1.15vh + 0.25vw, 19px);
+
   /* Ancho de la app. Lo comparten la barra superior, el contenido y la barra
      de recursos: si se desincronizan, el chrome deja de alinear con lo de
-     abajo. Un solo lugar donde se decide. */
-  --ancho-app: 1360px;
+     abajo. Un solo lugar donde se decide.
+     Era 1360px fijo: a 1920 sobraban 560px de fondo a los costados. Ahora sigue
+     al viewport con piso (para que a 1280 no se angoste) y techo (para que una
+     tabla de 10 filas no quede de punta a punta en un monitor de 2560). */
+  --ancho-app: clamp(1200px, var(--u) * 96, 1760px);
 
   --radius: 4px; /* esta dirección es cuadrada */
   --sombra: 0 1px 2px rgba(37, 40, 44, 0.1);
@@ -102,11 +115,14 @@
   /* Empaquetada en el build (ver main.tsx): no depende de la fuente del sistema. */
   --display: 'Oswald', 'Bahnschrift SemiBold Condensed', 'Arial Narrow', sans-serif;
 
-  /* Alto de la barra de recursos fija, para el padding del body */
+  /* Alto de las dos barras del chrome. Desde la tanda A son FILAS de la grilla
+     del marco, así que ya no hacen falta para reservar hueco; quedan porque
+     todavía las usan cálculos de alto adentro de las pantallas (la lista del
+     quinteto). Siguen fijas a propósito: su contenido —cifras grandes, iconos—
+     todavía no es fluido, y achicar la caja sin achicar lo que lleva adentro
+     rompe. Se vuelven múltiplos de `--u` en la tanda donde su pantalla se
+     rediseña. Medidos, no estimados. */
   --recursos-alto: 68px;
-  /* Alto de la barra superior. Lo necesita todo lo que se pega abajo de ella
-     (el cabezal del partido): `.topbar` es sticky en top:0 y no hay forma de
-     preguntarle su alto desde CSS. Medido, no estimado. */
   --topbar-alto: 55px;
 }
 
@@ -172,24 +188,53 @@ button.danger {
   color: var(--bad);
 }
 
-/* ---------- Layout ---------- */
+/* ---------- Layout: el marco fijo ---------- */
 
-/* El formato objetivo del juego es PC (Steam): 1280px o más. Con 1200 quedaban
-   márgenes muertos a los costados en cualquier monitor normal. */
+/* El juego es una VENTANA, no una página (ver design/PLAN_MARCO_FIJO.md).
+   El marco ocupa exactamente el alto del viewport y se reparte en tres filas:
+   barra superior · contenido · barra de recursos. Las dos barras dejaron de ser
+   `sticky` y `fixed`: ahora son filas, y por eso ya no pueden taparle el pie a
+   nadie ni cortar una fila del partido a la mitad.
+
+   El formato objetivo es PC (Steam) con piso de diseño en 1280x720. */
+.marco {
+  height: 100vh; /* fallback para navegadores sin dvh */
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+}
+
 .app-shell {
   max-width: var(--ancho-app);
+  width: 100%;
   margin: 0 auto;
-  /* Deja aire para la barra de recursos fija. */
-  padding: 0 var(--sp-4) calc(var(--recursos-alto) + var(--sp-6));
+  padding: 0 var(--sp-4) var(--sp-6);
+
+  /* LA línea. Sin `min-height: 0` un hijo de grilla no baja de su alto de
+     contenido, la fila `1fr` se estira y vuelve el scroll de página: el bug se
+     ve como "hice todo bien y sigue scrolleando". */
+  min-height: 0;
+
+  /* MULETA DE MIGRACIÓN (tanda A; se apaga en la tanda E).
+     Hoy 8 de 13 pantallas miden más que el viewport. Si el contenido no
+     scrollease todavía, esas pantallas quedarían RECORTADAS —el botón de
+     "avanzar" del Informe queda fuera de alcance y el juego se traba—, que es
+     peor que ahora. Así que el marco ya no se mueve, pero el contenido todavía
+     puede scrollear. Cada tanda rediseña sus pantallas para que entren solas;
+     cuando entran todas, esta línea se va y una pantalla que desborda pasa a
+     ser un bug visible. */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ---------- Chrome: barra superior ---------- */
 
 /* Vive fuera de .app-shell y ocupa todo el ancho; el contenido se alinea con
-   la app vía .topbar-inner. Nada de trucos con vw: con scrollbar desbordan. */
+   la app vía .topbar-inner. Nada de trucos con vw: con scrollbar desbordan.
+   Desde la tanda A es la PRIMERA FILA del marco: ya no es `sticky`, así que no
+   pasa por encima de nada. El z-index queda por los popovers de adentro. */
 .topbar {
-  position: sticky;
-  top: 0;
   z-index: 30;
   background: var(--chrome);
   border-bottom: 1px solid var(--chrome-linea);
@@ -387,11 +432,10 @@ button.danger {
 
 /* ---------- Chrome: barra de recursos ---------- */
 
+/* Desde la tanda A es la TERCERA FILA del marco. Era `position: fixed` y por eso
+   le tapaba el pie a media docena de pantallas (la pizarra táctica del quinteto
+   quedaba media escondida abajo). Ahora ocupa su lugar y no pisa a nadie. */
 .recursos {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
   z-index: 30;
   background: var(--chrome);
   border-top: 1px solid var(--chrome-linea);
@@ -761,8 +805,10 @@ button.danger {
   align-items: center;
   gap: 0.55rem;
   text-align: center;
+  /* El scroller pasó a ser `.app-shell` (marco fijo, tanda A): el offset que
+     esquivaba la barra superior sticky ya no corresponde. */
   position: sticky;
-  top: calc(3.2rem + 1rem);
+  top: 0;
 }
 
 .hub-escudo {
@@ -1021,10 +1067,9 @@ img.retrato-img.v2 {
 .hub-punto.warn { background: var(--warn); }
 .hub-punto.bad { background: var(--bad); }
 
-/* Sin barra de recursos abajo, el hueco que deja el padding del body sobra. */
-.app-shell.sin-recursos {
-  margin-bottom: calc(var(--recursos-alto) * -1);
-}
+/* `.sin-recursos` ya no necesita corregir nada: con el marco en grilla, si la
+   barra de recursos no está, su fila mide 0 y el contenido usa ese alto. La
+   clase queda en el JSX porque nombra un estado real de la pantalla. */
 
 .recursos[hidden] {
   display: none;
@@ -1525,12 +1570,15 @@ td.num, th.num {
 
 /* ---------- Cabezal del partido ---------- */
 
-/* Se pega abajo de la barra superior mientras se juega. Solo lleva lo que hay
-   que tener siempre a la vista: marcador, cuarto y racha. Va por debajo de
-   `.topbar` (z-index 30) para que la barra le pase por encima al scrollear. */
+/* Se pega arriba del contenido mientras se juega. Solo lleva lo que hay que
+   tener siempre a la vista: marcador, cuarto y racha.
+   Hasta la tanda A se pegaba en `top: var(--topbar-alto)` porque el scroller era
+   la ventana y la barra superior le pasaba por encima; el resultado era que el
+   cabezal CORTABA a la mitad las filas de "En cancha" y "Banco". Ahora el
+   scroller es `.app-shell`, que arranca justo debajo de la barra: `top: 0`. */
 .partido-cabezal {
   position: sticky;
-  top: var(--topbar-alto);
+  top: 0;
   z-index: 20;
   margin-bottom: 1rem;
 }

@@ -53,7 +53,7 @@ quedar centrado con madera a los costados.
 
 ---
 
-## Tanda A — El marco (1 sesión)
+## Tanda A — El marco ✅ (hecha, sep 2026)
 
 Ninguna pantalla cambia de contenido. Se cambia de qué está hecho el contenedor.
 
@@ -72,11 +72,35 @@ Ninguna pantalla cambia de contenido. Se cambia de qué está hecho el contenedo
 pantallas que hoy desbordan quedarían **recortadas** en vez de scrolleadas, que es peor.
 Cada pantalla convertida se marca, y la última tanda apaga el fallback.
 
-**Se mueren solos tres bugs del diagnóstico:** la barra de recursos que tapa el pie de las
-pantallas, el marcador sticky que corta las filas de "En cancha", y el scroll de página.
+**Bugs del diagnóstico que toca esta tanda** — dos muertos y uno a medias, conviene ser
+exacto:
 
-*Criterio de salida:* en las 13 pantallas, la barra de arriba y la de abajo no se mueven
-nunca. `npm run build` limpio.
+- ✅ **La barra de recursos tapaba el pie de media docena de pantallas.** Muerto: ya no es
+  `position: fixed`, es una fila.
+- ✅ **El scroll de página.** Muerto: el marco mide exactamente el viewport.
+- 🔶 **El cabezal del partido cortaba las filas de "En cancha".** Se arregló *el error*: se
+  pegaba en `top: var(--topbar-alto)` porque el scroller era la ventana, y quedaba un hueco
+  de 55 px por el que se veía pasar el contenido. Ahora se pega en `top: 0` del contenedor
+  correcto. Lo que queda —que el contenido pase por debajo del cabezal al scrollear— es el
+  comportamiento normal de un sticky, y **desaparece en la tanda C**, cuando el marcador
+  deje de ser sticky y pase a ser una zona fija de la grilla del partido.
+
+### Resultado medido
+
+Recorrido completo (pretemporada → inscripción → fecha 1 con partido e informe) a
+**1920×1080** y **1280×720**, chequeando en cada pantalla que la página no scrollee, que el
+marco mida exactamente el viewport, que la barra de arriba esté en `y=0`, que la de recursos
+termine en el borde de abajo y que nada quede recortado:
+
+**11 de 11 pantallas en verde en las dos resoluciones, sin errores de consola.** El
+contenido que desborda (hasta +1626 px en Plantilla a 720p) scrollea adentro, que es
+exactamente lo que la muleta tiene que hacer hasta que su tanda lo rediseñe.
+
+Además, el ancho: `--ancho-app` pasó de 1360 px fijos a seguir al viewport. A 1920 el
+contenido usa **1653 px** en vez de 1360 — 293 px menos de fondo de madera al costado.
+
+`npm run build` limpio · `npm run sim -- 40` sin deriva (49.9 / 43.4 / 50.6 de victorias por
+estrategia; no se tocó una línea de lógica de juego).
 
 ---
 
