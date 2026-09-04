@@ -1021,6 +1021,60 @@ button.danger {
   .partido-col-scroll { grid-row: span 2; }
 }
 
+/* ---------- El informe (tanda D) ---------- */
+
+.informe-pantalla {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--sp-4);
+  min-height: 0;
+  height: 100%;
+}
+
+.informe-cabecera {
+  margin-bottom: 0;
+  max-height: 34vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* La planilla · el relato y las claves · el vestuario. Tres preguntas distintas
+   del mismo partido, que antes se leían scrolleando casi tres pantallas. */
+.informe-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.2fr) minmax(280px, 1fr) minmax(280px, 1fr);
+  gap: var(--sp-4);
+  min-height: 0;
+}
+
+.informe-planilla,
+.informe-moods {
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+.informe-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 0.2rem;
+}
+
+.informe-col > .card {
+  flex: none;
+  margin-bottom: 0;
+}
+
+.informe-pantalla .confirm-bar { margin-top: 0; }
+
+@media (max-width: 1240px) {
+  .informe-cuerpo { grid-template-columns: minmax(300px, 1.1fr) minmax(280px, 1fr); }
+  .informe-moods { grid-column: span 2; }
+}
+
 /* ---------- El Tablero encoge con la ventana ---------- */
 
 /* Todo lo de arriba entra cómodo a 1080p. A 720p —el piso de diseño— hay 250px
@@ -2309,12 +2363,39 @@ table.planilla tr:last-child td {
 
 /* ---------- Plantel: vista planilla (tabla densa estilo mesa de control) ---------- */
 
+/* ---------- El plantel (tanda D) ---------- */
+
+.plantel-pantalla {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  min-height: 0;
+  height: 100%;
+}
+
+/* El cuerpo scrollea; la barra de pestañas y la nota no se van de vista. */
+.plantel-cuerpo {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 0.2rem;
+}
+
 .roster-head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.9rem;
   flex-wrap: wrap;
+}
+
+/* La nota de la pantalla es contexto, no titular: se lleva el espacio que sobra
+   al lado de las pestañas en vez de una línea propia. */
+.roster-nota {
+  margin: 0;
+  flex: 1 1 320px;
+  min-width: 0;
+  font-size: var(--fs-xs);
 }
 
 .view-toggle {
@@ -4095,6 +4176,12 @@ button.mini.blue.on {
   padding-top: 0.85rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border);
+  /* Queda arriba mientras se scrollea el plantel: catorce renglones de cifras
+     sin títulos a la vista son catorce renglones que hay que adivinar. */
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel);
 }
 
 /* El `.tip` es el hijo de la grilla, así que la alineación va en él: si no, el

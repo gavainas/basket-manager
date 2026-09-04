@@ -21,6 +21,7 @@ import { LeagueProfile } from './ui/LeagueProfile';
 import { ClubLink, OpenClubContext } from './ui/ClubLink';
 import { ClubProfile } from './ui/ClubProfile';
 import { USER_CLUB_ID } from './game/world';
+import { activePlayers } from './game/match';
 import { NavigateTabContext, type AppFocus, type AppTab } from './ui/nav';
 import type { AbsenceDifficulty } from './game/types';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
@@ -364,7 +365,12 @@ export default function App() {
             : 'Mirá el resultado del partido';
 
   const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
-  const alDia = state.players.filter((p) => p.weeksUnpaid === 0).length;
+  /* El plantel son los que están, no los que estuvieron. La barra contaba sobre
+     `state.players`, que incluye a los que se fueron del club: por eso decía
+     "12 / 13 jugadores" mientras El club decía "8 activos" y la Plantilla
+     listaba 8 renglones. Un solo denominador en todo el juego. */
+  const enElPlantel = activePlayers(state.players);
+  const alDia = enElPlantel.filter((p) => p.weeksUnpaid === 0).length;
   const semanaLabel =
     state.week <= state.seasonLength
       ? `${Math.min(state.week, state.seasonLength)}`
@@ -467,7 +473,7 @@ export default function App() {
         )}
         {tab === 'plantilla' && (
           <div className="vista sec-plantel">
-            <RosterView state={state} dispatch={dispatch} />
+            <RosterView state={state} dispatch={dispatch} focus={focus} />
           </div>
         )}
         {tab === 'finanzas' && (
@@ -523,8 +529,8 @@ export default function App() {
             <span className="k">
               <Icon name="plantel" size={14} /> Cuotas al día
             </span>
-            <div className={`v ${alDia < state.players.length ? 'warn' : 'good'}`}>
-              {alDia} / {state.players.length}
+            <div className={`v ${alDia < enElPlantel.length ? 'warn' : 'good'}`}>
+              {alDia} / {enElPlantel.length}
             </div>
             <div className="s">jugadores</div>
           </div>

@@ -1646,8 +1646,11 @@ function MatchResultPanel({ state, dispatch }: Props) {
           : 'Cerrar la temporada →';
 
   return (
-    <div>
-      <div className="card">
+    /* El Informe era la peor de todas: una tira vertical de seis bloques que
+       medía casi tres pantallas a 720p. El contenido no sobraba —la forma sí—,
+       así que entra completo repartido en tres columnas, sin sacar una línea. */
+    <div className="informe-pantalla">
+      <div className="informe-cabecera card">
         <div style={{ textAlign: 'center' }}>
           <span className={`result-badge ${m.won ? 'win' : 'lose'}`}>
             {m.forfeit ? 'FORFEIT' : m.won ? 'VICTORIA' : 'DERROTA'}
@@ -1717,10 +1720,11 @@ function MatchResultPanel({ state, dispatch }: Props) {
         )}
       </div>
 
+      <div className="informe-cuerpo">
       {(m.box ?? []).length > 0 && (
-        <div className="card" style={{ marginTop: '1rem' }}>
-          <h3>Planilla del partido</h3>
-          <div className="table-wrap">
+        <div className="card pane informe-planilla">
+          <h3 className="card-band">Planilla del partido</h3>
+          <div className="table-wrap pane-body">
             <table className="planilla">
               <thead>
                 <tr>
@@ -1755,8 +1759,9 @@ function MatchResultPanel({ state, dispatch }: Props) {
         </div>
       )}
 
+      <div className="informe-col">
       {m.highlights.length > 0 && (
-        <div className="card" style={{ marginTop: '1rem' }}>
+        <div className="card">
           <h3>El relato del partido</h3>
           <ul className="reason-list">
             {m.highlights.map((h, i) => (
@@ -1766,7 +1771,6 @@ function MatchResultPanel({ state, dispatch }: Props) {
         </div>
       )}
 
-      <div className="grid cols-2" style={{ marginTop: '1rem' }}>
         <div className="card">
           <h3>Claves del resultado</h3>
           <ul className="reason-list">
@@ -1783,10 +1787,9 @@ function MatchResultPanel({ state, dispatch }: Props) {
             ))}
           </ul>
         </div>
-      </div>
 
       {m.lockerRoom.length > 0 && (
-        <div className="card" style={{ marginTop: '1rem' }}>
+        <div className="card">
           <h3>En el vestuario</h3>
           <ul className="reason-list">
             {m.lockerRoom.map((n, i) => (
@@ -1795,11 +1798,12 @@ function MatchResultPanel({ state, dispatch }: Props) {
           </ul>
         </div>
       )}
+      </div>
 
       {(m.moods ?? []).length > 0 && (
-        <div className="card" style={{ marginTop: '1rem' }}>
-          <h3>Cómo quedó cada uno</h3>
-          <div className="data-grid">
+        <div className="card pane informe-moods">
+          <h3 className="card-band">Cómo quedó cada uno</h3>
+          <div className="data-grid pane-body">
             {m.moods!.map((mood) => {
               const cls =
                 mood.emotion === 'euforico' || mood.emotion === 'orgulloso' || mood.emotion === 'contento'
@@ -1837,6 +1841,7 @@ function MatchResultPanel({ state, dispatch }: Props) {
           </div>
         </div>
       )}
+      </div>
 
       <div className="confirm-bar">
         <button className="primary" onClick={() => dispatch({ type: 'NEXT_WEEK' })}>
@@ -1856,7 +1861,8 @@ export function WeekView({ state, dispatch }: Props) {
     state.phase === 'planning' ||
     state.phase === 'callUp' ||
     state.phase === 'lineup' ||
-    state.phase === 'match';
+    state.phase === 'match' ||
+    state.phase === 'matchResult';
 
   return (
     <div className={fija ? 'semana-vista pantalla' : undefined}>
