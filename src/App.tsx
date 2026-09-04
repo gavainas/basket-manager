@@ -21,6 +21,7 @@ import { LeagueProfile } from './ui/LeagueProfile';
 import { ClubLink, OpenClubContext } from './ui/ClubLink';
 import { ClubProfile } from './ui/ClubProfile';
 import { USER_CLUB_ID } from './game/world';
+import { activePlayers } from './game/match';
 import { NavigateTabContext, type AppFocus, type AppTab } from './ui/nav';
 import type { AbsenceDifficulty } from './game/types';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
@@ -41,9 +42,7 @@ type Tab = AppTab;
    Partidos porque son la misma área — el color responde "¿qué parte del juego
    es esta?", no "¿qué botón toqué?".
    `sec` nombra la clase de área: la usan el cabezal de la pantalla y las bandas
-   de sus cards. Un solo lugar donde se decide.
-   Las pestañas se fueron: la navegación es el inicio (ver ui/Hub.tsx), y de
-   cualquier pantalla se vuelve con el botón Inicio de la barra. */
+   de sus cards. Un solo lugar donde se decide. */
 const VIEWS: Record<Tab, { label: string; sec: string; icon: IconName }> = {
   resumen: { label: 'Inicio', sec: 'sec-tablero', icon: 'tablero' },
   plantilla: { label: 'Plantilla', sec: 'sec-plantel', icon: 'plantel' },
@@ -55,6 +54,31 @@ const VIEWS: Record<Tab, { label: string; sec: string; icon: IconName }> = {
   club: { label: 'El club', sec: 'sec-tablero', icon: 'inscripcion' },
   semana: { label: 'La semana', sec: 'sec-partidos', icon: 'semana' },
 };
+
+/**
+ * La barra de secciones (tanda B del marco fijo).
+ *
+ * En agosto las pestañas se sacaron y la navegación pasó a ser el Tablero: de
+ * cualquier pantalla se volvía con Inicio. Funcionaba, pero costaba dos clicks
+ * llegar a cualquier lado. La maqueta que aprobó Gabi tiene las dos cosas a la
+ * vez —el Tablero es UNA de las secciones—, así que se recupera el acceso
+ * directo sin perder el menú, que sigue siendo el que se enciende con los
+ * avisos de `watch.ts`.
+ *
+ * Siete secciones, no nueve: Calendario y Rankings no son áreas propias, son
+ * preguntas de la Liga (en la tanda E pasan a ser pestañas de adentro). Hasta
+ * entonces siguen siendo pantallas y la barra ilumina Liga cuando estás en
+ * ellas — el color dice "en qué parte del juego estás", no "qué botón tocaste".
+ */
+const SECCIONES: { tab: Tab; label: string; icon: IconName; incluye?: Tab[] }[] = [
+  { tab: 'resumen', label: 'Tablero', icon: 'tablero' },
+  { tab: 'semana', label: 'Partidos', icon: 'semana' },
+  { tab: 'liga', label: 'Liga', icon: 'liga', incluye: ['agenda', 'rankings'] },
+  { tab: 'plantilla', label: 'Plantel', icon: 'plantel' },
+  { tab: 'finanzas', label: 'Finanzas', icon: 'finanzas' },
+  { tab: 'club', label: 'El club', icon: 'inscripcion' },
+  { tab: 'historia', label: 'Historia', icon: 'historia' },
+];
 
 /**
  * Portada del menú principal: `public/portada.webp`, versionada en el repo.
@@ -75,6 +99,19 @@ const PORTADA = `${import.meta.env.BASE_URL}portada.webp`;
  * los paneles. Cambiar de fondo es cambiar este nombre.
  */
 const FONDO = 'fondo-cancha.webp';
+
+/**
+ * Llevar el contenido al principio.
+ *
+ * Con el marco fijo (tanda A) el que scrollea ya no es la ventana sino el área
+ * de contenido, así que `window.scrollTo` dejó de hacer nada. Se llama a los dos
+ * porque las pantallas de cierre (fin de temporada, fin de pretemporada) todavía
+ * viven en el flujo del documento.
+ */
+function scrollContenidoArriba() {
+  document.querySelector('.app-shell')?.scrollTo({ top: 0 });
+  window.scrollTo({ top: 0 });
+}
 
 const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }> = {
   facil: { label: 'Fácil', desc: 'Casi siempre están todos: la vida molesta poco.' },
@@ -209,19 +246,21 @@ export default function App() {
   useEffect(() => {
     if (phase === 'callUp' || phase === 'lineup' || phase === 'match' || phase === 'matchResult') setTab('semana');
     if (phase === 'planning') setTab('resumen');
-    // Cada cambio de fase arranca desde arriba de la página.
-    window.scrollTo({ top: 0 });
+    // Cada cambio de fase arranca desde arriba.
+    scrollContenidoArriba();
   }, [phase]);
 
   // Al entrar desde un tile del inicio, ir directo a lo que el tile prometía.
   useEffect(() => {
     if (!focus) {
-      window.scrollTo({ top: 0 });
+      scrollContenidoArriba();
       return;
     }
     const el = document.querySelector(`[data-focus="${focus}"]`);
+    // `scrollIntoView` busca solo el scroller que corresponda: con el marco fijo
+    // ese pasó a ser `.app-shell`, y no hay que decírselo.
     if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    else window.scrollTo({ top: 0 });
+    else scrollContenidoArriba();
   }, [tab, focus]);
 
   /** Navegación de toda la app: pantalla y, si el tile lo pidió, su ancla. */
@@ -326,7 +365,12 @@ export default function App() {
             : 'Mirá el resultado del partido';
 
   const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
-  const alDia = state.players.filter((p) => p.weeksUnpaid === 0).length;
+  /* El plantel son los que están, no los que estuvieron. La barra contaba sobre
+     `state.players`, que incluye a los que se fueron del club: por eso decía
+     "12 / 13 jugadores" mientras El club decía "8 activos" y la Plantilla
+     listaba 8 renglones. Un solo denominador en todo el juego. */
+  const enElPlantel = activePlayers(state.players);
+  const alDia = enElPlantel.filter((p) => p.weeksUnpaid === 0).length;
   const semanaLabel =
     state.week <= state.seasonLength
       ? `${Math.min(state.week, state.seasonLength)}`
@@ -334,6 +378,10 @@ export default function App() {
 
   return withProviders(
     <>
+      {/* El marco fijo (design/PLAN_MARCO_FIJO.md): tres filas de alto de
+          ventana —barra superior, contenido, barra de recursos—. Las dos barras
+          dejaron de ser `sticky`/`fixed` y ya no le tapan el pie a nadie. */}
+      <div className="marco">
       <header className="topbar">
         <div className="topbar-inner">
           <div className="marca">
@@ -357,22 +405,25 @@ export default function App() {
             </div>
           </div>
 
-          {/* Sin pestañas: el nombre de la pantalla dice dónde estás y el botón
-              Inicio es el único camino de vuelta, como en la referencia. */}
-          {tab !== 'resumen' && (
-            <div className={`pantalla-actual ${VIEWS[tab].sec}`}>
-              <Icon name={VIEWS[tab].icon} size={19} />
-              {VIEWS[tab].label}
-            </div>
-          )}
+          <nav className="secciones">
+            {SECCIONES.map((s) => {
+              const activa = tab === s.tab || (s.incluye?.includes(tab) ?? false);
+              return (
+                <button
+                  key={s.tab}
+                  className={`seccion ${VIEWS[s.tab].sec}${activa ? ' on' : ''}`}
+                  onClick={() => navigate(s.tab)}
+                  aria-current={activa ? 'page' : undefined}
+                >
+                  <span className="seccion-punto" />
+                  <span className="seccion-label">{s.label}</span>
+                  <Icon name={s.icon} size={22} />
+                </button>
+              );
+            })}
+          </nav>
 
           <div className="spacer" />
-          {tab !== 'resumen' && (
-            <button className="inicio" title="Volver al inicio" onClick={() => navigate('resumen')}>
-              <Icon name="tablero" size={17} />
-              Inicio
-            </button>
-          )}
           {saveFailed && <span className="chip bad">⚠ No se pudo guardar</span>}
           <button
             className="salir"
@@ -422,7 +473,7 @@ export default function App() {
         )}
         {tab === 'plantilla' && (
           <div className="vista sec-plantel">
-            <RosterView state={state} dispatch={dispatch} />
+            <RosterView state={state} dispatch={dispatch} focus={focus} />
           </div>
         )}
         {tab === 'finanzas' && (
@@ -478,8 +529,8 @@ export default function App() {
             <span className="k">
               <Icon name="plantel" size={14} /> Cuotas al día
             </span>
-            <div className={`v ${alDia < state.players.length ? 'warn' : 'good'}`}>
-              {alDia} / {state.players.length}
+            <div className={`v ${alDia < enElPlantel.length ? 'warn' : 'good'}`}>
+              {alDia} / {enElPlantel.length}
             </div>
             <div className="s">jugadores</div>
           </div>
@@ -505,7 +556,11 @@ export default function App() {
           </div>
         </div>
       </footer>
+      </div>
 
+      {/* Los modales viven FUERA del marco: el marco tiene `overflow: hidden` y
+          aunque `position: fixed` se le escapa igual, dejarlos afuera evita que
+          mañana un `transform` en el marco los convierta en recortables. */}
       <EventModal state={state} dispatch={dispatch} />
       <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
     </>

@@ -257,7 +257,16 @@ function SecondTeamCard({ state }: { state: GameState }) {
   );
 }
 
+type LigaTab = 'tabla' | 'piramide' | 'ligas';
+
+const LIGA_TABS: { id: LigaTab; label: string; hint: string }[] = [
+  { id: 'tabla', label: 'Tabla y fixture', hint: 'Cómo viene la divisional y contra quién jugamos' },
+  { id: 'piramide', label: 'La pirámide', hint: 'Las divisionales de arriba y de abajo' },
+  { id: 'ligas', label: 'Las ligas', hint: 'El mapa de ligas y el segundo equipo del club' },
+];
+
 export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (action: GameAction) => void }) {
+  const [tab, setTab] = useState<LigaTab>('tabla');
   const [expandLeague, setExpandLeague] = useState<string | null>(null);
   // Qué otra divisional de la pirámide se está mirando (null = la primera).
   const [pyramidTab, setPyramidTab] = useState<string | null>(null);
@@ -299,8 +308,20 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
   const otherRows = shownDivision ? divisionStandings(world, shownDivision.id, state.week, state.seasonNumber) : [];
 
   return (
-    <div>
-      {userLeague && userDivision && (
+    /* Tres pestañas y no cuatro cards apiladas (tanda E del marco fijo). La
+       tabla, el fixture, la pirámide y el mapa de ligas son cuatro preguntas
+       distintas: apiladas medían 1556px y ninguna se veía entera. */
+    <div className="liga-pantalla">
+      <div className="view-toggle liga-tabs">
+        {LIGA_TABS.map((t) => (
+          <button key={t.id} className={tab === t.id ? 'active' : ''} title={t.hint} onClick={() => setTab(t.id)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="liga-cuerpo">
+      {tab === 'ligas' && userLeague && userDivision && (
         <div className="card" style={{ marginBottom: '1rem' }}>
           <h3>Las ligas</h3>
           <div className="data-grid">
@@ -357,7 +378,7 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
         </div>
       )}
 
-      {expandLeague &&
+      {tab === 'ligas' && expandLeague &&
         (() => {
           const l = world.leagues.find((x) => x.id === expandLeague);
           return l ? (
@@ -365,11 +386,11 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
           ) : null;
         })()}
 
-      <SecondTeamCard state={state} />
+      {tab === 'ligas' && <SecondTeamCard state={state} />}
 
-      <PlayoffsCard state={state} />
+      {tab === 'tabla' && <PlayoffsCard state={state} />}
 
-      <div className="grid cols-2">
+      <div className="grid cols-2" hidden={tab !== 'tabla'}>
       <div className="card">
         <h3>
           Tabla de posiciones
@@ -474,7 +495,7 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
       </div>
       </div>
 
-      {shownDivision && otherRows.length > 0 && (
+      {tab === 'piramide' && shownDivision && otherRows.length > 0 && (
         <div className="card" style={{ marginTop: '1rem' }}>
           <h3>La pirámide · {userLeague?.name}</h3>
           <p className="muted" style={{ marginTop: 0 }}>
@@ -546,6 +567,7 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
           </p>
         </div>
       )}
+      </div>
     </div>
   );
 }
