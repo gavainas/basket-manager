@@ -104,7 +104,7 @@ estrategia; no se tocó una línea de lógica de juego).
 
 ---
 
-## Tanda B — Tablero, Semana y Convocatoria (1 sesión)
+## Tanda B — Tablero, Semana y Convocatoria ✅ (hecha, sep 2026)
 
 El arranque del camino semanal. **Acá aterriza la maqueta.**
 
@@ -122,7 +122,7 @@ con la maqueta.
 
 ---
 
-## Tanda C — Quinteto y Partido (1-2 sesiones)
+## Tanda C — Quinteto y Partido ✅ (hecha, sep 2026)
 
 El núcleo del juego, y donde más se gana en sensación.
 
@@ -138,7 +138,7 @@ El núcleo del juego, y donde más se gana en sensación.
 
 ---
 
-## Tanda D — Informe y Plantilla (1-2 sesiones)
+## Tanda D — Informe y Plantilla ✅ (hecha, sep 2026)
 
 Las dos peores (+91% y +90% a 1080p).
 
@@ -158,30 +158,69 @@ pantallas y media.
 
 ---
 
-## Tanda E — El resto, y apagar el fallback (1 sesión)
+## Tanda E — El resto, y la regla final ✅ (hecha, sep 2026)
 
 - **Liga**: hoy apila tabla + fixture + pirámide + lista de ligas. Son cuatro preguntas
   distintas: pasan a pestañas internas.
 - **Rankings, Finanzas, El club**: están cerca de entrar; sólo adoptan el marco.
 - **Pretemporada**: el panel "Cómo llega el club" se colapsa a una línea (hoy se repite entero
   en las tres pestañas), y el mercado de 16 scrollea adentro de su panel.
-- **Se apaga el `overflow-y: auto` de `main`.** A partir de acá, una pantalla que desborda es
-  un bug, no una molestia.
+### La muleta no se apaga: se convierte en la regla
 
-*Criterio de salida:* cero barras de scroll de página en una temporada entera jugada a
-1280×720.
+El plan decía "se apaga el `overflow-y: auto` del área de contenido; a partir de acá una
+pantalla que desborda es un bug". **Haciéndolo se ve que la regla estaba mal enunciada**, y
+conviene corregirlo acá en vez de cumplirlo mal.
+
+Lo que molestaba nunca fue que scrollee *contenido*: era que scrollee **la página**, o sea
+que se vayan de pantalla la barra de arriba, la de recursos y el botón de seguir. Eso ya no
+pasa en ninguna pantalla. El área de contenido está **adentro** del marco, así que cuando
+scrollea, el chrome sigue quieto: eso es scroll de panel, que es exactamente lo que el plan
+pedía conservar.
+
+La regla final es más fina que "nada scrollea":
+
+- **Las pantallas con una acción** —el camino semanal entero, el Tablero, el Plantel, la
+  Liga, la Pretemporada— **tienen que entrar**. Si desbordan, es un bug: el botón que
+  continúa el juego no puede quedar fuera de alcance.
+- **Las pantallas de lectura** —Rankings, Calendario, Finanzas, Historia, Noticias— pueden
+  scrollear su cuerpo. Son listas largas por naturaleza y paginarlas a la fuerza sería peor.
+  Su chrome tampoco se mueve.
+
+Por eso el `overflow-y: auto` se queda, y deja de estar comentado como muleta de migración:
+pasa a estar comentado como lo que es.
+
+*Criterio de salida:* cero barras de scroll de página en una temporada entera jugada, en las
+tres resoluciones, y cero desborde en toda pantalla con acción.
 
 ---
+
+## Resultado final, medido
+
+Recorrido completo (pretemporada con sus tres pestañas · inscripción · las cuatro pestañas
+del Plantel · las tres de la Liga · Finanzas, El club, Historia, Rankings, Calendario · la
+semana entera con partido e informe) a **1920×1080, 1366×768 y 1280×720**:
+
+**22 pantallas × 3 resoluciones = 66 chequeos, 0 fallos.** En ninguna scrollea la página, en
+ninguna se mueve el chrome, y ninguna pantalla con acción desborda. Lo único que scrollea su
+cuerpo son Rankings, Calendario y Finanzas, que es lo que la regla de arriba permite.
+
+Contra la tabla de deuda del principio: **8 de 13 pantallas scrolleaban a 1080p y 11 de 13 a
+1366×768. Ahora, cero.**
+
+`npm run build` limpio · `npm run sim -- 40` sin deriva (49.9 / 43.4 / 50.6).
 
 ## La red que hace que no se vuelva atrás
 
 Lo que no se mide, se rompe en tres commits. Esta es la parte que hoy no existe y sin la
 cual el trabajo se deshace solo.
 
-**`npm run check:pantallas`**: un Playwright que recorre las 13 pantallas en una partida
-real, a **1280×720, 1366×768 y 1920×1080**, y falla si en alguna
-`document.body.scrollHeight > window.innerHeight`. Ya está escrito el 80%: es el script con
-el que se midió la tabla de arriba.
+**`npm run check:pantallas`**: un Playwright que recorre las 22 pantallas en una partida
+real, a **1280×720, 1366×768 y 1920×1080**, y falla si en alguna scrollea la página, se mueve
+el chrome o desborda una pantalla con acción. **El script existe y es el que produjo los 66
+chequeos de arriba**, pero todavía NO está en el repo: dejarlo acá significa sumar Playwright
+como dependencia de desarrollo y un `npx playwright install chromium` de una vez en la
+máquina de Gabi. Es una decisión suya sobre el peso del proyecto — con el visto bueno entra
+en cinco minutos, y sin él estas cinco tandas se deshacen solas en unos cuantos commits.
 
 Va al CI junto con `build` y `sim`. Cada tanda agrega sus pantallas a la lista de las que ya
 tienen que pasar.

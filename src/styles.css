@@ -1021,6 +1021,44 @@ button.danger {
   .partido-col-scroll { grid-row: span 2; }
 }
 
+/* ---------- La pretemporada (tanda E) ---------- */
+
+.pretemporada-pantalla {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  min-height: 0;
+  height: 100%;
+}
+
+.pretemporada-cabecera { min-height: 0; }
+
+.pretemporada-cuerpo {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 0.2rem;
+}
+
+/* ---------- La liga (tanda E) ---------- */
+
+.liga-pantalla {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  min-height: 0;
+  height: 100%;
+}
+
+.liga-tabs { align-self: start; }
+
+.liga-cuerpo {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 0.2rem;
+}
+
 /* ---------- El informe (tanda D) ---------- */
 
 .informe-pantalla {
