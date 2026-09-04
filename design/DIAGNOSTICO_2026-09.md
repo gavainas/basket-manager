@@ -419,6 +419,9 @@ pantallas y media. Eso, más que cualquier asset, es lo que se lee como "web" y 
 
 ### Tandas de la transición
 
+Detalladas tanda por tanda, con presupuesto de píxeles y criterios de salida, en
+[`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md). Resumen:
+
 Se **fusiona con T1**, porque tres de sus arreglos se resuelven solos al hacer el shell.
 
 - **A · El shell** (1 sesión): grilla de alto fijo, unidad fluida, barra superior de 7
