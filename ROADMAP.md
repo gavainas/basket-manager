@@ -1,5 +1,11 @@
 # Roadmap
 
+> **Sep 2026 — leer primero [`design/DIAGNOSTICO_2026-09.md`](design/DIAGNOSTICO_2026-09.md)**:
+> status del juego con una partida jugada de punta a punta, los tres pedidos de Gabi
+> (empezar sin plantel, compromiso oculto, ordenar el proceso de arte) convertidos en
+> diseño, y el plan de acción en cinco tandas. Este archivo, mientras tanto, es más un
+> registro de lo hecho que una lista de lo que sigue.
+
 Próximas etapas, en orden aproximado de valor:
 
 ## Hecho recientemente
