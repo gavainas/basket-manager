@@ -60,8 +60,14 @@ pantalla El club dice **Jugadores activos: 8**, la Plantilla lista **8 filas** m
 Esto es, literalmente, el "estoy entreverado".
 
 **4. La planilla tiene cuatro números sin encabezado.**
-`RosterList.tsx:110-113` pinta físico, motivación, compromiso y social como cuatro cifras
-seguidas. No hay fila de títulos. Hay que adivinar cuál es cuál.
+~~`RosterList.tsx:110-113` pinta físico, motivación, compromiso y social como cuatro cifras
+seguidas. No hay fila de títulos.~~
+
+> **Corregido (sep 2026): este dato estaba mal.** La fila de títulos existía —Físico,
+> Motiv., Compr., Social—; lo que pasaba es que **no se veía**, porque la pantalla medía el
+> doble que la ventana y la barra de recursos fija tapaba el resto. Es el hallazgo 5, no uno
+> aparte. Con el marco fijo ya se ve, y quedó *sticky* dentro del panel para que no se vaya
+> al scrollear catorce renglones de cifras.
 
 **5. Lo pegajoso tapa lo importante.**
 En la pantalla de partido el marcador sticky corta a la mitad las filas de "En cancha" y

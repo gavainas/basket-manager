@@ -18,6 +18,11 @@ Las puertas 3 a 6 (hoja maestra de personajes, vertical slice, prueba en juego y
 art bible) siguen **abiertas**: gobiernan la expansión que viene (set ilustrado de
 retratos, eventos ilustrados, más cabeceras).
 
+**Sep 2026 — el marco fijo no reabrió ninguna puerta.** Cinco tandas de layout
+(ver [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md)) sin generar un solo asset nuevo:
+la única generación que se propuso —la ilustración del héroe— fue rechazada por
+Gabi y la columna se armó con arte ya aprobado. Registro del 2026-09-04 al final.
+
 **Sep 2026 — la materia y la estructura quedaron aprobadas.** Dentro de la dirección ya
 aprobada (no la reabre), y por una queja concreta de Gabi sobre lo plano de los paneles, se
 exploraron tres tratamientos sobre la pantalla de Plantel. Gabi eligió dos y de ahí salió
@@ -416,13 +421,46 @@ Formato sugerido:
   los tokens de relieve y siguiendo pantalla por pantalla. Cada tanda commiteada por
   separado para poder pedir volver a cualquier punto.
 
+### 2026-09-04 — La maqueta de tablero y el marco fijo
+
+- Alcance: **layout y navegación**, no arte. No reabre ninguna puerta: la dirección de
+  papel claro y el retrato ilustrado siguen como estaban.
+- Origen: Gabi mandó una maqueta de tablero ("esta foto se siente más juego") y preguntó
+  cuándo se pasa a eso y cómo hacer que no scrollee para abajo. Al desarmarla contra el
+  repo apareció el dato que ordenó todo: **la maqueta no era una dirección nueva**.
+  `SISTEMA_VISUAL.md` ya especificaba la barra de siete secciones y el héroe de la
+  izquierda desde agosto; el código se había separado del documento.
+- Autorizado por Gabi: "avanza con todas las tandas" sobre el plan de cinco tandas de
+  [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md), donde la tanda B es explícitamente el
+  Tablero de la maqueta.
+- **Rechazado por Gabi: generar la ilustración de cuerpo entero del héroe.** Se propuso
+  (nano_banana_pro con `portada.webp` de referencia, la receta de `public/arte/LEEME.md`,
+  2 créditos) y se denegó. **No se generó ningún asset nuevo en estas cinco tandas.** La
+  columna del héroe se armó con el retrato de arquetipo ya aprobado.
+- Pendiente: la ilustración de cuerpo entero sigue sin pedirse. El hueco está listo
+  (`.hub-heroe-foto`) y las reglas de estilo para pedirla ya están escritas en
+  "El héroe y los arquetipos" de `SISTEMA_VISUAL.md`.
+- Próximo paso autorizado: nada de arte. Las Puertas 3 a 6 siguen abiertas y sin tocar.
+
 ## Estado de aprobación actual
 
-- La lógica y estructura técnica del sistema de retratos puede conservarse.
-- El estilo visual actual de las caras **no está aprobado como arte final**.
-- El estilo general actual de la interfaz **no está aprobado como dirección final**.
-- No está autorizado escalar el arte actual únicamente por estar ya implementado.
-- Existe una **dirección candidata documentada** (ver el registro del 2026-08-16), pendiente
-  de aprobación. Hasta que se apruebe, el juego publicado sigue con el tema oscuro azul.
-- El generador de escudos de club no existe y es la pieza procedural que falta: ninguna
-  IA da diez escudos consistentes entre sí.
+> **Corregido en sep 2026.** Este bloque contradecía al resto del documento y a lo que hay
+> en el repo: decía que la interfaz no estaba aprobada cuando arriba las Puertas 1 y 2
+> figuran cerradas, afirmaba que "el juego publicado sigue con el tema oscuro azul" (es
+> papel claro desde agosto) y que "el generador de escudos no existe" (existe:
+> `src/game/crest.ts`, 136 líneas, y `src/ui/Crest.tsx`, 240, con detalle por umbral de
+> tamaño). Un documento que gobierna el arte no puede tener dos verdades: era la causa
+> concreta de que el proceso se sintiera desordenado.
+
+- **UI: aprobada** (Puerta 2, ago 2026). Papel claro, Oswald, bandas de sección, iconos de
+  línea, naranja reservado a la acción. El **marco fijo** de sep 2026 no la reabre: es
+  layout dentro de esa dirección (ver [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md)).
+- **Personajes: el retrato ilustrado por arquetipo es la foto oficial** del jugador (Puerta
+  2). Ocho caras para planteles enteros es una limitación **conocida y aceptada**; su
+  solución es la Puerta 3, que sigue abierta.
+- El **set grande de retratos** no está aprobado y no se genera en masa hasta que la Puerta
+  3 cierre.
+- La **ilustración de cuerpo entero del héroe** no está generada ni aprobada (ver el
+  registro del 2026-09-04).
+- Procedural que **ya existe** y no hay que volver a pedir: retratos SVG por seed
+  (`AVATAR_SYSTEM.md`) y **escudos de club** (`game/crest.ts`).
