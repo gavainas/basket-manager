@@ -291,6 +291,47 @@ function PlantelStrip({ state }: { state: GameState }) {
   );
 }
 
+/**
+ * El referente del vestuario: la cara que el Tablero pone al frente.
+ *
+ * La maqueta que aprobó Gabi tiene un jugador de cuerpo entero llenando la
+ * columna izquierda. Esa ilustración todavía no existe y **no se genera hasta
+ * que la apruebe** (design/ART_PIPELINE.md), así que la columna se arma con el
+ * retrato de arquetipo que YA está aprobado y en uso.
+ *
+ * No es sólo un relleno: la cara del club es el que más pesa en el vestuario
+ * —el más querido, con la antigüedad como desempate—, así que cambia cuando
+ * cambia tu plantel. Cuando llegue la ilustración de cuerpo entero entra en
+ * este mismo hueco.
+ */
+function referente(state: GameState): Player | null {
+  const active = activePlayers(state.players);
+  if (active.length === 0) return null;
+  const peso = (p: Player) => p.social + (state.seasonNumber - p.joinedSeason) * 6 + p.age * 0.4;
+  return active.reduce((mejor, p) => (peso(p) > peso(mejor) ? p : mejor), active[0]);
+}
+
+function Heroe({ state }: { state: GameState }) {
+  const open = useContext(OpenProfileContext);
+  const p = referente(state);
+  if (!p) return <section className="hub-heroe" aria-hidden="true" />;
+
+  return (
+    <section className="hub-heroe">
+      <button className="hub-heroe-foto" onClick={() => open(p.id)} title={`Ver la ficha de ${p.name}`}>
+        <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={280} title={p.name} personality={p.personality} />
+      </button>
+      <div className="hub-heroe-pie">
+        <span className="hub-heroe-rol">
+          {POS_ABBR[p.position] ?? p.position} · {p.age} años
+        </span>
+        <span className="hub-heroe-nombre">{p.name}</span>
+        <span className="hub-heroe-dicho">{p.description}</span>
+      </div>
+    </section>
+  );
+}
+
 const PHASE_ACTION: Record<string, string> = {
   planning: 'Decidir la semana',
   callUp: 'Pasar lista',
@@ -319,15 +360,9 @@ export function Hub({ state }: { state: GameState }) {
   const revancha = nextRival ? rivalryWith(state, nextRival.id) : null;
 
   return (
-    <div className="hub">
+    <div className="hub pantalla">
       <div className="hub-grid">
-        <div className="hub-col">
-          {blocks(state)
-            .slice(0, 2)
-            .map((b) => (
-              <MenuBlock key={b.title} block={b} watch={watch} />
-            ))}
-        </div>
+        <Heroe state={state} />
 
         <div className="hub-centro">
           <div className="hub-escudo">
@@ -418,12 +453,12 @@ export function Hub({ state }: { state: GameState }) {
           </div>
         </div>
 
-        <div className="hub-col">
-          {blocks(state)
-            .slice(2)
-            .map((b) => (
-              <MenuBlock key={b.title} block={b} watch={watch} />
-            ))}
+        {/* Los cuatro bloques en 2x2. Siguen siendo el corazón del Tablero: son
+            los que se encienden solos con los avisos de watch.ts. */}
+        <div className="hub-bloques">
+          {blocks(state).map((b) => (
+            <MenuBlock key={b.title} block={b} watch={watch} />
+          ))}
         </div>
       </div>
 

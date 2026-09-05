@@ -91,9 +91,16 @@ Espaciado: `--sp-1` `0.25rem` · `--sp-2` `0.5rem` · `--sp-3` `0.75rem` · `--s
 
 | Token | Valor | Uso |
 | --- | --- | --- |
-| `--ancho-app` | `1360px` | Lo comparten el contenido y las dos barras de chrome |
-| `--topbar-alto` | `55px` | Medido: lo necesita todo lo que se pega abajo de la barra |
-| `--recursos-alto` | `68px` | Barra de recursos fija |
+| `--u` | `clamp(12px, 1.15vh + 0.25vw, 19px)` | **La unidad del juego** (sep 2026): crece con el alto de la ventana, que es el recurso escaso |
+| `--ancho-app` | `clamp(1200px, var(--u) * 96, 1760px)` | Lo comparten el contenido y las dos barras de chrome |
+| `--topbar-alto` | `55px` | Medido. Ya no reserva hueco (la barra es una fila); lo usan cálculos de alto de adentro |
+| `--recursos-alto` | `68px` | Ídem |
+
+`--ancho-app` era `1360px` fijo: a 1920 sobraban 560 px de fondo a los costados y a 1280
+apretaba. Ahora sigue al viewport con piso (para que a 1280 no se angoste) y techo (para
+que una tabla de diez filas no quede de punta a punta en un monitor de 2560). Las alturas
+de las dos barras siguen fijas **a propósito**: su contenido —cifras grandes, iconos— no es
+fluido todavía, y achicar la caja sin achicar lo que lleva adentro rompe.
 
 El radio de `10px` de la dirección anterior y los `14px` de la cálida no aplican: los
 paneles de esta dirección son casi rectos. Es parte de lo que la hace leer como manager
@@ -184,6 +191,50 @@ ni en Mac. Para publicar en Steam hay que empaquetar una condensada real con lic
 > regla vieja queda registrada acá para que se entienda qué cambió y por qué; no rige más.
 > Lo que **no** cambió: la sombra sigue siendo de un solo nivel y no hay degradados de
 > color. El relieve es luz y sombra, no decoración.
+
+## Anatomía de pantalla: el marco fijo (sep 2026)
+
+> El juego es una **ventana**, no una página. Detalle y tandas en
+> [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md).
+
+La app ocupa exactamente el alto del viewport y se reparte en tres filas: **barra superior ·
+contenido · barra de recursos**. Las dos barras no son `sticky` ni `fixed`: son filas, y por
+eso no pueden taparle el pie a ninguna pantalla ni cortar una fila del partido a la mitad.
+
+**Resolución de diseño: piso 1280×720** (cubre Steam Deck a 1280×800 y el portátil típico a
+1366×768). Presupuesto de alto útil ahí: ~604 px de contenido.
+
+### La regla
+
+- **Pantalla con acción** —el camino semanal entero, Tablero, Plantel, Liga, Pretemporada—
+  **entra**. Si desborda es un bug: el botón que continúa el juego no puede quedar fuera de
+  alcance.
+- **Pantalla de lectura** —Rankings, Calendario, Finanzas, Historia, Noticias— puede
+  scrollear su cuerpo. Son listas largas por naturaleza; paginarlas a la fuerza sería peor.
+  Su chrome tampoco se mueve.
+
+Lo que se fue no es el scroll: es el **scroll de página**. Football Manager nunca scrollea la
+pantalla, scrollea la tabla.
+
+### Primitivas
+
+| Clase | Qué hace |
+| --- | --- |
+| `.marco` | Grilla `auto 1fr auto` de alto de viewport, `overflow: hidden` |
+| `.app-shell` | La fila del medio: `min-height: 0` + `overflow-y: auto` + grilla de una fila |
+| `.pantalla` | Una pantalla de alto completo que no scrollea: lo hacen sus paneles |
+| `.pane` / `.pane-body` | Panel con cabezal quieto y cuerpo que scrollea |
+
+### Tres trampas, aprendidas rompiéndolas
+
+1. **`min-height: 0`** en todo hijo de grilla que tenga que encoger. Sin eso la fila `1fr`
+   se estira y vuelve el scroll de página: el bug se ve como "hice todo bien y sigue
+   scrolleando".
+2. **Los caps de alto van en `vh`, no en `%`.** Un porcentaje contra una fila `auto` es una
+   referencia circular y deja la card con el cuerpo en cero.
+3. **Las columnas que scrollean van en flex con `flex: none` en los hijos.** En grilla con
+   `min-height: 0` los hijos aceptan achicarse por debajo de su contenido y las cards se
+   recortan a la mitad.
 
 ## Barra superior
 
@@ -307,7 +358,12 @@ pantalla. Lo que se corrigió, y por qué cada uno no era ni acción ni dato cla
 porque son la misma área: el color responde "¿qué parte del juego es esta?", no "¿qué
 botón toqué?". `semana` no es una pantalla más — es la acción.
 
-### El inicio como menú (ago 2026)
+### El inicio como menú (ago 2026) — **parcialmente superado en sep 2026**
+
+> Lo de abajo describe agosto. La barra de pestañas **volvió** en el marco fijo (ver "El
+> marco fijo" más abajo): el Tablero es ahora *una* de las siete secciones, así que el menú
+> de tiles sigue vivo y además hay acceso directo. Todo lo demás de esta sección —el tile
+> como botón, el estado colgado del tile, el naranja— sigue vigente.
 
 La barra de pestañas se retiró: el inicio (`src/ui/Hub.tsx`) es la navegación, con cuatro
 bloques de tiles, el escudo y la fecha que viene en el medio, y la tira del plantel abajo.
@@ -439,6 +495,46 @@ preguntas distintas y las dos valen.
 `ui/PlayerCard.tsx` se borró: era el único lugar que lo usaba, y una card de jugador sin
 pantalla que la muestre es código muerto que el próximo que pase va a tener que leer para
 descubrir que no corre. Sigue en la historia de git si alguna vez hace falta.
+
+## El marco fijo (sep 2026) — implementado
+
+Cinco tandas, una por commit, a pedido de Gabi después de mandar una maqueta de tablero y
+preguntar "cuándo se pasa a eso" y "cómo hacemos para que no scrollee para abajo".
+
+**El hallazgo que ordenó todo: la maqueta no era una dirección nueva.** Este documento ya
+especificaba, desde agosto, la **barra de siete secciones** (ver "Barra superior") y **el
+héroe de la izquierda** (ver "El héroe y los arquetipos"). Lo que había pasado es que el
+código se separó del documento: en agosto se retiró la barra de pestañas y el héroe nunca se
+construyó. O sea que la maqueta pedía volver al sistema, no cambiarlo.
+
+| Tanda | Qué |
+| --- | --- |
+| A | El marco: las dos barras pasan de `sticky`/`fixed` a filas de la grilla. `--u` y `--ancho-app` fluido |
+| B | Vuelve la barra de siete secciones. Tablero en tres columnas con héroe. Semana en dos |
+| C | Quinteto (la pizarra deja de estar abajo del pliegue) y Partido en tres columnas |
+| D | Informe en tres columnas; Plantel en cuatro pestañas (el DT deja de abrir la pantalla) |
+| E | Liga en tres pestañas, pretemporada con cabecera quieta, y la regla final |
+
+**Medido**: 22 pantallas × 3 resoluciones (1920×1080, 1366×768, 1280×720) = 66 chequeos, 0
+fallos. Antes: 8 de 13 pantallas scrolleaban a 1080p y 11 de 13 a 1366×768.
+
+### Lo que se sacó, y por qué
+
+- **La tira de 5 cartas del quinteto** (`QuintetoStrip`): mostraba puesto, cara, nombre,
+  altura, barra de físico y media de **los mismos cinco que la pizarra muestra justo
+  abajo**. 180 de los 530 px que hay a 720p, y con ella la pizarra no entraba. La altura, su
+  único dato propio, se mudó a la línea de cada puesto en la cancha.
+- **El bloque CSS `.tabs`**: era el de las pestañas retiradas en agosto y hacía un mes que
+  no lo renderizaba nadie. Su lugar lo ocupa `.secciones`.
+
+### Lo que NO se hizo
+
+La **ilustración de cuerpo entero** del héroe (la de la maqueta, y la que describe "El héroe
+y los arquetipos") **no se generó**: se propuso y Gabi lo rechazó. La columna usa mientras
+tanto el retrato de arquetipo ya aprobado, mostrando al **referente del vestuario** — el más
+querido, con la antigüedad y la edad como desempate—, así que cambia con el plantel. Cuando
+la ilustración exista entra en el mismo hueco: cambia el contenido de `.hub-heroe-foto`, no
+la grilla.
 
 ## Cómo volver atrás
 

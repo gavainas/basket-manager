@@ -1127,41 +1127,54 @@ export function PreseasonView({ state, dispatch }: Props) {
 
   return (
     <>
+      {/* Mismo marco fijo que la temporada (design/PLAN_MARCO_FIJO.md): la
+          pretemporada tiene la misma anatomía de tres partes. */}
+      <div className="marco">
       <PreseasonTopbar state={state} dispatch={dispatch} />
 
       <div className="app-shell">
-        <div className="vista sec-plantel">
-          <EstadoPanel state={state} dispatch={dispatch} onFixLeague={() => setTab('inscripcion')} />
+        {/* Tanda E: el estado del club y las pestañas quedan quietos arriba y lo
+            que scrollea es la sección elegida. El panel de estado se repetía
+            entero en las tres pestañas ocupando 160px cada vez. */}
+        <div className="vista sec-plantel pretemporada-pantalla">
+          <div className="pretemporada-cabecera">
+            <EstadoPanel state={state} dispatch={dispatch} onFixLeague={() => setTab('inscripcion')} />
 
-          <nav className="ps-tabs">
-            {tabs.map((t) => (
-              <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
-                {t.label}
-                {t.badge && <span className={`chip ${t.badge.cls}`}>{t.badge.text}</span>}
-              </button>
-            ))}
-          </nav>
+            <nav className="ps-tabs">
+              {tabs.map((t) => (
+                <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
+                  {t.label}
+                  {t.badge && <span className={`chip ${t.badge.cls}`}>{t.badge.text}</span>}
+                </button>
+              ))}
+            </nav>
+          </div>
 
-          {tab === 'inscripcion' && hasInscription && <InscriptionSection state={state} dispatch={dispatch} />}
-          {tab === 'plantel' && <RosterSection state={state} dispatch={dispatch} />}
-          {tab === 'mercado' && <MarketSection state={state} dispatch={dispatch} />}
+          <div className="pretemporada-cuerpo">
+            {tab === 'inscripcion' && hasInscription && <InscriptionSection state={state} dispatch={dispatch} />}
+            {tab === 'plantel' && <RosterSection state={state} dispatch={dispatch} />}
+            {tab === 'mercado' && <MarketSection state={state} dispatch={dispatch} />}
 
-          {ps.log.length > 0 && (
-            <div className="card" style={{ marginBottom: '1rem' }}>
-              <h3 className="card-band">
-                <Icon name="historia" size={17} /> Lo que pasó en la pretemporada
-              </h3>
-              <ul className="log-list">
-                {ps.log.slice(0, 10).map((l, i) => (
-                  <li key={i}>{l}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {ps.log.length > 0 && (
+              <div className="card" style={{ marginBottom: '1rem' }}>
+                <h3 className="card-band">
+                  <Icon name="historia" size={17} /> Lo que pasó en la pretemporada
+                </h3>
+                <ul className="log-list">
+                  {ps.log.slice(0, 10).map((l, i) => (
+                    <li key={i}>{l}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       <PreseasonRecursos state={state} dispatch={dispatch} />
+      </div>
+
+      {/* Fuera del marco, como en App.tsx: los modales no son parte del layout. */}
       <PreseasonModals state={state} dispatch={dispatch} />
     </>
   );
