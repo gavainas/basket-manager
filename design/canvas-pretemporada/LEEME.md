@@ -74,13 +74,70 @@ Montevideo, violeta para la +35) están elegidos **lejos del naranja de acción*
 **Ronda 2 (sep 2026).** Gabi: *"la opción A y la opción C me gustan. Me gustaría que
 inventes una nueva opción D que vaya más con la experiencia del juego."* De ahí sale **D**.
 
+**Ronda 3 (sep 2026).** Gabi: *"opción D me gustó. Quiero algo entre la A y la D. Lo que
+tiene es que agregar algún filtro de grado de conocimiento; qué días de partido puede —
+porque si puede los lunes y te anotás en otra liga que juega los jueves y no puede los
+jueves, no tiene sentido ese dato (al menos en un principio): tendría que decir 'no puedo X
+día'. Después también si paga o no paga."* De ahí sale **E**, que es la propuesta.
+
 | Archivo | Qué es |
 | --- | --- |
-| `MercadoD.dc.html` | **D · La libreta del delegado.** La nueva. Ver abajo. |
-| `MercadoA.dc.html` | **A · La planilla del ojeador.** Te gustó. **De acá sale la densidad y los sellos.** |
-| `MercadoC.dc.html` | **C · Lista y ficha grande.** Te gustó. **De acá sale el esqueleto**: dos columnas, ficha grande, botón único. |
+| `MercadoE.dc.html` | **E · La libreta, en planilla.** La propuesta. Ver abajo. |
+| `MercadoD.dc.html` | **D · La libreta del delegado.** De acá sale la cabeza de E. |
+| `MercadoA.dc.html` | **A · La planilla del ojeador.** De acá sale el cuerpo de E. |
+| `MercadoC.dc.html` | **C · Lista y ficha grande.** Te gustó en la ronda 2. |
 | `MercadoActual.dc.html` | **Hoy.** El nivel aparece de tres formas en la misma fila (`71–85`, `≈69`, `★★★★☆`), las cards quedan de alturas desparejas según cuántos chips le toquen a cada uno, `Exigencias: ? (contactalo)` se repite dieciséis veces y hay dieciséis botones a ancho completo. Entran 5 de 16. |
 | `MercadoB.dc.html` | **B · La ficha de altura fija.** Grilla de cards que **todas miden 196 px**, así que la escalera desaparece. No la eligió. Archivada. |
+
+### E · La libreta, en planilla — la propuesta
+
+De **D** se queda la cabeza (los grupos por cómo llegó el nombre, la referencia con cara,
+las llamadas como fichas que se gastan, la presión de "faltan 4"). De **A** se queda el
+cuerpo: **una planilla a todo el ancho**, sin segunda columna fija. La ficha grande no se
+pierde — **se abre en la fila**. A 1080p entran 10 de 16 con una ficha abierta; hoy entran 5.
+
+Los tres pedidos de la ronda 3:
+
+1. **Filtro por cuánto sabés**, arriba, con **las mismas tres palabras que los grupos** de la
+   planilla: *Los viste jugar / Te los pasaron / De oídas*. Filtrar y leer son la misma
+   operación, así que el filtro no agrega vocabulario. Al lado sigue el de puesto, que ya existe.
+
+2. **"No puede" en vez de "¿puede los lunes?"** — la observación de Gabi es un error de diseño
+   de D, no un detalle. La columna dice el día que el jugador tiene tomado **sin cruzarlo con
+   ninguna liga**: sirve antes de elegir dónde jugás, que es cuando mirás esta pantalla. Al
+   firmar, el día que choque con el partido se pone rojo: **el cruce pasa a ser un resaltado
+   encima del dato, no el dato**.
+   El dato ya existe (`agenda.blockedDays`) y es **raro a propósito**: `genAvailability()` da
+   un día bloqueado al **20%**, y como mucho uno (`rng.chance(0.2) ? [rng.pick(...)] : []`).
+   Por eso merece columna: casi todos muestran "—" y los pocos que no saltan solos.
+
+3. **Cuota: paga / media / no paga.** También existe (`feeAttitude`) y también es raro: de los
+   32 del pool de `data/market.ts`, sólo **4 no piensan pagar** — y son los caros. Marcos
+   Brítez es el caso: ≈76, el mejor del mercado, $130 de pase **y** no paga cuota.
+
+La regla de las dos columnas nuevas es la misma y ya está en el juego (`playerFeeLabel()`, que
+devuelve `null` para la cuota normal): **lo normal se calla, la excepción grita.**
+
+**Ojo con los "?":** `agendaKnown()` es `contacted || muy_conocido`, y la cuota se sabe si
+además es `conocido`. Las dos columnas arrancan medio llenas de `?` — y está bien: *es* la
+razón de gastar una llamada.
+
+**En contra:** nueve columnas es mucho; abajo de 1400 px hay que empezar a tirar (físico
+primero, después el sello). Y agrupar por conocimiento sigue impidiendo ordenar por nivel de
+punta a punta.
+
+### Un problema que no es de esta pantalla (medido, sep 2026)
+
+El mercado de hoy, con las 16 cards:
+
+| Resolución | Cuerpo visible | Contenido | Cards enteras |
+| --- | --- | --- | --- |
+| 1920×1080 | 702 px | 1468 px | **5 de 16** |
+| 1280×720 | **320 px** | 1875 px | **0 de 16** |
+
+La `.pretemporada-cabecera` (panel de estado + las tres pestañas) se come **225 px de 545** en
+el piso de diseño. Elijamos la maqueta que elijamos, **eso hay que arreglarlo aparte** — con
+la misma media query por alto que ya se usó en la tabla de ligas.
 
 ### D · La libreta del delegado
 

@@ -1,0 +1,290 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #d8d4cc; --bg-soft: #e6e3dd; --panel: #f6f4f1; --panel-2: #eceae6; --border: #d2cec8;
+      --text: #25282c; --text-dim: #6a6f76; --text-faint: #9a9fa6; --text-light: #f6f4f1;
+      --accent: #e07a2a; --on-accent: #2a1a08; --good: #4a9160; --warn: #c69320; --bad: #b8443a;
+      --sec-plantel: #b07f27; --sec-scouting: #456470;
+      --display: 'Oswald', 'Arial Narrow', sans-serif;
+      --relieve: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,100,70,.2), 0 6px 16px rgba(20,14,8,.2);
+      --hundido: inset 0 1px 2px rgba(120,100,70,.32);
+      /* foto · nombre · nivel · físico · pase · cuota · no puede · conocimiento · acción */
+      --grid: 34px minmax(0,1fr) 62px 56px 54px 74px 92px 96px 96px;
+    }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 15.2px; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+
+    .planilla { background: var(--panel); border: 1px solid var(--border); border-radius: 4px;
+      box-shadow: var(--relieve); overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+    .cab, .fila { display: grid; grid-template-columns: var(--grid); gap: 9px; align-items: center; }
+    .cab { padding: 8px 12px 6px; border-bottom: 1px solid var(--border); }
+    .cab span { font-family: var(--display); font-weight: 500; text-transform: uppercase;
+      letter-spacing: .13em; font-size: 9.9px; color: var(--text-faint); }
+    .cab .n { text-align: right; }
+
+    .fila { padding: 4px 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .fila:hover { background: rgba(224,122,42,.05); }
+    .fila.on { background: rgba(224,122,42,.1); box-shadow: inset 3px 0 0 var(--accent); border-bottom: 0; }
+
+    /* El grupo: cómo llegó el nombre a la libreta. Es también el filtro. */
+    .grupo { display: flex; align-items: baseline; gap: 8px; padding: 5px 12px 3px;
+      background: var(--bg-soft); box-shadow: var(--hundido); }
+    .grupo-t { font-family: var(--display); font-weight: 600; text-transform: uppercase;
+      letter-spacing: .11em; font-size: 10.9px; color: var(--sec-scouting); }
+    .grupo-s { font-size: 11.5px; color: var(--text-dim); }
+    .grupo-n { margin-left: auto; font-family: var(--display); font-weight: 600; font-size: 10.9px; color: var(--text-faint); }
+
+    .foto { width: 34px; height: 34px; border-radius: 3px; border: 1px solid var(--border);
+      background: linear-gradient(180deg,#3c6e9e,#2a5075); object-fit: cover; }
+    .nom { font-family: var(--display); font-weight: 600; font-size: 14.4px; line-height: 1.1; }
+    .pos { font-family: var(--display); text-transform: uppercase; letter-spacing: .1em;
+      font-size: 9.9px; color: var(--text-faint); margin-left: 5px; }
+    .de { font-size: 11.9px; color: var(--text-dim); line-height: 1.25;
+      display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .n { text-align: right; font-variant-numeric: tabular-nums; }
+    .cifra { font-family: var(--display); font-weight: 600; font-size: 14.4px; }
+    .rango { color: var(--text-dim); font-size: 12.5px; }
+    .duda { color: var(--text-faint); font-weight: 400; }
+
+    /* Las dos columnas nuevas. La regla es la misma en las dos: lo normal se
+       calla, la excepción grita. */
+    .dato { font-family: var(--display); font-weight: 600; font-size: 12.5px; text-align: right;
+      white-space: nowrap; }
+    .dato.normal { font-family: inherit; font-weight: 400; color: var(--text-faint); }
+    .dato.warn { color: var(--warn); }
+    .dato.bad { color: var(--bad); }
+
+    .sello { font-family: var(--display); text-transform: uppercase; letter-spacing: .1em; font-size: 9.9px;
+      border: 1px solid var(--border); border-radius: 3px; padding: 2px 6px; color: var(--text-dim);
+      display: inline-block; white-space: nowrap; }
+    .sello.alto { color: var(--good); border-color: var(--good); }
+    .sello.medio { color: var(--warn); border-color: var(--warn); }
+
+    .bt { font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--panel-2);
+      color: var(--text); border-radius: 4px; padding: 4px 10px; font-size: 12.5px; white-space: nowrap; }
+    .bt.pri { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 700; }
+
+    /* Filtros: el de conocimiento habla el mismo idioma que los grupos. */
+    .chip { font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--panel);
+      color: var(--text-dim); border-radius: 3px; padding: 3px 9px; font-size: 12.5px; white-space: nowrap; }
+    .chip.on { border-color: var(--sec-scouting); background: var(--sec-scouting); color: var(--text-light); }
+    .chip b { font-weight: 600; }
+
+    .fichas { display: flex; gap: 4px; align-items: center; }
+    .ficha { width: 13px; height: 13px; border-radius: 3px; border: 2px solid var(--accent); background: var(--accent); }
+    .ficha.gastada { background: transparent; border-color: var(--border); }
+
+    /* La ficha se abre EN LA FILA: la densidad de A todo el tiempo, el detalle
+       de D cuando lo pedís, sin una segunda columna fija comiéndose el ancho. */
+    .abierta { border-bottom: 1px solid var(--border); background: rgba(224,122,42,.1);
+      box-shadow: inset 3px 0 0 var(--accent); padding: 2px 12px 8px 55px;
+      display: grid; grid-template-columns: minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr); gap: 14px; align-items: start; }
+    .caja { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 9px 11px; }
+    .rot { font-family: var(--display); font-weight: 500; text-transform: uppercase; letter-spacing: .13em;
+      font-size: 9.9px; color: var(--text-faint); display: block; margin-bottom: 4px; }
+  </style>
+</helmet>
+
+<div style="padding: 16px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 9px;">
+
+  <div style="display: flex; align-items: center; gap: 11px;">
+    <div style="font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 15.2px;">La libreta</div>
+    <div style="font-size: 13.1px; color: var(--text-dim);">16 nombres</div>
+    <div style="font-size: 13.1px; padding: 2px 9px; border-radius: 3px; background: rgba(184,68,58,.1); color: var(--bad); font-weight: 600;">
+      Faltan 4 para poder inscribirte · quedan 3 semanas
+    </div>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+      <span style="font-family: var(--display); font-weight: 500; text-transform: uppercase; letter-spacing: .13em; font-size: 9.9px; color: var(--text-faint);">Llamadas de esta semana</span>
+      <div class="fichas"><span class="ficha gastada"></span><span class="ficha"></span><span class="ficha"></span></div>
+      <span style="font-family: var(--display); font-weight: 600; font-size: 14.4px;">2 de 3</span>
+    </div>
+  </div>
+
+  <!-- FILTROS. El de conocimiento usa las mismas tres palabras que los grupos
+       de abajo, así filtrar y leer son la misma operación. -->
+  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+    <span style="font-family: var(--display); font-weight: 500; text-transform: uppercase; letter-spacing: .13em; font-size: 9.9px; color: var(--text-faint); margin-right: 2px;">Cuánto sabés</span>
+    <button class="chip on">Todos <b>16</b></button>
+    <button class="chip">Los viste jugar <b>6</b></button>
+    <button class="chip">Te los pasaron <b>6</b></button>
+    <button class="chip">De oídas <b>4</b></button>
+    <span style="width: 1px; height: 18px; background: var(--border); margin: 0 5px;"></span>
+    <span style="font-family: var(--display); font-weight: 500; text-transform: uppercase; letter-spacing: .13em; font-size: 9.9px; color: var(--text-faint); margin-right: 2px;">Puesto</span>
+    <button class="chip on">Todos</button>
+    <button class="chip">Bas <b>1</b></button><button class="chip">Esc <b>4</b></button>
+    <button class="chip">Ale <b>3</b></button><button class="chip">A-P <b>5</b></button><button class="chip">Piv <b>3</b></button>
+  </div>
+
+  <div class="planilla">
+    <div class="cab">
+      <span></span><span>Jugador · de dónde sale el dato</span>
+      <span class="n">Nivel</span><span class="n">Físico</span><span class="n">Pase</span>
+      <span class="n">Cuota</span><span class="n">No puede</span><span>Lo conocés</span><span></span>
+    </div>
+
+    <div style="overflow-y: auto;">
+
+      <div class="grupo">
+        <span class="grupo-t">Los que ya viste jugar</span>
+        <span class="grupo-s">Del nivel no te mienten. De los muy conocidos ya sabés hasta la agenda.</span>
+        <span class="grupo-n">6</span>
+      </div>
+
+      <div class="fila">
+        <img class="foto" src="p-cumplidor.webp" alt="">
+        <div><div class="nom">Ramiro Sosa<span class="pos">Bas · 27 · 178</span></div><div class="de">Jugó varias veces contra tu club: lo sufriste de cerca.</div></div>
+        <div class="n cifra">≈69</div><div class="n cifra">≈75</div><div class="n cifra">$60</div>
+        <div class="dato normal">Paga</div><div class="dato normal">—</div>
+        <div><span class="sello alto">Muy conocido</span></div>
+        <div style="text-align: right;"><button class="bt">Llamar</button></div>
+      </div>
+
+      <div class="fila">
+        <img class="foto" src="p-competitivo.webp" alt="">
+        <div><div class="nom">Nico Ferrari<span class="pos">Esc · 25 · 186</span></div><div class="de">Te clavó 24 puntos el año pasado: lo conocés de memoria.</div></div>
+        <div class="n cifra">≈70</div><div class="n cifra">≈76</div><div class="n cifra">$70</div>
+        <div class="dato normal">Paga</div><div class="dato warn">Jueves</div>
+        <div><span class="sello alto">Muy conocido</span></div>
+        <div style="text-align: right;"><button class="bt">Llamar</button></div>
+      </div>
+
+      <div class="fila">
+        <img class="foto" src="p-protagonista.webp" alt="">
+        <div><div class="nom">Marcos Brítez<span class="pos">Ale · 27 · 192</span></div><div class="de">El mejor alero que enfrentaste en años: goleador del campeón.</div></div>
+        <div class="n cifra">≈76</div><div class="n cifra">≈78</div><div class="n cifra">$130</div>
+        <div class="dato bad">No paga</div><div class="dato normal">—</div>
+        <div><span class="sello alto">Muy conocido</span></div>
+        <div style="text-align: right;"><button class="bt">Llamar</button></div>
+      </div>
+
+      <div class="fila">
+        <img class="foto" src="p-veterano.webp" alt="">
+        <div><div class="nom">"Chueco" Barrios<span class="pos">Esc · 33 · 183</span></div><div class="de">Ídolo de la liga en su momento; siempre cruza saludos con tu banco.</div></div>
+        <div class="n cifra">≈61</div><div class="n cifra">≈55</div><div class="n cifra">Libre</div>
+        <div class="dato normal">Paga</div><div class="dato warn">Sábados</div>
+        <div><span class="sello alto">Muy conocido</span></div>
+        <div style="text-align: right;"><button class="bt">Llamar</button></div>
+      </div>
+
+      <div class="fila">
+        <img class="foto" src="p-social.webp" alt="">
+        <div><div class="nom">"Gigante" Ferreyra<span class="pos">Piv · 27 · 203</span></div><div class="de">Jugó en esta liga la temporada pasada.</div></div>
+        <div class="n cifra">≈60</div><div class="n cifra">≈74</div><div class="n cifra">$45</div>
+        <div class="dato normal duda">?</div><div class="dato normal duda">?</div>
+        <div><span class="sello alto">Conocido</span></div>
+        <div style="text-align: right;"><button class="bt">Llamar</button></div>
+      </div>
+
+      <div class="grupo">
+        <span class="grupo-t">Te los pasó alguien del club</span>
+        <span class="grupo-s">Lo que sabés te lo contó un tercero — y el que trae un nombre lo defiende.</span>
+        <span class="grupo-n">6</span>
+      </div>
+
+      <div class="fila on">
+        <img class="foto" src="p-talentoso.webp" alt="">
+        <div><div class="nom">Facu Ledesma<span class="pos">Esc · 23 · 188</span></div><div class="de">Lo viste una vez en un amistoso: la rompió, pero llegó tarde.</div></div>
+        <div class="n cifra rango">65–79</div><div class="n cifra rango">73–87</div><div class="n cifra">$40</div>
+        <div class="dato normal duda">?</div><div class="dato normal duda">?</div>
+        <div><span class="sello medio">Referencias</span></div>
+        <div style="text-align: right;"><button class="bt pri">Llamar</button></div>
+      </div>
+
+      <!-- La ficha, abierta en la fila. Lo único que no cabe en una columna:
+           quién lo trajo, qué contesta la llamada y contra quién compite. -->
+      <div class="abierta">
+        <div class="caja" style="display: flex; gap: 10px; align-items: flex-start;">
+          <img src="p-competitivo.webp" alt="" style="width: 34px; height: 34px; border-radius: 3px; border: 1px solid var(--border); background: linear-gradient(180deg,#3c6e9e,#2a5075); object-fit: cover; flex: none;">
+          <div style="min-width: 0;">
+            <span class="rot">Quién te lo pasó</span>
+            <div style="font-size: 13.1px; line-height: 1.35;">«Ese pibe la rompe, jugamos juntos en el liceo. Traelo y no preguntes más.»</div>
+            <div style="font-size: 11.9px; color: var(--text-dim); margin-top: 3px;">
+              <b style="color: var(--text);">Gonzalo Viera</b>, de tu plantel · <span style="color: var(--warn);">te lo trajo él: va a hablar bien igual</span>
+            </div>
+          </div>
+        </div>
+        <div class="caja">
+          <span class="rot">Lo que contesta la llamada</span>
+          <div style="font-size: 12.5px; line-height: 1.45;">
+            <b>Qué días no puede</b> · si piensa pagar cuota · qué va a pedir para venir.
+            <span style="color: var(--text-dim);">El nivel no: eso se sabe viéndolo jugar.</span>
+          </div>
+        </div>
+        <div class="caja">
+          <span class="rot">En su puesto tenés</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-family: var(--display); font-weight: 600; font-size: 13.9px;">Seba Cardozo</span>
+            <span style="font-size: 11.9px; color: var(--text-dim);">Esc · 31</span>
+            <span style="font-family: var(--display); font-weight: 600; font-size: 14.4px; margin-left: auto;">≈62</span>
+          </div>
+          <div style="font-size: 11.9px; color: var(--text-dim); line-height: 1.4; margin-top: 3px;">
+            Tu único escolta confirmado. Facu sería titular <b style="color: var(--text);">si el 79 es cierto</b>.
+          </div>
+        </div>
+      </div>
+
+      <div class="fila">
+        <img class="foto" src="p-cumplidor.webp" alt="">
+        <div><div class="nom">Gastón Vila<span class="pos">Esc · 26 · 185</span></div><div class="de">Te lo recomendó el capitán: "es un soldado, no te va a fallar".</div></div>
+        <div class="n cifra rango">47–61</div><div class="n cifra rango">61–75</div><div class="n cifra">Libre</div>
+        <div class="dato normal duda">?</div><div class="dato normal duda">?</div>
+        <div><span class="sello medio">Referencias</span></div>
+        <div style="text-align: right;"><button class="bt">Llamar</button></div>
+      </div>
+
+      <div class="fila">
+        <img class="foto" src="p-mercenario.webp" alt="">
+        <div><div class="nom">Rolando Núñez<span class="pos">A-P · 29 · 197</span></div><div class="de">Fama de dominar la pintura… y de irse donde paguen mejor.</div></div>
+        <div class="n cifra rango">66–80</div><div class="n cifra rango">65–79</div><div class="n cifra">$120</div>
+        <div class="dato normal duda">?</div><div class="dato normal duda">?</div>
+        <div><span class="sello medio">Referencias</span></div>
+        <div style="text-align: right;"><button class="bt">Llamar</button></div>
+      </div>
+
+      <div class="grupo">
+        <span class="grupo-t">De oídas</span>
+        <span class="grupo-s">Alguien los nombró. De algunos ni el nivel: hay que ir a verlos.</span>
+        <span class="grupo-n">4</span>
+      </div>
+
+      <div class="fila">
+        <img class="foto" src="p-cumplidor.webp" alt="">
+        <div><div class="nom">Tomi Aguirre<span class="pos">Bas · 20 · 182</span></div><div class="de">Apenas un par de datos sueltos: dicen que corre toda la cancha.</div></div>
+        <div class="n cifra duda">★★★☆☆</div><div class="n cifra duda">★★★★★</div><div class="n cifra">Libre</div>
+        <div class="dato normal duda">?</div><div class="dato normal duda">?</div>
+        <div><span class="sello">Poco conocido</span></div>
+        <div style="text-align: right;"><button class="bt">Llamar</button></div>
+      </div>
+
+      <div class="fila">
+        <img class="foto" src="p-competitivo.webp" alt="">
+        <div><div class="nom">Leo Benítez<span class="pos">Ale · 26 · 188</span></div><div class="de">No tenés referencias confiables: nadie de la liga lo vio jugar.</div></div>
+        <div class="n cifra duda">?</div><div class="n cifra duda">?</div><div class="n cifra">$20</div>
+        <div class="dato normal duda">?</div><div class="dato normal duda">?</div>
+        <div><span class="sello">Desconocido</span></div>
+        <div style="text-align: right;"><button class="bt">Llamar</button></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="font-size: 12.5px; color: var(--text-dim);">
+    <b style="color: var(--text);">No puede</b> es el día que el jugador tiene tomado, sin cruzarlo con ninguna liga —
+    sirve antes de elegir dónde jugás. Cuando firmes, el día que choque con tu partido se pone <span style="color: var(--bad); font-weight: 600;">rojo</span>.
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
