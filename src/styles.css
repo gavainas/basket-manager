@@ -4304,3 +4304,163 @@ button.mini.blue.on {
 .card.plegada {
   padding-bottom: 0;
 }
+
+/* ---------- La ficha del jugador en dos columnas (sep 2026) ---------- */
+
+/* La persona a la izquierda, sus datos a la derecha. El retrato pasó de 58 px a
+   media ficha: es la cara del tipo del que estás decidiendo si juega, no un
+   ícono de fila. El hueco está pensado para la ilustración de cuerpo entero de
+   la maqueta; hasta que exista y se apruebe (Puerta 3) lo llena el retrato de
+   arquetipo. Cambia el contenido de `.profile-retrato`, no la grilla. */
+.profile-ficha {
+  position: relative;
+  max-width: 1000px;
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.profile-ficha .profile-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 2;
+}
+
+/* La columna de la persona: el retrato manda y el pie lo apoya. Fondo hundido
+   para que el retrato se lea como una foto puesta en la ficha. */
+.profile-cara {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-soft);
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+
+/* Crece con la ficha en vez de tener un alto fijo: si no, en las pestañas
+   largas quedaba un palmo de fondo vacío entre la foto y el nombre. */
+.profile-retrato {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 240px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #3c6e9e 0%, #2a5075 100%);
+}
+
+/* El retrato llena la columna en vez de quedar chico y centrado. El encuadre
+   sube el foco: la cara está en el tercio de arriba del archivo. */
+.profile-retrato img.retrato-img {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+  object-fit: cover;
+  object-position: center 22%;
+}
+
+/* Sin retrato ilustrado (el SVG de respaldo) el svg se estira igual. */
+.profile-retrato svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.profile-cara-pie {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: var(--sp-4);
+  flex: none;
+}
+
+.profile-cara-pos {
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+}
+
+.profile-ficha .profile-name {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--fs-lg);
+  line-height: 1.1;
+}
+
+/* La valoración: el dato que la ficha existe para mostrar, y el único naranja
+   de la pantalla (ver la regla del naranja en design/SISTEMA_VISUAL.md). */
+.profile-cara-valor {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0.15rem 0 0.35rem;
+}
+
+.profile-cara-valor .v {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--fs-xl);
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-cara-valor .v small {
+  font-size: var(--fs-md);
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.profile-cara-valor .k {
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+}
+
+.profile-ficha .profile-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+}
+
+/* La columna de datos: pestañas quietas arriba, cuerpo que scrollea. */
+.profile-datos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.profile-datos .profile-body {
+  flex: 1;
+  min-height: 0;
+}
+
+/* En una ventana angosta la ficha vuelve a ser una columna: el retrato arriba,
+   con menos alto para que los datos no queden abajo del pliegue. */
+@media (max-width: 820px) {
+  .profile-ficha {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-cara {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Apaisada y con techo: en una ventana angosta la foto no puede empujar los
+     datos abajo del pliegue. */
+  .profile-retrato {
+    flex: none;
+    aspect-ratio: 16 / 7;
+    max-height: 32vh;
+    min-height: 0;
+  }
+}
