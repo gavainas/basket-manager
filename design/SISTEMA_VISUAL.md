@@ -319,6 +319,10 @@ Reglas que esto agrega al sistema:
 
 - **Un tile es un botón de pantalla, no una card**: ícono en cuadro, nombre en display y
   una línea de estado de hasta dos renglones. Sin sombra propia: la superficie es el bloque.
+- **La izquierda es lo que se toca; la derecha, lo que se consulta** (sep 2026). La columna
+  de la izquierda lleva *La semana* y *El plantel* —lo que hay que hacer y quiénes lo
+  hacen, todas las semanas— y la derecha *La liga* y *La caja*. El orden del array de
+  `blocks()` en `Hub.tsx` **es** el orden de lectura: los dos primeros van a la izquierda.
 - **El estado se cuelga del tile que lo resuelve.** El semáforo vive en el texto y en un
   punto de 8 px a la derecha; nunca en el cabezal del bloque ni en el ícono.
 - **El naranja sigue siendo dos por pantalla**: la caja del club y el botón de avanzar. El

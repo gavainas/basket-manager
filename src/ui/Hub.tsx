@@ -52,6 +52,11 @@ function blocks(state: GameState): Block[] {
   const active = activePlayers(state.players);
   const alDia = active.filter((p) => p.weeksUnpaid === 0).length;
 
+  /* El orden de esta lista ES el orden de lectura del inicio: los dos primeros
+     van en la columna izquierda y los dos últimos en la derecha (ver `.hub-col`
+     más abajo). A la izquierda quedan las dos cosas que se tocan todas las
+     semanas —lo que hay que hacer y quiénes lo hacen— y a la derecha las de
+     consulta. */
   return [
     {
       title: 'La semana',
@@ -97,16 +102,6 @@ function blocks(state: GameState): Block[] {
       ],
     },
     {
-      title: 'La liga',
-      sec: 'sec-partidos',
-      icon: 'liga',
-      tiles: [
-        { id: 'tabla', label: 'Tabla', icon: 'liga', tab: 'liga', hint: `Vas ${clubPosition(state)}° de ${state.standings.length}` },
-        { id: 'calendario', label: 'Calendario', icon: 'agenda', tab: 'agenda', hint: 'Fechas, canchas y horarios' },
-        { id: 'rankings', label: 'Rankings', icon: 'rankings', tab: 'rankings', hint: 'Quién anota y quién rinde' },
-      ],
-    },
-    {
       title: 'El plantel',
       sec: 'sec-plantel',
       icon: 'plantel',
@@ -128,6 +123,16 @@ function blocks(state: GameState): Block[] {
           focus: 'cuerpo-tecnico',
           hint: state.coach ? state.coach.name : 'Sin entrenador: dirigís vos',
         },
+      ],
+    },
+    {
+      title: 'La liga',
+      sec: 'sec-partidos',
+      icon: 'liga',
+      tiles: [
+        { id: 'tabla', label: 'Tabla', icon: 'liga', tab: 'liga', hint: `Vas ${clubPosition(state)}° de ${state.standings.length}` },
+        { id: 'calendario', label: 'Calendario', icon: 'agenda', tab: 'agenda', hint: 'Fechas, canchas y horarios' },
+        { id: 'rankings', label: 'Rankings', icon: 'rankings', tab: 'rankings', hint: 'Quién anota y quién rinde' },
       ],
     },
     {
