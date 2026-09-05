@@ -850,20 +850,33 @@ function pickWeighted<T>(items: T[], peso: (x: T) => number, rng: Rng): T | null
 /**
  * Reparte los triples del cuarto ENTRE LOS PUNTOS YA ASIGNADOS: nadie puede
  * meter más de tres puntos por triple de los que anotó. Se sortea de a un
- * triple, con peso por perfil de tirador, y solo entre los que tienen 3 puntos
- * libres. Así el pívot que anotó 8 abajo del aro no aparece con 2 triples.
+ * triple, con peso por perfil de tirador. Así el pívot que anotó 8 abajo del
+ * aro no aparece con 2 triples.
+ *
+ * La cuenta va sobre el ACUMULADO DEL PARTIDO, no sobre el cuarto: pedir 3
+ * puntos en el cuarto dejaba afuera a todo el que anota poco, y como los
+ * grandes anotan menos, los pívots terminaban con el 1% de los triples cuando
+ * su perfil les daba el 6%. La invariante que importa (triples × 3 ≤ puntos)
+ * se sostiene igual sobre el total.
  */
 function repartirTriples(
   onCourt: Player[],
   qPts: Record<string, number>,
+  yaJugado: Record<string, { pts: number; t3: number }>,
   totalTriples: number,
   rng: Rng
 ): Record<string, number> {
   const out: Record<string, number> = {};
   for (const p of onCourt) out[p.id] = 0;
+  const libres = (p: Player) => {
+    const previo = yaJugado[p.id] ?? { pts: 0, t3: 0 };
+    const pts = previo.pts + (qPts[p.id] ?? 0);
+    const t3 = previo.t3 + out[p.id];
+    return pts - t3 * 3;
+  };
   for (let i = 0; i < totalTriples; i++) {
-    const elegibles = onCourt.filter((p) => (qPts[p.id] ?? 0) - out[p.id] * 3 >= 3);
-    const elegido = pickWeighted(elegibles, (p) => Math.pow(profileOf(p).outside, 2.2), rng);
+    const elegibles = onCourt.filter((p) => libres(p) >= 3);
+    const elegido = pickWeighted(elegibles, (p) => Math.pow(profileOf(p).outside, 1.7), rng);
     if (!elegido) break;
     out[elegido.id] += 1;
   }
@@ -1212,7 +1225,12 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   let shareTriples = M.boxTripleShare * rng.range(1 - M.boxTripleSpread, 1 + M.boxTripleSpread);
   if (rival.style === 'internos') shareTriples *= 1.1; // sus grandotes no salen a cerrar
   if (live.attack === 'correr') shareTriples *= M.boxTripleCorrerBonus;
-  const qTriples = repartirTriples(onCourt, qPts, Math.round((ourQ * shareTriples) / 3), rng);
+  const yaJugado: Record<string, { pts: number; t3: number }> = {};
+  for (const p of onCourt) {
+    const st = live.stats[p.id];
+    yaJugado[p.id] = { pts: st?.pts ?? 0, t3: st?.t3 ?? 0 };
+  }
+  const qTriples = repartirTriples(onCourt, qPts, yaJugado, Math.round((ourQ * shareTriples) / 3), rng);
 
   // Tapones: uno cada tanto, y se lo lleva el que vive abajo del aro.
   const qBlk: Record<string, number> = {};

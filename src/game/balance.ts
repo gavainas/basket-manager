@@ -143,7 +143,12 @@ export const BALANCE = {
     boxRebMax: 10,
     boxAstMin: 1,
     boxAstMax: 3,
-    estrellaPtsBias: 1.8, // la figura se lleva más tiros con ataque 'estrella'
+    // Dársela a la estrella tiene que VERSE en la planilla: con este ataque la
+    // figura se lleva entre el 40% y el 50% de los puntos del equipo (~28 de
+    // 64). Con 1.8 se quedaba en 39% y la táctica no se distinguía del reparto
+    // normal al mirar los números. Ojo: esto mueve QUIÉN anota, no CUÁNTO
+    // anota el equipo — el balance del marcador no se toca.
+    estrellaPtsBias: 2.35,
     // Concentración del goleo: el reparto de puntos eleva el rendimiento del
     // día a esta potencia. Con 1 el equipo anota parejo y no hay goleador;
     // con 2.2 aparece el que se echa el equipo al hombro, como en las

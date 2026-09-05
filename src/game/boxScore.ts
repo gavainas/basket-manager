@@ -123,7 +123,7 @@ export function repartirPlanilla(sujetos: StatSubject[], puntos: number, rng: Rn
   const totalTriples = Math.round((puntos * M.boxTripleShare * rng.range(0.7, 1.3)) / 3);
   for (let i = 0; i < totalTriples; i++) {
     const elegibles = juegan.filter((s) => (pts[s.id] ?? 0) - t3[s.id] * 3 >= 3);
-    const elegido = pickWeighted(elegibles, (s) => Math.pow(pf(s).outside, 2.2), rng);
+    const elegido = pickWeighted(elegibles, (s) => Math.pow(pf(s).outside, 1.7), rng);
     if (!elegido) break;
     t3[elegido.id] += 1;
   }

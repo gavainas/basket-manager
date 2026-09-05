@@ -34,21 +34,34 @@ export interface PlayerProfile {
   vision: number;
 }
 
-/** El perfil típico de cada puesto, antes de la variación personal. */
+/**
+ * El perfil típico de cada puesto, antes de la variación personal. Los valores
+ * apuntan a cómo se reparte de verdad la producción en una cancha: los triples
+ * los tiran sobre todo bases y escoltas, los rebotes los cierran los dos
+ * grandes, y el pase pasa por el base.
+ */
 const BASE_POR_PUESTO: Record<Position, PlayerProfile> = {
-  'Base': { outside: 60, inside: 18, vision: 86 },
-  'Escolta': { outside: 78, inside: 26, vision: 54 },
-  'Alero': { outside: 54, inside: 50, vision: 48 },
-  'Ala-Pívot': { outside: 26, inside: 78, vision: 36 },
-  'Pívot': { outside: 11, inside: 92, vision: 26 },
+  'Base': { outside: 68, inside: 16, vision: 86 },
+  'Escolta': { outside: 76, inside: 26, vision: 52 },
+  'Alero': { outside: 46, inside: 42, vision: 46 },
+  'Ala-Pívot': { outside: 28, inside: 80, vision: 34 },
+  'Pívot': { outside: 22, inside: 94, vision: 26 },
 };
 
-/**
- * Cuánto se puede despegar alguien del perfil de su puesto. Amplio a propósito:
- * el pívot que tira de tres y el base que no la pasa son los que hacen que un
- * plantel se sienta un plantel y no cinco puestos.
- */
+/** Cuánto se despega del perfil de su puesto un jugador cualquiera. */
 const VARIACION = 24;
+
+/**
+ * Cada tanto sale uno que rompe el molde: el pívot que tira de tres, el base
+ * que no la pasa pero mete, el alero que baja más rebotes que los grandes.
+ *
+ * Sin esto el puesto era un destino — medido: el 100% de los pívots salía
+ * "Juego interior" y NINGUNO llegaba al tiro mínimo para intentar un triple.
+ * Doce pívots en el mundo eran el mismo jugador. Con esto, uno de cada siete
+ * tiene algo que no le corresponde al puesto, y esos son los que te acordás.
+ */
+const RAREZA = 0.14;
+const EMPUJE_RARO = 34;
 
 /** FNV-1a de 32 bits. El mismo que usan `crest.ts` y `appearance.ts`. */
 function hash32(str: string): number {
@@ -74,15 +87,26 @@ const clamp01a100 = (v: number) => Math.max(2, Math.min(98, Math.round(v)));
 export function profileFrom(id: string, position: Position): PlayerProfile {
   const base = BASE_POR_PUESTO[position] ?? BASE_POR_PUESTO['Alero'];
   const desvio = (rasgo: string) => (roll(id, rasgo) - 0.5) * 2 * VARIACION;
+
+  // El que rompe el molde: un solo rasgo, empujado fuerte.
+  const esRaro = roll(id, 'raro') < RAREZA;
+  const cual = Math.floor(roll(id, 'cual') * 3);
+  const empuje = (i: number) => (esRaro && cual === i ? EMPUJE_RARO * (0.7 + roll(id, 'fuerza') * 0.6) : 0);
+
   return {
-    outside: clamp01a100(base.outside + desvio('out')),
-    inside: clamp01a100(base.inside + desvio('in')),
-    vision: clamp01a100(base.vision + desvio('vis')),
+    outside: clamp01a100(base.outside + desvio('out') + empuje(0)),
+    inside: clamp01a100(base.inside + desvio('in') + empuje(1)),
+    vision: clamp01a100(base.vision + desvio('vis') + empuje(2)),
   };
 }
 
 export function profileOf(p: Player): PlayerProfile {
   return profileFrom(p.id, p.position);
+}
+
+/** La etiqueta de alguien, leída contra lo que se espera de su puesto. */
+export function labelOf(p: Player): string {
+  return profileLabel(profileFrom(p.id, p.position), p.position);
 }
 
 export function profileOfWorld(wp: WorldPlayer): PlayerProfile {
@@ -93,7 +117,25 @@ export function profileOfWorld(wp: WorldPlayer): PlayerProfile {
  * La etiqueta que ve el jugador. Solo se pone cuando el rasgo se despega de
  * verdad del resto: si nadie manda, es "Completo" y no se dice nada.
  */
-export function profileLabel(pf: PlayerProfile): string {
+export function profileLabel(pf: PlayerProfile, position?: Position): string {
+  // Un pívot con 58 de tiro es un tirador aunque un escolta con 58 no lo sea:
+  // lo que hace noticia es despegarse de LO QUE SE ESPERA DE SU PUESTO.
+  if (position) {
+    const base = BASE_POR_PUESTO[position];
+    if (base) {
+      const sobre = {
+        outside: pf.outside - base.outside,
+        inside: pf.inside - base.inside,
+        vision: pf.vision - base.vision,
+      };
+      const mayor = Math.max(sobre.outside, sobre.inside, sobre.vision);
+      if (mayor >= 26) {
+        if (mayor === sobre.outside) return 'Tirador';
+        if (mayor === sobre.inside) return 'Juego interior';
+        return 'Armador';
+      }
+    }
+  }
   const alto = Math.max(pf.outside, pf.inside, pf.vision);
   const otros = [pf.outside, pf.inside, pf.vision].filter((v) => v !== alto);
   const segundo = Math.max(...otros, 0);
@@ -108,8 +150,8 @@ export function profileLabel(pf: PlayerProfile): string {
  * null cuando no hay nada distintivo que decir — el silencio es mejor que
  * "es un jugador equilibrado" en las doce fichas del plantel.
  */
-export function profileNote(pf: PlayerProfile): string | null {
-  switch (profileLabel(pf)) {
+export function profileNote(pf: PlayerProfile, position?: Position): string | null {
+  switch (profileLabel(pf, position)) {
     case 'Tirador':
       return pf.outside >= 82 ? 'Si le dejás el tiro de afuera, la mete.' : 'Se siente cómodo tirando de afuera.';
     case 'Juego interior':
