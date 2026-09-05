@@ -638,6 +638,18 @@ export interface League {
   minAge?: number;
   divisionCount: number;
   rules: string[];
+  /**
+   * Identidad visual de la liga (sep 2026, dirección D de la pretemporada).
+   *
+   * Hasta ahora una liga era sólo un nombre, así que en la pantalla de
+   * inscripción las cuatro opciones se veían iguales y había que leerlas para
+   * distinguirlas. Con color propio, cada una se reconoce sin leer.
+   *
+   * `abbr` se declara y no se deriva del nombre a propósito: "Liga del Centro"
+   * y "Liga del Comercio" colapsarían las dos en "LC".
+   */
+  abbr: string;
+  colors: { base: string; alt: string };
 }
 
 export interface Division {

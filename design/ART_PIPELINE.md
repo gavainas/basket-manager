@@ -442,6 +442,26 @@ Formato sugerido:
   "El héroe y los arquetipos" de `SISTEMA_VISUAL.md`.
 - Próximo paso autorizado: nada de arte. Las Puertas 3 a 6 siguen abiertas y sin tocar.
 
+### 2026-09-05 — La inscripción, dirección D (layout) + escudos de liga (placeholder)
+
+- Alcance: **cómo se muestran las ligas** en la pantalla de inscripción de la pretemporada.
+  Gabi: *"no me gusta el display de cómo aparecen las ligas y los jugadores."* Se compararon
+  cinco tratamientos sobre los datos reales de una partida en
+  [`canvas-pretemporada/`](canvas-pretemporada/LEEME.md).
+- Aprobado: **la dirección D** — *"La D quedó bien."* Una fila por liga con los datos en
+  columnas alineadas (estructura de C) y el color y el escudo de cada liga como identidad
+  (color de B). Implementada.
+- **No aprobado / explícitamente diferido: los escudos.** *"Los escudos después los
+  inventamos, ahora poné placeholder."* `ui/LeagueCrest.tsx` es un **placeholder declarado
+  en su propio encabezado**, no arte: silueta + color + iniciales. **No se generó ningún
+  asset**; no se llamó a Higgsfield. La propuesta de hacerlos procedurales con el generador
+  de escudos de club sigue **sin aprobar** y es materia de la Puerta 3.
+- Correcciones al implementar: la fila no entraba en el piso de diseño de 1280x720 y se
+  veían tres ligas de cuatro; se resolvió con una media query **por alto de ventana** que
+  apaga la frase y la bajada, no achicando la tipografía.
+- Próximo paso autorizado: nada de arte. Falta que Gabi elija entre **Mercado A, B o C**
+  para los fichables, que es la otra mitad de la misma queja.
+
 ## Estado de aprobación actual
 
 > **Corregido en sep 2026.** Este bloque contradecía al resto del documento y a lo que hay
@@ -464,3 +484,6 @@ Formato sugerido:
   registro del 2026-09-04).
 - Procedural que **ya existe** y no hay que volver a pedir: retratos SVG por seed
   (`AVATAR_SYSTEM.md`) y **escudos de club** (`game/crest.ts`).
+- Los **escudos de liga** (`ui/LeagueCrest.tsx`) son un **placeholder aceptado a
+  sabiendas**, no una aprobación: se ponen para que las opciones se distingan y se
+  reemplazan cuando Gabi decida cómo son de verdad (registro del 2026-09-05).

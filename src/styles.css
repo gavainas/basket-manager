@@ -1021,6 +1021,159 @@ button.danger {
   .partido-col-scroll { grid-row: span 2; }
 }
 
+/* ---------- La inscripción: la tabla de ligas (dirección D, sep 2026) ---------- */
+
+/* Aprobada por Gabi mirando el canvas de `design/canvas-pretemporada/`. Sale de
+   componer dos tratamientos que no competían: la ESTRUCTURA de la fila
+   comparable (los datos en columnas alineadas, para comparar el precio de las
+   cuatro sin leer) y el COLOR de la cartelera (cada liga con su identidad).
+   Antes eran cuatro cards con un párrafo de cinco líneas y los chips todos del
+   mismo tamaño, donde "$300" pesaba igual que "9 fechas". */
+.liga-tabla-card { margin-bottom: 1rem; }
+
+.liga-tabla {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--relieve);
+  overflow: hidden;
+}
+
+.liga-fila {
+  display: grid;
+  grid-template-columns: 6px 40px minmax(0, 1fr) 104px 82px 132px 58px 104px 92px 210px;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.7rem 0.9rem 0.7rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.liga-fila:last-child { border-bottom: 0; }
+
+/* El lomo de color es lo único que ocupa el alto entero de la fila. */
+.liga-fila > .liga-lomo { align-self: stretch; }
+
+.liga-fila.on { background: var(--accent-soft); }
+.liga-fila.bloqueada { opacity: 0.55; }
+
+.liga-cab {
+  padding-top: 0.55rem;
+  padding-bottom: 0.4rem;
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+}
+
+.liga-cab .der { text-align: right; }
+
+.liga-nombre {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--fs-md);
+  line-height: 1.12;
+}
+
+.liga-divi { color: var(--text-dim); font-weight: 400; }
+
+/* La prosa de la liga sobrevive, pero en un renglón: el color y las columnas
+   hacen el trabajo que antes hacían cinco líneas de texto. */
+.liga-frase {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  margin-top: 0.1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.liga-dia-k { font-family: var(--display); font-weight: 600; font-size: var(--fs-base); line-height: 1.05; }
+.liga-dia-h { font-size: var(--fs-2xs); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+.liga-ficha { text-align: right; }
+
+.liga-plata {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--fs-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.liga-plata.gratis { color: var(--good); }
+.liga-nota-warn { font-size: var(--fs-2xs); color: var(--warn); }
+.liga-nota-good { font-size: var(--fs-2xs); color: var(--good); }
+
+/* En una fila, un dato que envuelve en dos renglones estira la fila entera y
+   rompe la alineación con las de al lado, que es justo lo que esta pantalla
+   compra: "Nivel competitivo" entra en un renglón o no entra. */
+.liga-nivel, .liga-categoria { font-size: var(--fs-sm); color: var(--text); white-space: nowrap; }
+.liga-categoria { color: var(--text-dim); }
+.liga-categoria .si-sube { color: var(--good); font-weight: 600; }
+
+.liga-fechas { font-size: var(--fs-sm); text-align: right; font-variant-numeric: tabular-nums; }
+
+.liga-juego { text-align: right; font-size: var(--fs-sm); }
+.liga-premio { font-family: var(--display); font-weight: 600; font-size: var(--fs-md); color: var(--good); }
+.liga-castigo { color: var(--bad); font-weight: 600; }
+.liga-nada { color: var(--text-faint); }
+
+.liga-accion {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.liga-veredicto { font-size: var(--fs-xs); white-space: nowrap; }
+.liga-veredicto.good { color: var(--good); }
+.liga-veredicto.warn { color: var(--warn); }
+.liga-veredicto.bad { color: var(--bad); }
+
+.liga-locked {
+  font-size: var(--fs-xs);
+  color: var(--bad);
+  text-align: right;
+  line-height: 1.25;
+}
+
+.league-crest { display: block; flex-shrink: 0; }
+.liga-escudo { display: flex; justify-content: center; }
+
+/* Por debajo del piso de diseño se caen las columnas que menos deciden, en
+   orden: primero el premio, después la categoría y el nivel. La fila sigue
+   contestando "qué día, cuánto sale y si mi gente puede". */
+@media (max-width: 1400px) {
+  .liga-fila { grid-template-columns: 6px 40px minmax(0, 1fr) 104px 82px 132px 58px 104px 210px; }
+  .liga-fila > .liga-juego, .liga-cab > :nth-child(9) { display: none; }
+}
+
+@media (max-width: 1240px) {
+  .liga-fila { grid-template-columns: 6px 40px minmax(0, 1fr) 104px 82px 58px 210px; }
+  .liga-fila > .liga-nivel, .liga-cab > :nth-child(6),
+  .liga-fila > .liga-categoria, .liga-cab > :nth-child(8) { display: none; }
+}
+
+/* Lo mismo, pero en el eje vertical. En el piso de diseño (1280x720) las cinco
+   ligas no entraban por 100px y se veían tres: elegir liga es comparar, y una
+   comparación que hay que scrollear no es una comparación. Lo que se cae es la
+   frase —la única columna que ya venía recortada a un renglón, y la única cuyo
+   dato está también en las otras: el día, la ficha y "tu gente" siguen ahí—.
+   Se dispara por alto de ventana, no por ancho: en un monitor 1920x800 pasa
+   exactamente lo mismo y por ancho no se enteraría. */
+@media (max-height: 800px) {
+  .liga-fila { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  .liga-frase { display: none; }
+  .liga-escudo .league-crest { width: 34px; height: 38px; }
+  /* La bajada explicaba cómo leer cuatro cards de prosa. Ahora la tabla tiene
+     encabezados —DÍA, FICHA, TU GENTE— que dicen lo mismo en su lugar, así que
+     en el piso de diseño se va y el renglón se lo queda una liga. */
+  .liga-tabla-card > .hint { display: none; }
+  .liga-tabla-card { margin-bottom: 0; }
+}
+
 /* ---------- La pretemporada (tanda E) ---------- */
 
 .pretemporada-pantalla {

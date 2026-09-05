@@ -12,7 +12,7 @@ import {
   type LeagueOption,
 } from '../game/preseason';
 import { getPreseasonEvent } from '../game/preseasonEvents';
-import { DIVISIONS } from '../data/worldData';
+import { DIVISIONS, LEAGUES } from '../data/worldData';
 import { ORIGIN_SITUATIONS, originSentence } from '../data/market';
 import type { GameState, KnowledgeLevel, MarketPlayer, Player, Position } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
@@ -20,6 +20,7 @@ import { formatMoney, starsFor } from './helpers';
 import { Avatar } from './Avatar';
 import { Cabecera } from './Cabecera';
 import { Crest } from './Crest';
+import { LeagueCrest } from './LeagueCrest';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
@@ -389,82 +390,123 @@ function InscriptionSection({ state, dispatch }: Props) {
         !blocked.includes(p) &&
         opt.gameTimes.some((t) => !p.agenda!.onlyTimes.includes(t))
     );
+    /* De `LEAGUES` y no de `state.world.leagues`: durante la pretemporada el
+       mundo de la temporada todavía no se armó y `world.leagues` está vacío
+       (`world.ts` lo llena recién al construir la temporada). Es el mismo
+       patrón que este archivo ya usa para `DIVISIONS`. */
+    const league = LEAGUES.find((l) => l.id === opt.leagueId);
+    // Un veredicto por opción, no tres párrafos: lo que decide es si TU gente
+    // puede ese día.
+    const veredicto =
+      blocked.length > 0
+        ? { cls: 'bad', texto: `No pueden ${blocked.length}`, detalle: blocked.map((p) => p.name).join(', ') }
+        : late.length > 0
+          ? { cls: 'warn', texto: `${late.length} llegan tarde`, detalle: late.map((p) => p.name).join(', ') }
+          : { cls: 'good', texto: 'Todos pueden', detalle: '' };
+
     return (
-      <div key={opt.divisionId} className={`player-card ps-liga${chosen ? ' selected' : ''}`}>
-        <div className="player-head">
-          <div className="who">
-            <div className="name">
-              {opt.leagueName} · {opt.divisionName}
-            </div>
-            <div className="pos">
-              Se juega los {dayLabel(opt.gameDay)} ({opt.gameTimes.join(' / ')})
-            </div>
+      <div key={opt.divisionId} className={`liga-fila${chosen ? ' on' : ''}${opt.locked ? ' bloqueada' : ''}`}>
+        <span className="liga-lomo" style={{ background: league?.colors.base ?? 'var(--border)' }} />
+
+        {/* La celda del escudo se dibuja SIEMPRE, aunque la liga no aparezca:
+            en una grilla de diez columnas, un hijo que falta corre todo lo
+            demás una columna y la fila se rompe entera sin avisar. */}
+        <span className="liga-escudo">{league && <LeagueCrest league={league} size={40} />}</span>
+
+        <div className="liga-quien">
+          <div className="liga-nombre">
+            {opt.leagueName} <span className="liga-divi">· {opt.divisionName}</span>
           </div>
+          <div className="liga-frase">{opt.note}</div>
         </div>
-        <div className="player-chips">
-          <span className={`chip ${opt.fee > 0 ? '' : 'good'}`}>
-            {opt.fee > 0 ? `Inscripción: $${opt.fee}` : 'Inscripción gratis'}
-          </span>
-          <span className="chip accent">{opt.levelLabel}</span>
-          <span className="chip">{opt.weeks} fechas</span>
-          {opt.promotes ? (
-            <span className="chip good">Con ascensos y descensos</span>
+
+        <div className="liga-dia">
+          <div className="liga-dia-k">{dayLabel(opt.gameDay)}</div>
+          <div className="liga-dia-h">{opt.gameTimes.join(' / ')}</div>
+        </div>
+
+        <div className="liga-ficha">
+          <div className={`liga-plata${opt.fee > 0 ? '' : ' gratis'}`}>{opt.fee > 0 ? `$${opt.fee}` : 'Gratis'}</div>
+          {opt.fee > 0 && !opt.trusts && <div className="liga-nota-warn">contado</div>}
+          {opt.trusts && opt.fee > 0 && <div className="liga-nota-good">te fían</div>}
+        </div>
+
+        <div className="liga-nivel">{opt.levelLabel}</div>
+
+        <div className="liga-fechas">{opt.weeks}</div>
+
+        <div className="liga-categoria">
+          {opt.promotes ? <span className="si-sube">Sube y baja</span> : 'Sin ascensos'}
+          {opt.isHeld && <div className="liga-nota-good">te guardan el lugar</div>}
+        </div>
+
+        <div className="liga-juego">
+          {opt.prize ? (
+            <span className="liga-premio">${opt.prize.champion}</span>
+          ) : opt.isPlaza ? (
+            <span className="liga-castigo">−{BALANCE.preseason.plazaPrestigeHit} prest.</span>
           ) : (
-            <span className={`chip ${opt.isPlaza ? 'warn' : ''}`}>Sin ascensos</span>
+            <span className="liga-nada">—</span>
           )}
-          {opt.prize && <span className="chip good">Premio al campeón: ${opt.prize.champion}</span>}
-          {opt.fee > 0 && !opt.trusts && <span className="chip warn">Se paga contado: no fían</span>}
-          {opt.isPlaza && <span className="chip warn">Prestigio deportivo -{BALANCE.preseason.plazaPrestigeHit}</span>}
-          {opt.isHeld && <span className="chip good">Te guardan el lugar</span>}
         </div>
-        <p className="muted" style={{ margin: '0.5rem 0' }}>
-          {opt.note}
-        </p>
-        {blocked.length > 0 && (
-          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--bad)' }}>
-            ✕ No podrían los {dayLabel(opt.gameDay)}: {blocked.map((p) => p.name).join(', ')}
-          </p>
-        )}
-        {late.length > 0 && (
-          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--warn)' }}>
-            Llegarían tarde a los de{' '}
-            {opt.gameTimes.filter((t) => late.some((p) => !p.agenda!.onlyTimes.includes(t))).join(' y ')}:{' '}
-            {late.map((p) => p.name).join(', ')}
-          </p>
-        )}
-        {blocked.length === 0 && late.length === 0 && (
-          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--good)' }}>
-            ✓ Todos los confirmados pueden los {dayLabel(opt.gameDay)}
-          </p>
-        )}
-        {opt.locked && (
-          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--warn)' }}>
-            ✕ {opt.locked}
-          </p>
-        )}
-        <button
-          className={`ps-elegir${chosen ? ' on' : ''}`}
-          disabled={chosen || !!opt.locked}
-          onClick={() => dispatch({ type: 'PS_CHOOSE_LEAGUE', divisionId: opt.divisionId })}
-        >
-          {opt.locked ? 'No nos aceptan todavía' : chosen ? '✓ Inscripto acá (se paga al cierre)' : 'Anotarse acá'}
-        </button>
+
+        <div className="liga-accion">
+          {opt.locked ? (
+            <span className="liga-locked">{opt.locked}</span>
+          ) : (
+            <>
+              <span className={`liga-veredicto ${veredicto.cls}`} title={veredicto.detalle}>
+                {veredicto.texto}
+              </span>
+              <button
+                className={`ps-elegir${chosen ? ' on' : ''}`}
+                disabled={chosen}
+                onClick={() => dispatch({ type: 'PS_CHOOSE_LEAGUE', divisionId: opt.divisionId })}
+              >
+                {chosen ? '✓ Inscripto' : 'Anotarse'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
     );
   };
 
+  // El margen sale de `.liga-tabla-card` y no de un `style` inline como en las
+  // otras secciones: en pantallas bajas hay que poderlo apagar desde CSS, y un
+  // inline no lo deja sin `!important`.
   return (
-    <div className="card" style={{ marginBottom: '1rem' }}>
+    <div className="card liga-tabla-card">
       <h3 className="card-band">
         <Icon name="inscripcion" size={17} /> ¿Dónde jugamos este año?
       </h3>
-      <Cabecera art="cab-comision.webp" alt="La comisión del club reunida alrededor de una mesa" alto={150} />
+      {/* Lo que pasa si no elegís ya lo dice el panel de arriba, que es el que
+          lista los riesgos de cerrar: repetirlo acá era un renglón de más en la
+          pantalla más apretada del juego. */}
       <p className="hint" style={{ marginTop: 0 }}>
         Elegir liga es elegir tu día de partido: mirá qué día puede tu gente antes de firmar. Podés cambiar hasta el
-        cierre. Si no elegís, la comisión te anota a último momento en la de siempre (recargo $
-        {BALANCE.preseason.lateInscriptionFee} y mala imagen).
+        cierre.
       </p>
-      <div className="player-grid ps-grid">{offer.map(renderOption)}</div>
+      {/* Dirección D (aprobada por Gabi, sep 2026): una fila por liga con los
+          datos en columnas alineadas —para comparar el precio de las cuatro sin
+          leer— y el color y el escudo de cada una como identidad. Antes eran
+          cuatro párrafos de cinco líneas con los chips todos del mismo tamaño.
+          Ver design/canvas-pretemporada/. */}
+      <div className="liga-tabla">
+        <div className="liga-fila liga-cab">
+          <span />
+          <span />
+          <span>La liga</span>
+          <span>Día</span>
+          <span className="der">Ficha</span>
+          <span>Nivel</span>
+          <span className="der">Fechas</span>
+          <span>Categoría</span>
+          <span className="der">En juego</span>
+          <span>Tu gente</span>
+        </div>
+        {offer.map(renderOption)}
+      </div>
     </div>
   );
 }

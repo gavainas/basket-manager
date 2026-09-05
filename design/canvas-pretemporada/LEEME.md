@@ -10,6 +10,11 @@ es **cómo se ordena la información** en dos listas.
 
 ## Página 1 — Elegir liga
 
+> **Decidido y hecho (sep 2026).** Gabi: *"La D quedó bien. Los escudos después los
+> inventamos, ahora poné placeholder."* D está implementada en `ui/PreseasonView.tsx` +
+> el bloque `.liga-tabla` de `styles.css`, con `LeagueCrest.tsx` como **placeholder
+> declarado** (ver abajo). D2 queda archivada: era D con más color y nadie la pidió.
+
 **Ronda 2 (sep 2026).** Gabi: *"quedaron mejor. Creo que la A y la C son muy parecidas. La B
 me gusta la diferencia de colores. Capaz se puede hacer algo combinado y luego agregar
 logos de esas ligas."* Tenía razón: A y C son las dos una tabla y lo único que cambia es
@@ -41,6 +46,28 @@ el color de B, y la hoja de escudos.
 Los colores del mockup (azul institucional para la Universitaria, grafito y dorado para la
 nocturna del Centro, verde para el Comercio, ladrillo para la Plaza, pizarra para
 Montevideo, violeta para la +35) están elegidos **lejos del naranja de acción** a propósito.
+
+### Cómo quedó implementado
+
+1. **`League` ahora sí tiene identidad.** `abbr` y `colors: { base, alt }` en
+   `game/types.ts`, cargados para las seis ligas en `data/worldData.ts` con los colores de
+   arriba. `abbr` se **declara** y no se deriva del nombre: "Liga del Centro" y "Liga del
+   Comercio" colapsarían las dos en "LC".
+2. **`ui/LeagueCrest.tsx` es el placeholder**, y lo dice en su propio encabezado. Dibuja
+   silueta + color + iniciales, con cinco siluetas a propósito distintas de las de club.
+   Se reemplaza sin tocar ninguna pantalla: la firma `<LeagueCrest league={l} size={44} />`
+   no cambia cuando el escudo de verdad exista. **El generador procedural de la propuesta 2
+   sigue sin aprobar** — es lo que hay que decidir cuando toque Puerta 3.
+3. **Dos trampas que aparecieron al implementar**, por si vuelven:
+   - `state.world.leagues` **está vacío durante la pretemporada** (`world.ts` lo llena
+     recién al construir el mundo de la temporada), así que la fila lee de `LEAGUES` de
+     `data/worldData.ts`. Además la celda del escudo se dibuja siempre, aunque la liga no
+     aparezca: en una grilla de diez columnas, un hijo que falta corre todo lo demás una
+     columna y la fila se rompe entera sin avisar.
+   - En el piso de diseño (1280x720) las ligas no entraban y se veían tres. Elegir liga es
+     comparar, y una comparación que hay que scrollear no es una comparación: hay una
+     media query **por alto** (`max-height: 800px`) que apaga la frase y la bajada. Se
+     dispara por alto y no por ancho porque en un 1920x800 pasa exactamente lo mismo.
 
 ## Página 2 — Los fichables
 

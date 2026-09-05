@@ -150,6 +150,8 @@ export const EXPANSION_DIVISION_TEAMS: Record<string, WorldTeamSeed[]> = {
 export const LEAGUES: League[] = [
   {
     id: 'lg_universitaria',
+    abbr: 'LU',
+    colors: { base: '#2f5d8f', alt: '#e8e4dc' },
     name: 'Liga Universitaria',
     kind: 'universitaria',
     divisionCount: 4,
@@ -162,6 +164,8 @@ export const LEAGUES: League[] = [
   },
   {
     id: CENTRO_LEAGUE_ID,
+    abbr: 'C',
+    colors: { base: '#33373f', alt: '#c9a34e' },
     name: 'Liga del Centro',
     kind: 'libre',
     divisionCount: 2,
@@ -174,6 +178,8 @@ export const LEAGUES: League[] = [
   },
   {
     id: COMERCIO_LEAGUE_ID,
+    abbr: 'LC',
+    colors: { base: '#2e6b4d', alt: '#e8e4dc' },
     name: 'Liga del Comercio',
     kind: 'libre',
     divisionCount: 1,
@@ -186,6 +192,8 @@ export const LEAGUES: League[] = [
   },
   {
     id: 'lg_plaza',
+    abbr: 'LP',
+    colors: { base: '#9c5b3c', alt: '#e8e4dc' },
     name: 'Liga de la Plaza',
     kind: 'libre',
     divisionCount: 1,
@@ -197,6 +205,8 @@ export const LEAGUES: League[] = [
   },
   {
     id: 'lg_montevideo',
+    abbr: 'M',
+    colors: { base: '#456470', alt: '#e8e4dc' },
     name: 'Liga Montevideo',
     kind: 'libre',
     divisionCount: 1,
@@ -207,6 +217,8 @@ export const LEAGUES: League[] = [
   },
   {
     id: 'lg_veteranos',
+    abbr: '35',
+    colors: { base: '#6a4a86', alt: '#e8e4dc' },
     name: 'Liga +35',
     kind: 'veteranos',
     minAge: 35,
