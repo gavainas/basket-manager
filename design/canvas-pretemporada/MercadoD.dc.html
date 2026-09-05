@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #d8d4cc; --bg-soft: #e6e3dd; --panel: #f6f4f1; --panel-2: #eceae6; --border: #d2cec8;
+      --text: #25282c; --text-dim: #6a6f76; --text-faint: #9a9fa6; --text-light: #f6f4f1;
+      --accent: #e07a2a; --on-accent: #2a1a08; --good: #4a9160; --warn: #c69320; --bad: #b8443a;
+      --sec-plantel: #b07f27; --sec-scouting: #456470;
+      --display: 'Oswald', 'Arial Narrow', sans-serif;
+      --relieve: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,100,70,.2), 0 6px 16px rgba(20,14,8,.2);
+      --hundido: inset 0 1px 2px rgba(120,100,70,.32);
+    }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 15.2px; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--relieve); }
+    .cab { font-family: var(--display); font-weight: 500; text-transform: uppercase; letter-spacing: .13em;
+      font-size: 9.9px; color: var(--text-faint); }
+
+    /* La libreta: papel rayado apenas insinuado. El renglón es la unidad. */
+    .libreta { overflow: hidden; display: flex; flex-direction: column; }
+    .grupo { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px;
+      padding: 9px 11px 4px; background: var(--bg-soft); box-shadow: var(--hundido); }
+    .grupo-t { font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .11em;
+      font-size: 10.9px; color: var(--sec-scouting); }
+    .grupo-n { font-family: var(--display); font-weight: 600; font-size: 10.9px; color: var(--text-faint); }
+    .grupo-s { grid-column: 1 / -1; font-size: 11.5px; color: var(--text-dim); line-height: 1.3; }
+
+    .row { display: grid; grid-template-columns: 30px minmax(0,1fr) 58px 92px; gap: 9px; align-items: center;
+      padding: 5px 11px; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .row:last-child { border-bottom: 0; }
+    .row.on { background: rgba(224,122,42,.1); box-shadow: inset 3px 0 0 var(--accent); }
+    .row.ya { background: rgba(74,145,96,.07); }
+    .mini { width: 30px; height: 30px; border-radius: 3px; border: 1px solid var(--border);
+      background: linear-gradient(180deg,#3c6e9e,#2a5075); object-fit: cover; }
+    .rn { font-family: var(--display); font-weight: 600; font-size: 14.4px; line-height: 1.05; }
+    .rp { font-size: 11.5px; color: var(--text-dim); }
+    .rv { font-family: var(--display); font-weight: 600; font-size: 14.4px; text-align: right;
+      font-variant-numeric: tabular-nums; }
+    .rv.rango { font-size: 11.9px; color: var(--text-dim); }
+    .rv.nada { color: var(--text-faint); font-weight: 400; }
+
+    /* La columna que decide: ¿puede nuestro día? */
+    /* Un veredicto que envuelve en dos renglones estira la fila y rompe la
+       alineación de toda la columna: entra en un renglón o no entra. */
+    .dia { text-align: right; font-family: var(--display); font-weight: 600; font-size: 11.9px;
+      text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+    .dia.si { color: var(--good); }
+    .dia.no { color: var(--bad); }
+    .dia.medio { color: var(--warn); }
+    .dia.ni { color: var(--text-faint); font-weight: 400; letter-spacing: 0; text-transform: none; font-family: inherit; font-size: 12.5px; }
+
+    /* Las gestiones como fichas que se gastan. */
+    .fichas { display: flex; gap: 4px; align-items: center; }
+    .ficha { width: 13px; height: 13px; border-radius: 3px; border: 2px solid var(--accent); background: var(--accent); }
+    .ficha.gastada { background: transparent; border-color: var(--border); }
+
+    .dato { display: flex; flex-direction: column; gap: 1px; }
+    .dv { font-family: var(--display); font-weight: 600; font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .dv.duda { color: var(--text-faint); }
+  </style>
+</helmet>
+
+<div style="padding: 16px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px;">
+
+  <!-- El cabezal dice las dos cosas que aprietan: cuántos faltan y cuántas llamadas quedan. -->
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <div style="font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 15.2px;">La libreta</div>
+    <div style="font-size: 13.1px; color: var(--text-dim);">16 nombres anotados</div>
+    <div style="font-size: 13.1px; padding: 2px 9px; border-radius: 3px; background: rgba(184,68,58,.1); color: var(--bad); font-weight: 600;">
+      Faltan 4 para poder inscribirte · quedan 3 semanas
+    </div>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+      <span class="cab">Llamadas de esta semana</span>
+      <div class="fichas"><span class="ficha gastada"></span><span class="ficha"></span><span class="ficha"></span></div>
+      <span style="font-family: var(--display); font-weight: 600; font-size: 14.4px;">2 de 3</span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 462px minmax(0,1fr); gap: 14px; flex: 1; min-height: 0;">
+
+    <!-- IZQUIERDA: la libreta, agrupada por CÓMO llegó el nombre -->
+    <div class="panel libreta">
+      <div style="display: grid; grid-template-columns: 30px minmax(0,1fr) 58px 92px; gap: 9px; padding: 7px 11px 5px; border-bottom: 1px solid var(--border);">
+        <span></span><span class="cab">Nombre</span><span class="cab" style="text-align: right;">Nivel</span><span class="cab" style="text-align: right;">¿Los lunes?</span>
+      </div>
+
+      <div style="overflow-y: auto;">
+
+        <div class="grupo">
+          <span class="grupo-t">Los que ya viste jugar</span><span class="grupo-n">6</span>
+          <span class="grupo-s">Los enfrentaste o juegan en tu liga: del nivel no te mienten.</span>
+        </div>
+        <div class="row"><img class="mini" src="p-cumplidor.webp" alt=""><div><div class="rn">Ramiro Sosa</div><div class="rp">Base · 27 · lo enfrentaste 3 veces</div></div><div class="rv">≈69</div><div class="dia si">✓ Puede</div></div>
+        <div class="row"><img class="mini" src="p-social.webp" alt=""><div><div class="rn">Hernán Godoy</div><div class="rp">Ala-Pívot · 28 · jugó en la liga</div></div><div class="rv">≈68</div><div class="dia ni">?</div></div>
+        <div class="row ya"><img class="mini" src="p-veterano.webp" alt=""><div><div class="rn">"Gigante" Ferreyra <span style="font-family: var(--display); font-size: 10.9px; color: var(--good); letter-spacing: .08em;">· LLAMADO</span></div><div class="rp">Pívot · 27 · pide jugar de titular</div></div><div class="rv">≈65</div><div class="dia si">✓ Puede</div></div>
+        <div class="row"><img class="mini" src="p-veterano.webp" alt=""><div><div class="rn">Rubén Ábalos</div><div class="rp">Pívot · 36 · leyenda de la liga</div></div><div class="rv">≈61</div><div class="dia si">✓ Puede</div></div>
+        <div class="row"><img class="mini" src="p-social.webp" alt=""><div><div class="rn">Santi Olmos</div><div class="rp">Alero · 24 · jugó en la liga</div></div><div class="rv">≈61</div><div class="dia ni">?</div></div>
+        <div class="row"><img class="mini" src="p-veterano.webp" alt=""><div><div class="rn">"Chueco" Barrios</div><div class="rp">Escolta · 33 · ídolo en su momento</div></div><div class="rv">≈60</div><div class="dia no">✕ No puede</div></div>
+
+        <div class="grupo">
+          <span class="grupo-t">Te los pasó alguien del club</span><span class="grupo-n">4</span>
+          <span class="grupo-s">Lo que sabés de ellos te lo contó un tercero. Y el que trae un nombre lo defiende.</span>
+        </div>
+        <div class="row on"><img class="mini" src="p-talentoso.webp" alt=""><div><div class="rn">Facu Ledesma</div><div class="rp">Escolta · 23 · te lo pasó Gonzalo Viera</div></div><div class="rv rango">71–85</div><div class="dia ni">?</div></div>
+        <div class="row"><img class="mini" src="p-competitivo.webp" alt=""><div><div class="rn">Pablo Ortega</div><div class="rp">Ala-Pívot · 26 · te lo pasó el "Flaco"</div></div><div class="rv rango">54–68</div><div class="dia ni">?</div></div>
+
+        <div class="grupo">
+          <span class="grupo-t">De oídas</span><span class="grupo-n">6</span>
+          <span class="grupo-s">Alguien los nombró en el bar. De algunos ni el nivel: hay que ir a verlos.</span>
+        </div>
+        <div class="row"><img class="mini" src="p-mercenario.webp" alt=""><div><div class="rn">"Mono" Quiroga</div><div class="rp">Alero · 30 · «ese jugaba en el Sur»</div></div><div class="rv nada">★★★★☆</div><div class="dia ni">?</div></div>
+        <div class="row"><img class="mini" src="p-competitivo.webp" alt=""><div><div class="rn">Rolando Núñez</div><div class="rp">Ala-Pívot · 29 · «pregunten en el Oeste»</div></div><div class="rv nada">?</div><div class="dia ni">?</div></div>
+
+      </div>
+    </div>
+
+    <!-- DERECHA: la hoja del contacto. Arriba de todo, quién te lo pasó y qué dijo. -->
+    <div class="panel" style="padding: 15px; display: flex; flex-direction: column; gap: 11px;">
+
+      <div style="display: flex; gap: 14px; align-items: flex-start;">
+        <img src="p-talentoso.webp" alt="" style="width: 92px; height: 92px; border-radius: 4px; border: 1px solid var(--border); background: linear-gradient(180deg,#3c6e9e,#2a5075); object-fit: cover; flex: none;">
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-family: var(--display); font-weight: 600; font-size: 25px; line-height: 1.05;">Facu Ledesma</div>
+          <div style="font-size: 13.9px; color: var(--text-dim); margin-top: 2px;">Escolta · 23 años · 1,88 m · juega en la <b style="color: var(--text);">Liga de Empleados</b></div>
+          <div style="margin-top: 7px; display: flex; gap: 14px; font-size: 13.1px;">
+            <span><span class="cab">Pase</span> <b style="font-family: var(--display); font-size: 15.9px;">$40</b></span>
+            <span><span class="cab">Cuota</span> <b style="font-family: var(--display); font-size: 15.9px; color: var(--text-faint);">?</b></span>
+            <span><span class="cab">Exige</span> <b style="font-family: var(--display); font-size: 15.9px; color: var(--text-faint);">?</b></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LA FIRMA DE LA D: la referencia, con la cara del que la dio. -->
+      <div style="background: var(--bg-soft); border-radius: 4px; box-shadow: var(--hundido); padding: 11px 13px; display: flex; gap: 11px; align-items: flex-start;">
+        <img src="p-competitivo.webp" alt="" style="width: 38px; height: 38px; border-radius: 3px; border: 1px solid var(--border); background: linear-gradient(180deg,#3c6e9e,#2a5075); object-fit: cover; flex: none;">
+        <div style="min-width: 0;">
+          <div style="font-size: 14.4px; line-height: 1.4;">«Ese pibe la rompe, jugamos juntos en el liceo. Traelo y no preguntes más.»</div>
+          <div style="font-size: 12.5px; color: var(--text-dim); margin-top: 4px;">
+            <b style="color: var(--text);">Gonzalo Viera</b>, de tu plantel · <span style="color: var(--warn);">te lo trajo él: va a hablar bien igual</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px;">
+        <div class="dato"><span class="cab">Nivel</span><span class="dv" style="color: var(--text-dim);">71–85</span><span style="font-size: 11.5px; color: var(--text-faint);">catorce puntos de margen</span></div>
+        <div class="dato"><span class="cab">Físico</span><span class="dv" style="color: var(--text-dim);">70–84</span><span style="font-size: 11.5px; color: var(--text-faint);">nadie lo vio entrenar</span></div>
+        <div class="dato"><span class="cab">¿Puede los lunes?</span><span class="dv duda">No sabés</span><span style="font-size: 11.5px; color: var(--text-faint);">es lo que más importa</span></div>
+      </div>
+
+      <div style="background: var(--bg-soft); border-radius: 4px; box-shadow: var(--hundido); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+        <div class="cab">Lo que la llamada te contesta</div>
+        <div style="font-size: 13.1px; line-height: 1.5;">
+          <b>Si puede los lunes a las 20</b>, que es nuestro día · qué va a pedir para venir · si piensa pagar cuota.
+          <span style="color: var(--text-dim);">El nivel no: eso sólo se sabe viéndolo jugar.</span>
+        </div>
+      </div>
+
+      <!-- Lo que convierte el rango en una decisión: contra quién compite. Un
+           71-85 no dice nada solo; contra tu escolta de ≈62 dice todo. -->
+      <div style="border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;">
+        <div class="cab">En su puesto tenés</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="p-veterano.webp" alt="" style="width: 28px; height: 28px; border-radius: 3px; border: 1px solid var(--border); background: linear-gradient(180deg,#3c6e9e,#2a5075); object-fit: cover;">
+          <span style="font-family: var(--display); font-weight: 600; font-size: 14.4px;">Seba Cardozo</span>
+          <span style="font-size: 12.5px; color: var(--text-dim);">Escolta · 31</span>
+          <span style="font-family: var(--display); font-weight: 600; font-size: 15.9px; margin-left: auto;">≈62</span>
+        </div>
+        <div style="font-size: 12.5px; color: var(--text-dim); line-height: 1.4;">
+          Es tu único escolta confirmado. Facu sería titular <b style="color: var(--text);">si el 71 es mentira y el 85 es cierto</b> — y eso no lo contesta la llamada.
+        </div>
+      </div>
+
+      <div style="margin-top: auto; display: flex; align-items: center; gap: 12px;">
+        <button style="font-family: inherit; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 700; border-radius: 4px; padding: 10px 20px; font-size: 15.2px;">Llamar a Facu</button>
+        <span style="font-size: 12.5px; color: var(--text-dim);">Te quedan <b style="color: var(--text);">2 llamadas</b> esta semana.</span>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

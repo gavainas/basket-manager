@@ -71,12 +71,46 @@ Montevideo, violeta para la +35) están elegidos **lejos del naranja de acción*
 
 ## Página 2 — Los fichables
 
+**Ronda 2 (sep 2026).** Gabi: *"la opción A y la opción C me gustan. Me gustaría que
+inventes una nueva opción D que vaya más con la experiencia del juego."* De ahí sale **D**.
+
 | Archivo | Qué es |
 | --- | --- |
+| `MercadoD.dc.html` | **D · La libreta del delegado.** La nueva. Ver abajo. |
+| `MercadoA.dc.html` | **A · La planilla del ojeador.** Te gustó. **De acá sale la densidad y los sellos.** |
+| `MercadoC.dc.html` | **C · Lista y ficha grande.** Te gustó. **De acá sale el esqueleto**: dos columnas, ficha grande, botón único. |
 | `MercadoActual.dc.html` | **Hoy.** El nivel aparece de tres formas en la misma fila (`71–85`, `≈69`, `★★★★☆`), las cards quedan de alturas desparejas según cuántos chips le toquen a cada uno, `Exigencias: ? (contactalo)` se repite dieciséis veces y hay dieciséis botones a ancho completo. Entran 5 de 16. |
-| `MercadoA.dc.html` | **A · La planilla del ojeador.** La propuesta: la misma anatomía que el Plantel de la dirección D ya aprobada. Los chips se van —el conocimiento pasa a ser un sello y lo que no sabés es un `?` en su columna—. Entran 10-14 de 16. |
-| `MercadoB.dc.html` | **B · La ficha de altura fija.** Sigue siendo grilla de cards, pero **todas miden 196 px** pase lo que pase, así que la escalera desaparece. Conserva el retrato grande. |
-| `MercadoC.dc.html` | **C · Lista y ficha grande.** Los 16 a la izquierda, la ficha del elegido a la derecha con retrato de 96 px, **un solo botón Contactar** y un bloque de "lo que todavía no sabés". Es la que mejor prepara el compromiso oculto (T2 del [diagnóstico](../DIAGNOSTICO_2026-09.md)). |
+| `MercadoB.dc.html` | **B · La ficha de altura fija.** Grilla de cards que **todas miden 196 px**, así que la escalera desaparece. No la eligió. Archivada. |
+
+### D · La libreta del delegado
+
+A y C contestan bien *"cómo acomodo dieciséis jugadores en pantalla"*. Pero en la
+pretemporada el jugador no elige entre dieciséis: tiene **tres gestiones y cuatro semanas**,
+y la pregunta real es **"¿a quién llamo esta semana?"**. Ni A ni C la hacen. D sí, con cuatro
+cambios que salen del juego y no del layout:
+
+1. **Los nombres se agrupan por cómo llegaron a la libreta**, no por nivel: *Los que ya
+   viste jugar* / *Te los pasó alguien del club* / *De oídas*. Ese sistema **ya existe en el
+   código** (`knowledgeSource` en `MarketPlayer`), pero hoy es una línea de texto perdida al
+   final de cada card. Acá es la estructura de la pantalla, y el gradiente de conocimiento se
+   lee de un vistazo en vez de repetirse dieciséis veces como chip.
+2. **La columna que decide es "¿puede los lunes?"**, no el nivel. `agendaFit()` ya cruza la
+   agenda contra el día de partido de la liga elegida, y hoy es un chip más entre seis. En un
+   club amateur el mejor jugador que no puede el día del partido vale cero. Ojo con el detalle
+   de mecánica: `agendaKnown()` es `contacted || muy_conocido`, así que esa columna arranca
+   casi toda en `?` — **es la razón de gastar la llamada**, y por eso merece columna propia.
+3. **Las tres gestiones son fichas que se gastan**, y al lado la presión que hoy no está en
+   ninguna pantalla: *faltan 4 para poder inscribirte, quedan 3 semanas*.
+4. **La referencia tiene cara y es interesada.** Quien pasó el nombre aparece con su retrato
+   y su frase, y abajo la letra chica: *"te lo trajo él: va a hablar bien igual"*. Es la
+   regla 2 de [B. El compromiso deja de ser un número](../DIAGNOSTICO_2026-09.md) hecha
+   pantalla: al fichar no ves conducta, ves lo que dice quien lo trajo.
+
+La ficha de la derecha es la de C con un bloque más — **"En su puesto tenés"** —: un `71–85`
+solo no dice nada; contra tu único escolta de `≈62` dice todo.
+
+**En contra:** es la más lejos de lo que hay hoy, y agrupar por conocimiento significa que
+**no se puede ordenar por nivel de punta a punta** (el orden vive dentro de cada grupo).
 
 `canvas.json` define las dos páginas, dónde se apoya cada artboard, sus títulos y las notas
 con el a favor y el en contra de cada tratamiento.
