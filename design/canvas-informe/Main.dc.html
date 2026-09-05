@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>    @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&display=swap');
+    :root{
+      --chrome:#32353a; --chrome-alto:#3d4147; --chrome-linea:#4a4e55;
+      --bg:#d8d4cc; --bg-soft:#e6e3dd; --panel:#f6f4f1; --panel-2:#eceae6; --border:#d2cec8;
+      --text:#25282c; --text-dim:#6a6f76; --text-faint:#9a9fa6; --text-light:#f6f4f1;
+      --accent:#e07a2a; --good:#4a9160; --warn:#c69320; --bad:#b8443a;
+      --sec:#2d5c8a; --radius:4px;
+      --display:'Oswald','Arial Narrow',sans-serif;
+      --grano:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.3'/%3E%3C/svg%3E");
+      --relieve:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,100,70,.2), 0 6px 16px rgba(20,14,8,.2);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);font-size:15px;
+      }
+    a{color:var(--accent)} a:hover{color:#b8621f}
+    .num{font-variant-numeric:tabular-nums}
+    .pantalla{width:1440px;height:900px;display:flex;flex-direction:column;position:relative;
+      background:linear-gradient(180deg,rgba(32,28,24,.42),rgba(24,21,19,.62)),
+        repeating-linear-gradient(96deg,#6b4f31 0 38px,#5d442a 38px 76px);}
+    .topbar{background:var(--chrome);border-bottom:1px solid var(--chrome-linea);display:flex;align-items:stretch;padding:0 16px;flex-shrink:0}
+    .marca{display:flex;align-items:center;gap:9px;padding:9px 17px 9px 0;border-right:1px solid var(--chrome-linea);margin-right:6px}
+    .marca .cn{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:18px;line-height:1.05;color:var(--text-light)}
+    .marca .tp{font-family:var(--display);text-transform:uppercase;letter-spacing:.12em;font-size:9px;color:var(--text-faint);margin-top:3px}
+    .tabs{display:flex;align-items:stretch}
+    .tabs .t{border:0;background:transparent;color:var(--text-faint);font-family:var(--display);font-weight:500;text-transform:uppercase;letter-spacing:.07em;font-size:12px;padding:8px 13px 7px;display:flex;align-items:center;gap:6px;border-bottom:3px solid transparent}
+    .tabs .t::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--sec)}
+    .tabs .t.on{background:var(--chrome-alto);color:var(--text-light);border-bottom-color:var(--sec)}
+    .salir{margin-left:auto;align-self:center;background:transparent;border:1px solid var(--chrome-linea);color:var(--text-faint);font-family:var(--display);text-transform:uppercase;letter-spacing:.09em;font-size:12px;padding:6px 14px;border-radius:var(--radius)}
+    .pasos{display:flex;gap:8px;padding:10px 16px 0;flex-shrink:0}
+    .paso{font-size:12px;color:var(--text-faint);border:1px solid rgba(210,206,200,.32);border-radius:14px;padding:3px 11px}
+    .paso.on{color:#cfe0f0;border-color:#5a86b3;background:rgba(45,92,138,.28)}
+    .card{background-color:var(--panel);background-image:var(--grano);background-blend-mode:multiply;
+      border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--relieve);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+    .band{background:var(--sec);color:var(--text-light);font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.08em;
+      text-transform:uppercase;padding:7px 13px;display:flex;align-items:center;gap:7px;flex-shrink:0}
+    .band .der{margin-left:auto;font-weight:400;font-size:12px;opacity:.85;letter-spacing:.05em}
+    .cuerpo{padding:12px 13px;min-height:0;overflow:auto}
+    table.pl{width:100%;border-collapse:collapse}
+    table.pl th{font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:11px;color:var(--text-faint);
+      font-weight:500;text-align:left;padding:3px 6px;border-bottom:1px solid var(--border);white-space:nowrap}
+    table.pl td{padding:4px 6px;font-size:13.5px;border-bottom:1px solid var(--border)}
+    table.pl td.n,table.pl th.n{text-align:right;font-variant-numeric:tabular-nums}
+    table.pl tr.tot td{font-weight:700;border-top:2px solid var(--border);border-bottom:0;background:var(--bg-soft)}
+    .eqcab{display:flex;align-items:center;gap:10px;padding:8px 11px;background:var(--panel-2);border-bottom:3px solid var(--border)}
+    .eqcab .pts{font-family:var(--display);font-size:30px;font-weight:600;line-height:1;color:var(--text-dim);font-variant-numeric:tabular-nums}
+    .eqcab .pts.g{color:var(--text)}
+    .eqcab .nom{margin-left:auto;font-weight:700;font-size:14.5px;text-align:right;line-height:1.15}
+    .bloque{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--panel)}
+    .chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:12px;padding:2px 10px;font-size:12px;background:var(--panel-2)}
+    .chip.mal{color:var(--bad);border-color:#e0b3ae;background:#f7e9e7;font-family:var(--display);font-weight:600;letter-spacing:.09em;text-transform:uppercase}
+    .relato{margin:0;padding-left:17px;font-size:13px;line-height:1.5;color:var(--text)}
+    .relato li{margin-bottom:5px}
+    .btn{background:var(--accent);border:1px solid var(--accent);color:#2a1a08;font-family:var(--display);font-weight:600;
+      text-transform:uppercase;letter-spacing:.07em;font-size:14px;padding:9px 18px;border-radius:var(--radius)}
+    .mini{font-size:11.5px;color:var(--text-faint)}
+</style>
+</helmet>
+<div class="pantalla">
+  <div class="topbar"><div class="marca"><svg width="30" height="35" viewBox="0 0 34 40" style="flex-shrink:0"><path d="M2 2 h30 v21 a15 16 0 0 1 -15 15 a15 16 0 0 1 -15 -15 Z" fill="#2d5c8a" stroke="rgba(0,0,0,.35)" stroke-width="1.4"/><rect x="2" y="11.5" width="30" height="5.5" fill="#e8e4dc" opacity=".92"/><text x="17" y="30" text-anchor="middle" font-family="Oswald,sans-serif" font-size="11" font-weight="600" fill="#e8e4dc">EP</text></svg><div><div class="cn">Atlético El Parque</div><div class="tp">Temporada 1 · Fundado en 2025</div></div></div><div class="tabs"><div class="t">Tablero</div><div class="t on">Partidos</div><div class="t">Liga</div><div class="t">Plantel</div><div class="t">Finanzas</div><div class="t">El club</div><div class="t">Historia</div></div><button class="salir">Salir</button></div><div class="pasos"><span class="paso">1 · La semana</span><span class="paso">2 · Convocatoria</span><span class="paso">3 · Quinteto</span><span class="paso">4 · Partido</span><span class="paso on">5 · Informe</span></div>
+  <div style="display:grid;grid-template-rows:auto minmax(0,1fr) 200px auto;gap:12px;padding:12px 16px 14px;flex:1;min-height:0">
+    <div class="card" style="flex-direction:row;align-items:center;gap:18px;padding:11px 16px">
+      <span class="chip mal">Derrota</span><div style="display:flex;align-items:center;gap:11px"><svg width="34" height="40" viewBox="0 0 34 40" style="flex-shrink:0"><path d="M2 2 h30 v21 a15 16 0 0 1 -15 15 a15 16 0 0 1 -15 -15 Z" fill="#2d5c8a" stroke="rgba(0,0,0,.35)" stroke-width="1.4"/><rect x="2" y="11.5" width="30" height="5.5" fill="#e8e4dc" opacity=".92"/><text x="17" y="30" text-anchor="middle" font-family="Oswald,sans-serif" font-size="11" font-weight="600" fill="#e8e4dc">EP</text></svg><div style="font-family:var(--display);font-size:36px;font-weight:600;line-height:1;color:var(--bad)" class="num">66</div></div><div style="font-family:var(--display);color:var(--text-faint);font-size:13px;letter-spacing:.12em">VS</div><div style="display:flex;align-items:center;gap:11px"><div style="font-family:var(--display);font-size:36px;font-weight:600;line-height:1;color:var(--good)" class="num">67</div><svg width="34" height="40" viewBox="0 0 34 40" style="flex-shrink:0"><path d="M2 2 h30 v21 a15 16 0 0 1 -15 15 a15 16 0 0 1 -15 -15 Z" fill="#2f6b4f" stroke="rgba(0,0,0,.35)" stroke-width="1.4"/><rect x="2" y="11.5" width="30" height="5.5" fill="#efe9dc" opacity=".92"/><text x="17" y="30" text-anchor="middle" font-family="Oswald,sans-serif" font-size="11" font-weight="600" fill="#efe9dc">LC</text></svg></div>
+      <div style="margin-left:26px"><table class="pl num" style="width:auto"><thead><tr><th></th><th class="n">Q1</th><th class="n">Q2</th><th class="n">Q3</th><th class="n">Q4</th><th class="n">Total</th></tr></thead><tbody><tr><td style="font-size:12.5px">Nosotros</td><td class="n">16</td><td class="n">15</td><td class="n">17</td><td class="n">18</td><td class="n" style="font-weight:700">66</td></tr><tr><td style="font-size:12.5px">Los Cardales</td><td class="n">16</td><td class="n">17</td><td class="n">16</td><td class="n">18</td><td class="n" style="font-weight:700">67</td></tr></tbody></table></div>
+      <div style="margin-left:auto;max-width:250px;font-size:13px;color:var(--text-dim);text-align:right;line-height:1.4">Derrota ajustada ante Los Cardales. Se escapó por detalles.</div>
+    </div>
+    <div class="card">
+      <div class="band">Planilla del partido <span class="der">Figura: “Tato” Fernández · 22 pts</span></div>
+      <div class="cuerpo" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start">
+        <div class="bloque"><div class="eqcab"><svg width="34" height="40" viewBox="0 0 34 40" style="flex-shrink:0"><path d="M2 2 h30 v21 a15 16 0 0 1 -15 15 a15 16 0 0 1 -15 -15 Z" fill="#2d5c8a" stroke="rgba(0,0,0,.35)" stroke-width="1.4"/><rect x="2" y="11.5" width="30" height="5.5" fill="#e8e4dc" opacity=".92"/><text x="17" y="30" text-anchor="middle" font-family="Oswald,sans-serif" font-size="11" font-weight="600" fill="#e8e4dc">EP</text></svg><div class="pts">66</div><div class="nom">Atlético El Parque</div></div><table class="pl"><thead><tr><th>Nombre</th><th class="n">Pts</th><th class="n">Triples</th><th class="n">Asists</th><th class="n">Tapones</th><th class="n">Rebotes</th><th class="n">Nota</th></tr></thead><tbody><tr><td>"Tato" Fernández <span style="color:#b07f27">★</span></td><td class="n" style="font-weight:700">22</td><td class="n">1</td><td class="n">1</td><td class="n">0</td><td class="n">9</td><td class="n">8/10</td></tr><tr><td>Seba Cardozo</td><td class="n" style="font-weight:700">16</td><td class="n">1</td><td class="n">2</td><td class="n">1</td><td class="n">13</td><td class="n">8/10</td></tr><tr><td>Martín Techera</td><td class="n" style="font-weight:700">9</td><td class="n">2</td><td class="n">4</td><td class="n">0</td><td class="n">4</td><td class="n">4/10</td></tr><tr><td>Facundo Silva</td><td class="n" style="font-weight:700">7</td><td class="n">1</td><td class="n">2</td><td class="n">0</td><td class="n">0</td><td class="n">6/10</td></tr><tr><td>"Chino" Rodríguez</td><td class="n" style="font-weight:700">7</td><td class="n">1</td><td class="n">3</td><td class="n">0</td><td class="n">2</td><td class="n">6/10</td></tr><tr><td>Gonzalo Viera</td><td class="n" style="font-weight:700">3</td><td class="n">0</td><td class="n">0</td><td class="n">1</td><td class="n">4</td><td class="n">4/10</td></tr><tr><td>Diego Núñez</td><td class="n" style="font-weight:700">2</td><td class="n">0</td><td class="n">1</td><td class="n">0</td><td class="n">0</td><td class="n">3/10</td></tr><tr class="tot"><td>Total:</td><td class="n">66</td><td class="n">6</td><td class="n">13</td><td class="n">2</td><td class="n">32</td><td></td></tr></tbody></table></div><div class="bloque"><div class="eqcab"><svg width="34" height="40" viewBox="0 0 34 40" style="flex-shrink:0"><path d="M2 2 h30 v21 a15 16 0 0 1 -15 15 a15 16 0 0 1 -15 -15 Z" fill="#2f6b4f" stroke="rgba(0,0,0,.35)" stroke-width="1.4"/><rect x="2" y="11.5" width="30" height="5.5" fill="#efe9dc" opacity=".92"/><text x="17" y="30" text-anchor="middle" font-family="Oswald,sans-serif" font-size="11" font-weight="600" fill="#efe9dc">LC</text></svg><div class="pts g">67</div><div class="nom">Los Cardales</div></div><table class="pl"><thead><tr><th>Nombre</th><th class="n">Pts</th><th class="n">Triples</th><th class="n">Asists</th><th class="n">Tapones</th><th class="n">Rebotes</th></tr></thead><tbody><tr><td>Maxi Castro</td><td class="n" style="font-weight:700">18</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">7</td></tr><tr><td>Martín Morales</td><td class="n" style="font-weight:700">18</td><td class="n">1</td><td class="n">1</td><td class="n">0</td><td class="n">3</td></tr><tr><td>Cristian Morales</td><td class="n" style="font-weight:700">12</td><td class="n">0</td><td class="n">3</td><td class="n">0</td><td class="n">2</td></tr><tr><td>Facundo Fernández</td><td class="n" style="font-weight:700">9</td><td class="n">2</td><td class="n">1</td><td class="n">0</td><td class="n">2</td></tr><tr><td>Agustín Curbelo</td><td class="n" style="font-weight:700">8</td><td class="n">1</td><td class="n">2</td><td class="n">0</td><td class="n">0</td></tr><tr><td>Nicolás Pérez</td><td class="n" style="font-weight:700">1</td><td class="n">0</td><td class="n">1</td><td class="n">0</td><td class="n">6</td></tr><tr><td>Washington Duarte</td><td class="n" style="font-weight:700">1</td><td class="n">0</td><td class="n">0</td><td class="n">2</td><td class="n">8</td></tr><tr class="tot"><td>Total:</td><td class="n">67</td><td class="n">4</td><td class="n">8</td><td class="n">2</td><td class="n">28</td></tr></tbody></table></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;min-height:0">
+      <div class="card"><div class="band">El relato del partido</div><div class="cuerpo"><ul class="relato"><li>Dirige Barreto: le encanta ser noticia: partido cortado seguro.</li><li>La zona les deja tiros abiertos y sus tiradores no perdonan.</li><li>Mueven la pelota hasta encontrar al tirador libre contra la zona: y la meten.</li><li>Cambio: entra “Chino” Rodríguez por Gonzalo Viera.</li><li>Seguimos sin Pívot de oficio en cancha, y el rival lo huele.</li></ul></div></div>
+      <div class="card"><div class="band">Cómo quedó cada uno</div><div class="cuerpo"><div style="display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)"><div style="width:26px;height:26px;border-radius:50%;background:#c9bda8;flex-shrink:0"></div><div style="min-width:0"><div style="font-family:var(--display);text-transform:uppercase;letter-spacing:.05em;font-size:11.5px;color:var(--text-dim)">“Chino” Rodríguez</div><div style="font-size:12.5px;line-height:1.35"><span class="chip" style="color:var(--good);font-size:11px;padding:1px 7px">Conforme</span> “Se hizo lo que había que hacer.”</div></div></div><div style="display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)"><div style="width:26px;height:26px;border-radius:50%;background:#c9bda8;flex-shrink:0"></div><div style="min-width:0"><div style="font-family:var(--display);text-transform:uppercase;letter-spacing:.05em;font-size:11.5px;color:var(--text-dim)">Facundo Silva</div><div style="font-size:12.5px;line-height:1.35"><span class="chip" style="color:var(--good);font-size:11px;padding:1px 7px">Conforme</span> “Bien. Sin mucho más para decir.”</div></div></div><div style="display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)"><div style="width:26px;height:26px;border-radius:50%;background:#c9bda8;flex-shrink:0"></div><div style="min-width:0"><div style="font-family:var(--display);text-transform:uppercase;letter-spacing:.05em;font-size:11.5px;color:var(--text-dim)">Martín Techera</div><div style="font-size:12.5px;line-height:1.35"><span class="chip" style="color:var(--warn);font-size:11px;padding:1px 7px">Decepcionado</span> “Hoy no estuve. El equipo merecía más.”</div></div></div></div></div>
+    </div>
+    <div><button class="btn">Avanzar a la semana 7 →</button></div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

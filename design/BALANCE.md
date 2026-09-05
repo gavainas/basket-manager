@@ -14,6 +14,7 @@ simular desde Node.
 npm run sim          # 80 temporadas por estrategia (~1 min)
 npm run sim -- 30    # menos corridas, más rápido
 npm run sim:notas    # distribución de la nota del partido (1-10) por minutos
+npm run sim:margenes # margen final contra rivales de distinta fuerza (compresión del marcador)
 ```
 
 Ojo con comparar corridas entre versiones: cualquier cambio que consuma tiradas

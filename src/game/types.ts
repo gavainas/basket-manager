@@ -63,10 +63,42 @@ export interface BoxScoreLine {
   points: number;
   rebounds: number;
   assists: number;
+  /** Triples convertidos (van incluidos en `points`). */
+  triples: number;
+  /** Tapones. */
+  blocks: number;
   rating: number;
   mvp: boolean;
   /** Frase que explica la nota. */
   comment?: string;
+}
+
+/**
+ * Una línea de la planilla del rival: las mismas cinco columnas que la nuestra,
+ * pero sin nota ni MVP (a los de enfrente no los calificamos).
+ */
+export interface RivalBoxLine {
+  playerId: string;
+  name: string;
+  position: Position;
+  points: number;
+  triples: number;
+  assists: number;
+  blocks: number;
+  rebounds: number;
+}
+
+/**
+ * Lo que acumula una persona en la temporada. Las cinco columnas de la planilla
+ * de la liga, más los partidos jugados para poder promediar.
+ */
+export interface StatLine {
+  pts: number;
+  t3: number;
+  reb: number;
+  ast: number;
+  blk: number;
+  games: number;
 }
 
 // ---------- Estado emocional postpartido ----------
@@ -290,7 +322,7 @@ export interface LiveMatchState {
   /** Minutos jugados por cada citado. */
   minutes: Record<string, number>;
   /** Planilla en vivo: puntos, rebotes y asistencias por citado. */
-  stats: Record<string, { pts: number; reb: number; ast: number }>;
+  stats: Record<string, { pts: number; reb: number; ast: number; t3: number; blk: number }>;
   /** Cambios hechos en el descanso, para el relato del próximo cuarto. */
   pendingSubNotes: string[];
   rivalFreshness: number;
@@ -309,7 +341,13 @@ export interface LiveMatchState {
   /** El rival metió una presión especial en el último cuarto. */
   rivalPush: boolean;
   /** Convocatoria rival del día: quiénes vinieron y cuánto pesa (opcional por compatibilidad). */
-  rivalSquad?: { presentCount: number; mod: number; notes: string[] };
+  rivalSquad?: {
+    presentCount: number;
+    mod: number;
+    notes: string[];
+    /** Los que efectivamente vinieron: con esto se arma su planilla al final. */
+    presentIds?: string[];
+  };
   /** Tensión con los jueces (0-5): percepción del equipo, afecta concentración. */
   refTension?: number;
   /** El próximo cuarto sale con bronca canalizada (+intensidad). */
@@ -384,6 +422,8 @@ export interface MatchResult {
   effects: string[];
   /** Planilla del partido, ordenada por puntos (vacía en forfeit). */
   box: BoxScoreLine[];
+  /** Planilla del rival con los que realmente vinieron (vacía si no tiene plantel generado). */
+  rivalBox?: RivalBoxLine[];
   /** Cómo quedó cada uno del plantel al terminar (vacío en forfeit). */
   moods?: PlayerMood[];
 }
@@ -897,6 +937,12 @@ export interface GameState {
   /** Partido en curso; null fuera de la fase 'match'. */
   live: LiveMatchState | null;
   lastMatch: MatchResult | null;
+  /**
+   * Lo que lleva cada persona de la divisional en la temporada, para las tablas
+   * de líderes. Las llaves son ids de jugador (los tuyos) o de persona del
+   * mundo. Se vacía al empezar cada temporada; pesa ~25 KB con la liga entera.
+   */
+  leagueStats?: Record<string, StatLine>;
   history: MatchResult[];
   news: NewsItem[];
   ledger: LedgerEntry[];

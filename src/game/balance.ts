@@ -135,13 +135,35 @@ export const BALANCE = {
     pushFreshCost: 5,
     pushRivalBoost: 1.05,
     hombreWearPerQuarter: 1, // desgaste físico extra post partido por cuarto en hombre
-    // Planilla: reparto de puntos/rebotes/asistencias por cuarto.
-    boxRebMin: 7,
-    boxRebMax: 12,
-    boxAstMin: 3,
-    boxAstMax: 6,
-    estrellaPtsBias: 1.8, // la figura se lleva más tiros con ataque 'estrella'
-    equipoAstExtra: 2, // mover la pelota genera más asistencias
+    // Planilla: reparto por cuarto. Calibrado contra planillas reales de la
+    // liga de Gabi (Tranquilo Nosotros): ~60 puntos, ~32 rebotes, ~11
+    // asistencias, ~5 triples y ~1 tapón por equipo por partido. Antes las
+    // asistencias salían al doble de lo real y triples/tapones no existían.
+    boxRebMin: 6,
+    boxRebMax: 10,
+    boxAstMin: 1,
+    boxAstMax: 3,
+    // Dársela a la estrella tiene que VERSE en la planilla: con este ataque la
+    // figura se lleva entre el 40% y el 50% de los puntos del equipo (~28 de
+    // 64). Con 1.8 se quedaba en 39% y la táctica no se distinguía del reparto
+    // normal al mirar los números. Ojo: esto mueve QUIÉN anota, no CUÁNTO
+    // anota el equipo — el balance del marcador no se toca.
+    estrellaPtsBias: 2.35,
+    // Concentración del goleo: el reparto de puntos eleva el rendimiento del
+    // día a esta potencia. Con 1 el equipo anota parejo y no hay goleador;
+    // con 2.2 aparece el que se echa el equipo al hombro, como en las
+    // planillas reales (un tipo con 25 de los 64 del equipo).
+    boxPtsConcentracion: 2.2,
+    equipoAstExtra: 1, // mover la pelota genera más asistencias
+    // Triples: cuántos de los puntos del cuarto vinieron de afuera. Se sortea
+    // sobre los puntos ya repartidos, así nunca hay más triples que puntos.
+    boxTripleShare: 0.225, // proporción del marcador que llega de tres
+    boxTripleSpread: 0.5, // ± sobre esa proporción, por cuarto
+    boxTripleZonaBonus: 1.35, // contra zona se tira (y se mete) más de afuera
+    boxTripleCorrerBonus: 1.12,
+    // Tapones: raros. ~1 por equipo por partido en el básquet de barrio.
+    boxBlockChance: 0.32, // prob. de que haya al menos uno en el cuarto
+    boxBlockAggressive: 1.5, // marcando hombre o presionando se tapa más
   },
 
   rotation: {
