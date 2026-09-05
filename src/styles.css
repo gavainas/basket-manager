@@ -3184,3 +3184,75 @@ button.mini.blue.on {
 .ps-who .name {
   font-weight: 600;
 }
+
+/* ---------- Planilla del partido, con identidad de los dos clubes ----------
+   Copia la forma de las planillas reales de la liga: escudo, marcador grande y
+   las cinco columnas que la gente mira. El color del club vive en el escudo y
+   en el filete del cabezal — nunca en las columnas, para que dos camisetas
+   parecidas no vuelvan la tabla ilegible. */
+.planilla-dos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 860px) {
+  .planilla-dos { grid-template-columns: 1fr; }
+}
+
+.planilla-equipo {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.planilla-cabezal {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--panel-2);
+  border-bottom: 3px solid var(--border);
+}
+
+.planilla-marcador {
+  font-family: var(--font-display, inherit);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.planilla-marcador.gano { color: var(--text); }
+
+.planilla-club {
+  font-weight: 700;
+  font-size: 0.98rem;
+  line-height: 1.15;
+  margin-left: auto;
+  text-align: right;
+}
+
+.planilla-hoja table.planilla { width: 100%; }
+.planilla-hoja table.planilla th,
+.planilla-hoja table.planilla td { padding: 0.24rem 0.5rem; }
+
+tr.planilla-total td {
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+  background: var(--bg-soft);
+}
+
+/* Líderes de la liga: el club al que pertenece cada uno, y los propios marcados
+   sin gritar (un filete, no un color de fondo). */
+.ranking-list .rk-club {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--text-faint);
+  line-height: 1.2;
+}
+.ranking-list li.rk-propio {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.4rem;
+  margin-left: -0.4rem;
+}

@@ -444,6 +444,7 @@ export function createPreseasonNewGame(seed: number, difficulty: AbsenceDifficul
     live: null,
     lastMatch: null,
     history: [],
+    leagueStats: {},
     news: [
       { week: 0, text: 'Arranca la pretemporada: hay que confirmar el plantel e inscribir al club antes de la fecha límite.', tone: 'neutral' },
       { week: 0, text: 'Sos el nuevo manager de Atlético El Parque. Primero, armá el equipo.', tone: 'good' },
@@ -580,6 +581,7 @@ export function startPreseason(state: GameState): GameState {
     live: null,
     lastMatch: null,
     history: [],
+    leagueStats: {},
     news: [
       ...(debtSettled > 0
         ? [{

@@ -11,6 +11,7 @@ import { courtFreshness, evaluateTeam, isSelectable } from '../game/match';
 import { userFixtureOfWeek } from '../game/world';
 import type { WeekDay } from '../game/types';
 import { Bar } from './Bar';
+import { BoxScoreSheet } from './BoxScoreSheet';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { StyleChip } from './StyleChip';
@@ -1679,18 +1680,17 @@ function MatchResultPanel({ state, dispatch }: Props) {
         )}
       </div>
 
+      <BoxScoreSheet state={state} match={m} />
+
       {(m.box ?? []).length > 0 && (
         <div className="card" style={{ marginTop: '1rem' }}>
-          <h3>Planilla del partido</h3>
+          <h3>Notas del partido</h3>
           <div className="table-wrap">
             <table className="planilla">
               <thead>
                 <tr>
                   <th>Jugador</th>
                   <th className="num">Min</th>
-                  <th className="num">Pts</th>
-                  <th className="num">Reb</th>
-                  <th className="num">Ast</th>
                   <th className="num">Nota</th>
                 </tr>
               </thead>
@@ -1701,11 +1701,6 @@ function MatchResultPanel({ state, dispatch }: Props) {
                       <PlayerLink id={line.playerId}>{line.name}</PlayerLink> {line.mvp ? <Icon name="estrella" size={11} /> : ''}
                     </td>
                     <td className="num">{line.minutes}&apos;</td>
-                    <td className="num" style={{ fontWeight: 700 }}>
-                      {line.points}
-                    </td>
-                    <td className="num">{line.rebounds}</td>
-                    <td className="num">{line.assists}</td>
                     <td className="num">
                       {line.comment ? <Tip text={line.comment}>{line.rating}/10</Tip> : `${line.rating}/10`}
                     </td>

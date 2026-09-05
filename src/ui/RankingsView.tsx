@@ -1,7 +1,9 @@
 import type { GameState, Player } from '../game/types';
+import { leaders, STAT_LABELS, type StatKey } from '../game/boxScore';
 import { affinity, RIVALRY_THRESHOLD } from '../game/relations';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
+import { WorldPlayerLink } from './WorldPlayerLink';
 
 interface Row {
   id: string;
@@ -33,6 +35,78 @@ function RankingCard({ title, icon, rows, empty }: { title: string; icon: IconNa
         </ol>
       )}
     </div>
+  );
+}
+
+const ICONO_LIGA: Record<StatKey, IconName> = {
+  pts: 'tiradores',
+  t3: 'tiradores',
+  ast: 'social',
+  reb: 'interior',
+  blk: 'cancha',
+};
+
+/**
+ * Los líderes de la divisional entera, no sólo del club. Los partidos que se
+ * juegan sin vos también dejan planilla, así que el goleador de la liga puede
+ * ser perfectamente alguien a quien todavía no enfrentaste.
+ */
+function LeagueLeaders({ state }: { state: GameState }) {
+  const stats = state.leagueStats ?? {};
+  const ctx = {
+    userPlayers: state.players.map((p) => ({ id: p.id, name: p.name })),
+    worldPlayers: state.world.players,
+    userClubName: state.club.name,
+  };
+  const claves: StatKey[] = ['pts', 't3', 'ast', 'reb', 'blk'];
+  const hayAlgo = claves.some((k) => leaders(stats, k, ctx, { limit: 1 }).length > 0);
+
+  return (
+    <>
+      <h2 className="section-title" style={{ marginTop: '1.4rem' }}>
+        <Icon name="rankings" size={17} /> Los números de la liga
+      </h2>
+      {!hayAlgo ? (
+        <div className="card">
+          <p className="muted" style={{ margin: 0 }}>
+            Todavía no hay suficientes fechas jugadas. Las tablas piden un mínimo de 3 partidos.
+          </p>
+        </div>
+      ) : (
+        <div className="grid cols-3">
+          {claves.map((k) => {
+            const filas = leaders(stats, k, ctx, { limit: 5 });
+            return (
+              <div className="card ranking-card" key={k}>
+                <h3>
+                  <Icon name={ICONO_LIGA[k]} size={16} /> {STAT_LABELS[k].titulo}
+                </h3>
+                {filas.length === 0 ? (
+                  <p className="muted" style={{ margin: 0 }}>Sin datos todavía.</p>
+                ) : (
+                  <ol className="ranking-list">
+                    {filas.map((r, i) => (
+                      <li key={r.playerId} className={r.isUserClub ? 'rk-propio' : undefined}>
+                        <span className="rk-pos">{i + 1}</span>
+                        <span className="rk-name">
+                          {r.isUserClub ? (
+                            <PlayerLink id={r.playerId}>{r.name}</PlayerLink>
+                          ) : (
+                            <WorldPlayerLink id={r.playerId}>{r.name}</WorldPlayerLink>
+                          )}
+                          <span className="rk-club">{r.clubName}</span>
+                        </span>
+                        <span className="rk-value">{r.average.toFixed(1)}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -170,6 +244,8 @@ export function RankingsView({ state }: { state: GameState }) {
           empty="Sin lesionados: a tocar madera."
         />
       </div>
+
+      <LeagueLeaders state={state} />
     </div>
   );
 }

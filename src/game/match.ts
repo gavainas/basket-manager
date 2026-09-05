@@ -6,9 +6,11 @@ import { fragilityOf, MATCH_INJURY_NOTES, rollInjuryWeeks } from './injuries';
 import { leagueNewsForWeek, refereeOfWeek, rivalryWith, settleRivalryAfterMatch, type OtherResult } from './leagueLife';
 import { bumpGrievance, sootheGrievance } from './mood';
 import { fallbackNote, quarterFlavor, rollRefIncident } from './narrative';
+import { acumular, repartirPlanilla, type StatSubject } from './boxScore';
+import { profileOf } from './profile';
 import { computeRating, type PlayerRating } from './rating';
 import { logClubEvent, logPlayerEvent } from './timeline';
-import { rollRivalMatchday, USER_TEAM_ID } from './world';
+import { rollRivalMatchday, teamByLegacyRival, teamRoster, USER_TEAM_ID } from './world';
 import type {
   BoxScoreLine,
   GameState,
@@ -19,6 +21,7 @@ import type {
   PlayerMood,
   Position,
   Rival,
+  RivalBoxLine,
   TeamEval,
 } from './types';
 import type { Rng } from './rng';
@@ -380,6 +383,50 @@ function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
       loseScore,
       winnerOdds: aWins ? pa : 1 - pa,
     });
+
+    // Los partidos que se juegan sin vos también dejan planilla: si no, el
+    // goleador de la liga sería siempre alguien que te enfrentó a vos.
+    const stats = (s.leagueStats ??= {});
+    for (const [rival, puntos] of [
+      [a, aWins ? winScore : loseScore],
+      [b, aWins ? loseScore : winScore],
+    ] as const) {
+      const sujetos = sujetosDeEquipo(s, rival.id);
+      if (sujetos.length > 0) acumular(stats, repartirPlanilla(sujetos, puntos, rng));
+    }
+  }
+
+  // Lo del club sale de la planilla real del partido, no de una estimación.
+  if (!result.forfeit) {
+    const stats = (s.leagueStats ??= {});
+    acumular(
+      stats,
+      result.box.map((b) => ({
+        id: b.playerId,
+        name: b.name,
+        position: (s.players.find((p) => p.id === b.playerId)?.position ?? 'Alero') as Position,
+        pts: b.points,
+        t3: b.triples,
+        reb: b.rebounds,
+        ast: b.assists,
+        blk: b.blocks,
+        games: 1,
+      }))
+    );
+    acumular(
+      stats,
+      (result.rivalBox ?? []).map((b) => ({
+        id: b.playerId,
+        name: b.name,
+        position: b.position,
+        pts: b.points,
+        t3: b.triples,
+        reb: b.rebounds,
+        ast: b.assists,
+        blk: b.blocks,
+        games: 1,
+      }))
+    );
   }
 
   s.lastMatch = result;
@@ -520,7 +567,7 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
   const perfs: Record<string, number> = {};
   const playerFresh: Record<string, number> = {};
   const minutes: Record<string, number> = {};
-  const stats: Record<string, { pts: number; reb: number; ast: number }> = {};
+  const stats: Record<string, { pts: number; reb: number; ast: number; t3: number; blk: number }> = {};
   for (const p of squad) {
     perfs[p.id] = playerEffective(p) * rng.range(0.78, 1.22);
     // El jugador-DT juega pensando en los cambios: el doble rol se paga.
@@ -533,7 +580,7 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
       playerFresh[p.id] = Math.round(playerFresh[p.id] * 0.88);
     }
     minutes[p.id] = 0;
-    stats[p.id] = { pts: 0, reb: 0, ast: 0 };
+    stats[p.id] = { pts: 0, reb: 0, ast: 0, t3: 0, blk: 0 };
   }
   const star = [...starters].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
 
@@ -582,7 +629,13 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     minutes,
     stats,
     pendingSubNotes: prematchNotes,
-    rivalSquad: { presentCount: rivalSquad.presentCount, mod: rivalSquad.mod, notes: rivalSquad.notes },
+    rivalSquad: {
+      presentCount: rivalSquad.presentCount,
+      mod: rivalSquad.mod,
+      notes: rivalSquad.notes,
+      // Con quiénes vino: al final se les arma la planilla con nombre y puesto.
+      presentIds: rivalSquad.presentIds,
+    },
     refTension: 0,
     rageBoost: false,
     pendingIncident: null,
@@ -780,6 +833,42 @@ function distribute(total: number, weights: { id: string; w: number }[], rng: Rn
 
 const REB_POS_WEIGHT: Record<Position, number> = { Base: 0.9, Escolta: 1.1, Alero: 1.7, 'Ala-Pívot': 2.4, Pívot: 3 };
 const AST_POS_WEIGHT: Record<Position, number> = { Base: 3, Escolta: 1.8, Alero: 1.2, 'Ala-Pívot': 0.8, Pívot: 0.6 };
+
+/** Elige uno de la lista con peso. Devuelve null si no hay candidatos. */
+function pickWeighted<T>(items: T[], peso: (x: T) => number, rng: Rng): T | null {
+  if (items.length === 0) return null;
+  const pesos = items.map((x) => Math.max(0.0001, peso(x)));
+  const total = pesos.reduce((t, w) => t + w, 0);
+  let r = rng.range(0, total);
+  for (let i = 0; i < items.length; i++) {
+    r -= pesos[i];
+    if (r <= 0) return items[i];
+  }
+  return items[items.length - 1];
+}
+
+/**
+ * Reparte los triples del cuarto ENTRE LOS PUNTOS YA ASIGNADOS: nadie puede
+ * meter más de tres puntos por triple de los que anotó. Se sortea de a un
+ * triple, con peso por perfil de tirador, y solo entre los que tienen 3 puntos
+ * libres. Así el pívot que anotó 8 abajo del aro no aparece con 2 triples.
+ */
+function repartirTriples(
+  onCourt: Player[],
+  qPts: Record<string, number>,
+  totalTriples: number,
+  rng: Rng
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const p of onCourt) out[p.id] = 0;
+  for (let i = 0; i < totalTriples; i++) {
+    const elegibles = onCourt.filter((p) => (qPts[p.id] ?? 0) - out[p.id] * 3 >= 3);
+    const elegido = pickWeighted(elegibles, (p) => Math.pow(profileOf(p).outside, 2.2), rng);
+    if (!elegido) break;
+    out[elegido.id] += 1;
+  }
+  return out;
+}
 
 /** Juega el próximo cuarto con las tácticas y los 5 en cancha de state.live. */
 export function playQuarter(state: GameState, rng: Rng): GameState {
@@ -1087,29 +1176,60 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
 
   // --- Planilla del cuarto: puntos, rebotes y asistencias ---
   const perfOf = (id: string) => live.perfs[id] ?? 50;
+  // El goleo no se reparte parejo: el que está en su día se lleva los tiros.
+  // Sin la potencia, cinco tipos anotaban 12 cada uno y no había goleador.
   const qPts = distribute(
     ourQ,
     onCourt.map((p) => ({
       id: p.id,
-      w: perfOf(p.id) * (live.attack === 'estrella' && p.id === star.id ? M.estrellaPtsBias : 1),
+      w:
+        Math.pow(perfOf(p.id), M.boxPtsConcentracion) *
+        (live.attack === 'estrella' && p.id === star.id ? M.estrellaPtsBias : 1),
     })),
     rng
   );
+  // El puesto pone el piso y el perfil manda: un ala-pívot que no rebotea
+  // baja menos que un alero que sí, y eso se lee en la planilla.
   const qReb = distribute(
     rng.int(M.boxRebMin, M.boxRebMax),
-    onCourt.map((p) => ({ id: p.id, w: REB_POS_WEIGHT[p.position] * (0.6 + perfOf(p.id) / 150) })),
+    onCourt.map((p) => ({
+      id: p.id,
+      w: REB_POS_WEIGHT[p.position] * (0.45 + profileOf(p).inside / 100) * (0.6 + perfOf(p.id) / 150),
+    })),
     rng
   );
   const qAst = distribute(
     rng.int(M.boxAstMin, M.boxAstMax) + (live.attack === 'equipo' ? M.equipoAstExtra : 0),
-    onCourt.map((p) => ({ id: p.id, w: AST_POS_WEIGHT[p.position] * (0.6 + perfOf(p.id) / 150) })),
+    onCourt.map((p) => ({
+      id: p.id,
+      w: AST_POS_WEIGHT[p.position] * (0.45 + profileOf(p).vision / 100) * (0.6 + perfOf(p.id) / 150),
+    })),
     rng
   );
+
+  // Triples: una porción del marcador del cuarto, repartida entre los que
+  // efectivamente anotaron, con peso de tirador.
+  let shareTriples = M.boxTripleShare * rng.range(1 - M.boxTripleSpread, 1 + M.boxTripleSpread);
+  if (rival.style === 'internos') shareTriples *= 1.1; // sus grandotes no salen a cerrar
+  if (live.attack === 'correr') shareTriples *= M.boxTripleCorrerBonus;
+  const qTriples = repartirTriples(onCourt, qPts, Math.round((ourQ * shareTriples) / 3), rng);
+
+  // Tapones: uno cada tanto, y se lo lleva el que vive abajo del aro.
+  const qBlk: Record<string, number> = {};
+  for (const p of onCourt) qBlk[p.id] = 0;
+  const chanceTapon =
+    M.boxBlockChance * (live.defense === 'zona' ? 1 : M.boxBlockAggressive);
+  if (rng.chance(chanceTapon)) {
+    const taponador = pickWeighted(onCourt, (p) => Math.pow(profileOf(p).inside, 2.4), rng);
+    if (taponador) qBlk[taponador.id] += 1;
+  }
   for (const p of onCourt) {
-    const st = live.stats[p.id] ?? (live.stats[p.id] = { pts: 0, reb: 0, ast: 0 });
+    const st = live.stats[p.id] ?? (live.stats[p.id] = { pts: 0, reb: 0, ast: 0, t3: 0, blk: 0 });
     st.pts += qPts[p.id] ?? 0;
     st.reb += qReb[p.id] ?? 0;
     st.ast += qAst[p.id] ?? 0;
+    st.t3 += qTriples[p.id] ?? 0;
+    st.blk += qBlk[p.id] ?? 0;
   }
   const qTop = [...onCourt].sort((a, b) => (qPts[b.id] ?? 0) - (qPts[a.id] ?? 0))[0];
   if ((qPts[qTop.id] ?? 0) >= 7) notes.push(`${qTop.name} metió ${qPts[qTop.id]} puntos en el ${Q_NAMES[qIndex]}.`);
@@ -1215,7 +1335,7 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
         rng
       );
       for (const id of live.onCourt) {
-        const st = live.stats[id] ?? (live.stats[id] = { pts: 0, reb: 0, ast: 0 });
+        const st = live.stats[id] ?? (live.stats[id] = { pts: 0, reb: 0, ast: 0, t3: 0, blk: 0 });
         st.pts += otPts[id] ?? 0;
       }
       live.quarters.push({
@@ -1235,6 +1355,47 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   }
 
   return s;
+}
+
+/** Los jugadores de un equipo del mundo, listos para repartirles una planilla. */
+function sujetosDeEquipo(s: GameState, legacyRivalId: string): StatSubject[] {
+  const team = teamByLegacyRival(s.world, legacyRivalId);
+  if (!team) return [];
+  return teamRoster(s.world, team.id).map((wp) => ({
+    id: wp.id,
+    name: `${wp.firstName} ${wp.lastName}`,
+    position: wp.position,
+    level: wp.level,
+  }));
+}
+
+/**
+ * La planilla del rival de la fecha, repartiendo su marcador entre los que
+ * vinieron. Devuelve vacío si ese equipo no tiene plantel generado (pasa con
+ * las divisionales lejanas): ahí el rival sigue siendo sólo un marcador.
+ */
+function buildRivalBox(s: GameState, live: LiveMatchState, scoreAgainst: number, rng: Rng): RivalBoxLine[] {
+  const ids = live.rivalSquad?.presentIds ?? [];
+  if (ids.length === 0) return [];
+  const sujetos: StatSubject[] = [];
+  for (const id of ids) {
+    const wp = s.world.players.find((x) => x.id === id);
+    if (!wp) continue;
+    sujetos.push({ id: wp.id, name: `${wp.firstName} ${wp.lastName}`, position: wp.position, level: wp.level });
+  }
+  if (sujetos.length === 0) return [];
+  return repartirPlanilla(sujetos, scoreAgainst, rng)
+    .map((l) => ({
+      playerId: l.id,
+      name: l.name,
+      position: l.position,
+      points: l.pts,
+      triples: l.t3,
+      assists: l.ast,
+      blocks: l.blk,
+      rebounds: l.reb,
+    }))
+    .sort((a, b) => b.points - a.points);
 }
 
 /** Cierra el partido jugado: efectos sobre jugadores y club, tabla e informe. */
@@ -1278,7 +1439,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   // Nota del partido por jugador: producción según el rol + su día + contexto.
   const ratings: Record<string, PlayerRating> = {};
   for (const x of played) {
-    const st = live.stats[x.p.id] ?? { pts: 0, reb: 0, ast: 0 };
+    const st = live.stats[x.p.id] ?? { pts: 0, reb: 0, ast: 0, t3: 0, blk: 0 };
     ratings[x.p.id] = computeRating({
       position: x.p.position,
       minutes: x.mins,
@@ -1385,7 +1546,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     }
 
     if (mins > 0 && np.lastRating !== null) {
-      const st = live.stats[np.id] ?? { pts: 0, reb: 0, ast: 0 };
+      const st = live.stats[np.id] ?? { pts: 0, reb: 0, ast: 0, t3: 0, blk: 0 };
       np.matchLog = [
         ...np.matchLog,
         {
@@ -1621,7 +1782,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     lockerRoom.push(`"Para el picado nunca falta", tiró uno del grupo cuando se habló de la ausencia de ${absentOnes[0].playerName}.`);
   }
 
-  const statsOf = (id: string) => live.stats[id] ?? { pts: 0, reb: 0, ast: 0 };
+  const statsOf = (id: string) => live.stats[id] ?? { pts: 0, reb: 0, ast: 0, t3: 0, blk: 0 };
   const box: BoxScoreLine[] = played
     .map(({ p, mins }) => ({
       playerId: p.id,
@@ -1630,11 +1791,17 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       points: statsOf(p.id).pts,
       rebounds: statsOf(p.id).reb,
       assists: statsOf(p.id).ast,
+      triples: statsOf(p.id).t3,
+      blocks: statsOf(p.id).blk,
       rating: ratings[p.id]?.rating ?? 5,
       mvp: p.id === mvp.id,
       comment: ratings[p.id]?.comment,
     }))
     .sort((a, b) => b.points - a.points);
+
+  // La planilla del rival: los que realmente vinieron, con su nombre y su
+  // puesto. Es la mitad que faltaba — hasta acá el rival era un número.
+  const rivalBox = buildRivalBox(s, live, scoreAgainst, rng);
 
   // Cómo quedó cada uno: el resultado no tapa los minutos que no jugaste.
   const bigGame = s.week > s.seasonLength;
@@ -1680,6 +1847,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     lockerRoom,
     effects,
     box,
+    rivalBox,
     moods,
   };
 
