@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #d8d4cc; --bg-soft: #e6e3dd; --panel: #f6f4f1; --panel-2: #eceae6; --border: #d2cec8;
+      --text: #25282c; --text-dim: #6a6f76; --text-faint: #9a9fa6; --text-light: #f6f4f1;
+      --accent: #e07a2a; --on-accent: #2a1a08;
+      --good: #4a9160; --warn: #c69320; --bad: #b8443a;
+      --sec-plantel: #b07f27; --sec-scouting: #456470;
+      --display: 'Oswald', 'Arial Narrow', sans-serif;
+      --relieve: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,100,70,.2), 0 6px 16px rgba(20,14,8,.2);
+    }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 15.2px; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .cab { font-family: var(--display); text-transform: uppercase; letter-spacing: .13em;
+      font-size: 9.9px; color: var(--text-faint); }
+    .num { font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 16px; height: 100%; box-sizing: border-box;">
+
+  <div style="display: flex; align-items: baseline; gap: 12px;">
+    <div style="font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 15.2px; color: var(--text);">¿Dónde jugamos este año?</div>
+    <div style="font-size: 13.1px; color: var(--text-dim);">Elegir liga es elegir tu día de partido. Podés cambiar hasta el cierre.</div>
+  </div>
+
+  <div style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--relieve); overflow: hidden;">
+
+    <div style="display: grid; grid-template-columns: 300px 96px 78px 116px 62px 104px 84px 210px; gap: 10px; padding: 10px 14px 7px; border-bottom: 1px solid var(--border);">
+      <span class="cab">La liga</span>
+      <span class="cab">Día</span>
+      <span class="cab" style="text-align: right;">Ficha</span>
+      <span class="cab">Nivel</span>
+      <span class="cab" style="text-align: right;">Fechas</span>
+      <span class="cab">Categoría</span>
+      <span class="cab" style="text-align: right;">Premio</span>
+      <span class="cab">Tu gente</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 300px 96px 78px 116px 62px 104px 84px 210px; gap: 10px; padding: 12px 14px; align-items: center; border-bottom: 1px solid var(--border);">
+      <div style="min-width: 0;">
+        <div style="font-family: var(--display); font-weight: 600; font-size: 18.4px; line-height: 1.15;">Liga Universitaria <span style="color: var(--text-dim); font-weight: 400;">· Divisional B</span></div>
+        <div style="font-size: 12.5px; color: var(--text-dim); margin-top: 2px;">La de siempre. Acá te conocen y te fían la ficha.</div>
+      </div>
+      <div><div style="font-family: var(--display); font-weight: 600; font-size: 15.2px;">Lunes</div><div class="num" style="font-size: 11.5px; color: var(--text-dim);">20:00 / 22:00</div></div>
+      <div class="num" style="font-family: var(--display); font-weight: 600; font-size: 18.4px; text-align: right;">$300</div>
+      <div style="font-size: 13.1px;">Competitivo</div>
+      <div class="num" style="font-size: 13.1px; text-align: right;">9</div>
+      <div style="font-size: 12.5px; color: var(--good); font-weight: 600;">Sube y baja</div>
+      <div style="font-size: 13.1px; color: var(--text-faint); text-align: right;">—</div>
+      <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
+        <span style="font-size: 12.5px; color: var(--good);">Todos pueden</span>
+        <button style="font-family: inherit; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 700; border-radius: 4px; padding: 7px 14px; font-size: 14.4px;">Anotarse</button>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 300px 96px 78px 116px 62px 104px 84px 210px; gap: 10px; padding: 12px 14px; align-items: center; border-bottom: 1px solid var(--border); opacity: .55;">
+      <div style="min-width: 0;">
+        <div style="font-family: var(--display); font-weight: 600; font-size: 18.4px; line-height: 1.15;">Liga del Centro <span style="color: var(--text-dim); font-weight: 400;">· Segunda</span></div>
+        <div style="font-size: 12.5px; color: var(--text-dim); margin-top: 2px;">La nocturna. Se juega tarde y el nivel es otro.</div>
+      </div>
+      <div><div style="font-family: var(--display); font-weight: 600; font-size: 15.2px;">Martes</div><div class="num" style="font-size: 11.5px; color: var(--text-dim);">21:30 / 23:00</div></div>
+      <div style="text-align: right;"><div class="num" style="font-family: var(--display); font-weight: 600; font-size: 18.4px;">$450</div><div style="font-size: 11.5px; color: var(--warn);">contado</div></div>
+      <div style="font-size: 13.1px;">Muy duro</div>
+      <div class="num" style="font-size: 13.1px; text-align: right;">9</div>
+      <div style="font-size: 12.5px; color: var(--good); font-weight: 600;">Sube y baja</div>
+      <div style="font-size: 13.1px; color: var(--text-faint); text-align: right;">—</div>
+      <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
+        <span style="font-size: 12.5px; color: var(--bad); text-align: right; line-height: 1.25;">Piden 45 de prestigio<br>y tenés 40</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 300px 96px 78px 116px 62px 104px 84px 210px; gap: 10px; padding: 12px 14px; align-items: center; border-bottom: 1px solid var(--border);">
+      <div style="min-width: 0;">
+        <div style="font-family: var(--display); font-weight: 600; font-size: 18.4px; line-height: 1.15;">Liga del Comercio <span style="color: var(--text-dim); font-weight: 400;">· Única</span></div>
+        <div style="font-size: 12.5px; color: var(--text-dim); margin-top: 2px;">Torneo corto de los comercios del barrio.</div>
+      </div>
+      <div><div style="font-family: var(--display); font-weight: 600; font-size: 15.2px;">Domingo</div><div class="num" style="font-size: 11.5px; color: var(--text-dim);">10:00 / 11:30</div></div>
+      <div style="text-align: right;"><div class="num" style="font-family: var(--display); font-weight: 600; font-size: 18.4px;">$180</div><div style="font-size: 11.5px; color: var(--warn);">contado</div></div>
+      <div style="font-size: 13.1px;">Accesible</div>
+      <div class="num" style="font-size: 13.1px; text-align: right; color: var(--warn); font-weight: 600;">7</div>
+      <div style="font-size: 12.5px; color: var(--text-dim);">Sin ascensos</div>
+      <div class="num" style="font-family: var(--display); font-weight: 600; font-size: 16.7px; text-align: right; color: var(--good);">$400</div>
+      <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
+        <span style="font-size: 12.5px; color: var(--good);">Todos pueden</span>
+        <button style="font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); border-radius: 4px; padding: 7px 14px; font-size: 14.4px;">Anotarse</button>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 300px 96px 78px 116px 62px 104px 84px 210px; gap: 10px; padding: 12px 14px; align-items: center;">
+      <div style="min-width: 0;">
+        <div style="font-family: var(--display); font-weight: 600; font-size: 18.4px; line-height: 1.15;">Liga de la Plaza <span style="color: var(--text-dim); font-weight: 400;">· Única</span></div>
+        <div style="font-size: 12.5px; color: var(--text-dim); margin-top: 2px;">Gratis, y los sábados puede todo el mundo.</div>
+      </div>
+      <div><div style="font-family: var(--display); font-weight: 600; font-size: 15.2px;">Sábado</div><div class="num" style="font-size: 11.5px; color: var(--text-dim);">17:00 / 19:00</div></div>
+      <div style="font-family: var(--display); font-weight: 600; font-size: 16.7px; text-align: right; color: var(--good);">Gratis</div>
+      <div style="font-size: 13.1px; color: var(--text-dim);">Para pasear</div>
+      <div class="num" style="font-size: 13.1px; text-align: right;">9</div>
+      <div style="font-size: 12.5px; color: var(--text-dim);">Sin ascensos</div>
+      <div style="font-size: 13.1px; color: var(--bad); text-align: right; font-weight: 600;">−6 prest.</div>
+      <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
+        <span style="font-size: 12.5px; color: var(--good);">Todos pueden</span>
+        <button style="font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); border-radius: 4px; padding: 7px 14px; font-size: 14.4px;">Anotarse</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="font-size: 12.5px; color: var(--text-dim);">Si no elegís, la comisión te anota a último momento en la de siempre (recargo $60 y mala imagen).</div>
+</div>
+</x-dc>
+</body>
+</html>

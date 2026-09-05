@@ -1,156 +1,38 @@
 {
   "pages": [
-    {
-      "id": "ligas",
-      "name": "Elegir liga"
-    },
-    {
-      "id": "fichables",
-      "name": "Los fichables"
-    }
+    { "id": "ligas", "name": "Elegir liga" },
+    { "id": "fichables", "name": "Los fichables" }
   ],
   "artboards": [
-    {
-      "file": "LigaActual.dc.html",
-      "page": "ligas",
-      "title": "Ligas · Hoy",
-      "x": 0,
-      "y": 0,
-      "w": 1200,
-      "h": 560
-    },
-    {
-      "file": "Main.dc.html",
-      "page": "ligas",
-      "title": "Ligas · Opción C — la fila comparable",
-      "x": 1320,
-      "y": 0,
-      "w": 1200,
-      "h": 480
-    },
-    {
-      "file": "LigaA.dc.html",
-      "page": "ligas",
-      "title": "Ligas · Opción A — la tabla pura",
-      "x": 0,
-      "y": 900,
-      "w": 1200,
-      "h": 480
-    },
-    {
-      "file": "LigaB.dc.html",
-      "page": "ligas",
-      "title": "Ligas · Opción B — la cartelera",
-      "x": 1320,
-      "y": 900,
-      "w": 1200,
-      "h": 520
-    },
-    {
-      "file": "MercadoActual.dc.html",
-      "page": "fichables",
-      "title": "Fichables · Hoy",
-      "x": 0,
-      "y": 0,
-      "w": 1200,
-      "h": 620
-    },
-    {
-      "file": "MercadoA.dc.html",
-      "page": "fichables",
-      "title": "Fichables · Opción A — la planilla del ojeador",
-      "x": 1320,
-      "y": 0,
-      "w": 1200,
-      "h": 660
-    },
-    {
-      "file": "MercadoB.dc.html",
-      "page": "fichables",
-      "title": "Fichables · Opción B — la ficha de altura fija",
-      "x": 0,
-      "y": 1000,
-      "w": 1200,
-      "h": 520
-    },
-    {
-      "file": "MercadoC.dc.html",
-      "page": "fichables",
-      "title": "Fichables · Opción C — lista y ficha grande",
-      "x": 1320,
-      "y": 1000,
-      "w": 1200,
-      "h": 560
-    }
+    { "file": "Main.dc.html", "page": "ligas", "title": "Ligas · D — la fila con color y escudo", "x": 0, "y": 0, "w": 1200, "h": 480 },
+    { "file": "LigaD2.dc.html", "page": "ligas", "title": "Ligas · D2 — el día pintado entero", "x": 1320, "y": 0, "w": 1200, "h": 480 },
+
+    { "file": "Escudos.dc.html", "page": "ligas", "title": "Escudos de liga · procedurales", "x": 0, "y": 800, "w": 1200, "h": 520 },
+    { "file": "LigaB.dc.html", "page": "ligas", "title": "Ligas · Opción B — la cartelera (de acá sale el color)", "x": 1320, "y": 800, "w": 1200, "h": 520 },
+
+    { "file": "LigaC.dc.html", "page": "ligas", "title": "Ligas · Opción C — la fila comparable (de acá sale la estructura)", "x": 0, "y": 1640, "w": 1200, "h": 480 },
+    { "file": "LigaA.dc.html", "page": "ligas", "title": "Ligas · Opción A — la tabla pura", "x": 1320, "y": 1640, "w": 1200, "h": 480 },
+
+    { "file": "LigaActual.dc.html", "page": "ligas", "title": "Ligas · Hoy", "x": 0, "y": 2440, "w": 1200, "h": 560 },
+
+    { "file": "MercadoActual.dc.html", "page": "fichables", "title": "Fichables · Hoy", "x": 0, "y": 0, "w": 1200, "h": 620 },
+    { "file": "MercadoA.dc.html", "page": "fichables", "title": "Fichables · Opción A — la planilla del ojeador", "x": 1320, "y": 0, "w": 1200, "h": 660 },
+    { "file": "MercadoB.dc.html", "page": "fichables", "title": "Fichables · Opción B — la ficha de altura fija", "x": 0, "y": 1000, "w": 1200, "h": 520 },
+    { "file": "MercadoC.dc.html", "page": "fichables", "title": "Fichables · Opción C — lista y ficha grande", "x": 1320, "y": 1000, "w": 1200, "h": 560 }
   ],
   "annotations": [
-    {
-      "id": "l-hoy",
-      "page": "ligas",
-      "x": 0,
-      "y": -200,
-      "w": 1200,
-      "text": "HOY — cuatro paredes de texto.\n\nCada liga trae un párrafo de cinco líneas y 4-6 chips del mismo tamaño donde \"$300\" pesa lo mismo que \"9 fechas\". Para elegir hay que leer las cuatro y comparar de memoria. Los cuatro botones son contornos naranjas iguales, así que ninguno es LA acción."
-    },
-    {
-      "id": "l-c",
-      "page": "ligas",
-      "x": 1320,
-      "y": -200,
-      "w": 1200,
-      "text": "OPCIÓN C — la fila comparable  (mi favorita)\n\nCada liga es una fila y los datos caen en columnas alineadas: el precio de las cuatro se compara verticalmente, sin leer. La prosa se comprime a UNA línea que conserva la voz (\"la de siempre, acá te fían\").\n\nA favor: se decide de un vistazo y sigue teniendo carácter.\nEn contra: una línea de prosa por liga es menos color del que hay hoy."
-    },
-    {
-      "id": "l-a",
-      "page": "ligas",
-      "x": 0,
-      "y": 700,
-      "w": 1200,
-      "text": "OPCIÓN A — la tabla pura\n\nUna tabla de posiciones: filas de 36 px, cero prosa arriba. La letra chica de la liga seleccionada vive en un panel abajo.\n\nA favor: máxima densidad y comparación; se parece a la tabla de la liga, que ya existe en el juego.\nEn contra: es la más fría de las tres. La pretemporada deja de tener voz."
-    },
-    {
-      "id": "l-b",
-      "page": "ligas",
-      "x": 1320,
-      "y": 700,
-      "w": 1200,
-      "text": "OPCIÓN B — la cartelera del club\n\nCada liga es un afiche pinchado en la cartelera, con EL DÍA enorme arriba: elegir liga es elegir tu día de partido, así que el día manda.\n\nA favor: la más de club de barrio; el dato que más importa se ve desde lejos.\nEn contra: comparar la ficha de las cuatro obliga a saltar de afiche en afiche."
-    },
-    {
-      "id": "m-hoy",
-      "page": "fichables",
-      "x": 0,
-      "y": -220,
-      "w": 1200,
-      "text": "HOY — la sopa de chips.\n\nEl nivel aparece de tres formas en la misma fila (71–85, ≈69, ★★★★☆). Las cards quedan de alturas desparejas según cuántos chips le toquen a cada uno, así que la segunda fila arranca en escalera. \"Exigencias: ? (contactalo)\" se repite dieciséis veces diciendo que no sabés nada. Y hay dieciséis botones \"Contactar\" a ancho completo.\n\nEntran 5 de 16 fichables en pantalla."
-    },
-    {
-      "id": "m-a",
-      "page": "fichables",
-      "x": 1320,
-      "y": -220,
-      "w": 1200,
-      "text": "OPCIÓN A — la planilla del ojeador  (mi favorita)\n\nLa misma anatomía que el Plantel de la dirección D que ya aprobaste: una placa con renglones, cifras en columna, el \"por qué\" en su propia columna. Los chips desaparecen: el conocimiento pasa a ser un sello (De oídas / Conocido / Muy conocido) y lo que no sabés es un \"?\" en su columna, no una etiqueta repetida.\n\nA favor: entran 10-14 de 16 sin scrollear, y el pase de todos se compara en columna.\nEn contra: el retrato se achica a 36 px."
-    },
-    {
-      "id": "m-b",
-      "page": "fichables",
-      "x": 0,
-      "y": 780,
-      "w": 1200,
-      "text": "OPCIÓN B — la ficha de altura fija\n\nSigue siendo una grilla de cards, pero TODAS miden lo mismo: 196 px, pase lo que pase. Retrato de 62 px, un solo número grande (el nivel), el conocimiento como sello en la esquina y nada más.\n\nA favor: conserva la cara del jugador, que es la mitad del encanto, y la grilla deja de estar en escalera.\nEn contra: entran 10 y hay que scrollear igual; y para comparar pases hay que barrer con la vista."
-    },
-    {
-      "id": "m-c",
-      "page": "fichables",
-      "x": 1320,
-      "y": 780,
-      "w": 1200,
-      "text": "OPCIÓN C — lista y ficha grande\n\nLa lista completa a la izquierda (16 nombres, siempre a la vista) y la ficha del elegido a la derecha, con retrato de 96 px. UN solo botón Contactar en toda la pantalla, y un bloque explícito de \"lo que todavía no sabés\" que le da sentido a gastar la gestión.\n\nA favor: el fichaje se convierte en una decisión con peso, no en elegir entre dieciséis cajas iguales. Es la que mejor prepara el compromiso oculto (T2).\nEn contra: es la más lejos de lo que hay hoy, y ver dos jugadores en detalle exige dos clicks."
-    }
+    { "id": "l-d", "page": "ligas", "x": 0, "y": -230, "w": 1200, "text": "D — LA FILA CON COLOR Y ESCUDO   ·   la combinación que pediste\n\nLa estructura de C (los datos en columnas alineadas, para comparar sin leer) más la identidad de B (cada liga con su color y su escudo). El color entra como un lomo de 6 px a la izquierda de la fila; el escudo, a 44 px.\n\nA favor: se compara de un vistazo Y cada liga se reconoce sin leer el nombre.\nEn contra: es la más sobria de las dos con color." },
+    { "id": "l-d2", "page": "ligas", "x": 1320, "y": -230, "w": 1200, "text": "D2 — EL DÍA PINTADO ENTERO\n\nLa misma fila, pero el bloque del día se pinta con el color de la liga, como el cabezal de un afiche de la cartelera. Más cerca de B sin perder las columnas.\n\nA favor: el color pesa de verdad y el día —que es lo que realmente elegís— se ve desde lejos.\nEn contra: cuatro bloques de color saturado en pantalla compiten más entre sí; y en una liga con muchas divisionales podría cansar." },
+    { "id": "l-esc", "page": "ligas", "x": 0, "y": 570, "w": 1200, "text": "LOS ESCUDOS DE LIGA\n\nLos seis escudos a 96, 44 y 18 px. Propuesta: que sean PROCEDURALES, con el mismo generador que ya hace los escudos de club (game/crest.ts), pero con su propio juego de siluetas para que un escudo de liga no se confunda con el de un club.\n\nOjo con un dato del código: hoy League no tiene ni colores ni escudo — sólo id, nombre, tipo, divisionales y reglas. El color que ves acá me lo inventé yo; para que exista de verdad hay que sumarle tres campos." },
+    { "id": "l-b", "page": "ligas", "x": 1320, "y": 570, "w": 1200, "text": "B — LA CARTELERA   ·   de acá sale el color\n\nCada liga como un afiche con el día enorme. Es la que te gustó por la diferencia de colores, y es de donde D y D2 se lo llevan.\n\nQueda acá como referencia: si D2 te parece poco color, esto es el techo." },
+    { "id": "l-c", "page": "ligas", "x": 0, "y": 1420, "w": 1200, "text": "C — LA FILA COMPARABLE   ·   de acá sale la estructura\n\nLa que era mi favorita antes de tu comentario. Tenías razón en que A y C son parecidas: las dos son tablas, y lo que cambia es cuánta prosa sobrevive. D es esta misma fila con el color y el escudo encima." },
+    { "id": "l-a", "page": "ligas", "x": 1320, "y": 1420, "w": 1200, "text": "A — LA TABLA PURA\n\nLa hermana fría de C: filas de 36 px y cero prosa arriba. Queda archivada, salvo que quieras la versión más densa posible." },
+    { "id": "l-hoy", "page": "ligas", "x": 0, "y": 2270, "w": 1200, "text": "HOY — cuatro paredes de texto.\n\nCada liga trae un párrafo de cinco líneas y 4-6 chips del mismo tamaño donde \"$300\" pesa lo mismo que \"9 fechas\". Para elegir hay que leer las cuatro y comparar de memoria. Los cuatro botones son contornos naranjas iguales, así que ninguno es LA acción." },
+
+    { "id": "m-hoy", "page": "fichables", "x": 0, "y": -220, "w": 1200, "text": "HOY — la sopa de chips.\n\nEl nivel aparece de tres formas en la misma fila (71–85, ≈69, ★★★★☆). Las cards quedan de alturas desparejas según cuántos chips le toquen a cada uno, así que la segunda fila arranca en escalera. \"Exigencias: ? (contactalo)\" se repite dieciséis veces diciendo que no sabés nada. Y hay dieciséis botones \"Contactar\" a ancho completo.\n\nEntran 5 de 16 fichables en pantalla." },
+    { "id": "m-a", "page": "fichables", "x": 1320, "y": -220, "w": 1200, "text": "OPCIÓN A — la planilla del ojeador  (mi favorita)\n\nLa misma anatomía que el Plantel de la dirección D que ya aprobaste: una placa con renglones, cifras en columna, el \"por qué\" en su propia columna. Los chips desaparecen: el conocimiento pasa a ser un sello (De oídas / Conocido / Muy conocido) y lo que no sabés es un \"?\" en su columna, no una etiqueta repetida.\n\nA favor: entran 10-14 de 16 sin scrollear, y el pase de todos se compara en columna.\nEn contra: el retrato se achica a 36 px." },
+    { "id": "m-b", "page": "fichables", "x": 0, "y": 780, "w": 1200, "text": "OPCIÓN B — la ficha de altura fija\n\nSigue siendo una grilla de cards, pero TODAS miden lo mismo: 196 px, pase lo que pase. Retrato de 62 px, un solo número grande (el nivel), el conocimiento como sello en la esquina y nada más.\n\nA favor: conserva la cara del jugador, que es la mitad del encanto, y la grilla deja de estar en escalera.\nEn contra: entran 10 y hay que scrollear igual; y para comparar pases hay que barrer con la vista." },
+    { "id": "m-c", "page": "fichables", "x": 1320, "y": 780, "w": 1200, "text": "OPCIÓN C — lista y ficha grande\n\nLa lista completa a la izquierda (16 nombres, siempre a la vista) y la ficha del elegido a la derecha, con retrato de 96 px. UN solo botón Contactar en toda la pantalla, y un bloque explícito de \"lo que todavía no sabés\" que le da sentido a gastar la gestión.\n\nA favor: el fichaje se convierte en una decisión con peso, no en elegir entre dieciséis cajas iguales. Es la que mejor prepara el compromiso oculto (T2).\nEn contra: es la más lejos de lo que hay hoy, y ver dos jugadores en detalle exige dos clicks." }
   ],
-  "launch": {
-    "view": "canvas",
-    "page": "ligas"
-  }
+  "launch": { "view": "canvas", "page": "ligas" }
 }

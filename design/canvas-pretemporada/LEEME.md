@@ -10,12 +10,37 @@ es **cómo se ordena la información** en dos listas.
 
 ## Página 1 — Elegir liga
 
+**Ronda 2 (sep 2026).** Gabi: *"quedaron mejor. Creo que la A y la C son muy parecidas. La B
+me gusta la diferencia de colores. Capaz se puede hacer algo combinado y luego agregar
+logos de esas ligas."* Tenía razón: A y C son las dos una tabla y lo único que cambia es
+cuánta prosa sobrevive. De ahí salieron **D** y **D2**, que se llevan la estructura de C y
+el color de B, y la hoja de escudos.
+
 | Archivo | Qué es |
 | --- | --- |
+| `Main.dc.html` | **D · La fila con color y escudo.** La propuesta. La estructura de C —datos en columnas alineadas, para comparar sin leer— más la identidad de B: cada liga con su color como lomo de 6 px y su escudo a 44 px. |
+| `LigaD2.dc.html` | **D2 · El día pintado entero.** La misma fila, con el bloque del día pintado del color de la liga, como el cabezal de un afiche. Es D con más color; están al lado para elegir cuánto. |
+| `Escudos.dc.html` | **La hoja de escudos**, a 96 / 44 / 18 px. El chico es el que manda: es el que va en la fila de una tabla. |
+| `LigaB.dc.html` | **B · La cartelera del club.** Cada liga es un afiche con **el día enorme**. **De acá sale el color.** La de más carácter, la peor para comparar la ficha. |
+| `LigaC.dc.html` | **C · La fila comparable.** **De acá sale la estructura.** Una fila por liga con los datos en columna y una sola línea de prosa que conserva la voz. |
+| `LigaA.dc.html` | **A · La tabla pura.** La hermana fría de C: filas de 36 px, cero prosa. Archivada. |
 | `LigaActual.dc.html` | **Hoy.** Cuatro cards con un párrafo de cinco líneas y 4-6 chips iguales donde `$300` pesa lo mismo que `9 fechas`. Para elegir hay que leer las cuatro y comparar de memoria; los cuatro botones son contornos naranjas idénticos, así que ninguno es *la* acción. |
-| `Main.dc.html` | **C · La fila comparable.** La propuesta. Una fila por liga con los datos en columnas alineadas —el precio de las cuatro se compara verticalmente, sin leer— y una sola línea de prosa que conserva la voz ("la de siempre, acá te fían"). |
-| `LigaA.dc.html` | **A · La tabla pura.** Filas de 36 px, cero prosa arriba; la letra chica de la seleccionada vive en un panel abajo. Máxima densidad, la más fría de las tres. |
-| `LigaB.dc.html` | **B · La cartelera del club.** Cada liga es un afiche con **el día enorme**: elegir liga es elegir tu día de partido. La de más carácter, la peor para comparar la ficha. |
+
+### Los escudos de liga: dos cosas que hay que saber antes de implementar
+
+1. **`League` no tiene ni colores ni escudo.** En `game/types.ts` sólo tiene `id`, `name`,
+   `kind`, `divisionCount` y `rules`. El color que se ve en B, D y D2 **está inventado en
+   el mockup**: para que exista hacen falta tres campos nuevos (dos colores y una silueta).
+2. **La propuesta es que sean procedurales**, con el mismo generador que ya hace los
+   escudos de club (`game/crest.ts` + `ui/Crest.tsx`), pero con su propio juego de siluetas
+   para que un escudo de liga no se confunda con el de un club. Es la regla del sistema
+   —"lo que escala con los datos es procedural"— y el roadmap quiere ligas que aparezcan y
+   desaparezcan según el año: así sumar una liga es sumar una fila de datos, no encargar un
+   dibujo.
+
+Los colores del mockup (azul institucional para la Universitaria, grafito y dorado para la
+nocturna del Centro, verde para el Comercio, ladrillo para la Plaza, pizarra para
+Montevideo, violeta para la +35) están elegidos **lejos del naranja de acción** a propósito.
 
 ## Página 2 — Los fichables
 
@@ -39,7 +64,7 @@ ocho retratos para dieciséis nombres, que es el problema abierto de la Puerta 3
 
 El `.html` empaquetado (el editor de Claude Design más el contenido) **no se versiona**:
 está en `.gitignore` y se regenera desde estos archivos con la skill `design` de Claude
-Code, pasando los ocho `--artboard`, los seis `--image` de `../../public/arte/` y
+Code, pasando los once `--artboard`, los seis `--image` de `../../public/arte/` y
 `--canvas canvas.json`.
 
 Publicado el 2026-09-05:
