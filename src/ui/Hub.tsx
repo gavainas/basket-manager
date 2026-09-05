@@ -52,6 +52,11 @@ function blocks(state: GameState): Block[] {
   const active = activePlayers(state.players);
   const alDia = active.filter((p) => p.weeksUnpaid === 0).length;
 
+  /* El orden de esta lista ES el orden de lectura del inicio: los dos primeros
+     van en la columna izquierda y los dos últimos en la derecha (ver `.hub-col`
+     más abajo). A la izquierda quedan las dos cosas que se tocan todas las
+     semanas —lo que hay que hacer y quiénes lo hacen— y a la derecha las de
+     consulta. */
   return [
     {
       title: 'La semana',
@@ -97,16 +102,6 @@ function blocks(state: GameState): Block[] {
       ],
     },
     {
-      title: 'La liga',
-      sec: 'sec-partidos',
-      icon: 'liga',
-      tiles: [
-        { id: 'tabla', label: 'Tabla', icon: 'liga', tab: 'liga', hint: `Vas ${clubPosition(state)}° de ${state.standings.length}` },
-        { id: 'calendario', label: 'Calendario', icon: 'agenda', tab: 'agenda', hint: 'Fechas, canchas y horarios' },
-        { id: 'rankings', label: 'Rankings', icon: 'rankings', tab: 'rankings', hint: 'Quién anota y quién rinde' },
-      ],
-    },
-    {
       title: 'El plantel',
       sec: 'sec-plantel',
       icon: 'plantel',
@@ -128,6 +123,16 @@ function blocks(state: GameState): Block[] {
           focus: 'cuerpo-tecnico',
           hint: state.coach ? state.coach.name : 'Sin entrenador: dirigís vos',
         },
+      ],
+    },
+    {
+      title: 'La liga',
+      sec: 'sec-partidos',
+      icon: 'liga',
+      tiles: [
+        { id: 'tabla', label: 'Tabla', icon: 'liga', tab: 'liga', hint: `Vas ${clubPosition(state)}° de ${state.standings.length}` },
+        { id: 'calendario', label: 'Calendario', icon: 'agenda', tab: 'agenda', hint: 'Fechas, canchas y horarios' },
+        { id: 'rankings', label: 'Rankings', icon: 'rankings', tab: 'rankings', hint: 'Quién anota y quién rinde' },
       ],
     },
     {
@@ -286,47 +291,6 @@ function PlantelStrip({ state }: { state: GameState }) {
   );
 }
 
-/**
- * El referente del vestuario: la cara que el Tablero pone al frente.
- *
- * La maqueta que aprobó Gabi tiene un jugador de cuerpo entero llenando la
- * columna izquierda. Esa ilustración todavía no existe y **no se genera hasta
- * que la apruebe** (design/ART_PIPELINE.md), así que la columna se arma con el
- * retrato de arquetipo que YA está aprobado y en uso.
- *
- * No es sólo un relleno: la cara del club es el que más pesa en el vestuario
- * —el más querido, con la antigüedad como desempate—, así que cambia cuando
- * cambia tu plantel. Cuando llegue la ilustración de cuerpo entero entra en
- * este mismo hueco.
- */
-function referente(state: GameState): Player | null {
-  const active = activePlayers(state.players);
-  if (active.length === 0) return null;
-  const peso = (p: Player) => p.social + (state.seasonNumber - p.joinedSeason) * 6 + p.age * 0.4;
-  return active.reduce((mejor, p) => (peso(p) > peso(mejor) ? p : mejor), active[0]);
-}
-
-function Heroe({ state }: { state: GameState }) {
-  const open = useContext(OpenProfileContext);
-  const p = referente(state);
-  if (!p) return <section className="hub-heroe" aria-hidden="true" />;
-
-  return (
-    <section className="hub-heroe">
-      <button className="hub-heroe-foto" onClick={() => open(p.id)} title={`Ver la ficha de ${p.name}`}>
-        <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={280} title={p.name} personality={p.personality} />
-      </button>
-      <div className="hub-heroe-pie">
-        <span className="hub-heroe-rol">
-          {POS_ABBR[p.position] ?? p.position} · {p.age} años
-        </span>
-        <span className="hub-heroe-nombre">{p.name}</span>
-        <span className="hub-heroe-dicho">{p.description}</span>
-      </div>
-    </section>
-  );
-}
-
 const PHASE_ACTION: Record<string, string> = {
   planning: 'Decidir la semana',
   callUp: 'Pasar lista',
@@ -357,7 +321,17 @@ export function Hub({ state }: { state: GameState }) {
   return (
     <div className="hub pantalla">
       <div className="hub-grid">
-        <Heroe state={state} />
+        {/* Izquierda: lo que se toca todas las semanas. Acá vivía el retrato del
+            referente, sacado por pedido de Gabi (sep 2026): se llevaba la mejor
+            columna de la pantalla y ninguna acción del juego lo cambiaba, así
+            que no era ni información ni decisión. */}
+        <div className="hub-bloques">
+          {blocks(state)
+            .slice(0, 2)
+            .map((b) => (
+              <MenuBlock key={b.title} block={b} watch={watch} />
+            ))}
+        </div>
 
         <div className="hub-centro">
           <div className="hub-escudo">
@@ -448,12 +422,15 @@ export function Hub({ state }: { state: GameState }) {
           </div>
         </div>
 
-        {/* Los cuatro bloques en 2x2. Siguen siendo el corazón del Tablero: son
-            los que se encienden solos con los avisos de watch.ts. */}
+        {/* Derecha: lo que se consulta. Los cuatro bloques siguen siendo el
+            corazón del Tablero —son los que se encienden solos con los avisos
+            de watch.ts—, pero ahora reparten dos y dos alrededor del club. */}
         <div className="hub-bloques">
-          {blocks(state).map((b) => (
-            <MenuBlock key={b.title} block={b} watch={watch} />
-          ))}
+          {blocks(state)
+            .slice(2)
+            .map((b) => (
+              <MenuBlock key={b.title} block={b} watch={watch} />
+            ))}
         </div>
       </div>
 
