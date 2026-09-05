@@ -1,0 +1,14 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 900, "title": "A · La planilla manda" },
+    { "file": "OpcionB.dc.html", "x": 1560, "y": 0, "w": 1440, "h": 900, "title": "B · Los numeros a un lado, el color al otro" },
+    { "file": "OpcionC.dc.html", "x": 3120, "y": 0, "w": 1440, "h": 900, "title": "C · Como la planilla de la liga" }
+  ],
+  "annotations": [
+    { "id": "hoy", "x": 0, "y": -300, "w": 460, "text": "HOY: la cabecera se lleva 306px de 800 (38%) casi en aire, y la planilla muestra 246px de 556 de contenido. El rival no entra sin scrollear." },
+    { "id": "nota-a", "x": 520, "y": -300, "w": 420, "text": "A · Marcador comprimido a una tira de ~90px. La planilla de los dos equipos se lleva el centro. Relato y animos abajo, mas chicos.\n\nContra: relato y animos quedan a dos o tres renglones visibles." },
+    { "id": "nota-b", "x": 1560, "y": -300, "w": 420, "text": "B · Todo lo que es NUMERO en una columna ancha (marcador, cuartos, las dos planillas); todo lo que es COLOR en la otra.\n\nContra: las planillas quedan angostas y hay que scrollear la columna." },
+    { "id": "nota-c", "x": 3120, "y": -300, "w": 420, "text": "C · La pantalla ES la planilla, como la foto de la liga: los dos equipos lado a lado ocupan casi todo. El marcador vive en el cabezal de cada equipo.\n\nContra: el marcador grande y el resumen pierden protagonismo." }
+  ],
+  "launch": { "view": "canvas" }
+}
