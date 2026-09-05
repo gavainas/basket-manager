@@ -12,7 +12,7 @@ import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
 import { Timeline } from './Timeline';
 import { TIPS } from './Tip';
-import { feeChipAlways, roleLabel, statusChipAlways } from './helpers';
+import { feeChip, feeChipAlways, roleLabel, statusChipAlways } from './helpers';
 import { Icon } from './Icon';
 
 type ProfileTab = 'general' | 'deportiva' | 'relaciones' | 'historia' | 'social';
@@ -321,11 +321,26 @@ export function PlayerProfile({ state, playerId, onClose }: Props) {
   if (!p) return null;
   const status = statusChipAlways(p);
 
+  const fee = feeChip(p);
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="profile" onClick={(e) => e.stopPropagation()}>
-        <div className="profile-head">
-          <div className="avatar profile-avatar">
+      {/* La ficha en dos columnas: la persona a la izquierda, sus datos a la
+          derecha. El retrato pasa de 58 px a media ficha — es la cara del tipo
+          del que estás decidiendo si juega, no un ícono de fila.
+
+          El hueco está pensado para la ilustración de cuerpo entero de la
+          maqueta; hasta que exista y se apruebe (Puerta 3 de
+          design/ART_PIPELINE.md) lo llena el retrato de arquetipo, que ya está
+          aprobado y en uso. Cuando llegue, cambia el contenido de
+          `.profile-retrato`, no la grilla. */}
+      <div className="profile profile-ficha" onClick={(e) => e.stopPropagation()}>
+        <button className="profile-close" onClick={onClose} title="Cerrar">
+          ✕
+        </button>
+
+        <aside className="profile-cara">
+          <div className="profile-retrato">
             <Avatar
               personality={p.personality}
               seed={p.id}
@@ -335,41 +350,48 @@ export function PlayerProfile({ state, playerId, onClose }: Props) {
                 p.status === 'molesto' || p.status === 'al_borde' ? 2 : p.status === 'lesionado' ? 3 : undefined
               }
               title={p.name}
+              size={320}
             />
           </div>
-          <div className="profile-who">
+
+          <div className="profile-cara-pie">
+            <div className="profile-cara-pos">
+              {p.position} · {p.age} años · {p.height} cm
+            </div>
             <div className="profile-name">{p.name}</div>
+            <div className="profile-cara-valor">
+              <span className="v">
+                <small>≈</small>
+                {p.visibleRating}
+              </span>
+              <span className="k">Valoración</span>
+            </div>
             <div className="profile-chips">
-              <span className="chip">{p.position}</span>
-              <span className="chip">{p.age} años</span>
-              <span className="chip">{p.height} cm</span>
               <span className={`chip ${status.cls}`}>{status.label}</span>
+              {fee && <span className={`chip ${fee.cls}`}>{fee.label}</span>}
+              <span className="chip">{roleLabel(p)}</span>
             </div>
           </div>
-          <div className="rating">
-            <div className="num">≈{p.visibleRating}</div>
+        </aside>
+
+        <div className="profile-datos">
+          <div className="profile-tabs">
+            {TABS.map((t) => (
+              <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
+                {t.label}
+              </button>
+            ))}
           </div>
-          <button className="profile-close" onClick={onClose} title="Cerrar">
-            ✕
-          </button>
-        </div>
 
-        <div className="profile-tabs">
-          {TABS.map((t) => (
-            <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="profile-body">
-          {tab === 'general' && <GeneralTab state={state} p={p} />}
-          {tab === 'deportiva' && <DeportivaTab p={p} />}
-          {tab === 'relaciones' && <RelacionesTab state={state} p={p} />}
-          {tab === 'historia' && (
-            <Timeline events={p.timeline} emptyText="Su historia en el club está por escribirse." />
-          )}
-          {tab === 'social' && <SocialTab state={state} p={p} />}
+          <div className="profile-body">
+            {tab === 'general' && <GeneralTab state={state} p={p} />}
+            {tab === 'deportiva' && <DeportivaTab p={p} />}
+            {tab === 'relaciones' && <RelacionesTab state={state} p={p} />}
+            {tab === 'historia' && (
+              <Timeline events={p.timeline} emptyText="Su historia en el club está por escribirse." />
+            )}
+            {tab === 'social' && <SocialTab state={state} p={p} />}
+          </div>
         </div>
       </div>
     </div>

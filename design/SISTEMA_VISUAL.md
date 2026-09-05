@@ -277,6 +277,26 @@ Reglas de estilo, para que el generador SVG pueda alcanzarlo después:
 - Cuerpo entero, de pie, peso en una pierna, mirando apenas fuera de eje.
 - Fondo de gimnasio desaturado y desenfocado: el personaje es lo único nítido.
 
+## La ficha del jugador (sep 2026)
+
+Dos columnas: **la persona a la izquierda, sus datos a la derecha**. El retrato pasó de
+58 px a media ficha — es la cara del tipo del que estás decidiendo si juega, no un ícono
+de fila — y a su lado van las pestañas con todo lo demás.
+
+- La columna izquierda lleva retrato, puesto/edad/altura, nombre, **la valoración como
+  único naranja de la pantalla**, y los chips de estado que tengan algo que decir (el de
+  cuota sólo aparece si no está al día).
+- El retrato **crece con la ficha**: con una pestaña larga se agranda en vez de dejar un
+  palmo de fondo vacío. En ventana angosta pasa a apaisado y con techo, para no empujar
+  los datos abajo del pliegue.
+- El hueco está pensado para **la ilustración de cuerpo entero de la maqueta**. Hasta que
+  exista y se apruebe (Puerta 3 de [ART_PIPELINE.md](ART_PIPELINE.md)) lo llena el retrato
+  de arquetipo, que ya está aprobado y en uso. Cuando llegue, cambia el contenido de
+  `.profile-retrato`, no la grilla.
+
+Es el mismo hueco que tenía el Tablero y que se sacó de ahí: en el Tablero la cara era del
+"referente" que ninguna acción cambiaba; acá es el jugador que abriste vos.
+
 ## Reglas de assets
 
 > **Lo que escala con los datos es procedural. Lo que es poco y fijo se genera.**
