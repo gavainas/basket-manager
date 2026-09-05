@@ -276,6 +276,18 @@ button.danger {
   scrollbar-width: thin;
 }
 
+/* Un panel que scrollea corta la última fila por la mitad y se lee como un
+   bug, no como "hay más abajo". El degradado al pie lo dice sin ocupar alto:
+   se apoya en el propio scroll (`background-attachment: local`), así que
+   aparece solo cuando falta contenido y desaparece al llegar al final. */
+.pane > .pane-body {
+  background:
+    linear-gradient(var(--panel) 30%, rgba(246, 244, 241, 0)) top / 100% 14px no-repeat local,
+    linear-gradient(rgba(246, 244, 241, 0), var(--panel) 70%) bottom / 100% 18px no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgba(37, 40, 44, 0.14), rgba(37, 40, 44, 0)) top / 100% 7px no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgba(37, 40, 44, 0.16), rgba(37, 40, 44, 0)) bottom / 100% 8px no-repeat scroll;
+}
+
 /* ---------- Chrome: barra superior ---------- */
 
 /* Vive fuera de .app-shell y ocupa todo el ancho; el contenido se alinea con
@@ -1061,27 +1073,97 @@ button.danger {
 
 /* ---------- El informe (tanda D) ---------- */
 
+/* Cuatro filas: tira del marcador · planilla (la que se estira) · relato y
+   reacciones · barra. La planilla se lleva el espacio elástico porque es para
+   lo que existe el informe; antes lo tenía el cuerpo de tres columnas y la
+   planilla quedaba en un tercio de pantalla. */
 .informe-pantalla {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: var(--sp-4);
+  /* La planilla toma LO QUE NECESITA (`auto`) y el resto va al relato y las
+     reacciones. Con un reparto fijo se reservaba 414px para 234 de contenido y
+     las reacciones quedaban en cuatro de once.
+     LOS PISOS NO SON DECORATIVOS: sin el de la planilla, a 1280x720 (el piso de
+     diseño) la fila `auto` se comprimía a 55px y no se veía UNA sola línea de
+     la planilla — solo los cabezales de los dos equipos. Cada panel scrollea
+     por dentro antes que recortarse. */
+  grid-template-rows: auto minmax(190px, auto) minmax(150px, 1fr) auto;
+  gap: var(--sp-3);
   min-height: 0;
   height: 100%;
 }
 
 .informe-cabecera {
   margin-bottom: 0;
-  max-height: 34vh;
-  overflow-y: auto;
-  scrollbar-width: thin;
+}
+
+/* La tira: todo el encabezado del partido en una línea. */
+.informe-cabecera.tira {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  flex-wrap: wrap;
+}
+
+/* A 1280 de ancho el resumen se iba a un segundo renglón y la tira pasaba de
+   84px a 140px, justo el alto que le falta a la planilla en 720p. El resumen
+   es lo primero que sobra: el marcador y los cuartos ya lo cuentan. */
+@media (max-width: 1400px) {
+  .informe-cabecera.tira { flex-wrap: nowrap; }
+  .tira-resumen { display: none; }
+}
+
+.tira-marcador {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.tira-pts {
+  font-family: var(--display);
+  font-size: 2.1rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.tira-pts.win { color: var(--good); }
+.tira-pts.lose { color: var(--bad); }
+
+.tira-vs {
+  font-family: var(--display);
+  color: var(--text-faint);
+  letter-spacing: 0.12em;
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+}
+
+.tira-rival { font-weight: 700; margin-left: 0.2rem; }
+
+.tira-cuartos table { font-size: var(--fs-sm); }
+.tira-cuartos th, .tira-cuartos td { padding: 0.12rem 0.42rem; }
+
+.tira-cierre {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}
+
+.tira-resumen {
+  margin: 0;
+  max-width: 34ch;
+  text-align: right;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  line-height: 1.35;
 }
 
 /* La planilla · el relato y las claves · el vestuario. Tres preguntas distintas
    del mismo partido, que antes se leían scrolleando casi tres pantallas. */
 .informe-cuerpo {
   display: grid;
-  grid-template-columns: minmax(320px, 1.2fr) minmax(280px, 1fr) minmax(280px, 1fr);
-  gap: var(--sp-4);
+  grid-template-columns: minmax(300px, 1fr) minmax(300px, 1.1fr);
+  gap: var(--sp-3);
   min-height: 0;
 }
 
@@ -1108,9 +1190,67 @@ button.danger {
 
 .informe-pantalla .confirm-bar { margin-top: 0; }
 
+/* Las reacciones, una fila por jugador y de UN renglón. La columna de 140px
+   del `.data-row` genérico partía el nombre en dos y la frase en tres, así que
+   una fila costaba ~60px y entraban tres de once. Con el nombre en una línea y
+   la frase recortada entran seis, y el resto queda a un scroll corto. */
+/* En dos columnas: el panel tiene 660px de ancho y las reacciones son filas de
+   29px, así que apiladas entraban cuatro de once y el resto quedaba escondido
+   en un scroll que nadie ve. En dos columnas entran nueve o diez de un vistazo,
+   que es lo que se pidió: ver cómo quedó CADA UNO. */
+.informe-moods .pane-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--sp-4);
+  align-content: start;
+}
 @media (max-width: 1240px) {
-  .informe-cuerpo { grid-template-columns: minmax(300px, 1.1fr) minmax(280px, 1fr); }
-  .informe-moods { grid-column: span 2; }
+  .informe-moods .pane-body { grid-template-columns: 1fr; }
+}
+
+/* Nombre a la izquierda, estado a la derecha. La FRASE no entra en media
+   columna: recortada a "Se hizo lo q…" no dice nada y encima desbordaba sobre
+   la columna de al lado. Se guarda en el tooltip de la fila; el chip con la
+   emoción es el dato que se lee de un vistazo. */
+/* El NOMBRE tiene prioridad sobre el chip: con la columna del chip en `auto`,
+   una etiqueta larga ("Masticando bronca por sus minutos") dejaba el nombre en
+   "N…" y no se sabía de quién se hablaba. Ahora el nombre tiene piso y el que
+   se recorta es el chip, que además lleva su texto completo en el tooltip. */
+.informe-moods .data-row {
+  grid-template-columns: minmax(124px, 1fr) minmax(0, auto);
+  gap: 0.4rem;
+  padding: 0.2rem 0;
+  align-items: center;
+  font-size: var(--fs-sm);
+  overflow: hidden;
+}
+.informe-moods .data-value .muted { display: none; }
+.informe-moods .data-value .chip {
+  max-width: 152px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.informe-moods .mood-avatar { width: 22px; height: 22px; min-width: 22px; }
+.informe-moods .mood-label {
+  min-width: 0;
+  white-space: nowrap;
+}
+.informe-moods .mood-label .plink {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.informe-moods .data-value {
+  font-size: var(--fs-sm);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+@media (max-width: 1080px) {
+  .informe-cuerpo { grid-template-columns: 1fr; }
 }
 
 /* ---------- El Tablero encoge con la ventana ---------- */
@@ -3951,12 +4091,17 @@ button.mini.blue.on {
    las cinco columnas que la gente mira. El color del club vive en el escudo y
    en el filete del cabezal — nunca en las columnas, para que dos camisetas
    parecidas no vuelvan la tabla ilegible. */
-/* Los dos equipos, uno debajo del otro: el panel del informe es angosto y
-   scrollea por dentro, asi que apilar lee mejor que dos columnas apretadas. */
+/* Los dos equipos lado a lado: la planilla tiene su propia fila a todo el
+   ancho, así que entra sin apretar. Apilada sólo tiene sentido en pantallas
+   angostas, donde dos columnas de siete cifras dejan de leerse. */
 .planilla-dos {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3, 0.75rem);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+  align-content: start;
+}
+@media (max-width: 1080px) {
+  .planilla-dos { grid-template-columns: 1fr; }
 }
 
 /* `flex: 0 0 auto` es obligatorio: sin eso los dos bloques se reparten el alto
@@ -3973,15 +4118,15 @@ button.mini.blue.on {
 .planilla-cabezal {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.55rem 0.7rem;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
   background: var(--panel-2);
   border-bottom: 3px solid var(--border);
 }
 
 .planilla-marcador {
-  font-family: var(--font-display, inherit);
-  font-size: 2rem;
+  font-family: var(--display);
+  font-size: 1.7rem;
   font-weight: 700;
   line-height: 1;
   color: var(--text-dim);

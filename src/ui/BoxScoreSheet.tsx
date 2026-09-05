@@ -7,10 +7,10 @@
 // columnas y los números se quedan en tinta: si dos clubes con camisetas
 // parecidas se cruzan, la planilla tiene que seguir leyéndose.
 //
-// Vive en el panel de la izquierda del informe, que es el que el marco fijo
-// reserva para la planilla: los dos equipos van APILADOS y el panel scrollea
-// por dentro (`.pane`). Puesta a lo ancho como un bloque aparte le robaba la
-// fila elástica a la grilla de `.informe-pantalla` y se aplastaba a 34px.
+// Ocupa su propia fila del informe, a todo el ancho y con los dos equipos LADO
+// A LADO: es lo que el informe existe para mostrar. Metida en una columna de la
+// grilla quedaba en 478px, con menos de la mitad de su contenido visible y el
+// rival fuera de pantalla.
 
 import { Crest } from './Crest';
 import { Icon } from './Icon';
@@ -28,7 +28,8 @@ interface FilaPlanilla {
   tapones: number;
   rebotes: number;
   destacado?: boolean;
-  /** Solo los nuestros llevan nota: a los de enfrente no los calificamos. */
+  /** Solo los nuestros llevan minutos y nota: del rival no tenemos planillero. */
+  minutos?: number;
   nota?: number;
   comentario?: string;
 }
@@ -38,6 +39,7 @@ function Totales({ filas, conNota }: { filas: FilaPlanilla[]; conNota: boolean }
   return (
     <tr className="planilla-total">
       <td>Total:</td>
+      {conNota && <td className="num">{suma((x) => x.minutos ?? 0)}&apos;</td>}
       <td className="num">{suma((x) => x.puntos)}</td>
       <td className="num">{suma((x) => x.triples)}</td>
       <td className="num">{suma((x) => x.asistencias)}</td>
@@ -69,7 +71,7 @@ function Bloque({
   return (
     <div className="planilla-equipo">
       <div className="planilla-cabezal" style={colors ? { borderBottomColor: colors[0] } : undefined}>
-        <Crest seed={crestSeed} name={nombre} colors={colors} founded={founded} size={38} />
+        <Crest seed={crestSeed} name={nombre} colors={colors} founded={founded} size={30} />
         <div className={`planilla-marcador num ${gano ? 'gano' : ''}`}>{puntos}</div>
         <div className="planilla-club">{nombre}</div>
       </div>
@@ -78,6 +80,7 @@ function Bloque({
           <thead>
             <tr>
               <th>Nombre</th>
+              {conNota && <th className="num">Min</th>}
               <th className="num">Pts</th>
               <th className="num" title="Triples">T3</th>
               <th className="num" title="Asistencias">As</th>
@@ -92,6 +95,7 @@ function Bloque({
                 <td>
                   {f.nombre} {f.destacado ? <Icon name="estrella" size={11} /> : ''}
                 </td>
+                {conNota && <td className="num">{f.minutos ?? 0}&apos;</td>}
                 <td className="num" style={{ fontWeight: 700 }}>
                   {f.puntos}
                 </td>
@@ -136,6 +140,7 @@ export function BoxScoreSheet({ state, match }: { state: GameState; match: Match
     tapones: l.blocks,
     rebotes: l.rebounds,
     destacado: l.mvp,
+    minutos: l.minutes,
     nota: l.rating,
     comentario: l.comment,
   }));
@@ -151,8 +156,11 @@ export function BoxScoreSheet({ state, match }: { state: GameState; match: Match
   }));
 
   return (
-    <div className="card pane informe-planilla planilla-hoja">
-      <h3 className="card-band">Planilla del partido</h3>
+    <div className="card pane planilla-hoja">
+      <h3 className="card-band">
+        Planilla del partido
+        {match.mvpName && <span className="band-right chip">Figura: {match.mvpName}</span>}
+      </h3>
       <div className="pane-body planilla-dos">
         <Bloque
           nombre={state.club.name}
@@ -183,7 +191,7 @@ export function BoxScoreSheet({ state, match }: { state: GameState; match: Match
                 name={match.rivalName}
                 colors={rivalClub?.colors}
                 founded={rivalClub?.founded}
-                size={38}
+                size={30}
               />
               <div className={`planilla-marcador num ${!match.won ? 'gano' : ''}`}>{match.scoreAgainst}</div>
               <div className="planilla-club">{match.rivalName}</div>

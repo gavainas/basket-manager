@@ -12,6 +12,7 @@ import { userFixtureOfWeek } from '../game/world';
 import type { WeekDay } from '../game/types';
 import { Bar } from './Bar';
 import { BoxScoreSheet } from './BoxScoreSheet';
+import { Crest } from './Crest';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { StyleChip } from './StyleChip';
@@ -1636,6 +1637,9 @@ function LiveMatchPanel({ state, dispatch }: Props) {
 
 function MatchResultPanel({ state, dispatch }: Props) {
   const m = state.lastMatch;
+  const userClub = state.world.clubs.find((c) => c.isUser);
+  const rivalTeam = state.world.teams.find((t) => t.legacyRivalId === m?.rivalId);
+  const rivalClub = rivalTeam ? state.world.clubs.find((c) => c.id === rivalTeam.clubId) : undefined;
   if (!m) return null;
   const nextLabel =
     state.week < state.seasonLength
@@ -1647,39 +1651,37 @@ function MatchResultPanel({ state, dispatch }: Props) {
           : 'Cerrar la temporada →';
 
   return (
-    /* El Informe era la peor de todas: una tira vertical de seis bloques que
-       medía casi tres pantallas a 720p. El contenido no sobraba —la forma sí—,
-       así que entra completo repartido en tres columnas, sin sacar una línea. */
+    /* Cuatro filas: la tira del marcador, la planilla de los dos equipos (que
+       se lleva el espacio elástico), el relato y las reacciones, y la barra.
+       Antes eran tres y la planilla compartía fila con el resto: quedaba en un
+       tercio de pantalla y no entraba ni un equipo entero. */
     <div className="informe-pantalla">
-      <div className="informe-cabecera card">
-        <div style={{ textAlign: 'center' }}>
-          <span className={`result-badge ${m.won ? 'win' : 'lose'}`}>
-            {m.forfeit ? 'FORFEIT' : m.won ? 'VICTORIA' : 'DERROTA'}
-          </span>
+      {/* La cabecera es una TIRA, no un bloque: apilada se llevaba 306px de
+          800 (38% de la pantalla) casi en aire, y la planilla —que es para lo
+          que existe el informe— quedaba mostrando menos de la mitad de su
+          contenido. Escudos, marcador, cuartos y resumen en una sola línea. */}
+      <div className="informe-cabecera card tira">
+        <span className={`result-badge ${m.won ? 'win' : 'lose'}`}>
+          {m.forfeit ? 'FORFEIT' : m.won ? 'VICTORIA' : 'DERROTA'}
+        </span>
+
+        <div className="tira-marcador">
+          <Crest seed={userClub?.id ?? 'club'} name={state.club.name} colors={userClub?.colors} founded={userClub?.founded} size={34} />
+          <div className={`tira-pts num ${m.won ? 'win' : 'lose'}`}>{m.scoreFor}</div>
+          <span className="tira-vs">vs</span>
+          <div className={`tira-pts num ${m.won ? 'lose' : 'win'}`}>{m.scoreAgainst}</div>
+          <Crest seed={rivalClub?.id ?? m.rivalId} name={m.rivalName} colors={rivalClub?.colors} founded={rivalClub?.founded} size={34} />
+          <div className="tira-rival"><RivalLink id={m.rivalId}>{m.rivalName}</RivalLink></div>
         </div>
-        <div className="scoreboard">
-          <div className="team">
-            <div className="tname">{state.club.name}</div>
-            <div className={`score ${m.won ? 'win' : 'lose'}`}>{m.scoreFor}</div>
-          </div>
-          <div style={{ color: 'var(--text-dim)', fontWeight: 700 }}>vs</div>
-          <div className="team">
-            <div className="tname">
-              <RivalLink id={m.rivalId}>{m.rivalName}</RivalLink>
-            </div>
-            <div className={`score ${m.won ? 'lose' : 'win'}`}>{m.scoreAgainst}</div>
-          </div>
-        </div>
+
         {m.quarters.length > 0 && (
-          <div className="table-wrap" style={{ maxWidth: 460, margin: '0 auto 0.8rem' }}>
+          <div className="table-wrap tira-cuartos">
             <table>
               <thead>
                 <tr>
                   <th></th>
                   {m.quarters.map((_, i) => (
-                    <th className="num" key={i}>
-                      {i < 4 ? `Q${i + 1}` : 'PR'}
-                    </th>
+                    <th className="num" key={i}>{i < 4 ? `Q${i + 1}` : 'PR'}</th>
                   ))}
                   <th className="num">Total</th>
                 </tr>
@@ -1687,45 +1689,32 @@ function MatchResultPanel({ state, dispatch }: Props) {
               <tbody>
                 <tr>
                   <td>Nosotros</td>
-                  {m.quarters.map((q, i) => (
-                    <td className="num" key={i}>
-                      {q.for}
-                    </td>
-                  ))}
-                  <td className="num" style={{ fontWeight: 700 }}>
-                    {m.scoreFor}
-                  </td>
+                  {m.quarters.map((q, i) => (<td className="num" key={i}>{q.for}</td>))}
+                  <td className="num" style={{ fontWeight: 700 }}>{m.scoreFor}</td>
                 </tr>
                 <tr>
-                  <td><RivalLink id={m.rivalId}>{m.rivalName}</RivalLink></td>
-                  {m.quarters.map((q, i) => (
-                    <td className="num" key={i}>
-                      {q.against}
-                    </td>
-                  ))}
-                  <td className="num" style={{ fontWeight: 700 }}>
-                    {m.scoreAgainst}
-                  </td>
+                  <td>{m.rivalName}</td>
+                  {m.quarters.map((q, i) => (<td className="num" key={i}>{q.against}</td>))}
+                  <td className="num" style={{ fontWeight: 700 }}>{m.scoreAgainst}</td>
                 </tr>
               </tbody>
             </table>
           </div>
         )}
-        <p style={{ textAlign: 'center', marginTop: 0 }}>{m.summary}</p>
-        {m.mvpName && m.mvpId && (
-          <p style={{ textAlign: 'center' }}>
+
+        <div className="tira-cierre">
+          <p className="tira-resumen">{m.summary}</p>
+          {m.mvpName && m.mvpId && (
             <span className="chip accent">
-              <Icon name="estrella" size={13} /> Mejor jugador: <PlayerLink id={m.mvpId}>{m.mvpName}</PlayerLink>
+              <Icon name="estrella" size={13} /> {' '}<PlayerLink id={m.mvpId}>{m.mvpName}</PlayerLink>
             </span>
-          </p>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="informe-cuerpo">
-        {/* La planilla ocupa el panel que el marco fijo reserva para ella: los
-            dos equipos apilados, con la nota de los nuestros en su columna. */}
-        <BoxScoreSheet state={state} match={m} />
+      <BoxScoreSheet state={state} match={m} />
 
+      <div className="informe-cuerpo">
       <div className="informe-col">
       {m.highlights.length > 0 && (
         <div className="card">
@@ -1782,7 +1771,9 @@ function MatchResultPanel({ state, dispatch }: Props) {
                       : '';
               const moodPlayer = state.players.find((p) => p.id === mood.playerId);
               return (
-                <div className="data-row" key={mood.playerId}>
+                /* La frase va al tooltip: en media columna no entra, y
+                   recortada a tres palabras no dice nada. */
+                <div className="data-row" key={mood.playerId} title={mood.text}>
                   <span className="data-label mood-label">
                     {moodPlayer && (
                       <span className="avatar mood-avatar">
@@ -1799,7 +1790,7 @@ function MatchResultPanel({ state, dispatch }: Props) {
                     <PlayerLink id={mood.playerId}>{mood.name}</PlayerLink>
                   </span>
                   <span className="data-value">
-                    <span className={`chip ${cls}`}>{mood.label}</span>{' '}
+                    <span className={`chip ${cls}`} title={mood.label}>{mood.label}</span>{' '}
                     <span className="muted">{mood.text}</span>
                   </span>
                 </div>
