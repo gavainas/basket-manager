@@ -89,7 +89,12 @@ día'. Después también si paga o no paga."* De ahí sale **E**, que es la prop
 | `MercadoActual.dc.html` | **Hoy.** El nivel aparece de tres formas en la misma fila (`71–85`, `≈69`, `★★★★☆`), las cards quedan de alturas desparejas según cuántos chips le toquen a cada uno, `Exigencias: ? (contactalo)` se repite dieciséis veces y hay dieciséis botones a ancho completo. Entran 5 de 16. |
 | `MercadoB.dc.html` | **B · La ficha de altura fija.** Grilla de cards que **todas miden 196 px**, así que la escalera desaparece. No la eligió. Archivada. |
 
-### E · La libreta, en planilla — la propuesta
+### E · La libreta, en planilla — **implementada**
+
+> **Hecha (sep 2026).** Gabi: *"dale, hacé E."* Vive en `MarketSection` de
+> `ui/PreseasonView.tsx` + el bloque `.mk-*` de `styles.css`. Medido antes y después,
+> con la misma partida: **cards enteras a la vista pasaron de 5 a 11 en 1920×1080 y de
+> 0 a 5 en 1280×720**, y el alto del contenido de 1468 px a ~1090 px.
 
 De **D** se queda la cabeza (los grupos por cómo llegó el nombre, la referencia con cara,
 las llamadas como fichas que se gastan, la presión de "faltan 4"). De **A** se queda el
@@ -126,18 +131,36 @@ razón de gastar una llamada.
 primero, después el sello). Y agrupar por conocimiento sigue impidiendo ordenar por nivel de
 punta a punta.
 
-### Un problema que no es de esta pantalla (medido, sep 2026)
+### La cabecera fija, medida y recortada (sep 2026)
 
-El mercado de hoy, con las 16 cards:
+Antes de E, el mercado con sus 16 cards:
 
 | Resolución | Cuerpo visible | Contenido | Cards enteras |
 | --- | --- | --- | --- |
 | 1920×1080 | 702 px | 1468 px | **5 de 16** |
 | 1280×720 | **320 px** | 1875 px | **0 de 16** |
 
-La `.pretemporada-cabecera` (panel de estado + las tres pestañas) se come **225 px de 545** en
-el piso de diseño. Elijamos la maqueta que elijamos, **eso hay que arreglarlo aparte** — con
-la misma media query por alto que ya se usó en la tabla de ligas.
+Dos cosas se comían el cuerpo, y las dos se arreglaron junto con E:
+
+1. **`cab-bar.webp`, 150 px de banda ilustrada** arriba de la lista — entre el 22% y el 47%
+   del espacio de lo único que hay que leer entero. Se sacó del mercado (el archivo sigue en
+   `public/arte/`: el arte no se descarta, cambia de pantalla). Es la misma decisión que ya se
+   había tomado con `cab-comision.webp` en la inscripción.
+2. **La `.pretemporada-cabecera`** (panel de estado + las tres pestañas), **225 px de 545** en
+   el piso de diseño. Con la media query por alto se le sacó el título de la banda —"Cómo
+   llega el club a la inscripción", que lo dicen la línea de liga y los riesgos de abajo— y el
+   aire de las pestañas y los filtros. **Los riesgos no se tocaron**: son la razón de que el
+   panel exista. El cuerpo pasó de 320 a 416 px.
+
+Queda pendiente lo mismo en la pestaña **Plantel**, que todavía lleva `cab-vestuario.webp` a
+150 px: a 720p muestra dos jugadores y medio de tres.
+
+### El detalle de implementación que casi se come el arreglo
+
+`.ps-estado > .card-band { display: none }` **no hacía nada**: la banda la pinta
+`.vista .card > h3.card-band`, que tiene más especificidad. Hay que escribir
+`.vista .ps-estado > h3.card-band`. Una regla que no aplica no avisa — se ve igual que si no
+la hubieras escrito.
 
 ### D · La libreta del delegado
 

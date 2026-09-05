@@ -462,6 +462,20 @@ Formato sugerido:
 - Próximo paso autorizado: nada de arte. Falta que Gabi elija entre **Mercado A, B o C**
   para los fichables, que es la otra mitad de la misma queja.
 
+### 2026-09-05 — El mercado, dirección E (layout) + `cab-bar.webp` sale de esa pantalla
+
+- Alcance: **cómo se muestran los fichables**. Gabi eligió entre cinco tratamientos del canvas
+  y pidió "algo entre la A y la D". Es layout dentro de la dirección aprobada: **no se generó
+  ningún asset y no se llamó a Higgsfield**.
+- **Una banda ilustrada salió de una pantalla**, y queda registrado porque es una decisión de
+  arte, no de código: `cab-bar.webp` (150 px) estaba arriba de la lista de dieciséis
+  fichables, en un cuerpo que mide 702 px a 1920×1080 y 320 px a 1280×720 — entre el 22% y el
+  47% del espacio de la única lista que hay que leer entera. **El archivo no se borra**: sigue
+  en `public/arte/` y su lugar es una pantalla que se mira, no una que se compara. Es la misma
+  decisión que ya se había tomado con `cab-comision.webp` en la inscripción.
+- Sigue en pie `cab-vestuario.webp` en la pestaña Plantel, con el mismo problema sin resolver.
+- Próximo paso autorizado: nada de arte. Las Puertas 3 a 6 siguen abiertas y sin tocar.
+
 ## Estado de aprobación actual
 
 > **Corregido en sep 2026.** Este bloque contradecía al resto del documento y a lo que hay

@@ -125,6 +125,90 @@ function agendaFit(state: GameState, mp: MarketPlayer): { cls: string; text: str
   return { cls: 'good', text: `Puede los ${dayLabel(d.gameDay)}, nuestro día de partido` };
 }
 
+/**
+ * "No puede": el día que el jugador tiene tomado, **sin cruzarlo con ninguna
+ * liga**.
+ *
+ * Antes esta columna preguntaba "¿puede los lunes?", que es el cruce contra el
+ * día de partido de la liga elegida. Pedido de Gabi (sep 2026), y tiene razón:
+ * mientras no elegiste liga —que es justo cuando estás mirando el mercado— ese
+ * cruce no existe, y si después te anotás en una que juega los jueves, el dato
+ * que viste era de otro partido. Así que el dato es del jugador; el cruce es un
+ * resaltado **encima** del dato: cuando ya hay liga y el día choca, se pone en
+ * rojo en vez de ámbar.
+ *
+ * Vale una columna porque es raro: `genAvailability()` bloquea un día al 20% de
+ * los jugadores, y como mucho uno. Casi todos muestran "—", y los pocos que no,
+ * saltan solos.
+ */
+function noPuedeLabel(state: GameState, mp: MarketPlayer): { text: string; cls: string } {
+  if (!agendaKnown(mp) || !mp.agenda) return { text: '?', cls: 'duda' };
+  const dias = mp.agenda.blockedDays;
+  if (dias.length > 0) {
+    const d = verdictDivision(state);
+    const choca = d ? dias.includes(d.gameDay) : false;
+    const texto = dias.map((x) => dayLabel(x).charAt(0).toUpperCase() + dayLabel(x).slice(1)).join(', ');
+    return { text: texto, cls: choca ? 'bad' : 'warn' };
+  }
+  if (mp.agenda.onlyTimes.length > 0) return { text: `Solo ${mp.agenda.onlyTimes.join('/')}`, cls: 'warn' };
+  return { text: '—', cls: 'normal' };
+}
+
+/**
+ * "Cuota": si va a pagar la cuota semanal o no. Mismo criterio que la columna de
+ * al lado —lo normal se calla, la excepción grita— y el mismo que ya usa
+ * `playerFeeLabel()` con las becas del plantel: de los 32 del pool sólo cuatro
+ * no piensan pagar, y son justo los caros. Un club amateur se financia con las
+ * cuotas: fichar al mejor y que además no aporte es una decisión, no un detalle.
+ */
+function cuotaLabel(mp: MarketPlayer): { text: string; cls: string } {
+  // La plata se comenta en la liga: alcanza con que sea conocido, no hace falta
+  // haberlo contactado (mismo criterio que la ficha, `feeKnown`).
+  const known = mp.contacted || mp.knowledge === 'muy_conocido' || mp.knowledge === 'conocido';
+  if (!known) return { text: '?', cls: 'duda' };
+  if (mp.feeAttitude === 'beca') return { text: 'No paga', cls: 'bad' };
+  if (mp.feeAttitude === 'parcial') return { text: 'Media', cls: 'warn' };
+  return { text: 'Paga', cls: 'normal' };
+}
+
+/**
+ * Los tres grupos de la libreta: **cómo llegó el nombre**, que es el orden en el
+ * que un delegado piensa el mercado. El juego ya tenía el dato (`knowledge` +
+ * `knowledgeSource`), pero repartido en un chip repetido dieciséis veces y una
+ * línea de prosa al final de cada card. Acá es la estructura de la lista, y las
+ * mismas tres palabras son el filtro de arriba: filtrar y leer son lo mismo.
+ */
+type MarketTier = 'vistos' | 'pasados' | 'oidas';
+
+const TIER_OF: Record<KnowledgeLevel, MarketTier> = {
+  muy_conocido: 'vistos',
+  conocido: 'vistos',
+  referencias: 'pasados',
+  poco_conocido: 'oidas',
+  desconocido: 'oidas',
+};
+
+const TIERS: { id: MarketTier; titulo: string; filtro: string; sub: string }[] = [
+  {
+    id: 'vistos',
+    titulo: 'Los que ya viste jugar',
+    filtro: 'Los viste jugar',
+    sub: 'Del nivel no te mienten. De los muy conocidos ya sabés hasta la agenda.',
+  },
+  {
+    id: 'pasados',
+    titulo: 'Te los pasó alguien',
+    filtro: 'Te los pasaron',
+    sub: 'Lo que sabés te lo contó un tercero — y el que trae un nombre lo defiende.',
+  },
+  {
+    id: 'oidas',
+    titulo: 'De oídas',
+    filtro: 'De oídas',
+    sub: 'Alguien los nombró. De algunos ni el nivel: hay que ir a verlos.',
+  },
+];
+
 /** Nombre del club de origen: clickeable cuando es un rival real de la liga. */
 function prevTeamNode(state: GameState, name: string) {
   const rival = state.rivals.find((r) => name === r.name || name.includes(r.name));
@@ -630,130 +714,239 @@ function RosterSection({ state, dispatch }: Props) {
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 
-/** Cómo ordenar la vidriera del mercado. */
-type MarketSort = 'nivel' | 'conocido' | 'posicion';
-
-const KNOWLEDGE_RANK: Record<KnowledgeLevel, number> = {
-  muy_conocido: 0,
-  conocido: 1,
-  referencias: 2,
-  poco_conocido: 3,
-  desconocido: 4,
-};
-
+/**
+ * El mercado como **la libreta del delegado** (dirección E, sep 2026, aprobada
+ * por Gabi mirando `design/canvas-pretemporada/`).
+ *
+ * Antes eran dieciséis cards con retrato, párrafo y cuatro a seis chips del
+ * mismo tamaño: el nivel aparecía de tres formas distintas, `Exigencias: ?
+ * (contactalo)` se repetía dieciséis veces, y había dieciséis botones naranjas.
+ * Medido, entraban **5 de 16 a 1920x1080 y 0 de 16 a 1280x720**.
+ *
+ * Ahora es una planilla con los datos en columnas, agrupada por **cómo llegó el
+ * nombre a la libreta** —que es el orden en el que un delegado piensa el
+ * mercado— y con la ficha abriéndose **en la propia fila**: la densidad de una
+ * tabla todo el tiempo, el detalle sólo cuando se pide, sin una segunda columna
+ * fija comiéndose el ancho.
+ *
+ * Se fue el control de "Ordenar", y a propósito: "por cuánto lo conocés" ahora
+ * es la estructura de la lista, "por puesto" ya lo hace el filtro de puesto, y
+ * "por nivel" es el orden dentro de cada grupo. Tres botones que decían lo que
+ * la pantalla ya dice.
+ */
 function MarketSection({ state, dispatch }: Props) {
   const ps = state.preseason!;
   const noGestiones = ps.gestionesLeft <= 0;
   const [profileId, setProfileId] = useState<string | null>(null);
   const [posFilter, setPosFilter] = useState<Position | null>(null);
-  const [sort, setSort] = useState<MarketSort>('nivel');
+  const [tierFilter, setTierFilter] = useState<MarketTier | null>(null);
+  /** La fila abierta: la ficha corta, en la fila. `null` = todas cerradas. */
+  const [openId, setOpenId] = useState<string | null>(null);
   const profileMp = ps.market.find((m) => m.id === profileId) ?? null;
 
   const all = ps.market.filter((m) => m.status === 'disponible');
   const gone = ps.market.filter((m) => m.status !== 'disponible');
-  const available = all
-    .filter((m) => !posFilter || m.position === posFilter)
-    .sort((a, b) => {
-      if (sort === 'conocido') return KNOWLEDGE_RANK[a.knowledge] - KNOWLEDGE_RANK[b.knowledge];
-      if (sort === 'posicion') return POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position);
-      // Del que no sabés nada no se puede decir que sea mejor ni peor: va al
-      // final en vez de encabezar la lista con un "?" que no ordena nada (y
-      // que además delataría el número que el juego todavía te esconde).
-      const blindA = a.knowledge === 'desconocido' ? 1 : 0;
-      const blindB = b.knowledge === 'desconocido' ? 1 : 0;
-      return blindA - blindB || b.estTechnique - a.estTechnique;
-    });
 
-  const renderCard = (mp: MarketPlayer) => {
+  const porNivel = (a: MarketPlayer, b: MarketPlayer) => {
+    // Del que no sabés nada no se puede decir que sea mejor ni peor: va al final
+    // en vez de encabezar el grupo con un "?" que no ordena nada (y que además
+    // delataría el número que el juego todavía te esconde).
+    const blindA = a.knowledge === 'desconocido' ? 1 : 0;
+    const blindB = b.knowledge === 'desconocido' ? 1 : 0;
+    return blindA - blindB || b.estTechnique - a.estTechnique;
+  };
+
+  const visibles = all.filter((m) => !posFilter || m.position === posFilter);
+  const grupos = TIERS.map((t) => ({
+    ...t,
+    // El contador del filtro cuenta sobre TODO el mercado disponible, no sobre
+    // lo que sobrevive al filtro de puesto: un "0" que aparece por el otro
+    // filtro se lee como "no hay nadie así" y no es cierto.
+    total: all.filter((m) => TIER_OF[m.knowledge] === t.id).length,
+    jugadores: visibles.filter((m) => TIER_OF[m.knowledge] === t.id).sort(porNivel),
+  })).filter((g) => !tierFilter || g.id === tierFilter);
+
+  const enPantalla = grupos.reduce((n, g) => n + g.jugadores.length, 0);
+
+  const renderFila = (mp: MarketPlayer) => {
     const know = KNOWLEDGE_LABELS[mp.knowledge];
     const active = mp.status === 'disponible';
-    const fit = agendaFit(state, mp);
-    // La fama es pública: si el club apunta a la plaza, se sabe de antemano
-    // que este no va a atender el teléfono.
+    const abierta = openId === mp.id;
+    const noPuede = noPuedeLabel(state, mp);
+    const cuota = cuotaLabel(mp);
+    // La fama es pública: si el club apunta a la plaza, se sabe de antemano que
+    // este no va a atender el teléfono.
     const snubs = plazaBound(state) && isMarketFigure(mp);
+    const fit = agendaFit(state, mp);
+    // Contra quién compite: sin esto, un rango como "65–79" no dice nada.
+    const enSuPuesto = confirmedPlayers(state)
+      .filter((p) => p.position === mp.position)
+      .sort((a, b) => b.visibleRating - a.visibleRating);
+
     return (
-      <div key={mp.id} className={`player-card${active ? '' : ' dimmed'}`}>
+      <div key={mp.id} className={`mk-bloque${abierta ? ' on' : ''}${active ? '' : ' mk-ida'}`}>
         <div
-          className="player-head"
-          style={{ cursor: 'pointer' }}
-          title={`Ver ficha de ${mp.name}`}
-          onClick={() => setProfileId(mp.id)}
+          className="mk-fila"
+          role="button"
+          tabIndex={0}
+          aria-expanded={abierta}
+          title={abierta ? 'Cerrar' : `Ver a ${mp.name}`}
+          onClick={() => setOpenId(abierta ? null : mp.id)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setOpenId(abierta ? null : mp.id);
+            }
+          }}
         >
-          <div className="avatar">
-            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} personality={mp.personality} />
-          </div>
-          <div className="who">
-            <div className="name">
-              <span className="plink" role="button" tabIndex={0}>
-                {mp.name}
+          <span className="mk-foto">
+            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} personality={mp.personality} size={34} />
+          </span>
+          <span className="mk-quien">
+            <span className="mk-nombre">
+              {mp.name}
+              <span className="mk-pos">
+                {mp.position} · {mp.age} · {mp.height}
               </span>
-            </div>
-            <div className="pos">
-              {mp.position} · {mp.age} años · {mp.height} cm
-            </div>
-          </div>
-          <div className="rating">
-            <div className="num">{estimateLabel(mp.estTechnique, mp.knowledge)}</div>
-            <div className="approx">nivel</div>
-          </div>
-        </div>
-        <div className="player-desc">
-          {originNode(state, mp.previousTeam)} {mp.knowledgeSource}
-        </div>
-        {(mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 && (
-          <div className="human-note">
-            <span className="hn-icon">
-              <Icon name="agenda" size={14} />
-            </span>{' '}
-            {mp.agenda!.notes.join(' ')}
-          </div>
-        )}
-        <div className="player-chips">
-          <span className={`chip ${know.cls}`}>{know.label}</span>
-          <span className="chip">Físico: {estimateLabel(mp.estPhysical, mp.knowledge)}</span>
-          <span className="chip">{mp.signingCost > 0 ? `Pase: $${mp.signingCost}` : 'Pase libre'}</span>
-          {fit && <span className={`chip ${fit.cls}`}>{fit.text}</span>}
-          {mp.availability === 'escuchando_ofertas' && active && <span className="chip warn">Escucha otras ofertas</span>}
-          {snubs && active && <span className="chip bad">Figura: no atiende a un club de la plaza</span>}
-          {(mp.contacted || mp.knowledge === 'muy_conocido' || mp.knowledge === 'conocido') && (
-            <span className="chip">{feeAttitudeLabel(mp)}</span>
-          )}
-          {mp.contacted ? (
-            <span className={`chip ${mp.demand ? 'accent' : 'good'}`}>
-              {mp.demand ? `Exige: ${DEMAND_LABELS[mp.demand]}` : 'Sin exigencias'}
             </span>
-          ) : (
-            active && <span className="chip">Exigencias: ? (contactalo)</span>
-          )}
-          {mp.status === 'fichado' && <span className="chip good">Fichado ✔</span>}
-          {mp.status === 'perdido' && <span className="chip bad">Arregló con otro club</span>}
-          {mp.status === 'rechazo' && <span className="chip bad">La negociación se cayó</span>}
+            <span className="mk-fuente">{mp.knowledgeSource}</span>
+          </span>
+          <span className="mk-num">{estimateLabel(mp.estTechnique, mp.knowledge)}</span>
+          <span className="mk-num mk-fis">{estimateLabel(mp.estPhysical, mp.knowledge)}</span>
+          <span className="mk-num">{mp.signingCost > 0 ? `$${mp.signingCost}` : 'Libre'}</span>
+          <span className={`mk-dato ${cuota.cls}`}>{cuota.text}</span>
+          <span className={`mk-dato ${noPuede.cls}`}>{noPuede.text}</span>
+          <span className="mk-sello-celda">
+            <span className={`mk-sello ${know.cls}`}>{know.label}</span>
+          </span>
+          <span className="mk-accion">
+            {mp.status === 'fichado' && <span className="chip good">Fichado ✔</span>}
+            {mp.status === 'perdido' && <span className="chip bad">Se fue</span>}
+            {mp.status === 'rechazo' && <span className="chip bad">Se cayó</span>}
+            {active && (
+              <button
+                className="small"
+                disabled={noGestiones}
+                title={noGestiones ? 'No te quedan gestiones esta semana' : undefined}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true });
+                }}
+              >
+                {mp.contacted ? 'Retomar' : 'Llamar'}
+              </button>
+            )}
+          </span>
         </div>
-        {active && (
-          <button
-            disabled={noGestiones}
-            title={noGestiones ? 'No te quedan gestiones esta semana' : undefined}
-            onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true })}
-          >
-            {snubs ? 'Llamarlo igual' : mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
-          </button>
+
+        {abierta && (
+          <div className="mk-ficha">
+            <div className="mk-caja">
+              <span className="mk-rot">De dónde sale el dato</span>
+              <p>
+                {originNode(state, mp.previousTeam)} {mp.knowledgeSource}
+              </p>
+              {(mp.agenda?.notes.length ?? 0) > 0 && agendaKnown(mp) && <p className="mk-notas">{mp.agenda!.notes.join(' ')}</p>}
+              {fit && <p className={`mk-fit ${fit.cls}`}>{fit.text}</p>}
+            </div>
+
+            <div className="mk-caja">
+              <span className="mk-rot">{mp.contacted ? 'Lo que te dijo' : 'Lo que contesta la llamada'}</span>
+              {mp.contacted ? (
+                <p>
+                  {mp.demand ? (
+                    <>
+                      Exige: <strong>{DEMAND_LABELS[mp.demand]}</strong>.
+                    </>
+                  ) : (
+                    <>Sin exigencias.</>
+                  )}{' '}
+                  {feeAttitudeLabel(mp)}.
+                </p>
+              ) : (
+                <p>
+                  <strong>Qué días no puede</strong> · si piensa pagar cuota · qué va a pedir para venir.{' '}
+                  <span className="muted">El nivel no: eso se sabe viéndolo jugar.</span>
+                </p>
+              )}
+              {snubs && active && <p className="mk-fit bad">Es figura: a un club de la plaza no le atiende el teléfono.</p>}
+              {mp.availability === 'escuchando_ofertas' && active && (
+                <p className="mk-fit warn">Escucha otras ofertas: si tardás, puede arreglar con otro club.</p>
+              )}
+            </div>
+
+            <div className="mk-caja">
+              <span className="mk-rot">En su puesto tenés</span>
+              {enSuPuesto.length === 0 ? (
+                <p>
+                  <strong>Nadie.</strong> Sos {mp.position.toLowerCase()} cero: el que entre juega sí o sí.
+                </p>
+              ) : (
+                <>
+                  {enSuPuesto.slice(0, 2).map((p) => (
+                    <span key={p.id} className="mk-rival">
+                      <PlayerLink id={p.id}>{p.name}</PlayerLink>
+                      <small>
+                        {p.position} · {p.age}
+                      </small>
+                      <b>≈{p.visibleRating}</b>
+                    </span>
+                  ))}
+                  {enSuPuesto.length > 2 && <p className="muted">y {enSuPuesto.length - 2} más.</p>}
+                </>
+              )}
+            </div>
+
+            <div className="mk-ficha-pie">
+              <button className="small" onClick={() => setProfileId(mp.id)}>
+                Ver ficha completa
+              </button>
+            </div>
+          </div>
         )}
       </div>
     );
   };
 
   return (
-    <div className="card" style={{ marginBottom: '1rem' }}>
+    <div className="card mk-card">
       <h3 className="card-band">
-        <Icon name="lupa" size={17} /> Mercado de fichajes
+        <Icon name="lupa" size={17} /> La libreta
         <span className="chip band-right">
-          {available.length} de {all.length} disponibles
+          {all.length} disponibles · {ps.gestionesLeft} llamadas esta semana
         </span>
       </h3>
-      <Cabecera art="cab-bar.webp" alt="Convenciendo a un jugador en la mesa de un bar" alto={150} />
+      {/* Acá iba `cab-bar.webp` a 150 px de alto. La planilla existe para poder
+          comparar dieciséis nombres, y el cuerpo de esta pantalla mide 680 px a
+          1920x1080 y 320 px a 1280x720: la banda ilustrada se llevaba entre el
+          22% y el 47% del espacio de la única lista que hay que leer entera.
+          El arte no se descarta —el archivo sigue en `public/arte/`— pero su
+          lugar es una pantalla que se mira, no una que se compara. */}
 
+      {/* El filtro de conocimiento usa LAS MISMAS PALABRAS que los encabezados de
+          los grupos de abajo, así filtrar y leer son la misma operación y no hay
+          que aprender un vocabulario nuevo para usarlo. */}
       <div className="ps-filtros">
-        <span className="ps-filtros-k">Puesto</span>
+        <span className="ps-filtros-k">Cuánto sabés</span>
+        <button className={tierFilter === null ? 'small on' : 'small'} onClick={() => setTierFilter(null)}>
+          Todos <small>({all.length})</small>
+        </button>
+        {TIERS.map((t) => {
+          const n = all.filter((m) => TIER_OF[m.knowledge] === t.id).length;
+          return (
+            <button
+              key={t.id}
+              className={tierFilter === t.id ? 'small on' : 'small'}
+              disabled={n === 0}
+              onClick={() => setTierFilter(tierFilter === t.id ? null : t.id)}
+            >
+              {t.filtro} <small>({n})</small>
+            </button>
+          );
+        })}
+        <span className="ps-filtros-k" style={{ marginLeft: 'auto' }}>
+          Puesto
+        </span>
         <button className={posFilter === null ? 'small on' : 'small'} onClick={() => setPosFilter(null)}>
           Todos
         </button>
@@ -770,30 +963,52 @@ function MarketSection({ state, dispatch }: Props) {
             </button>
           );
         })}
-        <span className="ps-filtros-k" style={{ marginLeft: 'auto' }}>
-          Ordenar
-        </span>
-        <button className={sort === 'nivel' ? 'small on' : 'small'} onClick={() => setSort('nivel')}>
-          Por nivel
-        </button>
-        <button className={sort === 'conocido' ? 'small on' : 'small'} onClick={() => setSort('conocido')}>
-          Por cuánto lo conocés
-        </button>
-        <button className={sort === 'posicion' ? 'small on' : 'small'} onClick={() => setSort('posicion')}>
-          Por puesto
-        </button>
       </div>
 
-      {available.length === 0 ? (
+      {enPantalla === 0 ? (
         <p className="muted">No queda nadie disponible con ese filtro.</p>
       ) : (
-        <div className="player-grid ps-grid">{available.map(renderCard)}</div>
+        <div className="mk-planilla">
+          <div className="mk-fila mk-cab">
+            <span />
+            <span>Jugador · de dónde sale el dato</span>
+            <span className="der">Nivel</span>
+            <span className="der mk-fis">Físico</span>
+            <span className="der">Pase</span>
+            <span className="der">Cuota</span>
+            <span className="der">No puede</span>
+            <span>Lo conocés</span>
+            <span />
+          </div>
+          {grupos.map(
+            (g) =>
+              g.jugadores.length > 0 && (
+                <div key={g.id}>
+                  <div className="mk-grupo">
+                    <span className="mk-grupo-t">{g.titulo}</span>
+                    <span className="mk-grupo-s">{g.sub}</span>
+                    <span className="mk-grupo-n">{g.jugadores.length}</span>
+                  </div>
+                  {g.jugadores.map(renderFila)}
+                </div>
+              ),
+          )}
+        </div>
       )}
+
+      {/* "No puede" es el día que el jugador tiene tomado, sin cruzarlo con
+          ninguna liga: es lo único que sirve mientras no elegiste dónde jugás. */}
+      <p className="hint mk-pie">
+        <strong>No puede</strong> es el día que el jugador ya tiene tomado, sin cruzarlo con ninguna liga.
+        {verdictDivision(state)
+          ? ` Se pone en rojo cuando cae justo el ${dayLabel(verdictDivision(state)!.gameDay)}, nuestro día de partido.`
+          : ' Cuando elijas liga, el día que choque con tu partido se pone en rojo.'}
+      </p>
 
       {gone.length > 0 && (
         <>
           <h4 className="ps-subtitulo">Ya no disponibles</h4>
-          <div className="player-grid ps-grid">{gone.map(renderCard)}</div>
+          <div className="mk-planilla">{gone.map(renderFila)}</div>
         </>
       )}
       {profileMp && <MarketProfile state={state} dispatch={dispatch} mp={profileMp} onClose={() => setProfileId(null)} />}

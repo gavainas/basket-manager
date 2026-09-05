@@ -1174,6 +1174,227 @@ button.danger {
   .liga-tabla-card { margin-bottom: 0; }
 }
 
+/* ---------- El mercado: la libreta (dirección E, sep 2026) ---------- */
+
+/* Aprobada por Gabi mirando el canvas de `design/canvas-pretemporada/`, pedida
+   como "algo entre la A y la D": la planilla densa de A con la cabeza de la
+   libreta de D —los grupos por cómo llegó el nombre— y tres cosas que faltaban:
+   filtro por cuánto sabés, qué día NO puede, y si paga la cuota o no.
+   Antes eran 16 cards con 4-6 chips iguales: entraban 5 de 16 a 1920x1080 y
+   NINGUNA a 1280x720. */
+
+.mk-card { margin-bottom: 1rem; }
+
+.mk-planilla {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--relieve);
+  overflow: hidden;
+}
+
+/* foto · nombre · nivel · físico · pase · cuota · no puede · sello · acción */
+.mk-fila {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 62px 56px 56px 74px 96px 104px 96px;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Más suave que `--accent-soft`: ese es el de la fila abierta, y si el hover
+   pesa igual no se distingue cuál está abierta. */
+.mk-fila:hover { background: rgba(224, 122, 42, 0.06); }
+.mk-fila:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.mk-cab {
+  cursor: default;
+  padding-top: 0.5rem;
+  padding-bottom: 0.35rem;
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+}
+
+.mk-cab:hover { background: none; }
+.mk-cab .der { text-align: right; }
+
+.mk-bloque:last-child .mk-fila { border-bottom: 0; }
+.mk-bloque.on .mk-fila { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); border-bottom: 0; }
+.mk-ida { opacity: 0.55; }
+
+.mk-foto { display: flex; }
+.mk-foto .retrato, .mk-foto img { border-radius: 3px; }
+
+.mk-quien { min-width: 0; display: flex; flex-direction: column; }
+
+.mk-nombre { font-family: var(--display); font-weight: 600; font-size: var(--fs-base); line-height: 1.1; }
+
+.mk-pos {
+  font-family: var(--display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  margin-left: 0.35rem;
+}
+
+/* La prosa del scouting sobrevive, pero en un renglón. */
+.mk-fuente {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mk-num {
+  text-align: right;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--fs-base);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Las dos columnas nuevas comparten regla: lo normal se calla y la excepción
+   grita. Es la misma de `playerFeeLabel()` con las becas del plantel — doce
+   etiquetas iguales diciendo lo mismo tapan a las dos que importan. */
+.mk-dato {
+  text-align: right;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.mk-dato.normal { font-family: inherit; font-weight: 400; color: var(--text-faint); }
+.mk-dato.duda { font-family: inherit; font-weight: 400; color: var(--text-faint); }
+.mk-dato.warn { color: var(--warn); }
+.mk-dato.bad { color: var(--bad); }
+
+.mk-sello-celda { min-width: 0; }
+
+.mk-sello {
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: var(--fs-2xs);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.1rem 0.35rem;
+  color: var(--text-dim);
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.mk-sello.good { color: var(--good); border-color: var(--good); }
+.mk-sello.warn { color: var(--warn); border-color: var(--warn); }
+
+.mk-accion { display: flex; justify-content: flex-end; align-items: center; gap: 0.35rem; }
+.mk-accion button { width: 100%; }
+
+/* Los encabezados de grupo: cómo llegó el nombre a la libreta. Las mismas
+   palabras que el filtro de arriba. */
+.mk-grupo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.35rem 0.7rem 0.25rem;
+  background: var(--bg-soft);
+  box-shadow: var(--hundido);
+}
+
+.mk-grupo-t {
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  font-size: var(--fs-2xs);
+  color: var(--sec-scouting);
+}
+
+.mk-grupo-s { font-size: var(--fs-xs); color: var(--text-dim); }
+.mk-grupo-n { font-family: var(--display); font-weight: 600; font-size: var(--fs-2xs); color: var(--text-faint); }
+
+/* La ficha se abre EN LA FILA: densidad de tabla todo el tiempo, detalle sólo
+   cuando se pide, sin una segunda columna fija comiéndose el ancho. */
+.mk-ficha {
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding: 0.1rem 0.7rem 0.6rem 3.1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: start;
+}
+
+.mk-caja {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.6rem;
+}
+
+.mk-caja p { margin: 0; font-size: var(--fs-sm); line-height: 1.4; }
+.mk-caja p + p { margin-top: 0.3rem; }
+
+.mk-rot {
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.mk-notas { color: var(--text-dim); }
+.mk-fit { font-weight: 600; }
+.mk-fit.good { color: var(--good); }
+.mk-fit.warn { color: var(--warn); }
+.mk-fit.bad { color: var(--bad); }
+
+.mk-rival { display: flex; align-items: baseline; gap: 0.4rem; font-size: var(--fs-sm); }
+.mk-rival small { color: var(--text-dim); font-size: var(--fs-2xs); }
+.mk-rival b { margin-left: auto; font-family: var(--display); font-size: var(--fs-base); }
+
+.mk-ficha-pie { display: flex; align-items: flex-start; }
+
+.mk-pie { margin: 0.5rem 0 0; }
+
+/* Nueve columnas no entran siempre. Se caen en orden de cuánto deciden: primero
+   el físico (que es la estimación más ruidosa de todas), después el sello, que
+   es redundante con el grupo en el que ya está la fila. */
+@media (max-width: 1440px) {
+  .mk-fila { grid-template-columns: 34px minmax(0, 1fr) 62px 56px 74px 96px 104px 96px; }
+  .mk-fila > .mk-fis { display: none; }
+}
+
+@media (max-width: 1260px) {
+  .mk-fila { grid-template-columns: 34px minmax(0, 1fr) 62px 56px 74px 96px 96px; }
+  .mk-fila > .mk-sello-celda, .mk-cab > :nth-child(8) { display: none; }
+  .mk-ficha { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+/* Igual que en la tabla de ligas: en pantallas bajas lo que sobra es la foto de
+   cabecera y la prosa del scouting, no los datos que se comparan. */
+@media (max-height: 800px) {
+  .mk-fuente { display: none; }
+  .mk-pie { display: none; }
+}
+
 /* ---------- La pretemporada (tanda E) ---------- */
 
 .pretemporada-pantalla {
@@ -4193,6 +4414,28 @@ button.mini.blue.on {
 .ps-tabs button.on .chip {
   border-color: rgba(246, 244, 241, 0.5);
   color: var(--text-light);
+}
+
+/* En el piso de diseño (1280x720) la cabecera fija de la pretemporada —el panel
+   de estado más las tres pestañas— se llevaba 225 de 545 px, y el cuerpo, que
+   es donde está TODO lo que hay que leer, quedaba en 320 px. Lo que se cae es
+   lo que no aporta un dato: el título de la banda ("Cómo llega el club a la
+   inscripción") lo dicen la línea de la liga y los riesgos que están justo
+   abajo, y el aire de las pestañas es aire. Los riesgos NO se tocan: son la
+   única razón por la que el panel existe. */
+@media (max-height: 800px) {
+  /* La especificidad tiene que igualar a `.vista .card > h3.card-band`, que es
+     quien pone el `display: flex` de la banda: con `.ps-estado > .card-band`
+     alcanza para el ojo pero no para el navegador, y la regla no hace nada. */
+  .vista .ps-estado > h3.card-band { display: none; }
+  .ps-estado { margin-bottom: var(--sp-2); padding-top: var(--sp-2); padding-bottom: var(--sp-2); }
+  .ps-estado-liga { padding-bottom: 0.35rem; margin-bottom: 0.35rem; }
+  .ps-tabs { margin-bottom: var(--sp-2); }
+  .ps-tabs button { padding: 0.3rem 0.8rem; font-size: var(--fs-sm); }
+  /* Con dos grupos de filtros (cuánto sabés + puesto) la fila se parte en dos
+     renglones abajo de 1300 px y el segundo cuesta 32 px de lista. */
+  .ps-filtros { padding-bottom: var(--sp-2); margin-bottom: var(--sp-2); gap: 0.25rem; }
+  .ps-filtros button { padding: 0.2rem 0.5rem; font-size: var(--fs-xs); }
 }
 
 /* Subtítulo dentro de una card de pretemporada: separa "a resolver" de
