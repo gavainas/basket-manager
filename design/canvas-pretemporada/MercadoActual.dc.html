@@ -1,0 +1,157 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #d8d4cc; --panel: #f6f4f1; --panel-2: #eceae6; --border: #d2cec8;
+      --text: #25282c; --text-dim: #6a6f76; --text-faint: #9a9fa6; --text-light: #f6f4f1;
+      --accent: #e07a2a; --good: #4a9160; --warn: #c69320; --bad: #b8443a;
+      --sec-plantel: #b07f27; --sec-scouting: #456470;
+      --display: 'Oswald', 'Arial Narrow', sans-serif;
+      --relieve: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,100,70,.2), 0 6px 16px rgba(20,14,8,.2);
+    }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 15.2px; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .chip { display: inline-block; padding: 1.8px 8px; border-radius: 999px; font-size: 11.5px;
+      font-weight: 700; border: 1px solid var(--border); color: var(--text-dim); white-space: nowrap; }
+    .chip.good { color: var(--good); border-color: var(--good); }
+    .chip.warn { color: var(--warn); border-color: var(--warn); }
+    .chip.accent { color: var(--sec-scouting); border-color: var(--sec-scouting); }
+    .pc { background: var(--panel); border: 1px solid var(--border); border-radius: 4px;
+      box-shadow: var(--relieve); padding: 12px; display: flex; flex-direction: column; gap: 8px; align-self: start; }
+    .foto { width: 40px; height: 40px; border-radius: 4px; border: 1px solid var(--border);
+      background: linear-gradient(180deg,#3c6e9e,#2a5075); object-fit: cover; flex: none; }
+    .nom { font-family: var(--display); font-weight: 600; font-size: 16.7px; line-height: 1.1; }
+    .meta { font-size: 12.5px; color: var(--text-dim); }
+    .niv { font-family: var(--display); font-weight: 700; font-size: 20px; text-align: right; line-height: 1; }
+    .nivk { font-size: 10.5px; color: var(--text-faint); text-align: right; }
+    .desc { font-size: 12.5px; font-style: italic; line-height: 1.4; }
+    .bt { font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--panel-2);
+      color: var(--text); border-radius: 4px; padding: 8px; font-size: 14.4px; width: 100%; }
+  </style>
+</helmet>
+
+<div style="padding: 16px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; overflow: hidden;">
+  <div style="background: var(--sec-plantel); color: var(--text-light); font-family: var(--display); font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; font-size: 15.2px; padding: 8px 14px; border-radius: 4px 4px 0 0;
+    display: flex; align-items: center;">Mercado de fichajes
+    <span class="chip" style="margin-left: auto; color: var(--text-light); border-color: rgba(246,244,241,.45); font-weight: 400;">16 de 16 disponibles</span>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px;">
+    <span style="font-family: var(--display); text-transform: uppercase; letter-spacing: .12em; font-size: 9.9px; color: var(--text-faint);">Puesto</span>
+    <button style="font-family: inherit; border: 1px solid var(--sec-plantel); background: var(--sec-plantel); color: var(--text-light); border-radius: 4px; padding: 4px 10px; font-size: 12.5px;">Todos</button>
+    <button style="font-family: inherit; border: 1px solid var(--border); background: var(--panel-2); border-radius: 4px; padding: 4px 10px; font-size: 12.5px;">Base (1)</button>
+    <button style="font-family: inherit; border: 1px solid var(--border); background: var(--panel-2); border-radius: 4px; padding: 4px 10px; font-size: 12.5px;">Escolta (4)</button>
+    <button style="font-family: inherit; border: 1px solid var(--border); background: var(--panel-2); border-radius: 4px; padding: 4px 10px; font-size: 12.5px;">Alero (3)</button>
+    <button style="font-family: inherit; border: 1px solid var(--border); background: var(--panel-2); border-radius: 4px; padding: 4px 10px; font-size: 12.5px;">Ala-Pívot (5)</button>
+    <button style="font-family: inherit; border: 1px solid var(--border); background: var(--panel-2); border-radius: 4px; padding: 4px 10px; font-size: 12.5px;">Pívot (3)</button>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px; align-items: start;">
+
+    <div class="pc">
+      <div style="display: flex; gap: 9px; align-items: flex-start;">
+        <img class="foto" src="p-talentoso.webp" alt="">
+        <div style="flex: 1; min-width: 0;"><div class="nom">Facu Ledesma</div><div class="meta">Escolta · 23 años · 188 cm</div></div>
+        <div><div class="niv">71–85</div><div class="nivk">nivel</div></div>
+      </div>
+      <div class="desc">Viene de <b>Liga de Empleados</b>. Lo viste una vez en un amistoso: la rompió, pero llegó tarde.</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+        <span class="chip warn">Referencias</span><span class="chip">Físico: 70–84</span>
+        <span class="chip">Pase: $40</span><span class="chip">Exigencias: ? (contactalo)</span>
+      </div>
+      <button class="bt">Contactar (1 gestión)</button>
+    </div>
+
+    <div class="pc">
+      <div style="display: flex; gap: 9px; align-items: flex-start;">
+        <img class="foto" src="p-mercenario.webp" alt="">
+        <div style="flex: 1; min-width: 0;"><div class="nom">"Mono" Quiroga</div><div class="meta">Alero · 30 años · 193 cm</div></div>
+        <div><div class="niv">70–84</div><div class="nivk">nivel</div></div>
+      </div>
+      <div class="desc">Viene de <b>Liga del Sur</b>. Llega con fama de resolver partidos… y de discutir con los DT.</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+        <span class="chip warn">Referencias</span><span class="chip">Físico: 57–71</span>
+        <span class="chip">Pase: $80</span><span class="chip">Exigencias: ? (contactalo)</span>
+      </div>
+      <button class="bt">Contactar (1 gestión)</button>
+    </div>
+
+    <div class="pc">
+      <div style="display: flex; gap: 9px; align-items: flex-start;">
+        <img class="foto" src="p-competitivo.webp" alt="">
+        <div style="flex: 1; min-width: 0;"><div class="nom">Rolando Núñez</div><div class="meta">Ala-Pívot · 29 años · 197 cm</div></div>
+        <div><div class="niv">69–83</div><div class="nivk">nivel</div></div>
+      </div>
+      <div class="desc">Viene de <b>Liga del Oeste</b>. Fama de dominar la pintura… y de irse donde paguen mejor.</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+        <span class="chip warn">Referencias</span><span class="chip">Físico: 75–89</span>
+        <span class="chip">Pase: $120</span><span class="chip warn">Escucha otras ofertas</span>
+        <span class="chip">Exigencias: ? (contactalo)</span>
+      </div>
+      <button class="bt">Contactar (1 gestión)</button>
+    </div>
+
+    <div class="pc">
+      <div style="display: flex; gap: 9px; align-items: flex-start;">
+        <img class="foto" src="p-cumplidor.webp" alt="">
+        <div style="flex: 1; min-width: 0;"><div class="nom">Ramiro Sosa</div><div class="meta">Base · 27 años · 178 cm</div></div>
+        <div><div class="niv">≈69</div><div class="nivk">nivel</div></div>
+      </div>
+      <div class="desc">Viene de <b>Unión Vecinal</b>. Jugó varias veces contra tu club: lo sufriste de cerca.</div>
+      <div style="font-size: 12.5px; color: var(--text-dim);">De los que están siempre: confirma temprano y no falla.</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+        <span class="chip good">Muy conocido</span><span class="chip">Físico: ≈75</span>
+        <span class="chip">Pase: $60</span><span class="chip warn">Escucha otras ofertas</span>
+        <span class="chip">Pagaría cuota completa ($30/sem)</span><span class="chip">Exigencias: ? (contactalo)</span>
+      </div>
+      <button class="bt">Contactar (1 gestión)</button>
+    </div>
+
+    <div class="pc">
+      <div style="display: flex; gap: 9px; align-items: flex-start;">
+        <img class="foto" src="p-social.webp" alt="">
+        <div style="flex: 1; min-width: 0;"><div class="nom">Hernán Godoy</div><div class="meta">Ala-Pívot · 28 años · 196 cm</div></div>
+        <div><div class="niv">≈68</div><div class="nivk">nivel</div></div>
+      </div>
+      <div class="desc">Viene de <b>Los Cardales</b>. Jugó en esta liga la temporada pasada.</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+        <span class="chip good">Conocido</span><span class="chip">Físico: ≈77</span>
+        <span class="chip">Pase: $55</span><span class="chip">Pagaría cuota completa ($30/sem)</span>
+        <span class="chip">Exigencias: ? (contactalo)</span>
+      </div>
+      <button class="bt">Contactar (1 gestión)</button>
+    </div>
+
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px; align-items: start;">
+    <div class="pc" style="height: 60px; overflow: hidden;">
+      <div style="display: flex; gap: 9px;"><img class="foto" src="p-veterano.webp" alt=""><div><div class="nom">"Gigante" Ferreyra</div><div class="meta">Pívot · 27 años · 203 cm</div></div></div>
+    </div>
+    <div class="pc" style="height: 60px; overflow: hidden;">
+      <div style="display: flex; gap: 9px;"><img class="foto" src="p-veterano.webp" alt=""><div><div class="nom">Rubén Ábalos</div><div class="meta">Pívot · 36 años · 201 cm</div></div></div>
+    </div>
+    <div class="pc" style="height: 60px; overflow: hidden;">
+      <div style="display: flex; gap: 9px;"><img class="foto" src="p-social.webp" alt=""><div><div class="nom">Santi Olmos</div><div class="meta">Alero · 24 años · 190 cm</div></div></div>
+    </div>
+    <div class="pc" style="height: 60px; overflow: hidden;">
+      <div style="display: flex; gap: 9px;"><img class="foto" src="p-competitivo.webp" alt=""><div><div class="nom">Pablo Ortega</div><div class="meta">Ala-Pívot · 26 años · 193 cm</div></div></div>
+    </div>
+    <div class="pc" style="height: 60px; overflow: hidden;">
+      <div style="display: flex; gap: 9px;"><img class="foto" src="p-veterano.webp" alt=""><div><div class="nom">"Chueco" Barrios</div><div class="meta">Escolta · 33 años · 183 cm</div></div></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

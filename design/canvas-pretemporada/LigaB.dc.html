@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #d8d4cc; --bg-soft: #e6e3dd; --panel: #f6f4f1; --panel-2: #eceae6; --border: #d2cec8;
+      --text: #25282c; --text-dim: #6a6f76; --text-faint: #9a9fa6; --text-light: #f6f4f1;
+      --accent: #e07a2a; --on-accent: #2a1a08; --good: #4a9160; --warn: #c69320; --bad: #b8443a;
+      --sec-plantel: #b07f27; --sec-partidos: #2d5c8a; --sec-tablero: #2f6b4f; --sec-ajustes: #565b62;
+      --display: 'Oswald', 'Arial Narrow', sans-serif;
+      --relieve: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,100,70,.2), 0 6px 16px rgba(20,14,8,.2);
+    }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 15.2px; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .afiche { background: var(--panel); border: 1px solid var(--border); border-radius: 4px;
+      box-shadow: var(--relieve); display: flex; flex-direction: column; overflow: hidden; }
+    .dia { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+      font-size: 32px; line-height: 1; color: var(--text-light); }
+    .hora { font-family: var(--display); font-size: 12.5px; letter-spacing: .1em; color: rgba(246,244,241,.75); }
+    .cuerpo { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 9px; flex: 1; }
+    .liga { font-family: var(--display); font-weight: 600; font-size: 17.6px; line-height: 1.1; }
+    .divi { font-size: 12.5px; color: var(--text-dim); }
+    .dato { display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+      border-bottom: 1px dotted var(--border); padding-bottom: 3px; }
+    .dk { font-family: var(--display); text-transform: uppercase; letter-spacing: .11em; font-size: 9.9px; color: var(--text-faint); }
+    .dv { font-size: 13.1px; font-variant-numeric: tabular-nums; }
+    .frase { font-size: 12.5px; color: var(--text-dim); line-height: 1.4; }
+    .btn { font-family: inherit; cursor: pointer; border-radius: 4px; padding: 8px 12px; font-size: 14.4px;
+      width: 100%; margin-top: auto; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); }
+    .btn.pri { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 700; }
+  </style>
+</helmet>
+
+<div style="padding: 16px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
+
+  <div style="display: flex; align-items: baseline; gap: 12px;">
+    <div style="font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 15.2px;">¿Dónde jugamos este año?</div>
+    <div style="font-size: 13.1px; color: var(--text-dim);">Elegir liga es elegir tu día. Eso manda: va primero y va grande.</div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: stretch; flex: 1;">
+
+    <div class="afiche">
+      <div style="background: var(--sec-plantel); padding: 10px 14px 9px;">
+        <div class="dia">Lunes</div><div class="hora">20:00 · 22:00</div>
+      </div>
+      <div class="cuerpo">
+        <div><div class="liga">Liga Universitaria</div><div class="divi">Divisional B · la de siempre</div></div>
+        <div class="dato"><span class="dk">Ficha</span><span class="dv" style="font-weight: 700;">$300 <span style="color: var(--good); font-weight: 400; font-size: 11.5px;">te fían</span></span></div>
+        <div class="dato"><span class="dk">Nivel</span><span class="dv">Competitivo</span></div>
+        <div class="dato"><span class="dk">Fechas</span><span class="dv">9 · sube y baja</span></div>
+        <div class="frase">Acá te conocen. Los dos finalistas suben a la A; los dos últimos se van a la C.</div>
+        <button class="btn pri">Anotarse acá</button>
+      </div>
+    </div>
+
+    <div class="afiche" style="opacity: .6;">
+      <div style="background: var(--sec-ajustes); padding: 10px 14px 9px;">
+        <div class="dia">Martes</div><div class="hora">21:30 · 23:00</div>
+      </div>
+      <div class="cuerpo">
+        <div><div class="liga">Liga del Centro</div><div class="divi">Segunda · la nocturna</div></div>
+        <div class="dato"><span class="dk">Ficha</span><span class="dv" style="font-weight: 700;">$450 <span style="color: var(--warn); font-weight: 400; font-size: 11.5px;">contado</span></span></div>
+        <div class="dato"><span class="dk">Nivel</span><span class="dv">Muy duro</span></div>
+        <div class="dato"><span class="dk">Fechas</span><span class="dv">9 · sube y baja</span></div>
+        <div class="frase" style="color: var(--bad);">Piden 45 de prestigio deportivo y el club tiene 40.</div>
+        <button class="btn" style="color: var(--text-faint); cursor: default;">No nos aceptan todavía</button>
+      </div>
+    </div>
+
+    <div class="afiche">
+      <div style="background: var(--sec-tablero); padding: 10px 14px 9px;">
+        <div class="dia">Domingo</div><div class="hora">10:00 · 11:30</div>
+      </div>
+      <div class="cuerpo">
+        <div><div class="liga">Liga del Comercio</div><div class="divi">Única · torneo corto</div></div>
+        <div class="dato"><span class="dk">Ficha</span><span class="dv" style="font-weight: 700;">$180 <span style="color: var(--warn); font-weight: 400; font-size: 11.5px;">contado</span></span></div>
+        <div class="dato"><span class="dk">Nivel</span><span class="dv">Accesible</span></div>
+        <div class="dato"><span class="dk">Fechas</span><span class="dv" style="color: var(--warn); font-weight: 700;">7 <span style="color: var(--text-dim); font-weight: 400;">· sin ascensos</span></span></div>
+        <div class="dato" style="border-bottom: 0;"><span class="dk">Premio</span><span class="dv" style="color: var(--good); font-weight: 700;">$400 al campeón</span></div>
+        <div class="frase">Barato, pero es media temporada de cuotas menos.</div>
+        <button class="btn">Anotarse acá</button>
+      </div>
+    </div>
+
+    <div class="afiche">
+      <div style="background: var(--sec-partidos); padding: 10px 14px 9px;">
+        <div class="dia">Sábado</div><div class="hora">17:00 · 19:00</div>
+      </div>
+      <div class="cuerpo">
+        <div><div class="liga">Liga de la Plaza</div><div class="divi">Única · para pasear</div></div>
+        <div class="dato"><span class="dk">Ficha</span><span class="dv" style="font-weight: 700; color: var(--good);">Gratis</span></div>
+        <div class="dato"><span class="dk">Nivel</span><span class="dv" style="color: var(--text-dim);">Para pasear</span></div>
+        <div class="dato"><span class="dk">Fechas</span><span class="dv">9 <span style="color: var(--text-dim);">· sin ascensos</span></span></div>
+        <div class="dato" style="border-bottom: 0;"><span class="dk">Cuesta</span><span class="dv" style="color: var(--bad); font-weight: 700;">−6 de prestigio</span></div>
+        <div class="frase">Los ambiciosos se calientan y las figuras del mercado ni te atienden.</div>
+        <button class="btn">Anotarse acá</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

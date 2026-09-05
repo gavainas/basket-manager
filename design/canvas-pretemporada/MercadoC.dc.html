@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #d8d4cc; --bg-soft: #e6e3dd; --panel: #f6f4f1; --panel-2: #eceae6; --border: #d2cec8;
+      --text: #25282c; --text-dim: #6a6f76; --text-faint: #9a9fa6; --text-light: #f6f4f1;
+      --accent: #e07a2a; --on-accent: #2a1a08; --good: #4a9160; --warn: #c69320; --bad: #b8443a;
+      --sec-plantel: #b07f27; --sec-scouting: #456470;
+      --display: 'Oswald', 'Arial Narrow', sans-serif;
+      --relieve: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,100,70,.2), 0 6px 16px rgba(20,14,8,.2);
+      --hundido: inset 0 1px 2px rgba(120,100,70,.32);
+    }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 15.2px; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--relieve); }
+    .row { display: grid; grid-template-columns: 30px minmax(0,1fr) 54px; gap: 9px; align-items: center;
+      padding: 6px 10px; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .row:last-child { border-bottom: 0; }
+    .row.on { background: rgba(224,122,42,.1); box-shadow: inset 3px 0 0 var(--accent); }
+    .mini { width: 30px; height: 30px; border-radius: 3px; border: 1px solid var(--border);
+      background: linear-gradient(180deg,#3c6e9e,#2a5075); object-fit: cover; }
+    .rn { font-family: var(--display); font-weight: 600; font-size: 14.4px; line-height: 1.05; }
+    .rp { font-size: 11.5px; color: var(--text-dim); }
+    .rv { font-family: var(--display); font-weight: 600; font-size: 14.4px; text-align: right;
+      font-variant-numeric: tabular-nums; }
+    .rv.rango { font-size: 12.5px; color: var(--text-dim); }
+    .cab { font-family: var(--display); font-weight: 500; text-transform: uppercase; letter-spacing: .13em;
+      font-size: 9.9px; color: var(--text-faint); }
+    .dato { display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+      padding: 6px 0; border-bottom: 1px dotted var(--border); }
+    .dv { font-family: var(--display); font-weight: 600; font-size: 15.9px; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="padding: 16px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px;">
+
+  <div style="display: flex; align-items: baseline; gap: 10px;">
+    <div style="font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 15.2px;">Mercado de fichajes</div>
+    <div style="font-size: 13.1px; color: var(--text-dim);">16 disponibles · te quedan <b style="color: var(--accent);">3 gestiones</b> esta semana</div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 340px minmax(0,1fr); gap: 14px; flex: 1; min-height: 0;">
+
+    <div class="panel" style="overflow: hidden; display: flex; flex-direction: column;">
+      <div style="display: grid; grid-template-columns: 30px minmax(0,1fr) 54px; gap: 9px; padding: 8px 10px 6px; border-bottom: 1px solid var(--border);">
+        <span></span><span class="cab">Jugador</span><span class="cab" style="text-align: right;">Nivel</span>
+      </div>
+      <div style="overflow-y: auto;">
+        <div class="row"><img class="mini" src="p-talentoso.webp" alt=""><div><div class="rn">Facu Ledesma</div><div class="rp">Escolta · 23</div></div><div class="rv rango">71–85</div></div>
+        <div class="row"><img class="mini" src="p-mercenario.webp" alt=""><div><div class="rn">"Mono" Quiroga</div><div class="rp">Alero · 30</div></div><div class="rv rango">70–84</div></div>
+        <div class="row"><img class="mini" src="p-competitivo.webp" alt=""><div><div class="rn">Rolando Núñez</div><div class="rp">Ala-Pívot · 29</div></div><div class="rv rango">69–83</div></div>
+        <div class="row on"><img class="mini" src="p-cumplidor.webp" alt=""><div><div class="rn">Ramiro Sosa</div><div class="rp">Base · 27</div></div><div class="rv">≈69</div></div>
+        <div class="row"><img class="mini" src="p-social.webp" alt=""><div><div class="rn">Hernán Godoy</div><div class="rp">Ala-Pívot · 28</div></div><div class="rv">≈68</div></div>
+        <div class="row"><img class="mini" src="p-veterano.webp" alt=""><div><div class="rn">"Gigante" Ferreyra</div><div class="rp">Pívot · 27</div></div><div class="rv">≈65</div></div>
+        <div class="row"><img class="mini" src="p-veterano.webp" alt=""><div><div class="rn">Rubén Ábalos</div><div class="rp">Pívot · 36</div></div><div class="rv">≈61</div></div>
+        <div class="row"><img class="mini" src="p-social.webp" alt=""><div><div class="rn">Santi Olmos</div><div class="rp">Alero · 24</div></div><div class="rv">≈61</div></div>
+        <div class="row"><img class="mini" src="p-competitivo.webp" alt=""><div><div class="rn">Pablo Ortega</div><div class="rp">Ala-Pívot · 26</div></div><div class="rv rango">54–68</div></div>
+        <div class="row"><img class="mini" src="p-veterano.webp" alt=""><div><div class="rn">"Chueco" Barrios</div><div class="rp">Escolta · 33</div></div><div class="rv">≈60</div></div>
+      </div>
+    </div>
+
+    <div class="panel" style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; gap: 14px; align-items: flex-start;">
+        <img src="p-cumplidor.webp" alt="" style="width: 96px; height: 96px; border-radius: 4px; border: 1px solid var(--border); background: linear-gradient(180deg,#3c6e9e,#2a5075); object-fit: cover; flex: none;">
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-family: var(--display); font-weight: 600; font-size: 25px; line-height: 1.05;">Ramiro Sosa</div>
+          <div style="font-size: 13.9px; color: var(--text-dim); margin-top: 2px;">Base · 27 años · 1,78 m · viene de <b style="color: var(--text);">Unión Vecinal</b></div>
+          <div style="margin-top: 8px; font-size: 13.9px; line-height: 1.45;">Jugó varias veces contra tu club: lo sufriste de cerca. <b style="color: var(--good);">De los que están siempre: confirma temprano y no falla.</b></div>
+        </div>
+        <div style="text-align: right; flex: none;">
+          <div style="font-family: var(--display); text-transform: uppercase; letter-spacing: .12em; font-size: 9.9px; color: var(--text-faint);">Lo conocés</div>
+          <div style="font-family: var(--display); font-weight: 600; font-size: 15.2px; color: var(--good);">Muy bien</div>
+          <div style="font-size: 11.5px; color: var(--text-dim); margin-top: 2px;">lo enfrentaste 3 veces</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 18px;">
+        <div class="dato" style="flex-direction: column; align-items: flex-start; gap: 2px;"><span class="cab">Nivel</span><span class="dv" style="font-size: 22px;">≈69</span></div>
+        <div class="dato" style="flex-direction: column; align-items: flex-start; gap: 2px;"><span class="cab">Físico</span><span class="dv" style="font-size: 22px;">≈75</span></div>
+        <div class="dato" style="flex-direction: column; align-items: flex-start; gap: 2px;"><span class="cab">Pase</span><span class="dv" style="font-size: 22px;">$60</span></div>
+        <div class="dato" style="flex-direction: column; align-items: flex-start; gap: 2px;"><span class="cab">Cuota</span><span class="dv" style="font-size: 22px; color: var(--good);">$30</span></div>
+      </div>
+
+      <div style="background: var(--bg-soft); border-radius: 4px; box-shadow: var(--hundido); padding: 10px 12px; display: flex; flex-direction: column; gap: 5px;">
+        <div class="cab">Lo que todavía no sabés</div>
+        <div style="font-size: 13.1px; color: var(--text-dim);">Qué va a pedir para venir · su agenda (qué días puede) · cuánto se banca el banco.</div>
+        <div style="font-size: 13.1px;">Se enteran <b>contactándolo</b>, y eso gasta una de tus 3 gestiones.</div>
+      </div>
+
+      <div style="margin-top: auto; display: flex; align-items: center; gap: 12px;">
+        <button style="font-family: inherit; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 700; border-radius: 4px; padding: 10px 20px; font-size: 15.2px;">Contactar a Ramiro (1 gestión)</button>
+        <span style="font-size: 12.5px; color: var(--text-dim);">Escucha otras ofertas: si tardás, puede arreglar con otro club.</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

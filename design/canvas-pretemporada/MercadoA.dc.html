@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #d8d4cc; --bg-soft: #e6e3dd; --panel: #f6f4f1; --panel-2: #eceae6; --border: #d2cec8;
+      --text: #25282c; --text-dim: #6a6f76; --text-faint: #9a9fa6; --text-light: #f6f4f1;
+      --accent: #e07a2a; --on-accent: #2a1a08; --good: #4a9160; --warn: #c69320; --bad: #b8443a;
+      --sec-plantel: #b07f27; --sec-scouting: #456470;
+      --display: 'Oswald', 'Arial Narrow', sans-serif;
+      --relieve: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,100,70,.2), 0 6px 16px rgba(20,14,8,.2);
+      --grid: 44px minmax(0,1fr) 78px 78px 66px 78px 104px 92px;
+    }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 15.2px; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .planilla { position: relative; background: var(--panel); border: 1px solid var(--border);
+      border-radius: 4px; box-shadow: var(--relieve); padding: 4px 12px 8px; }
+    .cab, .fila { display: grid; grid-template-columns: var(--grid); gap: 10px; align-items: center; }
+    .cab { padding: 10px 2px 6px; border-bottom: 1px solid var(--border); }
+    .cab span { font-family: var(--display); font-weight: 500; text-transform: uppercase;
+      letter-spacing: .13em; font-size: 9.9px; color: var(--text-faint); }
+    .fila { padding: 6px 2px; border-bottom: 1px solid var(--border); }
+    .fila:last-child { border-bottom: 0; }
+    .fila:hover { background: rgba(224,122,42,.05); }
+    .foto { width: 36px; height: 36px; border-radius: 4px; border: 1px solid var(--border);
+      background: linear-gradient(180deg,#3c6e9e,#2a5075); object-fit: cover; }
+    .nom { font-family: var(--display); font-weight: 600; font-size: 15.9px; line-height: 1.1; }
+    .pos { font-family: var(--display); text-transform: uppercase; letter-spacing: .1em;
+      font-size: 9.9px; color: var(--text-faint); margin-left: 6px; }
+    .de { font-size: 12.5px; color: var(--text-dim); line-height: 1.25; }
+    .n { font-variant-numeric: tabular-nums; text-align: right; }
+    .cifra { font-family: var(--display); font-weight: 600; font-size: 15.9px; }
+    .rango { color: var(--text-dim); }
+    .sello { font-family: var(--display); text-transform: uppercase; letter-spacing: .1em; font-size: 9.9px;
+      border: 1px solid var(--border); border-radius: 3px; padding: 2px 6px; color: var(--text-dim); display: inline-block; }
+    .sello.alto { color: var(--good); border-color: var(--good); }
+    .sello.bajo { color: var(--warn); border-color: var(--warn); }
+    .bt { font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--panel-2);
+      color: var(--text); border-radius: 4px; padding: 4px 10px; font-size: 12.5px; }
+    .bt.pri { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 700; }
+    .ojo { color: var(--warn); }
+  </style>
+</helmet>
+
+<div style="padding: 16px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px;">
+
+  <div style="display: flex; align-items: baseline; gap: 10px;">
+    <div style="font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 15.2px;">Mercado de fichajes</div>
+    <div style="font-size: 13.1px; color: var(--text-dim);">16 disponibles · te quedan <b style="color: var(--accent);">3 gestiones</b> esta semana</div>
+    <div style="margin-left: auto; display: flex; gap: 5px; font-size: 12.5px;">
+      <button class="bt" style="border-color: var(--sec-plantel); background: var(--sec-plantel); color: var(--text-light);">Todos</button>
+      <button class="bt">Base 1</button><button class="bt">Escolta 4</button><button class="bt">Alero 3</button>
+      <button class="bt">Ala-Pívot 5</button><button class="bt">Pívot 3</button>
+    </div>
+  </div>
+
+  <div class="planilla">
+    <div class="cab">
+      <span></span><span>Jugador · de dónde viene</span>
+      <span class="n">Nivel</span><span class="n">Físico</span><span class="n">Pase</span><span class="n">Cuota</span>
+      <span>Lo conocés</span><span></span>
+    </div>
+
+    <div class="fila">
+      <img class="foto" src="p-talentoso.webp" alt="">
+      <div><div class="nom">Facu Ledesma<span class="pos">Esc · 23 · 188</span></div><div class="de">Liga de Empleados · lo viste en un amistoso: la rompió, pero llegó tarde</div></div>
+      <div class="n cifra rango">71–85</div><div class="n cifra rango">70–84</div>
+      <div class="n cifra">$40</div><div class="n" style="color: var(--text-faint);">?</div>
+      <div><span class="sello bajo">De oídas</span></div>
+      <div style="text-align: right;"><button class="bt">Contactar</button></div>
+    </div>
+
+    <div class="fila">
+      <img class="foto" src="p-mercenario.webp" alt="">
+      <div><div class="nom">"Mono" Quiroga<span class="pos">Ale · 30 · 193</span></div><div class="de">Liga del Sur · resuelve partidos, y discute con los DT</div></div>
+      <div class="n cifra rango">70–84</div><div class="n cifra rango">57–71</div>
+      <div class="n cifra">$80</div><div class="n" style="color: var(--text-faint);">?</div>
+      <div><span class="sello bajo">De oídas</span></div>
+      <div style="text-align: right;"><button class="bt">Contactar</button></div>
+    </div>
+
+    <div class="fila">
+      <img class="foto" src="p-competitivo.webp" alt="">
+      <div><div class="nom">Rolando Núñez<span class="pos">Ala · 29 · 197</span></div><div class="de">Liga del Oeste · domina la pintura, y se va donde paguen mejor <span class="ojo">· escucha ofertas</span></div></div>
+      <div class="n cifra rango">69–83</div><div class="n cifra rango">75–89</div>
+      <div class="n cifra">$120</div><div class="n" style="color: var(--text-faint);">?</div>
+      <div><span class="sello bajo">De oídas</span></div>
+      <div style="text-align: right;"><button class="bt">Contactar</button></div>
+    </div>
+
+    <div class="fila" style="background: rgba(224,122,42,.07);">
+      <img class="foto" src="p-cumplidor.webp" alt="">
+      <div><div class="nom">Ramiro Sosa<span class="pos">Bas · 27 · 178</span></div><div class="de">Unión Vecinal · lo sufriste de cerca · <b style="color: var(--good);">de los que están siempre</b></div></div>
+      <div class="n cifra">≈69</div><div class="n cifra">≈75</div>
+      <div class="n cifra">$60</div><div class="n cifra" style="color: var(--good);">$30</div>
+      <div><span class="sello alto">Muy conocido</span></div>
+      <div style="text-align: right;"><button class="bt pri">Contactar</button></div>
+    </div>
+
+    <div class="fila">
+      <img class="foto" src="p-social.webp" alt="">
+      <div><div class="nom">Hernán Godoy<span class="pos">Ala · 28 · 196</span></div><div class="de">Los Cardales · jugó en esta liga la temporada pasada</div></div>
+      <div class="n cifra">≈68</div><div class="n cifra">≈77</div>
+      <div class="n cifra">$55</div><div class="n cifra" style="color: var(--good);">$30</div>
+      <div><span class="sello alto">Conocido</span></div>
+      <div style="text-align: right;"><button class="bt">Contactar</button></div>
+    </div>
+
+    <div class="fila">
+      <img class="foto" src="p-veterano.webp" alt="">
+      <div><div class="nom">"Gigante" Ferreyra<span class="pos">Piv · 27 · 203</span></div><div class="de">La Terminal · jugó en esta liga la temporada pasada</div></div>
+      <div class="n cifra">≈65</div><div class="n cifra">≈70</div>
+      <div class="n cifra">Libre</div><div class="n cifra" style="color: var(--good);">$30</div>
+      <div><span class="sello alto">Conocido</span></div>
+      <div style="text-align: right;"><button class="bt">Contactar</button></div>
+    </div>
+
+    <div class="fila">
+      <img class="foto" src="p-veterano.webp" alt="">
+      <div><div class="nom">Rubén Ábalos<span class="pos">Piv · 36 · 201</span></div><div class="de">Se había retirado y le picó volver · leyenda de la liga</div></div>
+      <div class="n cifra">≈61</div><div class="n cifra" style="color: var(--warn);">≈44</div>
+      <div class="n cifra">Libre</div><div class="n cifra" style="color: var(--good);">$30</div>
+      <div><span class="sello alto">Muy conocido</span></div>
+      <div style="text-align: right;"><button class="bt">Contactar</button></div>
+    </div>
+
+    <div class="fila">
+      <img class="foto" src="p-social.webp" alt="">
+      <div><div class="nom">Santi Olmos<span class="pos">Ale · 24 · 190</span></div><div class="de">Deportivo La Curva · jugó en esta liga la temporada pasada</div></div>
+      <div class="n cifra">≈61</div><div class="n cifra">≈69</div>
+      <div class="n cifra">$35</div><div class="n cifra" style="color: var(--good);">$30</div>
+      <div><span class="sello alto">Conocido</span></div>
+      <div style="text-align: right;"><button class="bt">Contactar</button></div>
+    </div>
+
+    <div class="fila">
+      <img class="foto" src="p-competitivo.webp" alt="">
+      <div><div class="nom">Pablo Ortega<span class="pos">Ala · 26 · 193</span></div><div class="de">Del club de su barrio, de toda la vida · organiza los picados</div></div>
+      <div class="n cifra rango">54–68</div><div class="n cifra rango">62–76</div>
+      <div class="n cifra">Libre</div><div class="n" style="color: var(--text-faint);">?</div>
+      <div><span class="sello bajo">De oídas</span></div>
+      <div style="text-align: right;"><button class="bt">Contactar</button></div>
+    </div>
+
+    <div class="fila">
+      <img class="foto" src="p-veterano.webp" alt="">
+      <div><div class="nom">"Chueco" Barrios<span class="pos">Esc · 33 · 183</span></div><div class="de">Halcones de la Costa · ídolo de la liga en su momento</div></div>
+      <div class="n cifra">≈60</div><div class="n cifra">≈58</div>
+      <div class="n cifra">Libre</div><div class="n cifra" style="color: var(--good);">$30</div>
+      <div><span class="sello alto">Muy conocido</span></div>
+      <div style="text-align: right;"><button class="bt">Contactar</button></div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

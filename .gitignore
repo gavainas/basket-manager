@@ -10,9 +10,11 @@ design/cards/
 scripts/.sim-out/
 
 # Canvas de Claude Design ya empaquetado (2,7 MB de editor + contenido).
-# Se regenera desde los .dc.html + canvas.json de al lado: ver design/canvas/LEEME.md
+# Se regenera desde los .dc.html + canvas.json de al lado: ver el LEEME de cada carpeta
 design/canvas/*.html
 !design/canvas/*.dc.html
+design/canvas-pretemporada/*.html
+!design/canvas-pretemporada/*.dc.html
 
 # Capturas sueltas de los scripts de verificación (van al scratchpad, no al repo)
 /*.png

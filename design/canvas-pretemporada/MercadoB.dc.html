@@ -1,0 +1,202 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #d8d4cc; --bg-soft: #e6e3dd; --panel: #f6f4f1; --panel-2: #eceae6; --border: #d2cec8;
+      --text: #25282c; --text-dim: #6a6f76; --text-faint: #9a9fa6; --text-light: #f6f4f1;
+      --accent: #e07a2a; --on-accent: #2a1a08; --good: #4a9160; --warn: #c69320; --bad: #b8443a;
+      --sec-plantel: #b07f27; --sec-scouting: #456470;
+      --display: 'Oswald', 'Arial Narrow', sans-serif;
+      --relieve: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,100,70,.2), 0 6px 16px rgba(20,14,8,.2);
+    }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 15.2px; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    /* Altura FIJA: el punto de esta opción. Ningún jugador empuja la grilla. */
+    .ficha { height: 196px; background: var(--panel); border: 1px solid var(--border); border-radius: 4px;
+      box-shadow: var(--relieve); display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; position: relative; }
+    .tapa { display: flex; gap: 10px; padding: 10px 12px 8px; align-items: center; }
+    .foto { width: 62px; height: 62px; border-radius: 4px; border: 1px solid var(--border);
+      background: linear-gradient(180deg,#3c6e9e,#2a5075); object-fit: cover; flex: none; }
+    .nom { font-family: var(--display); font-weight: 600; font-size: 17.6px; line-height: 1.05; }
+    .pos { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
+    .nivel { font-family: var(--display); font-weight: 700; font-size: 27px; line-height: 1;
+      font-variant-numeric: tabular-nums; }
+    .nivel.rango { font-size: 20px; color: var(--text-dim); }
+    .nk { font-family: var(--display); text-transform: uppercase; letter-spacing: .12em;
+      font-size: 9.9px; color: var(--text-faint); }
+    .de { padding: 0 12px; font-size: 12.5px; color: var(--text-dim); line-height: 1.35; }
+    .pie { display: flex; align-items: center; gap: 8px; padding: 8px 12px 10px; border-top: 1px solid var(--border); }
+    .dato { font-family: var(--display); font-weight: 600; font-size: 13.9px; font-variant-numeric: tabular-nums; }
+    .dk { font-family: var(--display); text-transform: uppercase; letter-spacing: .11em; font-size: 9.2px; color: var(--text-faint); display: block; }
+    .bt { font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--panel-2);
+      color: var(--text); border-radius: 4px; padding: 5px 12px; font-size: 13.1px; margin-left: auto; }
+    .bt.pri { border-color: var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 700; }
+    /* El conocimiento es un sello en la esquina, no un chip más en la sopa. */
+    .sello { position: absolute; top: 0; right: 0; font-family: var(--display); text-transform: uppercase;
+      letter-spacing: .1em; font-size: 9.2px; padding: 3px 8px; border-radius: 0 4px 0 4px; color: var(--text-light); }
+  </style>
+</helmet>
+
+<div style="padding: 16px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px;">
+
+  <div style="display: flex; align-items: baseline; gap: 10px;">
+    <div style="font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 15.2px;">Mercado de fichajes</div>
+    <div style="font-size: 13.1px; color: var(--text-dim);">16 disponibles · te quedan <b style="color: var(--accent);">3 gestiones</b> esta semana</div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px;">
+
+    <div class="ficha">
+      <span class="sello" style="background: var(--warn);">De oídas</span>
+      <div class="tapa">
+        <img class="foto" src="p-talentoso.webp" alt="">
+        <div style="min-width: 0;"><div class="nom">Facu Ledesma</div><div class="pos">Escolta · 23 · 1,88</div></div>
+      </div>
+      <div class="de">Liga de Empleados. Lo viste en un amistoso: la rompió, pero llegó tarde.</div>
+      <div class="pie">
+        <div><span class="dk">Nivel</span><span class="nivel rango">71–85</span></div>
+        <div><span class="dk">Pase</span><span class="dato">$40</span></div>
+        <button class="bt">Contactar</button>
+      </div>
+    </div>
+
+    <div class="ficha">
+      <span class="sello" style="background: var(--warn);">De oídas</span>
+      <div class="tapa">
+        <img class="foto" src="p-mercenario.webp" alt="">
+        <div style="min-width: 0;"><div class="nom">"Mono" Quiroga</div><div class="pos">Alero · 30 · 1,93</div></div>
+      </div>
+      <div class="de">Liga del Sur. Resuelve partidos… y discute con los DT.</div>
+      <div class="pie">
+        <div><span class="dk">Nivel</span><span class="nivel rango">70–84</span></div>
+        <div><span class="dk">Pase</span><span class="dato">$80</span></div>
+        <button class="bt">Contactar</button>
+      </div>
+    </div>
+
+    <div class="ficha">
+      <span class="sello" style="background: var(--warn);">De oídas</span>
+      <div class="tapa">
+        <img class="foto" src="p-competitivo.webp" alt="">
+        <div style="min-width: 0;"><div class="nom">Rolando Núñez</div><div class="pos">Ala-Pívot · 29 · 1,97</div></div>
+      </div>
+      <div class="de">Liga del Oeste. Domina la pintura… y se va donde paguen mejor.</div>
+      <div class="pie">
+        <div><span class="dk">Nivel</span><span class="nivel rango">69–83</span></div>
+        <div><span class="dk">Pase</span><span class="dato">$120</span></div>
+        <button class="bt">Contactar</button>
+      </div>
+    </div>
+
+    <div class="ficha" style="outline: 2px solid var(--accent); outline-offset: -2px;">
+      <span class="sello" style="background: var(--good);">Muy conocido</span>
+      <div class="tapa">
+        <img class="foto" src="p-cumplidor.webp" alt="">
+        <div style="min-width: 0;"><div class="nom">Ramiro Sosa</div><div class="pos">Base · 27 · 1,78</div></div>
+      </div>
+      <div class="de">Unión Vecinal. Lo sufriste de cerca. <b style="color: var(--good);">De los que están siempre.</b></div>
+      <div class="pie">
+        <div><span class="dk">Nivel</span><span class="nivel">≈69</span></div>
+        <div><span class="dk">Pase</span><span class="dato">$60</span></div>
+        <button class="bt pri">Contactar</button>
+      </div>
+    </div>
+
+    <div class="ficha">
+      <span class="sello" style="background: var(--good);">Conocido</span>
+      <div class="tapa">
+        <img class="foto" src="p-social.webp" alt="">
+        <div style="min-width: 0;"><div class="nom">Hernán Godoy</div><div class="pos">Ala-Pívot · 28 · 1,96</div></div>
+      </div>
+      <div class="de">Los Cardales. Jugó en esta liga la temporada pasada.</div>
+      <div class="pie">
+        <div><span class="dk">Nivel</span><span class="nivel">≈68</span></div>
+        <div><span class="dk">Pase</span><span class="dato">$55</span></div>
+        <button class="bt">Contactar</button>
+      </div>
+    </div>
+
+    <div class="ficha">
+      <span class="sello" style="background: var(--good);">Conocido</span>
+      <div class="tapa">
+        <img class="foto" src="p-veterano.webp" alt="">
+        <div style="min-width: 0;"><div class="nom">"Gigante" Ferreyra</div><div class="pos">Pívot · 27 · 2,03</div></div>
+      </div>
+      <div class="de">La Terminal. Jugó en esta liga la temporada pasada.</div>
+      <div class="pie">
+        <div><span class="dk">Nivel</span><span class="nivel">≈65</span></div>
+        <div><span class="dk">Pase</span><span class="dato">Libre</span></div>
+        <button class="bt">Contactar</button>
+      </div>
+    </div>
+
+    <div class="ficha">
+      <span class="sello" style="background: var(--good);">Muy conocido</span>
+      <div class="tapa">
+        <img class="foto" src="p-veterano.webp" alt="">
+        <div style="min-width: 0;"><div class="nom">Rubén Ábalos</div><div class="pos">Pívot · 36 · 2,01</div></div>
+      </div>
+      <div class="de">Se había retirado y le picó volver. Leyenda de la liga.</div>
+      <div class="pie">
+        <div><span class="dk">Nivel</span><span class="nivel">≈61</span></div>
+        <div><span class="dk">Pase</span><span class="dato">Libre</span></div>
+        <button class="bt">Contactar</button>
+      </div>
+    </div>
+
+    <div class="ficha">
+      <span class="sello" style="background: var(--good);">Conocido</span>
+      <div class="tapa">
+        <img class="foto" src="p-social.webp" alt="">
+        <div style="min-width: 0;"><div class="nom">Santi Olmos</div><div class="pos">Alero · 24 · 1,90</div></div>
+      </div>
+      <div class="de">Deportivo La Curva. Jugó en esta liga la temporada pasada.</div>
+      <div class="pie">
+        <div><span class="dk">Nivel</span><span class="nivel">≈61</span></div>
+        <div><span class="dk">Pase</span><span class="dato">$35</span></div>
+        <button class="bt">Contactar</button>
+      </div>
+    </div>
+
+    <div class="ficha">
+      <span class="sello" style="background: var(--warn);">De oídas</span>
+      <div class="tapa">
+        <img class="foto" src="p-competitivo.webp" alt="">
+        <div style="min-width: 0;"><div class="nom">Pablo Ortega</div><div class="pos">Ala-Pívot · 26 · 1,93</div></div>
+      </div>
+      <div class="de">Del club de su barrio, de toda la vida. Organiza los picados.</div>
+      <div class="pie">
+        <div><span class="dk">Nivel</span><span class="nivel rango">54–68</span></div>
+        <div><span class="dk">Pase</span><span class="dato">Libre</span></div>
+        <button class="bt">Contactar</button>
+      </div>
+    </div>
+
+    <div class="ficha">
+      <span class="sello" style="background: var(--good);">Muy conocido</span>
+      <div class="tapa">
+        <img class="foto" src="p-veterano.webp" alt="">
+        <div style="min-width: 0;"><div class="nom">"Chueco" Barrios</div><div class="pos">Escolta · 33 · 1,83</div></div>
+      </div>
+      <div class="de">Halcones de la Costa. Ídolo de la liga en su momento.</div>
+      <div class="pie">
+        <div><span class="dk">Nivel</span><span class="nivel">≈60</span></div>
+        <div><span class="dk">Pase</span><span class="dato">Libre</span></div>
+        <button class="bt">Contactar</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #d8d4cc; --panel: #f6f4f1; --panel-2: #eceae6; --border: #d2cec8;
+      --text: #25282c; --text-dim: #6a6f76; --text-faint: #9a9fa6; --text-light: #f6f4f1;
+      --accent: #e07a2a; --good: #4a9160; --warn: #c69320; --bad: #b8443a;
+      --sec-plantel: #b07f27; --sec-scouting: #456470;
+      --display: 'Oswald', 'Arial Narrow', sans-serif;
+      --relieve: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,100,70,.2), 0 6px 16px rgba(20,14,8,.2);
+    }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 15.2px; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .chip { display: inline-block; padding: 1.8px 8px; border-radius: 999px; font-size: 11.5px;
+      font-weight: 700; border: 1px solid var(--border); color: var(--text-dim); white-space: nowrap; }
+    .chip.good { color: var(--good); border-color: var(--good); }
+    .chip.warn { color: var(--warn); border-color: var(--warn); }
+    .chip.accent { color: var(--sec-scouting); border-color: var(--sec-scouting); }
+    .lcard { background: var(--panel); border: 1px solid var(--border); border-radius: 4px;
+      box-shadow: var(--relieve); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .lname { font-family: var(--display); font-weight: 600; font-size: 18.4px; line-height: 1.15; }
+    .lday { font-size: 13.1px; color: var(--text-dim); }
+    .lprosa { font-size: 13.1px; line-height: 1.45; color: var(--text); }
+    .lver { font-size: 12.5px; color: var(--good); }
+    .lbtn { font-family: inherit; cursor: pointer; border: 1px solid var(--accent); background: transparent;
+      color: var(--accent); font-weight: 600; border-radius: 4px; padding: 8px 14px; font-size: 14.4px;
+      width: 100%; margin-top: auto; }
+  </style>
+</helmet>
+
+<div style="padding: 16px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
+  <div style="background: var(--sec-plantel); color: var(--text-light); font-family: var(--display); font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; font-size: 15.2px; padding: 8px 14px; border-radius: 4px 4px 0 0;">
+    ¿Dónde jugamos este año?
+  </div>
+  <div style="font-size: 13.1px; color: var(--text); margin-top: -6px;">
+    Elegir liga es elegir tu día de partido: mirá qué día puede tu gente antes de firmar. Podés cambiar hasta el cierre. Si no elegís, la comisión te anota a último momento en la de siempre (recargo $60 y mala imagen).
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: stretch;">
+
+    <div class="lcard">
+      <div><div class="lname">Liga Universitaria · Divisional B</div><div class="lday">Se juega los lunes (20:00 / 22:00)</div></div>
+      <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+        <span class="chip">Inscripción: $300</span><span class="chip accent">Nivel competitivo</span>
+        <span class="chip">9 fechas</span><span class="chip good">Con ascensos y descensos</span>
+      </div>
+      <div class="lprosa">Tu categoría de siempre: acá te conocen y te fían la ficha si no llegás con la plata. La categoría se mueve: los dos finalistas de la Copa de Oro ascienden a la Divisional A y los dos últimos se van a la Divisional C.</div>
+      <div class="lver">✓ Todos los confirmados pueden los lunes</div>
+      <button class="lbtn">Anotarse acá</button>
+    </div>
+
+    <div class="lcard">
+      <div><div class="lname">Liga del Centro · Segunda</div><div class="lday">Se juega los martes (21:30 / 23:00)</div></div>
+      <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+        <span class="chip">Inscripción: $450</span><span class="chip accent">Nivel muy duro</span>
+        <span class="chip">9 fechas</span><span class="chip good">Con ascensos y descensos</span>
+        <span class="chip warn">Se paga contado: no fían</span>
+      </div>
+      <div class="lprosa">La nocturna del Centro: la ficha es cara y se paga contado (no te conocen, no te fían), se juega tarde y el nivel es otro. Pero jugar acá se nota en el cartel del club.</div>
+      <div class="lver">✓ Todos los confirmados pueden los martes</div>
+      <div style="font-size: 12.5px; color: var(--bad);">✕ Piden antecedentes: al menos 45 de prestigio deportivo y el club tiene 40.</div>
+      <button class="lbtn" style="border-color: var(--border); color: var(--text-faint); cursor: default;">No nos aceptan todavía</button>
+    </div>
+
+    <div class="lcard">
+      <div><div class="lname">Liga del Comercio · Única</div><div class="lday">Se juega los domingos (10:00 / 11:30)</div></div>
+      <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+        <span class="chip">Inscripción: $180</span><span class="chip accent">Nivel accesible</span>
+        <span class="chip">7 fechas</span><span class="chip">Sin ascensos</span>
+        <span class="chip good">Premio al campeón: $400</span><span class="chip warn">Se paga contado: no fían</span>
+      </div>
+      <div class="lprosa">Torneo corto de los comercios del barrio: siete fechas, domingo de mañana y premio en plata para el podio. Barato, pero es media temporada de cuotas menos.</div>
+      <div class="lver">✓ Todos los confirmados pueden los domingos</div>
+      <button class="lbtn">Anotarse acá</button>
+    </div>
+
+    <div class="lcard">
+      <div><div class="lname">Liga de la Plaza · Única</div><div class="lday">Se juega los sábados (17:00 / 19:00)</div></div>
+      <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+        <span class="chip good">Inscripción gratis</span><span class="chip accent">Nivel para pasear</span>
+        <span class="chip">9 fechas</span><span class="chip warn">Sin ascensos</span>
+        <span class="chip warn">Prestigio deportivo -6</span>
+      </div>
+      <div class="lprosa">Gratis y los sábados puede todo el mundo. Sin ascensos, el prestigio deportivo se derrite semana a semana, los ambiciosos del plantel se calientan y las figuras del mercado ni te atienden.</div>
+      <div class="lver">✓ Todos los confirmados pueden los sábados</div>
+      <button class="lbtn">Anotarse acá</button>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

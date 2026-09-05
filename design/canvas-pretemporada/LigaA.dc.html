@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #d8d4cc; --bg-soft: #e6e3dd; --panel: #f6f4f1; --panel-2: #eceae6; --border: #d2cec8;
+      --text: #25282c; --text-dim: #6a6f76; --text-faint: #9a9fa6; --text-light: #f6f4f1;
+      --accent: #e07a2a; --on-accent: #2a1a08; --good: #4a9160; --warn: #c69320; --bad: #b8443a;
+      --sec-plantel: #b07f27;
+      --display: 'Oswald', 'Arial Narrow', sans-serif;
+      --relieve: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,100,70,.2), 0 6px 16px rgba(20,14,8,.2);
+    }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 15.2px; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    table { border-collapse: collapse; width: 100%; }
+    th { font-family: var(--display); font-weight: 500; text-transform: uppercase; letter-spacing: .13em;
+      font-size: 9.9px; color: var(--text-faint); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    td { padding: 9px 10px; font-size: 13.9px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: 0; }
+    tr.sel td { background: rgba(224,122,42,.09); }
+    tr.off td { color: var(--text-faint); }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .liga { font-family: var(--display); font-weight: 600; font-size: 16.7px; }
+    .div { color: var(--text-dim); font-weight: 400; }
+  </style>
+</helmet>
+
+<div style="padding: 16px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
+
+  <div style="display: flex; align-items: baseline; gap: 12px;">
+    <div style="font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 15.2px;">¿Dónde jugamos este año?</div>
+    <div style="font-size: 13.1px; color: var(--text-dim);">Cuatro opciones, los mismos siete datos. Tocá una fila para leer la letra chica.</div>
+  </div>
+
+  <div style="background: var(--panel); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--relieve); overflow: hidden;">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 260px;">Liga</th>
+          <th style="width: 120px;">Día y hora</th>
+          <th class="num" style="width: 90px;">Ficha</th>
+          <th style="width: 110px;">Nivel</th>
+          <th class="num" style="width: 70px;">Fechas</th>
+          <th style="width: 108px;">Categoría</th>
+          <th class="num" style="width: 96px;">En juego</th>
+          <th style="width: 130px;">Tu gente</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="sel">
+          <td><span class="liga">Liga Universitaria</span> <span class="div">· Divisional B</span></td>
+          <td>Lunes <span style="color: var(--text-dim);">20 / 22 h</span></td>
+          <td class="num" style="font-weight: 700;">$300</td>
+          <td>Competitivo</td>
+          <td class="num">9</td>
+          <td style="color: var(--good); font-weight: 600;">Sube y baja</td>
+          <td class="num" style="color: var(--text-faint);">—</td>
+          <td style="color: var(--good);">Pueden los 8</td>
+          <td style="text-align: right;"><button style="font-family: inherit; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 700; border-radius: 4px; padding: 5px 12px; font-size: 13.1px;">Anotarse</button></td>
+        </tr>
+        <tr class="off">
+          <td><span class="liga">Liga del Centro</span> <span class="div">· Segunda</span></td>
+          <td>Martes <span>21:30 / 23 h</span></td>
+          <td class="num" style="font-weight: 700;">$450 <span style="color: var(--warn); font-weight: 400;">contado</span></td>
+          <td>Muy duro</td>
+          <td class="num">9</td>
+          <td>Sube y baja</td>
+          <td class="num">—</td>
+          <td>Pueden los 8</td>
+          <td style="text-align: right; color: var(--bad); font-size: 12.5px;">Piden 45 prest.</td>
+        </tr>
+        <tr>
+          <td><span class="liga">Liga del Comercio</span> <span class="div">· Única</span></td>
+          <td>Domingo <span style="color: var(--text-dim);">10 / 11:30 h</span></td>
+          <td class="num" style="font-weight: 700;">$180 <span style="color: var(--warn); font-weight: 400;">contado</span></td>
+          <td>Accesible</td>
+          <td class="num" style="color: var(--warn); font-weight: 700;">7</td>
+          <td style="color: var(--text-dim);">Sin ascensos</td>
+          <td class="num" style="color: var(--good); font-weight: 700;">$400</td>
+          <td style="color: var(--good);">Pueden los 8</td>
+          <td style="text-align: right;"><button style="font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); border-radius: 4px; padding: 5px 12px; font-size: 13.1px;">Anotarse</button></td>
+        </tr>
+        <tr>
+          <td><span class="liga">Liga de la Plaza</span> <span class="div">· Única</span></td>
+          <td>Sábado <span style="color: var(--text-dim);">17 / 19 h</span></td>
+          <td class="num" style="font-weight: 700; color: var(--good);">Gratis</td>
+          <td style="color: var(--text-dim);">Para pasear</td>
+          <td class="num">9</td>
+          <td style="color: var(--text-dim);">Sin ascensos</td>
+          <td class="num" style="color: var(--bad); font-weight: 700;">−6 prest.</td>
+          <td style="color: var(--good);">Pueden los 8</td>
+          <td style="text-align: right;"><button style="font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); border-radius: 4px; padding: 5px 12px; font-size: 13.1px;">Anotarse</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="background: var(--bg-soft); border: 1px solid var(--border); border-left: 3px solid var(--sec-plantel); border-radius: 4px; padding: 10px 14px;">
+    <div style="font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .1em; font-size: 10.5px; color: var(--text-dim); margin-bottom: 4px;">Liga Universitaria · Divisional B</div>
+    <div style="font-size: 13.9px; line-height: 1.5;">Tu categoría de siempre: acá te conocen y te fían la ficha si no llegás con la plata. La categoría se mueve: los dos finalistas de la Copa de Oro ascienden a la Divisional A y los dos últimos se van a la Divisional C.</div>
+  </div>
+
+  <div style="font-size: 12.5px; color: var(--text-dim);">Si no elegís, la comisión te anota a último momento en la de siempre (recargo $60 y mala imagen).</div>
+</div>
+</x-dc>
+</body>
+</html>
