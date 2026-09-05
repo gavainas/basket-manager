@@ -216,6 +216,16 @@ eso no pueden taparle el pie a ninguna pantalla ni cortar una fila del partido a
 Lo que se fue no es el scroll: es el **scroll de página**. Football Manager nunca scrollea la
 pantalla, scrollea la tabla.
 
+**Una regla más, de septiembre: una pantalla scrollea en UN solo lugar.** El quinteto llegó a
+tener tres barras a la vez —el plantel, la pizarra y la propia cabecera— y son las dos
+mitades de la misma tarea: no se podía ver a quién elegías y dónde lo ponías al mismo tiempo.
+Apretar las dos para que entraran tampoco sirvió: la cancha quedó tan baja que los nombres de
+los puestos se pisaban con los jugadores.
+
+Cuando el cuerpo no entra, el que scrollea es **el cuerpo entero**, una vez, con la cabecera
+y la barra de acción quietas. Dos paneles hermanos con barra propia es siempre un error de
+diseño, no una solución: el que mira tiene que elegir cuál de los dos mover.
+
 ### Primitivas
 
 | Clase | Qué hace |

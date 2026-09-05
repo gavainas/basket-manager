@@ -821,29 +821,42 @@ button.danger {
   align-items: stretch;
 }
 
-.lineup-izq {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  min-height: 0;
+/* Un solo scroll en la pantalla, y es el del CUERPO entero (sep 2026).
+   Antes scrolleaban tres cosas a la vez —el plantel, la pizarra y hasta la
+   cabecera—, que son las dos mitades de la misma tarea: no se podía ver a quién
+   elegías y dónde lo ponías al mismo tiempo. Probamos apretarlas para que
+   entraran las dos, y la cancha quedó tan baja que los nombres de los puestos
+   se pisaban con los jugadores.
+
+   Así que el que scrollea es el cuerpo, una sola vez: la lista y la pizarra van
+   a tamaño natural, sin cortarse ni pisarse. La cabecera y la barra de acción
+   siguen fijas —que es lo que el marco fijo tenía que resolver— y el scroll
+   queda para lo único que de verdad no entra: un plantel de doce. */
+.quinteto-pantalla .lineup-layout {
   overflow-y: auto;
   scrollbar-width: thin;
   padding-right: 0.2rem;
 }
 
+.lineup-izq {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-height: 0;
+}
+
+/* El scouting arranca plegado (ver ui/ScoutingCard.tsx): ocupa su cabezal y
+   nada más hasta que lo abrís. */
 .lineup-izq > * { flex: none; }
 
-/* La lista ya no calcula su alto con `100vh` menos las barras: vive adentro de
-   una columna que ya sabe cuánto mide. */
+/* Ni la lista ni la pizarra scrollean por su cuenta: el cuerpo ya lo hace. */
 .quinteto-pantalla .lineup-list {
   max-height: none;
   overflow: visible;
 }
 
 .quinteto-pantalla .lineup-court {
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
+  overflow: visible;
   margin-bottom: 0;
 }
 
@@ -4284,4 +4297,10 @@ button.mini.blue.on {
   .planilla-nota {
     display: none;
   }
+}
+
+/* Una card plegada no deja un cuerpo vacío: el cabezal sangra hasta los bordes,
+   así que sin contenido el padding de abajo se ve como un hueco blanco. */
+.card.plegada {
+  padding-bottom: 0;
 }
