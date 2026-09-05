@@ -121,7 +121,9 @@ export function confirmActions(state: GameState, timing: 'temprana' | 'tarde' = 
       continue;
     }
     const log = def.apply(s, rng);
-    s.actionsLog.push(`${def.icon} ${def.name}: ${log}`);
+    // Sin ícono: el log es texto guardado en la partida y el emoji quedaba
+    // pegado ahí para siempre. Cómo se dibuja una acción lo decide la UI.
+    s.actionsLog.push(`${def.name}: ${log}`);
     if (def.oncePerSeason) s.actionsUsed.push(def.id);
   }
   // Convocatoria: se confirma quién viene al partido (y quién falla).

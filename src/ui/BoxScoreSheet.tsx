@@ -6,10 +6,16 @@
 // (design/SISTEMA_VISUAL.md: "el chrome es neutro; el color es dato"). Las
 // columnas y los números se quedan en tinta: si dos clubes con camisetas
 // parecidas se cruzan, la planilla tiene que seguir leyéndose.
+//
+// Vive en el panel de la izquierda del informe, que es el que el marco fijo
+// reserva para la planilla: los dos equipos van APILADOS y el panel scrollea
+// por dentro (`.pane`). Puesta a lo ancho como un bloque aparte le robaba la
+// fila elástica a la grilla de `.informe-pantalla` y se aplastaba a 34px.
 
 import { Crest } from './Crest';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
+import { Tip } from './Tip';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import type { BoxScoreLine, GameState, MatchResult, RivalBoxLine } from '../game/types';
 
@@ -22,9 +28,12 @@ interface FilaPlanilla {
   tapones: number;
   rebotes: number;
   destacado?: boolean;
+  /** Solo los nuestros llevan nota: a los de enfrente no los calificamos. */
+  nota?: number;
+  comentario?: string;
 }
 
-function Totales({ filas }: { filas: FilaPlanilla[] }) {
+function Totales({ filas, conNota }: { filas: FilaPlanilla[]; conNota: boolean }) {
   const suma = (f: (x: FilaPlanilla) => number) => filas.reduce((t, x) => t + f(x), 0);
   return (
     <tr className="planilla-total">
@@ -34,6 +43,7 @@ function Totales({ filas }: { filas: FilaPlanilla[] }) {
       <td className="num">{suma((x) => x.asistencias)}</td>
       <td className="num">{suma((x) => x.tapones)}</td>
       <td className="num">{suma((x) => x.rebotes)}</td>
+      {conNota && <td />}
     </tr>
   );
 }
@@ -55,6 +65,7 @@ function Bloque({
   filas: FilaPlanilla[];
   gano: boolean;
 }) {
+  const conNota = filas.some((f) => f.nota !== undefined);
   return (
     <div className="planilla-equipo">
       <div className="planilla-cabezal" style={colors ? { borderBottomColor: colors[0] } : undefined}>
@@ -68,10 +79,11 @@ function Bloque({
             <tr>
               <th>Nombre</th>
               <th className="num">Pts</th>
-              <th className="num">Triples</th>
-              <th className="num">Asists</th>
-              <th className="num">Tapones</th>
-              <th className="num">Rebotes</th>
+              <th className="num" title="Triples">T3</th>
+              <th className="num" title="Asistencias">As</th>
+              <th className="num" title="Tapones">Tap</th>
+              <th className="num" title="Rebotes">Reb</th>
+              {conNota && <th className="num">Nota</th>}
             </tr>
           </thead>
           <tbody>
@@ -87,9 +99,18 @@ function Bloque({
                 <td className="num">{f.asistencias}</td>
                 <td className="num">{f.tapones}</td>
                 <td className="num">{f.rebotes}</td>
+                {conNota && (
+                  <td className="num">
+                    {f.nota === undefined
+                      ? ''
+                      : f.comentario
+                        ? <Tip text={f.comentario}>{f.nota}/10</Tip>
+                        : `${f.nota}/10`}
+                  </td>
+                )}
               </tr>
             ))}
-            <Totales filas={filas} />
+            <Totales filas={filas} conNota={conNota} />
           </tbody>
         </table>
       </div>
@@ -115,6 +136,8 @@ export function BoxScoreSheet({ state, match }: { state: GameState; match: Match
     tapones: l.blocks,
     rebotes: l.rebounds,
     destacado: l.mvp,
+    nota: l.rating,
+    comentario: l.comment,
   }));
 
   const filasRival: FilaPlanilla[] = rivalBox.map((l) => ({
@@ -128,9 +151,9 @@ export function BoxScoreSheet({ state, match }: { state: GameState; match: Match
   }));
 
   return (
-    <div className="card planilla-hoja" style={{ marginTop: '1rem' }}>
-      <h3>Planilla del partido</h3>
-      <div className="planilla-dos">
+    <div className="card pane informe-planilla planilla-hoja">
+      <h3 className="card-band">Planilla del partido</h3>
+      <div className="pane-body planilla-dos">
         <Bloque
           nombre={state.club.name}
           puntos={match.scoreFor}

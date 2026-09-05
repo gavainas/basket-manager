@@ -1,0 +1,266 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #d8d4cc;
+      color: #25282c;
+    }
+    a { color: #e07a2a; } a:hover { color: #b45309; }
+    /* Tokens reales de src/styles.css, sin redondear. */
+    .chip {
+      display: inline-block;
+      padding: 0.12rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      border: 1px solid #d2cec8;
+      color: #6a6f76;
+      white-space: nowrap;
+    }
+    .chip.bad { color: #b8443a; border-color: #b8443a; }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 110px 1fr 34px;
+      align-items: center;
+      gap: 0.6rem;
+      margin: 0.3rem 0;
+      font-size: 0.82rem;
+    }
+    .bar-label { color: #6a6f76; }
+    .bar-track { height: 8px; background: #e6e3dd; border-radius: 999px; overflow: hidden; }
+    .bar-fill { display: block; height: 100%; border-radius: 999px; }
+    .bar-value { text-align: right; color: #6a6f76; font-variant-numeric: tabular-nums; }
+    .player-card {
+      background: #f6f4f1;
+      border: 1px solid #d2cec8;
+      border-radius: 4px;
+      padding: 0.9rem;
+      box-shadow: 0 2px 10px rgba(20, 18, 16, 0.28);
+    }
+    .player-desc {
+      font-size: 0.82rem;
+      color: #6a6f76;
+      font-style: italic;
+      margin: 0.4rem 0 0.6rem;
+      min-height: 2.2em;
+    }
+    .human-note { font-size: 0.82rem; color: #6a6f76; margin: 0.5rem 0 0.1rem; line-height: 1.35; }
+    .human-note.bad { color: #b8443a; }
+    .human-note.good { color: #4a9160; }
+    .avatar {
+      width: 42px; height: 42px; min-width: 42px;
+      border-radius: 50%;
+      background: #eceae6;
+      border: 2px solid #d2cec8;
+      overflow: hidden;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1000px; overflow: hidden; position: relative; background: #4a3a2c;">
+  <!-- El lienzo: la cancha detrás de todo, con el velo del juego. -->
+  <div style="position: absolute; inset: 0; background: linear-gradient(114deg, #6b5238 0%, #503c28 38%, #6f5539 62%, #46341f 100%);"></div>
+  <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(32, 28, 24, 0.42), rgba(24, 21, 19, 0.62));"></div>
+
+  <div style="position: relative;">
+    <!-- Barra superior -->
+    <div style="background: #32353a; border-bottom: 1px solid #4a4e55;">
+      <div style="max-width: 1360px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: stretch;">
+        <div style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 1.1rem 0.5rem 0; border-right: 1px solid #4a4e55; margin-right: 0.4rem;">
+          <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
+            <path d="M4 4 H34 V22 Q34 32 19 36 Q4 32 4 22 Z" fill="#2d5c8a" stroke="#f6f4f1" stroke-width="2"></path>
+            <path d="M4 15 H34" stroke="#f6f4f1" stroke-width="1.5"></path>
+            <text x="19" y="13" font-family="Oswald, sans-serif" font-size="9" fill="#f6f4f1" text-anchor="middle">EP</text>
+          </svg>
+          <div>
+            <div style="font-family: Oswald, 'Arial Narrow', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; font-size: 1.15rem; line-height: 1.05; color: #f6f4f1;">Atlético El Parque</div>
+            <div style="font-family: Oswald, 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.62rem; color: #9a9fa6; margin-top: 0.2rem;">Temporada 1 · fundado en 2025</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.45rem; margin-left: 1rem; padding-left: 0.7rem; border-left: 3px solid #b07f27; color: #f6f4f1; font-family: Oswald, 'Arial Narrow', sans-serif; font-weight: 500; font-size: 1.15rem; letter-spacing: 0.07em; text-transform: uppercase;">Plantilla</div>
+        <div style="flex: 1;"></div>
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="border: 1px solid #4a4e55; border-radius: 4px; color: #9a9fa6; font-family: Oswald, 'Arial Narrow', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.82rem; padding: 0.4rem 0.9rem;">Inicio</span>
+          <span style="border: 1px solid #4a4e55; border-radius: 4px; color: #9a9fa6; font-family: Oswald, 'Arial Narrow', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.82rem; padding: 0.4rem 0.9rem;">Salir</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenido -->
+    <div style="max-width: 1360px; margin: 0 auto; padding: 1rem 1rem 0;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem;">
+        <p style="margin: 0; max-width: 62ch; font-size: 0.82rem; color: #f6f4f1; text-shadow: 0 1px 3px rgba(20, 18, 16, 0.55);">La valoración (≈) es una estimación: el rendimiento real depende del físico, la motivación, la confianza y el encaje en el equipo. Nadie muestra todas sus cartas.</p>
+        <div style="display: inline-flex; border: 1px solid #d2cec8; border-radius: 999px; overflow: hidden; background: #f6f4f1;">
+          <span style="color: #e07a2a; background: rgba(224, 122, 42, 0.14); padding: 0.3rem 0.9rem; font-size: 0.82rem;">Fichas</span>
+          <span style="color: #6a6f76; padding: 0.3rem 0.9rem; font-size: 0.82rem;">Planilla</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem;">
+
+        <div class="player-card">
+          <div style="display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.5rem;">
+            <div class="avatar"><img src="p-protagonista.webp" alt=""></div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700;">Facundo Silva</div>
+              <div style="color: #6a6f76; font-size: 0.82rem;">Base · 22 años</div>
+            </div>
+            <div style="text-align: right; font-size: 1.15rem; font-weight: 800;">≈66</div>
+          </div>
+          <div class="player-desc">Rápido y encarador. Quiere la pelota en las manos y se nota cuando no la tiene.</div>
+          <div class="bar-row"><span class="bar-label">Físico</span><span class="bar-track"><span class="bar-fill" style="width: 82%; background: #4a9160;"></span></span><span class="bar-value">82</span></div>
+          <div class="bar-row"><span class="bar-label">Motivación</span><span class="bar-track"><span class="bar-fill" style="width: 70%; background: #4a9160;"></span></span><span class="bar-value">70</span></div>
+          <div class="bar-row"><span class="bar-label">Compromiso</span><span class="bar-track"><span class="bar-fill" style="width: 70%; background: #4a9160;"></span></span><span class="bar-value">70</span></div>
+          <div class="bar-row"><span class="bar-label">Afinidad social</span><span class="bar-track"><span class="bar-fill" style="width: 55%; background: #4a9160;"></span></span><span class="bar-value">55</span></div>
+          <div class="human-note bad">No se banca a Agustín Lemos: mejor no dejarlos marcándose en la práctica.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.55rem;"><span class="chip">Se ve titular · ~30 min</span></div>
+        </div>
+
+        <div class="player-card">
+          <div style="display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.5rem;">
+            <div class="avatar"><img src="p-veterano.webp" alt=""></div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700;">"Chino" Rodríguez</div>
+              <div style="color: #6a6f76; font-size: 0.82rem;">Base · 34 años</div>
+            </div>
+            <div style="text-align: right; font-size: 1.15rem; font-weight: 800;">≈63</div>
+          </div>
+          <div class="player-desc">Fundador del equipo. Ya no corre como antes, pero ordena al grupo adentro y afuera de la cancha.</div>
+          <div class="bar-row"><span class="bar-label">Físico</span><span class="bar-track"><span class="bar-fill" style="width: 55%; background: #c69320;"></span></span><span class="bar-value">55</span></div>
+          <div class="bar-row"><span class="bar-label">Motivación</span><span class="bar-track"><span class="bar-fill" style="width: 75%; background: #4a9160;"></span></span><span class="bar-value">75</span></div>
+          <div class="bar-row"><span class="bar-label">Compromiso</span><span class="bar-track"><span class="bar-fill" style="width: 90%; background: #4a9160;"></span></span><span class="bar-value">90</span></div>
+          <div class="bar-row"><span class="bar-label">Afinidad social</span><span class="bar-track"><span class="bar-fill" style="width: 85%; background: #4a9160;"></span></span><span class="bar-value">85</span></div>
+          <div class="human-note good">Íntimo de Rodri Batista: donde va uno, va el otro.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.55rem;"><span class="chip">Se ve titular · ~30 min</span></div>
+        </div>
+
+        <div class="player-card">
+          <div style="display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.5rem;">
+            <div class="avatar"><img src="p-competitivo.webp" alt=""></div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700;">Martín Techera</div>
+              <div style="color: #6a6f76; font-size: 0.82rem;">Escolta · 27 años</div>
+            </div>
+            <div style="text-align: right; font-size: 1.15rem; font-weight: 800;">≈75</div>
+          </div>
+          <div class="player-desc">Vino a ganar. Entrena aparte, mira los rivales y sufre cada derrota más que nadie.</div>
+          <div class="bar-row"><span class="bar-label">Físico</span><span class="bar-track"><span class="bar-fill" style="width: 78%; background: #4a9160;"></span></span><span class="bar-value">78</span></div>
+          <div class="bar-row"><span class="bar-label">Motivación</span><span class="bar-track"><span class="bar-fill" style="width: 80%; background: #4a9160;"></span></span><span class="bar-value">80</span></div>
+          <div class="bar-row"><span class="bar-label">Compromiso</span><span class="bar-track"><span class="bar-fill" style="width: 80%; background: #4a9160;"></span></span><span class="bar-value">80</span></div>
+          <div class="bar-row"><span class="bar-label">Afinidad social</span><span class="bar-track"><span class="bar-fill" style="width: 60%; background: #4a9160;"></span></span><span class="bar-value">60</span></div>
+          <div class="human-note bad">No se banca a Agustín Lemos: mejor no dejarlos marcándose en la práctica.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.55rem;"><span class="chip">Se ve titular · ~30 min</span></div>
+        </div>
+
+        <div class="player-card">
+          <div style="display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.5rem;">
+            <div class="avatar"><img src="p-talentoso.webp" alt=""></div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700;">"Tato" Fernández</div>
+              <div style="color: #6a6f76; font-size: 0.82rem;">Alero · 24 años</div>
+            </div>
+            <div style="text-align: right; font-size: 1.15rem; font-weight: 800;">≈74</div>
+          </div>
+          <div class="player-desc">El más talentoso del plantel, cuando aparece. Debe cuotas y a veces avisa una hora antes.</div>
+          <div class="bar-row"><span class="bar-label">Físico</span><span class="bar-track"><span class="bar-fill" style="width: 75%; background: #4a9160;"></span></span><span class="bar-value">75</span></div>
+          <div class="bar-row"><span class="bar-label">Motivación</span><span class="bar-track"><span class="bar-fill" style="width: 65%; background: #4a9160;"></span></span><span class="bar-value">65</span></div>
+          <div class="bar-row"><span class="bar-label">Compromiso</span><span class="bar-track"><span class="bar-fill" style="width: 40%; background: #c69320;"></span></span><span class="bar-value">40</span></div>
+          <div class="bar-row"><span class="bar-label">Afinidad social</span><span class="bar-track"><span class="bar-fill" style="width: 70%; background: #4a9160;"></span></span><span class="bar-value">70</span></div>
+          <div class="human-note bad">Cuota atrasada: dice que la semana que viene se pone al día.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.55rem;"><span class="chip bad">Debe 1 sem.</span><span class="chip">Se ve titular · ~30 min</span></div>
+        </div>
+
+        <div class="player-card">
+          <div style="display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.5rem;">
+            <div class="avatar"><img src="p-social.webp" alt=""></div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700;">Diego Núñez</div>
+              <div style="color: #6a6f76; font-size: 0.82rem;">Escolta · 25 años</div>
+            </div>
+            <div style="text-align: right; font-size: 1.15rem; font-weight: 800;">≈50</div>
+          </div>
+          <div class="player-desc">El que organiza los asados y arma el grupo de WhatsApp. Juega porque están sus amigos.</div>
+          <div class="bar-row"><span class="bar-label">Físico</span><span class="bar-track"><span class="bar-fill" style="width: 65%; background: #4a9160;"></span></span><span class="bar-value">65</span></div>
+          <div class="bar-row"><span class="bar-label">Motivación</span><span class="bar-track"><span class="bar-fill" style="width: 78%; background: #4a9160;"></span></span><span class="bar-value">78</span></div>
+          <div class="bar-row"><span class="bar-label">Compromiso</span><span class="bar-track"><span class="bar-fill" style="width: 75%; background: #4a9160;"></span></span><span class="bar-value">75</span></div>
+          <div class="bar-row"><span class="bar-label">Afinidad social</span><span class="bar-track"><span class="bar-fill" style="width: 92%; background: #4a9160;"></span></span><span class="bar-value">92</span></div>
+          <div class="human-note good">Íntimo de "Flaco" Morales: donde va uno, va el otro.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.55rem;"><span class="chip">Rotación · ~18 min</span></div>
+        </div>
+
+        <div class="player-card">
+          <div style="display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.5rem;">
+            <div class="avatar"><img src="p-cumplidor.webp" alt=""></div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700;">Nacho Pereyra</div>
+              <div style="color: #6a6f76; font-size: 0.82rem;">Alero · 29 años</div>
+            </div>
+            <div style="text-align: right; font-size: 1.15rem; font-weight: 800;">≈68</div>
+          </div>
+          <div class="player-desc">Paga el primero, llega temprano y avisa si falta. Le molesta el desorden más que perder.</div>
+          <div class="bar-row"><span class="bar-label">Físico</span><span class="bar-track"><span class="bar-fill" style="width: 72%; background: #4a9160;"></span></span><span class="bar-value">72</span></div>
+          <div class="bar-row"><span class="bar-label">Motivación</span><span class="bar-track"><span class="bar-fill" style="width: 72%; background: #4a9160;"></span></span><span class="bar-value">72</span></div>
+          <div class="bar-row"><span class="bar-label">Compromiso</span><span class="bar-track"><span class="bar-fill" style="width: 88%; background: #4a9160;"></span></span><span class="bar-value">88</span></div>
+          <div class="bar-row"><span class="bar-label">Afinidad social</span><span class="bar-track"><span class="bar-fill" style="width: 65%; background: #4a9160;"></span></span><span class="bar-value">65</span></div>
+          <div class="human-note good">Íntimo de "Chino" Rodríguez: donde va uno, va el otro.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.55rem;"><span class="chip">Se ve titular · ~30 min</span></div>
+        </div>
+
+        <div class="player-card">
+          <div style="display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.5rem;">
+            <div class="avatar"><img src="p-mercenario.webp" alt=""></div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700;">Seba Cardozo</div>
+              <div style="color: #6a6f76; font-size: 0.82rem;">Ala-Pívot · 31 años</div>
+            </div>
+            <div style="text-align: right; font-size: 1.15rem; font-weight: 800;">≈72</div>
+          </div>
+          <div class="player-desc">Jugó federado. Rinde mucho, pero deja claro que en otros clubes no le cobraban la cuota.</div>
+          <div class="bar-row"><span class="bar-label">Físico</span><span class="bar-track"><span class="bar-fill" style="width: 76%; background: #4a9160;"></span></span><span class="bar-value">76</span></div>
+          <div class="bar-row"><span class="bar-label">Motivación</span><span class="bar-track"><span class="bar-fill" style="width: 62%; background: #c69320;"></span></span><span class="bar-value">62</span></div>
+          <div class="bar-row"><span class="bar-label">Compromiso</span><span class="bar-track"><span class="bar-fill" style="width: 55%; background: #c69320;"></span></span><span class="bar-value">55</span></div>
+          <div class="bar-row"><span class="bar-label">Afinidad social</span><span class="bar-track"><span class="bar-fill" style="width: 45%; background: #c69320;"></span></span><span class="bar-value">45</span></div>
+          <div class="human-note">Juega con beca: el club lo banca para que esté.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.55rem;"><span class="chip">Beca parcial</span><span class="chip">Se ve titular · ~30 min</span></div>
+        </div>
+
+        <div class="player-card">
+          <div style="display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.5rem;">
+            <div class="avatar"><img src="p-competitivo.webp" alt=""></div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700;">Gonzalo Viera</div>
+              <div style="color: #6a6f76; font-size: 0.82rem;">Pívot · 28 años</div>
+            </div>
+            <div style="text-align: right; font-size: 1.15rem; font-weight: 800;">≈67</div>
+          </div>
+          <div class="player-desc">Pelea cada rebote como una final. Se calienta cuando el equipo no toma en serio los partidos.</div>
+          <div class="bar-row"><span class="bar-label">Físico</span><span class="bar-track"><span class="bar-fill" style="width: 80%; background: #4a9160;"></span></span><span class="bar-value">80</span></div>
+          <div class="bar-row"><span class="bar-label">Motivación</span><span class="bar-track"><span class="bar-fill" style="width: 76%; background: #4a9160;"></span></span><span class="bar-value">76</span></div>
+          <div class="bar-row"><span class="bar-label">Compromiso</span><span class="bar-track"><span class="bar-fill" style="width: 78%; background: #4a9160;"></span></span><span class="bar-value">78</span></div>
+          <div class="bar-row"><span class="bar-label">Afinidad social</span><span class="bar-track"><span class="bar-fill" style="width: 58%; background: #4a9160;"></span></span><span class="bar-value">58</span></div>
+          <div class="human-note bad">No se banca a "Tato" Fernández: mejor no dejarlos marcándose en la práctica.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.55rem;"><span class="chip">Se ve titular · ~30 min</span></div>
+        </div>
+
+      </div>
+
+      <p style="margin: 18px 2px 0; font-size: 0.82rem; color: #e8e2d8; text-shadow: 0 1px 3px rgba(20, 18, 16, 0.6);">
+        <strong style="font-family: Oswald, sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.72rem;">Hoy · lo que está publicado</strong>
+        &nbsp;— ocho rectángulos iguales de papel liso: mismo borde de 1px, mismo radio, mismas cuatro barras. Nada es más importante que nada, y no hay ninguna materia: eso es lo que se lee como "hecho con IA".
+      </p>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

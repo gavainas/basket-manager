@@ -16,7 +16,6 @@ export interface ActionAvailability {
 export interface ActionDef {
   id: string;
   name: string;
-  icon: string;
   description: string;
   costLabel: string;
   oncePerSeason?: boolean;
@@ -59,7 +58,6 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'training',
     name: 'Organizar entrenamiento',
-    icon: '🏋️',
     description: 'Un entrenamiento extra en la semana. Mejora el físico y el orden, con leve riesgo de lesión.',
     costLabel: `Cuesta $${A.training.cost}`,
     available: (s) => needMoney(s, A.training.cost),
@@ -126,7 +124,6 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'asado',
     name: 'Organizar asado',
-    icon: '🍖',
     description:
       'Convocás al plantel a un asado: cada uno confirma según su momento. Si va la mayoría, el grupo sale otro; si van cuatro, es un papelón.',
     costLabel: `Cuesta $${A.asado.cost} (según quiénes vayan)`,
@@ -147,7 +144,6 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'raffle',
     name: 'Hacer una rifa',
-    icon: '🎟️',
     description: 'Organizar una rifa en el barrio. Recauda según el prestigio social del club.',
     costLabel: `Cuesta $${A.raffle.cost} (recauda según prestigio)`,
     available: (s) => needMoney(s, A.raffle.cost),
@@ -169,7 +165,6 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'sponsor',
     name: 'Buscar sponsor',
-    icon: '🤝',
     description: 'Golpear puertas de comercios de la zona buscando un aporte semanal.',
     costLabel: 'Gratis (éxito según prestigio)',
     available: (s) =>
@@ -187,7 +182,6 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'talk',
     name: 'Hablar con un jugador molesto',
-    icon: '💬',
     description: 'Sentarse a charlar con el jugador más caliente del plantel para bajar la espuma.',
     costLabel: 'Gratis (puede salir mal)',
     // Mira la misma lista que el informe del partido y el radar: si alguien
@@ -221,7 +215,6 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'collect',
     name: 'Cobrar cuotas atrasadas',
-    icon: '💰',
     description: 'Pasar la gorra entre los deudores. Recupera plata pero puede caer mal.',
     costLabel: 'Gratis (puede molestar)',
     available: (s) =>
@@ -261,7 +254,6 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'scholarship',
     name: 'Becar a un jugador importante',
-    icon: '🎓',
     description: 'Eximir de la cuota a la figura del equipo para retenerlo. Los que pagan pueden molestarse.',
     costLabel: 'Resigna su cuota semanal',
     available: (s) =>
@@ -299,7 +291,6 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'jerseys',
     name: 'Comprar camisetas nuevas',
-    icon: '👕',
     description: 'Juego de camisetas nuevo. Gran salto de imagen y organización. Una vez por temporada.',
     costLabel: `Cuesta $${A.jerseys.cost} (única vez)`,
     oncePerSeason: true,
@@ -319,7 +310,6 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'rest',
     name: 'Descansar al equipo',
-    icon: '😴',
     description: 'Semana liviana sin entrenamientos. Recupera físico, aunque a los competitivos no les gusta.',
     costLabel: 'Gratis',
     available: () => ({ ok: true }),
@@ -334,7 +324,6 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'recruit',
     name: 'Reclutar un jugador',
-    icon: '🔎',
     description: 'Correr la voz para sumar un jugador nuevo al plantel. No hay garantías de calidad.',
     costLabel: `Cuesta $${A.recruit.cost}`,
     available: (s) => {

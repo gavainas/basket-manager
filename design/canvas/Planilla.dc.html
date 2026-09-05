@@ -1,0 +1,253 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+      background: #3a2f24;
+      color: #241f1a;
+    }
+    a { color: #c2521f; } a:hover { color: #963f16; }
+
+    /* La materia: papel. Grano fino sobre crema cálido, y una trama de
+       renglones tan tenue que no se ve pero se siente. */
+    .papel {
+      background-color: #f4efe4;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+      background-blend-mode: multiply;
+    }
+    .etiqueta {
+      font-family: 'Oswald', 'Arial Narrow', sans-serif;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-size: 0.62rem;
+      color: #9b8f7c;
+    }
+    .cifra {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.95rem;
+      color: #241f1a;
+      line-height: 1;
+    }
+    /* Un renglón de 2px bajo cada número: se comparan las columnas de un
+       vistazo, sin cuatro barras gordas por ficha. */
+    .escala { display: block; height: 2px; background: #ddd4c2; margin-top: 5px; }
+    .escala i { display: block; height: 100%; background: #6f6455; }
+    .fila { display: grid; grid-template-columns: 44px minmax(0, 1fr) 56px 56px 56px 56px 300px 132px 62px; gap: 14px; align-items: center; padding: 11px 18px; }
+    .fila + .fila { border-top: 1px solid #e2dacb; }
+    .foto { width: 44px; height: 44px; border-radius: 2px; overflow: hidden; background: #e6ddcb; box-shadow: 0 1px 0 #fff, 0 2px 5px rgba(60, 48, 32, 0.28); }
+    .foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .nombre { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; font-size: 1.1rem; letter-spacing: 0.01em; line-height: 1.15; }
+    .dicho { font-style: italic; font-size: 0.8rem; color: #7d7264; line-height: 1.3; margin-top: 2px; }
+    .nota { font-size: 0.8rem; line-height: 1.35; color: #6b6153; }
+    .nota.mal { color: #a8402f; }
+    .nota.bien { color: #3f7a4e; }
+    .rol { font-family: 'Oswald', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; color: #6b6153; }
+    .rating { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 1.6rem; text-align: right; line-height: 1; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1000px; overflow: hidden; position: relative; background: #3a2f24;">
+  <div style="position: absolute; inset: 0; background: radial-gradient(120% 90% at 30% 0%, #5c4a35 0%, #3a2f24 70%, #2b231a 100%);"></div>
+
+  <div style="position: relative;">
+    <!-- Barra superior: misma anatomía, tinta más cálida -->
+    <div style="background: #2b2721; border-bottom: 1px solid #45403a;">
+      <div style="max-width: 1360px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: stretch;">
+        <div style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 1.1rem 0.5rem 0; border-right: 1px solid #45403a; margin-right: 0.4rem;">
+          <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
+            <path d="M4 4 H34 V22 Q34 32 19 36 Q4 32 4 22 Z" fill="#2d5c8a" stroke="#f4efe4" stroke-width="2"></path>
+            <path d="M4 15 H34" stroke="#f4efe4" stroke-width="1.5"></path>
+            <text x="19" y="13" font-family="Oswald, sans-serif" font-size="9" fill="#f4efe4" text-anchor="middle">EP</text>
+          </svg>
+          <div>
+            <div style="font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; font-size: 1.15rem; line-height: 1.05; color: #f4efe4;">Atlético El Parque</div>
+            <div class="etiqueta" style="margin-top: 0.2rem;">Temporada 1 · fundado en 2025</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.45rem; margin-left: 1rem; padding-left: 0.7rem; border-left: 3px solid #b07f27; color: #f4efe4; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; font-size: 1.15rem; letter-spacing: 0.07em; text-transform: uppercase;">Plantilla</div>
+        <div style="flex: 1;"></div>
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="border: 1px solid #45403a; border-radius: 3px; color: #a49a8b; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.82rem; padding: 0.4rem 0.9rem;">Inicio</span>
+          <span style="border: 1px solid #45403a; border-radius: 3px; color: #a49a8b; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.82rem; padding: 0.4rem 0.9rem;">Salir</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width: 1360px; margin: 0 auto; padding: 22px 1rem 0;">
+      <!-- La planilla: una sola hoja, no doce cajitas -->
+      <div class="papel" style="position: relative; border-radius: 2px; box-shadow: 0 14px 34px rgba(20, 14, 8, 0.45), 0 1px 0 rgba(255, 255, 255, 0.5) inset;">
+        <!-- la cinta que la pega a la pared: lo hecho a mano, no generado -->
+        <div style="position: absolute; top: -11px; left: 92px; width: 116px; height: 24px; background: rgba(226, 214, 178, 0.75); border-left: 1px solid rgba(255,255,255,0.5); border-right: 1px solid rgba(160,148,118,0.5); transform: rotate(-1.4deg); box-shadow: 0 1px 3px rgba(40, 30, 16, 0.2);"></div>
+
+        <div style="display: flex; align-items: baseline; gap: 14px; padding: 18px 18px 12px; border-bottom: 2px solid #241f1a;">
+          <h2 style="margin: 0; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 1.5rem;">Plantel 2026</h2>
+          <span class="etiqueta">12 fichas · 11 al día con la cuota</span>
+          <div style="flex: 1;"></div>
+          <span class="etiqueta">La valoración (≈) es una estimación: nadie muestra todas sus cartas</span>
+        </div>
+
+        <div class="fila etiqueta" style="padding-top: 10px; padding-bottom: 8px; border-bottom: 1px solid #cdc2ab;">
+          <span></span>
+          <span>Jugador</span>
+          <span style="text-align: right;">Físico</span>
+          <span style="text-align: right;">Motiv.</span>
+          <span style="text-align: right;">Compr.</span>
+          <span style="text-align: right;">Social</span>
+          <span>En el vestuario</span>
+          <span>Rol previsto</span>
+          <span style="text-align: right;">Valor.</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-protagonista.webp" alt=""></span>
+          <span>
+            <span class="nombre">Facundo Silva</span>
+            <span class="etiqueta" style="margin-left: 8px;">Base · 22</span>
+            <div class="dicho">Rápido y encarador. Quiere la pelota en las manos y se nota cuando no la tiene.</div>
+          </span>
+          <span><span class="cifra" style="display: block; text-align: right;">82</span><span class="escala"><i style="width: 82%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">70</span><span class="escala"><i style="width: 70%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">70</span><span class="escala"><i style="width: 70%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">55</span><span class="escala"><i style="width: 55%;"></i></span></span>
+          <span class="nota mal">No se banca a Agustín Lemos: mejor no dejarlos marcándose en la práctica.</span>
+          <span class="rol">Titular · ~30 min</span>
+          <span class="rating">66</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-veterano.webp" alt=""></span>
+          <span>
+            <span class="nombre">"Chino" Rodríguez</span>
+            <span class="etiqueta" style="margin-left: 8px;">Base · 34</span>
+            <div class="dicho">Fundador del equipo. Ya no corre como antes, pero ordena al grupo adentro y afuera de la cancha.</div>
+          </span>
+          <span><span class="cifra" style="display: block; text-align: right; color: #a8402f;">55</span><span class="escala"><i style="width: 55%; background: #a8402f;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">75</span><span class="escala"><i style="width: 75%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">90</span><span class="escala"><i style="width: 90%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">85</span><span class="escala"><i style="width: 85%;"></i></span></span>
+          <span class="nota bien">Íntimo de Rodri Batista: donde va uno, va el otro.</span>
+          <span class="rol">Titular · ~30 min</span>
+          <span class="rating">63</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-competitivo.webp" alt=""></span>
+          <span>
+            <span class="nombre">Martín Techera</span>
+            <span class="etiqueta" style="margin-left: 8px;">Escolta · 27</span>
+            <div class="dicho">Vino a ganar. Entrena aparte, mira los rivales y sufre cada derrota más que nadie.</div>
+          </span>
+          <span><span class="cifra" style="display: block; text-align: right;">78</span><span class="escala"><i style="width: 78%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">80</span><span class="escala"><i style="width: 80%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">80</span><span class="escala"><i style="width: 80%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">60</span><span class="escala"><i style="width: 60%;"></i></span></span>
+          <span class="nota mal">No se banca a Agustín Lemos: mejor no dejarlos marcándose en la práctica.</span>
+          <span class="rol">Titular · ~30 min</span>
+          <span class="rating">75</span>
+        </div>
+
+        <div class="fila" style="background: rgba(168, 64, 47, 0.06);">
+          <span class="foto"><img src="p-talentoso.webp" alt=""></span>
+          <span>
+            <span class="nombre">"Tato" Fernández</span>
+            <span class="etiqueta" style="margin-left: 8px;">Alero · 24</span>
+            <div class="dicho">El más talentoso del plantel, cuando aparece. Debe cuotas y a veces avisa una hora antes.</div>
+          </span>
+          <span><span class="cifra" style="display: block; text-align: right;">75</span><span class="escala"><i style="width: 75%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">65</span><span class="escala"><i style="width: 65%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right; color: #a8402f;">40</span><span class="escala"><i style="width: 40%; background: #a8402f;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">70</span><span class="escala"><i style="width: 70%;"></i></span></span>
+          <span class="nota mal">Cuota atrasada: dice que la semana que viene se pone al día.</span>
+          <span class="rol" style="color: #a8402f;">Titular · debe 1 sem.</span>
+          <span class="rating">74</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-social.webp" alt=""></span>
+          <span>
+            <span class="nombre">Diego Núñez</span>
+            <span class="etiqueta" style="margin-left: 8px;">Escolta · 25</span>
+            <div class="dicho">El que organiza los asados y arma el grupo de WhatsApp. Juega porque están sus amigos.</div>
+          </span>
+          <span><span class="cifra" style="display: block; text-align: right;">65</span><span class="escala"><i style="width: 65%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">78</span><span class="escala"><i style="width: 78%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">75</span><span class="escala"><i style="width: 75%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">92</span><span class="escala"><i style="width: 92%;"></i></span></span>
+          <span class="nota bien">Íntimo de "Flaco" Morales: donde va uno, va el otro.</span>
+          <span class="rol">Rotación · ~18 min</span>
+          <span class="rating">50</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-cumplidor.webp" alt=""></span>
+          <span>
+            <span class="nombre">Nacho Pereyra</span>
+            <span class="etiqueta" style="margin-left: 8px;">Alero · 29</span>
+            <div class="dicho">Paga el primero, llega temprano y avisa si falta. Le molesta el desorden más que perder.</div>
+          </span>
+          <span><span class="cifra" style="display: block; text-align: right;">72</span><span class="escala"><i style="width: 72%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">72</span><span class="escala"><i style="width: 72%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">88</span><span class="escala"><i style="width: 88%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">65</span><span class="escala"><i style="width: 65%;"></i></span></span>
+          <span class="nota bien">Íntimo de "Chino" Rodríguez: donde va uno, va el otro.</span>
+          <span class="rol">Titular · ~30 min</span>
+          <span class="rating">68</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-mercenario.webp" alt=""></span>
+          <span>
+            <span class="nombre">Seba Cardozo</span>
+            <span class="etiqueta" style="margin-left: 8px;">Ala-Pívot · 31</span>
+            <div class="dicho">Jugó federado. Rinde mucho, pero deja claro que en otros clubes no le cobraban la cuota.</div>
+          </span>
+          <span><span class="cifra" style="display: block; text-align: right;">76</span><span class="escala"><i style="width: 76%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">62</span><span class="escala"><i style="width: 62%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">55</span><span class="escala"><i style="width: 55%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right; color: #a8402f;">45</span><span class="escala"><i style="width: 45%; background: #a8402f;"></i></span></span>
+          <span class="nota">Juega con beca: el club lo banca para que esté.</span>
+          <span class="rol">Titular · media beca</span>
+          <span class="rating">72</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-competitivo.webp" alt=""></span>
+          <span>
+            <span class="nombre">Gonzalo Viera</span>
+            <span class="etiqueta" style="margin-left: 8px;">Pívot · 28</span>
+            <div class="dicho">Pelea cada rebote como una final. Se calienta cuando el equipo no toma en serio los partidos.</div>
+          </span>
+          <span><span class="cifra" style="display: block; text-align: right;">80</span><span class="escala"><i style="width: 80%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">76</span><span class="escala"><i style="width: 76%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">78</span><span class="escala"><i style="width: 78%;"></i></span></span>
+          <span><span class="cifra" style="display: block; text-align: right;">58</span><span class="escala"><i style="width: 58%;"></i></span></span>
+          <span class="nota mal">No se banca a "Tato" Fernández: mejor no dejarlos marcándose en la práctica.</span>
+          <span class="rol">Titular · ~30 min</span>
+          <span class="rating">67</span>
+        </div>
+      </div>
+
+      <p style="margin: 14px 2px 0; font-size: 0.8rem; color: #d8cdb8; text-shadow: 0 1px 3px rgba(20, 14, 8, 0.6);">
+        <strong style="font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.72rem;">A · Planilla del club</strong>
+        &nbsp;— el papel es la materia y el dato manda: una sola hoja con renglones, cifras en columna comparables de arriba abajo, y el "por qué" de cada uno en su propia columna. Densidad de manager. Cuesta: los retratos quedan chicos.
+      </p>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -16,10 +16,23 @@ export function avgMotivation(players: Player[]): number {
   return Math.round(active.reduce((s, p) => s + p.motivation, 0) / active.length);
 }
 
-export function statusChip(p: Player): { label: string; cls: string } {
+export interface Chip {
+  label: string;
+  cls: string;
+}
+
+/**
+ * Estado del jugador — solo cuando NO es el normal.
+ *
+ * La regla vale para todo el juego: un chip de estado se muestra únicamente si
+ * el estado es la excepción. Con doce jugadores sanos, doce chips «Disponible»
+ * no informan nada y tapan al que sí tiene un problema. Devuelve `null` para
+ * el caso corriente y quien lo use decide si dibuja algo.
+ */
+export function statusChip(p: Player): Chip | null {
   switch (p.status) {
     case 'disponible':
-      return { label: 'Disponible', cls: 'good' };
+      return null;
     case 'molesto':
       return { label: 'Molesto', cls: 'warn' };
     case 'lesionado':
@@ -31,10 +44,15 @@ export function statusChip(p: Player): { label: string; cls: string } {
   }
 }
 
-export function feeChip(p: Player): { label: string; cls: string } {
+/**
+ * Cuota — solo cuando NO está al día. Las becas sí se muestran siempre: que el
+ * club le banque la cuota a alguien no es la situación corriente, es una
+ * decisión que tomaste y conviene tener presente.
+ */
+export function feeChip(p: Player): Chip | null {
   switch (p.feeStatus) {
     case 'pagada':
-      return { label: 'Cuota al día', cls: 'good' };
+      return null;
     case 'pendiente':
       return { label: `Debe ${Math.max(p.weeksUnpaid, 1)} sem.`, cls: 'bad' };
     case 'beca_total':
@@ -42,6 +60,15 @@ export function feeChip(p: Player): { label: string; cls: string } {
     case 'beca_parcial':
       return { label: 'Beca parcial', cls: 'accent' };
   }
+}
+
+/** La versión completa, para las pantallas que sí quieren el estado siempre. */
+export function statusChipAlways(p: Player): Chip {
+  return statusChip(p) ?? { label: 'Disponible', cls: 'good' };
+}
+
+export function feeChipAlways(p: Player): Chip {
+  return feeChip(p) ?? { label: 'Cuota al día', cls: 'good' };
 }
 
 export function roleLabel(p: Player): string {

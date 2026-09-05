@@ -43,22 +43,64 @@ afinan al pasarlos a `styles.css`.
 
 ## Tokens
 
-Reemplazan el `:root` actual de [`src/styles.css`](../src/styles.css), que es tema oscuro
-azul ("partido nocturno") y queda descartado.
+> **Manda el código.** Los nombres canónicos son los del `:root` de
+> [`src/styles.css`](../src/styles.css); esta tabla los refleja, no al revés. Los nombres
+> que este documento usaba antes (`--lienzo`, `--tinta`, `--naranja`, `--radio`…) quedaron
+> como alias en el kit para no romperlo, pero no se usan en código nuevo.
 
 | Token | Valor | Uso |
 | --- | --- | --- |
 | `--chrome` | `#32353a` | Barra superior y barra de recursos |
 | `--chrome-alto` | `#3d4147` | Pestaña activa, superficies elevadas del chrome |
-| `--lienzo` | `#e2dfd9` | Campo detrás de los paneles |
+| `--bg` | `#d8d4cc` | Campo detrás de los paneles |
+| `--bg-soft` | `#e6e3dd` | Pistas de barra, filas hundidas |
 | `--panel` | `#f6f4f1` | Cuerpo de panel |
-| `--panel-alt` | `#eceae6` | Bloque interno, fila alterna |
-| `--linea` | `#d2cec8` | Filetes y bordes |
-| `--tinta` | `#25282c` | Texto principal |
-| `--tinta-media` | `#6a6f76` | Texto secundario |
-| `--tinta-suave` | `#9a9fa6` | Etiquetas, texto deshabilitado |
-| `--naranja` | `#e07a2a` | **Reservado**: acción y dato clave |
-| `--radio` | `4px` | Radio estándar — esta dirección es cuadrada |
+| `--panel-2` | `#eceae6` | Bloque interno, fila alterna |
+| `--border` | `#d2cec8` | Filetes y bordes |
+| `--text` | `#25282c` | Texto principal |
+| `--text-dim` | `#6a6f76` | Texto secundario |
+| `--text-faint` | `#9a9fa6` | Etiquetas, texto deshabilitado |
+| `--text-light` | `#f6f4f1` | Sobre chrome y sobre la cancha |
+| `--accent` | `#e07a2a` | **Reservado**: acción y dato clave |
+| `--on-accent` | `#2a1a08` | Tinta sobre naranja (5:1, pasa AA en texto chico) |
+| `--radius` | `4px` | Radio estándar — esta dirección es cuadrada |
+
+### Escalas
+
+Antes había 18 tamaños de fuente distintos y 82 de las 133 declaraciones caían entre 0.6 y
+0.9rem: nada era grande, nada era chico. El sistema promete "densidad con jerarquía" y el
+CSS solo entregaba la densidad. Nueve pasos, la razón se abre hacia arriba porque los tres
+últimos son display y necesitan aire entre sí para leerse como escalones.
+
+| Token | Valor | Uso |
+| --- | --- | --- |
+| `--fs-2xs` | `0.62rem` | Etiqueta mayúscula mínima |
+| `--fs-xs` | `0.72rem` | Chip, sub-etiqueta |
+| `--fs-sm` | `0.82rem` | Texto secundario, tabla densa |
+| `--fs-base` | `0.95rem` | Cuerpo |
+| `--fs-md` | `1.15rem` | Subtítulo, dato de ficha |
+| `--fs-lg` | `1.5rem` | Título grande |
+| `--fs-xl` | `2rem` | Cifra destacada |
+| `--fs-2xl` | `2.6rem` | Marcador en vivo |
+| `--fs-3xl` | `3rem` | Marcador final |
+
+Espaciado: `--sp-1` `0.25rem` · `--sp-2` `0.5rem` · `--sp-3` `0.75rem` · `--sp-4` `1rem` ·
+`--sp-5` `1.5rem` · `--sp-6` `2.25rem`.
+
+### Medidas del shell
+
+| Token | Valor | Uso |
+| --- | --- | --- |
+| `--u` | `clamp(12px, 1.15vh + 0.25vw, 19px)` | **La unidad del juego** (sep 2026): crece con el alto de la ventana, que es el recurso escaso |
+| `--ancho-app` | `clamp(1200px, var(--u) * 96, 1760px)` | Lo comparten el contenido y las dos barras de chrome |
+| `--topbar-alto` | `55px` | Medido. Ya no reserva hueco (la barra es una fila); lo usan cálculos de alto de adentro |
+| `--recursos-alto` | `68px` | Ídem |
+
+`--ancho-app` era `1360px` fijo: a 1920 sobraban 560 px de fondo a los costados y a 1280
+apretaba. Ahora sigue al viewport con piso (para que a 1280 no se angoste) y techo (para
+que una tabla de diez filas no quede de punta a punta en un monitor de 2560). Las alturas
+de las dos barras siguen fijas **a propósito**: su contenido —cifras grandes, iconos— no es
+fluido todavía, y achicar la caja sin achicar lo que lleva adentro rompe.
 
 El radio de `10px` de la dirección anterior y los `14px` de la cálida no aplican: los
 paneles de esta dirección son casi rectos. Es parte de lo que la hace leer como manager
@@ -137,8 +179,62 @@ ni en Mac. Para publicar en Steam hay que empaquetar una condensada real con lic
 
 - Cabezal: fondo del color de la sección, texto `--panel`, ícono a la izquierda.
 - Cuerpo: `--panel`, filete `--linea` cuando hay filas.
-- Sombra mínima, un solo nivel. Sin biseles, sin degradados.
+- **El panel tiene relieve** (sep 2026): `--grano` de chapa esmaltada, `--relieve` de luz
+  arriba y sombra abajo, y sombra proyectada. Los pozos donde va un dato —pistas de
+  medidor, celdas hundidas— llevan `--hundido`.
 - Tu fila en una tabla se marca con fondo tenue y el número en `--naranja`.
+
+> **Cambio de regla, sep 2026.** Hasta acá este documento decía *"sombra mínima, un solo
+> nivel; sin biseles, sin degradados"*. Eso era exactamente lo que hacía que todo panel
+> fuera el mismo rectángulo liso — la queja que abrió la
+> [dirección D](#relieve-y-planilla-la-dirección-d-sep-2026), aprobada el 2026-09-01. La
+> regla vieja queda registrada acá para que se entienda qué cambió y por qué; no rige más.
+> Lo que **no** cambió: la sombra sigue siendo de un solo nivel y no hay degradados de
+> color. El relieve es luz y sombra, no decoración.
+
+## Anatomía de pantalla: el marco fijo (sep 2026)
+
+> El juego es una **ventana**, no una página. Detalle y tandas en
+> [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md).
+
+La app ocupa exactamente el alto del viewport y se reparte en tres filas: **barra superior ·
+contenido · barra de recursos**. Las dos barras no son `sticky` ni `fixed`: son filas, y por
+eso no pueden taparle el pie a ninguna pantalla ni cortar una fila del partido a la mitad.
+
+**Resolución de diseño: piso 1280×720** (cubre Steam Deck a 1280×800 y el portátil típico a
+1366×768). Presupuesto de alto útil ahí: ~604 px de contenido.
+
+### La regla
+
+- **Pantalla con acción** —el camino semanal entero, Tablero, Plantel, Liga, Pretemporada—
+  **entra**. Si desborda es un bug: el botón que continúa el juego no puede quedar fuera de
+  alcance.
+- **Pantalla de lectura** —Rankings, Calendario, Finanzas, Historia, Noticias— puede
+  scrollear su cuerpo. Son listas largas por naturaleza; paginarlas a la fuerza sería peor.
+  Su chrome tampoco se mueve.
+
+Lo que se fue no es el scroll: es el **scroll de página**. Football Manager nunca scrollea la
+pantalla, scrollea la tabla.
+
+### Primitivas
+
+| Clase | Qué hace |
+| --- | --- |
+| `.marco` | Grilla `auto 1fr auto` de alto de viewport, `overflow: hidden` |
+| `.app-shell` | La fila del medio: `min-height: 0` + `overflow-y: auto` + grilla de una fila |
+| `.pantalla` | Una pantalla de alto completo que no scrollea: lo hacen sus paneles |
+| `.pane` / `.pane-body` | Panel con cabezal quieto y cuerpo que scrollea |
+
+### Tres trampas, aprendidas rompiéndolas
+
+1. **`min-height: 0`** en todo hijo de grilla que tenga que encoger. Sin eso la fila `1fr`
+   se estira y vuelve el scroll de página: el bug se ve como "hice todo bien y sigue
+   scrolleando".
+2. **Los caps de alto van en `vh`, no en `%`.** Un porcentaje contra una fila `auto` es una
+   referencia circular y deja la card con el cuerpo en cero.
+3. **Las columnas que scrollean van en flex con `flex: none` en los hijos.** En grilla con
+   `min-height: 0` los hijos aceptan achicarse por debajo de su contenido y las cards se
+   recortan a la mitad.
 
 ## Barra superior
 
@@ -262,7 +358,12 @@ pantalla. Lo que se corrigió, y por qué cada uno no era ni acción ni dato cla
 porque son la misma área: el color responde "¿qué parte del juego es esta?", no "¿qué
 botón toqué?". `semana` no es una pantalla más — es la acción.
 
-### El inicio como menú (ago 2026)
+### El inicio como menú (ago 2026) — **parcialmente superado en sep 2026**
+
+> Lo de abajo describe agosto. La barra de pestañas **volvió** en el marco fijo (ver "El
+> marco fijo" más abajo): el Tablero es ahora *una* de las siete secciones, así que el menú
+> de tiles sigue vivo y además hay acceso directo. Todo lo demás de esta sección —el tile
+> como botón, el estado colgado del tile, el naranja— sigue vigente.
 
 La barra de pestañas se retiró: el inicio (`src/ui/Hub.tsx`) es la navegación, con cuatro
 bloques de tiles, el escudo y la fecha que viene en el medio, y la tira del plantel abajo.
@@ -280,12 +381,160 @@ Reglas que esto agrega al sistema:
   foco del teclado usa el color de área, no el acento.
 - `.tabs` sigue documentado en el kit como componente, aunque el shell ya no lo use.
 
-Pendiente del paso 4: las cards todavía no llevan banda de color (la clase `.card.banda`
-ya existe).
+**Paso 4 hecho**: las cards llevan banda de color (ver `.vista .card > h3` en
+`styles.css`). El `h3` que abre una card se pinta con el color de su área; si la card
+arranca con otra cosa, se declara con la clase `card-band`.
+
+### La pretemporada entra al sistema (sep 2026)
+
+La pretemporada era la única pantalla del juego **fuera** del sistema: sin barra superior,
+sin escudo, sin color de área y sin barra de recursos. Se leía como otra aplicación pegada
+adelante del juego — y el propio mapa de secciones de este documento ya decía que
+"Pretemporada y Mercado van con Plantel". Ahora lo cumple:
+
+- Barra superior con escudo y nombre del club, y `--sec-plantel` como color de área.
+- La barra de recursos fija abajo, con los mismos módulos que en temporada (semana,
+  confirmados, caja, cuotas contra gastos, gestiones) y el botón de avanzar como único
+  naranja. Antes esos siete números eran siete chips del mismo tamaño arriba de todo: al
+  ser todos iguales, ninguno se leía primero.
+- Tres pestañas (Inscripción · Plantel · Mercado) en vez de tres metros de scroll: **3105
+  px medidos pasaron a 1002 / 905 / 1806**.
+- Pasada de la regla del naranja, que ahí estaba rota del todo: había **quince** botones
+  naranjas en una pantalla. "Anotarse acá" y "Contactar" pasaron al color del área; la
+  liga elegida queda en `--good`. Queda uno solo: avanzar la semana.
+
+Dos arreglos de sistema que salieron de ahí y valen para todo el juego:
+
+- **`.hint` no tenía estilo propio.** Sólo existía dentro de `.confirm-bar`, así que la
+  letra chica de las otras veinte pantallas salía con el mismo cuerpo que el texto
+  principal. Ahora es `--fs-sm` en `--text-dim`, como corresponde a la letra chica.
+- **`.band-right` y `.band-btn`**: el contador y el botón de plegar que van del lado
+  derecho de una banda de cabezal, con la tinta apagada que pide el fondo de color.
+
+**Y las acciones del club volvieron a existir.** No es diseño, es una regresión que costó
+media mecánica: desde el commit de la semana estilo PC Fútbol, las diez acciones
+(entrenar, asado, rifa, **buscar sponsor**, becar, cobrar cuotas, camisetas, descansar,
+reclutar) arrancaban colapsadas todas las semanas detrás de un botón gris chico al lado de
+"Pasarla sobre la hora". Gabi las buscó y concluyó que el sponsor ya no se podía. Ahora son
+una card con su banda de sección, abierta de entrada, ocupando el medio metro de fondo
+vacío que quedaba abajo del calendario.
+
+## Relieve y planilla: la dirección D (sep 2026)
+
+> **Estado: APROBADA por Gabi el 2026-09-01.** Canvas:
+> <https://claude.ai/code/artifact/8f61cad0-5265-4bfc-a5a3-0bed93a14876>; fuentes en
+> [`canvas/`](canvas/); registro en [ART_PIPELINE.md](ART_PIPELINE.md). Se implementa por
+> tandas: ver [estado](#estado-de-implementación-de-d) al final de esta sección.
+
+Gabi dijo que "todos los paneles lisos parece un juego hecho con Claude e IA". Medido en
+`src/styles.css`: **6 transiciones, 2 animaciones y cero texturas o gradientes en los
+paneles**, sobre 3304 líneas. El problema no es el arte —`public/arte/` tiene carácter—
+es que el 95% de los píxeles son rectángulos crema iguales.
+
+De tres tratamientos comparados sobre la pantalla de Plantel, Gabi eligió dos, y resultó
+que no competían: uno era **estructura** y el otro **relieve**. La propuesta los compone.
+
+**Lo que cambiaría. La paleta no está en esta lista:** sigue siendo la aprobada.
+
+| | Hoy | Propuesta |
+| --- | --- | --- |
+| Superficie | `--panel` plano, borde 1px, sombra de un nivel | Chapa esmaltada: grano fino, `inset` claro arriba, línea de sombra abajo y sombra proyectada. Se apoya sobre la cancha en vez de flotar |
+| Lista de jugadores | Una card por jugador | Una sola planilla con renglones: las cifras quedan en columna y se comparan de arriba abajo |
+| Diales | Cuatro barras iguales por card | Cifra tabular + medidor de cinco segmentos con la pista hundida |
+| Semáforo | En las cuatro barras siempre | Sólo cuando el dato está mal. El resto es tinta |
+| Densidad | 4 jugadores por pantalla | 8 en la misma altura |
+| Detalle físico | ninguno | Tornillos en las esquinas de la placa |
+
+Nada de esto contradice los cinco principios: el chrome sigue neutro, el color sigue
+siendo dato, el naranja sigue siendo uno solo por pantalla (la valoración) y la densidad
+sube sin perder jerarquía. **Sí contradice** "sin biseles, sin degradados" de
+[Anatomía de panel](#anatomía-de-panel) — es el punto de la propuesta, y por eso hay que
+aprobarla o rechazarla en vez de aplicarla de a poco.
+
+Queda **fuera**, aunque el boceto original lo tenía: la paleta oscura. El canvas guarda
+esa versión (`DPizarron`) sólo para mostrar que la paleta es un eje aparte. El papel claro
+está aprobado y no se reabre.
+
+### Estado de implementación de D
+
+**Tanda 1 — la materia: hecha.** Tres tokens nuevos en el `:root` de `src/styles.css`, para
+que ninguna pantalla se invente la suya:
+
+| Token | Qué es |
+| --- | --- |
+| `--grano` | Chapa esmaltada. Va con `background-blend-mode: multiply` sobre el color del panel; la opacidad está elegida para que `--panel` siga leyéndose como `--panel` |
+| `--relieve` | Luz arriba, línea de sombra abajo y sombra proyectada. Una superficie apoyada, no un borde dibujado |
+| `--hundido` | Lo contrario, para pistas y pozos donde va un dato |
+| `--segmentos` | La máscara de cinco bloques que convierte cualquier barra en un medidor de tablero |
+
+Aplicados a `.card` y `.player-card`. Y **las barras pasaron a medidores segmentados**: la
+segmentación se recorta con `mask-image` y no se pinta con un overlay de color, porque la
+barra vive sobre `--panel`, sobre `--panel-2` (la hover-card del partido) y sobre la
+cancha, y con un color fijo los huecos cantaban en dos de los tres. El relleno sigue siendo
+continuo, así que un 82 muestra cuatro bloques y un pedacito del quinto — más honesto que
+redondear al bloque — y no hubo que tocar `Bar.tsx`, que lo usa medio juego.
+
+**Tanda 2 — la planilla: hecha.** `ui/RosterList.tsx`: el plantel es una sola placa con
+renglones, con las cifras en columna (comparables de arriba abajo), el retrato de 52 px, la
+frase del jugador bajo el nombre, **el "por qué" en su propia columna** —la nota humana que
+antes sólo estaba en la card— el rol previsto, y la valoración como único naranja. Los
+cuatro tornillos van en el DOM y no en un gradiente, para no pelearse con el grano.
+
+Entran doce jugadores donde antes entraban cuatro. Por debajo de 1180 px la columna del
+vestuario es la primera que se cae: sin ella la fila sigue contestando "quién es y cómo
+está".
+
+El toggle de la pantalla pasó a **"Plantel"** (esta planilla) y **"Estadísticas"** (la tabla
+densa y ordenable de `RosterSheet`, sin cambios: minutos, faltas, último partido). Son dos
+preguntas distintas y las dos valen.
+
+`ui/PlayerCard.tsx` se borró: era el único lugar que lo usaba, y una card de jugador sin
+pantalla que la muestre es código muerto que el próximo que pase va a tener que leer para
+descubrir que no corre. Sigue en la historia de git si alguna vez hace falta.
+
+## El marco fijo (sep 2026) — implementado
+
+Cinco tandas, una por commit, a pedido de Gabi después de mandar una maqueta de tablero y
+preguntar "cuándo se pasa a eso" y "cómo hacemos para que no scrollee para abajo".
+
+**El hallazgo que ordenó todo: la maqueta no era una dirección nueva.** Este documento ya
+especificaba, desde agosto, la **barra de siete secciones** (ver "Barra superior") y **el
+héroe de la izquierda** (ver "El héroe y los arquetipos"). Lo que había pasado es que el
+código se separó del documento: en agosto se retiró la barra de pestañas y el héroe nunca se
+construyó. O sea que la maqueta pedía volver al sistema, no cambiarlo.
+
+| Tanda | Qué |
+| --- | --- |
+| A | El marco: las dos barras pasan de `sticky`/`fixed` a filas de la grilla. `--u` y `--ancho-app` fluido |
+| B | Vuelve la barra de siete secciones. Tablero en tres columnas con héroe. Semana en dos |
+| C | Quinteto (la pizarra deja de estar abajo del pliegue) y Partido en tres columnas |
+| D | Informe en tres columnas; Plantel en cuatro pestañas (el DT deja de abrir la pantalla) |
+| E | Liga en tres pestañas, pretemporada con cabecera quieta, y la regla final |
+
+**Medido**: 22 pantallas × 3 resoluciones (1920×1080, 1366×768, 1280×720) = 66 chequeos, 0
+fallos. Antes: 8 de 13 pantallas scrolleaban a 1080p y 11 de 13 a 1366×768.
+
+### Lo que se sacó, y por qué
+
+- **La tira de 5 cartas del quinteto** (`QuintetoStrip`): mostraba puesto, cara, nombre,
+  altura, barra de físico y media de **los mismos cinco que la pizarra muestra justo
+  abajo**. 180 de los 530 px que hay a 720p, y con ella la pizarra no entraba. La altura, su
+  único dato propio, se mudó a la línea de cada puesto en la cancha.
+- **El bloque CSS `.tabs`**: era el de las pestañas retiradas en agosto y hacía un mes que
+  no lo renderizaba nadie. Su lugar lo ocupa `.secciones`.
+
+### Lo que NO se hizo
+
+La **ilustración de cuerpo entero** del héroe (la de la maqueta, y la que describe "El héroe
+y los arquetipos") **no se generó**: se propuso y Gabi lo rechazó. La columna usa mientras
+tanto el retrato de arquetipo ya aprobado, mostrando al **referente del vestuario** — el más
+querido, con la antigüedad y la edad como desempate—, así que cambia con el plantel. Cuando
+la ilustración exista entra en el mismo hueco: cambia el contenido de `.hub-heroe-foto`, no
+la grilla.
 
 ## Cómo volver atrás
 
-Cada paso queda en un commit propio en `claude/basket-manager-mockup-vm5xak`. El arte
+Cada paso queda en un commit propio. El arte
 anterior no se borra:
 
 - La dirección cálida sigue viva en su artifact y en la maqueta HTML de las 24 pantallas.

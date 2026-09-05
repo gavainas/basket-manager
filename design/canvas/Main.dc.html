@@ -1,0 +1,351 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+      background: #d8d4cc;
+      color: #241f1a;
+    }
+    a { color: #e07a2a; } a:hover { color: #b45309; }
+
+    /* La materia de C, en la paleta aprobada: chapa esmaltada color hueso.
+       Bisel arriba, línea de sombra abajo y una sombra proyectada de verdad —
+       una placa apoyada sobre la cancha, no un rectángulo dibujado. El grano
+       viene de A. */
+    .placa {
+      position: relative;
+      background-color: #f2ece0;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+      background-blend-mode: multiply;
+      border-radius: 3px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 0 rgba(120, 100, 70, 0.28),
+        0 14px 30px rgba(20, 14, 8, 0.42);
+    }
+    /* Los tornillos: lo que hace que la placa pese. Cuatro detalles hechos a
+       mano valen más que cualquier sombra genérica. */
+    .tornillo {
+      position: absolute;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      /* Tono medio a propósito: los dos de arriba caen sobre la banda ámbar y
+         los de abajo sobre la chapa hueso — tienen que leerse en las dos. */
+      background: radial-gradient(circle at 34% 30%, #c3b69c, #6b5f4b 72%);
+      box-shadow: 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 0 0 1px rgba(60, 50, 34, 0.45);
+    }
+    .tornillo::after {
+      content: '';
+      position: absolute;
+      left: 1.5px; right: 1.5px; top: 4px;
+      height: 1px;
+      background: rgba(80, 68, 48, 0.75);
+      transform: rotate(28deg);
+    }
+
+    /* La banda de sección del juego (--sec-plantel), tal cual está aprobada. */
+    .banda {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      background: #b07f27;
+      color: #f6f4f1;
+      padding: 11px 22px 10px;
+      border-radius: 3px 3px 0 0;
+    }
+    .banda h2 {
+      margin: 0;
+      font-family: 'Oswald', 'Arial Narrow', sans-serif;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 1.5rem;
+    }
+    .banda .sub {
+      font-family: 'Oswald', 'Arial Narrow', sans-serif;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-size: 0.62rem;
+      color: rgba(246, 244, 241, 0.82);
+    }
+
+    /* La estructura de A: una sola planilla con renglones, no ocho cajitas. */
+    .fila {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr) 74px 74px 74px 74px 280px 152px 64px;
+      gap: 15px;
+      align-items: center;
+      padding: 9px 22px;
+    }
+    .fila + .fila { border-top: 1px solid #e3dac8; }
+    .fila.alerta { background: rgba(184, 68, 58, 0.07); }
+
+    .foto {
+      width: 52px; height: 52px;
+      border-radius: 2px;
+      overflow: hidden;
+      background: #e6ddcb;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 6px rgba(60, 48, 32, 0.3), inset 0 0 0 1px rgba(120, 100, 70, 0.2);
+    }
+    .foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .etiqueta {
+      font-family: 'Oswald', 'Arial Narrow', sans-serif;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-size: 0.62rem;
+      color: #9b8f7c;
+    }
+    .nombre {
+      font-family: 'Oswald', 'Arial Narrow', sans-serif;
+      font-weight: 500;
+      font-size: 1.12rem;
+      line-height: 1.15;
+      color: #241f1a;
+    }
+    .dicho { font-style: italic; font-size: 0.8rem; color: #7d7264; line-height: 1.3; margin-top: 2px; }
+
+    /* Los medidores de C: cinco segmentos, no diez —en ocho filas, cuarenta
+       bloquecitos por columna serían ruido. La pista va hundida: el relieve se
+       lee igual en claro que en oscuro. */
+    .cifra {
+      display: block;
+      font-family: 'Oswald', 'Arial Narrow', sans-serif;
+      font-weight: 600;
+      font-size: 1.05rem;
+      line-height: 1;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: #241f1a;
+    }
+    .segs { display: flex; gap: 3px; margin-top: 6px; }
+    .segs i {
+      flex: 1;
+      height: 5px;
+      border-radius: 1px;
+      background: #ddd4c2;
+      box-shadow: inset 0 1px 1px rgba(120, 100, 70, 0.3);
+    }
+    .segs i.on { background: #4a9160; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+    .segs i.on.tibio { background: #c69320; }
+    .segs i.on.frio { background: #b8443a; }
+
+    .nota { font-size: 0.8rem; line-height: 1.35; color: #6b6153; }
+    .nota.mal { color: #a8402f; }
+    .nota.bien { color: #3f7a4e; }
+    .rol { font-family: 'Oswald', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.07em; font-size: 0.72rem; color: #6b6153; }
+    .rol.mal { color: #a8402f; }
+    /* El único naranja de la pantalla, y es el dato que se mira primero. */
+    .rating { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 1.7rem; text-align: right; line-height: 1; color: #c2621d; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1000px; overflow: hidden; position: relative; background: #4a3a2c;">
+  <!-- El lienzo del juego, sin tocar: la cancha con su velo. -->
+  <div style="position: absolute; inset: 0; background: linear-gradient(114deg, #6b5238 0%, #503c28 38%, #6f5539 62%, #46341f 100%);"></div>
+  <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(32, 28, 24, 0.42), rgba(24, 21, 19, 0.62));"></div>
+
+  <div style="position: relative;">
+    <!-- La barra superior del juego, sin tocar. -->
+    <div style="background: #32353a; border-bottom: 1px solid #4a4e55;">
+      <div style="max-width: 1360px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: stretch;">
+        <div style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 1.1rem 0.5rem 0; border-right: 1px solid #4a4e55; margin-right: 0.4rem;">
+          <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
+            <path d="M4 4 H34 V22 Q34 32 19 36 Q4 32 4 22 Z" fill="#2d5c8a" stroke="#f6f4f1" stroke-width="2"></path>
+            <path d="M4 15 H34" stroke="#f6f4f1" stroke-width="1.5"></path>
+            <text x="19" y="13" font-family="Oswald, sans-serif" font-size="9" fill="#f6f4f1" text-anchor="middle">EP</text>
+          </svg>
+          <div>
+            <div style="font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; font-size: 1.15rem; line-height: 1.05; color: #f6f4f1;">Atlético El Parque</div>
+            <div style="font-family: 'Oswald', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.62rem; color: #9a9fa6; margin-top: 0.2rem;">Temporada 1 · fundado en 2025</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.45rem; margin-left: 1rem; padding-left: 0.7rem; border-left: 3px solid #b07f27; color: #f6f4f1; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; font-size: 1.15rem; letter-spacing: 0.07em; text-transform: uppercase;">Plantilla</div>
+        <div style="flex: 1;"></div>
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="border: 1px solid #4a4e55; border-radius: 4px; color: #9a9fa6; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.82rem; padding: 0.4rem 0.9rem;">Inicio</span>
+          <span style="border: 1px solid #4a4e55; border-radius: 4px; color: #9a9fa6; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.82rem; padding: 0.4rem 0.9rem;">Salir</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width: 1360px; margin: 0 auto; padding: 24px 1rem 0;">
+      <div class="placa">
+        <span class="tornillo" style="top: 9px; left: 9px;"></span>
+        <span class="tornillo" style="top: 9px; right: 9px;"></span>
+        <span class="tornillo" style="bottom: 9px; left: 9px;"></span>
+        <span class="tornillo" style="bottom: 9px; right: 9px;"></span>
+
+        <div class="banda">
+          <h2>El plantel</h2>
+          <span class="sub">12 fichas · 11 al día con la cuota</span>
+          <div style="flex: 1;"></div>
+          <span class="sub">La valoración es una estimación: nadie muestra todas sus cartas</span>
+        </div>
+
+        <div class="fila etiqueta" style="padding-top: 11px; padding-bottom: 9px; border-bottom: 1px solid #cdc2ab;">
+          <span></span>
+          <span>Jugador</span>
+          <span style="text-align: right;">Físico</span>
+          <span style="text-align: right;">Motiv.</span>
+          <span style="text-align: right;">Compr.</span>
+          <span style="text-align: right;">Social</span>
+          <span>En el vestuario</span>
+          <span>Rol previsto</span>
+          <span style="text-align: right;">Valor.</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-protagonista.webp" alt=""></span>
+          <span>
+            <span class="nombre">Facundo Silva</span>
+            <span class="etiqueta" style="margin-left: 8px;">Base · 22</span>
+            <div class="dicho">Rápido y encarador. Quiere la pelota en las manos y se nota cuando no la tiene.</div>
+          </span>
+          <span><span class="cifra">82</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">70</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">70</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">55</span><span class="segs"><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i></i><i></i></span></span>
+          <span class="nota mal">No se banca a Agustín Lemos: mejor no dejarlos marcándose en la práctica.</span>
+          <span class="rol">Titular · ~30 min</span>
+          <span class="rating">66</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-veterano.webp" alt=""></span>
+          <span>
+            <span class="nombre">"Chino" Rodríguez</span>
+            <span class="etiqueta" style="margin-left: 8px;">Base · 34</span>
+            <div class="dicho">Fundador del equipo. Ya no corre como antes, pero ordena al grupo adentro y afuera de la cancha.</div>
+          </span>
+          <span><span class="cifra" style="color: #a07216;">55</span><span class="segs"><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i></i><i></i></span></span>
+          <span><span class="cifra">75</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">90</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+          <span><span class="cifra">85</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+          <span class="nota bien">Íntimo de Rodri Batista: donde va uno, va el otro.</span>
+          <span class="rol">Titular · ~30 min</span>
+          <span class="rating">63</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-competitivo.webp" alt=""></span>
+          <span>
+            <span class="nombre">Martín Techera</span>
+            <span class="etiqueta" style="margin-left: 8px;">Escolta · 27</span>
+            <div class="dicho">Vino a ganar. Entrena aparte, mira los rivales y sufre cada derrota más que nadie.</div>
+          </span>
+          <span><span class="cifra">78</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">80</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">80</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">60</span><span class="segs"><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i></i><i></i></span></span>
+          <span class="nota mal">No se banca a Agustín Lemos: mejor no dejarlos marcándose en la práctica.</span>
+          <span class="rol">Titular · ~30 min</span>
+          <span class="rating">75</span>
+        </div>
+
+        <div class="fila alerta">
+          <span class="foto"><img src="p-talentoso.webp" alt=""></span>
+          <span>
+            <span class="nombre">"Tato" Fernández</span>
+            <span class="etiqueta" style="margin-left: 8px;">Alero · 24</span>
+            <div class="dicho">El más talentoso del plantel, cuando aparece. Debe cuotas y a veces avisa una hora antes.</div>
+          </span>
+          <span><span class="cifra">75</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">65</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></span>
+          <span><span class="cifra" style="color: #a8402f;">40</span><span class="segs"><i class="on frio"></i><i class="on frio"></i><i></i><i></i><i></i></span></span>
+          <span><span class="cifra">70</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span class="nota mal">Cuota atrasada: dice que la semana que viene se pone al día.</span>
+          <span class="rol mal">Titular · debe 1 sem.</span>
+          <span class="rating">74</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-social.webp" alt=""></span>
+          <span>
+            <span class="nombre">Diego Núñez</span>
+            <span class="etiqueta" style="margin-left: 8px;">Escolta · 25</span>
+            <div class="dicho">El que organiza los asados y arma el grupo de WhatsApp. Juega porque están sus amigos.</div>
+          </span>
+          <span><span class="cifra">65</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></span>
+          <span><span class="cifra">78</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">75</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">92</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+          <span class="nota bien">Íntimo de "Flaco" Morales: donde va uno, va el otro.</span>
+          <span class="rol">Rotación · ~18 min</span>
+          <span class="rating">50</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-cumplidor.webp" alt=""></span>
+          <span>
+            <span class="nombre">Nacho Pereyra</span>
+            <span class="etiqueta" style="margin-left: 8px;">Alero · 29</span>
+            <div class="dicho">Paga el primero, llega temprano y avisa si falta. Le molesta el desorden más que perder.</div>
+          </span>
+          <span><span class="cifra">72</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">72</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">88</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+          <span><span class="cifra">65</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></span>
+          <span class="nota bien">Íntimo de "Chino" Rodríguez: donde va uno, va el otro.</span>
+          <span class="rol">Titular · ~30 min</span>
+          <span class="rating">68</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-mercenario.webp" alt=""></span>
+          <span>
+            <span class="nombre">Seba Cardozo</span>
+            <span class="etiqueta" style="margin-left: 8px;">Ala-Pívot · 31</span>
+            <div class="dicho">Jugó federado. Rinde mucho, pero deja claro que en otros clubes no le cobraban la cuota.</div>
+          </span>
+          <span><span class="cifra">76</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">62</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></span>
+          <span><span class="cifra" style="color: #a07216;">55</span><span class="segs"><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i></i><i></i></span></span>
+          <span><span class="cifra" style="color: #a8402f;">45</span><span class="segs"><i class="on frio"></i><i class="on frio"></i><i></i><i></i><i></i></span></span>
+          <span class="nota">Juega con beca: el club lo banca para que esté.</span>
+          <span class="rol">Titular · media beca</span>
+          <span class="rating">72</span>
+        </div>
+
+        <div class="fila">
+          <span class="foto"><img src="p-competitivo.webp" alt=""></span>
+          <span>
+            <span class="nombre">Gonzalo Viera</span>
+            <span class="etiqueta" style="margin-left: 8px;">Pívot · 28</span>
+            <div class="dicho">Pelea cada rebote como una final. Se calienta cuando el equipo no toma en serio los partidos.</div>
+          </span>
+          <span><span class="cifra">80</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">76</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">78</span><span class="segs"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+          <span><span class="cifra">58</span><span class="segs"><i class="on tibio"></i><i class="on tibio"></i><i class="on tibio"></i><i></i><i></i></span></span>
+          <span class="nota mal">No se banca a "Tato" Fernández: mejor no dejarlos marcándose en la práctica.</span>
+          <span class="rol">Titular · ~30 min</span>
+          <span class="rating">67</span>
+        </div>
+
+        <div style="height: 14px;"></div>
+      </div>
+
+      <p style="margin: 18px 2px 0; font-size: 0.82rem; color: #e8e2d8; text-shadow: 0 1px 3px rgba(20, 18, 16, 0.6);">
+        <strong style="font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.72rem;">D · La planilla del club (A + C)</strong>
+        &nbsp;— la estructura de A (una sola hoja con renglones, cifras en columna comparables de arriba abajo, el "por qué" en su propia columna) con el relieve de C (chapa esmaltada con bisel y tornillos, medidores segmentados, un solo naranja: la valoración). Paleta de papel claro, la que ya está aprobada. Ocho jugadores en la misma altura donde hoy entran cuatro.
+      </p>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

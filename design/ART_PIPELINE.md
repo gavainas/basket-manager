@@ -18,6 +18,19 @@ Las puertas 3 a 6 (hoja maestra de personajes, vertical slice, prueba en juego y
 art bible) siguen **abiertas**: gobiernan la expansión que viene (set ilustrado de
 retratos, eventos ilustrados, más cabeceras).
 
+**Sep 2026 — el marco fijo no reabrió ninguna puerta.** Cinco tandas de layout
+(ver [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md)) sin generar un solo asset nuevo:
+la única generación que se propuso —la ilustración del héroe— fue rechazada por
+Gabi y la columna se armó con arte ya aprobado. Registro del 2026-09-04 al final.
+
+**Sep 2026 — la materia y la estructura quedaron aprobadas.** Dentro de la dirección ya
+aprobada (no la reabre), y por una queja concreta de Gabi sobre lo plano de los paneles, se
+exploraron tres tratamientos sobre la pantalla de Plantel. Gabi eligió dos y de ahí salió
+**D · La planilla del club**, **aprobada el 2026-09-01**: superficie con relieve en vez de
+rectángulo plano, y la lista como una sola planilla con renglones en vez de una card por
+jugador. Ver el registro al final de este documento y la
+[anatomía de panel](SISTEMA_VISUAL.md#anatomía-de-panel) en el sistema visual.
+
 La estructura técnica existente puede conservarse y evolucionar, pero no se debe interpretar
 que un sistema está artísticamente aprobado solo porque ya funciona, está documentado o fue
 integrado en varias pantallas.
@@ -375,13 +388,79 @@ Formato sugerido:
 - Próximo paso autorizado: solo revisión del kit. **No** tocar `src/styles.css`, **no**
   pedir assets a Higgsfield, **no** propagar a pantallas.
 
+### 2026-09-01 — Exploración de materia y estructura (dentro de la dirección aprobada)
+
+- Alcance: la pantalla de **Plantel**, en cuatro tratamientos comparables sobre los mismos
+  ocho jugadores. **No reabre la Puerta 1**: la dirección "club de barrio" y la paleta de
+  papel claro siguen aprobadas y no se discutieron. Lo que se exploró es de qué está hecha
+  la interfaz — con el método de la Puerta 1 (tres direcciones sobre una pantalla completa
+  comparable) porque la queja de Gabi era exactamente de ese nivel: "todos los paneles
+  lisos parece un juego hecho con Claude e IA".
+- Diagnóstico que la motivó, medido y no opinado: en las 3304 líneas de `src/styles.css`
+  hay **6 transiciones, 2 animaciones y cero texturas o gradientes en los paneles**. No
+  falta arte — el lote de `public/arte/` tiene carácter de sobra. Falta **materia**: el
+  95% de los píxeles son rectángulos crema con borde de 1px y radio de 4.
+- Canvas: <https://claude.ai/code/artifact/8f61cad0-5265-4bfc-a5a3-0bed93a14876>. Fuentes
+  versionadas en [`canvas/`](canvas/) — ver su [LEEME](canvas/LEEME.md).
+- Presentado: **A · Planilla del club** (estructura: una sola hoja con renglones y cifras
+  en columna, en vez de doce cajitas), **B · Carpeta de cartulina** (cada jugador es un
+  objeto físico) y **C · Pizarra del vestuario** (relieve: superficie con bisel y sombra
+  real, medidores segmentados, un solo acento).
+- Elegido por Gabi: **A y C**. No competían — A es estructura y C es relieve, así que se
+  componen. De ahí salió **D · La planilla del club**, que es la propuesta.
+- Corrección de Gabi, registrada porque el error fue mío: el primer D salió en paleta
+  oscura. Que el boceto C fuera oscuro era un detalle del boceto, no lo que lo hacía
+  bueno, y **la paleta ya está aprobada** (Puerta 2). D se rehízo en papel claro. La
+  versión oscura queda en el canvas como `DPizarron`, sólo para mostrar que la paleta es
+  un eje aparte; no es una propuesta.
+- **Aprobado por Gabi el 2026-09-01: D · La planilla del club.** Palabra textual:
+  "aprobado". Pasa a ser la anatomía oficial de panel y de lista del juego.
+- No aprobado: **B** (archivada) y **la paleta oscura** (`DPizarron`), que no estaba en
+  discusión y sigue sin estarlo.
+- Próximo paso autorizado: implementar en `src/styles.css`, **de a tandas**, empezando por
+  los tokens de relieve y siguiendo pantalla por pantalla. Cada tanda commiteada por
+  separado para poder pedir volver a cualquier punto.
+
+### 2026-09-04 — La maqueta de tablero y el marco fijo
+
+- Alcance: **layout y navegación**, no arte. No reabre ninguna puerta: la dirección de
+  papel claro y el retrato ilustrado siguen como estaban.
+- Origen: Gabi mandó una maqueta de tablero ("esta foto se siente más juego") y preguntó
+  cuándo se pasa a eso y cómo hacer que no scrollee para abajo. Al desarmarla contra el
+  repo apareció el dato que ordenó todo: **la maqueta no era una dirección nueva**.
+  `SISTEMA_VISUAL.md` ya especificaba la barra de siete secciones y el héroe de la
+  izquierda desde agosto; el código se había separado del documento.
+- Autorizado por Gabi: "avanza con todas las tandas" sobre el plan de cinco tandas de
+  [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md), donde la tanda B es explícitamente el
+  Tablero de la maqueta.
+- **Rechazado por Gabi: generar la ilustración de cuerpo entero del héroe.** Se propuso
+  (nano_banana_pro con `portada.webp` de referencia, la receta de `public/arte/LEEME.md`,
+  2 créditos) y se denegó. **No se generó ningún asset nuevo en estas cinco tandas.** La
+  columna del héroe se armó con el retrato de arquetipo ya aprobado.
+- Pendiente: la ilustración de cuerpo entero sigue sin pedirse. El hueco está listo
+  (`.hub-heroe-foto`) y las reglas de estilo para pedirla ya están escritas en
+  "El héroe y los arquetipos" de `SISTEMA_VISUAL.md`.
+- Próximo paso autorizado: nada de arte. Las Puertas 3 a 6 siguen abiertas y sin tocar.
+
 ## Estado de aprobación actual
 
-- La lógica y estructura técnica del sistema de retratos puede conservarse.
-- El estilo visual actual de las caras **no está aprobado como arte final**.
-- El estilo general actual de la interfaz **no está aprobado como dirección final**.
-- No está autorizado escalar el arte actual únicamente por estar ya implementado.
-- Existe una **dirección candidata documentada** (ver el registro del 2026-08-16), pendiente
-  de aprobación. Hasta que se apruebe, el juego publicado sigue con el tema oscuro azul.
-- El generador de escudos de club no existe y es la pieza procedural que falta: ninguna
-  IA da diez escudos consistentes entre sí.
+> **Corregido en sep 2026.** Este bloque contradecía al resto del documento y a lo que hay
+> en el repo: decía que la interfaz no estaba aprobada cuando arriba las Puertas 1 y 2
+> figuran cerradas, afirmaba que "el juego publicado sigue con el tema oscuro azul" (es
+> papel claro desde agosto) y que "el generador de escudos no existe" (existe:
+> `src/game/crest.ts`, 136 líneas, y `src/ui/Crest.tsx`, 240, con detalle por umbral de
+> tamaño). Un documento que gobierna el arte no puede tener dos verdades: era la causa
+> concreta de que el proceso se sintiera desordenado.
+
+- **UI: aprobada** (Puerta 2, ago 2026). Papel claro, Oswald, bandas de sección, iconos de
+  línea, naranja reservado a la acción. El **marco fijo** de sep 2026 no la reabre: es
+  layout dentro de esa dirección (ver [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md)).
+- **Personajes: el retrato ilustrado por arquetipo es la foto oficial** del jugador (Puerta
+  2). Ocho caras para planteles enteros es una limitación **conocida y aceptada**; su
+  solución es la Puerta 3, que sigue abierta.
+- El **set grande de retratos** no está aprobado y no se genera en masa hasta que la Puerta
+  3 cierre.
+- La **ilustración de cuerpo entero del héroe** no está generada ni aprobada (ver el
+  registro del 2026-09-04).
+- Procedural que **ya existe** y no hay que volver a pedir: retratos SVG por seed
+  (`AVATAR_SYSTEM.md`) y **escudos de club** (`game/crest.ts`).

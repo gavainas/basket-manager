@@ -37,6 +37,30 @@ interface Props {
   dispatch: (action: GameAction) => void;
 }
 
+/**
+ * Ícono de cada acción del club. Vive acá y no en `game/actions.ts` porque cómo
+ * se dibuja una acción es presentación, y la lógica del juego no depende de
+ * React (ver CLAUDE.md). Antes eran emoji hardcodeados en el archivo de lógica,
+ * que además es justo lo que `Icon.tsx` pide no hacer.
+ */
+const ACTION_ICON: Record<string, IconName> = {
+  training: 'gimnasio',
+  asado: 'asado',
+  raffle: 'rifa',
+  sponsor: 'comercio',
+  talk: 'chat',
+  collect: 'plata',
+  scholarship: 'beca',
+  jerseys: 'camiseta',
+  rest: 'descanso',
+  recruit: 'lupa',
+};
+
+/** Si aparece una acción nueva sin ícono, cae en uno neutro en vez de romper. */
+function actionIcon(id: string): IconName {
+  return ACTION_ICON[id] ?? 'inscripcion';
+}
+
 function shortName(name: string): string {
   const parts = name.replace(/"[^"]*"\s*/g, '').trim().split(/\s+/);
   return parts[parts.length - 1];
@@ -273,14 +297,22 @@ function AsadoRsvpPanel({ state }: { state: GameState }) {
  */
 function PlanningPanel({ state, dispatch }: Props) {
   const max = BALANCE.actions.maxPerWeek;
-  const [showActions, setShowActions] = useState(state.actionsChosen.length > 0);
+  // Abiertas de entrada. Colapsadas eran invisibles: buscar un sponsor, becar a
+  // la figura o cobrar las cuotas atrasadas vivían detrás de un botón gris al
+  // lado de "Pasarla sobre la hora", y quien no lo tocaba nunca jugaba con la
+  // mitad del juego. El botón sigue estando para plegarlas.
+  const [showActions, setShowActions] = useState(true);
   const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1]);
   const chosen = state.actionsChosen
     .map((id) => ACTIONS.find((a) => a.id === id))
     .filter((a): a is (typeof ACTIONS)[number] => !!a);
 
   return (
-    <div>
+    /* Dos columnas (tanda B del marco fijo): a la izquierda la decisión de la
+       semana —rival, calendario, previa— y a la derecha las acciones del club,
+       que son diez cards y antes empujaban la pantalla 279px abajo del pliegue. */
+    <div className="semana-planning">
+      <div className="semana-izq">
       <div className="card" style={{ marginBottom: '1rem' }}>
         <h3>
           {weekLabel(state.week, state.seasonLength)}
@@ -321,7 +353,7 @@ function PlanningPanel({ state, dispatch }: Props) {
             Esta semana además:{' '}
             {chosen.map((a) => (
               <span key={a.id} className="chip accent" style={{ marginRight: '0.3rem' }}>
-                {a.icon} {a.name}
+                <Icon name={actionIcon(a.id)} size={12} /> {a.name}
               </span>
             ))}
           </p>
@@ -340,9 +372,6 @@ function PlanningPanel({ state, dispatch }: Props) {
           >
             Pasarla sobre la hora
           </button>
-          <button className="small" onClick={() => setShowActions((v) => !v)}>
-            {showActions ? 'Ocultar acciones' : `Acciones del club${chosen.length > 0 ? ` (${chosen.length}/${max})` : ''}`}
-          </button>
           <span className="hint">
             {chosen.length > 0
               ? 'Las acciones elegidas se aplican al pasar lista.'
@@ -354,42 +383,58 @@ function PlanningPanel({ state, dispatch }: Props) {
       <PreviaFeed state={state} dispatch={dispatch} />
 
       {state.actionsChosen.includes('asado') && <AsadoRsvpPanel state={state} />}
+      </div>
 
-      {showActions && (
-        <>
-          <p className="muted" style={{ marginTop: 0 }}>
-            Hasta {max} acciones por semana. Cada una tiene costos, beneficios y algún riesgo. Ninguna es obligatoria.
-          </p>
-          <div className="action-grid">
-            {ACTIONS.map((a) => {
-              const check = a.available(state);
-              const selected = state.actionsChosen.includes(a.id);
-              const blocked = !check.ok && !selected;
-              const full = !selected && state.actionsChosen.length >= max;
-              return (
-                <div
-                  key={a.id}
-                  className={`action-card${selected ? ' selected' : ''}${blocked || full ? ' disabled' : ''}`}
-                  onClick={() => {
-                    if (!blocked && !full) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
-                    else if (selected) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
-                  }}
-                >
-                  <div className="action-title">
-                    {a.icon} {a.name}
+      {/* Las acciones son una sección de la pantalla, no un cajón escondido:
+          card con su cabezal, como todo lo demás del juego. Desde la tanda B es
+          un panel con el cabezal quieto y las diez cards scrolleando adentro. */}
+      <div className={`card semana-acciones${showActions ? ' pane' : ''}`}>
+        <h3 className="card-band">
+          <Icon name="tablero" size={17} /> Acciones del club
+          <span className="chip band-right">
+            {chosen.length}/{max} esta semana
+          </span>
+          <button className="small band-btn" onClick={() => setShowActions((v) => !v)}>
+            {showActions ? 'Ocultar' : 'Ver'}
+          </button>
+        </h3>
+        {showActions && (
+          <div className="pane-body">
+            <p className="hint" style={{ marginTop: 0 }}>
+              Hasta {max} acciones por semana. Cada una tiene costos, beneficios y algún riesgo. Ninguna es obligatoria:
+              se aplican al pasar lista.
+            </p>
+            <div className="action-grid">
+              {ACTIONS.map((a) => {
+                const check = a.available(state);
+                const selected = state.actionsChosen.includes(a.id);
+                const blocked = !check.ok && !selected;
+                const full = !selected && state.actionsChosen.length >= max;
+                return (
+                  <div
+                    key={a.id}
+                    className={`action-card${selected ? ' selected' : ''}${blocked || full ? ' disabled' : ''}`}
+                    onClick={() => {
+                      if (!blocked && !full) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
+                      else if (selected) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
+                    }}
+                  >
+                    <div className="action-title">
+                      <Icon name={actionIcon(a.id)} size={17} /> {a.name}
+                    </div>
+                    <div className="action-desc">{a.description}</div>
+                    {blocked ? (
+                      <div className="action-blocked">✕ {check.reason}</div>
+                    ) : (
+                      <div className="action-cost">{a.costLabel}</div>
+                    )}
                   </div>
-                  <div className="action-desc">{a.description}</div>
-                  {blocked ? (
-                    <div className="action-blocked">✕ {check.reason}</div>
-                  ) : (
-                    <div className="action-cost">{a.costLabel}</div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -465,7 +510,9 @@ function CallUpPanel({ state, dispatch }: Props) {
   const availableCount = entries.filter((e) => e.status === 'confirmado').length;
 
   return (
-    <div>
+    /* Ya entraba en la ventana; con el marco fijo scrollea adentro de sí misma
+       si una semana brava trae seis ausencias con sus gestiones. */
+    <div className="semana-scroll">
       {state.actionsLog.length > 0 && (
         <div className="card" style={{ marginBottom: '1rem' }}>
           <h3>Resultado de tus decisiones</h3>
@@ -727,56 +774,12 @@ function CourtLines() {
   );
 }
 
-/** Tira de 5 cartas estilo manager: encabezado visual del quinteto elegido. */
-function QuintetoStrip({ slots }: { slots: (Player | null)[] }) {
-  return (
-    <div className="quinteto-strip">
-      {POSITION_ORDER.map((pos, i) => {
-        const p = slots[i];
-        const oop = p ? p.position !== pos : false;
-        return (
-          <div key={pos} className={`qs-card${p ? '' : ' empty'}`}>
-            <span className="qs-pos">{pos}</span>
-            {p ? (
-              <>
-                <div className={`qs-avatar${oop ? ' oop' : ''}`}>
-                  <Avatar
-                    seed={p.id}
-                    age={p.age}
-                    appearance={p.appearance}
-                    expressionOverride={p.status === 'molesto' || p.status === 'al_borde' ? 2 : undefined}
-                    title={p.name}
-                    personality={p.personality}
-                  />
-                </div>
-                <div className="qs-name">
-                  <PlayerLink id={p.id}>{shortName(p.name)}</PlayerLink>
-                </div>
-                <div className="qs-ht">
-                  {(p.height / 100).toFixed(2)} m
-                  {oop && <span className="oop-tag"> · es {p.position}</span>}
-                </div>
-                <div className="qs-bar">
-                  <i style={{ width: `${Math.round(p.physical)}%` }} />
-                </div>
-                <div className="qs-media">
-                  ≈{p.visibleRating}
-                  <small>media</small>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="qs-avatar empty">+</div>
-                <div className="qs-name dim">Libre</div>
-                <div className="qs-ht">—</div>
-              </>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+/* La tira de 5 cartas del quinteto se eliminó en la tanda C del marco fijo.
+   Mostraba puesto, cara, nombre, altura, una barra de físico y la media de los
+   mismos cinco que ya muestra la pizarra justo abajo: era la duplicación más
+   cara de la pantalla (unos 180px de los 530 que hay a 720p, y con ella la
+   pizarra no entraba). Lo único que aportaba y la pizarra no decía —la altura—
+   se mudó a la línea de cada puesto en la cancha. */
 
 function LineupPanel({ state, dispatch }: Props) {
   const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1])!;
@@ -860,8 +863,13 @@ function LineupPanel({ state, dispatch }: Props) {
   const style = rivalStyleInfo(rival.style);
 
   return (
-    <div>
-      <div className="card" style={{ marginBottom: '1rem' }}>
+    /* Tres franjas de alto fijo (tanda C): arriba cómo llega el partido y el
+       quinteto de un vistazo, en el medio la pizarra —que es LA acción de esta
+       pantalla y antes quedaba medio escondida abajo del pliegue—, abajo la
+       confirmación siempre en el mismo lugar. */
+    <div className="quinteto-pantalla">
+      <div className="quinteto-cabecera">
+      <div className="card">
         <h3>
           {weekLabel(state.week, state.seasonLength)} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
         </h3>
@@ -915,7 +923,6 @@ function LineupPanel({ state, dispatch }: Props) {
         </div>
       )}
 
-      <QuintetoStrip slots={slots} />
 
       {forfeitRisk && (
         <div className="card" style={{ borderColor: 'var(--bad)', marginBottom: '1rem' }}>
@@ -937,10 +944,10 @@ function LineupPanel({ state, dispatch }: Props) {
           </strong>
         </div>
       )}
-
-      <ScoutingCard state={state} />
+      </div>
 
       <div className="lineup-layout">
+        <div className="lineup-izq">
         <div className="lineup-list card" onDragOver={allowDrop} onDrop={dropOnList}>
           <div className="lineup-toolbar">
             <h3 style={{ margin: 0 }}>Plantel</h3>
@@ -1032,6 +1039,10 @@ function LineupPanel({ state, dispatch }: Props) {
             );
           })}
         </div>
+        {/* El scouting del rival, debajo de la lista: primero armás el quinteto,
+            después leés al rival. Scrollea junto con el plantel. */}
+        <ScoutingCard state={state} />
+        </div>
 
         <div className="lineup-court card">
           <h3>La pizarra</h3>
@@ -1063,7 +1074,7 @@ function LineupPanel({ state, dispatch }: Props) {
                   <div className={`slot-name${pl ? '' : ' dim'}`}>{pl ? shortName(pl.name) : 'Libre'}</div>
                   {pl && (
                     <div className={`slot-sub${oop ? ' oop-text' : ''}`}>
-                      ≈{pl.visibleRating}
+                      ≈{pl.visibleRating} · {(pl.height / 100).toFixed(2)} m
                       {oop ? ` · es ${pl.position}` : ''}
                     </div>
                   )}
@@ -1098,8 +1109,9 @@ function LineupPanel({ state, dispatch }: Props) {
         </div>
       </div>
 
+      <div className="quinteto-pie">
       {lineupPromiseWarnings(state).map((w) => (
-        <p key={w.playerId} style={{ color: w.breaksToday ? 'var(--bad)' : 'var(--warn, #c90)', fontWeight: 600, margin: '0.5rem 0 0' }}>
+        <p key={w.playerId} style={{ color: w.breaksToday ? 'var(--bad)' : 'var(--warn, #c90)', fontWeight: 600, margin: '0 0 0.35rem' }}>
           {w.text}
         </p>
       ))}
@@ -1125,6 +1137,7 @@ function LineupPanel({ state, dispatch }: Props) {
             pizarra para sacar.
           </span>
         )}
+      </div>
       </div>
     </div>
   );
@@ -1252,9 +1265,17 @@ function LiveMatchPanel({ state, dispatch }: Props) {
   };
 
   return (
-    <div>
-      <div className="card" style={{ marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
+    /* Tres franjas de alto fijo (tanda C): el marcador arriba, el juego en el
+       medio en tres columnas que scrollean cada una lo suyo, y el botón del
+       cuarto siempre en el mismo lugar abajo.
+       El cabezal DEJÓ DE SER STICKY: era sticky porque el scroller era la
+       página y al jugar un cuarto terminabas mirando suplentes con 0 pts con el
+       resultado seiscientos píxeles más arriba. Ahora es una fila de la grilla,
+       así que no scrollea, no tapa nada y no corta las filas de "En cancha". */
+    <div className="partido-pantalla">
+      <div className="partido-cabecera">
+      <div className="card partido-cabezal">
+        <div className="partido-cabezal-fila">
           <h3 style={{ margin: 0 }}>
             {weekLabel(state.week, state.seasonLength)} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
           </h3>
@@ -1297,6 +1318,9 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         )}
 
         {injuryNote && <div className="match-alert">{injuryNote}</div>}
+      </div>
+
+      <div className="card" style={{ marginBottom: '1rem' }}>
         {live.rivalSquad && live.rivalSquad.notes.length > 0 && (
           <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.4rem', fontSize: '0.82rem' }}>
             {live.rivalSquad.notes.join(' ')}
@@ -1357,7 +1381,10 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         </div>
       </div>
 
-      <div className="grid cols-2" style={{ marginBottom: '1rem' }}>
+      </div>
+
+      <div className="partido-cuerpo">
+        <div className="partido-col-scroll">
         <div className="card">
           <h3>Pizarra táctica</h3>
           <div className="tactic-block">
@@ -1432,7 +1459,15 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         </div>
 
         <div className="card">
-          <h3>Cambios</h3>
+          <h3>Piernas</h3>
+          <Bar label="En cancha" value={courtFreshness(live)} hint={TIPS.piernas} />
+          <Bar label={rival.name} value={live.rivalFreshness} hint={TIPS.piernas} />
+        </div>
+        </div>
+
+        <div className="card pane partido-cambios">
+          <h3 className="card-band">Cambios</h3>
+          <div className="pane-body">
           <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
             {(['titulares', 'segunda', 'frescos', 'cerradores'] as const).map((preset) => (
               <button
@@ -1511,18 +1546,13 @@ function LiveMatchPanel({ state, dispatch }: Props) {
           ) : (
             <p className="tactic-hint">No citaste suplentes: no hay cambios posibles.</p>
           )}
+          </div>
         </div>
-      </div>
 
-      <div className="card" style={{ marginBottom: '1rem' }}>
-        <h3>Piernas</h3>
-        <Bar label="En cancha" value={courtFreshness(live)} hint={TIPS.piernas} />
-        <Bar label={rival.name} value={live.rivalFreshness} hint={TIPS.piernas} />
-      </div>
-
-      {played.length > 0 && (
-        <div className="card" style={{ marginBottom: '1rem' }}>
-          <h3>El relato</h3>
+        {played.length > 0 ? (
+        <div className="card pane partido-relato">
+          <h3 className="card-band">El relato</h3>
+          <div className="pane-body">
           {played.map((q, i) => (
             <div key={i} className="quarter-log">
               <div className="quarter-head">
@@ -1551,9 +1581,16 @@ function LiveMatchPanel({ state, dispatch }: Props) {
               </ul>
             </div>
           ))}
+          </div>
         </div>
-      )}
+        ) : (
+          <div className="card partido-relato-vacio">
+            <p className="tactic-hint">El relato se escribe cuarto a cuarto: tocá «Jugar el 1er cuarto».</p>
+          </div>
+        )}
+      </div>
 
+      <div className="partido-pie">
       {live.pendingIncident && (
         <div className="card" style={{ marginBottom: '1rem', borderColor: 'var(--warn)' }}>
           <h3>
@@ -1592,6 +1629,7 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         )}
         {live.pendingIncident && <span className="hint">Resolvé la incidencia antes de seguir jugando.</span>}
       </div>
+      </div>
     </div>
   );
 }
@@ -1609,8 +1647,11 @@ function MatchResultPanel({ state, dispatch }: Props) {
           : 'Cerrar la temporada →';
 
   return (
-    <div>
-      <div className="card">
+    /* El Informe era la peor de todas: una tira vertical de seis bloques que
+       medía casi tres pantallas a 720p. El contenido no sobraba —la forma sí—,
+       así que entra completo repartido en tres columnas, sin sacar una línea. */
+    <div className="informe-pantalla">
+      <div className="informe-cabecera card">
         <div style={{ textAlign: 'center' }}>
           <span className={`result-badge ${m.won ? 'win' : 'lose'}`}>
             {m.forfeit ? 'FORFEIT' : m.won ? 'VICTORIA' : 'DERROTA'}
@@ -1680,40 +1721,14 @@ function MatchResultPanel({ state, dispatch }: Props) {
         )}
       </div>
 
-      <BoxScoreSheet state={state} match={m} />
+      <div className="informe-cuerpo">
+        {/* La planilla ocupa el panel que el marco fijo reserva para ella: los
+            dos equipos apilados, con la nota de los nuestros en su columna. */}
+        <BoxScoreSheet state={state} match={m} />
 
-      {(m.box ?? []).length > 0 && (
-        <div className="card" style={{ marginTop: '1rem' }}>
-          <h3>Notas del partido</h3>
-          <div className="table-wrap">
-            <table className="planilla">
-              <thead>
-                <tr>
-                  <th>Jugador</th>
-                  <th className="num">Min</th>
-                  <th className="num">Nota</th>
-                </tr>
-              </thead>
-              <tbody>
-                {m.box.map((line) => (
-                  <tr key={line.playerId}>
-                    <td>
-                      <PlayerLink id={line.playerId}>{line.name}</PlayerLink> {line.mvp ? <Icon name="estrella" size={11} /> : ''}
-                    </td>
-                    <td className="num">{line.minutes}&apos;</td>
-                    <td className="num">
-                      {line.comment ? <Tip text={line.comment}>{line.rating}/10</Tip> : `${line.rating}/10`}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
+      <div className="informe-col">
       {m.highlights.length > 0 && (
-        <div className="card" style={{ marginTop: '1rem' }}>
+        <div className="card">
           <h3>El relato del partido</h3>
           <ul className="reason-list">
             {m.highlights.map((h, i) => (
@@ -1723,7 +1738,6 @@ function MatchResultPanel({ state, dispatch }: Props) {
         </div>
       )}
 
-      <div className="grid cols-2" style={{ marginTop: '1rem' }}>
         <div className="card">
           <h3>Claves del resultado</h3>
           <ul className="reason-list">
@@ -1740,10 +1754,9 @@ function MatchResultPanel({ state, dispatch }: Props) {
             ))}
           </ul>
         </div>
-      </div>
 
       {m.lockerRoom.length > 0 && (
-        <div className="card" style={{ marginTop: '1rem' }}>
+        <div className="card">
           <h3>En el vestuario</h3>
           <ul className="reason-list">
             {m.lockerRoom.map((n, i) => (
@@ -1752,11 +1765,12 @@ function MatchResultPanel({ state, dispatch }: Props) {
           </ul>
         </div>
       )}
+      </div>
 
       {(m.moods ?? []).length > 0 && (
-        <div className="card" style={{ marginTop: '1rem' }}>
-          <h3>Cómo quedó cada uno</h3>
-          <div className="data-grid">
+        <div className="card pane informe-moods">
+          <h3 className="card-band">Cómo quedó cada uno</h3>
+          <div className="data-grid pane-body">
             {m.moods!.map((mood) => {
               const cls =
                 mood.emotion === 'euforico' || mood.emotion === 'orgulloso' || mood.emotion === 'contento'
@@ -1794,6 +1808,7 @@ function MatchResultPanel({ state, dispatch }: Props) {
           </div>
         </div>
       )}
+      </div>
 
       <div className="confirm-bar">
         <button className="primary" onClick={() => dispatch({ type: 'NEXT_WEEK' })}>
@@ -1805,8 +1820,19 @@ function MatchResultPanel({ state, dispatch }: Props) {
 }
 
 export function WeekView({ state, dispatch }: Props) {
+  /* Migración al marco fijo (design/PLAN_MARCO_FIJO.md): las fases ya
+     convertidas ocupan el alto exacto de la ventana y scrollean por panel; las
+     que todavía no, siguen creciendo hacia abajo y las scrollea `.app-shell`.
+     La lista crece tanda a tanda y desaparece en la E, cuando estén todas. */
+  const fija =
+    state.phase === 'planning' ||
+    state.phase === 'callUp' ||
+    state.phase === 'lineup' ||
+    state.phase === 'match' ||
+    state.phase === 'matchResult';
+
   return (
-    <div>
+    <div className={fija ? 'semana-vista pantalla' : undefined}>
       <Steps phase={state.phase} />
       {state.phase === 'planning' && <PlanningPanel state={state} dispatch={dispatch} />}
       {state.phase === 'callUp' && <CallUpPanel state={state} dispatch={dispatch} />}

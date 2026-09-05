@@ -185,11 +185,14 @@ export function RosterSheet({ state }: { state: GameState }) {
         <td className={`num ${lastCls(p.lastRating)}`}>{p.lastRating ?? '—'}</td>
         <td className="num">{seasonMinutes(p)}&apos;</td>
         <td className="num">{seasonAbsences(p) || '—'}</td>
+        {/* En la planilla el estado normal va con guion, como el resto de las
+            columnas: la fila mantiene la grilla y el ojo busca las que tienen
+            algo escrito. */}
         <td>
-          <span className={`sheet-tag ${status.cls}`}>{status.label}</span>
+          {status ? <span className={`sheet-tag ${status.cls}`}>{status.label}</span> : <span className="sheet-nada">—</span>}
         </td>
         <td>
-          <span className={`sheet-tag ${fee.cls}`}>{fee.label}</span>
+          {fee ? <span className={`sheet-tag ${fee.cls}`}>{fee.label}</span> : <span className="sheet-nada">—</span>}
         </td>
       </tr>
     );

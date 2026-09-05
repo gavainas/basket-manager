@@ -12,7 +12,7 @@ import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
 import { Timeline } from './Timeline';
 import { TIPS } from './Tip';
-import { feeChip, roleLabel, statusChip } from './helpers';
+import { feeChipAlways, roleLabel, statusChipAlways } from './helpers';
 import { Icon } from './Icon';
 
 type ProfileTab = 'general' | 'deportiva' | 'relaciones' | 'historia' | 'social';
@@ -46,8 +46,8 @@ function seasonsAtClub(p: Player, currentSeason: number): string {
 }
 
 function GeneralTab({ state, p }: { state: GameState; p: Player }) {
-  const status = statusChip(p);
-  const fee = feeChip(p);
+  const status = statusChipAlways(p);
+  const fee = feeChipAlways(p);
   const absentThisWeek = state.callUp.some((c) => c.playerId === p.id && c.status === 'ausente');
   const promises = state.promises.filter((pr) => pr.playerId === p.id && pr.season === state.seasonNumber);
   const notes = playerNotes(state, p);
@@ -319,7 +319,7 @@ export function PlayerProfile({ state, playerId, onClose }: Props) {
   const [tab, setTab] = useState<ProfileTab>('general');
   const p = state.players.find((x) => x.id === playerId);
   if (!p) return null;
-  const status = statusChip(p);
+  const status = statusChipAlways(p);
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
