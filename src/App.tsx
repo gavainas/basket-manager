@@ -21,7 +21,7 @@ import { LeagueProfile } from './ui/LeagueProfile';
 import { ClubLink, OpenClubContext } from './ui/ClubLink';
 import { ClubProfile } from './ui/ClubProfile';
 import { USER_CLUB_ID } from './game/world';
-import { activePlayers } from './game/match';
+import { activePlayers, clubRecord } from './game/match';
 import { NavigateTabContext, type AppFocus, type AppTab } from './ui/nav';
 import type { AbsenceDifficulty } from './game/types';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
@@ -352,7 +352,11 @@ export default function App() {
     return withProviders(<SeasonEndScreen state={state} dispatch={dispatch} />);
   }
 
-  const row = state.standings.find((r) => r.teamId === 'club')!;
+  /* El récord cuenta el partido de hoy apenas termina: la tabla se entera
+     recién con el informe, y mientras tanto la barra decía 0-0 con el partido
+     ganado. Y con el partido terminado ya no se "dirige cuarto a cuarto". */
+  const record = clubRecord(state);
+  const matchOver = state.phase === 'match' && !!state.live?.finished;
   const phaseHint =
     state.phase === 'planning'
       ? 'Elegí las decisiones de la semana'
@@ -361,8 +365,13 @@ export default function App() {
         : state.phase === 'lineup'
           ? 'Armá el quinteto titular'
           : state.phase === 'match'
-            ? 'Dirigí el partido cuarto a cuarto'
+            ? matchOver
+              ? 'Terminó el partido: mirá el informe'
+              : 'Dirigí el partido cuarto a cuarto'
             : 'Mirá el resultado del partido';
+  const recordSub = record.today
+    ? `${record.today.finished ? 'hoy' : 'en juego'} ${record.today.scoreFor}-${record.today.scoreAgainst}`
+    : 'en la liga';
 
   const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
   /* El plantel son los que están, no los que estuvieron. La barra contaba sobre
@@ -532,16 +541,16 @@ export default function App() {
             <div className={`v ${alDia < enElPlantel.length ? 'warn' : 'good'}`}>
               {alDia} / {enElPlantel.length}
             </div>
-            <div className="s">jugadores</div>
+            <div className="s">en el plantel</div>
           </div>
           <div className="recurso">
             <span className="k">
               <Icon name="liga" size={14} /> Récord
             </span>
             <div className="v">
-              {row.wins}-{row.losses}
+              {record.wins}-{record.losses}
             </div>
-            <div className="s">en la liga</div>
+            <div className="s">{recordSub}</div>
           </div>
           <div className="recurso accion">
             <span className="s">{phaseHint}</span>

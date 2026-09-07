@@ -560,11 +560,34 @@ fallos. Antes: 8 de 13 pantallas scrolleaban a 1080p y 11 de 13 a 1366×768.
 ### Lo que NO se hizo
 
 La **ilustración de cuerpo entero** del héroe (la de la maqueta, y la que describe "El héroe
-y los arquetipos") **no se generó**: se propuso y Gabi lo rechazó. La columna usa mientras
-tanto el retrato de arquetipo ya aprobado, mostrando al **referente del vestuario** — el más
-querido, con la antigüedad y la edad como desempate—, así que cambia con el plantel. Cuando
-la ilustración exista entra en el mismo hueco: cambia el contenido de `.hub-heroe-foto`, no
-la grilla.
+y los arquetipos") **no se generó**: se propuso y Gabi lo rechazó. La columna del Tablero
+usó mientras tanto el retrato de arquetipo mostrando al referente del vestuario, y **el 5 de
+septiembre se sacó**: ninguna acción del juego la cambiaba (ver "La ficha del jugador").
+**Decisión de Gabi (sep 2026): el héroe se agrega cuando haya más arte.** El hueco que lo
+espera es ahora la columna izquierda de la ficha del jugador (`.profile-retrato`).
+
+## T1: que el juego no se contradiga (sep 2026)
+
+Tres reglas de sistema que salieron de cerrar la tanda T1 del
+[diagnóstico](DIAGNOSTICO_2026-09.md):
+
+- **La barra de recursos cuenta el partido de hoy.** El récord sale de `clubRecord()`, no
+  de la tabla: la tabla se entera con el informe, y la barra no puede decir 0-0 con el
+  partido ganado. Debajo del récord va el marcador en curso ("en juego 14-15") o el final
+  ("hoy 68-58"); el resto del tiempo, "en la liga". La consigna de la fase también cambia
+  al terminar: "Terminó el partido: mirá el informe".
+- **Sin fechas jugadas, la posición es "—".** Una tabla de ceros no ordena nada, y "1°"
+  antes de jugar es una mentira chica que se lee como bug. Vale para el Tablero, el tile
+  de Tabla ("10 equipos · sin fechas jugadas") y la ficha del rival.
+- **El plantel se cuenta una sola vez y se llama "en el plantel".** Barra de recursos,
+  Tablero, El club, Historia y convocatoria usan el mismo denominador (`activePlayers`) y
+  la misma palabra. "Confirmados" es de la pretemporada (los que siguen la temporada) y
+  "Inscriptos" queda reservado para el multi-liga.
+
+Y la **cabecera de la pretemporada es una línea**: `.ps-estado` pasó de card de 160 px a
+tira de ~40, con la liga a la izquierda y los riesgos como chips (`.chip.warn`) con el
+porqué en el `title`. Las cifras que el panel repetía —confirmados, caja, cuotas— ya viven
+en la barra de recursos de abajo; en la cabecera sólo va lo que está mal.
 
 ## Cómo volver atrás
 

@@ -52,8 +52,8 @@ export function ClubView({ state }: { state: GameState }) {
           <Bar label="Prestigio deportivo" value={state.club.sportPrestige} hint={TIPS.prestigioDeportivo} />
           <Bar label="Prestigio social" value={state.club.socialPrestige} hint={TIPS.prestigioSocial} />
           <div className="muted" style={{ marginTop: '0.6rem' }}>
-            Jugadores activos: <strong>{active.length}</strong>
-            {state.playersLeftCount > 0 && ` · Se fueron ${state.playersLeftCount} esta temporada`}
+            En el plantel: <strong>{active.length}</strong>
+            {state.playersLeftCount > 0 && ` · se fueron ${state.playersLeftCount} esta temporada`}
           </div>
         </div>
       </div>

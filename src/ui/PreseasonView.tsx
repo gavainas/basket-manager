@@ -145,11 +145,19 @@ function originNode(state: GameState, previousTeam: string) {
 
 // ---------- Los riesgos de cerrar así ----------
 
+/** Un riesgo de cerrar así: el chip que se lee de un saque y la explicación al pasar el mouse. */
+interface ClosingRisk {
+  short: string;
+  long: string;
+}
+
 /**
- * Lo que hoy está mal para inscribirse. Vive suelto (y no dentro de un panel)
- * porque lo miran dos lugares: el aviso de arriba y el botón de cerrar.
+ * Lo que hoy está mal para inscribirse. Cada riesgo tiene una versión corta
+ * (cabe en un chip de la cabecera) y una larga (el porqué, como tooltip). Las
+ * cifras de fondo —confirmados, caja, cuotas— ya viven en la barra de recursos,
+ * así que acá sólo va lo que está mal, no el estado entero.
  */
-function closingRisks(state: GameState): string[] {
+function closingRisks(state: GameState): ClosingRisk[] {
   const ps = state.preseason!;
   const confirmed = confirmedPlayers(state);
   const min = BALANCE.preseason.minPlayers;
@@ -162,27 +170,39 @@ function closingRisks(state: GameState): string[] {
       : (offer.find((o) => o.divisionId === ps.chosenDivisionId) ?? null);
   const fee = chosenOpt ? chosenOpt.fee : BALANCE.economy.inscriptionFee;
 
-  const risks: string[] = [];
+  const risks: ClosingRisk[] = [];
   if (state.club.money < 0)
-    risks.push(
-      `La caja está en rojo ($${state.club.money}). Si cerrás así, la comisión va a tener que tapar el agujero, y eso cuesta prestigio.`
-    );
+    risks.push({
+      short: `Caja en rojo (${formatMoney(state.club.money)})`,
+      long: `La caja está en rojo ($${state.club.money}). Si cerrás así, la comisión va a tener que tapar el agujero, y eso cuesta prestigio.`,
+    });
   if (confirmed.length < min)
-    risks.push(
-      `Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`
-    );
+    risks.push({
+      short: `Faltan ${min - confirmed.length} para el mínimo de ${min}`,
+      long: `Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`,
+    });
   if (fee > 0 && state.club.money < fee)
     risks.push(
       chosenOpt?.trusts
-        ? `La caja no cubre la inscripción ($${fee}): en tu liga te conocen y te la van a fiar, pero arrancás la temporada con deuda y cuotas semanales.`
-        : `La caja no cubre la inscripción ($${fee}): la comisión tendría que pasar la gorra, y eso cuesta prestigio.`
+        ? {
+            short: `La inscripción ($${fee}) va fiada`,
+            long: `La caja no cubre la inscripción ($${fee}): en tu liga te conocen y te la van a fiar, pero arrancás la temporada con deuda y cuotas semanales.`,
+          }
+        : {
+            short: `La caja no cubre la inscripción ($${fee})`,
+            long: `La caja no cubre la inscripción ($${fee}): la comisión tendría que pasar la gorra, y eso cuesta prestigio.`,
+          }
     );
   if (fees < costs && confirmed.length >= min)
-    risks.push(`Las cuotas proyectadas ($${fees}/sem) no cubren los gastos fijos ($${costs}/sem).`);
+    risks.push({
+      short: `Las cuotas ($${fees}) no cubren los gastos ($${costs})`,
+      long: `Las cuotas proyectadas ($${fees}/sem) no cubren los gastos fijos ($${costs}/sem).`,
+    });
   if (chosenOpt === null)
-    risks.push(
-      `Todavía no elegiste liga: si cerrás la pretemporada así, la comisión te anota a último momento en la de siempre (recargo $${BALANCE.preseason.lateInscriptionFee} y mala imagen).`
-    );
+    risks.push({
+      short: 'Sin liga elegida',
+      long: `Todavía no elegiste liga: si cerrás la pretemporada así, la comisión te anota a último momento en la de siempre (recargo $${BALANCE.preseason.lateInscriptionFee} y mala imagen).`,
+    });
   return risks;
 }
 
@@ -324,8 +344,10 @@ function PreseasonRecursos({ state, dispatch }: Props) {
 // ---------- El estado del club, arriba de todo ----------
 
 /**
- * Dos cosas y nada más: en qué liga quedaste anotado (con su día de partido,
- * que es lo que decide cada fichaje) y qué está mal para cerrar.
+ * Una línea, no una card: en qué liga quedaste anotado (con su día de partido,
+ * que es lo que decide cada fichaje) y, a la derecha, qué está mal para cerrar.
+ * Es cabecera, está siempre a la vista arriba de las pestañas, así que no
+ * puede medir 160 px: los riesgos son chips y el porqué va en el tooltip.
  */
 function EstadoPanel({ state, onFixLeague }: Props & { onFixLeague: () => void }) {
   const risks = closingRisks(state);
@@ -333,10 +355,8 @@ function EstadoPanel({ state, onFixLeague }: Props & { onFixLeague: () => void }
 
   return (
     <div className="card ps-estado">
-      <h3 className="card-band">
-        <Icon name="inscripcion" size={17} /> Cómo llega el club a la inscripción
-      </h3>
       <div className="ps-estado-liga">
+        <Icon name="inscripcion" size={16} />
         {opt ? (
           <>
             <span className="ps-estado-k">Anotado en</span>
@@ -350,22 +370,26 @@ function EstadoPanel({ state, onFixLeague }: Props & { onFixLeague: () => void }
         ) : (
           <>
             <span className="ps-estado-k">Sin liga</span>
-            <strong style={{ color: 'var(--warn)' }}>La inscripción está abierta y todavía no elegiste dónde jugar</strong>
+            <strong style={{ color: 'var(--warn)' }}>Todavía no elegiste dónde jugar</strong>
             <button className="small" onClick={onFixLeague}>
               Elegir liga
             </button>
           </>
         )}
       </div>
-      {risks.length === 0 ? (
-        <p className="ps-veredicto good">✓ Con lo que hay hoy, el club llega a inscribirse sin problemas.</p>
-      ) : (
-        <ul className="ps-riesgos">
-          {risks.map((r, i) => (
-            <li key={i}>{r}</li>
-          ))}
-        </ul>
-      )}
+      <div className="ps-estado-veredicto">
+        {risks.length === 0 ? (
+          <span className="chip good" title="Con lo que hay hoy, el club llega a inscribirse sin problemas.">
+            ✓ Llegás a inscribirte
+          </span>
+        ) : (
+          risks.map((r) => (
+            <span key={r.short} className="chip warn" title={r.long}>
+              {r.short}
+            </span>
+          ))
+        )}
+      </div>
     </div>
   );
 }

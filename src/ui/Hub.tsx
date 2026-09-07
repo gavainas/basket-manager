@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import type { GameState, Player } from '../game/types';
 import { BALANCE } from '../game/balance';
 import { rivalryWith } from '../game/leagueLife';
-import { activePlayers, clubPosition } from '../game/match';
+import { activePlayers, clubGamesPlayed, clubPosition, clubRecord } from '../game/match';
 import { CAUSE_SHORT } from '../game/mood';
 import { clubByLegacyId, USER_CLUB_ID, userFixtureOfWeek } from '../game/world';
 import { ClubLink } from './ClubLink';
@@ -94,7 +94,9 @@ function blocks(state: GameState): Block[] {
           tab: 'semana',
           hint:
             phase === 'match'
-              ? 'Ahora: se juega'
+              ? state.live?.finished
+                ? 'Terminó: mirá el informe'
+                : 'Ahora: se juega'
               : phase === 'matchResult'
                 ? 'Mirá cómo quedó'
                 : 'Al final de la semana',
@@ -106,7 +108,7 @@ function blocks(state: GameState): Block[] {
       sec: 'sec-plantel',
       icon: 'plantel',
       tiles: [
-        { id: 'plantilla', label: 'Plantilla', icon: 'plantel', tab: 'plantilla', hint: `${active.length} jugadores activos` },
+        { id: 'plantilla', label: 'Plantilla', icon: 'plantel', tab: 'plantilla', hint: `${active.length} en el plantel` },
         {
           id: 'vestuario',
           label: 'Vestuario',
@@ -130,7 +132,16 @@ function blocks(state: GameState): Block[] {
       sec: 'sec-partidos',
       icon: 'liga',
       tiles: [
-        { id: 'tabla', label: 'Tabla', icon: 'liga', tab: 'liga', hint: `Vas ${clubPosition(state)}° de ${state.standings.length}` },
+        {
+          id: 'tabla',
+          label: 'Tabla',
+          icon: 'liga',
+          tab: 'liga',
+          hint:
+            clubGamesPlayed(state) === 0
+              ? `${state.standings.length} equipos · sin fechas jugadas`
+              : `Vas ${clubPosition(state)}° de ${state.standings.length}`,
+        },
         { id: 'calendario', label: 'Calendario', icon: 'agenda', tab: 'agenda', hint: 'Fechas, canchas y horarios' },
         { id: 'rankings', label: 'Rankings', icon: 'rankings', tab: 'rankings', hint: 'Quién anota y quién rinde' },
       ],
@@ -303,7 +314,7 @@ export function Hub({ state }: { state: GameState }) {
   const navigate = useContext(NavigateTabContext);
   const watch = watchByTile(state);
   const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
-  const row = state.standings.find((r) => r.teamId === 'club')!;
+  const record = clubRecord(state);
 
   // Tras el partido (matchResult) la semana aún no avanzó: el "próximo" es el que sigue.
   const upcomingWeek = state.phase === 'matchResult' ? state.week + 1 : state.week;
@@ -388,15 +399,18 @@ export function Hub({ state }: { state: GameState }) {
             <span className={`hub-caja-v ${state.club.money < 0 ? 'bad' : ''}`}>{formatMoney(state.club.money)}</span>
           </div>
 
+          {/* Sin fechas jugadas no hay posición: la tabla ordena diez ceros y
+              el club salía "1°" antes de tocar una pelota. El récord cuenta el
+              partido de hoy apenas termina (ver clubRecord). */}
           <div className="hub-cifras">
             <div>
               <span className="k">Posición</span>
-              <span className="v">{clubPosition(state)}°</span>
+              <span className="v">{clubGamesPlayed(state) === 0 ? '—' : `${clubPosition(state)}°`}</span>
             </div>
             <div>
               <span className="k">Récord</span>
               <span className="v">
-                {row.wins}-{row.losses}
+                {record.wins}-{record.losses}
               </span>
             </div>
             <div>

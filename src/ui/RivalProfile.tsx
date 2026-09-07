@@ -184,7 +184,9 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
                 </div>
                 <div className="data-row">
                   <span className="data-label">Posición</span>
-                  <span className="data-value">{position}° de {state.standings.length}</span>
+                  <span className="data-value">
+                    {row.wins + row.losses === 0 ? 'Sin fechas jugadas' : `${position}° de ${state.standings.length}`}
+                  </span>
                 </div>
               </div>
             </>

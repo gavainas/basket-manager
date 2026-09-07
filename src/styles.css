@@ -3880,25 +3880,42 @@ button.mini.blue.on {
    recursos abajo). Lo de acá abajo es solo lo suyo: el estado del club, las
    pestañas y las dos listas del plantel. */
 
+/* El estado del club es una tira de una línea, no una card de 160 px: vive
+   quieto arriba de las pestañas (tanda E) y cada píxel suyo se lo saca al
+   cuerpo que scrollea. A la izquierda la liga, a la derecha los riesgos. */
 .ps-estado {
-  margin-bottom: var(--sp-4);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-3);
 }
 
 /* La liga en la que quedaste anotado, en una línea que se lee de un saque:
    es el dato del que dependen todos los fichajes (día de partido). */
 .ps-estado-liga {
+  flex: 1 1 auto;
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 0.5rem;
   font-size: var(--fs-md);
-  padding-bottom: var(--sp-2);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: var(--sp-2);
+}
+
+.ps-estado-liga .ico {
+  align-self: center;
+  color: var(--sec);
 }
 
 .ps-estado-liga .muted {
   font-size: var(--fs-sm);
+}
+
+.ps-estado-veredicto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .ps-estado-k {
@@ -3917,20 +3934,6 @@ button.mini.blue.on {
 
 .ps-veredicto.good {
   color: var(--good);
-}
-
-/* Los riesgos son una lista, no cinco párrafos rojos apilados: así se cuentan
-   de un vistazo y se leen como el checklist que son. */
-.ps-riesgos {
-  margin: 0;
-  padding-left: 1.1rem;
-  font-size: var(--fs-sm);
-  color: var(--bad);
-  line-height: 1.45;
-}
-
-.ps-riesgos li + li {
-  margin-top: 0.2rem;
 }
 
 /* Pestañas de la pretemporada. La pantalla eran tres metros de scroll con

@@ -1704,6 +1704,39 @@ export function clubPosition(state: GameState): number {
   return sorted.findIndex((r) => r.teamId === 'club') + 1;
 }
 
+/** Fechas de fase regular que el club ya jugó (las que cuentan en la tabla). */
+export function clubGamesPlayed(state: GameState): number {
+  const row = state.standings.find((r) => r.teamId === 'club');
+  return row ? row.wins + row.losses : 0;
+}
+
+/**
+ * El récord del club como lo contaría alguien en la tribuna: con el partido de
+ * hoy incluido apenas termina. La tabla (`standings`) recién se entera en
+ * `concludeMatch`, cuando apretás "Ver el informe"; en el medio la barra de
+ * recursos decía 0-0 con el partido ganado 66-53. `today` trae el marcador en
+ * curso (o final) cuando hay partido con al menos un cuarto jugado. En playoffs
+ * la tabla queda congelada, así que ahí el de hoy no suma al récord.
+ */
+export function clubRecord(state: GameState): {
+  wins: number;
+  losses: number;
+  today: { scoreFor: number; scoreAgainst: number; finished: boolean } | null;
+} {
+  const row = state.standings.find((r) => r.teamId === 'club');
+  let wins = row?.wins ?? 0;
+  let losses = row?.losses ?? 0;
+  const live = state.live;
+  if (!live || live.quarters.length === 0) return { wins, losses, today: null };
+  const scoreFor = live.quarters.reduce((sum, q) => sum + q.for, 0);
+  const scoreAgainst = live.quarters.reduce((sum, q) => sum + q.against, 0);
+  if (live.finished && state.week <= state.seasonLength) {
+    if (scoreFor > scoreAgainst) wins += 1;
+    else losses += 1;
+  }
+  return { wins, losses, today: { scoreFor, scoreAgainst, finished: live.finished } };
+}
+
 /** Rotación sugerida: los mejores disponibles que no son titulares. */
 export function suggestRotation(players: Player[], starterIds: string[], absent: Set<string> = new Set()): string[] {
   return players

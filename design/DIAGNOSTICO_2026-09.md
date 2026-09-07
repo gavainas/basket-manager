@@ -59,6 +59,12 @@ pantalla El club dice **Jugadores activos: 8**, la Plantilla lista **8 filas** m
 "SE FUERON DEL CLUB: 4", y la convocatoria dice **"✓ Vinieron todos"** con **9 nombres**.
 Esto es, literalmente, el "estoy entreverado".
 
+> **Corregido (sep 2026, T1).** La barra contaba sobre `state.players` con los que se fueron
+> adentro (arreglado con el marco fijo). Lo que quedaba era el nombre: ahora el conteo se
+> llama igual en todos lados —**"en el plantel"**— y la convocatoria dice de cuántos son
+> "todos": "Vinieron todos: los 12 del plantel" / "10 confirmados · 2 bajas · de los 12 del
+> plantel".
+
 **4. La planilla tiene cuatro números sin encabezado.**
 ~~`RosterList.tsx:110-113` pinta físico, motivación, compromiso y social como cuatro cifras
 seguidas. No hay fila de títulos.~~
@@ -77,6 +83,13 @@ pantallas: en el Quinteto, la pizarra táctica queda medio escondida abajo.
 **6. La barra de recursos miente.**
 Con el partido terminado 66-53 seguía diciendo **RÉCORD 0-0** y *"Dirigí el partido cuarto
 a cuarto"*. Y el Hub muestra **POSICIÓN 1°** antes de jugar una sola fecha.
+
+> **Corregido (sep 2026, T1).** La causa: la tabla se actualiza en `concludeMatch`, o sea al
+> apretar "Ver el informe", y la barra leía la tabla. Ahora lee `clubRecord()`, que suma el
+> partido de hoy apenas termina y muestra el marcador en curso ("en juego 14-15") o final
+> ("hoy 68-58"); la consigna pasa a "Terminó el partido: mirá el informe". La posición sin
+> fechas jugadas es "—" (la tabla ordenaba diez ceros y el club salía primero por estar
+> primero en el array).
 
 **7. Ocho caras para el mundo entero.**
 `public/arte/` tiene 8 retratos de arquetipo. En el Hub a 1920 px hay **12 jugadores con
@@ -233,13 +246,16 @@ Puerta 3 cierre.
 
 ### UI
 
-- Un solo conteo de plantel en todas las pantallas, con un nombre elegido: **"En el plantel"
+- ✅ Un solo conteo de plantel en todas las pantallas, con un nombre elegido: **"En el plantel"
   (los que están) / "Inscriptos" (los que pueden jugar esta liga)**. Hoy hay cuatro.
-- Encabezados en la planilla. Cuatro cifras sin título no son datos: son ruido.
-- **"Plantilla" abre con el panel de contratar DT** y el plantel queda abajo del pliegue. Dar
-  vuelta el orden: primero lo que la pantalla promete.
-- El panel "Cómo llega el club a la inscripción" se repite entero en las tres pestañas de
-  pretemporada. Es cabecera, no contenido: una línea, no 160 px.
+  *(Hecho en T1: "en el plantel" en todos lados. "Inscriptos" queda para cuando el
+  multi-liga lo necesite.)*
+- ✅ Encabezados en la planilla. Cuatro cifras sin título no son datos: son ruido. *(Marco fijo.)*
+- ✅ **"Plantilla" abre con el panel de contratar DT** y el plantel queda abajo del pliegue. Dar
+  vuelta el orden: primero lo que la pantalla promete. *(Marco fijo, tanda D.)*
+- ✅ El panel "Cómo llega el club a la inscripción" se repite entero en las tres pestañas de
+  pretemporada. Es cabecera, no contenido: una línea, no 160 px. *(Hecho en T1: una tira de
+  39-45 px, liga a la izquierda y riesgos como chips a la derecha.)*
 - **Aprovechar el ancho.** A 1920 sobra un tercio de pantalla vertical y hay 560 px de
   madera a los costados. Para Steam: subir `--ancho-app` y agregar la primera media query
   `min-width` del proyecto, para que en pantalla grande entre más juego, no más fondo.
@@ -296,7 +312,7 @@ commiteada y pusheada por separado para poder pedir volver a cualquier punto.
 
 *Criterio de salida:* alguien que abre el repo sabe en 2 minutos qué sigue.
 
-### T1 — Que el juego no se contradiga (1 sesión)
+### T1 — Que el juego no se contradiga (1 sesión) ✅ (hecha, sep 2026)
 
 Los seis arreglos medidos arriba: un solo conteo de plantel, encabezados en la planilla,
 sticky que no tapa, barra de recursos honesta durante y después del partido, "posición" sin
@@ -304,6 +320,13 @@ partidos jugados, y el panel de inscripción convertido en cabecera.
 
 *Criterio de salida:* jugar una fecha entera sin encontrar dos pantallas que digan cosas
 distintas del mismo dato.
+
+**Cerrada.** Tres arreglos cayeron con el marco fijo (encabezados, sticky, la barra que
+contaba a los que se fueron) y los otros tres entraron en un commit propio: `clubRecord()`
+para la barra y el Tablero, "—" como posición sin fechas, el vocabulario "en el plantel" en
+las cinco pantallas que contaban, y la cabecera de pretemporada como tira de una línea.
+Verificado con un recorrido completo en el navegador (pretemporada, Tablero, El club,
+convocatoria, partido cuarto a cuarto, informe): las mismas cifras en todas las pantallas.
 
 ### T2 — El compromiso se descubre (1-2 sesiones)
 
@@ -444,8 +467,10 @@ Se **fusiona con T1**, porque tres de sus arreglos se resuelven solos al hacer e
   navegación es el inicio").
 - **Registrar la maqueta como aprobación** en `ART_PIPELINE.md` con fecha, alcance y qué
   queda fuera. Es exactamente la disciplina que hoy falta.
-- **Pedir la ilustración del héroe** (una sola, categoría escena) — se puede hacer en
-  paralelo a la tanda A.
+- ~~**Pedir la ilustración del héroe** (una sola, categoría escena) — se puede hacer en
+  paralelo a la tanda A.~~ **Decidido por Gabi (sep 2026): el héroe se agrega cuando haya
+  más arte.** La columna del Tablero se sacó el 5 de septiembre; el hueco que la espera es
+  ahora el de la ficha del jugador (`.profile-retrato`).
 
 *Nota de higiene documental:* `ART_PIPELINE.md` afirma que "el generador de escudos de club
 no existe y es la pieza procedural que falta". Existe (`crest.ts`, 136 líneas + `Crest.tsx`,
