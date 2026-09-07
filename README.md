@@ -12,9 +12,13 @@ Prototipo web jugable de un juego de gestión de un club de básquet **amateur**
 npm install
 npm run dev      # abre en http://localhost:5173
 npm run build    # verifica TypeScript y genera dist/
+npm test         # tests del motor (recorren temporadas enteras por el reducer)
+npm run sim      # harness de balance: simula temporadas y reporta métricas
 ```
 
 Sin backend, sin login, sin APIs externas. La partida se guarda automáticamente en LocalStorage.
+
+En cada push corre el CI (`.github/workflows/ci.yml`): build, tests y las dos simulaciones en corridas cortas. El deploy a GitHub Pages es aparte y sólo sale de `main`.
 
 ## El ciclo del juego
 
@@ -50,9 +54,11 @@ Al final, una evaluación multidimensional: resultado deportivo, salud financier
 - Guardado automático, continuar y reiniciar partida.
 - Azar con semilla determinista (reproducible desde un guardado).
 
-## Sistemas pendientes
+## Qué sigue y qué se hizo
 
-Ver [ROADMAP.md](ROADMAP.md). Los principales: más eventos y personalidades, mercado de pases, lesiones más profundas, relaciones entre jugadores e historias emergentes.
+- [ROADMAP.md](ROADMAP.md): una página con las próximas cinco cosas y las decisiones pendientes.
+- [CHANGELOG.md](CHANGELOG.md): todo lo hecho, con el porqué de cada cosa.
+- [design/DIAGNOSTICO_2026-09.md](design/DIAGNOSTICO_2026-09.md): el estado del juego medido y el plan de acción.
 
 ## Estructura del proyecto
 
@@ -74,6 +80,9 @@ src/
   state/         Reducer del estado global
   persistence/   Guardado en LocalStorage
   ui/            Componentes React (Dashboard, Plantilla, Finanzas, Liga, Semana…)
+tests/           Tests del motor (Vitest): juegan por el reducer, sin React
+scripts/         Harness de balance y de ligas (npm run sim, npm run sim:ligas)
+design/          Diseño: sistema visual, pipeline de arte, balance, diagnóstico
 ```
 
 El estado completo del juego es un único objeto JSON; toda la lógica vive en `src/game/` y es independiente de React.

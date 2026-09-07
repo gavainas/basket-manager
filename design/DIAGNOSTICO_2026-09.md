@@ -123,6 +123,11 @@ Eso, y no la falta de talento, es "el proceso desordenado".
 Una sola entrada de "hecho" mide 3.000 caracteres. Sirve para recordar qué pasó, no para
 decidir qué sigue. Falta la página que diga las próximas cinco cosas.
 
+> **Corregido (sep 2026, T0).** `ROADMAP.md` es una página con las próximas cinco cosas y
+> `CHANGELOG.md` tiene las 39 entradas de lo hecho. El hallazgo 10 (28.000 líneas sin una
+> prueba) también: 28 tests en `tests/` y CI en cada push. Siguen abiertos de ese hallazgo
+> ESLint, el code-splitting y partir `WeekView.tsx`.
+
 **13. La economía quiebra sola.**
 En 60 temporadas simuladas sin acciones del manager hay **5 a 9 GameOvers por caja** según
 la estrategia (8-15%). La rifa y el sponsor son botones, no arcos.
@@ -303,7 +308,7 @@ Con `prefers-reduced-motion: reduce` respetado desde el principio.
 Cinco tandas, ordenadas por dependencia. Cada una es una sesión o dos, y cada una termina
 commiteada y pusheada por separado para poder pedir volver a cualquier punto.
 
-### T0 — Ordenar la mesa (media sesión)
+### T0 — Ordenar la mesa (media sesión) ✅ (hecha, sep 2026)
 
 - `ROADMAP.md` se parte en dos: **`ROADMAP.md`** de una página con las próximas 5 cosas, y
   **`CHANGELOG.md`** con todo lo hecho (que es lo que hoy ocupa 40 KB).
@@ -311,6 +316,19 @@ commiteada y pusheada por separado para poder pedir volver a cualquier punto.
 - Vitest + CI (build, tests, sim).
 
 *Criterio de salida:* alguien que abre el repo sabe en 2 minutos qué sigue.
+
+**Cerrada.** `ROADMAP.md` es una página (dónde estamos, las próximas cinco cosas, las
+decisiones en la cancha de Gabi, y el "después" comprimido) y las 39 entradas de "hecho"
+pasaron enteras a `CHANGELOG.md`. El bloque de `ART_PIPELINE.md` no se borró: se corrigió
+el 4 de septiembre para que dijera una sola verdad, que era el objetivo. **Vitest** entra
+con 28 tests en `tests/` que juegan por el reducer —el mismo camino que la UI—: el récord y
+la posición de T1, una temporada entera con sus invariantes (tabla que cierra, cero
+forfeits, atributos enteros), la convocatoria, el azar con semilla, la pretemporada de
+punta a punta (oferta, elección de liga, cierre con y sin liga, paso de temporada), la
+pirámide en carreras de tres temporadas (las invariantes de `sim:ligas`, portadas) y el
+guardado (ida y vuelta, versión desconocida, save roto, migración v21 → actual). Y el
+**CI** (`.github/workflows/ci.yml`) corre en cada push: build, tests, `sim -- 20` y
+`sim:ligas -- 4 4`.
 
 ### T1 — Que el juego no se contradiga (1 sesión) ✅ (hecha, sep 2026)
 

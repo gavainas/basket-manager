@@ -14,8 +14,11 @@ Juego de gestión de un club de básquet amateur (React + TypeScript + Vite, sin
 
 - `npm run dev` — servidor de desarrollo (http://localhost:5173)
 - `npm run build` — chequeo de TypeScript + build a `dist/`
+- `npm test` — tests del motor (Vitest, en `tests/`): recorren temporadas enteras por el reducer
 - `npm run sim` — harness de balance: simula temporadas y reporta métricas (ver `design/BALANCE.md`)
 
-Toda la lógica del juego vive en `src/game/` y es independiente de React. Los números de balance están centralizados en `src/game/balance.ts`; antes de ajustarlos, correr `npm run sim` y comparar contra los objetivos de `design/BALANCE.md`. El roadmap de features está en `ROADMAP.md`.
+Toda la lógica del juego vive en `src/game/` y es independiente de React. Los números de balance están centralizados en `src/game/balance.ts`; antes de ajustarlos, correr `npm run sim` y comparar contra los objetivos de `design/BALANCE.md`. Antes de commitear, `npm run build` y `npm test` tienen que pasar: el CI (`.github/workflows/ci.yml`) corre las dos cosas más las simulaciones en cada push. Una migración de save nueva lleva su test en `tests/guardado.test.ts`.
+
+Qué sigue está en `ROADMAP.md` (una página); lo hecho, en `CHANGELOG.md`. Al terminar una feature, la entrada va al changelog, no al roadmap.
 
 La versión jugable vive en **https://gavainas.github.io/basket-manager/** (es la build que Gabi prueba, a veces incluso desde el celular, pero el formato objetivo es PC): cada push a `main` la redeploya solo vía GitHub Actions (`.github/workflows/deploy.yml`). Por eso todo trabajo termina commiteado **y pusheado**, con mensaje detallado — cada commit es una versión a la que Gabi puede pedir volver.
