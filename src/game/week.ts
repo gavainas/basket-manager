@@ -15,6 +15,7 @@ import { rollCallUp } from './callup';
 import { buildCoachMarket, coachWeeklyTick } from './coach';
 import { advancePlayoffs } from './playoffs';
 import { checkPromises } from './promises';
+import { affinity } from './relations';
 import { secondTeamWeeklyTick } from './secondTeam';
 import { logClubEvent, logPlayerEvent } from './timeline';
 import { initialWorldDivisions } from './pyramid';
@@ -171,6 +172,89 @@ function trialPlanningEvent(s: GameState, rng: Rng): ActiveEvent | null {
   return { defId: 'prueba_amigo', playerId: tc.inviterId };
 }
 
+/**
+ * Gatillos semanales de las broncas que no son por minutos (T4). Antes, sin
+ * gestión, el 100% de las quejas eran 'minutos': la plata sólo se quejaba con
+ * el equipo de racha y el grupo sólo dentro de un evento. Acá la vida del club
+ * las dispara sola. Máximo una por semana: es run-run de vestuario, no motín.
+ */
+export function weeklyGrievanceTriggers(s: GameState, rng: Rng): void {
+  const B = BALANCE.broncas;
+  const roster = s.players.filter((p) => !p.leftClub && p.status !== 'lesionado');
+  const paga = (p: (typeof roster)[number]) => p.feeStatus === 'pagada' || p.feeStatus === 'pendiente';
+  const box = s.lastMatch && !s.lastMatch.forfeit ? s.lastMatch.box : [];
+  const minutesOf = (id: string) => box.find((b) => b.playerId === id)?.minutes ?? 0;
+
+  type Trigger = { p: (typeof roster)[number]; cause: 'plata' | 'grupo'; note: string; news: string };
+  const candidates: Trigger[] = [];
+
+  // Plata, versión 1: paga la cuota y el equipo pierde seguido. "Pago para
+  // perder" lo dice el que juega por algo más que juntarse.
+  const tail = s.history.slice(-B.plataRachaDerrotas);
+  const losingStreak = tail.length === B.plataRachaDerrotas && tail.every((m) => !m.won);
+  if (losingStreak) {
+    for (const p of roster) {
+      if (!paga(p)) continue;
+      if (p.personality !== 'mercenario' && p.personality !== 'competitivo' && p.personality !== 'protagonista') continue;
+      if (!rng.chance(B.plataRachaChance)) continue;
+      candidates.push({
+        p,
+        cause: 'plata',
+        note: `${tail.length} derrotas seguidas y la cuota al día: "pago para perder", dejó caer.`,
+        news: `${p.name} hizo la cuenta en voz alta: ${tail.length} derrotas seguidas y él pagando la cuota puntual. "Pago para perder", tiró.`,
+      });
+    }
+  }
+
+  // Plata, versión 2: paga, carga con el equipo, y ve que a otro lo becan.
+  const becados = roster.filter((p) => p.feeStatus === 'beca_total' || p.feeStatus === 'beca_parcial');
+  if (becados.length > 0) {
+    for (const p of roster) {
+      if (!paga(p) || minutesOf(p.id) < 25) continue;
+      if (p.personality === 'leal' || p.personality === 'social') continue;
+      if (!rng.chance(B.plataBecaChance)) continue;
+      const otro = rng.pick(becados);
+      candidates.push({
+        p,
+        cause: 'plata',
+        note: `Paga la cuota entera y juega ${minutesOf(p.id)}'; a ${otro.name} lo becan. Hizo cuentas.`,
+        news: `${p.name} se enteró de que a ${otro.name} lo becan. Él paga entera y carga con el equipo: "¿y lo mío?".`,
+      });
+    }
+  }
+
+  // Grupo: el que no encaja en el vestuario (el que menos cariño recibe del
+  // resto, y poco) o el 'social' cuando el clima del club está por el piso.
+  const receivedOf = (p: (typeof roster)[number]) => {
+    const others = roster.filter((t) => t.id !== p.id);
+    return others.length ? others.reduce((sum, t) => sum + affinity(t, p, s.affinityBonus), 0) / others.length : 50;
+  };
+  const leastLoved = roster.length >= 5 ? [...roster].sort((a, b) => receivedOf(a) - receivedOf(b))[0] : null;
+  for (const p of roster) {
+    if (p === leastLoved && receivedOf(p) < B.grupoAfinidadPiso && rng.chance(B.grupoChance)) {
+      candidates.push({
+        p,
+        cause: 'grupo',
+        note: 'Termina el entrenamiento y se va solo. En el grupo no le contestan los chistes.',
+        news: `${p.name} no termina de entrar en el grupo: llega, entrena y se va sin que nadie lo frene.`,
+      });
+    } else if (p.personality === 'social' && s.club.socialClimate < B.grupoClimaPiso && rng.chance(B.grupoClimaChance)) {
+      candidates.push({
+        p,
+        cause: 'grupo',
+        note: 'Vino por el grupo y el grupo está espeso. "Así no tiene gracia".',
+        news: `${p.name} lo dijo sin vueltas: "yo venía por el grupo, y el grupo está espeso". El clima le pesa.`,
+      });
+    }
+  }
+
+  if (candidates.length === 0) return;
+  const t = rng.pick(candidates);
+  const level = bumpGrievance(s, t.p, t.cause, { note: t.note });
+  // La escalada ya trae su noticia; la primera queja se cuenta acá.
+  if (level <= 1 && t.p.grievance?.cause === t.cause) s.news.unshift({ week: s.week, text: t.news, tone: 'bad' });
+}
+
 /** Cierra la semana tras el partido: recuperación, humores, economía y avance. */
 export function advanceWeek(state: GameState): GameState {
   const s: GameState = structuredClone(state);
@@ -321,6 +405,9 @@ export function advanceWeek(state: GameState): GameState {
       }
     }
   }
+
+  // --- Las otras broncas: la plata y el grupo también tienen gatillo ---
+  weeklyGrievanceTriggers(s, rng);
 
   // --- Promesas: lo que prometiste en la pretemporada se cobra acá ---
   // (después de la evolución semanal, para que el enojo no se pise con la recuperación)

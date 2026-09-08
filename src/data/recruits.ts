@@ -28,23 +28,27 @@ const RECRUIT_PERSONALITIES: Personality[] = [
   'talentoso_informal',
 ];
 
-let recruitCounter = 0;
-let nameOffset = -1;
-
+/**
+ * Un recluta nuevo (amigo invitado, pibe del barrio, refuerzo de emergencia).
+ * Todo sale del RNG y de `opts.taken` (los nombres que ya están en uso): antes
+ * el id y el nombre salían de un contador global del módulo, y el mismo estado
+ * guardado daba un recluta distinto según cuántos se habían creado antes en
+ * la sesión (y la misma semilla, dos temporadas distintas).
+ */
 export function createRecruit(
   rng: Rng,
-  opts?: { minTechnique?: number; maxTechnique?: number; season?: number }
+  opts?: { minTechnique?: number; maxTechnique?: number; season?: number; taken?: readonly string[] }
 ): Player {
-  recruitCounter += 1;
   const technique = Math.round(rng.range(opts?.minTechnique ?? 45, opts?.maxTechnique ?? 70));
   const personality = rng.pick(RECRUIT_PERSONALITIES);
   const position = rng.pick(POSITIONS);
   const bg = rollBackground(position, rng);
   const season = opts?.season ?? 1;
-  // Recorre la lista en orden desde un punto aleatorio: sin nombres repetidos seguidos.
-  if (nameOffset < 0) nameOffset = rng.int(0, RECRUIT_NAMES.length - 1);
-  const name = RECRUIT_NAMES[(nameOffset + recruitCounter) % RECRUIT_NAMES.length];
-  const id = `n${rng.int(0, 0xffffff).toString(36)}_${recruitCounter}`;
+  // Un nombre que no esté ya en el club; si se agotaron, se repite alguno.
+  const taken = new Set(opts?.taken ?? []);
+  const free = RECRUIT_NAMES.filter((n) => !taken.has(n));
+  const name = rng.pick(free.length > 0 ? free : RECRUIT_NAMES);
+  const id = `n${rng.int(0, 0xffffff).toString(36)}${rng.int(0, 0xffffff).toString(36)}`;
   const age = rng.int(20, 33);
   return {
     id,

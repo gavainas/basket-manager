@@ -335,7 +335,7 @@ export const ACTIONS: ActionDef[] = [
       if (rng.chance(A.recruit.failChance)) {
         return 'Preguntamos por todos lados, pero esta semana no apareció nadie con ganas de sumarse.';
       }
-      const recruit = createRecruit(rng, { season: s.seasonNumber });
+      const recruit = createRecruit(rng, { season: s.seasonNumber, taken: s.players.map((p) => p.name) });
       s.players.push(recruit);
       logClubEvent(s, 'llegada', `Se sumó ${recruit.name} (${recruit.position}) al plantel a mitad de temporada.`);
       s.news.unshift({ week: s.week, text: `Se sumó ${recruit.name} (${recruit.position}) al plantel.`, tone: 'good' });

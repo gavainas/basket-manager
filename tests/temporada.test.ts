@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { createRecruit } from '../src/data/recruits';
 import { activePlayers } from '../src/game/match';
+import { Rng } from '../src/game/rng';
 import { jugarFecha, jugarTemporada, partidaNueva } from './jugar';
 
 describe('una temporada entera por el reducer', () => {
@@ -75,6 +77,16 @@ describe('el azar con semilla', () => {
     const marcador = (s: typeof a) => s.history.map((m) => `${m.week}:${m.scoreFor}-${m.scoreAgainst}`);
     expect(marcador(a)).toEqual(marcador(b));
     expect(a.club.money).toBe(b.club.money);
+  });
+
+  it('un recluta sale del RNG y del plantel, no de un contador del módulo', () => {
+    const taken = ['Lucas Camejo', 'Emi Duarte'];
+    const a = createRecruit(new Rng(9), { taken });
+    createRecruit(new Rng(1)); // otro recluta en el medio no cambia al siguiente
+    const b = createRecruit(new Rng(9), { taken });
+    expect(b.id).toBe(a.id);
+    expect(b.name).toBe(a.name);
+    expect(taken).not.toContain(a.name);
   });
 
   it('semillas distintas dan temporadas distintas', () => {

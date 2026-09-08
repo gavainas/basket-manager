@@ -400,7 +400,7 @@ fundación (que el grupo no se desarme, que se gane algo, que la mesa se junte: 
 pusieron plata, no una comisión), y la cancha lleva el nombre del club en un barrio fijo.
 Testeado: en una Carrera ninguna noticia ni hito habla de Atlético El Parque.
 
-### T4 — Que jugar con cinco deje de ser el default (1 sesión)
+### T4 — Que jugar con cinco deje de ser el default (1 sesión) ✅ (hecha, sep 2026)
 
 Rotación en los presets, aviso en la pizarra, DT que rota solo, desgaste que cruza la fecha,
 y bajar el monopolio de la bronca por minutos.
@@ -408,7 +408,20 @@ y bajar el monopolio de la bronca por minutos.
 *Criterio de salida:* en 60 temporadas simuladas, las causas de bronca dejan de ser 100%
 'minutos'.
 
-### T5 — El salto de arte (en paralelo, gobernado por el pipeline)
+**Cerrada.** Sin DT y con dos o más en el banco, el partido arranca con un **plan de
+cambios** que rota solo (frescos en el 2° cuarto, titulares en el 3°, cerradores al final;
+un cambio a mano frena el plan por ese cuarto), con su toggle en la tarjeta de cambios y su
+aviso en la pizarra ("Vas con 10 y tenés 11 en la planilla: Morales mira desde afuera"). El
+DT que juega a ganar también mueve el banco con el partido cómodo. Y las otras broncas
+consiguieron su gatillo semanal: *plata* (paga y pierde seguido, o paga y ve que a otro lo
+becan), *grupo* (el que menos cariño recibe; el 'social' con el clima por el piso) y *trato*
+(lo jugaron fundido y se rompió). **Medido con 60 temporadas: los motivos pasaron de
+`{minutos: 138}` a `{minutos: 62, plata: 67, grupo: 11}`**, los abandonos de la estrategia
+pasiva bajaron de 1.59 a 0.15 por temporada, y jugar con cinco a propósito (`cincoFijos`,
+nueva en el harness) deja 0.42 titulares fundidos por partido y 1.50 abandonos. Detalle en
+[`BALANCE.md`](BALANCE.md#sistemas-de-la-5ª-pasada-septiembre-2026-t4-jugar-con-cinco-deja-de-ser-el-default).
+
+### T5 — El salto de arte (en paralelo, gobernado por el pipeline) — en curso
 
 Sistema de capas por seed → lámina de 12 caras armadas con el sistema (Puerta 3) → vertical
 slice → art bible. Nada se genera en masa antes de que Gabi apruebe la lámina.
@@ -419,12 +432,20 @@ de "esto ya no es un prototipo".
 *Criterio de salida:* dos jugadores del mismo arquetipo en la misma pantalla no se ven
 iguales.
 
+**Lo que ya está (sep 2026):** las cinco animaciones (marcador que sube número a número,
+filas escalonadas, fundido de 120 ms, barra que se llena, modal con escala; todo apagado
+con `prefers-reduced-motion`), y el **brief de la lámina** escrito y reproducible en
+[`arte/BRIEFS/`](arte/BRIEFS/LEEME.md), en dos pasos (prueba de registro ≈12 créditos,
+lámina ≈60). **Lo que falta depende de Gabi, no de código:** aprobar el brief. No se generó
+nada.
+
 ---
 
 ## 5. Orden recomendado y por qué
 
 **T0 → T1 → T2 → T3**, con **T5 corriendo en paralelo** desde el principio (porque depende
-de aprobaciones de Gabi, no de código) y **T4 en cualquier hueco**.
+de aprobaciones de Gabi, no de código) y **T4 en cualquier hueco**. *(Sep 2026: T0 a T4
+cerradas; de T5 quedan las aprobaciones.)*
 
 T2 va antes que T3 a propósito: el compromiso oculto cambia **cómo se fichan amigos** (sin
 número, fichar es confiar en una referencia). Si el modo carrera se construye primero, se

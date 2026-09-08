@@ -539,7 +539,10 @@ export default function App() {
           </div>
         )}
         {tab === 'semana' && (
-          <div className="vista sec-partidos">
+          /* La Semana cambia de pantalla sin cambiar de sección (lista →
+             quinteto → partido → informe): la clave remonta la vista y el
+             fundido de 120 ms corre también entre etapas. */
+          <div className="vista sec-partidos" key={state.phase}>
             <WeekView state={state} dispatch={dispatch} />
           </div>
         )}

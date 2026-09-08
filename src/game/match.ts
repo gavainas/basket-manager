@@ -15,6 +15,7 @@ import type {
   GameState,
   LineupPreset,
   LiveMatchState,
+  MatchPlan,
   MatchResult,
   Player,
   PlayerMood,
@@ -595,6 +596,10 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     // Con DT contratado, los cambios arrancan en sus manos y con su directiva.
     autoRotation: !!s.coach,
     directive: s.coach?.directive ?? 'ganar',
+    // Sin DT: con banco, el plan por defecto rota por cuarto. Jugar con cinco
+    // es una decisión que se toma, no lo que pasa si no tocás nada.
+    plan: defaultMatchPlan(rotation.length),
+    manualBreak: false,
     rivalFreshness: clamp(M.rivalFreshStart + rng.int(-4, 4)),
     starId: star.id,
     starName: star.name,
@@ -635,9 +640,70 @@ export function substitute(state: GameState, outId: string, inId: string): GameS
       onCourt,
       starId: star.id,
       starName: star.name,
+      manualBreak: true,
       pendingSubNotes: [...live.pendingSubNotes, `Cambio: entra ${inP.name} por ${outP.name}.`],
     },
   };
+}
+
+/** Con cuántos suplentes el plan por defecto pasa a rotar por cuarto. */
+export const PLAN_MIN_BENCH = 2;
+
+/** El plan con el que arranca el partido según el banco citado. */
+export function defaultMatchPlan(benchCount: number): MatchPlan {
+  return benchCount >= PLAN_MIN_BENCH ? 'rotar' : 'manual';
+}
+
+/** Qué unidad manda el plan 'rotar' antes de cada cuarto (el arranque es tuyo). */
+export const PLAN_BY_QUARTER: Record<number, LineupPreset> = {
+  1: 'frescos',
+  2: 'titulares',
+  3: 'cerradores',
+};
+
+export const PLAN_LABELS: Record<MatchPlan, string> = {
+  rotar: 'Rota solo',
+  manual: 'A mano',
+};
+
+/**
+ * El plan de cambios entre cuartos, cuando los cambios son tuyos. Corre antes
+ * del piloto del DT: si el DT está al mando, el plan no toca nada. Un cambio
+ * hecho a mano en el descanso lo frena por ese cuarto (lo que vos armaste no
+ * se pisa), y en el siguiente vuelve a rotar.
+ */
+function applyMatchPlan(s: GameState, live: LiveMatchState): void {
+  const manual = live.manualBreak;
+  live.manualBreak = false;
+  if (live.autoRotation || (live.plan ?? 'manual') !== 'rotar') return;
+  const qIndex = live.quarters.length;
+  const preset = PLAN_BY_QUARTER[qIndex];
+  if (!preset) return;
+  if (manual) {
+    live.pendingSubNotes.push('El plan respeta los cambios que hiciste a mano en este descanso.');
+    return;
+  }
+  const five = presetFive(s, live, preset);
+  if (five.length < 5) return;
+  const changed = five.some((id) => !live.onCourt.includes(id));
+  if (!changed) return;
+  live.onCourt = five;
+  const courtPlayers = s.players.filter((p) => live.onCourt.includes(p.id));
+  const star = [...courtPlayers].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
+  live.starId = star.id;
+  live.starName = star.name;
+  const why =
+    preset === 'frescos'
+      ? 'entra la unidad "Piernas frescas" para el 2° cuarto'
+      : preset === 'titulares'
+        ? 'vuelven los titulares para el 3° cuarto'
+        : 'salen los cerradores para el último cuarto';
+  live.pendingSubNotes.push(`↺ Plan de cambios: ${why}.`);
+}
+
+/** Diferencia de puntos acumulada (positiva si vamos ganando). */
+function matchDiff(live: LiveMatchState): number {
+  return live.quarters.reduce((t, q) => t + q.for - q.against, 0);
 }
 
 /** Piernas promedio de los que están en cancha. */
@@ -697,12 +763,20 @@ export function applyLineupPreset(state: GameState, preset: LineupPreset): GameS
   if (five.length < 5) return s;
   const changed = five.some((id) => !live.onCourt.includes(id));
   live.onCourt = five;
+  live.manualBreak = true;
   const courtPlayers = s.players.filter((p) => live.onCourt.includes(p.id));
   const star = [...courtPlayers].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
   live.starId = star.id;
   live.starName = star.name;
   if (changed) live.pendingSubNotes.push(`↺ A la cancha la unidad "${PRESET_LABELS[preset]}".`);
   return s;
+}
+
+/** Cambia el plan de cambios a mitad de partido (con DT al mando no aplica). */
+export function setMatchPlan(state: GameState, plan: MatchPlan): GameState {
+  const live = state.live;
+  if (!live || live.finished) return state;
+  return { ...state, live: { ...live, plan } };
 }
 
 /**
@@ -742,6 +816,14 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
     if (closers.some((id) => !live.onCourt.includes(id))) {
       live.onCourt = closers;
       notes.push(`↺ ${dt} mandó a los cerradores para el último cuarto.`);
+    }
+  } else if (qIndex === 2 && live.directive !== 'repartir' && matchDiff(live) >= BALANCE.rotation.coachRestLead) {
+    // Entretiempo con el partido cómodo: hasta el DT que juega a ganar le da
+    // aire a los titulares y minutos al banco. Los cerradores vuelven al final.
+    const fresh = presetFive(s, live, 'frescos');
+    if (fresh.some((id) => !live.onCourt.includes(id))) {
+      live.onCourt = fresh;
+      notes.push(`↺ Con el partido cómodo, ${dt} mueve el banco: descansan los titulares.`);
     }
   } else {
     // Regla general: el fundido descansa si hay recambio con piernas.
@@ -797,7 +879,9 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   const qIndex = live.quarters.length; // 0..3
   const notes: string[] = [];
 
-  // El piloto automático hace sus cambios antes de que arranque el cuarto.
+  // Primero el plan de cambios (si los cambios son tuyos), después el piloto
+  // del DT (si está al mando): los dos corren antes de que arranque el cuarto.
+  applyMatchPlan(s, live);
   autoRotate(s, live);
 
   // En el entretiempo caen los que venían del trabajo: ya pueden entrar.
@@ -1162,6 +1246,14 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
     real.injuryWeeks = weeks;
     logPlayerEvent(real, s.seasonNumber, s.week, 'lesion', `Se lesionó en pleno partido: ${how}`);
     live.injuries = [...(live.injuries ?? []), { playerId: p.id, name: p.name, weeks }];
+    // Llegó fundido, avisó, lo jugaste igual y se rompió: eso no es mala
+    // suerte, es cómo lo trataron. Entra como bronca por el trato, ya caliente.
+    if (s.callUp.some((c) => c.playerId === p.id && c.playingExhausted)) {
+      bumpGrievance(s, real, 'trato', {
+        floor: 2,
+        note: 'Avisó que llegaba fundido, lo mandaron a la cancha igual y se rompió. Lo toma personal.',
+      });
+    }
 
     // Sale y entra el recambio con más piernas; sin banco, quedan cuatro.
     const sub = live.squad

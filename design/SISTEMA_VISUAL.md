@@ -592,6 +592,25 @@ mide por el hijo más ancho (`grid-template-columns: minmax(0, 1fr)` y `min-widt
 los hijos lo evitan), y para recortar a lo ancho sin convertir al contenedor en scroll
 —que rompería el `sticky`— va `overflow-x: clip`, no `hidden`.
 
+## Movimiento (T5, sep 2026)
+
+Cinco animaciones, y ninguna más. La regla: **el movimiento cuenta algo que pasó** (un
+número que subió, una lista que llegó, una pantalla que cambió); nada se mueve por decorar,
+y todo dura menos que un parpadeo largo. Viven en un bloque propio de `src/styles.css`
+("Movimiento") y en `ui/CountUp.tsx`:
+
+| # | Qué | Cuánto |
+| --- | --- | --- |
+| 1 | El marcador sube número a número y late una vez mientras cuenta (`CountUp`, clase `contando`) | 600 ms, curva cúbica |
+| 2 | Las filas de la planilla entran escalonadas (`--fila` en cada renglón) | 220 ms + 28 ms por fila |
+| 3 | Fundido entre pantallas (`.vista`; la Semana remonta también entre etapas) | 120 ms |
+| 4 | La barra segmentada se llena desde la izquierda (`.bar-fill`, `.mini-medidor i`) | 480 ms |
+| 5 | El modal entra con escala y el velo con fundido (`.modal-backdrop > *`) | 160 / 120 ms |
+
+Con `prefers-reduced-motion: reduce` **todo se apaga**: estas cinco, el pop del marcador,
+las alertas y las transiciones de hover (bloque al final de la sección). El contador lo
+consulta por su cuenta y salta directo al valor.
+
 ## T1: que el juego no se contradiga (sep 2026)
 
 Tres reglas de sistema que salieron de cerrar la tanda T1 del

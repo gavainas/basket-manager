@@ -149,7 +149,7 @@ export const PRESEASON_EVENTS: PreseasonEventDef[] = [
     ],
     resolve: (s, _ids, opt, rng) => {
       if (opt === 0) {
-        const vet = createRecruit(rng, { minTechnique: 52, maxTechnique: 62, season: s.seasonNumber });
+        const vet = createRecruit(rng, { minTechnique: 52, maxTechnique: 62, season: s.seasonNumber, taken: s.players.map((p) => p.name) });
         vet.name = '"Griego" Kalitis';
         vet.previousTeam = 'Histórico del club: vuelve del retiro';
         vet.age = 36;
@@ -262,7 +262,7 @@ export const PRESEASON_EVENTS: PreseasonEventDef[] = [
         sponsor.motivation = clamp(sponsor.motivation - 3);
         return `${sponsor.name} lo entendió, aunque le quedó un gustito amargo: "Bueno, después no digas que no te ofrecí gente".`;
       }
-      const friend = createRecruit(rng, { minTechnique: 40, maxTechnique: 70, season: s.seasonNumber });
+      const friend = createRecruit(rng, { minTechnique: 40, maxTechnique: 70, season: s.seasonNumber, taken: s.players.map((p) => p.name) });
       friend.description = `Amigo de ${sponsor.name}. Nadie sabe bien cuánto vale, pero paga la cuota.`;
       s.players.push(friend);
       s.preseason!.continuity[friend.id] = 'confirmado';

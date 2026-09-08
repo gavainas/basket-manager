@@ -26,7 +26,10 @@ El harness ([`scripts/sim-balance.cjs`](../scripts/sim-balance.cjs)) compila
 estrategias de referencia, **sin acciones del manager** (mide el piso):
 
 - `presionRotate`: presión a toda cancha + rotar piernas frescas (la ex-dominante).
-- `zonaEquipo`: zona pasiva sin tocar el banco.
+- `zonaEquipo`: zona pasiva con el plan de cambios por defecto (desde T4, con banco el
+  partido rota solo: frescos en el 2°, titulares en el 3°, cerradores al final).
+- `cincoFijos`: zona pasiva, plan a mano y sin tocar el banco nunca. Es lo que antes de T4
+  pasaba si no tocabas nada; ahora hay que elegirlo.
 - `mixta`: hombre temprano, zona al final, cerradores en el último cuarto.
 
 Reporta: % de victorias, remontadas (concretadas / oportunidades), lesiones en
@@ -51,7 +54,9 @@ una partida jugada de verdad.
 | Semanas sin ausencias | ~1/3 (que "vinieron todos" sea noticia) | ~35% |
 | Top faltador vs resto | Tato ~2/temp, resto ~0.7 (no siempre el mismo) | ✓ |
 | Caja final sin recaudar | Deriva leve, con riesgo real de quiebre | $274-377 y 10-16% de quiebras según estrategia |
-| Abandonos / temporada (sin gestión) | Castigar ignorar al plantel, no ser una masacre | 0.00 rotando · 1.78 sin tocar el banco |
+| Abandonos / temporada (sin gestión) | Castigar ignorar al plantel, no ser una masacre | 0.00 rotando · 1.78 sin tocar el banco (5ª pasada, T4: 0.15 con el plan por defecto · 1.50 con cinco fijos) |
+| Motivos de bronca al cierre (sin gestión) | Que no sean 100% 'minutos' (T4) | 5ª pasada: minutos 62 · plata 67 · grupo 11 (`zonaEquipo`, 60 temp.) |
+| Titulares que llegan fundidos | Que jugar con cinco se pague la semana siguiente | 5ª pasada: 0.42/partido con cinco fijos · 0.00 rotando |
 | Nota del partido (titulares 30'+) | Media ~6.5-7, banda 1-5 viva (~15%), 9-10 raro (<10%) | media 6.88 · 1-5: 15.6% · 9-10: 7.7% |
 
 Nota de la 2ª pasada: el piso de victorias bajó ~5 pts respecto de la 1ª
@@ -232,6 +237,47 @@ significaba nada.
 - **Fin de semana sin horarios**: la penalización por "solo llega a los de
   22:00" no aplica sábado ni domingo. Eso hace que la plaza y el Comercio
   sean, de verdad, las ligas donde viene todo el mundo.
+
+## Sistemas de la 5ª pasada (septiembre 2026, T4: jugar con cinco deja de ser el default)
+
+Corrida de 60 temporadas por estrategia, antes y después.
+
+| | Antes (zona sin tocar el banco) | `zonaEquipo` con el plan por defecto | `cincoFijos` |
+| --- | --- | --- | --- |
+| Victorias | 43.9% | 43.1% | 42.3% |
+| Abandonos / temporada | 1.59 | 0.15 | 1.50 |
+| Motivos de bronca al cierre | `{minutos: 138}` | `{minutos: 62, plata: 67, grupo: 11}` | `{minutos: 107, plata: 67, grupo: 13}` |
+| Titulares que llegan fundidos / partido | (no se medía) | 0.00 | 0.42 |
+| Minutos por suplente | (no se medía) | 13.7' | 0.4' |
+
+Rotar no regala partidos (la diferencia de victorias está dentro del ruido): jugar con
+cinco se paga en el vestuario y en las piernas de la semana siguiente, no en el marcador.
+Es el gradiente que se buscaba.
+
+- **El plan de cambios** (`live.plan`, `match.ts`): sin DT y con dos o más en el banco
+  (`PLAN_MIN_BENCH`), el partido arranca en `'rotar'`: la unidad "Piernas frescas" en el 2°
+  cuarto, los titulares en el 3°, los cerradores en el 4°. Un cambio a mano en el descanso
+  frena el plan por ese cuarto (`manualBreak`) y el siguiente vuelve a rotar. `'manual'`
+  deja los cinco hasta que el manager los mueva. Con DT al mando el plan no toca nada.
+- **El DT que juega a ganar también mueve el banco** al entretiempo si la ventaja es de
+  `coachRestLead` (10) o más.
+- **Las otras broncas** (`BALANCE.broncas`, `weeklyGrievanceTriggers` en `week.ts`), una por
+  semana como máximo: *plata* para el que paga la cuota y pierde tres seguidas
+  (`plataRachaChance` 0.25, mercenario/competitivo/protagonista) o carga con el equipo (25'+)
+  mientras a otro lo becan (`plataBecaChance` 0.12); *grupo* para el que menos cariño recibe
+  del vestuario, si está por debajo de 50 de afinidad media (`grupoChance` 0.12), y para el
+  'social' cuando el clima está por debajo de 35 (`grupoClimaChance` 0.2). Y *trato*, ya
+  caliente (nivel 2), para el que avisó que llegaba fundido, lo jugaron igual y se rompió.
+  En el harness la afinidad media recibida va de 48 a 67, así que 'grupo' es la menos
+  frecuente de las tres sin gestión (11-13 sobre 60 temporadas); los eventos de
+  vestuario, que el harness no juega, la alimentan en una partida de verdad.
+- **El desgaste que cruza la fecha** ya estaba (40' son -14 de físico contra +8 de
+  recuperación semanal); lo que faltaba era medirlo: `Titulares que llegan fundidos`
+  (físico ≤ 46 al salto inicial) y `Minutos por suplente` en el reporte del harness.
+- De paso, un bug latente de determinismo: `createRecruit` usaba un contador global del
+  módulo para el id y el nombre, así que el mismo estado daba un recluta distinto según
+  cuántos se habían creado antes en la sesión (y la misma semilla, dos temporadas
+  distintas). Ahora el id sale del RNG y el nombre, del RNG y de los nombres ya en uso.
 
 ## Pendiente (ver ROADMAP)
 
