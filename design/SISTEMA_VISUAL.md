@@ -566,6 +566,22 @@ septiembre se sacó**: ninguna acción del juego la cambiaba (ver "La ficha del 
 **Decisión de Gabi (sep 2026): el héroe se agrega cuando haya más arte.** El hueco que lo
 espera es ahora la columna izquierda de la ficha del jugador (`.profile-retrato`).
 
+## Modo celular (sep 2026)
+
+El marco fijo es para PC. Debajo de **900 px de ancho** el juego vuelve a ser una página:
+el marco deja de medir el alto de la ventana, las dos barras se pegan arriba y abajo con
+`position: sticky` (ocupan su lugar: no tapan nada), todo panel que scrolleaba por dentro
+pasa a scrollear con la página, y las pantallas de dos y tres columnas quedan en una. La
+barra de recursos se compacta (cuatro cifras en una fila, sin la letra chica; el botón
+abajo) y la de secciones queda en íconos. Vive en un solo bloque al final de
+`src/styles.css` y **no rediseña ninguna pantalla**: apaga el encierro, nada más. La regla
+de que una pantalla con acción tiene que entrar sin scrollear sigue valiendo en escritorio.
+
+Dos cosas aprendidas ahí que valen para todo el juego: una pantalla en grilla implícita
+mide por el hijo más ancho (`grid-template-columns: minmax(0, 1fr)` y `min-width: 0` en
+los hijos lo evitan), y para recortar a lo ancho sin convertir al contenedor en scroll
+—que rompería el `sticky`— va `overflow-x: clip`, no `hidden`.
+
 ## T1: que el juego no se contradiga (sep 2026)
 
 Tres reglas de sistema que salieron de cerrar la tanda T1 del
