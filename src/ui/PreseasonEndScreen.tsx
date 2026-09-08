@@ -18,12 +18,57 @@ export function PreseasonEndScreen({ state, dispatch }: Props) {
   const summary = state.preseason?.summary;
   if (!summary) return null;
 
+  // Modo Carrera: con siete no hay temporada. Se puede perder la pretemporada.
+  if (state.phase === 'gameOver') {
+    return (
+      <div className="season-end">
+        <div className="outcome">
+          <div className="outcome-glyph"><Icon name="alerta" size={52} /></div>
+          <h1>No hubo temporada</h1>
+          <p>{state.gameOverReason}</p>
+          <p className="muted">
+            {state.club.name} · {summary.roster.length} de los que hacían falta
+          </p>
+        </div>
+        <div className="card" style={{ borderColor: 'var(--bad)' }}>
+          <h3>Lo que pasó</h3>
+          <ul className="reason-list">
+            {summary.consequences.map((c, i) => (
+              <li key={i}>{c}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="card">
+          <h3>Los que dijeron que sí ({summary.roster.length})</h3>
+          {summary.roster.length === 0 ? (
+            <p className="muted">Nadie. Ni tu amigo de toda la vida llegó a firmar.</p>
+          ) : (
+            <ul className="reason-list">
+              {summary.roster.map((e, i) => (
+                <li key={i}><NameLink entry={e} /></li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="confirm-bar" style={{ justifyContent: 'center' }}>
+          <button className="primary" onClick={() => dispatch({ type: 'QUIT_TO_MENU' })}>
+            Volver al menú y fundarlo de nuevo
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="season-end">
       <div className="outcome">
         <div className="outcome-glyph"><Icon name="inscripcion" size={52} /></div>
         <h1>Plantel inscripto</h1>
-        <p>La lista quedó cerrada y el club está inscripto en la liga.</p>
+        <p>
+          {state.mode === 'carrera' && state.seasonNumber === 1
+            ? `${state.club.name} existe: la lista quedó cerrada y el club está inscripto en la liga.`
+            : 'La lista quedó cerrada y el club está inscripto en la liga.'}
+        </p>
         <p className="muted">Temporada {state.seasonNumber} · {summary.roster.length} jugadores</p>
         <p style={{ marginTop: '0.8rem' }}>
           <span className="chip accent">Gastado en pretemporada: {formatMoney(summary.moneySpent)}</span>{' '}

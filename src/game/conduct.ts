@@ -234,6 +234,11 @@ const RUMORES: Record<Tier, string> = {
  */
 export function marketReference(mp: MarketPlayer): MarketReference {
   const rng = new Rng(seedFromString(`ref_${mp.id}_${mp.name}`));
+  // La libreta del modo Carrera: al que abrió su agenda para traerlo lo
+  // recomienda como recomienda un amigo, por lealtad.
+  if (mp.viaDe && mp.viaDe !== 'vos') {
+    return { who: `${mp.viaDe}, que lo trae`, quote: AMIGO[tierOf(mp.commitment + rng.int(8, 20))] };
+  }
   switch (mp.knowledge) {
     case 'desconocido':
       return { who: 'Nadie que conozcas', quote: 'No hay a quién preguntarle: es una apuesta.' };

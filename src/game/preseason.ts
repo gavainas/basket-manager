@@ -23,6 +23,7 @@ import {
   scheduleFor,
 } from './pyramid';
 import { rollWeekBanter } from './banter';
+import { abrirAgenda, buildLibreta, favorChance, favorRefusal } from './carrera';
 import { rollWeekMoment } from './moments';
 import { weeklyFee } from './economy';
 import { generateObjectives } from './objectives';
@@ -475,6 +476,108 @@ export function createPreseasonNewGame(seed: number, difficulty: AbsenceDifficul
 }
 
 /**
+ * Modo Carrera: el club desde cero (ver `carrera.ts`). Sin plantel, con la
+ * plata que se junta entre amigos y una libreta de contactos en vez de un
+ * mercado. El nombre y los colores los puso el jugador al fundarlo.
+ */
+export function createCareerNewGame(
+  seed: number,
+  difficulty: AbsenceDifficulty = 'medio',
+  opts: { clubName: string; colors: [string, string] }
+): GameState {
+  const rng = new Rng(seed);
+  const C = BALANCE.carrera;
+  const name = opts.clubName.trim() || 'Club de los Amigos';
+
+  const state: GameState = {
+    saveVersion: SAVE_VERSION,
+    seed: 0,
+    seasonNumber: 1,
+    objectives: [],
+    pastSeasons: [],
+    week: 1,
+    seasonLength: BALANCE.season.weeks,
+    phase: 'preseason',
+    mode: 'carrera',
+    club: {
+      name,
+      colors: opts.colors,
+      money: C.startingMoney,
+      socialClimate: 55,
+      organization: 35,
+      sportPrestige: C.sportPrestige,
+      socialPrestige: C.socialPrestige,
+    },
+    players: [],
+    rivals: RIVALS,
+    schedule: SCHEDULE_ORDER,
+    standings: [
+      { teamId: 'club', wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 },
+      ...RIVALS.map((r) => ({ teamId: r.id, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 })),
+    ],
+    actionsChosen: [],
+    actionsLog: [],
+    actionsUsed: [],
+    pendingEvent: null,
+    eventOutcome: null,
+    starters: [],
+    rotation: [],
+    callUp: [],
+    live: null,
+    lastMatch: null,
+    history: [],
+    news: [
+      {
+        week: 0,
+        text: `Nace ${name}. No hay plantel: hay una libreta con tu gente. Necesitás ${BALANCE.preseason.minPlayers} para inscribir al club, y tenés ${BALANCE.preseason.weeks} semanas.`,
+        tone: 'neutral',
+      },
+      { week: 0, text: 'Te comiste los cruzados. Lo único que te queda del básquet es armar tu propio club.', tone: 'good' },
+    ],
+    ledger: [{ week: 0, concept: 'Lo que juntaste entre amigos para arrancar', amount: C.startingMoney }],
+    memorableMoments: [],
+    clubTimeline: [
+      { season: 1, week: 0, kind: 'hito', text: `Nace ${name}: una libreta de contactos, una pelota y cuatro semanas para juntar ocho.` },
+    ],
+    playersLeftCount: 0,
+    sponsorWeeks: 0,
+    gameOverReason: null,
+    startingMoney: C.startingMoney,
+    promises: [],
+    preseason: null,
+    world: emptyWorld(),
+    playoffs: null,
+    coach: null,
+    coachMarket: buildCoachMarket(1, seed),
+    trialCandidate: null,
+    divisionId: USER_DIVISION_ID,
+    worldDivisions: initialWorldDivisions(USER_DIVISION_ID),
+    heldDivisionIds: [],
+    absenceDifficulty: difficulty,
+  };
+  state.preseason = {
+    week: 1,
+    totalWeeks: BALANCE.preseason.weeks,
+    gestionesLeft: BALANCE.preseason.gestionesPerWeek,
+    chosenDivisionId: null,
+    continuity: {},
+    playerDemands: {},
+    market: buildLibreta(rng),
+    negotiation: null,
+    counterUsed: {},
+    actionOutcome: null,
+    pendingEvent: null,
+    eventOutcome: null,
+    log: ['S1: Abriste la libreta. Empezá por el que seguro te dice que sí.'],
+    moneySpent: 0,
+    summary: null,
+    libreta: true,
+  };
+  state.seed = rng.nextSeed();
+  return state;
+}
+
+/**
  * Cierra la temporada terminada y abre la pretemporada de la siguiente:
  * el plantel evoluciona en el verano y cada jugador define su situación.
  */
@@ -635,8 +738,10 @@ export function startPreseason(state: GameState): GameState {
     worldDivisions: promo.nextWorldDivisions,
     // Los lugares que las ligas le guardan al club (si anda jugando en otra).
     heldDivisionIds: [...(state.heldDivisionIds ?? [])],
-    // La dificultad de faltas acompaña al club toda la carrera.
+    // La dificultad de faltas acompaña al club toda la carrera. Y el modo:
+    // el club desde cero sigue siendo el club desde cero (ya con mercado).
     absenceDifficulty: state.absenceDifficulty,
+    mode: state.mode,
     // Lo vivido entre compañeros (asados, sociedades, peleas) no se resetea.
     affinityBonus: state.affinityBonus ?? {},
     // La espina clavada tampoco: la revancha puede esperar un año entero.
@@ -819,6 +924,17 @@ export function signMarketPlayer(
     p.continuity[friend.id] = 'confirmado';
     extra = ` Y trajo a su amigo: se sumó ${friend.name} (${friend.position}).`;
   }
+  // La bola de nieve de la libreta: el que firmó abre su agenda.
+  if (p.libreta && (mp.abre ?? 0) > 0) {
+    const taken = [...s.players.map((x) => x.name), ...p.market.map((m) => m.name)];
+    const nuevos = abrirAgenda(mp, rng, taken);
+    if (nuevos.length > 0) {
+      p.market.push(...nuevos);
+      const lista = nuevos.map((n) => `${n.name} (${(n.relacion ?? '').toLowerCase()})`).join(', ');
+      psLog(s, `${mp.name} abrió su agenda: te pasó a ${lista}.`);
+      extra += ` Y abrió su agenda: ${nuevos.length === 1 ? 'un contacto nuevo' : `${nuevos.length} contactos nuevos`} en la libreta.`;
+    }
+  }
   const origin = ORIGIN_SITUATIONS[mp.previousTeam];
   psLog(s, `Fichamos a ${mp.name} (${mp.position}).${origin ? ` ${origin}` : ` Viene de ${mp.previousTeam}.`}`);
   logClubEvent(
@@ -853,6 +969,25 @@ export function resolveNegotiation(
   if (neg.isMarket) {
     const mp = p.market.find((m) => m.id === neg.targetId);
     if (!mp || mp.status !== 'disponible') return state;
+
+    // La libreta: fichar es pedir un favor, y el favor se puede negar.
+    // "¿Y quién más va?": con más confirmados, más fácil. A la segunda
+    // negativa no insiste más.
+    if (p.libreta && decision !== 'priority' && !rng.chance(favorChance(s, mp))) {
+      mp.dudas = (mp.dudas ?? 0) + 1;
+      const ultima = mp.dudas >= BALANCE.carrera.dudasMax;
+      const confirmados = confirmedPlayers(s).length;
+      p.actionOutcome = favorRefusal(mp, confirmados, ultima);
+      if (ultima) {
+        mp.status = 'rechazo';
+        psLog(s, `${mp.name} dijo que no, y esta vez en serio.`);
+      } else {
+        psLog(s, `${mp.name} preguntó quién más iba. Todavía no lo convenciste.`);
+      }
+      p.negotiation = null;
+      s.seed = rng.nextSeed();
+      return s;
+    }
 
     if (decision === 'accept') {
       const cost = mp.signingCost;
@@ -1020,13 +1155,20 @@ export function advancePreseasonWeek(state: GameState): GameState {
   p.gestionesLeft = BALANCE.preseason.gestionesPerWeek;
   psSpend(s, 'Gastos de mantenimiento (pretemporada)', BALANCE.preseason.weeklyUpkeep);
 
-  // El mercado se mueve: otros clubes también fichan.
-  for (const mp of p.market) {
-    if (mp.status !== 'disponible') continue;
-    const lostChance = mp.availability === 'escuchando_ofertas' ? 0.22 : p.week >= 3 ? 0.08 : 0;
-    if (lostChance > 0 && rng.chance(lostChance)) {
-      mp.status = 'perdido';
-      psLog(s, `${mp.name} arregló con otro club. Se cayó esa opción.`);
+  // El mercado se mueve: otros clubes también fichan. Pero sólo si vos te
+  // moviste: el diagnóstico de septiembre midió que el mercado se vaciaba solo
+  // (16 → 13) mientras el jugador miraba, y eso castiga mirar y premia
+  // esperar. La presión tiene que salir de las decisiones, no del reloj. La
+  // libreta no se mueve nunca: son tus amigos, no están en oferta.
+  const idle = p0.gestionesLeft >= BALANCE.preseason.gestionesPerWeek;
+  if (!p.libreta && !idle) {
+    for (const mp of p.market) {
+      if (mp.status !== 'disponible') continue;
+      const lostChance = mp.availability === 'escuchando_ofertas' ? 0.22 : p.week >= 3 ? 0.08 : 0;
+      if (lostChance > 0 && rng.chance(lostChance)) {
+        mp.status = 'perdido';
+        psLog(s, `${mp.name} arregló con otro club. Se cayó esa opción.`);
+      }
     }
   }
 
@@ -1108,6 +1250,34 @@ export function closePreseason(state: GameState): GameState {
   }
 
   let roster = s.players.filter((x) => !x.leftClub);
+
+  // Modo Carrera: con siete no hay temporada. Nadie sale a buscar jugadores
+  // de emergencia por un club que todavía no existe: se puede perder la
+  // pretemporada, y ese es el punto.
+  if (s.mode === 'carrera' && p.libreta && roster.length < BALANCE.preseason.minPlayers) {
+    const faltan = BALANCE.preseason.minPlayers - roster.length;
+    p.summary = {
+      roster: roster.map((x) => ({ id: x.id, label: `${x.name} (${x.position})` })),
+      lost: lostEntries,
+      signed: p.market.filter((m) => m.status === 'fichado').map((m) => ({ id: '', label: m.name })),
+      emergency: [],
+      moneySpent: p.moneySpent,
+      projectedWeeklyFees: 0,
+      projectedWeeklyCosts: BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly,
+      scholarships: 0,
+      promises: [],
+      strengths: [],
+      risks: [],
+      consequences: [
+        `Juntaste ${roster.length} y la liga pide ${BALANCE.preseason.minPlayers}: faltaron ${faltan === 1 ? 'uno' : faltan}. Sin ocho fichas no hay inscripción, y sin inscripción no hay temporada.`,
+      ],
+    };
+    s.gameOverReason = `No juntaste ${BALANCE.preseason.minPlayers} para inscribir al club: la temporada se jugó sin vos.`;
+    logClubEvent(s, 'hito', `${s.club.name} no llegó a inscribirse: ${roster.length} de ${BALANCE.preseason.minPlayers}.`, 0);
+    s.phase = 'gameOver';
+    s.seed = rng.nextSeed();
+    return s;
+  }
 
   // Plantel corto: jugadores de emergencia para poder inscribirse.
   if (roster.length < BALANCE.preseason.minPlayers) {

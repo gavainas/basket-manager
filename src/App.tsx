@@ -1,5 +1,6 @@
 import { useEffect, useReducer, useState } from 'react';
-import { gameReducer } from './state/gameReducer';
+import { gameReducer, type GameAction } from './state/gameReducer';
+import { CareerSetup } from './ui/CareerSetup';
 import { clearSave, loadGame, saveGame, saveStatus } from './persistence/storage';
 import { Hub } from './ui/Hub';
 import { ClubView } from './ui/ClubView';
@@ -122,18 +123,32 @@ const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }
 function MainMenu({
   onNew,
   onNewPreseason,
+  onNewCareer,
   onContinue,
   ask,
 }: {
   onNew: (difficulty: AbsenceDifficulty) => void;
   onNewPreseason: (difficulty: AbsenceDifficulty) => void;
+  onNewCareer: (difficulty: AbsenceDifficulty, clubName: string, colors: [string, string]) => void;
   onContinue: () => void;
   ask: (req: ConfirmRequest) => void;
 }) {
   const [, forceRender] = useState(0);
   const [difficulty, setDifficulty] = useState<AbsenceDifficulty>('medio');
+  const [carrera, setCarrera] = useState(false);
   const status = saveStatus();
   const saved = status === 'ok';
+
+  if (carrera) {
+    return (
+      <div className="menu-screen">
+        <div className="menu-portada" style={{ backgroundImage: `url(${PORTADA})` }} role="img" aria-label="Asado en la cantina del club" />
+        <div className="menu-panel">
+          <CareerSetup difficulty={difficulty} onStart={(n, c) => onNewCareer(difficulty, n, c)} onBack={() => setCarrera(false)} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="menu-screen">
@@ -177,10 +192,20 @@ function MainMenu({
               Continuar partida
             </button>
           )}
-          <button className={saved ? '' : 'primary'} onClick={() => onNewPreseason(difficulty)}>
-            Nueva partida · armá el plantel en la pretemporada
-          </button>
-          <button onClick={() => onNew(difficulty)}>Nueva partida directa · plantel ya armado</button>
+          {/* Dos modos: el club en marcha (Atlético El Parque, con o sin
+              pretemporada) y la carrera desde cero (T3: sin plantel, con una
+              libreta de contactos). */}
+          <div className="menu-modo">
+            <div className="menu-modo-k">Carrera · el club desde cero</div>
+            <button className={saved ? '' : 'primary'} onClick={() => setCarrera(true)}>
+              Fundar tu club · sin plantel, con una libreta de amigos
+            </button>
+          </div>
+          <div className="menu-modo">
+            <div className="menu-modo-k">Club en marcha · Atlético El Parque</div>
+            <button onClick={() => onNewPreseason(difficulty)}>Armá el plantel en la pretemporada</button>
+            <button onClick={() => onNew(difficulty)}>Partida directa · plantel ya armado</button>
+          </div>
           {status !== 'none' && (
             <button
               className="danger"
@@ -270,7 +295,7 @@ export default function App() {
   };
 
   if (!state) {
-    const startNew = (type: 'NEW_GAME' | 'NEW_GAME_PRESEASON', difficulty: AbsenceDifficulty) => {
+    const startNew = (action: GameAction) => {
       // También avisa si el guardado es de una versión ilegible: pisa igual.
       if (saveStatus() !== 'none') {
         setConfirmReq({
@@ -279,18 +304,19 @@ export default function App() {
           confirmLabel: 'Empezar de nuevo',
           danger: true,
           icon: 'alerta',
-          onConfirm: () => dispatch({ type, difficulty }),
+          onConfirm: () => dispatch(action),
         });
         return;
       }
-      dispatch({ type, difficulty });
+      dispatch(action);
     };
     return (
       <>
         <MainMenu
           ask={setConfirmReq}
-          onNew={(difficulty) => startNew('NEW_GAME', difficulty)}
-          onNewPreseason={(difficulty) => startNew('NEW_GAME_PRESEASON', difficulty)}
+          onNew={(difficulty) => startNew({ type: 'NEW_GAME', difficulty })}
+          onNewPreseason={(difficulty) => startNew({ type: 'NEW_GAME_PRESEASON', difficulty })}
+          onNewCareer={(difficulty, clubName, colors) => startNew({ type: 'NEW_GAME_CAREER', difficulty, clubName, colors })}
           onContinue={() => {
             const saved = loadGame();
             if (saved) dispatch({ type: 'LOAD', state: saved });
@@ -344,7 +370,9 @@ export default function App() {
     return withProviders(<PreseasonView state={state} dispatch={dispatch} />);
   }
 
-  if (state.phase === 'preseasonEnd') {
+  // El cierre de pretemporada, y también su fracaso: en el modo Carrera, no
+  // juntar ocho termina la partida antes de la primera fecha.
+  if (state.phase === 'preseasonEnd' || (state.phase === 'gameOver' && state.preseason?.summary)) {
     return withProviders(<PreseasonEndScreen state={state} dispatch={dispatch} />);
   }
 

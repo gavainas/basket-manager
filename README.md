@@ -20,6 +20,11 @@ Sin backend, sin login, sin APIs externas. La partida se guarda automáticamente
 
 En cada push corre el CI (`.github/workflows/ci.yml`): build, tests y las dos simulaciones en corridas cortas. El deploy a GitHub Pages es aparte y sólo sale de `main`.
 
+## Dos modos
+
+- **Carrera · el club desde cero**: te comiste los cruzados y lo único que te queda del básquet es una libreta con nombres. Fundás el club (nombre y colores), y la primera pretemporada no tiene mercado: tiene 6 a 8 contactos. Fichar es pedir un favor, cada firmado abre su agenda, y necesitás 8 en 4 semanas o no hay temporada.
+- **Club en marcha**: arrancás con Atlético El Parque armado, con o sin pretemporada.
+
 ## El ciclo del juego
 
 **Pretemporada (4 semanas)**: antes de cada temporada hay que armar el plantel. Los jugadores del año anterior confirman, dudan, no responden, piden condiciones o se retiran. Hay un mercado de fichables con información imperfecta (según cuánto los conozcas), negociaciones con exigencias (becas, titularidad, pases), promesas que quedan registradas, y una fecha límite: al cierre se paga la inscripción, y si no llegás con jugadores o plata, hay consecuencias.

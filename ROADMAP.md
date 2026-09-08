@@ -12,22 +12,23 @@ cuarto con informe, vestuario con voces por arquetipo y una economía con cuotas
 fiado. Está flojo de **coherencia, foco y acabado**, y eso es lo que ordena esta lista.
 
 Del plan de septiembre ya están cerradas **T0** (esta página, los tests y el CI), **T1**
-(el juego no se contradice) y **T2** (el compromiso se descubre: el número salió de la UI
-y en su lugar está la ficha de conducta), además del **marco fijo** (el juego entra en la
-ventana sin scrollear como página, y en el celular vuelve a ser página), y la **dirección
-D** (relieve y planilla). El motor tiene build limpio, 40 tests que recorren temporadas
-enteras por el reducer y un harness de balance con los números en objetivo.
+(el juego no se contradice), **T2** (el compromiso se descubre: el número salió de la UI
+y en su lugar está la ficha de conducta) y la primera tanda de **T3** (el modo Carrera:
+el club desde cero, con la libreta de contactos, el favor y el corte de los ocho), además
+del **marco fijo** (el juego entra en la ventana sin scrollear como página, y en el
+celular vuelve a ser página), y la **dirección D** (relieve y planilla). El motor tiene
+build limpio, 52 tests que recorren temporadas enteras por el reducer y un harness de
+balance con los números en objetivo.
 
 ## Las próximas cinco cosas
 
-1. **T3 · El club desde cero** (2-3 sesiones). Modo carrera: no tenés equipo, tenés una
-   libreta con 6 a 8 contactos; fichar es pedir un favor; cada firmado abre 1 a 3 contactos
-   suyos; necesitás 8 en 4 semanas o no hay temporada. El catálogo de 16 fichables se gana
-   en la temporada 2. El modo actual queda como "club en marcha". *Sale cuando:* se puede
-   perder la pretemporada. T2 ya está: fichar amigos es confiar en una referencia
-   interesada (`marketReference` en `conduct.ts`), así que el modo carrera se construye
-   sobre eso. Arreglo aplicable ya: los eventos que regalan jugadores sólo si te falta
-   gente, y el mercado no se vacía solo mientras no hacés nada.
+1. **T3, segunda tanda · el club desde cero se termina** (1 sesión). Lo que quedó: la
+   intro como pantalla con más historia y arte (hoy son tres párrafos en el panel de
+   fundación), que la comisión del club nuevo hable con voz propia en la primera
+   pretemporada, que la liga sepa que el club es nuevo ("acá no te conocen" en vez de "tu
+   categoría de siempre") y que los objetivos de la primera temporada sean los de un club
+   que acaba de nacer. *Sale cuando:* una partida de Carrera se juega de punta a punta sin
+   que ninguna pantalla hable de Atlético El Parque.
 2. **T4 · Que jugar con cinco deje de ser el default** (1 sesión). Los presets rotan por
    cuarto, la pizarra avisa antes de empezar ("vas con 5 y tenés 9 en la planilla"), el DT
    contratado rota solo, el desgaste de 40' se paga la semana siguiente, y las otras causas
@@ -52,9 +53,8 @@ enteras por el reducer y un harness de balance con los números en objetivo.
    cuando:* en 60 temporadas simuladas sin gestión los game over por caja bajan a la mitad,
    y con gestión mínima (un sponsor) desaparecen.
 
-**Orden:** T3 primero, con T4 en cualquier hueco y las animaciones y el arte en paralelo.
-La conducta ya se escribe con la convocatoria, la cuota y el asado; cuando entre T3, la
-libreta de contactos usa las mismas referencias interesadas del mercado.
+**Orden:** cerrar T3, después T4, con las animaciones y el arte en paralelo. La libreta
+de contactos ya usa las referencias interesadas de T2 (el que lo trae miente por lealtad).
 
 ## Decisiones que están en la cancha de Gabi
 

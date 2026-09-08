@@ -4703,3 +4703,137 @@ button.mini.blue.on {
   .recursos .recurso.accion .s { display: block; }
   .recursos .avanzar { padding: 0.45rem 1rem; }
 }
+
+/* ---------- Modo Carrera: el menú, la fundación y la libreta (sep 2026) ---------- */
+
+/* Los dos modos del menú: el título chico dice cuál es cuál, los botones
+   hacen. El de Carrera va primero porque es la partida que empieza por el
+   principio. */
+.menu-modo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.menu-modo-k {
+  font-family: var(--display);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--text-faint);
+}
+
+/* La fundación: la historia a la izquierda del panel y el formulario debajo,
+   con el escudo que cambia mientras escribís. */
+.carrera-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.carrera-intro h1 {
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: var(--fs-2xl);
+  margin: 0 0 0.6rem;
+}
+
+.carrera-intro h1 span {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.carrera-intro p {
+  margin: 0 0 0.6rem;
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.carrera-form { margin-bottom: 0; }
+
+.carrera-escudo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0 0.9rem;
+}
+
+.carrera-escudo-nombre {
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--fs-lg);
+  text-align: center;
+}
+
+.carrera-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.8rem;
+}
+
+.carrera-k {
+  font-family: var(--display);
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--text-faint);
+}
+
+.carrera-campo input {
+  font: inherit;
+  font-size: var(--fs-md);
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.carrera-campo input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.carrera-colores {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.carrera-color {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.carrera-color.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+/* La libreta: quién es para vos, en versalita; el "lo trae X" como chip. */
+.ps-relacion {
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  margin-right: 0.4rem;
+}
+
+.ps-via { vertical-align: middle; }

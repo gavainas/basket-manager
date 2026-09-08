@@ -373,12 +373,27 @@ del desconocido nadie habla. Con semilla por jugador: la referencia no cambia al
 dos veces. 12 tests en `tests/conducta.test.ts`, incluida una partida de seis fechas por
 el reducer donde las cuentas de cada ficha cierran.
 
-### T3 — El club desde cero (2-3 sesiones)
+### T3 — El club desde cero (2-3 sesiones) ✅ primera tanda (sep 2026)
 
 Modo carrera con agenda de contactos, fichar como pedir un favor, bola de nieve de
 referidos, y el corte real de los 8 en 4 semanas. El catálogo de mercado se gana en la T2.
 
 *Criterio de salida:* se puede perder la pretemporada. Hoy es imposible.
+
+**Primera tanda cerrada.** Modo aparte ("Carrera · el club desde cero" en el menú; el de
+siempre queda como "Club en marcha"). `src/game/carrera.ts`: la libreta de 6 a 8 contactos
+con relación, motivo y pedido; el favor con "¿y quién más va?" (50% de base, +7 por
+confirmado, +25 si el que lo trajo firmó, dos negativas y no insiste); la bola de nieve
+(cada firmado abre 1 a 3 contactos suyos con la referencia interesada de T2, y cada uno
+abre menos); y el corte: en Carrera no hay jugadores de emergencia, cerrar con siete termina
+la partida antes de la primera fecha. Fundación con nombre y colores (`ui/CareerSetup.tsx`),
+$200 que no alcanzan para la ficha, y el mercado de 16 recién en la segunda temporada.
+Medido con 30 semillas: algunas carreras llegan y otras no. **El criterio de salida se
+cumple: se puede perder la pretemporada.** El arreglo aparte también entró, para los dos
+modos: los eventos que regalan jugadores sólo si te falta gente (nunca en la libreta), y el
+mercado no se vacía las semanas en que no hiciste nada. Queda para la segunda tanda: la
+intro como pantalla con más historia y arte, la comisión del club nuevo con voz propia, y
+que la liga sepa que el club es nuevo.
 
 ### T4 — Que jugar con cinco deje de ser el default (1 sesión)
 

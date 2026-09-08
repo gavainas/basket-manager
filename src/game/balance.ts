@@ -285,6 +285,24 @@ export const BALANCE = {
     fiadoSocialHit: 2, // pedir fiado se comenta, pero mucho menos que la gorra de antes
   },
 
+  // Modo Carrera: el club desde cero (T3 del diagnóstico de septiembre). No
+  // tenés equipo, tenés amigos: una libreta de contactos en vez de un mercado,
+  // y fichar es pedir un favor. Necesitás 8 en 4 semanas o no hay temporada.
+  carrera: {
+    startingMoney: 200, // lo que se junta entre amigos: no alcanza para la ficha ($300) sin fiado o sin ir a la plaza
+    sportPrestige: 25, // nadie te conoce
+    socialPrestige: 35,
+    contactosMin: 6, // la libreta del arranque
+    contactosMax: 8,
+    abreMin: 1, // contactos que abre cada firmado (bola de nieve)
+    abreMax: 3,
+    favorBase: 0.5, // prob. de que un contacto (no íntimo) diga que sí sin nadie más confirmado
+    favorPorConfirmado: 0.07, // "¿y quién más va?": cada confirmado suma
+    favorAmigoDentro: 0.25, // si el que lo trajo ya firmó
+    favorMax: 0.95,
+    dudasMax: 2, // a la segunda negativa, no insiste más
+  },
+
   // Fiado de la inscripción: solo tu liga de siempre te lo da (te conocen).
   debt: {
     missPrestigeHit: 2, // prestigio social por semana con la cuota del fiado impaga
