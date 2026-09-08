@@ -1298,207 +1298,171 @@ function LiveMatchPanel({ state, dispatch }: Props) {
     /* Tres franjas de alto fijo (tanda C): el marcador arriba, el juego en el
        medio en tres columnas que scrollean cada una lo suyo, y el botón del
        cuarto siempre en el mismo lugar abajo.
-       El cabezal DEJÓ DE SER STICKY: era sticky porque el scroller era la
-       página y al jugar un cuarto terminabas mirando suplentes con 0 pts con el
-       resultado seiscientos píxeles más arriba. Ahora es una fila de la grilla,
-       así que no scrollea, no tapa nada y no corta las filas de "En cancha". */
+       La cabecera es UNA franja (sep 2026): antes eran dos cards —el marcador
+       grande y la tabla de cuartos con los mismos números— que medían 213 px y
+       en una ventana de 815 le dejaban 320 a la acción: tres columnas con
+       scroll interno y los botones de táctica escondidos. Ahora mide ~80. */
     <div className="partido-pantalla">
-      <div className="partido-cabecera">
-      <div className="card partido-cabezal">
-        <div className="partido-cabezal-fila">
+      <div className="card partido-franja">
+        <div className="franja-quien">
           <h3 style={{ margin: 0 }}>
             {weekLabel(state.week, state.seasonLength)} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
           </h3>
-          <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
-          <span className="chip accent" title={style.desc}>
-            {style.label}
+          <div className="franja-chips">
+            <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
+            <span className="chip accent" title={`${style.desc} ${style.advice}`}>
+              {style.label}
+            </span>
+            {isHalftime && <span className="chip good">Entretiempo: el equipo recupera aire</span>}
+          </div>
+        </div>
+
+        <div className="franja-marcador">
+          <span className="fm-team">{state.club.name}</span>
+          <span className={`fm-score score ${diff > 0 ? 'win' : diff < 0 ? 'lose' : ''}`}>
+            <CountUp value={totalFor} />
           </span>
-          {isHalftime && <span className="chip good">Entretiempo: el equipo recupera aire</span>}
-        </div>
-
-        <div className="scoreboard live">
-          <div className="team">
-            <div className="tname">{state.club.name}</div>
-            <div className={`score ${diff > 0 ? 'win' : diff < 0 ? 'lose' : ''}`}>
-              <CountUp value={totalFor} />
-            </div>
-          </div>
-          <div style={{ color: 'var(--text-dim)', fontWeight: 700 }}>
+          <span className="fm-sep">
             {live.finished ? 'FINAL' : played.length === 0 ? 'vs' : `${Q_LABELS[Math.min(regularPlayed, 3)]}${hasOT ? ' + PR' : ''}`}
+          </span>
+          <span className={`fm-score score ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}>
+            <CountUp value={totalAgainst} />
+          </span>
+          <span className="fm-team"><RivalLink id={rival.id}>{rival.name}</RivalLink></span>
+          {/* Los cuartos, en una línea: "22-13 · 15-13 · – · –". */}
+          <div className="fm-cuartos" title="Parciales por cuarto (nosotros-ellos)">
+            {[0, 1, 2, 3].map((i) => {
+              const q = played.filter((x) => !x.overtime)[i];
+              return (
+                <span key={i} className={`fm-cuarto${q ? '' : ' vacio'}`}>
+                  <b>Q{i + 1}</b> {q ? `${q.for}-${q.against}` : '–'}
+                </span>
+              );
+            })}
+            {hasOT && (
+              <span className="fm-cuarto">
+                <b>PR</b> {played.find((q) => q.overtime)!.for}-{played.find((q) => q.overtime)!.against}
+              </span>
+            )}
           </div>
-          <div className="team">
-            <div className="tname"><RivalLink id={rival.id}>{rival.name}</RivalLink></div>
-            <div className={`score ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}>
-              <CountUp value={totalAgainst} />
+        </div>
+
+        <div className="franja-estado">
+          {played.length > 0 && (
+            <span className="franja-linea">
+              {scoreLine}
+              {(() => {
+                const top = [...live.squad].sort((a, b) => (live.stats[b]?.pts ?? 0) - (live.stats[a]?.pts ?? 0))[0];
+                const pts = live.stats[top]?.pts ?? 0;
+                if (pts === 0) return null;
+                const tp = state.players.find((p) => p.id === top);
+                return tp ? ` Goleador: ${shortName(tp.name)} (${pts}).` : null;
+              })()}
+            </span>
+          )}
+          {(hotStreak || coldStreak || comebackMode || holdMode) && (
+            <div className="drama-row">
+              {hotStreak && lastQ && (
+                <span className="chip good">Parcial de {lastQ.for}-{lastQ.against}: estamos en racha</span>
+              )}
+              {coldStreak && lastQ && (
+                <span className="chip bad">Nos metieron un parcial de {lastQ.against}-{lastQ.for}</span>
+              )}
+              {comebackMode && <span className="chip warn">{-diff} abajo: el equipo sale a morder cada pelota</span>}
+              {holdMode && <span className="chip warn">⚠ Ojo: {rival.name} va a salir con todo a descontar</span>}
             </div>
-          </div>
+          )}
+          {injuryNote && <div className="match-alert">{injuryNote}</div>}
         </div>
-
-        {(hotStreak || coldStreak || comebackMode || holdMode) && (
-          <div className="drama-row">
-            {hotStreak && lastQ && (
-              <span className="chip good">Parcial de {lastQ.for}-{lastQ.against}: estamos en racha</span>
-            )}
-            {coldStreak && lastQ && (
-              <span className="chip bad">Nos metieron un parcial de {lastQ.against}-{lastQ.for}</span>
-            )}
-            {comebackMode && <span className="chip warn">{-diff} abajo: el equipo sale a morder cada pelota</span>}
-            {holdMode && <span className="chip warn">⚠ Ojo: {rival.name} va a salir con todo a descontar</span>}
-          </div>
-        )}
-
-        {injuryNote && <div className="match-alert">{injuryNote}</div>}
-      </div>
-
-      <div className="card" style={{ marginBottom: '1rem' }}>
-        {live.rivalSquad && live.rivalSquad.notes.length > 0 && (
-          <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.4rem', fontSize: '0.82rem' }}>
-            {live.rivalSquad.notes.join(' ')}
-          </p>
-        )}
-        <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.6rem' }}>
-          {scoreLine}
-          {(() => {
-            const top = [...live.squad].sort((a, b) => (live.stats[b]?.pts ?? 0) - (live.stats[a]?.pts ?? 0))[0];
-            const pts = live.stats[top]?.pts ?? 0;
-            if (pts === 0) return null;
-            const tp = state.players.find((p) => p.id === top);
-            return tp ? ` Goleador: ${tp.name} (${pts}).` : null;
-          })()}
-        </p>
-
-        <div className="table-wrap" style={{ maxWidth: 460, margin: '0 auto' }}>
-          <table>
-            <thead>
-              <tr>
-                <th></th>
-                {[0, 1, 2, 3].map((i) => (
-                  <th className="num" key={i}>
-                    Q{i + 1}
-                  </th>
-                ))}
-                {hasOT && <th className="num">PR</th>}
-                <th className="num">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Nosotros</td>
-                {[0, 1, 2, 3].map((i) => (
-                  <td className="num" key={i}>
-                    {played.filter((q) => !q.overtime)[i]?.for ?? '–'}
-                  </td>
-                ))}
-                {hasOT && <td className="num">{played.find((q) => q.overtime)!.for}</td>}
-                <td className="num" style={{ fontWeight: 700 }}>
-                  {totalFor}
-                </td>
-              </tr>
-              <tr>
-                <td><RivalLink id={rival.id}>{rival.name}</RivalLink></td>
-                {[0, 1, 2, 3].map((i) => (
-                  <td className="num" key={i}>
-                    {played.filter((q) => !q.overtime)[i]?.against ?? '–'}
-                  </td>
-                ))}
-                {hasOT && <td className="num">{played.find((q) => q.overtime)!.against}</td>}
-                <td className="num" style={{ fontWeight: 700 }}>
-                  {totalAgainst}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       </div>
 
       <div className="partido-cuerpo">
         <div className="partido-col-scroll">
-        <div className="card">
+        {/* La pizarra compacta: dos filas de botones (defensa, ataque) con una
+            sola línea de pista debajo de cada una —la explicación larga vive
+            en el tooltip del botón— y las piernas de los dos equipos adentro de
+            la misma card. Antes eran dos cards con 506 px de contenido en una
+            columna de 320: los botones quedaban escondidos arriba del scroll. */}
+        <div className="card pizarra-viva">
           <h3>Pizarra táctica</h3>
-          <div className="tactic-block">
-            <div className="tactic-label">Defensa</div>
+          <div className="pv-fila">
+            <span className="tactic-label">Defensa</span>
             <div className="segmented">
-              <button
-                className={live.defense === 'zona' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', defense: 'zona' })}
-              >
-                Zona
-              </button>
-              <button
-                className={live.defense === 'hombre' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', defense: 'hombre' })}
-              >
-                Hombre
-              </button>
-              <button
-                className={live.defense === 'presion' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', defense: 'presion' })}
-              >
-                Presión
-              </button>
+              {(
+                [
+                  ['zona', 'Zona', 'Ordenada y económica: cuida el físico. Ojo con los equipos de buenos tiradores.'],
+                  ['hombre', 'Hombre', 'Asfixia al rival, pero quema piernas. Si el equipo está fundido, quedan pasillos.'],
+                  ['presion', 'Presión', 'A toda cancha: el máximo castigo defensivo… y el máximo desgaste. Solo con piernas frescas.'],
+                ] as const
+              ).map(([id, label, tip]) => (
+                <button
+                  key={id}
+                  className={live.defense === id ? 'on' : ''}
+                  disabled={live.finished}
+                  title={tip}
+                  onClick={() => dispatch({ type: 'SET_TACTIC', defense: id })}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-            <p className="tactic-hint">
-              {live.defense === 'zona'
-                ? 'Ordenada y económica: cuida el físico. Ojo con los equipos de buenos tiradores.'
-                : live.defense === 'hombre'
-                  ? 'Asfixia al rival, pero quema piernas. Si el equipo está fundido, quedan pasillos.'
-                  : 'A toda cancha: el máximo castigo defensivo… y el máximo desgaste. Solo con piernas frescas.'}
-            </p>
           </div>
-          <div className="tactic-block">
-            <div className="tactic-label">Ataque</div>
-            <div className="segmented">
-              <button
-                className={live.attack === 'estrella' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', attack: 'estrella' })}
-              >
-                Dársela a {shortName(live.starName)}
-              </button>
-              <button
-                className={live.attack === 'equipo' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', attack: 'equipo' })}
-              >
-                Mover la pelota
-              </button>
-              <button
-                className={live.attack === 'correr' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', attack: 'correr' })}
-              >
-                Correr la cancha
-              </button>
-            </div>
-            <p className="tactic-hint">
-              {live.attack === 'estrella'
-                ? `Todo pasa por ${live.starName}. Si está caliente es fiesta; si no, el rival lo espera entre dos.`
-                : live.attack === 'equipo'
-                  ? 'La mueven todos: menos brillo, más pases. Aprovecha la química del grupo.'
-                  : 'Partido de ida y vuelta: más puntos para los dos. Gana el que tiene piernas; pierde el que se funde.'}
-            </p>
-          </div>
-          <p className="tactic-hint" style={{ borderTop: '1px solid var(--border)', paddingTop: '0.6rem' }}>
-            {style.label}: {style.desc}
+          <p className="pv-pista">
+            {live.defense === 'zona'
+              ? 'Cuida el físico. Ojo con los tiradores.'
+              : live.defense === 'hombre'
+                ? 'Asfixia al rival, quema piernas.'
+                : 'Máximo castigo, máximo desgaste.'}
           </p>
-        </div>
-
-        <div className="card">
-          <h3>Piernas</h3>
-          <Bar label="En cancha" value={courtFreshness(live)} hint={TIPS.piernas} />
-          <Bar label={rival.name} value={live.rivalFreshness} hint={TIPS.piernas} />
+          <div className="pv-fila">
+            <span className="tactic-label">Ataque</span>
+            <div className="segmented">
+              {(
+                [
+                  ['estrella', `Para ${shortName(live.starName)}`, `Dársela a ${live.starName}: todo pasa por él. Si está caliente es fiesta; si no, el rival lo espera entre dos.`],
+                  ['equipo', 'Mover', 'Mover la pelota: la mueven todos, menos brillo, más pases. Aprovecha la química del grupo.'],
+                  ['correr', 'Correr', 'Correr la cancha: partido de ida y vuelta, más puntos para los dos. Gana el que tiene piernas; pierde el que se funde.'],
+                ] as const
+              ).map(([id, label, tip]) => (
+                <button
+                  key={id}
+                  className={live.attack === id ? 'on' : ''}
+                  disabled={live.finished}
+                  title={tip}
+                  onClick={() => dispatch({ type: 'SET_TACTIC', attack: id })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="pv-pista">
+            {live.attack === 'estrella'
+              ? `Todo pasa por ${shortName(live.starName)}: fiesta o lo esperan entre dos.`
+              : live.attack === 'equipo'
+                ? 'Menos brillo, más pases: vale la química.'
+                : 'Ida y vuelta: gana el que tiene piernas.'}
+          </p>
+          <div className="pv-piernas" title={TIPS.piernas}>
+            <span className="tactic-label">Piernas</span>
+            <span className="pv-pierna">
+              <span>Nosotros</span>
+              <div className="legs-mini"><div className={`fill ${legsCls(courtFreshness(live))}`} style={{ width: `${courtFreshness(live)}%` }} /></div>
+              <b>{Math.round(courtFreshness(live))}</b>
+            </span>
+            <span className="pv-pierna">
+              <span>{shortName(rival.name) === rival.name ? 'Ellos' : rival.name}</span>
+              <div className="legs-mini"><div className={`fill ${legsCls(live.rivalFreshness)}`} style={{ width: `${live.rivalFreshness}%` }} /></div>
+              <b>{Math.round(live.rivalFreshness)}</b>
+            </span>
+          </div>
         </div>
         </div>
 
         <div className="card pane partido-cambios">
           <h3 className="card-band">Cambios</h3>
           <div className="pane-body">
-          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+          <div className="cambios-presets">
             {(['titulares', 'segunda', 'frescos', 'cerradores'] as const).map((preset) => (
               <button
                 key={preset}
@@ -1519,14 +1483,15 @@ function LiveMatchPanel({ state, dispatch }: Props) {
               </button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-            <div className="segmented">
+          <div className="cambios-mandos">
+            <div className="segmented" title="Quién hace los cambios entre cuartos">
               <button
                 className={!live.autoRotation ? 'on' : ''}
                 disabled={live.finished}
+                title="Los cambios son tuyos"
                 onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: false })}
               >
-                Cambios manuales
+                Vos
               </button>
               <button
                 className={live.autoRotation ? 'on' : ''}
@@ -1577,22 +1542,27 @@ function LiveMatchPanel({ state, dispatch }: Props) {
               </div>
             )}
           </div>
-          <p className="tactic-hint" style={{ margin: '0 0 0.5rem' }}>
+          <p
+            className="tactic-hint cambios-pista"
+            title={
+              live.autoRotation
+                ? 'El DT hace los cambios entre cuartos según la directiva. Podés pisar sus decisiones a mano.'
+                : 'Rota solo: frescos en el 2° cuarto, titulares en el 3°, cerradores al final. Un cambio a mano frena el plan por ese cuarto. A mano: tocá quién sale y después quién entra, o arrastrá; valen las reentradas.'
+            }
+          >
             {live.finished
               ? 'Partido terminado: no hay más cambios.'
               : live.autoRotation
-                ? `${state.coach ? state.coach.name : 'El DT'} hace los cambios entre cuartos según la directiva. Podés pisar sus decisiones a mano.`
+                ? `${state.coach ? shortName(state.coach.name) : 'El DT'} hace los cambios entre cuartos. Podés pisarlos a mano.`
                 : outSel
                   ? `Sale ${shortName(byId(outSel).name)}: tocá quién entra del banco.`
                   : live.plan === 'rotar' && benchPlayers.length > 0
-                    ? 'El plan rota solo: frescos en el 2° cuarto, titulares en el 3°, cerradores al final. Si tocás el quinteto a mano, ese cuarto va como lo dejaste.'
-                    : 'Arrastrá un suplente sobre uno en cancha (o tocá: sale → entra). Valen las reentradas.'}
+                    ? 'Rota solo: frescos en el 2°, titulares en el 3°, cerradores al final. Un cambio a mano manda por ese cuarto.'
+                    : 'Tocá quién sale y después quién entra (o arrastrá). Valen las reentradas.'}
           </p>
           <div className="sub-group-label">En cancha</div>
           {onCourtPlayers.map((p) => subRow(p, 'court'))}
-          <div className="sub-group-label" style={{ marginTop: '0.6rem' }}>
-            Banco
-          </div>
+          <div className="sub-group-label sub-group-banco">Banco</div>
           {benchPlayers.length > 0 ? (
             benchPlayers.map((p) => subRow(p, 'bench'))
           ) : (
@@ -1601,7 +1571,28 @@ function LiveMatchPanel({ state, dispatch }: Props) {
           </div>
         </div>
 
-        {played.length > 0 ? (
+        {live.pendingIncident ? (
+          /* La incidencia va en la columna del relato, no en el pie: en el pie
+             era una card de 250 px que aplastaba las tres columnas a 158. */
+          <div className="card pane partido-relato partido-incidencia">
+            <h3 className="card-band">
+              <Icon name="alerta" size={17} /> Incidencia en la cancha
+            </h3>
+            <div className="pane-body">
+              <p className="previa-consigna">{live.pendingIncident.text}</p>
+              <div className="modal-like options" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {live.pendingIncident.options.map((opt, i) => (
+                  <button key={i} style={{ textAlign: 'left' }} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })}>
+                    {opt.label}
+                    <span className="opt-hint" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                      {opt.hint}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : played.length > 0 ? (
         <div className="card pane partido-relato">
           <h3 className="card-band">El relato</h3>
           <div className="pane-body">
@@ -1636,32 +1627,29 @@ function LiveMatchPanel({ state, dispatch }: Props) {
           </div>
         </div>
         ) : (
-          <div className="card partido-relato-vacio">
-            <p className="tactic-hint">El relato se escribe cuarto a cuarto: tocá «Jugar el 1er cuarto».</p>
+          /* Antes del salto el relato no está vacío: es la previa (quién no
+             vino, quién dirige, la historia con este rival) y la consigna de
+             qué hacer, que era lo que la pantalla no decía en ningún lado. */
+          <div className="card pane partido-relato">
+            <h3 className="card-band">La previa</h3>
+            <div className="pane-body">
+              <p className="previa-consigna">
+                Elegí la defensa y el ataque, mirá quién sale y quién queda en el banco, y tocá <b>Jugar el 1er cuarto</b>.
+                Entre cuarto y cuarto podés cambiar todo.
+              </p>
+              {live.pendingSubNotes.length > 0 && (
+                <ul className="reason-list">
+                  {live.pendingSubNotes.map((n, i) => (
+                    <li key={i}>{n}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         )}
       </div>
 
       <div className="partido-pie">
-      {live.pendingIncident && (
-        <div className="card" style={{ marginBottom: '1rem', borderColor: 'var(--warn)' }}>
-          <h3>
-            <Icon name="alerta" size={17} /> Incidencia en la cancha
-          </h3>
-          <p style={{ marginTop: 0 }}>{live.pendingIncident.text}</p>
-          <div className="modal-like options" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {live.pendingIncident.options.map((opt, i) => (
-              <button key={i} style={{ textAlign: 'left' }} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })}>
-                {opt.label}
-                <span className="opt-hint" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                  {opt.hint}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="confirm-bar">
         {!live.finished ? (
           <button
@@ -1703,74 +1691,45 @@ function MatchResultPanel({ state, dispatch }: Props) {
        medía casi tres pantallas a 720p. El contenido no sobraba —la forma sí—,
        así que entra completo repartido en tres columnas, sin sacar una línea. */
     <div className="informe-pantalla">
-      <div className="informe-cabecera card">
-        <div style={{ textAlign: 'center' }}>
+      {/* La cabecera es una franja, como en el partido (sep 2026): el
+          resultado, el marcador con los cuartos en una línea, el resumen y la
+          figura. Antes medía 275 px (marcador grande + tabla de cuartos con los
+          mismos números) y a las tres columnas les quedaban 257. */}
+      <div className="card partido-franja informe-franja">
+        <div className="franja-quien">
           <span className={`result-badge ${m.won ? 'win' : 'lose'}`}>
             {m.forfeit ? 'FORFEIT' : m.won ? 'VICTORIA' : 'DERROTA'}
           </span>
+          <h3 style={{ margin: 0 }}>
+            {weekLabel(m.week, state.seasonLength)} · vs <RivalLink id={m.rivalId}>{m.rivalName}</RivalLink>
+          </h3>
         </div>
-        <div className="scoreboard">
-          <div className="team">
-            <div className="tname">{state.club.name}</div>
-            <div className={`score ${m.won ? 'win' : 'lose'}`}>{m.scoreFor}</div>
-          </div>
-          <div style={{ color: 'var(--text-dim)', fontWeight: 700 }}>vs</div>
-          <div className="team">
-            <div className="tname">
-              <RivalLink id={m.rivalId}>{m.rivalName}</RivalLink>
+
+        <div className="franja-marcador">
+          <span className="fm-team">{state.club.name}</span>
+          <span className={`fm-score ${m.won ? 'win' : 'lose'}`}>{m.scoreFor}</span>
+          <span className="fm-sep">final</span>
+          <span className={`fm-score ${m.won ? 'lose' : 'win'}`}>{m.scoreAgainst}</span>
+          <span className="fm-team"><RivalLink id={m.rivalId}>{m.rivalName}</RivalLink></span>
+          {m.quarters.length > 0 && (
+            <div className="fm-cuartos" title="Parciales por cuarto (nosotros-ellos)">
+              {m.quarters.map((q, i) => (
+                <span key={i} className="fm-cuarto">
+                  <b>{i < 4 ? `Q${i + 1}` : 'PR'}</b> {q.for}-{q.against}
+                </span>
+              ))}
             </div>
-            <div className={`score ${m.won ? 'lose' : 'win'}`}>{m.scoreAgainst}</div>
-          </div>
+          )}
         </div>
-        {m.quarters.length > 0 && (
-          <div className="table-wrap" style={{ maxWidth: 460, margin: '0 auto 0.8rem' }}>
-            <table>
-              <thead>
-                <tr>
-                  <th></th>
-                  {m.quarters.map((_, i) => (
-                    <th className="num" key={i}>
-                      {i < 4 ? `Q${i + 1}` : 'PR'}
-                    </th>
-                  ))}
-                  <th className="num">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Nosotros</td>
-                  {m.quarters.map((q, i) => (
-                    <td className="num" key={i}>
-                      {q.for}
-                    </td>
-                  ))}
-                  <td className="num" style={{ fontWeight: 700 }}>
-                    {m.scoreFor}
-                  </td>
-                </tr>
-                <tr>
-                  <td><RivalLink id={m.rivalId}>{m.rivalName}</RivalLink></td>
-                  {m.quarters.map((q, i) => (
-                    <td className="num" key={i}>
-                      {q.against}
-                    </td>
-                  ))}
-                  <td className="num" style={{ fontWeight: 700 }}>
-                    {m.scoreAgainst}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
-        <p style={{ textAlign: 'center', marginTop: 0 }}>{m.summary}</p>
-        {m.mvpName && m.mvpId && (
-          <p style={{ textAlign: 'center' }}>
+
+        <div className="franja-estado">
+          <span className="franja-linea" title={m.summary}>{m.summary}</span>
+          {m.mvpName && m.mvpId && (
             <span className="chip accent">
-              <Icon name="estrella" size={13} /> Mejor jugador: <PlayerLink id={m.mvpId}>{m.mvpName}</PlayerLink>
+              <Icon name="estrella" size={13} /> Figura: <PlayerLink id={m.mvpId}>{m.mvpName}</PlayerLink>
             </span>
-          </p>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="informe-cuerpo">
