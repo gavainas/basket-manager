@@ -1,6 +1,7 @@
 import type { GameState, Player } from '../game/types';
 import { playerNotes } from '../game/humanState';
 import { Avatar } from './Avatar';
+import { ConductaCorta } from './Conducta';
 import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
 import { Tip, TIPS } from './Tip';
@@ -35,7 +36,7 @@ export function RosterList({ state, players }: { state: GameState; players: Play
         <span>Jugador</span>
         <Tip text={TIPS.fisico}><span className="num">Físico</span></Tip>
         <Tip text={TIPS.motivacion}><span className="num">Motiv.</span></Tip>
-        <Tip text={TIPS.compromiso}><span className="num">Compr.</span></Tip>
+        <Tip text={TIPS.conducta}><span>Conducta</span></Tip>
         <Tip text={TIPS.afinidadSocial}><span className="num">Social</span></Tip>
         <span>En el vestuario</span>
         <span>Rol previsto</span>
@@ -109,7 +110,8 @@ function Fila({ state, p }: { state: GameState; p: Player }) {
 
       <Cifra value={p.physical} />
       <Cifra value={p.motivation} />
-      <Cifra value={p.commitment} />
+      {/* El compromiso ya no es un número: es lo que el club vio (T2). */}
+      <ConductaCorta p={p} />
       <Cifra value={p.social} />
 
       <span className="planilla-nota">{nota ? <HumanNoteRow note={nota} /> : <span className="planilla-nada">—</span>}</span>

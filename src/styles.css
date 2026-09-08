@@ -4131,7 +4131,9 @@ button.mini.blue.on {
 .planilla-cab,
 .planilla-fila {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) 74px 74px 74px 74px minmax(200px, 280px) 152px 62px;
+  /* La quinta columna era la cifra de compromiso; ahora es la conducta en
+     palabras ("Está siempre", "Cuando quiere"), que necesita más ancho. */
+  grid-template-columns: 52px minmax(0, 1fr) 74px 74px minmax(108px, 132px) 74px minmax(200px, 280px) 152px 62px;
   gap: var(--sp-3);
   align-items: center;
   padding: 0.55rem 1.4rem;
@@ -4207,6 +4209,35 @@ button.mini.blue.on {
   line-height: 1.3;
   /* Aire suficiente para que el punteado del nombre no toque la frase. */
   margin-top: 0.3rem;
+}
+
+/* La conducta en palabras (T2): el veredicto lleva el color del semáforo y los
+   hechos van en el tooltip. Sin veredicto (recién llega) va en tinta apagada. */
+.conducta {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: var(--fs-sm);
+  line-height: 1.2;
+  color: var(--text-dim);
+  cursor: help;
+}
+
+.conducta.good { color: var(--good); }
+.conducta.warn { color: var(--warn); }
+.conducta.bad { color: var(--bad); }
+
+.conducta-ficha .chip { margin-bottom: 0.35rem; }
+.conducta-ficha .muted { margin: 0 0 0.6rem; font-size: var(--fs-sm); }
+
+.sheet-conducta { white-space: nowrap; }
+
+.ps-ref-quien {
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
 }
 
 /* Cifra grande y tabular con su medidor debajo: se comparan las columnas de un

@@ -346,13 +346,32 @@ las cinco pantallas que contaban, y la cabecera de pretemporada como tira de una
 Verificado con un recorrido completo en el navegador (pretemporada, Tablero, El club,
 convocatoria, partido cuarto a cuarto, informe): las mismas cifras en todas las pantallas.
 
-### T2 — El compromiso se descubre (1-2 sesiones)
+### T2 — El compromiso se descubre (1-2 sesiones) ✅ (hecha, sep 2026)
 
 Ficha de conducta + etiqueta observada + referencias interesadas al fichar. El número sale
 de la UI; el motor no cambia.
 
 *Criterio de salida:* a la fecha 3 no sabés quién es cumplidor, y a la fecha 8 lo sabés
 porque lo viste.
+
+**Cerrada.** `src/game/conduct.ts`: la ficha (`p.record`, opcional: los saves viejos
+arrancan en cero) se escribe en tres lugares —al salto inicial con la lista definitiva
+(presente / avisó / faltó sin avisar, con el lesionado que no cuenta y el fundido que vos
+mandaste a descansar contando como presente), en la economía semanal (cuota en fecha o
+tarde, los becados no juegan) y en el asado (invitado / fue)—, y guarda las últimas ocho
+convocatorias para la tendencia. La etiqueta tiene tres niveles de evidencia: 0-2 fechas
+"Recién llega: no sabemos de qué palo es"; 3-5 "Parece de los que están" / "Faltó una
+vez" / "Ya faltó N veces"; 6+ "De los que están siempre" / "Va cuando puede" / "Aparece
+cuando quiere". Y la primera impresión puede mentir en los dos sentidos: el que estaba
+siempre y falló dos de las últimas tres baja a amarillo con un "Ojo:", y el faltador que
+vino las últimas tres sube con un "Viene enderezándose". El número desapareció de las
+cinco pantallas (planilla, planilla densa, ficha en dos pestañas, la tarjeta del partido,
+la ficha del rival que ahora dice fama, no ficha) y del mercado, donde lo reemplazan las
+**referencias interesadas**: tu gente miente por lealtad (+8 a +20), el ex compañero es el
+más honesto, el ex DT exagera para sacárselo de encima, el barrio dice cualquier cosa, y
+del desconocido nadie habla. Con semilla por jugador: la referencia no cambia al mirarla
+dos veces. 12 tests en `tests/conducta.test.ts`, incluida una partida de seis fechas por
+el reducer donde las cuentas de cada ficha cierran.
 
 ### T3 — El club desde cero (2-3 sesiones)
 

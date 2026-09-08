@@ -171,6 +171,8 @@ export interface Player {
   promiseLog?: { season: number; week: number; started: boolean; inSquad: boolean }[];
   /** Semanas restantes de suspensión por acumulación de técnicas. */
   suspendedWeeks?: number;
+  /** La ficha de conducta: lo que el club vio de él (ver `conduct.ts`). Opcional: los saves viejos arrancan sin historial. */
+  record?: ConductRecord;
   /** Técnica ganada esta temporada entrenando (impulsa el progreso visible). */
   techniqueGain: number;
   leftClub: boolean;
@@ -185,6 +187,34 @@ export interface Player {
   matchLog: PlayerMatchEntry[];
   /** Historia personal en el club. */
   timeline: TimelineEvent[];
+}
+
+/** Cómo se contó una convocatoria en la ficha de conducta: presente, avisó, faltó sin avisar. */
+export type Presencia = 'p' | 'a' | 'f';
+
+/**
+ * La ficha de conducta (T2 del diagnóstico de septiembre): lo que el club
+ * efectivamente vio de un jugador, sin el número de compromiso. Se llena
+ * jugando y de acá sale la etiqueta observada ("de los que están siempre",
+ * "aparece cuando quiere"). El motor sigue usando `commitment` por dentro.
+ */
+export interface ConductRecord {
+  /** Fechas en las que se lo citó (estaba en el club y sano). */
+  convocado: number;
+  /** Vino (incluye llegar para el segundo tiempo). */
+  presente: number;
+  /** Faltó pero avisó: la vida, la agenda que te marcó al firmar, el momento del mundo. */
+  avisoATiempo: number;
+  /** Faltó con excusa floja o se cayó sobre la hora. */
+  faltoSinAvisar: number;
+  /** Semanas en las que pagó la cuota en fecha (los becados no cuentan). */
+  cuotaEnFecha: number;
+  /** Semanas en las que debía la cuota. */
+  cuotaTarde: number;
+  asadosInvitado: number;
+  asadosFue: number;
+  /** Las últimas convocatorias, para leer la tendencia (la primera impresión puede mentir). */
+  ultimas: Presencia[];
 }
 
 export interface Club {

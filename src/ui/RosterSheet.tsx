@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import type { GameState, Player, Position } from '../game/types';
+import { conductScore } from '../game/conduct';
 import { activePlayers } from '../game/match';
 import { Avatar } from './Avatar';
+import { ConductaCorta } from './Conducta';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { feeChip, statusChip } from './helpers';
@@ -110,7 +112,7 @@ export function RosterSheet({ state }: { state: GameState }) {
     rating: (p) => p.visibleRating,
     fis: (p) => p.physical,
     mot: (p) => p.motivation,
-    com: (p) => p.commitment,
+    com: (p) => conductScore(p),
     afi: (p) => p.social,
     ult: (p) => p.lastRating ?? -1,
     min: (p) => seasonMinutes(p),
@@ -180,7 +182,9 @@ export function RosterSheet({ state }: { state: GameState }) {
         <td className="num sheet-rating">≈{p.visibleRating}</td>
         <td className={`num ${statCls(p.physical)}`}>{p.physical}</td>
         <td className={`num ${statCls(p.motivation)}`}>{p.motivation}</td>
-        <td className={`num ${statCls(p.commitment)}`}>{p.commitment}</td>
+        <td className="sheet-conducta">
+          <ConductaCorta p={p} />
+        </td>
         <td className={`num ${statCls(p.social)}`}>{p.social}</td>
         <td className={`num ${lastCls(p.lastRating)}`}>{p.lastRating ?? '—'}</td>
         <td className="num">{seasonMinutes(p)}&apos;</td>
@@ -220,7 +224,7 @@ export function RosterSheet({ state }: { state: GameState }) {
               <Th k="rating" label="≈" title="Valoración estimada" num />
               <Th k="fis" label="Fís" title="Físico" num />
               <Th k="mot" label="Mot" title="Motivación" num />
-              <Th k="com" label="Com" title="Compromiso" num />
+              <Th k="com" label="Conducta" title="Lo que el club vio de él: fechas, faltas sin avisar, cuota y asados" />
               <Th k="afi" label="Afi" title="Afinidad social" num />
               <Th k="ult" label="Últ" title="Nota del último partido" num />
               <Th k="min" label="Min" title="Minutos jugados esta temporada" num />

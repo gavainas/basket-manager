@@ -8,6 +8,7 @@ import { playerNotes } from '../game/humanState';
 import { ORIGIN_SITUATIONS } from '../data/market';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
+import { ConductaFicha } from './Conducta';
 import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
 import { Timeline } from './Timeline';
@@ -133,8 +134,12 @@ function DeportivaTab({ p }: { p: Player }) {
       <Bar label="Valoración" value={p.visibleRating} hint={TIPS.valoracion} />
       <Bar label="Físico" value={p.physical} hint={TIPS.fisico} />
       <Bar label="Motivación" value={p.motivation} hint={TIPS.motivacion} />
-      <Bar label="Compromiso" value={p.commitment} hint={TIPS.compromiso} />
       <Bar label="Afinidad social" value={p.social} hint={TIPS.afinidadSocial} />
+
+      {/* El compromiso no se ve: se descubre. Lo que hay es la ficha de
+          conducta, que se llena con las fechas (T2). */}
+      <h4 className="profile-subtitle">Conducta</h4>
+      <ConductaFicha p={p} />
 
       <h4 className="profile-subtitle">Estadísticas con el club</h4>
       <div className="data-grid">
@@ -300,9 +305,10 @@ function SocialTab({ state, p }: { state: GameState; p: Player }) {
           {absences > 0 ? `${absences} falta${absences > 1 ? 's' : ''} al partido con excusa.` : 'Nunca faltó con excusa.'}
         </DataRow>
       </div>
+      <h4 className="profile-subtitle">Conducta</h4>
+      <ConductaFicha p={p} />
       <h4 className="profile-subtitle">Cómo está en el grupo</h4>
       <Bar label="Moral" value={p.motivation} hint={TIPS.motivacion} />
-      <Bar label="Compromiso" value={p.commitment} hint={TIPS.compromiso} />
       <Bar label="Peso en el vestuario" value={standing} hint={TIPS.pesoVestuario} />
       <p className="muted">
         {standing >= 70

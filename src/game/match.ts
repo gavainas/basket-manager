@@ -1,6 +1,7 @@
 import { addPairBonus } from './asado';
 import { settleAsadoBet } from './banter';
 import { BALANCE, clamp } from './balance';
+import { recordCallUpConduct } from './conduct';
 import { buildMoods, hasMinutesPromise, moodCauseFor, type EmotionContext } from './emotions';
 import { fragilityOf, MATCH_INJURY_NOTES, rollInjuryWeeks } from './injuries';
 import { leagueNewsForWeek, refereeOfWeek, rivalryWith, settleRivalryAfterMatch, type OtherResult } from './leagueLife';
@@ -479,6 +480,10 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
   const s: GameState = structuredClone(state);
   const rivalId = s.schedule[s.week - 1];
   const rival = s.rivals.find((r) => r.id === rivalId)!;
+
+  // La lista ya es definitiva (gestiones hechas, bajas sobre la hora caídas):
+  // lo que cada uno hizo con esta convocatoria va a su ficha de conducta.
+  recordCallUpConduct(s);
 
   // El fiado impago se cobra acá: con la sanción encima, la liga exige ponerse
   // al día ANTES del partido. Si la caja llega (una rifa a tiempo salva la
