@@ -4467,3 +4467,164 @@ button.mini.blue.on {
     min-height: 0;
   }
 }
+
+/* ---------- Modo celular: la página vuelve a scrollear (sep 2026) ---------- */
+
+/* El marco fijo es para PC (Steam, piso 1280x720): un teléfono no tiene el alto
+   para encerrar el juego en una ventana, y encerrado se veía recortado y sin
+   poder scrollear —Gabi no pudo mostrárselo a un amigo desde el celular—.
+   Debajo de 900px el juego vuelve a ser una página: las dos barras se pegan
+   arriba y abajo (sticky, no fijas: no tapan nada porque ocupan su lugar), y
+   todo lo que scrolleaba adentro de su panel pasa a scrollear con la página.
+   Ninguna pantalla se rediseña: sólo se apaga el encierro. En escritorio nada
+   de esto se aplica. */
+@media (max-width: 900px) {
+  .marco {
+    height: auto;
+    min-height: 100dvh;
+    display: block;
+    /* `clip` y no `hidden`: recorta lo que se pase de ancho sin convertir al
+       marco en un contenedor de scroll (con `hidden` las barras sticky
+       dejarían de pegarse a la ventana). */
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  /* Lo que no encogía y estiraba la página a lo ancho: el marcador (dos
+     equipos de 140px mínimo más el "vs") y la tira de siete días. */
+  .scoreboard { gap: 0.8rem; padding: 1rem 0.6rem; }
+  .scoreboard .team { min-width: 0; flex: 1 1 0; }
+  .scoreboard .score { font-size: var(--fs-2xl); }
+
+  /* Una pantalla es una columna del ancho de la ventana, no del ancho de su
+     hijo más ancho: sin esto la grilla implícita mide por min-content y una
+     fila de chips que no corta estira toda la pantalla hacia la derecha. */
+  .pantalla,
+  .semana-vista {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pantalla > *,
+  .semana-vista > *,
+  .partido-pantalla > *,
+  .partido-cabecera > *,
+  .partido-cuerpo > *,
+  .quinteto-pantalla > *,
+  .informe-pantalla > *,
+  .informe-cuerpo > * {
+    min-width: 0;
+  }
+
+  .partido-cabecera { grid-template-columns: minmax(0, 1fr); }
+
+  /* Un cabezal con chips (la convocatoria: "Faltas: Medio", "Lista 2 días
+     antes") corta en dos líneas en vez de salirse de la card. */
+  .vista .card > h3 { flex-wrap: wrap; }
+  .semana-strip { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.2rem; }
+  .dia-cell { padding: 0.25rem 0.15rem; overflow: hidden; }
+
+  .topbar { position: sticky; top: 0; }
+  .recursos { position: sticky; bottom: 0; }
+
+  .app-shell {
+    display: block;
+    overflow: visible;
+    min-height: 0;
+    padding-bottom: var(--sp-4);
+  }
+
+  /* Las pantallas dejan de medir el alto de la ventana: sus filas miden lo que
+     su contenido pide (se mantiene la grilla para no perder los gaps). */
+  .pantalla,
+  .semana-vista,
+  .hub,
+  .quinteto-pantalla,
+  .partido-pantalla,
+  .pretemporada-pantalla,
+  .liga-pantalla,
+  .informe-pantalla,
+  .plantel-pantalla {
+    height: auto;
+    grid-template-rows: none;
+  }
+
+  /* Todo lo que scrolleaba por dentro deja de hacerlo. */
+  .pane,
+  .pane > .pane-body,
+  .semana-scroll,
+  .semana-izq,
+  .quinteto-cabecera,
+  .quinteto-pantalla .lineup-layout,
+  .partido-cabecera,
+  .partido-cabecera > .card,
+  .partido-col-scroll,
+  .pretemporada-cuerpo,
+  .liga-cuerpo,
+  .informe-cabecera,
+  .informe-col,
+  .plantel-cuerpo,
+  .lineup-list {
+    overflow: visible;
+    max-height: none;
+  }
+
+  /* Una sola columna donde había dos o tres. */
+  .semana-planning,
+  .partido-cuerpo,
+  .informe-cuerpo,
+  .hub-grid,
+  .hub-bloques,
+  .lineup-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+
+  .partido-col-scroll { grid-row: auto; }
+  .informe-moods { grid-column: auto; }
+  .hub-bloques .hub-block { grid-template-rows: auto auto; }
+
+  /* Las cards que iban a `margin-bottom: 0` porque las separaba un gap de
+     grilla o de flex siguen separadas: las columnas siguen siendo flex/grid. */
+
+  /* La barra de recursos, compacta: los cuatro números en una fila (sin la
+     letra chica) y el botón de avanzar abajo. Pegada abajo se lleva pantalla,
+     así que no puede medir lo que mide en escritorio. */
+  .recursos-inner {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    min-height: 0;
+  }
+
+  .recursos .recurso {
+    min-width: 0;
+    flex: 1 1 25%;
+    padding: 0.3rem 0.5rem;
+  }
+
+  .recursos .recurso .v { font-size: var(--fs-md); }
+  .recursos .recurso .s { display: none; }
+
+  .recursos .recurso.accion {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    padding: 0.3rem 0.5rem 0.45rem;
+    border-top: 1px solid var(--chrome-linea);
+  }
+
+  .recursos .recurso.accion .s { display: block; }
+  .recursos .avanzar { padding: 0.45rem 1rem; }
+
+  /* Un botón al pie de una pantalla no puede quedar debajo de la barra pegada:
+     el scroll automático (foco, "scroll into view") le deja el lugar. */
+  html { scroll-padding-bottom: 130px; }
+
+  /* La barra superior: secciones más apretadas, sólo ícono y punto (el nombre
+     de la sección lo dice la pantalla); el resto scrollea a lo ancho si hace
+     falta, que ya lo hacía. */
+  .secciones { margin-left: 0; }
+  .secciones .seccion { padding: 0.35rem 0.5rem 0.25rem; }
+  .secciones .seccion-label { display: none; }
+  .secciones .seccion-punto { margin-right: 0; }
+  .topbar .marca { padding-right: 0.6rem; }
+  .topbar .marca .temporada { display: none; }
+}
