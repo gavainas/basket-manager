@@ -437,9 +437,11 @@ Formato sugerido:
   (nano_banana_pro con `portada.webp` de referencia, la receta de `public/arte/LEEME.md`,
   2 créditos) y se denegó. **No se generó ningún asset nuevo en estas cinco tandas.** La
   columna del héroe se armó con el retrato de arquetipo ya aprobado.
-- Pendiente: la ilustración de cuerpo entero sigue sin pedirse. El hueco está listo
-  (`.hub-heroe-foto`) y las reglas de estilo para pedirla ya están escritas en
-  "El héroe y los arquetipos" de `SISTEMA_VISUAL.md`.
+- Pendiente: la ilustración de cuerpo entero sigue sin pedirse. Las reglas de estilo para
+  pedirla ya están escritas en "El héroe y los arquetipos" de `SISTEMA_VISUAL.md`.
+  **Actualización (2026-09-07):** la columna del héroe se sacó del Tablero el 5 de
+  septiembre y Gabi decidió que **el héroe se agrega cuando haya más arte**. El hueco que
+  lo espera es la columna izquierda de la ficha del jugador (`.profile-retrato`).
 - Próximo paso autorizado: nada de arte. Las Puertas 3 a 6 siguen abiertas y sin tocar.
 
 ## Estado de aprobación actual

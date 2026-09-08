@@ -112,7 +112,7 @@ export function HistoryView({ state }: { state: GameState }) {
             </ul>
           )}
           <p className="muted" style={{ marginBottom: 0 }}>
-            Plantel actual: {activePlayers(state.players).length} jugadores · {state.playersLeftCount} bajas esta
+            En el plantel: {activePlayers(state.players).length} · se fueron {state.playersLeftCount} esta
             temporada.
           </p>
         </div>

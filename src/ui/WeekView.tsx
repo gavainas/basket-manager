@@ -507,6 +507,10 @@ function CallUpPanel({ state, dispatch }: Props) {
   );
   const suspended = state.players.filter((p) => !p.leftClub && (p.suspendedWeeks ?? 0) > 0);
   const availableCount = entries.filter((e) => e.status === 'confirmado').length;
+  const bajas = entries.filter((e) => e.status !== 'confirmado').length + stillInjured.length + suspended.length;
+  // El mismo denominador que la barra de recursos, El club y la Plantilla: los
+  // que están en el club. Así "vinieron todos" dice cuántos son "todos".
+  const enElPlantel = state.players.filter((p) => !p.leftClub).length;
 
   return (
     /* Ya entraba en la ventana; con el marco fijo scrollea adentro de sí misma
@@ -556,13 +560,13 @@ function CallUpPanel({ state, dispatch }: Props) {
         )}
         {outs.length === 0 && stillInjured.length === 0 && suspended.length === 0 ? (
           <p style={{ marginTop: 0 }}>
-            ✓ <strong>Vinieron todos.</strong> Semana tranquila: el grupo está entero para el partido.
+            ✓ <strong>Vinieron todos: los {enElPlantel} del plantel.</strong> Semana tranquila: el grupo está entero
+            para el partido.
           </p>
         ) : (
           <p className="muted" style={{ marginTop: 0 }}>
-            {availableCount} confirmado{availableCount !== 1 ? 's' : ''} ·{' '}
-            {entries.filter((e) => e.status !== 'confirmado').length + stillInjured.length + suspended.length} baja
-            {entries.filter((e) => e.status !== 'confirmado').length + stillInjured.length + suspended.length !== 1 ? 's' : ''}
+            {availableCount} confirmado{availableCount !== 1 ? 's' : ''} · {bajas} baja{bajas !== 1 ? 's' : ''} · de los{' '}
+            {enElPlantel} del plantel
           </p>
         )}
 
