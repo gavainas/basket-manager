@@ -4837,3 +4837,69 @@ button.mini.blue.on {
 }
 
 .ps-via { vertical-align: middle; }
+
+/* Las tres escenas de la intro de Carrera: una imagen ya aprobada a pantalla
+   completa, un velo que sube desde abajo y el texto encima. Sin animación
+   todavía (las cinco animaciones son otra tanda). */
+.carrera-escena {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--chrome) center / cover no-repeat;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+}
+
+.carrera-escena::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 22, 26, 0.15) 30%, rgba(20, 22, 26, 0.88) 75%, rgba(20, 22, 26, 0.96));
+}
+
+.carrera-escena-texto {
+  position: relative;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.6rem 2.6rem;
+  color: var(--text-light);
+}
+
+.carrera-escena-paso {
+  font-family: var(--display);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+  margin-bottom: 0.4rem;
+}
+
+.carrera-escena h1 {
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: var(--fs-2xl);
+  margin: 0 0 0.7rem;
+  color: #fff;
+}
+
+.carrera-escena p {
+  margin: 0 0 0.7rem;
+  font-size: var(--fs-md);
+  line-height: 1.55;
+  color: rgba(246, 244, 241, 0.92);
+}
+
+.carrera-escena-botones {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1.2rem;
+}
+
+.carrera-escena-botones button:not(.primary) {
+  background: transparent;
+  border-color: rgba(246, 244, 241, 0.35);
+  color: rgba(246, 244, 241, 0.85);
+}

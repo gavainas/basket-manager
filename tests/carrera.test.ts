@@ -3,7 +3,7 @@ import { BALANCE } from '../src/game/balance';
 import { buildLibreta, favorChance } from '../src/game/carrera';
 import { marketReference } from '../src/game/conduct';
 import { activePlayers } from '../src/game/match';
-import { createCareerNewGame, startPreseason } from '../src/game/preseason';
+import { createCareerNewGame, inscriptionOffer, startPreseason } from '../src/game/preseason';
 import { Rng } from '../src/game/rng';
 import type { GameState } from '../src/game/types';
 import { jugarTemporada, paso } from './jugar';
@@ -187,6 +187,29 @@ describe('ocho en cuatro semanas', () => {
     expect(activePlayers(s.players).length).toBeGreaterThanOrEqual(MIN);
     expect(s.club.name).toBe('Club de Prueba');
     expect(s.world.clubs.find((c) => c.isUser)!.colors).toEqual(['#111111', '#eeeeee']);
+  });
+
+  it('el club nuevo tiene su propia voz: la liga lo anota como nuevo, los encargos son de fundación y la cancha lleva su nombre', () => {
+    const inicio = fundar(3);
+    const actual = inscriptionOffer(inicio).find((o) => o.isCurrent)!;
+    expect(actual.note).toMatch(/club nuevo/);
+    expect(actual.note).not.toMatch(/de siempre/);
+    expect(actual.trusts).toBe(true);
+
+    let llego: GameState | null = null;
+    for (let seed = 1; seed < 30 && !llego; seed++) {
+      const s = jugarLibreta(fundar(seed), seed);
+      if (s.phase === 'preseasonEnd') llego = s;
+    }
+    const s = paso(llego!, { type: 'START_SEASON' });
+    expect(s.objectives.map((o) => o.id).sort()).toEqual(['asados', 'retention', 'wins']);
+    expect(s.news[0].text).toMatch(/pusieron plata/);
+    const venue = s.world.venues.find((v) => v.id === 'vn_user')!;
+    expect(venue.name).toContain('Club de Prueba');
+    expect(venue.name).not.toMatch(/Parque/);
+    // Ninguna pantalla habla de Atlético El Parque: ni las noticias ni la historia.
+    for (const n of s.news) expect(n.text).not.toMatch(/El Parque/);
+    for (const e of s.clubTimeline) expect(e.text).not.toMatch(/El Parque/);
   });
 
   it('y también se puede perder: no todas las carreras llegan', () => {

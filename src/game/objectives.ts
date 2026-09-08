@@ -110,10 +110,17 @@ export function generateObjectives(
   seasonNumber: number,
   sportPrestige: number,
   rng: Rng,
-  seasonLength = 9
+  seasonLength = 9,
+  opts: { fundacion?: boolean } = {}
 ): Objective[] {
-  const ambition = Math.min(4, seasonNumber - 1 + Math.floor(sportPrestige / 35));
-  const picked = rng.shuffle(DEFS).slice(0, 3);
+  // El club que acaba de nacer (modo Carrera, primera temporada) no tiene una
+  // comisión: tiene a los que pusieron plata. Y lo que piden es lo que pide
+  // cualquiera que puso plata en algo que recién empieza: que el grupo no se
+  // desarme, que se gane algo, y que la mesa se junte. Sin ambición todavía.
+  const ambition = opts.fundacion ? 0 : Math.min(4, seasonNumber - 1 + Math.floor(sportPrestige / 35));
+  const picked = opts.fundacion
+    ? DEFS.filter((d) => d.id === 'retention' || d.id === 'wins' || d.id === 'asados')
+    : rng.shuffle(DEFS).slice(0, 3);
   return picked.map((def) => {
     const target = def.fitToSeason
       ? Math.min(def.makeTarget(ambition, rng), Math.max(1, seasonLength - 1))

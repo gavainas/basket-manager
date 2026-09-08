@@ -13,33 +13,26 @@ fiado. Está flojo de **coherencia, foco y acabado**, y eso es lo que ordena est
 
 Del plan de septiembre ya están cerradas **T0** (esta página, los tests y el CI), **T1**
 (el juego no se contradice), **T2** (el compromiso se descubre: el número salió de la UI
-y en su lugar está la ficha de conducta) y la primera tanda de **T3** (el modo Carrera:
-el club desde cero, con la libreta de contactos, el favor y el corte de los ocho), además
-del **marco fijo** (el juego entra en la ventana sin scrollear como página, y en el
-celular vuelve a ser página), y la **dirección D** (relieve y planilla). El motor tiene
-build limpio, 52 tests que recorren temporadas enteras por el reducer y un harness de
-balance con los números en objetivo.
+y en su lugar está la ficha de conducta) y **T3** (el modo Carrera: el club desde cero,
+con la intro en tres escenas, la libreta de contactos, el favor, la bola de nieve y el
+corte de los ocho), además del **marco fijo** (el juego entra en la ventana sin scrollear
+como página, y en el celular vuelve a ser página), y la **dirección D** (relieve y
+planilla). El motor tiene build limpio, 53 tests que recorren temporadas enteras por el
+reducer y un harness de balance con los números en objetivo.
 
 ## Las próximas cinco cosas
 
-1. **T3, segunda tanda · el club desde cero se termina** (1 sesión). Lo que quedó: la
-   intro como pantalla con más historia y arte (hoy son tres párrafos en el panel de
-   fundación), que la comisión del club nuevo hable con voz propia en la primera
-   pretemporada, que la liga sepa que el club es nuevo ("acá no te conocen" en vez de "tu
-   categoría de siempre") y que los objetivos de la primera temporada sean los de un club
-   que acaba de nacer. *Sale cuando:* una partida de Carrera se juega de punta a punta sin
-   que ninguna pantalla hable de Atlético El Parque.
-2. **T4 · Que jugar con cinco deje de ser el default** (1 sesión). Los presets rotan por
+1. **T4 · Que jugar con cinco deje de ser el default** (1 sesión). Los presets rotan por
    cuarto, la pizarra avisa antes de empezar ("vas con 5 y tenés 9 en la planilla"), el DT
    contratado rota solo, el desgaste de 40' se paga la semana siguiente, y las otras causas
    de bronca (plata, trato, grupo) consiguen su gatillo. *Sale cuando:* en 60 temporadas
    simuladas las broncas dejan de ser 100% 'minutos'.
-3. **Las cinco animaciones** (media sesión). El marcador que sube número a número, las
+2. **Las cinco animaciones** (media sesión). El marcador que sube número a número, las
    filas de la planilla que entran escalonadas, fundido de 120 ms entre pantallas, la
    barra segmentada que se llena, el modal que entra con escala. Con
    `prefers-reduced-motion` respetado. Es la mitad de la sensación de "esto ya no es un
    prototipo" y cuesta menos que un asset.
-4. **T5 · El salto de arte** (en paralelo, gobernado por
+3. **T5 · El salto de arte** (en paralelo, gobernado por
    [`design/ART_PIPELINE.md`](design/ART_PIPELINE.md)). El retrato deja de ser un archivo
    y pasa a ser una receta: capas por seed (base × piel × pelo × barba × camiseta ×
    expresión) compuestas en runtime. La Puerta 3 cambia de enunciado: se aprueba una lámina
@@ -47,14 +40,20 @@ balance con los números en objetivo.
    rastro en `design/arte/BRIEFS/`. *Sale cuando:* dos jugadores del mismo arquetipo en la
    misma pantalla no se ven iguales. Depende de aprobaciones de Gabi, no de código.
 
-5. **Economía con arco** (1 sesión). La caja quiebra sola en 8-15% de las temporadas
+4. **Economía con arco** (1 sesión). La caja quiebra sola en 8-15% de las temporadas
    simuladas sin gestión: el sponsor como contrato con condiciones (cumplí X y renueva),
    la rifa con historia, y la dificultad seleccionable extendida a la economía. *Sale
    cuando:* en 60 temporadas simuladas sin gestión los game over por caja bajan a la mitad,
    y con gestión mínima (un sponsor) desaparecen.
 
-**Orden:** cerrar T3, después T4, con las animaciones y el arte en paralelo. La libreta
-de contactos ya usa las referencias interesadas de T2 (el que lo trae miente por lealtad).
+5. **Lo que queda de T2 y T3, juntos** (media sesión). Que la charla y "mandá a un
+   compañero a buscarlo" también escriban en la ficha de conducta, que "Qué mirar hoy"
+   avise cuando alguien pasa a "aparece cuando quiere", y en la Carrera, que la libreta
+   siga viva en la temporada (el que dijo que no en la pretemporada puede volver a
+   aparecer en un evento) y que el modo tenga su propia entrada en `sim` para medir
+   cuántas carreras llegan a inscribirse sin gestión.
+
+**Orden:** T4 primero, con las animaciones y el arte en paralelo.
 
 ## Decisiones que están en la cancha de Gabi
 
@@ -70,9 +69,6 @@ de contactos ya usa las referencias interesadas de T2 (el que lo trae miente por
 
 ## Después, sin orden fijo
 
-- **Lo que queda de T2**: que la charla y "mandá a un compañero a buscarlo" también
-  escriban en la ficha de conducta (hoy escriben la convocatoria, la cuota y el asado), y
-  que la ficha se lea en "Qué mirar hoy" cuando alguien pasa a "aparece cuando quiere".
 - **Multi-liga humana y etapa 7 (doble partido y fatiga).** Un jugador puede jugar dos
   ligas, o jugar en contra tuya en la otra; el cansancio y los horarios cruzan entre
   ligas; partidos del segundo equipo jugables; el conocimiento de la persona cruza ligas.
