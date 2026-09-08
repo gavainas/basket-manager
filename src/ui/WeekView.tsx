@@ -4,6 +4,7 @@ import type { GameAction } from '../state/gameReducer';
 import { ABSENCE_ACTIONS, reasonById } from '../game/absences';
 import { ACTIONS } from '../game/actions';
 import { BALANCE } from '../game/balance';
+import { conductLabel } from '../game/conduct';
 import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { userGameDay } from '../game/moments';
 import { lineupPromiseWarnings } from '../game/promises';
@@ -1257,8 +1258,10 @@ function LiveMatchPanel({ state, dispatch }: Props) {
           <p className="hc-desc">{p.description}</p>
           <Bar label="Físico" value={p.physical} />
           <Bar label="Motivación" value={p.motivation} />
-          <Bar label="Compromiso" value={p.commitment} />
           <Bar label="Afinidad social" value={p.social} />
+          <div className="hc-meta" style={{ marginTop: '0.3rem' }}>
+            Conducta: {conductLabel(p).short.toLowerCase()}
+          </div>
           <div className="hc-meta" style={{ marginTop: '0.3rem' }}>
             Piernas ahora: {fresh} · {minsOf(p.id)}&apos; jugados
           </div>

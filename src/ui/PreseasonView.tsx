@@ -1,4 +1,5 @@
 import { BALANCE } from '../game/balance';
+import { marketReference } from '../game/conduct';
 import { weeklyFee } from '../game/economy';
 import {
   CONTINUITY_LABELS,
@@ -799,6 +800,7 @@ function MarketProfile({
   const deepKnown = mp.knowledge === 'muy_conocido';
   const feeKnown = mp.contacted || deepKnown || mp.knowledge === 'conocido';
   const fit = agendaFit(state, mp);
+  const referencia = marketReference(mp);
   const active = mp.status === 'disponible';
 
   return (
@@ -865,9 +867,13 @@ function MarketProfile({
               <span className="data-label">Personalidad</span>
               <span className="data-value">{deepKnown ? mp.personality.replace('_', ' ') : '?'}</span>
             </div>
+            {/* Al fichar no ves conducta: ves lo que dice quien lo trajo, y
+                cada uno tiene su interés (T2). */}
             <div className="data-row">
-              <span className="data-label">Compromiso</span>
-              <span className="data-value">{deepKnown ? starsFor(mp.commitment) : '?'}</span>
+              <span className="data-label">Referencias</span>
+              <span className="data-value">
+                <span className="ps-ref-quien">{referencia.who}:</span> {referencia.quote}
+              </span>
             </div>
             <div className="data-row">
               <span className="data-label">Cartel en la liga</span>

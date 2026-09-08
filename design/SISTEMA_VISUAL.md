@@ -566,6 +566,16 @@ septiembre se sacó**: ninguna acción del juego la cambiaba (ver "La ficha del 
 **Decisión de Gabi (sep 2026): el héroe se agrega cuando haya más arte.** El hueco que lo
 espera es ahora la columna izquierda de la ficha del jugador (`.profile-retrato`).
 
+## La conducta en palabras (T2, sep 2026)
+
+El compromiso dejó de ser una cifra: es **una frase con el color del veredicto** y los
+hechos al lado. En la planilla es la versión corta ("Está siempre", "Cuando quiere", "No
+sabemos todavía") en la columna que era la cifra, con los hechos en el tooltip; en la
+ficha, la frase entera como chip y los hechos debajo en letra chica (`ui/Conducta.tsx`).
+Sin evidencia va en tinta apagada, sin chip de color: que el juego no sepa se tiene que
+ver como no saber, no como un valor bajo. En el mercado, la fila "Referencias" lleva quién
+habla en versalita chica y la cita entre comillas: es una voz, no un dato.
+
 ## Modo celular (sep 2026)
 
 El marco fijo es para PC. Debajo de **900 px de ancho** el juego vuelve a ser una página:

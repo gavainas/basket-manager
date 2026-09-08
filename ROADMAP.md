@@ -11,40 +11,34 @@ con personas persistentes, pretemporada con mercado y elección de liga, partido
 cuarto con informe, vestuario con voces por arquetipo y una economía con cuotas, sponsor y
 fiado. Está flojo de **coherencia, foco y acabado**, y eso es lo que ordena esta lista.
 
-Del plan de septiembre ya están cerradas **T0** (esta página, los tests y el CI) y **T1**
-(el juego no se contradice), además del **marco fijo** (el juego entra en la ventana sin
-scrollear como página) y la **dirección D** (relieve y planilla). El motor tiene build
-limpio, 28 tests que recorren temporadas enteras por el reducer y un harness de balance
-con los números en objetivo.
+Del plan de septiembre ya están cerradas **T0** (esta página, los tests y el CI), **T1**
+(el juego no se contradice) y **T2** (el compromiso se descubre: el número salió de la UI
+y en su lugar está la ficha de conducta), además del **marco fijo** (el juego entra en la
+ventana sin scrollear como página, y en el celular vuelve a ser página), y la **dirección
+D** (relieve y planilla). El motor tiene build limpio, 40 tests que recorren temporadas
+enteras por el reducer y un harness de balance con los números en objetivo.
 
 ## Las próximas cinco cosas
 
-1. **T2 · El compromiso se descubre** (1-2 sesiones). El número `commitment` sale de la
-   UI y en su lugar aparece la ficha de conducta (convocado / presente / avisó / faltó sin
-   avisar / cuota en fecha / asados) con una etiqueta observada que arranca en "recién
-   llega: no sabemos de qué palo es" y se afina con evidencia. Las referencias al fichar
-   son interesadas (el amigo miente por lealtad). *Sale cuando:* a la fecha 3 no sabés
-   quién es cumplidor y a la fecha 8 lo sabés porque lo viste. Diseño en la sección 2.B
-   del diagnóstico.
-2. **T3 · El club desde cero** (2-3 sesiones). Modo carrera: no tenés equipo, tenés una
+1. **T3 · El club desde cero** (2-3 sesiones). Modo carrera: no tenés equipo, tenés una
    libreta con 6 a 8 contactos; fichar es pedir un favor; cada firmado abre 1 a 3 contactos
    suyos; necesitás 8 en 4 semanas o no hay temporada. El catálogo de 16 fichables se gana
    en la temporada 2. El modo actual queda como "club en marcha". *Sale cuando:* se puede
-   perder la pretemporada. Va **después** de T2 a propósito: sin número, fichar amigos es
-   confiar en una referencia; si se construye antes, se construye dos veces. Arreglo
-   aplicable ya: los eventos que regalan jugadores sólo si te falta gente, y el mercado no
-   se vacía solo mientras no hacés nada.
-3. **T4 · Que jugar con cinco deje de ser el default** (1 sesión). Los presets rotan por
+   perder la pretemporada. T2 ya está: fichar amigos es confiar en una referencia
+   interesada (`marketReference` en `conduct.ts`), así que el modo carrera se construye
+   sobre eso. Arreglo aplicable ya: los eventos que regalan jugadores sólo si te falta
+   gente, y el mercado no se vacía solo mientras no hacés nada.
+2. **T4 · Que jugar con cinco deje de ser el default** (1 sesión). Los presets rotan por
    cuarto, la pizarra avisa antes de empezar ("vas con 5 y tenés 9 en la planilla"), el DT
    contratado rota solo, el desgaste de 40' se paga la semana siguiente, y las otras causas
    de bronca (plata, trato, grupo) consiguen su gatillo. *Sale cuando:* en 60 temporadas
    simuladas las broncas dejan de ser 100% 'minutos'.
-4. **Las cinco animaciones** (media sesión). El marcador que sube número a número, las
+3. **Las cinco animaciones** (media sesión). El marcador que sube número a número, las
    filas de la planilla que entran escalonadas, fundido de 120 ms entre pantallas, la
    barra segmentada que se llena, el modal que entra con escala. Con
    `prefers-reduced-motion` respetado. Es la mitad de la sensación de "esto ya no es un
    prototipo" y cuesta menos que un asset.
-5. **T5 · El salto de arte** (en paralelo, gobernado por
+4. **T5 · El salto de arte** (en paralelo, gobernado por
    [`design/ART_PIPELINE.md`](design/ART_PIPELINE.md)). El retrato deja de ser un archivo
    y pasa a ser una receta: capas por seed (base × piel × pelo × barba × camiseta ×
    expresión) compuestas en runtime. La Puerta 3 cambia de enunciado: se aprueba una lámina
@@ -52,7 +46,15 @@ con los números en objetivo.
    rastro en `design/arte/BRIEFS/`. *Sale cuando:* dos jugadores del mismo arquetipo en la
    misma pantalla no se ven iguales. Depende de aprobaciones de Gabi, no de código.
 
-**Orden:** T2 → T3, con T4 en cualquier hueco y las animaciones y el arte en paralelo.
+5. **Economía con arco** (1 sesión). La caja quiebra sola en 8-15% de las temporadas
+   simuladas sin gestión: el sponsor como contrato con condiciones (cumplí X y renueva),
+   la rifa con historia, y la dificultad seleccionable extendida a la economía. *Sale
+   cuando:* en 60 temporadas simuladas sin gestión los game over por caja bajan a la mitad,
+   y con gestión mínima (un sponsor) desaparecen.
+
+**Orden:** T3 primero, con T4 en cualquier hueco y las animaciones y el arte en paralelo.
+La conducta ya se escribe con la convocatoria, la cuota y el asado; cuando entre T3, la
+libreta de contactos usa las mismas referencias interesadas del mercado.
 
 ## Decisiones que están en la cancha de Gabi
 
@@ -68,10 +70,9 @@ con los números en objetivo.
 
 ## Después, sin orden fijo
 
-- **Economía con arco.** La caja quiebra sola en 8-15% de las temporadas simuladas sin
-  gestión. El sponsor como contrato con condiciones (cumplí X y renueva), la rifa con
-  historia, y la dificultad seleccionable extendida a la economía (hoy sólo escala faltas y
-  lesiones).
+- **Lo que queda de T2**: que la charla y "mandá a un compañero a buscarlo" también
+  escriban en la ficha de conducta (hoy escriben la convocatoria, la cuota y el asado), y
+  que la ficha se lea en "Qué mirar hoy" cuando alguien pasa a "aparece cuando quiere".
 - **Multi-liga humana y etapa 7 (doble partido y fatiga).** Un jugador puede jugar dos
   ligas, o jugar en contra tuya en la otra; el cansancio y los horarios cruzan entre
   ligas; partidos del segundo equipo jugables; el conocimiento de la persona cruza ligas.

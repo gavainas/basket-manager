@@ -3,6 +3,7 @@
 // La lista es el juego: quién va importa tanto como cuántos.
 
 import { BALANCE, clamp } from './balance';
+import { recordAsado } from './conduct';
 import { affinity, pairKey, FRIEND_THRESHOLD } from './relations';
 import { logPlayerEvent } from './timeline';
 import { pickVoicedRng, type VoicePools } from './voices';
@@ -190,6 +191,13 @@ export function resolveAsado(s: GameState, rng: Rng): AsadoReport {
       if (rng.chance(0.08)) attended.push(p);
       else missed.push({ playerId: p.id, reason: rsvp.reason ?? 'No pudo.' });
     }
+  }
+
+  // La ficha de conducta: a quién invitaste y quién apareció. El asado también
+  // es una herramienta de información.
+  for (const rsvp of plan.rsvps) {
+    const p = squad.find((x) => x.id === rsvp.playerId);
+    if (p) recordAsado(p, attended.includes(p));
   }
 
   const ratio = squad.length > 0 ? attended.length / squad.length : 0;

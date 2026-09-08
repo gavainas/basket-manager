@@ -16,8 +16,8 @@ export const TIPS = {
   fisico: 'Estado físico: baja con los minutos jugados y se recupera descansando durante la semana.',
   motivacion:
     'Ganas de jugar por el club. Baja con derrotas, banco y problemas; sube con victorias, charlas y buen ambiente.',
-  compromiso:
-    'Qué tan confiable es fuera de la cancha: con poco compromiso falta a entrenamientos y falla en la convocatoria.',
+  conducta:
+    'Lo que el club vio de él: a cuántas fechas vino, cuántas faltó sin avisar, si paga la cuota en fecha y si aparece en los asados. Al principio no se sabe; se afina con las fechas.',
   afinidadSocial: 'Qué tan integrado está al grupo: suma a la química del equipo.',
   moralGeneral: 'Promedio de motivación de todo el plantel.',
   ambienteSocial: 'El clima del vestuario y del club: potencia la química del quinteto en la cancha.',

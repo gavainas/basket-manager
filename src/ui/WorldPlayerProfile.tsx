@@ -1,4 +1,5 @@
 import type { GameState } from '../game/types';
+import { famaDeCumplidor } from '../game/conduct';
 import { DEBUG_FULL_SCOUTING, perceivedLevel, scoutingLevel } from '../game/scouting';
 import {
   divisionOfTeam,
@@ -137,7 +138,10 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
           <h4 className="profile-subtitle">Cómo es</h4>
           {knowsWell ? (
             <>
-              <Bar label="Compromiso" value={p.commitment} />
+              {/* De uno de otro club sólo hay fama, no ficha de conducta. */}
+              <p className="muted" style={{ margin: '0 0 0.4rem' }}>
+                {famaDeCumplidor(p.commitment)}
+              </p>
               <Bar label="Confiabilidad" value={p.reliability} />
               <Bar label="Prestigio" value={p.prestige} />
               <p className="muted" style={{ margin: '0.4rem 0 0' }}>

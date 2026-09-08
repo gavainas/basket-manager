@@ -1,4 +1,5 @@
 import { BALANCE, clamp } from './balance';
+import { recordFee } from './conduct';
 import type { GameState, Player } from './types';
 import type { Rng } from './rng';
 
@@ -65,6 +66,9 @@ export function applyWeeklyEconomy(s: GameState, rng: Rng): void {
       }
     }
     if (p.feeStatus === 'pendiente') p.weeksUnpaid += 1;
+    // La ficha de conducta: pagó en fecha o debe (los becados no juegan esto).
+    if (p.feeStatus === 'pagada') recordFee(p, true);
+    else if (p.feeStatus === 'pendiente') recordFee(p, false);
   }
 
   const payers = active.filter((p) => weeklyFee(p) > 0);
