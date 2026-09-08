@@ -172,6 +172,7 @@ function closingRisks(state: GameState): ClosingRisk[] {
   const fee = chosenOpt ? chosenOpt.fee : BALANCE.economy.inscriptionFee;
 
   const risks: ClosingRisk[] = [];
+  const carrera = state.mode === 'carrera' && !!ps.libreta;
   if (state.club.money < 0)
     risks.push({
       short: `Caja en rojo (${formatMoney(state.club.money)})`,
@@ -179,8 +180,12 @@ function closingRisks(state: GameState): ClosingRisk[] {
     });
   if (confirmed.length < min)
     risks.push({
-      short: `Faltan ${min - confirmed.length} para el mínimo de ${min}`,
-      long: `Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`,
+      short: carrera
+        ? `Faltan ${min - confirmed.length} de los ${min}: sin eso no hay temporada`
+        : `Faltan ${min - confirmed.length} para el mínimo de ${min}`,
+      long: carrera
+        ? `Faltan ${min - confirmed.length} jugadores para los ${min} que pide la liga. Acá no hay jugadores de emergencia: si cerrás así, no hay temporada.`
+        : `Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`,
     });
   if (fee > 0 && state.club.money < fee)
     risks.push(
@@ -231,9 +236,16 @@ function PreseasonTopbar({ state, dispatch }: Props) {
     <header className="topbar">
       <div className="topbar-inner">
         <div className="marca">
-          {userClub && (
-            <Crest seed={userClub.id} name={userClub.name} colors={userClub.colors} founded={userClub.founded} size={38} />
-          )}
+          {/* Antes de la primera temporada el mundo todavía no existe y el
+              escudo salía de ahí: se dibuja desde el club, que ya tiene nombre
+              y colores (en Carrera los acaba de elegir el jugador). */}
+          <Crest
+            seed={USER_CLUB_ID}
+            name={state.club.name}
+            colors={userClub?.colors ?? state.club.colors}
+            founded={userClub?.founded ?? 2025}
+            size={38}
+          />
           <div>
             <div className="club-name">{state.club.name}</div>
             <div className="temporada">Temporada {state.seasonNumber} · antes de la primera fecha</div>
@@ -560,7 +572,11 @@ function RosterSection({ state, dispatch }: Props) {
       </h3>
       <Cabecera art="cab-vestuario.webp" alt="El vestuario del club antes del partido" alto={150} />
 
-      {pending.length > 0 ? (
+      {roster.length === 0 ? (
+        <p className="ps-veredicto">
+          Todavía no hay nadie. El plantel se arma en la libreta: empezá por el que seguro te dice que sí.
+        </p>
+      ) : pending.length > 0 ? (
         <>
           <h4 className="ps-subtitulo">
             <span className="chip warn">{pending.length}</span> esperan una respuesta tuya
@@ -613,8 +629,8 @@ function RosterSection({ state, dispatch }: Props) {
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 
-/** Cómo ordenar la vidriera del mercado. */
-type MarketSort = 'nivel' | 'conocido' | 'posicion';
+/** Cómo ordenar la vidriera del mercado ('libreta': como está anotada, el íntimo primero). */
+type MarketSort = 'nivel' | 'conocido' | 'posicion' | 'libreta';
 
 const KNOWLEDGE_RANK: Record<KnowledgeLevel, number> = {
   muy_conocido: 0,
@@ -629,7 +645,9 @@ function MarketSection({ state, dispatch }: Props) {
   const noGestiones = ps.gestionesLeft <= 0;
   const [profileId, setProfileId] = useState<string | null>(null);
   const [posFilter, setPosFilter] = useState<Position | null>(null);
-  const [sort, setSort] = useState<MarketSort>('nivel');
+  // La libreta se lee como está anotada: el íntimo primero, y los que abrió
+  // cada firmado al final, que es el orden en que fueron llegando.
+  const [sort, setSort] = useState<MarketSort>(ps.libreta ? 'libreta' : 'nivel');
   const profileMp = ps.market.find((m) => m.id === profileId) ?? null;
 
   const all = ps.market.filter((m) => m.status === 'disponible');
@@ -637,6 +655,7 @@ function MarketSection({ state, dispatch }: Props) {
   const available = all
     .filter((m) => !posFilter || m.position === posFilter)
     .sort((a, b) => {
+      if (sort === 'libreta') return 0;
       if (sort === 'conocido') return KNOWLEDGE_RANK[a.knowledge] - KNOWLEDGE_RANK[b.knowledge];
       if (sort === 'posicion') return POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position);
       // Del que no sabés nada no se puede decir que sea mejor ni peor: va al
@@ -647,6 +666,8 @@ function MarketSection({ state, dispatch }: Props) {
       return blindA - blindB || b.estTechnique - a.estTechnique;
     });
 
+  const libreta = !!ps.libreta;
+
   const renderCard = (mp: MarketPlayer) => {
     const know = KNOWLEDGE_LABELS[mp.knowledge];
     const active = mp.status === 'disponible';
@@ -654,6 +675,8 @@ function MarketSection({ state, dispatch }: Props) {
     // La fama es pública: si el club apunta a la plaza, se sabe de antemano
     // que este no va a atender el teléfono.
     const snubs = plazaBound(state) && isMarketFigure(mp);
+    // En la libreta, el que lo trajo y por qué vendría valen más que el nivel.
+    const contacto = libreta && mp.relacion;
     return (
       <div key={mp.id} className={`player-card${active ? '' : ' dimmed'}`}>
         <div
@@ -680,9 +703,18 @@ function MarketSection({ state, dispatch }: Props) {
             <div className="approx">nivel</div>
           </div>
         </div>
-        <div className="player-desc">
-          {originNode(state, mp.previousTeam)} {mp.knowledgeSource}
-        </div>
+        {contacto ? (
+          <div className="player-desc">
+            <span className="ps-relacion">{mp.relacion}</span>
+            {mp.viaDe && mp.viaDe !== 'vos' && <span className="chip accent ps-via">Lo trae {mp.viaDe}</span>}
+            <br />
+            {mp.porQue}
+          </div>
+        ) : (
+          <div className="player-desc">
+            {originNode(state, mp.previousTeam)} {mp.knowledgeSource}
+          </div>
+        )}
         {(mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 && (
           <div className="human-note">
             <span className="hn-icon">
@@ -692,9 +724,12 @@ function MarketSection({ state, dispatch }: Props) {
           </div>
         )}
         <div className="player-chips">
-          <span className={`chip ${know.cls}`}>{know.label}</span>
+          {!contacto && <span className={`chip ${know.cls}`}>{know.label}</span>}
           <span className="chip">Físico: {estimateLabel(mp.estPhysical, mp.knowledge)}</span>
-          <span className="chip">{mp.signingCost > 0 ? `Pase: $${mp.signingCost}` : 'Pase libre'}</span>
+          {!contacto && <span className="chip">{mp.signingCost > 0 ? `Pase: $${mp.signingCost}` : 'Pase libre'}</span>}
+          {contacto && (mp.dudas ?? 0) > 0 && active && (
+            <span className="chip warn">Preguntó quién más va</span>
+          )}
           {fit && <span className={`chip ${fit.cls}`}>{fit.text}</span>}
           {mp.availability === 'escuchando_ofertas' && active && <span className="chip warn">Escucha otras ofertas</span>}
           {snubs && active && <span className="chip bad">Figura: no atiende a un club de la plaza</span>}
@@ -708,9 +743,9 @@ function MarketSection({ state, dispatch }: Props) {
           ) : (
             active && <span className="chip">Exigencias: ? (contactalo)</span>
           )}
-          {mp.status === 'fichado' && <span className="chip good">Fichado ✔</span>}
+          {mp.status === 'fichado' && <span className="chip good">{contacto ? 'Dijo que sí ✔' : 'Fichado ✔'}</span>}
           {mp.status === 'perdido' && <span className="chip bad">Arregló con otro club</span>}
-          {mp.status === 'rechazo' && <span className="chip bad">La negociación se cayó</span>}
+          {mp.status === 'rechazo' && <span className="chip bad">{contacto ? 'Dijo que no' : 'La negociación se cayó'}</span>}
         </div>
         {active && (
           <button
@@ -718,7 +753,16 @@ function MarketSection({ state, dispatch }: Props) {
             title={noGestiones ? 'No te quedan gestiones esta semana' : undefined}
             onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true })}
           >
-            {snubs ? 'Llamarlo igual' : mp.contacted ? 'Retomar negociación' : 'Contactar'} (1 gestión)
+            {contacto
+              ? mp.contacted
+                ? 'Insistirle'
+                : 'Pedirle que venga'
+              : snubs
+                ? 'Llamarlo igual'
+                : mp.contacted
+                  ? 'Retomar negociación'
+                  : 'Contactar'}{' '}
+            (1 gestión)
           </button>
         )}
       </div>
@@ -728,12 +772,19 @@ function MarketSection({ state, dispatch }: Props) {
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
       <h3 className="card-band">
-        <Icon name="lupa" size={17} /> Mercado de fichajes
+        <Icon name={libreta ? 'agenda' : 'lupa'} size={17} /> {libreta ? 'La libreta' : 'Mercado de fichajes'}
         <span className="chip band-right">
-          {available.length} de {all.length} disponibles
+          {libreta ? `${available.length} por convencer` : `${available.length} de ${all.length} disponibles`}
         </span>
       </h3>
       <Cabecera art="cab-bar.webp" alt="Convenciendo a un jugador en la mesa de un bar" alto={150} />
+      {libreta && (
+        <p className="hint" style={{ marginTop: 0 }}>
+          No tenés equipo: tenés amigos. Fichar es pedir un favor, y del segundo en adelante te van a preguntar
+          quién más va. Cada uno que diga que sí abre su propia agenda. Necesitás {BALANCE.preseason.minPlayers} en{' '}
+          {ps.totalWeeks} semanas: con menos, no hay temporada.
+        </p>
+      )}
 
       <div className="ps-filtros">
         <span className="ps-filtros-k">Puesto</span>
@@ -756,26 +807,35 @@ function MarketSection({ state, dispatch }: Props) {
         <span className="ps-filtros-k" style={{ marginLeft: 'auto' }}>
           Ordenar
         </span>
+        {libreta && (
+          <button className={sort === 'libreta' ? 'small on' : 'small'} onClick={() => setSort('libreta')}>
+            Como está en la libreta
+          </button>
+        )}
         <button className={sort === 'nivel' ? 'small on' : 'small'} onClick={() => setSort('nivel')}>
           Por nivel
         </button>
-        <button className={sort === 'conocido' ? 'small on' : 'small'} onClick={() => setSort('conocido')}>
-          Por cuánto lo conocés
-        </button>
+        {!libreta && (
+          <button className={sort === 'conocido' ? 'small on' : 'small'} onClick={() => setSort('conocido')}>
+            Por cuánto lo conocés
+          </button>
+        )}
         <button className={sort === 'posicion' ? 'small on' : 'small'} onClick={() => setSort('posicion')}>
           Por puesto
         </button>
       </div>
 
       {available.length === 0 ? (
-        <p className="muted">No queda nadie disponible con ese filtro.</p>
+        <p className="muted">
+          {libreta ? 'La libreta está vacía: no queda nadie a quien pedirle.' : 'No queda nadie disponible con ese filtro.'}
+        </p>
       ) : (
         <div className="player-grid ps-grid">{available.map(renderCard)}</div>
       )}
 
       {gone.length > 0 && (
         <>
-          <h4 className="ps-subtitulo">Ya no disponibles</h4>
+          <h4 className="ps-subtitulo">{libreta ? 'Ya contestaron' : 'Ya no disponibles'}</h4>
           <div className="player-grid ps-grid">{gone.map(renderCard)}</div>
         </>
       )}
@@ -836,7 +896,15 @@ function MarketProfile({
 
         <div className="profile-body">
           <p style={{ margin: '0 0 0.6rem' }}>
-            {originNode(state, mp.previousTeam)} {mp.knowledgeSource}
+            {ps.libreta && mp.relacion ? (
+              <>
+                <strong>{mp.relacion}.</strong> {mp.porQue}
+              </>
+            ) : (
+              <>
+                {originNode(state, mp.previousTeam)} {mp.knowledgeSource}
+              </>
+            )}
           </p>
 
           <h4 className="profile-subtitle">Lo que sabés (y lo que no)</h4>
@@ -949,16 +1017,23 @@ function NegotiationModal({ state, dispatch }: Props) {
     const counter = mp.demand ? COUNTER_OFFERS[mp.demand] : undefined;
     const canCounter = counter && !ps.counterUsed[mp.id];
     const fit = agendaFit(state, mp);
+    const contacto = !!ps.libreta && !!mp.relacion;
     return (
       <div className="modal-backdrop">
         <div className="modal">
-          <h2>Negociación con {mp.name}</h2>
+          <h2>{contacto ? `Pedirle el favor a ${mp.name}` : `Negociación con ${mp.name}`}</h2>
           <p className="event-text">
-            {mp.position} · {mp.age} años · {mp.height} cm. {originSentence(mp.previousTeam)}
+            {mp.position} · {mp.age} años · {mp.height} cm.{' '}
+            {contacto ? `${mp.relacion}.` : originSentence(mp.previousTeam)}
             <br />
-            {mp.knowledgeSource}
+            {contacto ? mp.porQue : mp.knowledgeSource}
             <br />
-            {feeAttitudeLabel(mp)}. {mp.signingCost > 0 ? `El pase cuesta $${mp.signingCost}.` : 'El pase es libre.'}
+            {feeAttitudeLabel(mp)}.{' '}
+            {contacto
+              ? 'Un favor no tiene pase.'
+              : mp.signingCost > 0
+                ? `El pase cuesta $${mp.signingCost}.`
+                : 'El pase es libre.'}
             <br />
             {(mp.agenda?.notes.length ?? 0) > 0 && (
               <>
@@ -980,8 +1055,21 @@ function NegotiationModal({ state, dispatch }: Props) {
           </p>
           <div className="options">
             <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'accept' })}>
-              {mp.demand ? `Aceptar su condición y ficharlo` : `Ficharlo${mp.signingCost > 0 ? ` ($${mp.signingCost})` : ''}`}
-              {mp.demand && <span className="opt-hint">Queda registrado como promesa del club</span>}
+              {contacto
+                ? mp.demand
+                  ? 'Pedírselo, aceptando lo que pide'
+                  : 'Pedírselo'
+                : mp.demand
+                  ? `Aceptar su condición y ficharlo`
+                  : `Ficharlo${mp.signingCost > 0 ? ` ($${mp.signingCost})` : ''}`}
+              {contacto ? (
+                <span className="opt-hint">
+                  Un favor: puede decir que sí… o preguntar quién más va.
+                  {mp.demand ? ' Lo que pide queda como promesa del club.' : ''}
+                </span>
+              ) : (
+                mp.demand && <span className="opt-hint">Queda registrado como promesa del club</span>
+              )}
             </button>
             {canCounter && (
               <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'counter' })}>

@@ -15,6 +15,7 @@ import {
 import {
   advancePreseasonWeek,
   closePreseason,
+  createCareerNewGame,
   createPreseasonNewGame,
   inscriptionOffer,
   openNegotiation,
@@ -38,6 +39,7 @@ import type { AbsenceDifficulty, AttackTactic, DefenseTactic, GameState, LineupP
 export type GameAction =
   | { type: 'NEW_GAME'; difficulty?: AbsenceDifficulty }
   | { type: 'NEW_GAME_PRESEASON'; difficulty?: AbsenceDifficulty }
+  | { type: 'NEW_GAME_CAREER'; difficulty?: AbsenceDifficulty; clubName: string; colors: [string, string] }
   | { type: 'NEW_SEASON' }
   | { type: 'LOAD'; state: GameState }
   | { type: 'QUIT_TO_MENU' }
@@ -84,6 +86,8 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       return createNewGame(randomSeed(), action.difficulty);
     case 'NEW_GAME_PRESEASON':
       return createPreseasonNewGame(randomSeed(), action.difficulty);
+    case 'NEW_GAME_CAREER':
+      return createCareerNewGame(randomSeed(), action.difficulty, { clubName: action.clubName, colors: action.colors });
     case 'LOAD':
       return action.state;
     case 'QUIT_TO_MENU':

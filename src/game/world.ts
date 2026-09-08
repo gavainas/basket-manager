@@ -460,7 +460,8 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   world.clubs.push({
     id: USER_CLUB_ID,
     name: state.club.name,
-    colors: CLUB_COLORS[0],
+    // En el modo Carrera los colores los eligió el jugador al fundar el club.
+    colors: state.club.colors ?? CLUB_COLORS[0],
     // El club nació el año anterior a su primera temporada, y esa fecha no se mueve.
     founded: 2025,
     // El prestigio real del usuario vive en state.club; esto es un espejo.

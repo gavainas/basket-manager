@@ -219,6 +219,8 @@ export interface ConductRecord {
 
 export interface Club {
   name: string;
+  /** Los colores de la camiseta y el escudo. Los elige el jugador en el modo Carrera; si falta, el azul y blanco de siempre. */
+  colors?: [string, string];
   money: number;
   socialClimate: number; // ambiente social 0-100
   organization: number; // 0-100
@@ -536,6 +538,17 @@ export interface MarketPlayer {
   contacted: boolean;
   /** Si viene del mundo (agente libre real): el id de esa persona. */
   worldPlayerId?: string;
+  // --- La libreta del modo Carrera (ver carrera.ts) ---
+  /** Quién es para vos ("Tu primo", "Compañero de laburo de X"). */
+  relacion?: string;
+  /** Por qué vendría, y qué te va a pedir. */
+  porQue?: string;
+  /** Quién te lo pasó: 'vos' en la libreta del arranque, o el nombre del firmado que abrió su agenda. */
+  viaDe?: string;
+  /** Cuántos contactos suyos abre si firma (oculto). */
+  abre?: number;
+  /** Veces que preguntó "¿quién más va?" y no firmó. */
+  dudas?: number;
 }
 
 /** Un mensaje de la previa entre clubes (jugador rival real, tu vestuario o el delegado). */
@@ -653,6 +666,12 @@ export interface PreseasonState {
   log: string[];
   moneySpent: number;
   summary: PreseasonSummaryData | null;
+  /**
+   * Modo Carrera, primera pretemporada: el "mercado" es tu libreta de
+   * contactos. Fichar es pedir un favor, cada firmado abre su agenda, y si no
+   * juntás el mínimo no hay temporada.
+   */
+  libreta?: boolean;
 }
 
 // ---------- Mundo: ligas, clubes, equipos y jugadores rivales ----------
@@ -973,6 +992,12 @@ export interface GameState {
   secondTeam?: SecondTeamState | null;
   /** Dificultad de faltas y lesiones (elegida al crear la partida; saves viejos = medio). */
   absenceDifficulty?: AbsenceDifficulty;
+  /**
+   * Cómo empezó la partida: 'club' (Atlético El Parque en marcha, el de
+   * siempre) o 'carrera' (el club desde cero: sin plantel, con una libreta de
+   * contactos). Opcional: los saves viejos son 'club'.
+   */
+  mode?: 'club' | 'carrera';
   /** Convocatoria al asado de esta semana (respuestas del plantel); opcional para no migrar saves. */
   asadoPlan?: AsadoPlan | null;
   /** Cómo salió el asado de esta semana (para el informe y el partido). */

@@ -306,9 +306,19 @@ export function getPreseasonEvent(id: string): PreseasonEventDef {
   return def;
 }
 
+/**
+ * Los eventos que regalan jugadores. El diagnóstico de septiembre midió que
+ * con ellos la pretemporada se ganaba sin jugarla (tres jugadores gratis en
+ * cuatro semanas): ahora se disparan sólo si te falta gente para el mínimo, y
+ * en la libreta del modo Carrera nunca — ahí la red de contactos ES el juego.
+ */
+const GIFT_EVENTS = new Set(['ps_duo_amigos', 'ps_veterano_vuelve', 'ps_trae_amigo']);
+
 /** Sortea el evento de la semana de pretemporada (o null). */
 export function rollPreseasonEvent(s: GameState, rng: Rng): PreseasonEventState | null {
-  const fireable = PRESEASON_EVENTS.filter((e) => e.canFire(s));
+  const shortOfPlayers = confirmed(s).length < BALANCE.preseason.minPlayers;
+  const giftsAllowed = !s.preseason?.libreta && shortOfPlayers;
+  const fireable = PRESEASON_EVENTS.filter((e) => e.canFire(s) && (giftsAllowed || !GIFT_EVENTS.has(e.id)));
   // La misma escena dos veces en la misma pretemporada rompe la ilusión: lo ya
   // visto sale del sorteo. Solo si no queda nada fresco se relaja el filtro,
   // antes que dejar la semana muda.
