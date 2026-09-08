@@ -246,6 +246,22 @@ diseño, no una solución: el que mira tiene que elegir cuál de los dos mover.
    `min-height: 0` los hijos aceptan achicarse por debajo de su contenido y las cards se
    recortan a la mitad.
 
+## La portada: menú central (sep 2026)
+
+Composición aprobada por Gabi (`public/arte/portada-menu-central/README.md`): la
+ilustración del asado a sangre, un velo oscuro aparte (`--portada-velo`, ajustable sin
+tocar la imagen), el título centrado arriba en texto, dos accesos grandes en el medio y
+uno chico debajo. Los accesos son **imagen + etiqueta, sin caja**: el fondo se ve entre
+medio, y el estado se cuenta con el subrayado naranja a pincel (hover y foco) y la sombra
+proyectada. Sin partida guardada la carpeta queda apagada pero reconocible.
+
+"Nueva partida" abre un segundo paso en un panel oscuro translúcido con las tres
+modalidades y el selector de faltas y lesiones; "Gestionar partida", otro con el estado
+del guardado y el borrar con confirmación. Escape vuelve al menú. Entra sin scrollear a
+1280×720 y 1920×1080; en el celular los accesos se apilan y la página scrollea. Vive en
+`src/ui/Portada.tsx` y en el bloque "La portada" de `src/styles.css`; la fundación del
+club (Carrera) sigue con el layout partido en dos de `.menu-screen`.
+
 ## Barra superior
 
 Identidad del club a la izquierda — escudo, nombre, año de fundación — y después las

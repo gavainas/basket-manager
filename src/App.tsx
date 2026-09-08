@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useState } from 'react';
 import { gameReducer, type GameAction } from './state/gameReducer';
-import { CareerSetup } from './ui/CareerSetup';
-import { clearSave, loadGame, saveGame, saveStatus } from './persistence/storage';
+import { Portada } from './ui/Portada';
+import { loadGame, saveGame, saveStatus } from './persistence/storage';
 import { Hub } from './ui/Hub';
 import { ClubView } from './ui/ClubView';
 import { RosterView } from './ui/RosterView';
@@ -24,7 +24,6 @@ import { ClubProfile } from './ui/ClubProfile';
 import { USER_CLUB_ID } from './game/world';
 import { activePlayers, clubRecord } from './game/match';
 import { NavigateTabContext, type AppFocus, type AppTab } from './ui/nav';
-import type { AbsenceDifficulty } from './game/types';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
 import { HistoryView } from './ui/HistoryView';
 import { PreseasonView } from './ui/PreseasonView';
@@ -114,134 +113,6 @@ function scrollContenidoArriba() {
   window.scrollTo({ top: 0 });
 }
 
-const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }> = {
-  facil: { label: 'Fácil', desc: 'Casi siempre están todos: la vida molesta poco.' },
-  medio: { label: 'Medio', desc: 'La vida pasa: enfermos, viajes y algún lesionado.' },
-  dificil: { label: 'Difícil', desc: 'Cada semana falta gente: armar el equipo con los que vinieron es el juego.' },
-};
-
-function MainMenu({
-  onNew,
-  onNewPreseason,
-  onNewCareer,
-  onContinue,
-  ask,
-}: {
-  onNew: (difficulty: AbsenceDifficulty) => void;
-  onNewPreseason: (difficulty: AbsenceDifficulty) => void;
-  onNewCareer: (difficulty: AbsenceDifficulty, clubName: string, colors: [string, string]) => void;
-  onContinue: () => void;
-  ask: (req: ConfirmRequest) => void;
-}) {
-  const [, forceRender] = useState(0);
-  const [difficulty, setDifficulty] = useState<AbsenceDifficulty>('medio');
-  const [carrera, setCarrera] = useState(false);
-  const status = saveStatus();
-  const saved = status === 'ok';
-
-  if (carrera) {
-    return (
-      <CareerSetup
-        difficulty={difficulty}
-        portada={PORTADA}
-        onStart={(n, c) => onNewCareer(difficulty, n, c)}
-        onBack={() => setCarrera(false)}
-      />
-    );
-  }
-
-  return (
-    <div className="menu-screen">
-      {/* Arte provisional (ver design/ART_PIPELINE.md y la constante PORTADA).
-          Si la imagen no carga, el panel queda en grafito y el menú sigue usable. */}
-      <div
-        className="menu-portada"
-        style={{ backgroundImage: `url(${PORTADA})` }}
-        role="img"
-        aria-label="Asado en la cantina del club"
-      />
-
-      <div className="menu-panel">
-        <h1>
-          Básquet <span>Manager</span> Amateur
-        </h1>
-        <p>
-          Manejás un club amateur de básquet. No alcanza con ganar: necesitás jugadores motivados, cuotas pagas, buen
-          ambiente y una caja que no llegue a cero. Sobreviví la temporada… y si se puede, salí campeón.
-        </p>
-        <div className="menu-difficulty">
-          <div className="menu-diff-label">Faltas y lesiones (para partidas nuevas)</div>
-          <div className="segmented">
-            {(Object.keys(DIFFICULTY_INFO) as AbsenceDifficulty[]).map((d) => (
-              <button key={d} className={difficulty === d ? 'on' : ''} onClick={() => setDifficulty(d)}>
-                {DIFFICULTY_INFO[d].label}
-              </button>
-            ))}
-          </div>
-          <p className="menu-diff-desc">{DIFFICULTY_INFO[difficulty].desc}</p>
-        </div>
-        <div className="menu-buttons">
-          {status === 'incompatible' && (
-            <p style={{ color: 'var(--bad)', fontWeight: 600, margin: 0 }}>
-              ⚠ Hay una partida guardada de una versión que este juego ya no puede leer. No se va a cargar; si empezás
-              una nueva, se pierde.
-            </p>
-          )}
-          {saved && (
-            <button className="primary" onClick={onContinue}>
-              Continuar partida
-            </button>
-          )}
-          {/* Dos modos: el club en marcha (Atlético El Parque, con o sin
-              pretemporada) y la carrera desde cero (T3: sin plantel, con una
-              libreta de contactos). */}
-          <div className="menu-modo">
-            <div className="menu-modo-k">Carrera · el club desde cero</div>
-            <button className={saved ? '' : 'primary'} onClick={() => setCarrera(true)}>
-              Fundar tu club · sin plantel, con una libreta de amigos
-            </button>
-          </div>
-          <div className="menu-modo">
-            <div className="menu-modo-k">Club en marcha · Atlético El Parque</div>
-            <button onClick={() => onNewPreseason(difficulty)}>Armá el plantel en la pretemporada</button>
-            <button onClick={() => onNew(difficulty)}>Partida directa · plantel ya armado</button>
-          </div>
-          {status !== 'none' && (
-            <button
-              className="danger"
-              onClick={() =>
-                ask({
-                  title: 'Borrar la partida guardada',
-                  message: 'Se pierden el club, el plantel y toda su historia. Esto no se puede deshacer.',
-                  confirmLabel: 'Borrar todo',
-                  danger: true,
-                  onConfirm: () => {
-                    clearSave();
-                    forceRender((n) => n + 1);
-                  },
-                })
-              }
-            >
-              Borrar partida guardada
-            </button>
-          )}
-        </div>
-        <p className="menu-version">
-          Versión {__COMMIT_HASH__} ·{' '}
-          {new Date(__COMMIT_DATE__).toLocaleString('es-UY', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-          })}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, null);
 
@@ -312,7 +183,8 @@ export default function App() {
     };
     return (
       <>
-        <MainMenu
+        <Portada
+          portada={PORTADA}
           ask={setConfirmReq}
           onNew={(difficulty) => startNew({ type: 'NEW_GAME', difficulty })}
           onNewPreseason={(difficulty) => startNew({ type: 'NEW_GAME_PRESEASON', difficulty })}

@@ -20,3 +20,14 @@ Leer primero CLAUDE.md y revisar la portada actual y sus acciones. Implementar l
 7. Verificar visualmente la implementación, ejecutar las comprobaciones requeridas por CLAUDE.md y documentar la feature en CHANGELOG.md. No publicar en main automáticamente: dejar la implementación en una rama para revisión.
 
 Esta entrega solo agrega recursos y documentación; no implementa cambios de interfaz.
+
+## Implementación (sep 2026)
+
+Hecha en `src/ui/Portada.tsx` y el bloque "La portada: menú central" de `src/styles.css`,
+siguiendo los siete puntos de arriba. Lo que el juego carga son los **WebP de 640 px**
+(`continuar.webp`, `nueva-partida.webp`, `gestionar.webp`, 47-109 KB cada uno), derivados
+de los PNG de esta carpeta con el canvas de Chromium a calidad 0,86; los PNG quedan como
+fuente y no se sirven. El título es texto en Oswald 700 (crema y naranja con sombra dura):
+no hay fuente collegiate en el proyecto y no se sumó ninguna. "Nueva partida" abre un
+segundo paso con **tres** modalidades, no dos: desde T3 existe la Carrera además de la
+pretemporada y la partida directa. `referencia.png` no se usa en el juego.
