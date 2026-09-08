@@ -4477,8 +4477,14 @@ button.mini.blue.on {
    arriba y abajo (sticky, no fijas: no tapan nada porque ocupan su lugar), y
    todo lo que scrolleaba adentro de su panel pasa a scrollear con la página.
    Ninguna pantalla se rediseña: sólo se apaga el encierro. En escritorio nada
-   de esto se aplica. */
+   de esto se aplica.
+
+   El orden de las reglas importa: primero se apaga el encierro (marco,
+   pantallas, paneles que scrolleaban), después se corrige lo que estira la
+   página a lo ancho, y al final las excepciones que SÍ scrollean de costado
+   (tablas, la planilla del plantel). */
 @media (max-width: 900px) {
+  /* --- 1. El marco deja de ser una ventana --- */
   .marco {
     height: auto;
     min-height: 100dvh;
@@ -4490,39 +4496,6 @@ button.mini.blue.on {
     overflow-y: visible;
   }
 
-  /* Lo que no encogía y estiraba la página a lo ancho: el marcador (dos
-     equipos de 140px mínimo más el "vs") y la tira de siete días. */
-  .scoreboard { gap: 0.8rem; padding: 1rem 0.6rem; }
-  .scoreboard .team { min-width: 0; flex: 1 1 0; }
-  .scoreboard .score { font-size: var(--fs-2xl); }
-
-  /* Una pantalla es una columna del ancho de la ventana, no del ancho de su
-     hijo más ancho: sin esto la grilla implícita mide por min-content y una
-     fila de chips que no corta estira toda la pantalla hacia la derecha. */
-  .pantalla,
-  .semana-vista {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .pantalla > *,
-  .semana-vista > *,
-  .partido-pantalla > *,
-  .partido-cabecera > *,
-  .partido-cuerpo > *,
-  .quinteto-pantalla > *,
-  .informe-pantalla > *,
-  .informe-cuerpo > * {
-    min-width: 0;
-  }
-
-  .partido-cabecera { grid-template-columns: minmax(0, 1fr); }
-
-  /* Un cabezal con chips (la convocatoria: "Faltas: Medio", "Lista 2 días
-     antes") corta en dos líneas en vez de salirse de la card. */
-  .vista .card > h3 { flex-wrap: wrap; }
-  .semana-strip { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.2rem; }
-  .dia-cell { padding: 0.25rem 0.15rem; overflow: hidden; }
-
   .topbar { position: sticky; top: 0; }
   .recursos { position: sticky; bottom: 0; }
 
@@ -4532,6 +4505,10 @@ button.mini.blue.on {
     min-height: 0;
     padding-bottom: var(--sp-4);
   }
+
+  /* Un botón al pie de una pantalla no puede quedar debajo de la barra pegada:
+     el scroll automático (foco, "scroll into view") le deja el lugar. */
+  html { scroll-padding-bottom: 130px; }
 
   /* Las pantallas dejan de medir el alto de la ventana: sus filas miden lo que
      su contenido pide (se mantiene la grilla para no perder los gaps). */
@@ -4568,27 +4545,108 @@ button.mini.blue.on {
     max-height: none;
   }
 
-  /* Una sola columna donde había dos o tres. */
+  /* --- 2. Una columna, y del ancho de la ventana --- */
+
+  /* Una pantalla es una columna del ancho de la ventana, no del ancho de su
+     hijo más ancho: sin esto la grilla implícita mide por min-content y una
+     fila de chips que no corta estira toda la pantalla hacia la derecha. */
+  .pantalla,
+  .semana-vista,
+  .plantel-pantalla,
+  .partido-cabecera,
   .semana-planning,
   .partido-cuerpo,
   .informe-cuerpo,
   .hub-grid,
   .hub-bloques,
-  .lineup-layout {
+  .lineup-layout,
+  .grid.cols-2,
+  .grid.cols-3,
+  .grid.cols-4 {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;
+  }
+
+  .pantalla > *,
+  .semana-vista > *,
+  .plantel-pantalla > *,
+  .partido-pantalla > *,
+  .partido-cabecera > *,
+  .partido-cuerpo > *,
+  .quinteto-pantalla > *,
+  .informe-pantalla > *,
+  .informe-cuerpo > *,
+  .grid > *,
+  .sheet-layout > *,
+  .card {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .partido-col-scroll { grid-row: auto; }
   .informe-moods { grid-column: auto; }
   .hub-bloques .hub-block { grid-template-rows: auto auto; }
 
-  /* Las cards que iban a `margin-bottom: 0` porque las separaba un gap de
-     grilla o de flex siguen separadas: las columnas siguen siendo flex/grid. */
+  /* Lo que no encogía y estiraba la página a lo ancho: el marcador (dos
+     equipos de 140px mínimo más el "vs"), la tira de siete días, los cabezales
+     con chips y la píldora de pestañas (era `inline-flex` con `overflow:
+     hidden`: si no entraban, la última quedaba cortada sin aviso). */
+  .scoreboard { gap: 0.8rem; padding: 1rem 0.6rem; }
+  .scoreboard .team { min-width: 0; flex: 1 1 0; }
+  .scoreboard .score { font-size: var(--fs-2xl); }
+  .semana-strip { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.2rem; }
+  .dia-cell { padding: 0.25rem 0.15rem; overflow: hidden; }
+  .vista .card > h3 { flex-wrap: wrap; }
 
-  /* La barra de recursos, compacta: los cuatro números en una fila (sin la
-     letra chica) y el botón de avanzar abajo. Pegada abajo se lleva pantalla,
-     así que no puede medir lo que mide en escritorio. */
+  .view-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 100%;
+    border-radius: var(--radius);
+  }
+
+  /* --- 3. Lo que SÍ desliza de costado, adentro de su panel --- */
+
+  /* Las tablas anchas (posiciones, planilla del partido, movimientos) y la
+     planilla del plantel (una placa con renglones de ancho fijo). Va después
+     de la lista que apaga el scroll interno porque la pisa a propósito. */
+  .table-wrap,
+  .pane > .table-wrap.pane-body,
+  .plantel-cuerpo {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* --- 4. Las dos barras, compactas --- */
+
+  /* La barra superior en dos filas: el club y Salir arriba, las siete
+     secciones abajo repartidas a lo ancho y sólo con su ícono (el nombre lo
+     dice la pantalla). Antes la barra scrolleaba de costado y sólo se veían
+     cuatro secciones sin que nada avisara. */
+  .topbar-inner {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .topbar .marca { border-right: 0; padding-right: 0.6rem; }
+  .topbar .marca .temporada { display: none; }
+
+  .secciones {
+    flex: 1 1 100%;
+    order: 3;
+    margin-left: 0;
+    justify-content: space-between;
+    border-top: 1px solid var(--chrome-linea);
+  }
+
+  .secciones .seccion { flex: 1 1 0; padding: 0.3rem 0.2rem 0.25rem; }
+  .secciones .seccion-label { display: none; }
+  .secciones .seccion-punto { margin-right: 0; }
+
+  /* La barra de recursos: los cuatro números en una fila (sin la letra chica)
+     y el botón de avanzar abajo. Pegada abajo se lleva pantalla, así que no
+     puede medir lo que mide en escritorio. */
   .recursos-inner {
     flex-wrap: wrap;
     overflow-x: visible;
@@ -4613,18 +4671,4 @@ button.mini.blue.on {
 
   .recursos .recurso.accion .s { display: block; }
   .recursos .avanzar { padding: 0.45rem 1rem; }
-
-  /* Un botón al pie de una pantalla no puede quedar debajo de la barra pegada:
-     el scroll automático (foco, "scroll into view") le deja el lugar. */
-  html { scroll-padding-bottom: 130px; }
-
-  /* La barra superior: secciones más apretadas, sólo ícono y punto (el nombre
-     de la sección lo dice la pantalla); el resto scrollea a lo ancho si hace
-     falta, que ya lo hacía. */
-  .secciones { margin-left: 0; }
-  .secciones .seccion { padding: 0.35rem 0.5rem 0.25rem; }
-  .secciones .seccion-label { display: none; }
-  .secciones .seccion-punto { margin-right: 0; }
-  .topbar .marca { padding-right: 0.6rem; }
-  .topbar .marca .temporada { display: none; }
 }
