@@ -3285,7 +3285,9 @@ button.mini.blue.on {
   font-size: var(--fs-2xl);
 }
 
-/* Drama del partido: el marcador salta al actualizarse y las alertas entran. */
+/* Drama del partido: el marcador late al actualizarse (desde T5 lo dispara
+   `CountUp` con la clase `contando` mientras sube número a número) y las
+   alertas entran. */
 .scoreboard .score-pop {
   animation: score-pop 0.55s ease;
 }
@@ -4496,6 +4498,96 @@ button.mini.blue.on {
     aspect-ratio: 16 / 7;
     max-height: 32vh;
     min-height: 0;
+  }
+}
+
+/* ---------- Movimiento (T5, sep 2026): cinco animaciones, y ninguna más ---------- */
+
+/* La regla: el movimiento cuenta algo que pasó (un número que subió, una
+   lista que llegó, una pantalla que cambió). Nada se mueve por decorar, y todo
+   dura menos que un parpadeo largo. Las cinco:
+     1. el marcador sube número a número (CountUp en ui/CountUp.tsx + el pop);
+     2. las filas de la planilla entran escalonadas;
+     3. fundido de 120 ms entre pantallas;
+     4. la barra segmentada se llena;
+     5. el modal entra con escala.
+   Con `prefers-reduced-motion` todo esto se apaga (bloque al final). */
+
+/* 1. El marcador: mientras cuenta, el número late una vez. */
+.score .contando {
+  display: inline-block;
+  animation: score-pop 0.55s ease;
+}
+
+/* 2. Las filas de la planilla, una detrás de otra. `--fila` la pone la lista. */
+.planilla-fila {
+  animation: fila-in 220ms ease-out both;
+  animation-delay: calc(var(--fila, 0) * 28ms);
+}
+
+@keyframes fila-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 3. Fundido entre pantallas. Cada vista se monta al cambiar de sección (y la
+   Semana, además, al cambiar de etapa). */
+.vista {
+  animation: pantalla-in 120ms ease-out both;
+}
+
+@keyframes pantalla-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 4. La barra segmentada se llena desde la izquierda al aparecer. Dentro de una
+   fila escalonada, espera a su fila. */
+.bar-fill,
+.mini-medidor i {
+  transform-origin: left center;
+  animation: barra-llena 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.planilla-fila .mini-medidor i {
+  animation-delay: calc(var(--fila, 0) * 28ms + 120ms);
+}
+
+@keyframes barra-llena {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* 5. El modal entra con escala; el velo, con fundido. */
+.modal-backdrop {
+  animation: velo-in 120ms ease-out both;
+}
+
+.modal-backdrop > * {
+  animation: modal-in 160ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes velo-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Quien pidió menos movimiento, no lo recibe: ni estas cinco ni las que ya
+   había (el pop del marcador, las alertas, las transiciones de hover). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

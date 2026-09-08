@@ -923,7 +923,7 @@ export function signMarketPlayer(
     addPromise(s, player.id, player.name, terms.demandApplied, terms.promiseLabel ?? DEMAND_LABELS[terms.demandApplied]);
   }
   if (terms.demandApplied === 'amigo') {
-    const friend = createRecruit(rng, { minTechnique: 42, maxTechnique: 64, season: s.seasonNumber });
+    const friend = createRecruit(rng, { minTechnique: 42, maxTechnique: 64, season: s.seasonNumber, taken: s.players.map((p) => p.name) });
     friend.description = `Vino porque ficharon a su amigo ${mp.name}.`;
     s.players.push(friend);
     p.continuity[friend.id] = 'confirmado';
@@ -1288,7 +1288,7 @@ export function closePreseason(state: GameState): GameState {
   if (roster.length < BALANCE.preseason.minPlayers) {
     const needed = BALANCE.preseason.minPlayers - roster.length;
     for (let i = 0; i < needed; i++) {
-      const emergency = createRecruit(rng, { minTechnique: 32, maxTechnique: 48, season: s.seasonNumber });
+      const emergency = createRecruit(rng, { minTechnique: 32, maxTechnique: 48, season: s.seasonNumber, taken: s.players.map((p) => p.name) });
       emergency.description = 'Vino a dar una mano a último momento para que el club pudiera inscribirse.';
       s.players.push(emergency);
       p.continuity[emergency.id] = 'confirmado';

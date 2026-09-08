@@ -8,10 +8,11 @@ import { conductLabel } from '../game/conduct';
 import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { userGameDay } from '../game/moments';
 import { lineupPromiseWarnings } from '../game/promises';
-import { courtFreshness, evaluateTeam, isSelectable } from '../game/match';
+import { courtFreshness, evaluateTeam, isSelectable, PLAN_MIN_BENCH } from '../game/match';
 import { userFixtureOfWeek } from '../game/world';
 import type { WeekDay } from '../game/types';
 import { Bar } from './Bar';
+import { CountUp } from './CountUp';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { StyleChip } from './StyleChip';
@@ -824,6 +825,13 @@ function LineupPanel({ state, dispatch }: Props) {
   const missing = POSITION_ORDER.filter((pos) => !covered.has(pos));
   const slots = assignSlots(starters);
 
+  // Los que vinieron y se quedan mirando: la pizarra lo dice antes de empezar
+  // (T4), y nombra a los que se van a calentar por eso.
+  const leftOut = available.filter((p) => !state.starters.includes(p.id) && !rotationIds.includes(p.id));
+  const leftOutHot = leftOut.filter(
+    (p) => p.personality === 'protagonista' || p.expectedRole === 'titular' || p.grievance?.cause === 'minutos'
+  );
+
   // Drag & drop: el id viaja en el dataTransfer; los guards viven en el reducer.
   const dragStart = (id: string) => (e: React.DragEvent) => {
     e.dataTransfer.setData('text/plain', id);
@@ -903,6 +911,22 @@ function LineupPanel({ state, dispatch }: Props) {
         {count === 5 && rotationIds.length === 0 && (
           <p className="muted" style={{ marginBottom: 0, color: 'var(--warn)' }}>
             Sin banco no hay cambios: los cinco juegan los 40 minutos, llegan fundidos al final y se desgastan mucho más.
+            {available.length > 5 && ` Tenés ${available.length} en la planilla.`}
+          </p>
+        )}
+        {count === 5 && rotationIds.length > 0 && leftOut.length > 0 && (
+          <p className="muted" style={{ marginBottom: 0, color: 'var(--warn)' }}>
+            Vas con {count + rotationIds.length} y tenés {available.length} en la planilla:{' '}
+            {leftOutHot.length > 0
+              ? `${leftOutHot.map((p) => shortName(p.name)).join(', ')} ${leftOutHot.length > 1 ? 'se van' : 'se va'} a calentar mirando desde afuera.`
+              : `${leftOut.map((p) => shortName(p.name)).join(', ')} ${leftOut.length > 1 ? 'miran' : 'mira'} desde afuera.`}
+          </p>
+        )}
+        {count === 5 && rotationIds.length > 0 && (
+          <p className="muted" style={{ marginBottom: 0 }}>
+            {rotationIds.length >= PLAN_MIN_BENCH
+              ? 'Con banco, el partido rota solo: frescos en el 2° cuarto, titulares en el 3°, cerradores al final. En el partido lo podés pasar a mano.'
+              : 'Con un solo suplente los cambios son tuyos: el plan rota solo desde dos en el banco.'}
           </p>
         )}
       </div>
@@ -1295,8 +1319,8 @@ function LiveMatchPanel({ state, dispatch }: Props) {
         <div className="scoreboard live">
           <div className="team">
             <div className="tname">{state.club.name}</div>
-            <div key={totalFor} className={`score score-pop ${diff > 0 ? 'win' : diff < 0 ? 'lose' : ''}`}>
-              {totalFor}
+            <div className={`score ${diff > 0 ? 'win' : diff < 0 ? 'lose' : ''}`}>
+              <CountUp value={totalFor} />
             </div>
           </div>
           <div style={{ color: 'var(--text-dim)', fontWeight: 700 }}>
@@ -1304,8 +1328,8 @@ function LiveMatchPanel({ state, dispatch }: Props) {
           </div>
           <div className="team">
             <div className="tname"><RivalLink id={rival.id}>{rival.name}</RivalLink></div>
-            <div key={totalAgainst} className={`score score-pop ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}>
-              {totalAgainst}
+            <div className={`score ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}>
+              <CountUp value={totalAgainst} />
             </div>
           </div>
         </div>
@@ -1512,6 +1536,26 @@ function LiveMatchPanel({ state, dispatch }: Props) {
                 {state.coach ? `DT: ${shortName(state.coach.name)}` : 'DT'}
               </button>
             </div>
+            {!live.autoRotation && benchPlayers.length > 0 && (
+              <div className="segmented" title="Plan de cambios entre cuartos">
+                <button
+                  className={(live.plan ?? 'manual') === 'rotar' ? 'on' : ''}
+                  disabled={live.finished}
+                  title="Frescos en el 2° cuarto, titulares en el 3°, cerradores al final. Un cambio a mano frena el plan por ese cuarto."
+                  onClick={() => dispatch({ type: 'SET_MATCH_PLAN', plan: 'rotar' })}
+                >
+                  Rota solo
+                </button>
+                <button
+                  className={(live.plan ?? 'manual') === 'manual' ? 'on' : ''}
+                  disabled={live.finished}
+                  title="Los cinco se quedan hasta que vos los muevas"
+                  onClick={() => dispatch({ type: 'SET_MATCH_PLAN', plan: 'manual' })}
+                >
+                  A mano
+                </button>
+              </div>
+            )}
             {live.autoRotation && (
               <div className="segmented">
                 <button
@@ -1540,7 +1584,9 @@ function LiveMatchPanel({ state, dispatch }: Props) {
                 ? `${state.coach ? state.coach.name : 'El DT'} hace los cambios entre cuartos según la directiva. Podés pisar sus decisiones a mano.`
                 : outSel
                   ? `Sale ${shortName(byId(outSel).name)}: tocá quién entra del banco.`
-                  : 'Arrastrá un suplente sobre uno en cancha (o tocá: sale → entra). Valen las reentradas.'}
+                  : live.plan === 'rotar' && benchPlayers.length > 0
+                    ? 'El plan rota solo: frescos en el 2° cuarto, titulares en el 3°, cerradores al final. Si tocás el quinteto a mano, ese cuarto va como lo dejaste.'
+                    : 'Arrastrá un suplente sobre uno en cancha (o tocá: sale → entra). Valen las reentradas.'}
           </p>
           <div className="sub-group-label">En cancha</div>
           {onCourtPlayers.map((p) => subRow(p, 'court'))}

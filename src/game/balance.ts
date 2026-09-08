@@ -151,6 +151,22 @@ export const BALANCE = {
     wearPerMinute: 0.34, // desgaste físico por minuto jugado
     overloadThreshold: 32, // por encima de estos minutos, los titulares rinden menos
     overloadPenaltyPerMin: 0.008, // penalización de rendimiento por minuto de sobrecarga
+    coachRestLead: 10, // con esta ventaja al entretiempo, el DT "a ganar" también mueve el banco
+  },
+
+  // Las otras broncas (T4): gatillos semanales para plata y grupo, así el humor
+  // del plantel no habla sólo de minutos. Medido con `npm run sim`: el objetivo
+  // es que en 60 temporadas sin gestión los motivos dejen de ser 100% 'minutos'.
+  broncas: {
+    plataRachaDerrotas: 3, // el que paga la cuota y pierde seguido hace cuentas
+    plataRachaChance: 0.25,
+    plataBecaChance: 0.12, // paga, juega, y ve que a otro lo becan: por semana
+    // La afinidad media recibida va de ~48 a ~67 en el plantel inicial: "no
+    // encaja" es el que menos cariño recibe del grupo, y por debajo de esto.
+    grupoAfinidadPiso: 50,
+    grupoChance: 0.12, // por semana, para el que no encaja
+    grupoClimaPiso: 35, // clima social por debajo de esto: el 'social' lo sufre
+    grupoClimaChance: 0.2,
   },
 
   weekly: {

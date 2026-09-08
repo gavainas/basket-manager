@@ -13,57 +13,62 @@ fiado. Está flojo de **coherencia, foco y acabado**, y eso es lo que ordena est
 
 Del plan de septiembre ya están cerradas **T0** (esta página, los tests y el CI), **T1**
 (el juego no se contradice), **T2** (el compromiso se descubre: el número salió de la UI
-y en su lugar está la ficha de conducta) y **T3** (el modo Carrera: el club desde cero,
+y en su lugar está la ficha de conducta), **T3** (el modo Carrera: el club desde cero,
 con la intro en tres escenas, la libreta de contactos, el favor, la bola de nieve y el
-corte de los ocho), además del **marco fijo** (el juego entra en la ventana sin scrollear
-como página, y en el celular vuelve a ser página), y la **dirección D** (relieve y
-planilla). El motor tiene build limpio, 53 tests que recorren temporadas enteras por el
-reducer y un harness de balance con los números en objetivo.
+corte de los ocho) y **T4** (jugar con cinco dejó de ser el default: el partido rota solo
+si hay banco, la pizarra avisa, y las broncas ya no son sólo por minutos), además del
+**marco fijo** (el juego entra en la ventana sin scrollear como página, y en el celular
+vuelve a ser página), la **dirección D** (relieve y planilla) y **las cinco animaciones**.
+De **T5** (el salto de arte) está hecho lo que era código: el brief de la lámina, escrito y
+reproducible; lo que falta son aprobaciones de Gabi. El motor tiene build limpio, 61 tests
+que recorren temporadas enteras por el reducer y un harness de balance con los números en
+objetivo.
 
 ## Las próximas cinco cosas
 
-1. **T4 · Que jugar con cinco deje de ser el default** (1 sesión). Los presets rotan por
-   cuarto, la pizarra avisa antes de empezar ("vas con 5 y tenés 9 en la planilla"), el DT
-   contratado rota solo, el desgaste de 40' se paga la semana siguiente, y las otras causas
-   de bronca (plata, trato, grupo) consiguen su gatillo. *Sale cuando:* en 60 temporadas
-   simuladas las broncas dejan de ser 100% 'minutos'.
-2. **Las cinco animaciones** (media sesión). El marcador que sube número a número, las
-   filas de la planilla que entran escalonadas, fundido de 120 ms entre pantallas, la
-   barra segmentada que se llena, el modal que entra con escala. Con
-   `prefers-reduced-motion` respetado. Es la mitad de la sensación de "esto ya no es un
-   prototipo" y cuesta menos que un asset.
-3. **T5 · El salto de arte** (en paralelo, gobernado por
-   [`design/ART_PIPELINE.md`](design/ART_PIPELINE.md)). El retrato deja de ser un archivo
-   y pasa a ser una receta: capas por seed (base × piel × pelo × barba × camiseta ×
-   expresión) compuestas en runtime. La Puerta 3 cambia de enunciado: se aprueba una lámina
-   de 12 caras **armadas con el sistema**, no 12 dibujos sueltos. Cada pedido de arte deja
-   rastro en `design/arte/BRIEFS/`. *Sale cuando:* dos jugadores del mismo arquetipo en la
-   misma pantalla no se ven iguales. Depende de aprobaciones de Gabi, no de código.
-
-4. **Economía con arco** (1 sesión). La caja quiebra sola en 8-15% de las temporadas
+1. **Economía con arco** (1 sesión). La caja quiebra sola en 8-15% de las temporadas
    simuladas sin gestión: el sponsor como contrato con condiciones (cumplí X y renueva),
    la rifa con historia, y la dificultad seleccionable extendida a la economía. *Sale
    cuando:* en 60 temporadas simuladas sin gestión los game over por caja bajan a la mitad,
    y con gestión mínima (un sponsor) desaparecen.
 
-5. **Lo que queda de T2 y T3, juntos** (media sesión). Que la charla y "mandá a un
+2. **Lo que queda de T2 y T3, juntos** (media sesión). Que la charla y "mandá a un
    compañero a buscarlo" también escriban en la ficha de conducta, que "Qué mirar hoy"
    avise cuando alguien pasa a "aparece cuando quiere", y en la Carrera, que la libreta
    siga viva en la temporada (el que dijo que no en la pretemporada puede volver a
    aparecer en un evento) y que el modo tenga su propia entrada en `sim` para medir
    cuántas carreras llegan a inscribirse sin gestión.
 
-**Orden:** T4 primero, con las animaciones y el arte en paralelo.
+3. **T5 · El salto de arte** (gobernado por
+   [`design/ART_PIPELINE.md`](design/ART_PIPELINE.md); depende de Gabi, no de código). El
+   brief está en [`design/arte/BRIEFS/`](design/arte/BRIEFS/LEEME.md): el retrato deja de
+   ser un archivo y pasa a ser una receta de capas (base × expresión × pelo × barba ×
+   camiseta) compuestas en runtime por la `appearance` del jugador, en dos pasos para no
+   gastar de más (prueba de registro ≈12 créditos, lámina de 12 caras ≈60). *Sale cuando:*
+   dos jugadores del mismo arquetipo en la misma pantalla no se ven iguales.
+
+4. **Llevar la dirección D al resto del juego** (1 sesión). La planilla y el relieve a la
+   pretemporada, el mercado, la convocatoria y la liga, para que no convivan dos anatomías
+   de lista en el mismo juego.
+
+5. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.900 líneas) en sus cinco etapas,
+   ESLint con `react-hooks`, code-splitting (715 kB en un chunk).
+
+**Orden:** la economía primero (es el game over que más se repite sin gestión), después los
+restos, y el arte cuando Gabi diga.
 
 ## Decisiones que están en la cancha de Gabi
 
+- **El brief de la lámina** (Puerta 3,
+  [`design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md`](design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md)):
+  leerlo y decir si va la **prueba de registro** (1 base, 3 pelos, 2 barbas, ≈12 créditos).
+  Hasta entonces no se genera nada.
 - **`npm run check:pantallas`**: el Playwright que mide las 22 pantallas en tres
   resoluciones existe pero no está en el repo porque suma una dependencia de desarrollo
   (ver [`design/PLAN_MARCO_FIJO.md`](design/PLAN_MARCO_FIJO.md)). Con el visto bueno entra
   al CI en cinco minutos.
 - **Registrar la maqueta del tablero como aprobación** en `ART_PIPELINE.md`, con fecha,
   alcance y qué queda fuera.
-- **La lámina de 12 caras** (Puerta 3): nada se genera en masa antes de aprobarla.
 - Decidido: **el héroe de cuerpo entero se agrega cuando haya más arte**; el hueco que lo
   espera es la ficha del jugador.
 
@@ -78,17 +83,14 @@ reducer y un harness de balance con los números en objetivo.
 - **Más voces por arquetipo** en las emociones con pool único, los mensajes de amigos de
   afuera y las respuestas a eventos. Regla: voz donde el contraste se lee, no por completar
   la matriz.
-- **Llevar la dirección D al resto del juego**: la planilla y el relieve a pretemporada,
-  mercado, convocatoria y liga, para que no convivan dos anatomías.
 - **Más eventos**: cadenas de 3+ eslabones y eventos que dependan del historial del club.
   Ligas que cobren por fecha o aparezcan y desaparezcan según el año.
 - **Mediano plazo**: clima liviano (suspensiones, público, recaudación), más profundidad
   táctica (matchups, ritmo), lesiones con recuperación progresiva, influencias entre
   jugadores (un líder que se va arrastra amigos), sponsors y actividades sociales.
 - **Largo plazo**: historias emergentes desde los datos, versión móvil, reskin fútbol 5.
-- **Programación**: partir `WeekView.tsx` (1.873 líneas) en sus cinco etapas, ESLint con
-  `react-hooks`, code-splitting (685 kB en un chunk), y que cada migración de save nueva
-  llegue con su test en `tests/guardado.test.ts`.
+- **Programación, lo que no entra en la sesión de arriba**: que cada migración de save
+  nueva llegue con su test en `tests/guardado.test.ts`.
 
 ## Diseño
 

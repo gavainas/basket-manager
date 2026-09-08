@@ -356,6 +356,16 @@ export interface LiveMatchState {
   autoRotation?: boolean;
   /** Directiva del piloto: ganar como sea o que todos sumen minutos. */
   directive?: 'ganar' | 'repartir';
+  /**
+   * Plan de cambios del partido cuando los cambios son tuyos (sin DT al
+   * mando): 'rotar' mete una unidad distinta en cada cuarto (frescos en el 2°,
+   * titulares en el 3°, cerradores al final); 'manual' deja los cinco hasta
+   * que vos los muevas. Arranca en 'rotar' si hay banco (T4: jugar con cinco
+   * dejó de ser el default).
+   */
+  plan?: MatchPlan;
+  /** Tocaste el quinteto a mano en este descanso: el plan no te lo pisa. */
+  manualBreak?: boolean;
   /** Lesionados durante el partido (para el informe y las noticias). */
   injuries?: { playerId: string; name: string; weeks: number }[];
   eval: TeamEval;
@@ -363,6 +373,9 @@ export interface LiveMatchState {
 
 /** Quintetos predefinidos, estilo unidades de NBA. */
 export type LineupPreset = 'titulares' | 'segunda' | 'frescos' | 'cerradores';
+
+/** Plan de cambios del partido: rotar por cuarto o mover los cinco a mano. */
+export type MatchPlan = 'rotar' | 'manual';
 
 // ---------- Cuerpo técnico ----------
 

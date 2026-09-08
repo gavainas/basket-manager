@@ -281,7 +281,7 @@ export const EVENTS: EventDef[] = [
     resolve: (s, ev, opt, rng) => {
       const inviter = byId(s, ev.playerId);
       if (opt === 0) {
-        const friend = createRecruit(rng, { minTechnique: 60, maxTechnique: 80, season: s.seasonNumber });
+        const friend = createRecruit(rng, { minTechnique: 60, maxTechnique: 80, season: s.seasonNumber, taken: s.players.map((p) => p.name) });
         friend.description = `Amigo de ${inviter.name}. Se nota que jugó en serio, falta ver si se engancha con el grupo.`;
         // No entra al plantel: queda a prueba, entrena una semana y recién ahí decidís.
         s.trialCandidate = {
@@ -734,7 +734,7 @@ export const EVENTS: EventDef[] = [
     ],
     resolve: (s, _ev, opt, rng) => {
       if (opt === 0) {
-        const kid = createRecruit(rng, { minTechnique: 35, maxTechnique: 52, season: s.seasonNumber });
+        const kid = createRecruit(rng, { minTechnique: 35, maxTechnique: 52, season: s.seasonNumber, taken: s.players.map((p) => p.name) });
         kid.age = 19;
         kid.description = 'El sobrino del vecino. Le falta juego, pero corre todo y no falta nunca.';
         kid.commitment = rng.int(75, 95);
@@ -971,7 +971,7 @@ export const EVENTS: EventDef[] = [
     ],
     resolve: (s, _ev, opt, rng) => {
       if (opt === 0) {
-        const tryout = createRecruit(rng, { minTechnique: 55, maxTechnique: 78, season: s.seasonNumber });
+        const tryout = createRecruit(rng, { minTechnique: 55, maxTechnique: 78, season: s.seasonNumber, taken: s.players.map((p) => p.name) });
         tryout.description = 'A prueba en el club. Todavía se está ganando un lugar.';
         s.players.push(tryout);
         s.news.unshift({ week: s.week, text: `${tryout.name} se suma a prueba por unas semanas.`, tone: 'neutral' });

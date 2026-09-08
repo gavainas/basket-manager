@@ -40,6 +40,7 @@ const {
   matchAbsentIds,
 } = require(path.join(OUT, 'game', 'match.js'));
 const { fragilityOf } = require(path.join(OUT, 'game', 'injuries.js'));
+const { BALANCE } = require(path.join(OUT, 'game', 'balance.js'));
 const { Rng } = require(path.join(OUT, 'game', 'rng.js'));
 
 // Estrategias de referencia: si alguna domina por paliza, el balance cojea.
@@ -49,10 +50,18 @@ const STRATEGIES = {
     tactics: () => ({ defense: 'presion', attack: 'equipo' }),
     rotate: 'frescos',
   },
-  // Conservadora: zona y ataque de equipo, sin tocar el banco.
+  // Conservadora: zona y ataque de equipo, con el plan de cambios por defecto
+  // (desde T4, con banco el partido rota solo: frescos, titulares, cerradores).
   zonaEquipo: {
     tactics: () => ({ defense: 'zona', attack: 'equipo' }),
     rotate: null,
+  },
+  // Los cinco fijos: zona y equipo, plan a mano y sin tocar el banco nunca.
+  // Es lo que antes de T4 pasaba si no tocabas nada; ahora hay que elegirlo.
+  cincoFijos: {
+    tactics: () => ({ defense: 'zona', attack: 'equipo' }),
+    rotate: null,
+    plan: 'manual',
   },
   // Mixta: hombre temprano, zona al final, cerradores en el último cuarto.
   mixta: {
@@ -81,6 +90,10 @@ function playSeason(seed, strategy) {
     hotAtEnd: 0,
     burningAtEnd: 0,
     grievanceCauses: {},
+    // El desgaste que cruza la fecha: titulares que llegan fundidos al partido.
+    exhaustedStarts: 0,
+    benchMinutes: 0,
+    benchGames: 0,
   };
 
   while (s.phase !== 'gameOver' && s.week <= s.seasonLength) {
@@ -96,10 +109,15 @@ function playSeason(seed, strategy) {
     const starters = suggestStarters(s.players, absent);
     s = { ...s, phase: 'lineup', starters, rotation: suggestRotation(s.players, starters, absent) };
 
+    st.exhaustedStarts += s.players.filter(
+      (p) => starters.includes(p.id) && p.physical <= BALANCE.callUp.exhaustedThreshold
+    ).length;
+
     let rng = new Rng(s.seed);
     s = startLiveMatch({ ...s, seed: rng.nextSeed() }, rng);
 
     if (s.phase === 'match') {
+      if (STRATEGIES[strategy].plan) s = { ...s, live: { ...s.live, plan: STRATEGIES[strategy].plan } };
       let trailedBy9 = false;
       let ledBy9 = false;
       while (s.live && !s.live.finished) {
@@ -116,6 +134,11 @@ function playSeason(seed, strategy) {
         s = playQuarter({ ...s, seed: rng.nextSeed() }, rng);
       }
       st.injuries += (s.live.injuries || []).length;
+      for (const id of s.live.squad) {
+        if (starters.includes(id)) continue;
+        st.benchMinutes += s.live.minutes[id] || 0;
+        st.benchGames += 1;
+      }
       rng = new Rng(s.seed);
       s = finishLiveMatch({ ...s, seed: rng.nextSeed() }, rng);
       const m = s.lastMatch;
@@ -170,6 +193,9 @@ for (const strat of Object.keys(STRATEGIES)) {
     hotAtEnd: 0,
     burningAtEnd: 0,
     causes: {},
+    exhaustedStarts: 0,
+    benchMinutes: 0,
+    benchGames: 0,
   };
   for (let i = 0; i < RUNS; i++) {
     const st = playSeason(1000 + i * 7919, strat);
@@ -187,6 +213,9 @@ for (const strat of Object.keys(STRATEGIES)) {
     a.playersLeft += st.playersLeft;
     a.hotAtEnd += st.hotAtEnd;
     a.burningAtEnd += st.burningAtEnd;
+    a.exhaustedStarts += st.exhaustedStarts;
+    a.benchMinutes += st.benchMinutes;
+    a.benchGames += st.benchGames;
     for (const [c, n] of Object.entries(st.grievanceCauses)) a.causes[c] = (a.causes[c] || 0) + n;
     for (const n of st.absenceCounts) a.absCounts[n] = (a.absCounts[n] || 0) + 1;
     for (const [name, c] of Object.entries(st.absencesByPlayer)) a.absByPlayer[name] = (a.absByPlayer[name] || 0) + c;
@@ -212,6 +241,13 @@ for (const strat of Object.keys(STRATEGIES)) {
   console.log(
     `Abandonos: ${(a.playersLeft / a.seasons).toFixed(2)}/temp  ·  Con bronca al cierre: ${(a.hotAtEnd / a.seasons).toFixed(1)} (al límite: ${(a.burningAtEnd / a.seasons).toFixed(1)})  ·  Motivos:`,
     JSON.stringify(a.causes)
+  );
+  // El desgaste que cruza la fecha: cuántos titulares por partido llegan con
+  // el físico en "fundido", y cuántos minutos promedio suma cada suplente.
+  console.log(
+    `Titulares que llegan fundidos: ${(a.exhaustedStarts / a.games).toFixed(2)}/partido  ·  Minutos por suplente: ${
+      a.benchGames > 0 ? (a.benchMinutes / a.benchGames).toFixed(1) : '0'
+    }'`
   );
 }
 

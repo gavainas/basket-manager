@@ -444,6 +444,23 @@ Formato sugerido:
   lo espera es la columna izquierda de la ficha del jugador (`.profile-retrato`).
 - Próximo paso autorizado: nada de arte. Las Puertas 3 a 6 siguen abiertas y sin tocar.
 
+### 2026-09-08 — La Puerta 3 cambia de enunciado, y los briefs dejan rastro
+
+- Alcance: **ningún asset**. Se creó [`arte/BRIEFS/`](arte/BRIEFS/LEEME.md), donde cada
+  pedido de arte queda escrito como receta reproducible (modelo, referencia, prompts
+  textuales, nombres de archivo, costo en créditos) **antes** de gastar un crédito.
+- La Puerta 3 se reformula: lo que se aprueba no son doce dibujos sueltos sino **una
+  lámina de doce caras armadas con un sistema de capas** (base × expresión × pelo × barba ×
+  camiseta, compuestas en runtime por la `appearance` del jugador, que ya existe). El brief
+  completo está en
+  [`arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md`](arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md),
+  en dos pasos para no gastar de más: primero una **prueba de registro** (1 base, 3 pelos,
+  2 barbas, ≈12 créditos) para ver si las capas generadas por IA calzan entre sí, y recién
+  con eso validado la lámina (31 piezas, ≈60 créditos).
+- Aprobado: **nada todavía.** El brief está `PENDIENTE`.
+- Próximo paso autorizado: que Gabi lea el brief y diga si va la prueba de registro. Hasta
+  entonces, no se genera nada.
+
 ## Estado de aprobación actual
 
 > **Corregido en sep 2026.** Este bloque contradecía al resto del documento y a lo que hay
@@ -461,7 +478,8 @@ Formato sugerido:
   2). Ocho caras para planteles enteros es una limitación **conocida y aceptada**; su
   solución es la Puerta 3, que sigue abierta.
 - El **set grande de retratos** no está aprobado y no se genera en masa hasta que la Puerta
-  3 cierre.
+  3 cierre. El brief para cerrarla (sistema de capas, en dos pasos) está escrito y
+  `PENDIENTE` en [`arte/BRIEFS/`](arte/BRIEFS/LEEME.md) (registro del 2026-09-08).
 - La **ilustración de cuerpo entero del héroe** no está generada ni aprobada (ver el
   registro del 2026-09-04).
 - Procedural que **ya existe** y no hay que volver a pedir: retratos SVG por seed

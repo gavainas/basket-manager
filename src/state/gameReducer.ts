@@ -7,6 +7,7 @@ import {
   noStartIds,
   playQuarter,
   sanitizeLineup,
+  setMatchPlan,
   startLiveMatch,
   substitute,
   suggestRotation,
@@ -34,7 +35,7 @@ import { appointPlayerCoach, fireCoach, hireCoach } from '../game/coach';
 import { resolveIncident } from '../game/narrative';
 import { registerSecondTeam } from '../game/secondTeam';
 import { advanceWeek, confirmActions, createNewGame, resolveEvent } from '../game/week';
-import type { AbsenceDifficulty, AttackTactic, DefenseTactic, GameState, LineupPreset } from '../game/types';
+import type { AbsenceDifficulty, AttackTactic, DefenseTactic, GameState, LineupPreset, MatchPlan } from '../game/types';
 
 export type GameAction =
   | { type: 'NEW_GAME'; difficulty?: AbsenceDifficulty }
@@ -65,6 +66,7 @@ export type GameAction =
   | { type: 'SUBSTITUTE'; outId: string; inId: string }
   | { type: 'APPLY_PRESET'; preset: LineupPreset }
   | { type: 'SET_AUTO_ROTATION'; on: boolean; directive?: 'ganar' | 'repartir' }
+  | { type: 'SET_MATCH_PLAN'; plan: MatchPlan }
   | { type: 'INCIDENT_CHOICE'; index: number }
   | { type: 'PLAY_QUARTER' }
   | { type: 'FINISH_MATCH' }
@@ -301,6 +303,10 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
           directive: action.directive ?? state.live.directive ?? 'ganar',
         },
       };
+    }
+    case 'SET_MATCH_PLAN': {
+      if (state.phase !== 'match' || !state.live || state.live.finished) return state;
+      return setMatchPlan(state, action.plan);
     }
     case 'INCIDENT_CHOICE': {
       if (state.phase !== 'match' || !state.live?.pendingIncident) return state;

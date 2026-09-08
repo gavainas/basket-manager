@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { GameState, Player } from '../game/types';
 import { playerNotes } from '../game/humanState';
 import { Avatar } from './Avatar';
@@ -43,8 +44,8 @@ export function RosterList({ state, players }: { state: GameState; players: Play
         <Tip text={TIPS.valoracion}><span className="num">Valor.</span></Tip>
       </div>
 
-      {players.map((p) => (
-        <Fila key={p.id} state={state} p={p} />
+      {players.map((p, i) => (
+        <Fila key={p.id} state={state} p={p} indice={i} />
       ))}
     </div>
   );
@@ -75,7 +76,7 @@ function Cifra({ value }: { value: number }) {
   );
 }
 
-function Fila({ state, p }: { state: GameState; p: Player }) {
+function Fila({ state, p, indice }: { state: GameState; p: Player; indice: number }) {
   const nota = playerNotes(state, p)[0];
   const status = statusChip(p);
   const fee = feeChip(p);
@@ -84,7 +85,8 @@ function Fila({ state, p }: { state: GameState; p: Player }) {
   const alerta = status?.cls === 'bad' || fee?.cls === 'bad';
 
   return (
-    <div className={`planilla-fila${alerta ? ' alerta' : ''}`}>
+    // `--fila` escalona la entrada de los renglones (T5, animación 2).
+    <div className={`planilla-fila${alerta ? ' alerta' : ''}`} style={{ '--fila': indice } as CSSProperties}>
       <span className="planilla-foto">
         <Avatar
           seed={p.id}
