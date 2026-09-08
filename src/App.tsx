@@ -141,12 +141,12 @@ function MainMenu({
 
   if (carrera) {
     return (
-      <div className="menu-screen">
-        <div className="menu-portada" style={{ backgroundImage: `url(${PORTADA})` }} role="img" aria-label="Asado en la cantina del club" />
-        <div className="menu-panel">
-          <CareerSetup difficulty={difficulty} onStart={(n, c) => onNewCareer(difficulty, n, c)} onBack={() => setCarrera(false)} />
-        </div>
-      </div>
+      <CareerSetup
+        difficulty={difficulty}
+        portada={PORTADA}
+        onStart={(n, c) => onNewCareer(difficulty, n, c)}
+        onBack={() => setCarrera(false)}
+      />
     );
   }
 

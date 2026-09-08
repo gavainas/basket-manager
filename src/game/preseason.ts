@@ -322,10 +322,15 @@ function optionFor(s: GameState, divisionId: string, opts: { held?: boolean } = 
     : !below
       ? ' Abajo no hay nada: de acá no se baja.'
       : '';
+  // El club nuevo del modo Carrera no tiene "categoría de siempre": lo anotan
+  // porque al delegado lo conocés de jugador, y te fía la ficha a cuenta de eso.
+  const nuevo = s.mode === 'carrera' && s.seasonNumber === 1;
   const note = isCurrent
-    ? leaguePromotes(league.id)
-      ? `Tu categoría de siempre: acá te conocen y te fían la ficha si no llegás con la plata. La categoría se mueve: ${movimientos.join(' y ')}.${remate}`
-      : 'Tu liga de siempre: acá te conocen, y si no llegás con la plata, te la fían (deuda que se paga en temporada).'
+    ? nuevo
+      ? `La liga del barrio, donde jugaste hasta la rodilla. Al delegado lo conocés de jugador: a un club nuevo lo anota igual, y si no llegás con la plata te fía la ficha a cuenta de tu cara. La categoría se mueve: ${movimientos.join(' y ')}.${remate}`
+      : leaguePromotes(league.id)
+        ? `Tu categoría de siempre: acá te conocen y te fían la ficha si no llegás con la plata. La categoría se mueve: ${movimientos.join(' y ')}.${remate}`
+        : 'Tu liga de siempre: acá te conocen, y si no llegás con la plata, te la fían (deuda que se paga en temporada).'
     : held
       ? 'Te guardaron el lugar: el dueño de la liga te conoce, y si no llegás con la plata, te la fía. Volvés a la categoría que dejaste.'
       : entry?.note ?? 'Una liga nueva para el club.';
@@ -1424,14 +1429,17 @@ export function startSeasonFromPreseason(state: GameState): GameState {
   const s: GameState = structuredClone(state);
   const rng = new Rng(s.seed);
 
-  s.objectives = generateObjectives(s.seasonNumber, s.club.sportPrestige, rng, s.seasonLength);
+  const fundacion = s.mode === 'carrera' && s.seasonNumber === 1;
+  s.objectives = generateObjectives(s.seasonNumber, s.club.sportPrestige, rng, s.seasonLength, { fundacion });
   s.week = 1;
   s.phase = 'planning';
   s.starters = suggestStarters(s.players);
   s.rotation = suggestRotation(s.players, s.starters);
   s.news.unshift({
     week: 1,
-    text: `¡Arranca la temporada ${s.seasonNumber}! La comisión fijó los objetivos del año.`,
+    text: fundacion
+      ? `¡Arranca la primera temporada de ${s.club.name}! Los que pusieron plata te dejaron tres encargos: que el grupo no se desarme, que se gane algo, y que la mesa se junte.`
+      : `¡Arranca la temporada ${s.seasonNumber}! La comisión fijó los objetivos del año.`,
     tone: 'good',
   });
   logClubEvent(s, 'hito', `Arranca la temporada ${s.seasonNumber} con ${s.players.filter((p) => !p.leftClub).length} jugadores en el plantel.`, 0);

@@ -455,8 +455,15 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   // La liga del usuario sale de su divisional (Universitaria o la plaza).
   const leagueId = division.leagueId;
 
-  // Club y equipo del usuario.
-  world.venues.push({ id: 'vn_user', name: 'Gimnasio del Parque', neighborhood: 'Parque Batlle' });
+  // Club y equipo del usuario. El club de siempre juega en el Gimnasio del
+  // Parque; el del modo Carrera, en la cancha que consiguió, en el barrio que
+  // le tocó (fijo por nombre: el mismo club, el mismo barrio todos los años).
+  if (state.mode === 'carrera') {
+    const barrio = NEIGHBORHOODS[seedFromString(`barrio_${state.club.name}`) % NEIGHBORHOODS.length];
+    world.venues.push({ id: 'vn_user', name: `Cancha de ${state.club.name}`, neighborhood: barrio });
+  } else {
+    world.venues.push({ id: 'vn_user', name: 'Gimnasio del Parque', neighborhood: 'Parque Batlle' });
+  }
   world.clubs.push({
     id: USER_CLUB_ID,
     name: state.club.name,

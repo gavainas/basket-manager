@@ -373,7 +373,7 @@ del desconocido nadie habla. Con semilla por jugador: la referencia no cambia al
 dos veces. 12 tests en `tests/conducta.test.ts`, incluida una partida de seis fechas por
 el reducer donde las cuentas de cada ficha cierran.
 
-### T3 — El club desde cero (2-3 sesiones) ✅ primera tanda (sep 2026)
+### T3 — El club desde cero (2-3 sesiones) ✅ (hecha en dos tandas, sep 2026)
 
 Modo carrera con agenda de contactos, fichar como pedir un favor, bola de nieve de
 referidos, y el corte real de los 8 en 4 semanas. El catálogo de mercado se gana en la T2.
@@ -391,9 +391,14 @@ $200 que no alcanzan para la ficha, y el mercado de 16 recién en la segunda tem
 Medido con 30 semillas: algunas carreras llegan y otras no. **El criterio de salida se
 cumple: se puede perder la pretemporada.** El arreglo aparte también entró, para los dos
 modos: los eventos que regalan jugadores sólo si te falta gente (nunca en la libreta), y el
-mercado no se vacía las semanas en que no hiciste nada. Queda para la segunda tanda: la
-intro como pantalla con más historia y arte, la comisión del club nuevo con voz propia, y
-que la liga sepa que el club es nuevo.
+mercado no se vacía las semanas en que no hiciste nada.
+
+**Segunda tanda cerrada.** La intro son tres escenas a pantalla completa con arte ya
+aprobado (la derrota, el bar, la cancha desde la tribuna), la liga anota al club como
+nuevo ("al delegado lo conocés de jugador"), los encargos de la primera temporada son de
+fundación (que el grupo no se desarme, que se gane algo, que la mesa se junte: los que
+pusieron plata, no una comisión), y la cancha lleva el nombre del club en un barrio fijo.
+Testeado: en una Carrera ninguna noticia ni hito habla de Atlético El Parque.
 
 ### T4 — Que jugar con cinco deje de ser el default (1 sesión)
 
