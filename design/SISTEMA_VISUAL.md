@@ -651,8 +651,19 @@ el marcador ("2do cuarto · 7'", con "· pausado"), la etiqueta roja **● en ju
 cuarto del relato, y la ficha del que acaba de anotar latiendo una vez en la cancha
 (`.pv-ficha.anoto`, 0,9 minutos de partido). La última jugada entra con un fundido de 260 ms
 (`.rj.nueva`) y el panel del relato se desplaza hasta ella; se desplaza el panel, nunca la
-página. El pie cambia de forma mientras corre: Pausar/Seguir y Saltar al final del cuarto;
-sin reloj, Jugar el cuarto y Simular el partido. Todo se apaga con `prefers-reduced-motion`.
+página. El pie cambia de forma mientras corre: Pausar/Seguir, Pedir minuto y Saltar al final
+del cuarto; sin reloj, Jugar el cuarto y Simular el partido. Todo se apaga con
+`prefers-reduced-motion`.
+
+**La pelota muerta (segundo paso, sep 2026).** El motor simula por tramos de dos minutos y el
+reloj pide el siguiente cuando llega al final del último jugado: lo que hacés con el reloj
+corriendo (un cambio, la táctica, pedir minuto) entra en la próxima pelota muerta, y el relato
+lo anota en su minuto como una fila más tenue, sin el punto de color (`.rj.cambio`,
+`.rj.nota`), con el ícono de cambio o un punto. El texto de ayuda lo dice en los dos lugares
+donde se decide: el pie ("entran en la próxima pelota muerta") y el tablero táctico ("Entra en
+la próxima pelota muerta" mientras corre; "Se aplica desde el próximo cuarto" en el descanso).
+Si el cuarto queda a mitad (una recarga), el momento dice "2do cuarto · 6' · pelota muerta" y
+el botón, "Seguir el 2do cuarto".
 
 ## La franja del partido (sep 2026)
 

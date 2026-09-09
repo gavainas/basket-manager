@@ -47,7 +47,7 @@ una partida jugada de verdad.
 
 | Métrica | Objetivo | Última corrida (3ª pasada, 240 temp.) |
 |---|---|---|
-| Mejor táctica vs zona | La agresiva la mejor, pero no dominante (~7-10 pts sobre zona) | 50.3% (presión) / 51.3% (mixta) vs 43.7% (zona) |
+| Mejor táctica vs zona | La agresiva la mejor, pero no dominante (~7-10 pts sobre zona) | 6ª pasada (120 temp., motor por tramos): 51.4% (presión) / 59.4% (mixta) vs 47.6% (zona) · 40.5% cinco fijos |
 | Remontadas propias (9+ abajo) | Raras pero reales (~5%) | 8/366 (2.2% — quedó corta: vigilar en la próxima pasada) |
 | Nos remontan (9+ arriba) | Ninguna ventaja sellada (~7-10%) | 44/551 (8%) |
 | Lesiones en partido / temporada | 1-2 | 1.3 |
@@ -75,6 +75,20 @@ bajaban el piso otros ~2 pts sin que nadie lo decidiera). Presión y mixta
 quedaron parejas entre sí — "la mejor pero no dominante" se cumple mejor que
 nunca. Las remontadas propias midieron 2.2% (objetivo ~5%): anotado para
 vigilar en la próxima pasada de balance.
+
+Nota de la 6ª pasada (sep 2026, el motor por tramos): el cuarto pasó a simularse
+en cinco tramos de dos minutos, con el ataque, la defensa, el desgaste y las
+lesiones calculados en cada tramo con los cinco y las piernas de ese momento
+(`playTramo` en `match.ts`; `playQuarter` juega los tramos que faltan y es lo que
+usa este harness). Medido a 120 temporadas contra la versión anterior, mismas
+seeds: presión 49.9% → 51.4%, zona 45.9% → 47.6%, cinco fijos 42.8% → 40.5%,
+mixta 56.2% → 59.4%. Las que rotan suben ~1,5 puntos y los cinco fijos bajan
+~2: ahora el cansancio pega dentro del cuarto y no recién en el siguiente, que
+es lo que se buscaba en T4. Lesiones (1.4 / 0.9 / 1.0 / 1.0 por temporada),
+abandonos (0.00 / 0.16 / 1.59 / 0.10) y minutos por suplente no se movieron. El
+rival pide minuto solo (`timeoutRun`, `timeoutCut`) cuando le metemos un
+parcial; el harness no pide los nuestros (mide el piso sin manager). Queda
+anotado que mixta le saca 11.8 a la zona, un poco por encima de la banda.
 
 ## Sistemas de la 1ª pasada
 

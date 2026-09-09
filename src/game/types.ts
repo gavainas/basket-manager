@@ -306,6 +306,66 @@ export interface LiveQuarter {
   box?: Record<string, number>;
   /** Los cinco que jugaron el cuarto. */
   onCourt?: string[];
+  /**
+   * El cuarto por tramos (sep 2026, el reloj en vivo con el motor por
+   * tramos): cada pelota muerta es un tramo con sus puntos, su planilla y los
+   * cinco que lo jugaron. Los cuartos jugados antes de esto (y el
+   * suplementario) no tienen tramos.
+   */
+  tramos?: LiveTramo[];
+}
+
+/** Un tramo del cuarto: dos minutos de juego entre dos pelotas muertas. */
+export interface LiveTramo {
+  for: number;
+  against: number;
+  /** Puntos de cada uno de los nuestros en el tramo. */
+  box: Record<string, number>;
+  /** Los cinco que jugaron el tramo. */
+  onCourt: string[];
+  /** Lo que pasó en la pelota muerta: cambios, minutos pedidos, la lesión. Va al relato en su minuto. */
+  notes?: string[];
+}
+
+/**
+ * Lo que el motor decide al arrancar el cuarto y sostiene tramo a tramo: el
+ * día del rival, la suerte, la racha (y en qué tramo cae), los rebotes y
+ * asistencias del cuarto, y los restos decimales del marcador. Vive sólo
+ * mientras el cuarto está en curso.
+ */
+export interface QuarterContext {
+  /** El día del rival (±): se sortea una vez por cuarto. */
+  rivalDay: number;
+  /** La fuerza del rival en el último tramo (con sus piernas de ese momento). */
+  rivalEff: number;
+  luck: number;
+  momentumPts: number;
+  /** El rival rompió la presión este cuarto (se sortea una vez). */
+  presionRota: boolean;
+  /** Tramo en el que cae la racha de cada lado (-1 si no hay), y de cuántos puntos. */
+  rachaOurAt: number;
+  rachaOurPts: number;
+  rachaRivalAt: number;
+  rachaRivalPts: number;
+  rebQ: number;
+  astQ: number;
+  /** Rebotes de cada uno en el cuarto (para las incidencias del cierre). */
+  rebBox: Record<string, number>;
+  /** El ataque del último tramo (decide el suplementario si hay empate). */
+  lastAtk: number;
+  carryFor: number;
+  carryAgainst: number;
+  /** Bronca canalizada en este cuarto. */
+  rage: boolean;
+  /** Ya hubo una lesión en este cuarto. */
+  injured: boolean;
+  /** El rival ya pidió minuto en este cuarto. */
+  rivalTimeout: boolean;
+  /** Tramo en el que corre el minuto pedido (nuestro / del rival), -1 si no. */
+  ourTimeoutAt: number;
+  rivalTimeoutAt: number;
+  /** Notas del cuarto que se van juntando (las de color del arranque y el cierre). */
+  notes: string[];
 }
 
 /** Estado del partido en curso (fase 'match'). */
@@ -376,6 +436,16 @@ export interface LiveMatchState {
   manualBreak?: boolean;
   /** Lesionados durante el partido (para el informe y las noticias). */
   injuries?: { playerId: string; name: string; weeks: number }[];
+  /**
+   * El cuarto que se está jugando, tramo a tramo (sep 2026). Entra a
+   * `quarters` cuando termina. Sin esto, el próximo `PLAY_TRAMO` arranca un
+   * cuarto nuevo.
+   */
+  enCurso?: LiveQuarter & { ctx: QuarterContext };
+  /** Minutos pedidos por nosotros en el partido (hay dos). */
+  minutosPedidos?: number;
+  /** Pediste minuto: corre en el próximo tramo. */
+  minutoPedido?: boolean;
   eval: TeamEval;
 }
 

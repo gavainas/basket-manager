@@ -13,8 +13,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { BALANCE } from '../game/balance';
-import { courtFreshness, rivalBoxScore, rivalLineup } from '../game/match';
-import { arranqueDelCuarto, jugadasDelCuarto, largoDelCuarto, type Jugada } from '../game/relato';
+import { courtFreshness, cuartosDe, marcador, MINUTOS_POR_PARTIDO, rivalBoxScore, rivalLineup } from '../game/match';
+import { arranqueDelCuarto, jugadasDelCuarto, largoDelCuarto, largoDelTramo, type Jugada } from '../game/relato';
 import { clubByLegacyId, teamByLegacyRival, userTeam } from '../game/world';
 import type { GameState, Player, Position, WorldPlayer } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
@@ -101,11 +101,14 @@ const SEGUNDOS_POR_CUARTO = 15;
 const TICK_MS = 100;
 
 /**
- * El reloj en vivo (sep 2026). El motor sigue simulando el cuarto entero de
- * una vez; la pantalla lo CUENTA en tiempo: el reloj corre diez minutos en
+ * El reloj en vivo (sep 2026). El motor simula el cuarto por tramos de dos
+ * minutos y la pantalla los CUENTA en tiempo: el reloj corre diez minutos en
  * unos quince segundos, las canastas van cayendo a medida que pasa el minuto,
- * el marcador sube con cada una y la cancha marca quién anotó. Se puede
- * pausar, saltar al final del cuarto, o simular el partido entero.
+ * el marcador sube con cada una y la cancha marca quién anotó. Cuando el
+ * reloj llega al final del último tramo jugado, pide el siguiente: por eso
+ * los cambios, la táctica y el minuto pedido entran en la próxima pelota
+ * muerta, no en el próximo cuarto. Se puede pausar, saltar al final del
+ * cuarto, o simular el partido entero.
  */
 interface Reloj {
   /** El cuarto que se está contando. */
@@ -123,26 +126,47 @@ export function PartidoVivo({ state, dispatch }: Props) {
   const [reloj, setReloj] = useState<Reloj | null>(null);
   const [simulando, setSimulando] = useState(false);
   const ultimaFilaRef = useRef<HTMLDivElement | null>(null);
+  const tramoPedidoRef = useRef<string>('');
 
   const live = state.live;
-  const cuartosJugados = live?.quarters.length ?? 0;
-  const relojFin = live && reloj ? arranqueDelCuarto(live, reloj.q) + largoDelCuarto(live.quarters[reloj.q]?.overtime) : 0;
+  const cuartos = live ? cuartosDe(live) : [];
+  const cuartosJugados = cuartos.length;
+  const relojCuarto = live && reloj ? cuartos[reloj.q] : undefined;
+  const relojFin = live && reloj ? arranqueDelCuarto(live, reloj.q) + largoDelCuarto(relojCuarto?.overtime) : 0;
+  // Hasta dónde puede correr el reloj: el final del último tramo que el motor
+  // ya jugó (o la chicharra, si el cuarto está cerrado).
+  const enCursoDelReloj = live && reloj && live.enCurso && reloj.q === live.quarters.length ? live.enCurso : null;
+  const relojTope = enCursoDelReloj
+    ? arranqueDelCuarto(live!, reloj!.q) + largoDelTramo(enCursoDelReloj) * (enCursoDelReloj.tramos?.length ?? 0)
+    : relojFin;
 
-  // El reloj avanza mientras no esté en pausa; al llegar a la chicharra, si el
-  // motor ya jugó otro cuarto (el suplementario), lo cuenta también.
+  // El reloj avanza mientras no esté en pausa, hasta donde el motor llegó; al
+  // llegar a la chicharra, si el motor ya jugó otro cuarto (el suplementario),
+  // lo cuenta también.
   useEffect(() => {
     if (!reloj || reloj.pausa || !live) return;
-    const paso = (largoDelCuarto(live.quarters[reloj.q]?.overtime) / SEGUNDOS_POR_CUARTO) * (TICK_MS / 1000);
+    const paso = (largoDelCuarto(relojCuarto?.overtime) / SEGUNDOS_POR_CUARTO) * (TICK_MS / 1000);
     const id = window.setInterval(() => {
       setReloj((r) => {
         if (!r || r.pausa) return r;
-        const t = r.t + paso;
-        if (t < relojFin) return { ...r, t };
+        const t = Math.min(r.t + paso, relojTope);
+        if (t < relojFin) return t === r.t ? r : { ...r, t };
         return cuartosJugados > r.q + 1 ? { q: r.q + 1, t: relojFin, pausa: false } : null;
       });
     }, TICK_MS);
     return () => window.clearInterval(id);
-  }, [reloj, live, relojFin, cuartosJugados]);
+  }, [reloj, live, relojCuarto, relojFin, relojTope, cuartosJugados]);
+
+  // La pelota muerta: cuando el reloj alcanza el final del último tramo
+  // jugado, pide el siguiente al motor (una sola vez por tramo).
+  useEffect(() => {
+    if (!reloj || reloj.pausa || !live || !enCursoDelReloj || live.pendingIncident) return;
+    if (reloj.t < relojTope - 1e-6) return;
+    const clave = `${reloj.q}:${enCursoDelReloj.tramos?.length ?? 0}`;
+    if (tramoPedidoRef.current === clave) return;
+    tramoPedidoRef.current = clave;
+    dispatch({ type: 'PLAY_TRAMO' });
+  }, [reloj, live, enCursoDelReloj, relojTope, dispatch]);
 
   // Simular el partido: un cuarto tras otro, sin reloj, hasta el final o hasta
   // una incidencia que tenés que resolver vos.
@@ -175,12 +199,26 @@ export function PartidoVivo({ state, dispatch }: Props) {
   if (!live) return null;
 
   const jugarCuarto = () => {
+    if (reducedMotion()) {
+      dispatch({ type: 'PLAY_QUARTER' });
+      return;
+    }
+    // Arranca el cuarto (o lo sigue desde la pelota muerta en la que quedó) y
+    // pone el reloj ahí: el motor va a jugar el próximo tramo.
     const q = live.quarters.length;
-    dispatch({ type: 'PLAY_QUARTER' });
-    if (!reducedMotion()) setReloj({ q, t: arranqueDelCuarto(live, q), pausa: false });
+    const jugados = live.enCurso?.tramos?.length ?? 0;
+    const t = arranqueDelCuarto(live, q) + (live.enCurso ? largoDelTramo(live.enCurso) * jugados : 0);
+    tramoPedidoRef.current = `${q}:${jugados}`;
+    dispatch({ type: 'PLAY_TRAMO' });
+    setReloj({ q, t, pausa: false });
   };
-  const saltar = () => setReloj(null);
+  const saltar = () => {
+    dispatch({ type: 'PLAY_QUARTER' });
+    setReloj(null);
+  };
   const pausar = () => setReloj((r) => (r ? { ...r, pausa: !r.pausa } : r));
+  const pedirMinuto = () => dispatch({ type: 'PEDIR_MINUTO' });
+  const minutosQueQuedan = MINUTOS_POR_PARTIDO - (live.minutosPedidos ?? 0);
   const rival = state.rivals.find((r) => r.id === live.rivalId)!;
   const style = rivalStyleInfo(rival.style);
   const world = state.world;
@@ -192,7 +230,8 @@ export function PartidoVivo({ state, dispatch }: Props) {
   const nuestrosColores = state.club.colors ?? nuestroClub?.colors ?? ['#2d5c8a', '#e8e4dc'];
   const rivalColores = rivalClub?.colors ?? ['#9d3b3b', '#e8e4dc'];
 
-  const played = live.quarters;
+  // Los cuartos que se ven: los jugados y el que está en curso.
+  const played = cuartos;
   const hasOT = played.some((q) => q.overtime);
 
   // Con el reloj corriendo, la pantalla muestra el partido HASTA ese minuto:
@@ -213,7 +252,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
     ? ultimaVisible
       ? { f: ultimaVisible.f, a: ultimaVisible.a }
       : antesDelReloj!
-    : { f: played.reduce((t, q) => t + q.for, 0), a: played.reduce((t, q) => t + q.against, 0) };
+    : marcador(live);
   const totalFor = mostrado.f;
   const totalAgainst = mostrado.a;
   const diff = totalFor - totalAgainst;
@@ -224,28 +263,34 @@ export function PartidoVivo({ state, dispatch }: Props) {
     if (reloj && i === reloj.q) return lado === 'for' ? totalFor - antesDelReloj!.f : totalAgainst - antesDelReloj!.a;
     return q[lado];
   };
-  const cuartosCerrados = reloj ? reloj.q : played.length;
-  const regularPlayed = played.slice(0, cuartosCerrados).filter((q) => !q.overtime).length;
-  const lastQ = cuartosCerrados > 0 ? played[cuartosCerrados - 1] : null;
+  // Los cuartos cerrados de verdad: sin el que corre en el reloj ni el que quedó en una pelota muerta.
+  const cuartosCerrados = live.quarters.length;
+  const regularPlayed = live.quarters.filter((q) => !q.overtime).length;
+  const enDescanso = !reloj && !live.enCurso;
+  const lastQ = cuartosCerrados > 0 ? live.quarters[cuartosCerrados - 1] : null;
   const lastDiff = lastQ ? lastQ.for - lastQ.against : 0;
-  const hotStreak = !reloj && !live.finished && lastQ !== null && lastDiff >= 6;
-  const coldStreak = !reloj && !live.finished && lastQ !== null && lastDiff <= -6;
-  const comebackMode = !reloj && !live.finished && played.length > 0 && diff <= -BALANCE.liveMatch.comebackDeficit;
-  const holdMode = !reloj && !live.finished && played.length > 0 && diff >= BALANCE.liveMatch.comebackDeficit;
-  const injuryNote = !reloj ? (lastQ?.notes.find((n) => n.startsWith('🚑')) ?? null) : null;
+  const hotStreak = enDescanso && !live.finished && lastQ !== null && lastDiff >= 6;
+  const coldStreak = enDescanso && !live.finished && lastQ !== null && lastDiff <= -6;
+  const comebackMode = enDescanso && !live.finished && played.length > 0 && diff <= -BALANCE.liveMatch.comebackDeficit;
+  const holdMode = enDescanso && !live.finished && played.length > 0 && diff >= BALANCE.liveMatch.comebackDeficit;
+  const injuryNote = enDescanso ? (lastQ?.notes.find((n) => n.startsWith('🚑')) ?? null) : null;
 
   const minutoReloj = reloj ? Math.min(relojFin, Math.floor(reloj.t) + (reloj.t % 1 > 0 ? 1 : 0)) : 0;
+  const nombreCuarto = (i: number) => (played[i]?.overtime ? 'Suplementario' : `${Q_LABELS[Math.min(i, 3)]} cuarto`);
+  const minutoEnCurso = live.enCurso ? arranqueDelCuarto(live, cuartosCerrados) + largoDelTramo(live.enCurso) * (live.enCurso.tramos?.length ?? 0) : 0;
   const momento = reloj
-    ? `${played[reloj.q]?.overtime ? 'Suplementario' : `${Q_LABELS[Math.min(reloj.q, 3)]} cuarto`} · ${minutoReloj}'${reloj.pausa ? ' · pausado' : ''}`
-    : live.finished
-      ? 'Final'
-      : played.length === 0
-        ? 'Antes del salto'
-        : regularPlayed === 2 && !hasOT
-          ? 'Entretiempo'
-          : hasOT
-            ? 'Suplementario'
-            : `Fin del ${Q_LABELS[Math.min(regularPlayed, 4) - 1]} cuarto`;
+    ? `${nombreCuarto(reloj.q)} · ${minutoReloj}'${reloj.pausa ? ' · pausado' : ''}`
+    : live.enCurso
+      ? `${nombreCuarto(cuartosCerrados)} · ${minutoEnCurso}' · pelota muerta`
+      : live.finished
+        ? 'Final'
+        : played.length === 0
+          ? 'Antes del salto'
+          : regularPlayed === 2 && !hasOT
+            ? 'Entretiempo'
+            : hasOT
+              ? 'Suplementario'
+              : `Fin del ${Q_LABELS[Math.min(regularPlayed, 4) - 1]} cuarto`;
 
   const byId = (id: string) => state.players.find((p) => p.id === id)!;
   const onCourt = live.onCourt.map(byId);
@@ -537,14 +582,18 @@ export function PartidoVivo({ state, dispatch }: Props) {
                   const i = played.length - 1 - k;
                   // Con el reloj corriendo, los cuartos que todavía no empezaron no existen.
                   if (reloj && i > reloj.q) return null;
-                  const enVivo = reloj !== null && i === reloj.q;
-                  // Las jugadas (minuto, marcador, autor) y lo que se vio (las
-                  // notas del motor). "Puntos" muestra sólo las jugadas;
-                  // "Cambios", sólo las notas de cambios; "Todo", las dos.
-                  const jugadas = filtro === 'cambios' ? [] : jugadasDe(i);
-                  const notas = enVivo || filtro === 'puntos' ? [] : filtro === 'cambios' ? q.notes.filter(esDeCambios) : q.notes;
+                  const enVivo = (reloj !== null && i === reloj.q) || (reloj === null && i === cuartosCerrados && !!live.enCurso);
+                  // Las jugadas (minuto, marcador, autor; los cambios y las
+                  // notas de cada pelota muerta) y lo que se vio del cuarto
+                  // entero (las notas del motor, sin repetir las que ya están
+                  // en su minuto). "Puntos" muestra sólo las canastas;
+                  // "Cambios", sólo las entradas y salidas; "Todo", todo.
+                  const jugadas = jugadasDe(i).filter((j) => (filtro === 'puntos' ? !j.tipo : filtro === 'cambios' ? j.tipo === 'cambio' : true));
+                  const enTramos = new Set((q.tramos ?? []).flatMap((t) => t.notes ?? []));
+                  const notasDelCuarto = q.notes.filter((n) => !enTramos.has(n));
+                  const notas = enVivo || filtro === 'puntos' ? [] : filtro === 'cambios' ? notasDelCuarto.filter(esDeCambios) : notasDelCuarto;
                   if (jugadas.length === 0 && notas.length === 0 && filtro !== 'todo' && !enVivo) return null;
-                  const parcial = enVivo ? `${totalFor - antesDelReloj!.f}-${totalAgainst - antesDelReloj!.a}` : `${q.for}-${q.against}`;
+                  const parcial = reloj && i === reloj.q ? `${totalFor - antesDelReloj!.f}-${totalAgainst - antesDelReloj!.a}` : `${q.for}-${q.against}`;
                   return (
                     <div key={i} className={`quarter-log${enVivo ? ' en-vivo' : ''}`}>
                       <div className="quarter-head">
@@ -559,10 +608,14 @@ export function PartidoVivo({ state, dispatch }: Props) {
                       {jugadas.length > 0 && (
                         <div className="rj-lista">
                           {jugadas.map((j, n) => (
-                            <div key={n} className={`rj ${j.lado}${enVivo && n === jugadas.length - 1 ? ' nueva' : ''}`} ref={enVivo && n === jugadas.length - 1 ? ultimaFilaRef : undefined}>
+                            <div key={n} className={`rj ${j.lado}${j.tipo ? ` ${j.tipo}` : ''}${enVivo && n === jugadas.length - 1 ? ' nueva' : ''}`} ref={enVivo && n === jugadas.length - 1 ? ultimaFilaRef : undefined}>
                               <span className="rj-min">{j.minuto}</span>
                               <span className="rj-marcador">{j.marcador}</span>
-                              <span className="rj-punto" title={j.lado === 'nosotros' ? state.club.name : rival.name} />
+                              {j.tipo ? (
+                                <span className="rj-icono">{j.tipo === 'cambio' ? <Icon name="cambio" size={11} /> : '·'}</span>
+                              ) : (
+                                <span className="rj-punto" title={j.lado === 'nosotros' ? state.club.name : rival.name} />
+                              )}
                               <span className="rj-texto">
                                 <b>{j.texto}</b>
                                 {j.sub && <span className="rj-sub">{j.sub}</span>}
@@ -751,7 +804,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
                 ))}
               </div>
             </div>
-            <p className="pvt-nota">Se aplica al próximo cuarto.</p>
+            <p className="pvt-nota">{reloj || live.enCurso ? 'Entra en la próxima pelota muerta.' : 'Se aplica desde el próximo cuarto.'}</p>
           </div>
         </div>
       </div>
@@ -764,13 +817,26 @@ export function PartidoVivo({ state, dispatch }: Props) {
               <button className="primary" onClick={pausar}>
                 {reloj.pausa ? '▶ Seguir' : '❚❚ Pausar'}
               </button>
-              <button onClick={saltar}>Saltar al final del cuarto ⏭</button>
-              <span className="hint">{reloj.pausa ? 'El reloj está parado. Mirá la cancha y seguí cuando quieras.' : 'El cuarto se juega en vivo. Los cambios que hagas ahora entran en el próximo.'}</span>
+              <button
+                disabled={!live.enCurso || !!live.minutoPedido || minutosQueQuedan <= 0}
+                title="Corta el juego en la próxima pelota muerta: el rival ataca peor ese tramo y los cinco respiran. Tenés dos por partido."
+                onClick={pedirMinuto}
+              >
+                ⏱ Minuto{minutosQueQuedan > 0 ? ` (${minutosQueQuedan})` : ''}
+              </button>
+              <button onClick={saltar}>Saltar el cuarto ⏭</button>
+              <span className="hint">
+                {live.minutoPedido
+                  ? 'Pediste minuto: corre en la próxima pelota muerta.'
+                  : reloj.pausa
+                    ? 'Reloj parado: armá el cambio y seguí cuando quieras.'
+                    : 'En vivo: los cambios y la táctica entran en la próxima pelota muerta.'}
+              </span>
             </>
           ) : !live.finished ? (
             <>
               <button className="primary" disabled={!!live.pendingIncident || simulando} onClick={jugarCuarto}>
-                ▶ Jugar el {Q_LABELS[Math.min(regularPlayed, 3)]} cuarto
+                {live.enCurso ? `▶ Seguir el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto` : `▶ Jugar el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto`}
               </button>
               <button disabled={!!live.pendingIncident || simulando} title="Juega lo que falta de corrido, con tu plan de cambios (o el DT). Se frena sola si hay una incidencia." onClick={() => setSimulando(true)}>
                 {simulando ? 'Simulando…' : 'Simular el partido ⏩'}

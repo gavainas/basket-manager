@@ -46,7 +46,11 @@ describe('el relato jugada a jugada', () => {
         expect(j.texto.length).toBeGreaterThan(3);
         expect(j.texto).not.toContain('{n}');
         expect(j.sub ?? '').not.toContain('{a}');
-        if (j.lado === 'nosotros') expect(q.onCourt).toContain(j.quienId);
+        // Una canasta nuestra la hizo uno de los que estaban en cancha en ese tramo (o en el cuarto, si no hay tramos).
+        if (j.lado === 'nosotros' && !j.tipo) {
+          const tramo = (q.tramos ?? []).find((_t, k) => j.t >= inicio + k * 2 && j.t < inicio + (k + 1) * 2);
+          expect(tramo?.onCourt ?? q.onCourt).toContain(j.quienId);
+        }
       }
     });
   });

@@ -5,7 +5,9 @@ import {
   finishLiveMatch,
   matchAbsentIds,
   noStartIds,
+  pedirMinuto,
   playQuarter,
+  playTramo,
   sanitizeLineup,
   setMatchPlan,
   setStar,
@@ -71,6 +73,8 @@ export type GameAction =
   | { type: 'SET_STAR'; playerId: string }
   | { type: 'INCIDENT_CHOICE'; index: number }
   | { type: 'PLAY_QUARTER' }
+  | { type: 'PLAY_TRAMO' }
+  | { type: 'PEDIR_MINUTO' }
   | { type: 'FINISH_MATCH' }
   | { type: 'NEXT_WEEK' }
   | { type: 'PS_TALK'; id: string }
@@ -323,6 +327,15 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
       if (state.phase !== 'match' || !state.live || state.live.finished || state.live.pendingIncident) return state;
       const rng = new Rng(state.seed);
       return playQuarter({ ...state, seed: rng.nextSeed() }, rng);
+    }
+    case 'PLAY_TRAMO': {
+      if (state.phase !== 'match' || !state.live || state.live.finished || state.live.pendingIncident) return state;
+      const rng = new Rng(state.seed);
+      return playTramo({ ...state, seed: rng.nextSeed() }, rng);
+    }
+    case 'PEDIR_MINUTO': {
+      if (state.phase !== 'match' || !state.live || state.live.finished) return state;
+      return pedirMinuto(state);
     }
     case 'FINISH_MATCH': {
       if (state.phase !== 'match' || !state.live?.finished) return state;
