@@ -8,6 +8,7 @@ import {
   playQuarter,
   sanitizeLineup,
   setMatchPlan,
+  setStar,
   startLiveMatch,
   substitute,
   suggestRotation,
@@ -67,6 +68,7 @@ export type GameAction =
   | { type: 'APPLY_PRESET'; preset: LineupPreset }
   | { type: 'SET_AUTO_ROTATION'; on: boolean; directive?: 'ganar' | 'repartir' }
   | { type: 'SET_MATCH_PLAN'; plan: MatchPlan }
+  | { type: 'SET_STAR'; playerId: string }
   | { type: 'INCIDENT_CHOICE'; index: number }
   | { type: 'PLAY_QUARTER' }
   | { type: 'FINISH_MATCH' }
@@ -307,6 +309,10 @@ export function gameReducer(state: GameState | null, action: GameAction): GameSt
     case 'SET_MATCH_PLAN': {
       if (state.phase !== 'match' || !state.live || state.live.finished) return state;
       return setMatchPlan(state, action.plan);
+    }
+    case 'SET_STAR': {
+      if (state.phase !== 'match' || !state.live || state.live.finished) return state;
+      return setStar(state, action.playerId);
     }
     case 'INCIDENT_CHOICE': {
       if (state.phase !== 'match' || !state.live?.pendingIncident) return state;

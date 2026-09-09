@@ -461,6 +461,26 @@ Formato sugerido:
 - Próximo paso autorizado: que Gabi lea el brief y diga si va la prueba de registro. Hasta
   entonces, no se genera nada.
 
+### 2026-09-09 — La referencia del partido en vivo (aprobada)
+
+- Alcance: la anatomía de la pantalla del partido. Gabi mandó una referencia armada
+  fuera del repo ("así quedó una referencia que armamos, ¿qué te parece?") y dio el
+  visto bueno a implementarla en dos pasos. Guardada en
+  [`arte/referencias/2026-09-09-partido.png`](arte/referencias/2026-09-09-partido.png).
+- Aprobado: la composición —cabecera con los dos escudos y el marcador oscuro, nuestro
+  equipo con el cambio preparado, la cancha con los diez en el medio y el relato debajo,
+  el rival y el tablero táctico a la derecha— y la lectura de "un solo naranja".
+- No aprobado (todavía no existe en el motor y no se dibujan controles que no hacen
+  nada): presión en tres niveles, ritmo, marca especial, energía individual del rival, y
+  el relato jugada a jugada con minuto y marcador (queda para un segundo paso, con un
+  generador de jugadas por cuarto).
+- Correcciones: la referencia del ataque se puede elegir (`SET_STAR`), que en la
+  referencia era un desplegable y en el motor no existía; el quinteto rival es real (las
+  personas del mundo que vinieron hoy) con sus puntos repartidos cuarto a cuarto; las
+  piernas del rival van por equipo, no por jugador. Ningún asset nuevo: escudos
+  procedurales y cancha en CSS/SVG.
+- Próximo paso autorizado: el relato jugada a jugada (segundo paso). Nada de arte.
+
 ## Estado de aprobación actual
 
 > **Corregido en sep 2026.** Este bloque contradecía al resto del documento y a lo que hay

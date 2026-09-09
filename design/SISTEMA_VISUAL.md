@@ -611,6 +611,20 @@ Con `prefers-reduced-motion: reduce` **todo se apaga**: estas cinco, el pop del 
 las alertas y las transiciones de hover (bloque al final de la sección). El contador lo
 consulta por su cuenta y salta directo al valor.
 
+## El partido en vivo: la anatomía de la referencia (sep 2026)
+
+Referencia armada por Gabi y aprobada el 2026-09-09
+(`design/arte/referencias/2026-09-09-partido.png`), implementada en `src/ui/PartidoVivo.tsx`
+y el bloque "El partido en vivo" de `src/styles.css`. Tres franjas: **la cabecera** (contexto
+· nuestro escudo y nombre · marcador oscuro en chrome con el momento debajo · escudo y
+nombre del rival · parciales), **el cuerpo** en tres columnas —nuestro equipo con el cambio
+preparado, la cancha con los diez y el relato con filtros, el tablero táctico y el rival— y
+**el pie** con el botón del cuarto. Las bandas de las dos cards de equipo llevan el color
+del club (es dato: qué equipo es), la cancha es CSS y SVG, los escudos son procedurales.
+Reglas que deja: el tablero táctico va arriba del rival porque es acción; la cancha es lo
+que se achica con la ventana (`clamp(120px, 21vh, 250px)`); no se dibuja un control que
+el motor no tenga.
+
 ## La franja del partido (sep 2026)
 
 Regla nueva, salida de medir la pantalla del partido con la ventana de Gabi (815 px de

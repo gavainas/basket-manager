@@ -340,8 +340,12 @@ export interface LiveMatchState {
   luckTotal: number;
   /** El rival metió una presión especial en el último cuarto. */
   rivalPush: boolean;
-  /** Convocatoria rival del día: quiénes vinieron y cuánto pesa (opcional por compatibilidad). */
-  rivalSquad?: { presentCount: number; mod: number; notes: string[] };
+  /** Convocatoria rival del día: quiénes vinieron y cuánto pesa (opcional por compatibilidad).
+   *  `presentIds` (sep 2026) son las personas del mundo que vinieron: con eso la
+   *  pantalla muestra el quinteto rival con nombre y apellido. */
+  rivalSquad?: { presentIds?: string[]; presentCount: number; mod: number; notes: string[] };
+  /** La referencia del ataque la elegiste vos: no se recalcula en cada cambio mientras siga en cancha. */
+  starLocked?: boolean;
   /** Tensión con los jueces (0-5): percepción del equipo, afecta concentración. */
   refTension?: number;
   /** El próximo cuarto sale con bronca canalizada (+intensidad). */

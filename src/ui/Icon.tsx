@@ -55,7 +55,10 @@ export type IconName =
   | 'beca'
   | 'camiseta'
   | 'descanso'
-  | 'lupa';
+  | 'lupa'
+  // El partido en vivo (sep 2026): el cambio (dos flechas) y el tablero táctico.
+  | 'cambio'
+  | 'pizarra';
 
 const PATHS: Record<IconName, string> = {
   // Tablero: la grilla del resumen.
@@ -148,6 +151,10 @@ const PATHS: Record<IconName, string> = {
   descanso: 'M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 102 16.5 8.5 8.5 0 008.5-6z',
   // Lupa: correr la voz, preguntar por ahí.
   lupa: 'M10.5 3.5a7 7 0 100 14 7 7 0 000-14 M15.5 15.5L21 21',
+  // Cambio: dos flechas cruzadas, una entra y otra sale.
+  cambio: 'M4 8h13 M14 5l3 3-3 3 M20 16H7 M10 13l-3 3 3 3',
+  // Pizarra: la tablilla con la pinza y las líneas de la jugada.
+  pizarra: 'M6 5.5h12v15H6z M9 3.5h6v3.5H9z M9 11h6 M9 14.5h6 M9 18h4',
 };
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
