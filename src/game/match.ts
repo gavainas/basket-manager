@@ -837,19 +837,25 @@ export function rivalLineup(state: GameState, live: LiveMatchState): { court: Wo
  * los metió.
  */
 export function rivalBoxScore(state: GameState, live: LiveMatchState): Record<string, number> {
-  const { court } = rivalLineup(state, live);
   const out: Record<string, number> = {};
-  if (court.length === 0) return out;
-  live.quarters.forEach((q, i) => {
-    const rng = new Rng(seedFromString(`${live.rivalId}:${state.week}:${i}:${q.against}`));
-    const share = distribute(
-      q.against,
-      court.map((p) => ({ id: p.id, w: Math.max(1, p.level - 30) })),
-      rng
-    );
-    for (const p of court) out[p.id] = (out[p.id] ?? 0) + (share[p.id] ?? 0);
+  live.quarters.forEach((_q, i) => {
+    const share = rivalQuarterBox(state, live, i);
+    for (const [id, pts] of Object.entries(share)) out[id] = (out[id] ?? 0) + pts;
   });
   return out;
+}
+
+/** Los puntos rivales de UN cuarto, repartidos entre su quinteto (ver `rivalBoxScore`). */
+export function rivalQuarterBox(state: GameState, live: LiveMatchState, qIndex: number): Record<string, number> {
+  const q = live.quarters[qIndex];
+  const { court } = rivalLineup(state, live);
+  if (!q || court.length === 0) return {};
+  const rng = new Rng(seedFromString(`${live.rivalId}:${state.week}:${qIndex}:${q.against}`));
+  return distribute(
+    q.against,
+    court.map((p) => ({ id: p.id, w: Math.max(1, p.level - 30) })),
+    rng
+  );
 }
 
 /** Cambia el plan de cambios a mitad de partido (con DT al mando no aplica). */
@@ -1367,7 +1373,15 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
     live.rivalFreshness = clamp(live.rivalFreshness + M.halftimeRecovery);
   }
 
-  live.quarters.push({ for: ourQ, against: rivalQ, defense: live.defense, attack: live.attack, notes: notes.slice(0, 5) });
+  live.quarters.push({
+    for: ourQ,
+    against: rivalQ,
+    defense: live.defense,
+    attack: live.attack,
+    notes: notes.slice(0, 5),
+    box: qPts,
+    onCourt: [...live.onCourt],
+  });
 
   // --- Final y suplementario ---
   if (qIndex === 3) {
@@ -1396,6 +1410,8 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
         defense: live.defense,
         attack: live.attack,
         overtime: true,
+        box: otPts,
+        onCourt: [...live.onCourt],
         notes: [
           ourOT > rivalOT
             ? 'Suplementario de infarto: lo ganamos con carácter.'

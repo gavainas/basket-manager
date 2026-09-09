@@ -495,6 +495,8 @@ Formato sugerido:
   piernas del rival van por equipo, no por jugador. Ningún asset nuevo: escudos
   procedurales y cancha en CSS/SVG.
 - Próximo paso autorizado: el relato jugada a jugada (segundo paso). Nada de arte.
+  *(Hecho el mismo día: `src/game/relato.ts`, ver CHANGELOG.)* Siguen sin dibujarse
+  presión en tres niveles, ritmo, marca especial y energía individual del rival.
 
 ## Estado de aprobación actual
 

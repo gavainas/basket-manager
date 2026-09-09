@@ -5214,6 +5214,61 @@ button.mini.blue.on {
 .pv-filtro button + button { border-left-color: rgba(246, 244, 241, 0.35); }
 .pv-filtro button.on { background: var(--panel); color: var(--sec); }
 
+/* El relato jugada a jugada: minuto · marcador · quién · qué pasó. */
+.rj-lista {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0.2rem 0 0.4rem;
+}
+
+.rj {
+  display: grid;
+  grid-template-columns: 2.6ch 5ch 12px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.55rem;
+  padding: 0.28rem 0.35rem;
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+}
+
+.rj:nth-child(even) { background: var(--panel-2); }
+
+.rj-min {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+  text-align: right;
+}
+
+.rj-marcador {
+  font-family: var(--display);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.rj-punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  align-self: center;
+  background: var(--nuestro, var(--sec-partidos));
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+}
+
+.rj.rival .rj-punto { background: var(--rival, #9d3b3b); }
+
+.rj-texto {
+  display: grid;
+  gap: 0.05rem;
+  line-height: 1.3;
+}
+
+.rj-texto b { font-weight: 600; }
+.rj-sub { font-size: var(--fs-xs); color: var(--text-dim); }
+
+.rj-notas { margin-top: 0.15rem; }
+.rj-notas li { font-size: var(--fs-sm); margin-bottom: 0.15rem; }
+
 .pv-aviso {
   display: flex;
   align-items: center;

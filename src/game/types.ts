@@ -302,6 +302,10 @@ export interface LiveQuarter {
   notes: string[];
   /** true si es el suplementario. */
   overtime?: boolean;
+  /** Puntos de cada uno de los nuestros en este cuarto (sep 2026: alimenta el relato jugada a jugada). */
+  box?: Record<string, number>;
+  /** Los cinco que jugaron el cuarto. */
+  onCourt?: string[];
 }
 
 /** Estado del partido en curso (fase 'match'). */

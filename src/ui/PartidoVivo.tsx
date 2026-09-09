@@ -14,8 +14,9 @@
 import { useState } from 'react';
 import { BALANCE } from '../game/balance';
 import { courtFreshness, rivalBoxScore, rivalLineup } from '../game/match';
+import { jugadasDelCuarto } from '../game/relato';
 import { clubByLegacyId, teamByLegacyRival, userTeam } from '../game/world';
-import type { GameState, LiveQuarter, Player, Position, WorldPlayer } from '../game/types';
+import type { GameState, Player, Position, WorldPlayer } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { CountUp } from './CountUp';
 import { Crest } from './Crest';
@@ -85,10 +86,7 @@ function CanchaLineas() {
   );
 }
 
-/** Puntos de un cuarto para el filtro "Puntos": rachas, parciales, triples, remontadas. */
-function esDePuntos(n: string): boolean {
-  return /racha|parcial|triple|aro|remont|descontar|marcador|bandeja|canasta|puntos|ventaja|arriba|abajo/i.test(n);
-}
+/** Notas de cambios para el filtro "Cambios": entradas, salidas, el plan, el DT, la lesión. */
 function esDeCambios(n: string): boolean {
   return /cambio|entra |plan de cambios|unidad|cerradores|titulares|movió el banco|descansa|🕘|🚑/i.test(n);
 }
@@ -227,9 +225,6 @@ export function PartidoVivo({ state, dispatch }: Props) {
       <span className="pvj-nivel" title="Nivel estimado desde afuera">≈{p.level}</span>
     </div>
   );
-
-  const notasFiltradas = (q: LiveQuarter) =>
-    filtro === 'todo' ? q.notes : filtro === 'puntos' ? q.notes.filter(esDePuntos) : q.notes.filter(esDeCambios);
 
   const nuestrosSlots = bySlots(onCourt);
   const rivalSlots = bySlots(rivalCinco.court);
@@ -409,7 +404,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
               </div>
             </div>
           ) : played.length > 0 ? (
-            <div className="card pane partido-relato pv-relato">
+            <div className="card pane partido-relato pv-relato" style={{ '--nuestro': nuestrosColores[0], '--rival': rivalColores[0] } as React.CSSProperties}>
               <h3 className="card-band pv-relato-cab">
                 <span><Icon name="chat" size={15} /> Relato del partido</span>
                 <span className="segmented pv-filtro">
@@ -423,8 +418,12 @@ export function PartidoVivo({ state, dispatch }: Props) {
               <div className="pane-body">
                 {[...played].reverse().map((q, k) => {
                   const i = played.length - 1 - k;
-                  const notas = notasFiltradas(q);
-                  if (notas.length === 0 && filtro !== 'todo') return null;
+                  // Las jugadas (minuto, marcador, autor) y lo que se vio (las
+                  // notas del motor). "Puntos" muestra sólo las jugadas;
+                  // "Cambios", sólo las notas de cambios; "Todo", las dos.
+                  const jugadas = filtro === 'cambios' ? [] : jugadasDelCuarto(state, live, i);
+                  const notas = filtro === 'puntos' ? [] : filtro === 'cambios' ? q.notes.filter(esDeCambios) : q.notes;
+                  if (jugadas.length === 0 && notas.length === 0 && filtro !== 'todo') return null;
                   return (
                     <div key={i} className="quarter-log">
                       <div className="quarter-head">
@@ -434,14 +433,31 @@ export function PartidoVivo({ state, dispatch }: Props) {
                           {q.attack === 'estrella' ? 'Estrella' : q.attack === 'correr' ? 'Correr' : 'Colectivo'}
                         </span>
                       </div>
-                      <ul className="reason-list">
-                        {notas.map((n, j) => (
-                          <li key={j} className={n.startsWith('🚑') ? 'note-injury' : /racha|prendió el aro/.test(n) ? 'note-hot' : ''}>
-                            {n}
-                          </li>
-                        ))}
-                        {notas.length === 0 && <li>Cuarto parejo, sin sobresaltos.</li>}
-                      </ul>
+                      {jugadas.length > 0 && (
+                        <div className="rj-lista">
+                          {jugadas.map((j, n) => (
+                            <div key={n} className={`rj ${j.lado}`}>
+                              <span className="rj-min">{j.minuto}</span>
+                              <span className="rj-marcador">{j.marcador}</span>
+                              <span className="rj-punto" title={j.lado === 'nosotros' ? state.club.name : rival.name} />
+                              <span className="rj-texto">
+                                <b>{j.texto}</b>
+                                {j.sub && <span className="rj-sub">{j.sub}</span>}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {notas.length > 0 && (
+                        <ul className="reason-list rj-notas">
+                          {notas.map((n, j) => (
+                            <li key={j} className={n.startsWith('🚑') ? 'note-injury' : /racha|prendió el aro/.test(n) ? 'note-hot' : ''}>
+                              {n}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {jugadas.length === 0 && notas.length === 0 && <p className="tactic-hint">Cuarto parejo, sin sobresaltos.</p>}
                     </div>
                   );
                 })}
