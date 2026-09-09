@@ -13,10 +13,17 @@ import type { GameState, LiveMatchState } from './types';
 export interface Jugada {
   /** Minuto del partido ("7'"), acumulado entre cuartos. */
   minuto: string;
+  /** El mismo instante como número (minutos del partido, con decimales): lo usa el reloj en vivo. */
+  t: number;
   /** Marcador después de la jugada, "nosotros-ellos". */
   marcador: string;
+  /** Marcador después de la jugada, en números. */
+  f: number;
+  a: number;
   lado: 'nosotros' | 'rival';
   pts: number;
+  /** Quién anotó: id del jugador nuestro o de la persona del mundo rival (vacío si el rival no tiene plantel conocido). */
+  quienId: string;
   texto: string;
   sub?: string;
 }
@@ -78,10 +85,21 @@ const SUB_RIVALES = ['Nos cuesta cerrar el rebote.', 'Llegamos tarde a la ayuda.
 
 const MOMENTOS_POR_CUARTO = 5;
 
+/** Cuánto dura un cuarto en el reloj del partido (el suplementario, la mitad). */
+export function largoDelCuarto(overtime?: boolean): number {
+  return overtime ? 5 : 10;
+}
+
+/** Minuto del partido en el que arranca un cuarto. */
+export function arranqueDelCuarto(live: LiveMatchState, qIndex: number): number {
+  return live.quarters.slice(0, qIndex).reduce((t, x) => t + largoDelCuarto(x.overtime), 0);
+}
+
 /**
- * Las jugadas de un cuarto que se muestran: hasta cinco momentos, siempre con
- * el último (el cierre del cuarto con su marcador). Devuelve [] si el cuarto
- * todavía no tiene planilla (partidas guardadas antes de este relato).
+ * TODAS las canastas de un cuarto, en el orden del reloj, con el marcador
+ * después de cada una. Es lo que el reloj en vivo va soltando minuto a
+ * minuto. Devuelve [] si el cuarto todavía no tiene planilla (partidas
+ * guardadas antes de este relato).
  */
 export function jugadasDelCuarto(state: GameState, live: LiveMatchState, qIndex: number): Jugada[] {
   const q = live.quarters[qIndex];
@@ -91,24 +109,24 @@ export function jugadasDelCuarto(state: GameState, live: LiveMatchState, qIndex:
   const rivalCourt = rivalLineup(state, live).court;
   const rivalBox = rivalQuarterBox(state, live, qIndex);
 
-  type Evento = { lado: 'nosotros' | 'rival'; pts: number; quien: string; orden: number };
+  type Evento = { lado: 'nosotros' | 'rival'; pts: number; quien: string; quienId: string; orden: number };
   const eventos: Evento[] = [];
   for (const [id, pts] of Object.entries(q.box)) {
-    for (const c of canastas(pts, rng)) eventos.push({ lado: 'nosotros', pts: c, quien: apellido(nombreDe(id)), orden: rng.next() });
+    for (const c of canastas(pts, rng)) eventos.push({ lado: 'nosotros', pts: c, quien: apellido(nombreDe(id)), quienId: id, orden: rng.next() });
   }
   for (const p of rivalCourt) {
-    for (const c of canastas(rivalBox[p.id] ?? 0, rng)) eventos.push({ lado: 'rival', pts: c, quien: p.lastName, orden: rng.next() });
+    for (const c of canastas(rivalBox[p.id] ?? 0, rng)) eventos.push({ lado: 'rival', pts: c, quien: p.lastName, quienId: p.id, orden: rng.next() });
   }
   // Si el rival no tiene plantel conocido, sus puntos igual entran al marcador.
   const rivalSinNombre = q.against - Object.values(rivalBox).reduce((t, n) => t + n, 0);
-  for (const c of canastas(Math.max(0, rivalSinNombre), rng)) eventos.push({ lado: 'rival', pts: c, quien: live.rivalName, orden: rng.next() });
+  for (const c of canastas(Math.max(0, rivalSinNombre), rng)) eventos.push({ lado: 'rival', pts: c, quien: live.rivalName, quienId: '', orden: rng.next() });
   eventos.sort((a, b) => a.orden - b.orden);
   if (eventos.length === 0) return [];
 
   // Marcador al arrancar el cuarto, y el reloj: diez minutos por cuarto, cinco el suplementario.
   const antes = live.quarters.slice(0, qIndex).reduce((t, x) => ({ f: t.f + x.for, a: t.a + x.against }), { f: 0, a: 0 });
-  const base = live.quarters.slice(0, qIndex).reduce((t, x) => t + (x.overtime ? 5 : 10), 0);
-  const largo = q.overtime ? 5 : 10;
+  const base = arranqueDelCuarto(live, qIndex);
+  const largo = largoDelCuarto(q.overtime);
 
   const todas: Jugada[] = [];
   let f = antes.f;
@@ -117,7 +135,11 @@ export function jugadasDelCuarto(state: GameState, live: LiveMatchState, qIndex:
   eventos.forEach((e, i) => {
     if (e.lado === 'nosotros') f += e.pts;
     else a += e.pts;
-    const minuto = base + Math.max(1, Math.min(largo, Math.ceil(((i + 1) / eventos.length) * largo)));
+    // Cada canasta cae en su tramo del cuarto, con un poco de ruido para que
+    // no vengan a intervalos exactos; la última siempre antes de la chicharra.
+    const tramo = largo / eventos.length;
+    const t = base + Math.min(largo - 0.05, tramo * (i + 0.35 + rng.range(0, 0.55)));
+    const minuto = base + Math.max(1, Math.min(largo, Math.ceil(t - base)));
     const pool = e.lado === 'nosotros' ? NUESTRAS[e.pts] : RIVALES[e.pts];
     const texto = rng.pick(pool).replace('{n}', e.quien);
     let sub: string | undefined;
@@ -127,10 +149,17 @@ export function jugadasDelCuarto(state: GameState, live: LiveMatchState, qIndex:
     } else if (e.lado === 'rival' && rng.chance(0.3)) {
       sub = rng.pick(SUB_RIVALES);
     }
-    todas.push({ minuto: `${minuto}'`, marcador: `${f}-${a}`, lado: e.lado, pts: e.pts, texto, sub });
+    todas.push({ minuto: `${minuto}'`, t, marcador: `${f}-${a}`, f, a, lado: e.lado, pts: e.pts, quienId: e.quienId, texto, sub });
   });
+  return todas;
+}
 
-  // Los momentos: repartidos a lo largo del cuarto, con el cierre siempre.
+/**
+ * Los momentos de un cuarto: hasta cinco jugadas repartidas a lo largo, con el
+ * cierre siempre. Para leer un cuarto ya jugado sin la lista entera.
+ */
+export function momentosDelCuarto(state: GameState, live: LiveMatchState, qIndex: number): Jugada[] {
+  const todas = jugadasDelCuarto(state, live, qIndex);
   if (todas.length <= MOMENTOS_POR_CUARTO) return todas;
   const elegidas: Jugada[] = [];
   for (let k = 0; k < MOMENTOS_POR_CUARTO; k++) {

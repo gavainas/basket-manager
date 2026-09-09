@@ -641,6 +641,19 @@ Reglas que deja: el tablero táctico va arriba del rival porque es acción; la c
 que se achica con la ventana (`clamp(120px, 21vh, 250px)`); no se dibuja un control que
 el motor no tenga.
 
+### El reloj en vivo (sep 2026)
+
+El cuarto se cuenta en tiempo: diez minutos del partido en unos quince segundos
+(`SEGUNDOS_POR_CUARTO` en `PartidoVivo.tsx`), y todo lo que la pantalla muestra es **el
+partido hasta ese minuto**: marcador, parciales, puntos por jugador, relato. Lo que el
+motor ya sabe del resto del cuarto no se ve. Tres señales y ninguna más: el momento bajo
+el marcador ("2do cuarto · 7'", con "· pausado"), la etiqueta roja **● en juego** en el
+cuarto del relato, y la ficha del que acaba de anotar latiendo una vez en la cancha
+(`.pv-ficha.anoto`, 0,9 minutos de partido). La última jugada entra con un fundido de 260 ms
+(`.rj.nueva`) y el panel del relato se desplaza hasta ella; se desplaza el panel, nunca la
+página. El pie cambia de forma mientras corre: Pausar/Seguir y Saltar al final del cuarto;
+sin reloj, Jugar el cuarto y Simular el partido. Todo se apaga con `prefers-reduced-motion`.
+
 ## La franja del partido (sep 2026)
 
 Regla nueva, salida de medir la pantalla del partido con la ventana de Gabi (815 px de
