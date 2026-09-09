@@ -4,15 +4,12 @@ import type { GameAction } from '../state/gameReducer';
 import { ABSENCE_ACTIONS, reasonById } from '../game/absences';
 import { ACTIONS } from '../game/actions';
 import { BALANCE } from '../game/balance';
-import { conductLabel } from '../game/conduct';
 import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { userGameDay } from '../game/moments';
 import { lineupPromiseWarnings } from '../game/promises';
-import { courtFreshness, evaluateTeam, isSelectable, PLAN_MIN_BENCH } from '../game/match';
+import { evaluateTeam, isSelectable, PLAN_MIN_BENCH } from '../game/match';
 import { userFixtureOfWeek } from '../game/world';
 import type { WeekDay } from '../game/types';
-import { Bar } from './Bar';
-import { CountUp } from './CountUp';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { StyleChip } from './StyleChip';
@@ -22,6 +19,7 @@ import { Tip, TIPS } from './Tip';
 import { rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
 import { EMOTION_EXPRESSION } from '../game/humanState';
 import { Avatar } from './Avatar';
+import { PartidoVivo } from './PartidoVivo';
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 const POS_ABBR: Record<Position, string> = {
@@ -31,7 +29,6 @@ const POS_ABBR: Record<Position, string> = {
   'Ala-Pívot': 'AP',
   Pívot: 'PI',
 };
-const Q_LABELS = ['1er', '2do', '3er', '4to'];
 
 interface Props {
   state: GameState;
@@ -1171,521 +1168,6 @@ function LineupPanel({ state, dispatch }: Props) {
   );
 }
 
-function LiveMatchPanel({ state, dispatch }: Props) {
-  const [outSel, setOutSel] = useState<string | null>(null);
-  const live = state.live;
-  if (!live) return null;
-  const rival = state.rivals.find((r) => r.id === live.rivalId)!;
-  const style = rivalStyleInfo(rival.style);
-  const played = live.quarters;
-  const regularPlayed = played.filter((q) => !q.overtime).length;
-  const totalFor = played.reduce((t, q) => t + q.for, 0);
-  const totalAgainst = played.reduce((t, q) => t + q.against, 0);
-  const diff = totalFor - totalAgainst;
-  const isHalftime = regularPlayed === 2 && !live.finished;
-  const hasOT = played.some((q) => q.overtime);
-
-  // Drama del partido: lo que el motor ya sabe (rachas, remontadas, lesiones),
-  // la UI lo tiene que gritar, no esconderlo en una línea del relato.
-  const lastQ = played.length > 0 ? played[played.length - 1] : null;
-  const lastDiff = lastQ ? lastQ.for - lastQ.against : 0;
-  const hotStreak = !live.finished && lastQ !== null && lastDiff >= 6;
-  const coldStreak = !live.finished && lastQ !== null && lastDiff <= -6;
-  const comebackMode = !live.finished && played.length > 0 && diff <= -BALANCE.liveMatch.comebackDeficit;
-  const holdMode = !live.finished && played.length > 0 && diff >= BALANCE.liveMatch.comebackDeficit;
-  const injuryNote = lastQ?.notes.find((n) => n.startsWith('🚑')) ?? null;
-
-  const scoreLine =
-    played.length === 0
-      ? 'Todo listo para la presentación.'
-      : live.finished
-        ? diff > 0
-          ? `Final: victoria por ${diff}.`
-          : `Final: derrota por ${-diff}.`
-        : diff > 0
-          ? `Ganamos por ${diff}.`
-          : diff < 0
-            ? `Perdemos por ${-diff}.`
-            : 'Empatados.';
-
-  const byId = (id: string) => state.players.find((p) => p.id === id)!;
-  const onCourtPlayers = live.onCourt.map(byId);
-  const benchPlayers = live.squad.filter((id) => !live.onCourt.includes(id)).map(byId);
-  const freshOf = (id: string) => Math.round(live.playerFresh[id] ?? 70);
-  const minsOf = (id: string) => live.minutes[id] ?? 0;
-  const legsCls = (v: number) => (v >= 65 ? 'good' : v >= 40 ? 'warn' : 'bad');
-
-  const subRow = (p: Player, side: 'court' | 'bench') => {
-    const fresh = freshOf(p.id);
-    const selected = side === 'court' && outSel === p.id;
-    const clickable = !live.finished && (side === 'court' || outSel !== null);
-    const onClick = () => {
-      if (live.finished) return;
-      if (side === 'court') setOutSel(selected ? null : p.id);
-      else if (outSel) {
-        dispatch({ type: 'SUBSTITUTE', outId: outSel, inId: p.id });
-        setOutSel(null);
-      }
-    };
-    // Arrastre: soltar un suplente sobre uno de la cancha (o al revés) hace el cambio.
-    const onDrop = (e: React.DragEvent) => {
-      e.preventDefault();
-      if (live.finished) return;
-      const draggedId = e.dataTransfer.getData('text/plain');
-      if (!draggedId || draggedId === p.id) return;
-      const draggedOnCourt = live.onCourt.includes(draggedId);
-      const targetOnCourt = side === 'court';
-      if (draggedOnCourt === targetOnCourt) return;
-      const outId = draggedOnCourt ? draggedId : p.id;
-      const inId = draggedOnCourt ? p.id : draggedId;
-      dispatch({ type: 'SUBSTITUTE', outId, inId });
-      setOutSel(null);
-    };
-    return (
-      <div
-        key={p.id}
-        className={`sub-row${selected ? ' sel' : ''}${clickable ? '' : ' off'}`}
-        onClick={clickable ? onClick : undefined}
-        draggable={!live.finished}
-        onDragStart={(e) => {
-          e.dataTransfer.setData('text/plain', p.id);
-          e.dataTransfer.effectAllowed = 'move';
-        }}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={onDrop}
-        title={
-          side === 'court'
-            ? 'Arrastralo al banco o tocá para elegir quién sale'
-            : outSel
-              ? 'Tocá para meterlo (o arrastralo sobre uno en cancha)'
-              : 'Arrastralo sobre uno en cancha para el cambio'
-        }
-      >
-        <span className="lp-pos">{POS_ABBR[p.position]}</span>
-        <span className="sub-name">
-          {p.name}
-          {live.starId === p.id && side === 'court' ? <Icon name="estrella" size={10} /> : ''}
-        </span>
-        <span className="sub-pts">{live.stats[p.id]?.pts ?? 0} pts</span>
-        <span className="sub-mins">{minsOf(p.id)}&apos;</span>
-        <div className="legs-mini" title={`Piernas: ${fresh}`}>
-          <div className={`fill ${legsCls(fresh)}`} style={{ width: `${fresh}%` }} />
-        </div>
-        <div className="hover-card">
-          <div className="hc-head">
-            <strong>{p.name}</strong>
-            <span className="hc-rating">≈{p.visibleRating}</span>
-          </div>
-          <div className="hc-meta">
-            {p.position} · {p.age} años
-          </div>
-          <p className="hc-desc">{p.description}</p>
-          <Bar label="Físico" value={p.physical} />
-          <Bar label="Motivación" value={p.motivation} />
-          <Bar label="Afinidad social" value={p.social} />
-          <div className="hc-meta" style={{ marginTop: '0.3rem' }}>
-            Conducta: {conductLabel(p).short.toLowerCase()}
-          </div>
-          <div className="hc-meta" style={{ marginTop: '0.3rem' }}>
-            Piernas ahora: {fresh} · {minsOf(p.id)}&apos; jugados
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    /* Tres franjas de alto fijo (tanda C): el marcador arriba, el juego en el
-       medio en tres columnas que scrollean cada una lo suyo, y el botón del
-       cuarto siempre en el mismo lugar abajo.
-       El cabezal DEJÓ DE SER STICKY: era sticky porque el scroller era la
-       página y al jugar un cuarto terminabas mirando suplentes con 0 pts con el
-       resultado seiscientos píxeles más arriba. Ahora es una fila de la grilla,
-       así que no scrollea, no tapa nada y no corta las filas de "En cancha". */
-    <div className="partido-pantalla">
-      <div className="partido-cabecera">
-      <div className="card partido-cabezal">
-        <div className="partido-cabezal-fila">
-          <h3 style={{ margin: 0 }}>
-            {weekLabel(state.week, state.seasonLength)} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
-          </h3>
-          <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
-          <span className="chip accent" title={style.desc}>
-            {style.label}
-          </span>
-          {isHalftime && <span className="chip good">Entretiempo: el equipo recupera aire</span>}
-        </div>
-
-        <div className="scoreboard live">
-          <div className="team">
-            <div className="tname">{state.club.name}</div>
-            <div className={`score ${diff > 0 ? 'win' : diff < 0 ? 'lose' : ''}`}>
-              <CountUp value={totalFor} />
-            </div>
-          </div>
-          <div style={{ color: 'var(--text-dim)', fontWeight: 700 }}>
-            {live.finished ? 'FINAL' : played.length === 0 ? 'vs' : `${Q_LABELS[Math.min(regularPlayed, 3)]}${hasOT ? ' + PR' : ''}`}
-          </div>
-          <div className="team">
-            <div className="tname"><RivalLink id={rival.id}>{rival.name}</RivalLink></div>
-            <div className={`score ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}>
-              <CountUp value={totalAgainst} />
-            </div>
-          </div>
-        </div>
-
-        {(hotStreak || coldStreak || comebackMode || holdMode) && (
-          <div className="drama-row">
-            {hotStreak && lastQ && (
-              <span className="chip good">Parcial de {lastQ.for}-{lastQ.against}: estamos en racha</span>
-            )}
-            {coldStreak && lastQ && (
-              <span className="chip bad">Nos metieron un parcial de {lastQ.against}-{lastQ.for}</span>
-            )}
-            {comebackMode && <span className="chip warn">{-diff} abajo: el equipo sale a morder cada pelota</span>}
-            {holdMode && <span className="chip warn">⚠ Ojo: {rival.name} va a salir con todo a descontar</span>}
-          </div>
-        )}
-
-        {injuryNote && <div className="match-alert">{injuryNote}</div>}
-      </div>
-
-      <div className="card" style={{ marginBottom: '1rem' }}>
-        {live.rivalSquad && live.rivalSquad.notes.length > 0 && (
-          <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.4rem', fontSize: '0.82rem' }}>
-            {live.rivalSquad.notes.join(' ')}
-          </p>
-        )}
-        <p className="muted" style={{ textAlign: 'center', margin: '0 0 0.6rem' }}>
-          {scoreLine}
-          {(() => {
-            const top = [...live.squad].sort((a, b) => (live.stats[b]?.pts ?? 0) - (live.stats[a]?.pts ?? 0))[0];
-            const pts = live.stats[top]?.pts ?? 0;
-            if (pts === 0) return null;
-            const tp = state.players.find((p) => p.id === top);
-            return tp ? ` Goleador: ${tp.name} (${pts}).` : null;
-          })()}
-        </p>
-
-        <div className="table-wrap" style={{ maxWidth: 460, margin: '0 auto' }}>
-          <table>
-            <thead>
-              <tr>
-                <th></th>
-                {[0, 1, 2, 3].map((i) => (
-                  <th className="num" key={i}>
-                    Q{i + 1}
-                  </th>
-                ))}
-                {hasOT && <th className="num">PR</th>}
-                <th className="num">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Nosotros</td>
-                {[0, 1, 2, 3].map((i) => (
-                  <td className="num" key={i}>
-                    {played.filter((q) => !q.overtime)[i]?.for ?? '–'}
-                  </td>
-                ))}
-                {hasOT && <td className="num">{played.find((q) => q.overtime)!.for}</td>}
-                <td className="num" style={{ fontWeight: 700 }}>
-                  {totalFor}
-                </td>
-              </tr>
-              <tr>
-                <td><RivalLink id={rival.id}>{rival.name}</RivalLink></td>
-                {[0, 1, 2, 3].map((i) => (
-                  <td className="num" key={i}>
-                    {played.filter((q) => !q.overtime)[i]?.against ?? '–'}
-                  </td>
-                ))}
-                {hasOT && <td className="num">{played.find((q) => q.overtime)!.against}</td>}
-                <td className="num" style={{ fontWeight: 700 }}>
-                  {totalAgainst}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      </div>
-
-      <div className="partido-cuerpo">
-        <div className="partido-col-scroll">
-        <div className="card">
-          <h3>Pizarra táctica</h3>
-          <div className="tactic-block">
-            <div className="tactic-label">Defensa</div>
-            <div className="segmented">
-              <button
-                className={live.defense === 'zona' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', defense: 'zona' })}
-              >
-                Zona
-              </button>
-              <button
-                className={live.defense === 'hombre' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', defense: 'hombre' })}
-              >
-                Hombre
-              </button>
-              <button
-                className={live.defense === 'presion' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', defense: 'presion' })}
-              >
-                Presión
-              </button>
-            </div>
-            <p className="tactic-hint">
-              {live.defense === 'zona'
-                ? 'Ordenada y económica: cuida el físico. Ojo con los equipos de buenos tiradores.'
-                : live.defense === 'hombre'
-                  ? 'Asfixia al rival, pero quema piernas. Si el equipo está fundido, quedan pasillos.'
-                  : 'A toda cancha: el máximo castigo defensivo… y el máximo desgaste. Solo con piernas frescas.'}
-            </p>
-          </div>
-          <div className="tactic-block">
-            <div className="tactic-label">Ataque</div>
-            <div className="segmented">
-              <button
-                className={live.attack === 'estrella' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', attack: 'estrella' })}
-              >
-                Dársela a {shortName(live.starName)}
-              </button>
-              <button
-                className={live.attack === 'equipo' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', attack: 'equipo' })}
-              >
-                Mover la pelota
-              </button>
-              <button
-                className={live.attack === 'correr' ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_TACTIC', attack: 'correr' })}
-              >
-                Correr la cancha
-              </button>
-            </div>
-            <p className="tactic-hint">
-              {live.attack === 'estrella'
-                ? `Todo pasa por ${live.starName}. Si está caliente es fiesta; si no, el rival lo espera entre dos.`
-                : live.attack === 'equipo'
-                  ? 'La mueven todos: menos brillo, más pases. Aprovecha la química del grupo.'
-                  : 'Partido de ida y vuelta: más puntos para los dos. Gana el que tiene piernas; pierde el que se funde.'}
-            </p>
-          </div>
-          <p className="tactic-hint" style={{ borderTop: '1px solid var(--border)', paddingTop: '0.6rem' }}>
-            {style.label}: {style.desc}
-          </p>
-        </div>
-
-        <div className="card">
-          <h3>Piernas</h3>
-          <Bar label="En cancha" value={courtFreshness(live)} hint={TIPS.piernas} />
-          <Bar label={rival.name} value={live.rivalFreshness} hint={TIPS.piernas} />
-        </div>
-        </div>
-
-        <div className="card pane partido-cambios">
-          <h3 className="card-band">Cambios</h3>
-          <div className="pane-body">
-          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-            {(['titulares', 'segunda', 'frescos', 'cerradores'] as const).map((preset) => (
-              <button
-                key={preset}
-                className="small"
-                disabled={live.finished}
-                title={
-                  preset === 'titulares'
-                    ? 'Vuelven los cinco del arranque'
-                    : preset === 'segunda'
-                      ? 'Entra el banco: descansan los titulares'
-                      : preset === 'frescos'
-                        ? 'Los cinco con más piernas ahora'
-                        : 'Los mejores acá y ahora, para cerrar'
-                }
-                onClick={() => dispatch({ type: 'APPLY_PRESET', preset })}
-              >
-                {preset === 'titulares' ? 'Titulares' : preset === 'segunda' ? '2da unidad' : preset === 'frescos' ? 'Frescos' : 'Cerradores'}
-              </button>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-            <div className="segmented">
-              <button
-                className={!live.autoRotation ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: false })}
-              >
-                Cambios manuales
-              </button>
-              <button
-                className={live.autoRotation ? 'on' : ''}
-                disabled={live.finished}
-                onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true })}
-              >
-                {state.coach ? `DT: ${shortName(state.coach.name)}` : 'DT'}
-              </button>
-            </div>
-            {!live.autoRotation && benchPlayers.length > 0 && (
-              <div className="segmented" title="Plan de cambios entre cuartos">
-                <button
-                  className={(live.plan ?? 'manual') === 'rotar' ? 'on' : ''}
-                  disabled={live.finished}
-                  title="Frescos en el 2° cuarto, titulares en el 3°, cerradores al final. Un cambio a mano frena el plan por ese cuarto."
-                  onClick={() => dispatch({ type: 'SET_MATCH_PLAN', plan: 'rotar' })}
-                >
-                  Rota solo
-                </button>
-                <button
-                  className={(live.plan ?? 'manual') === 'manual' ? 'on' : ''}
-                  disabled={live.finished}
-                  title="Los cinco se quedan hasta que vos los muevas"
-                  onClick={() => dispatch({ type: 'SET_MATCH_PLAN', plan: 'manual' })}
-                >
-                  A mano
-                </button>
-              </div>
-            )}
-            {live.autoRotation && (
-              <div className="segmented">
-                <button
-                  className={(live.directive ?? 'ganar') === 'ganar' ? 'on' : ''}
-                  disabled={live.finished}
-                  title="Descansa fundidos y mete a los mejores para cerrar"
-                  onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true, directive: 'ganar' })}
-                >
-                  A ganar
-                </button>
-                <button
-                  className={live.directive === 'repartir' ? 'on' : ''}
-                  disabled={live.finished}
-                  title="Rota el banco: todos suman minutos"
-                  onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true, directive: 'repartir' })}
-                >
-                  Juegan todos
-                </button>
-              </div>
-            )}
-          </div>
-          <p className="tactic-hint" style={{ margin: '0 0 0.5rem' }}>
-            {live.finished
-              ? 'Partido terminado: no hay más cambios.'
-              : live.autoRotation
-                ? `${state.coach ? state.coach.name : 'El DT'} hace los cambios entre cuartos según la directiva. Podés pisar sus decisiones a mano.`
-                : outSel
-                  ? `Sale ${shortName(byId(outSel).name)}: tocá quién entra del banco.`
-                  : live.plan === 'rotar' && benchPlayers.length > 0
-                    ? 'El plan rota solo: frescos en el 2° cuarto, titulares en el 3°, cerradores al final. Si tocás el quinteto a mano, ese cuarto va como lo dejaste.'
-                    : 'Arrastrá un suplente sobre uno en cancha (o tocá: sale → entra). Valen las reentradas.'}
-          </p>
-          <div className="sub-group-label">En cancha</div>
-          {onCourtPlayers.map((p) => subRow(p, 'court'))}
-          <div className="sub-group-label" style={{ marginTop: '0.6rem' }}>
-            Banco
-          </div>
-          {benchPlayers.length > 0 ? (
-            benchPlayers.map((p) => subRow(p, 'bench'))
-          ) : (
-            <p className="tactic-hint">No citaste suplentes: no hay cambios posibles.</p>
-          )}
-          </div>
-        </div>
-
-        {played.length > 0 ? (
-        <div className="card pane partido-relato">
-          <h3 className="card-band">El relato</h3>
-          <div className="pane-body">
-          {played.map((q, i) => (
-            <div key={i} className="quarter-log">
-              <div className="quarter-head">
-                {q.overtime ? 'Suplementario' : `${Q_LABELS[i]} cuarto`} · {q.for}-{q.against}
-                <span className="chip" style={{ marginLeft: '0.5rem' }}>
-                  {q.defense === 'presion' ? 'Presión' : q.defense === 'hombre' ? 'Hombre' : 'Zona'} ·{' '}
-                  {q.attack === 'estrella' ? 'Estrella' : q.attack === 'correr' ? 'Correr' : 'Equipo'}
-                </span>
-              </div>
-              <ul className="reason-list">
-                {q.notes.map((n, j) => (
-                  <li
-                    key={j}
-                    className={
-                      n.startsWith('🚑')
-                        ? 'note-injury'
-                        : n.includes('racha') || n.includes('prendió el aro')
-                          ? 'note-hot'
-                          : ''
-                    }
-                  >
-                    {n}
-                  </li>
-                ))}
-                {q.notes.length === 0 && <li>Cuarto parejo, sin sobresaltos.</li>}
-              </ul>
-            </div>
-          ))}
-          </div>
-        </div>
-        ) : (
-          <div className="card partido-relato-vacio">
-            <p className="tactic-hint">El relato se escribe cuarto a cuarto: tocá «Jugar el 1er cuarto».</p>
-          </div>
-        )}
-      </div>
-
-      <div className="partido-pie">
-      {live.pendingIncident && (
-        <div className="card" style={{ marginBottom: '1rem', borderColor: 'var(--warn)' }}>
-          <h3>
-            <Icon name="alerta" size={17} /> Incidencia en la cancha
-          </h3>
-          <p style={{ marginTop: 0 }}>{live.pendingIncident.text}</p>
-          <div className="modal-like options" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {live.pendingIncident.options.map((opt, i) => (
-              <button key={i} style={{ textAlign: 'left' }} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })}>
-                {opt.label}
-                <span className="opt-hint" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                  {opt.hint}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="confirm-bar">
-        {!live.finished ? (
-          <button
-            className="primary"
-            disabled={!!live.pendingIncident}
-            onClick={() => dispatch({ type: 'PLAY_QUARTER' })}
-          >
-            ▶ Jugar el {Q_LABELS[regularPlayed]} cuarto
-          </button>
-        ) : (
-          <button className="primary" onClick={() => dispatch({ type: 'FINISH_MATCH' })}>
-            Ver el informe del partido →
-          </button>
-        )}
-        {!live.finished && !live.pendingIncident && (
-          <span className="hint">Podés cambiar la táctica antes de cada cuarto. El rival también juega…</span>
-        )}
-        {live.pendingIncident && <span className="hint">Resolvé la incidencia antes de seguir jugando.</span>}
-      </div>
-      </div>
-    </div>
-  );
-}
-
 function MatchResultPanel({ state, dispatch }: Props) {
   const m = state.lastMatch;
   if (!m) return null;
@@ -1703,74 +1185,45 @@ function MatchResultPanel({ state, dispatch }: Props) {
        medía casi tres pantallas a 720p. El contenido no sobraba —la forma sí—,
        así que entra completo repartido en tres columnas, sin sacar una línea. */
     <div className="informe-pantalla">
-      <div className="informe-cabecera card">
-        <div style={{ textAlign: 'center' }}>
+      {/* La cabecera es una franja, como en el partido (sep 2026): el
+          resultado, el marcador con los cuartos en una línea, el resumen y la
+          figura. Antes medía 275 px (marcador grande + tabla de cuartos con los
+          mismos números) y a las tres columnas les quedaban 257. */}
+      <div className="card partido-franja informe-franja">
+        <div className="franja-quien">
           <span className={`result-badge ${m.won ? 'win' : 'lose'}`}>
             {m.forfeit ? 'FORFEIT' : m.won ? 'VICTORIA' : 'DERROTA'}
           </span>
+          <h3 style={{ margin: 0 }}>
+            {weekLabel(m.week, state.seasonLength)} · vs <RivalLink id={m.rivalId}>{m.rivalName}</RivalLink>
+          </h3>
         </div>
-        <div className="scoreboard">
-          <div className="team">
-            <div className="tname">{state.club.name}</div>
-            <div className={`score ${m.won ? 'win' : 'lose'}`}>{m.scoreFor}</div>
-          </div>
-          <div style={{ color: 'var(--text-dim)', fontWeight: 700 }}>vs</div>
-          <div className="team">
-            <div className="tname">
-              <RivalLink id={m.rivalId}>{m.rivalName}</RivalLink>
+
+        <div className="franja-marcador">
+          <span className="fm-team">{state.club.name}</span>
+          <span className={`fm-score ${m.won ? 'win' : 'lose'}`}>{m.scoreFor}</span>
+          <span className="fm-sep">final</span>
+          <span className={`fm-score ${m.won ? 'lose' : 'win'}`}>{m.scoreAgainst}</span>
+          <span className="fm-team"><RivalLink id={m.rivalId}>{m.rivalName}</RivalLink></span>
+          {m.quarters.length > 0 && (
+            <div className="fm-cuartos" title="Parciales por cuarto (nosotros-ellos)">
+              {m.quarters.map((q, i) => (
+                <span key={i} className="fm-cuarto">
+                  <b>{i < 4 ? `Q${i + 1}` : 'PR'}</b> {q.for}-{q.against}
+                </span>
+              ))}
             </div>
-            <div className={`score ${m.won ? 'lose' : 'win'}`}>{m.scoreAgainst}</div>
-          </div>
+          )}
         </div>
-        {m.quarters.length > 0 && (
-          <div className="table-wrap" style={{ maxWidth: 460, margin: '0 auto 0.8rem' }}>
-            <table>
-              <thead>
-                <tr>
-                  <th></th>
-                  {m.quarters.map((_, i) => (
-                    <th className="num" key={i}>
-                      {i < 4 ? `Q${i + 1}` : 'PR'}
-                    </th>
-                  ))}
-                  <th className="num">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Nosotros</td>
-                  {m.quarters.map((q, i) => (
-                    <td className="num" key={i}>
-                      {q.for}
-                    </td>
-                  ))}
-                  <td className="num" style={{ fontWeight: 700 }}>
-                    {m.scoreFor}
-                  </td>
-                </tr>
-                <tr>
-                  <td><RivalLink id={m.rivalId}>{m.rivalName}</RivalLink></td>
-                  {m.quarters.map((q, i) => (
-                    <td className="num" key={i}>
-                      {q.against}
-                    </td>
-                  ))}
-                  <td className="num" style={{ fontWeight: 700 }}>
-                    {m.scoreAgainst}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
-        <p style={{ textAlign: 'center', marginTop: 0 }}>{m.summary}</p>
-        {m.mvpName && m.mvpId && (
-          <p style={{ textAlign: 'center' }}>
+
+        <div className="franja-estado">
+          <span className="franja-linea" title={m.summary}>{m.summary}</span>
+          {m.mvpName && m.mvpId && (
             <span className="chip accent">
-              <Icon name="estrella" size={13} /> Mejor jugador: <PlayerLink id={m.mvpId}>{m.mvpName}</PlayerLink>
+              <Icon name="estrella" size={13} /> Figura: <PlayerLink id={m.mvpId}>{m.mvpName}</PlayerLink>
             </span>
-          </p>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="informe-cuerpo">
@@ -1923,7 +1376,7 @@ export function WeekView({ state, dispatch }: Props) {
       {state.phase === 'planning' && <PlanningPanel state={state} dispatch={dispatch} />}
       {state.phase === 'callUp' && <CallUpPanel state={state} dispatch={dispatch} />}
       {state.phase === 'lineup' && <LineupPanel state={state} dispatch={dispatch} />}
-      {state.phase === 'match' && <LiveMatchPanel state={state} dispatch={dispatch} />}
+      {state.phase === 'match' && <PartidoVivo state={state} dispatch={dispatch} />}
       {state.phase === 'matchResult' && <MatchResultPanel state={state} dispatch={dispatch} />}
     </div>
   );

@@ -22,8 +22,9 @@ import type {
   Position,
   Rival,
   TeamEval,
+  WorldPlayer,
 } from './types';
-import type { Rng } from './rng';
+import { Rng, seedFromString } from './rng';
 
 const ALL_POSITIONS: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 const Q_NAMES = ['1er cuarto', '2do cuarto', '3er cuarto', '4to cuarto'];
@@ -588,7 +589,12 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     minutes,
     stats,
     pendingSubNotes: prematchNotes,
-    rivalSquad: { presentCount: rivalSquad.presentCount, mod: rivalSquad.mod, notes: rivalSquad.notes },
+    rivalSquad: {
+      presentIds: rivalSquad.presentIds,
+      presentCount: rivalSquad.presentCount,
+      mod: rivalSquad.mod,
+      notes: rivalSquad.notes,
+    },
     refTension: 0,
     rageBoost: false,
     pendingIncident: null,
@@ -630,8 +636,7 @@ export function substitute(state: GameState, outId: string, inId: string): GameS
   if (!canEnterCourt(live, inId)) return state;
 
   const onCourt = live.onCourt.map((id) => (id === outId ? inId : id));
-  const courtPlayers = state.players.filter((p) => onCourt.includes(p.id));
-  const star = [...courtPlayers].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
+  const star = starFor(state.players, { ...live, onCourt });
 
   return {
     ...state,
@@ -640,6 +645,8 @@ export function substitute(state: GameState, outId: string, inId: string): GameS
       onCourt,
       starId: star.id,
       starName: star.name,
+      // Si la referencia elegida fue la que salió, se suelta.
+      starLocked: !!live.starLocked && onCourt.includes(star.id) && star.id === live.starId,
       manualBreak: true,
       pendingSubNotes: [...live.pendingSubNotes, `Cambio: entra ${inP.name} por ${outP.name}.`],
     },
@@ -688,10 +695,7 @@ function applyMatchPlan(s: GameState, live: LiveMatchState): void {
   const changed = five.some((id) => !live.onCourt.includes(id));
   if (!changed) return;
   live.onCourt = five;
-  const courtPlayers = s.players.filter((p) => live.onCourt.includes(p.id));
-  const star = [...courtPlayers].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
-  live.starId = star.id;
-  live.starName = star.name;
+  refreshStar(s, live);
   const why =
     preset === 'frescos'
       ? 'entra la unidad "Piernas frescas" para el 2° cuarto'
@@ -764,12 +768,88 @@ export function applyLineupPreset(state: GameState, preset: LineupPreset): GameS
   const changed = five.some((id) => !live.onCourt.includes(id));
   live.onCourt = five;
   live.manualBreak = true;
-  const courtPlayers = s.players.filter((p) => live.onCourt.includes(p.id));
-  const star = [...courtPlayers].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
-  live.starId = star.id;
-  live.starName = star.name;
+  refreshStar(s, live);
   if (changed) live.pendingSubNotes.push(`↺ A la cancha la unidad "${PRESET_LABELS[preset]}".`);
   return s;
+}
+
+/**
+ * La referencia del ataque: el mejor de los que están en cancha, salvo que la
+ * hayas elegido vos (`starLocked`) y siga en cancha.
+ */
+function starFor(players: Player[], live: Pick<LiveMatchState, 'onCourt' | 'starId' | 'starLocked'>): Player {
+  const court = players.filter((p) => live.onCourt.includes(p.id));
+  if (live.starLocked) {
+    const kept = court.find((p) => p.id === live.starId);
+    if (kept) return kept;
+  }
+  return [...court].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
+}
+
+function refreshStar(s: GameState, live: LiveMatchState): void {
+  if (live.onCourt.length === 0) return;
+  const star = starFor(s.players, live);
+  live.starId = star.id;
+  live.starName = star.name;
+  if (live.starLocked && !live.onCourt.includes(live.starId)) live.starLocked = false;
+}
+
+/** Elegís vos a quién dársela: queda fija mientras siga en cancha. */
+export function setStar(state: GameState, playerId: string): GameState {
+  const live = state.live;
+  if (!live || live.finished || !live.onCourt.includes(playerId)) return state;
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return state;
+  return { ...state, live: { ...live, starId: p.id, starName: p.name, starLocked: true } };
+}
+
+/**
+ * El quinteto rival del día: de los que vinieron, el mejor por puesto en el
+ * orden de la pizarra (base, escolta, alero, ala-pívot, pívot), completado con
+ * los mejores que queden. Es de lectura: el motor sigue jugando con la fuerza
+ * del equipo, no jugador por jugador.
+ */
+export function rivalLineup(state: GameState, live: LiveMatchState): { court: WorldPlayer[]; bench: WorldPlayer[] } {
+  const ids = live.rivalSquad?.presentIds ?? [];
+  const present = ids
+    .map((id) => state.world.players.find((p) => p.id === id))
+    .filter((p): p is WorldPlayer => !!p)
+    .sort((a, b) => b.level - a.level);
+  const court: WorldPlayer[] = [];
+  for (const pos of ALL_POSITIONS) {
+    const pick = present.find((p) => !court.includes(p) && (p.position === pos || p.secondaryPositions.includes(pos)));
+    if (pick) court.push(pick);
+  }
+  for (const p of present) {
+    if (court.length >= 5) break;
+    if (!court.includes(p)) court.push(p);
+  }
+  const ordered = ALL_POSITIONS.map((pos) => court.find((p) => p.position === pos) ?? null);
+  const rest = court.filter((p) => !ordered.includes(p));
+  const five = ordered.map((p) => p ?? rest.shift()!).filter(Boolean);
+  return { court: five, bench: present.filter((p) => !five.includes(p)) };
+}
+
+/**
+ * Los puntos rivales repartidos entre su quinteto, cuarto a cuarto. Es un
+ * reparto de lectura, determinista por partido y cuarto (no toca el RNG de la
+ * temporada): el marcador del cuarto ya está decidido, esto sólo dice quién
+ * los metió.
+ */
+export function rivalBoxScore(state: GameState, live: LiveMatchState): Record<string, number> {
+  const { court } = rivalLineup(state, live);
+  const out: Record<string, number> = {};
+  if (court.length === 0) return out;
+  live.quarters.forEach((q, i) => {
+    const rng = new Rng(seedFromString(`${live.rivalId}:${state.week}:${i}:${q.against}`));
+    const share = distribute(
+      q.against,
+      court.map((p) => ({ id: p.id, w: Math.max(1, p.level - 30) })),
+      rng
+    );
+    for (const p of court) out[p.id] = (out[p.id] ?? 0) + (share[p.id] ?? 0);
+  });
+  return out;
 }
 
 /** Cambia el plan de cambios a mitad de partido (con DT al mando no aplica). */
@@ -840,10 +920,7 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
   }
 
   if (notes.length > 0) {
-    const courtPlayers = s.players.filter((p) => live.onCourt.includes(p.id));
-    const star = [...courtPlayers].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
-    live.starId = star.id;
-    live.starName = star.name;
+    refreshStar(s, live);
     live.pendingSubNotes.push(...notes.slice(0, 2));
   }
 }
@@ -1267,10 +1344,8 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
       `🚑 ${p.name} ${how} ${sub ? `Entra ${sub.name} en su lugar.` : 'No queda recambio: seguimos con cuatro.'}`
     );
     if (live.starId === p.id && live.onCourt.length > 0) {
-      const court = s.players.filter((x) => live.onCourt.includes(x.id));
-      const newStar = [...court].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
-      live.starId = newStar.id;
-      live.starName = newStar.name;
+      live.starLocked = false;
+      refreshStar(s, live);
     }
     break; // una lesión por cuarto alcanza para el drama
   }
