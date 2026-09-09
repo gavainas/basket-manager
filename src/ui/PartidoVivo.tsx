@@ -11,10 +11,10 @@
 // personas del mundo que vinieron hoy, con sus puntos repartidos cuarto a
 // cuarto (rivalBoxScore, de lectura).
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BALANCE } from '../game/balance';
 import { courtFreshness, rivalBoxScore, rivalLineup } from '../game/match';
-import { jugadasDelCuarto } from '../game/relato';
+import { arranqueDelCuarto, jugadasDelCuarto, largoDelCuarto, type Jugada } from '../game/relato';
 import { clubByLegacyId, teamByLegacyRival, userTeam } from '../game/world';
 import type { GameState, Player, Position, WorldPlayer } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
@@ -91,14 +91,96 @@ function esDeCambios(n: string): boolean {
   return /cambio|entra |plan de cambios|unidad|cerradores|titulares|movió el banco|descansa|🕘|🚑/i.test(n);
 }
 
+/** Quien pidió menos movimiento no ve correr el reloj: el cuarto aparece jugado. */
+function reducedMotion(): boolean {
+  return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Segundos reales que tarda un cuarto de diez minutos en el reloj en vivo. */
+const SEGUNDOS_POR_CUARTO = 15;
+const TICK_MS = 100;
+
+/**
+ * El reloj en vivo (sep 2026). El motor sigue simulando el cuarto entero de
+ * una vez; la pantalla lo CUENTA en tiempo: el reloj corre diez minutos en
+ * unos quince segundos, las canastas van cayendo a medida que pasa el minuto,
+ * el marcador sube con cada una y la cancha marca quién anotó. Se puede
+ * pausar, saltar al final del cuarto, o simular el partido entero.
+ */
+interface Reloj {
+  /** El cuarto que se está contando. */
+  q: number;
+  /** Minuto del partido en el que va el reloj (con decimales). */
+  t: number;
+  pausa: boolean;
+}
+
 export function PartidoVivo({ state, dispatch }: Props) {
   const [saleSel, setSaleSel] = useState<string | null>(null);
   const [entraSel, setEntraSel] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<'todo' | 'puntos' | 'cambios'>('todo');
   const [verSuplentesRival, setVerSuplentesRival] = useState(false);
+  const [reloj, setReloj] = useState<Reloj | null>(null);
+  const [simulando, setSimulando] = useState(false);
+  const ultimaFilaRef = useRef<HTMLDivElement | null>(null);
 
   const live = state.live;
+  const cuartosJugados = live?.quarters.length ?? 0;
+  const relojFin = live && reloj ? arranqueDelCuarto(live, reloj.q) + largoDelCuarto(live.quarters[reloj.q]?.overtime) : 0;
+
+  // El reloj avanza mientras no esté en pausa; al llegar a la chicharra, si el
+  // motor ya jugó otro cuarto (el suplementario), lo cuenta también.
+  useEffect(() => {
+    if (!reloj || reloj.pausa || !live) return;
+    const paso = (largoDelCuarto(live.quarters[reloj.q]?.overtime) / SEGUNDOS_POR_CUARTO) * (TICK_MS / 1000);
+    const id = window.setInterval(() => {
+      setReloj((r) => {
+        if (!r || r.pausa) return r;
+        const t = r.t + paso;
+        if (t < relojFin) return { ...r, t };
+        return cuartosJugados > r.q + 1 ? { q: r.q + 1, t: relojFin, pausa: false } : null;
+      });
+    }, TICK_MS);
+    return () => window.clearInterval(id);
+  }, [reloj, live, relojFin, cuartosJugados]);
+
+  // Simular el partido: un cuarto tras otro, sin reloj, hasta el final o hasta
+  // una incidencia que tenés que resolver vos.
+  useEffect(() => {
+    if (!simulando || !live) return;
+    if (live.finished || live.pendingIncident) {
+      setSimulando(false);
+      return;
+    }
+    const id = window.setTimeout(() => dispatch({ type: 'PLAY_QUARTER' }), 60);
+    return () => window.clearTimeout(id);
+  }, [simulando, live, dispatch]);
+
+  // La última canasta que cayó queda a la vista.
+  // Se desplaza sólo el panel del relato, nunca la página: en el celular la
+  // página es la que scrollea y no tiene que saltar con cada canasta.
+  useEffect(() => {
+    const fila = ultimaFilaRef.current;
+    const panel = fila?.closest('.pane-body');
+    if (!reloj || !fila || !(panel instanceof HTMLElement) || panel.scrollHeight <= panel.clientHeight) return;
+    const r = fila.getBoundingClientRect();
+    const c = panel.getBoundingClientRect();
+    // Si la fila no entra entera en el panel, se alinea arriba (y no se mueve
+    // ida y vuelta entre un render y otro).
+    if (r.height >= c.height - 6) panel.scrollTop += r.top - c.top;
+    else if (r.bottom > c.bottom) panel.scrollTop += r.bottom - c.bottom + 6;
+    else if (r.top < c.top) panel.scrollTop -= c.top - r.top + 6;
+  });
+
   if (!live) return null;
+
+  const jugarCuarto = () => {
+    const q = live.quarters.length;
+    dispatch({ type: 'PLAY_QUARTER' });
+    if (!reducedMotion()) setReloj({ q, t: arranqueDelCuarto(live, q), pausa: false });
+  };
+  const saltar = () => setReloj(null);
+  const pausar = () => setReloj((r) => (r ? { ...r, pausa: !r.pausa } : r));
   const rival = state.rivals.find((r) => r.id === live.rivalId)!;
   const style = rivalStyleInfo(rival.style);
   const world = state.world;
@@ -111,39 +193,74 @@ export function PartidoVivo({ state, dispatch }: Props) {
   const rivalColores = rivalClub?.colors ?? ['#9d3b3b', '#e8e4dc'];
 
   const played = live.quarters;
-  const regularPlayed = played.filter((q) => !q.overtime).length;
-  const totalFor = played.reduce((t, q) => t + q.for, 0);
-  const totalAgainst = played.reduce((t, q) => t + q.against, 0);
-  const diff = totalFor - totalAgainst;
   const hasOT = played.some((q) => q.overtime);
-  const lastQ = played.length > 0 ? played[played.length - 1] : null;
-  const lastDiff = lastQ ? lastQ.for - lastQ.against : 0;
-  const hotStreak = !live.finished && lastQ !== null && lastDiff >= 6;
-  const coldStreak = !live.finished && lastQ !== null && lastDiff <= -6;
-  const comebackMode = !live.finished && played.length > 0 && diff <= -BALANCE.liveMatch.comebackDeficit;
-  const holdMode = !live.finished && played.length > 0 && diff >= BALANCE.liveMatch.comebackDeficit;
-  const injuryNote = lastQ?.notes.find((n) => n.startsWith('🚑')) ?? null;
 
-  const momento = live.finished
-    ? 'Final'
-    : played.length === 0
-      ? 'Antes del salto'
-      : regularPlayed === 2 && !hasOT
-        ? 'Entretiempo'
-        : hasOT
-          ? 'Suplementario'
-          : `Fin del ${Q_LABELS[Math.min(regularPlayed, 4) - 1]} cuarto`;
+  // Con el reloj corriendo, la pantalla muestra el partido HASTA ese minuto:
+  // las canastas que ya cayeron, el marcador que va, los puntos que cada uno
+  // lleva. Lo que el motor ya sabe del resto del cuarto todavía no se ve.
+  const jugadasDe = (i: number): Jugada[] => {
+    const todas = jugadasDelCuarto(state, live, i);
+    if (!reloj || i < reloj.q) return todas;
+    if (i > reloj.q) return [];
+    return todas.filter((j) => j.t <= reloj.t);
+  };
+  const ocultas: Jugada[] = reloj ? jugadasDelCuarto(state, live, reloj.q).filter((j) => j.t > reloj.t) : [];
+  const ptsOcultos = (id: string) => ocultas.filter((j) => j.quienId === id).reduce((t, j) => t + j.pts, 0);
+  const visibles = reloj ? jugadasDe(reloj.q) : [];
+  const ultimaVisible = visibles.length > 0 ? visibles[visibles.length - 1] : null;
+  const antesDelReloj = reloj ? played.slice(0, reloj.q).reduce((t, q) => ({ f: t.f + q.for, a: t.a + q.against }), { f: 0, a: 0 }) : null;
+  const mostrado = reloj
+    ? ultimaVisible
+      ? { f: ultimaVisible.f, a: ultimaVisible.a }
+      : antesDelReloj!
+    : { f: played.reduce((t, q) => t + q.for, 0), a: played.reduce((t, q) => t + q.against, 0) };
+  const totalFor = mostrado.f;
+  const totalAgainst = mostrado.a;
+  const diff = totalFor - totalAgainst;
+  const parcialDe = (i: number, lado: 'for' | 'against'): number | string => {
+    const q = played.filter((x) => !x.overtime)[i];
+    if (!q) return '–';
+    if (reloj && i > reloj.q) return '–';
+    if (reloj && i === reloj.q) return lado === 'for' ? totalFor - antesDelReloj!.f : totalAgainst - antesDelReloj!.a;
+    return q[lado];
+  };
+  const cuartosCerrados = reloj ? reloj.q : played.length;
+  const regularPlayed = played.slice(0, cuartosCerrados).filter((q) => !q.overtime).length;
+  const lastQ = cuartosCerrados > 0 ? played[cuartosCerrados - 1] : null;
+  const lastDiff = lastQ ? lastQ.for - lastQ.against : 0;
+  const hotStreak = !reloj && !live.finished && lastQ !== null && lastDiff >= 6;
+  const coldStreak = !reloj && !live.finished && lastQ !== null && lastDiff <= -6;
+  const comebackMode = !reloj && !live.finished && played.length > 0 && diff <= -BALANCE.liveMatch.comebackDeficit;
+  const holdMode = !reloj && !live.finished && played.length > 0 && diff >= BALANCE.liveMatch.comebackDeficit;
+  const injuryNote = !reloj ? (lastQ?.notes.find((n) => n.startsWith('🚑')) ?? null) : null;
+
+  const minutoReloj = reloj ? Math.min(relojFin, Math.floor(reloj.t) + (reloj.t % 1 > 0 ? 1 : 0)) : 0;
+  const momento = reloj
+    ? `${played[reloj.q]?.overtime ? 'Suplementario' : `${Q_LABELS[Math.min(reloj.q, 3)]} cuarto`} · ${minutoReloj}'${reloj.pausa ? ' · pausado' : ''}`
+    : live.finished
+      ? 'Final'
+      : played.length === 0
+        ? 'Antes del salto'
+        : regularPlayed === 2 && !hasOT
+          ? 'Entretiempo'
+          : hasOT
+            ? 'Suplementario'
+            : `Fin del ${Q_LABELS[Math.min(regularPlayed, 4) - 1]} cuarto`;
 
   const byId = (id: string) => state.players.find((p) => p.id === id)!;
   const onCourt = live.onCourt.map(byId);
   const bench = live.squad.filter((id) => !live.onCourt.includes(id)).map(byId);
   const freshOf = (id: string) => Math.round(live.playerFresh[id] ?? 70);
   const minsOf = (id: string) => live.minutes[id] ?? 0;
-  const ptsOf = (id: string) => live.stats[id]?.pts ?? 0;
+  const ptsOf = (id: string) => (live.stats[id]?.pts ?? 0) - ptsOcultos(id);
   const legsCls = (v: number) => (v >= 65 ? 'good' : v >= 40 ? 'warn' : 'bad');
 
   const rivalCinco = rivalLineup(state, live);
-  const rivalPts = rivalBoxScore(state, live);
+  const rivalPtsTotal = rivalBoxScore(state, live);
+  const rivalPts: Record<string, number> = {};
+  for (const [id, n] of Object.entries(rivalPtsTotal)) rivalPts[id] = n - ptsOcultos(id);
+  // Quién acaba de anotar: la ficha late un momento en la cancha.
+  const acabaDeAnotar = reloj && ultimaVisible && reloj.t - ultimaVisible.t < 0.9 ? ultimaVisible.quienId : null;
 
   // El aviso de cansancio: alguien en cancha fundido y un recambio con piernas.
   const cansado = onCourt.find((p) => freshOf(p.id) < 45);
@@ -288,14 +405,14 @@ export function PartidoVivo({ state, dispatch }: Props) {
           <tbody>
             <tr>
               <td>{shortName(state.club.name) === state.club.name ? state.club.name : state.club.name}</td>
-              {[0, 1, 2, 3].map((i) => <td key={i}>{played.filter((q) => !q.overtime)[i]?.for ?? '–'}</td>)}
-              {hasOT && <td>{played.find((q) => q.overtime)!.for}</td>}
+              {[0, 1, 2, 3].map((i) => <td key={i}>{parcialDe(i, 'for')}</td>)}
+              {hasOT && <td>{reloj ? '–' : played.find((q) => q.overtime)!.for}</td>}
               <td className="total">{totalFor}</td>
             </tr>
             <tr>
               <td>{rival.name}</td>
-              {[0, 1, 2, 3].map((i) => <td key={i}>{played.filter((q) => !q.overtime)[i]?.against ?? '–'}</td>)}
-              {hasOT && <td>{played.find((q) => q.overtime)!.against}</td>}
+              {[0, 1, 2, 3].map((i) => <td key={i}>{parcialDe(i, 'against')}</td>)}
+              {hasOT && <td>{reloj ? '–' : played.find((q) => q.overtime)!.against}</td>}
               <td className="total">{totalAgainst}</td>
             </tr>
           </tbody>
@@ -360,7 +477,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
               p ? (
                 <div
                   key={p.id}
-                  className={`pv-ficha nuestro${live.starId === p.id ? ' ref' : ''}${freshOf(p.id) < 45 ? ' fundido' : ''}`}
+                  className={`pv-ficha nuestro${live.starId === p.id ? ' ref' : ''}${freshOf(p.id) < 45 ? ' fundido' : ''}${acabaDeAnotar === p.id ? ' anoto' : ''}`}
                   style={{ left: `${HALF_SLOTS[i].x / 2}%`, top: `${HALF_SLOTS[i].y}%` }}
                   title={`${p.name} · ${p.position} · ${ptsOf(p.id)} pts · piernas ${freshOf(p.id)}`}
                 >
@@ -373,7 +490,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
               p ? (
                 <div
                   key={p.id}
-                  className="pv-ficha rival"
+                  className={`pv-ficha rival${acabaDeAnotar === p.id ? ' anoto' : ''}`}
                   style={{ left: `${100 - HALF_SLOTS[i].x / 2}%`, top: `${HALF_SLOTS[i].y}%` }}
                   title={`${p.firstName} ${p.lastName} · ${p.position} · nivel ≈${p.level}`}
                 >
@@ -384,7 +501,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
             )}
           </div>
 
-          {live.pendingIncident ? (
+          {live.pendingIncident && !reloj ? (
             <div className="card pane partido-relato partido-incidencia">
               <h3 className="card-band">
                 <Icon name="alerta" size={17} /> Incidencia en la cancha
@@ -418,25 +535,31 @@ export function PartidoVivo({ state, dispatch }: Props) {
               <div className="pane-body">
                 {[...played].reverse().map((q, k) => {
                   const i = played.length - 1 - k;
+                  // Con el reloj corriendo, los cuartos que todavía no empezaron no existen.
+                  if (reloj && i > reloj.q) return null;
+                  const enVivo = reloj !== null && i === reloj.q;
                   // Las jugadas (minuto, marcador, autor) y lo que se vio (las
                   // notas del motor). "Puntos" muestra sólo las jugadas;
                   // "Cambios", sólo las notas de cambios; "Todo", las dos.
-                  const jugadas = filtro === 'cambios' ? [] : jugadasDelCuarto(state, live, i);
-                  const notas = filtro === 'puntos' ? [] : filtro === 'cambios' ? q.notes.filter(esDeCambios) : q.notes;
-                  if (jugadas.length === 0 && notas.length === 0 && filtro !== 'todo') return null;
+                  const jugadas = filtro === 'cambios' ? [] : jugadasDe(i);
+                  const notas = enVivo || filtro === 'puntos' ? [] : filtro === 'cambios' ? q.notes.filter(esDeCambios) : q.notes;
+                  if (jugadas.length === 0 && notas.length === 0 && filtro !== 'todo' && !enVivo) return null;
+                  const parcial = enVivo ? `${totalFor - antesDelReloj!.f}-${totalAgainst - antesDelReloj!.a}` : `${q.for}-${q.against}`;
                   return (
-                    <div key={i} className="quarter-log">
+                    <div key={i} className={`quarter-log${enVivo ? ' en-vivo' : ''}`}>
                       <div className="quarter-head">
-                        {q.overtime ? 'Suplementario' : `${Q_LABELS[i]} cuarto`} · {q.for}-{q.against}
+                        {q.overtime ? 'Suplementario' : `${Q_LABELS[i]} cuarto`} · {parcial}
+                        {enVivo && <span className="rj-vivo">● en juego</span>}
                         <span className="chip" style={{ marginLeft: '0.5rem' }}>
                           {q.defense === 'presion' ? 'Presión' : q.defense === 'hombre' ? 'Hombre' : 'Zona'} ·{' '}
                           {q.attack === 'estrella' ? 'Estrella' : q.attack === 'correr' ? 'Correr' : 'Colectivo'}
                         </span>
                       </div>
+                      {enVivo && jugadas.length === 0 && <p className="tactic-hint rj-espera">Salta la pelota…</p>}
                       {jugadas.length > 0 && (
                         <div className="rj-lista">
                           {jugadas.map((j, n) => (
-                            <div key={n} className={`rj ${j.lado}`}>
+                            <div key={n} className={`rj ${j.lado}${enVivo && n === jugadas.length - 1 ? ' nueva' : ''}`} ref={enVivo && n === jugadas.length - 1 ? ultimaFilaRef : undefined}>
                               <span className="rj-min">{j.minuto}</span>
                               <span className="rj-marcador">{j.marcador}</span>
                               <span className="rj-punto" title={j.lado === 'nosotros' ? state.club.name : rival.name} />
@@ -482,7 +605,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
             </div>
           )}
 
-          {cansado && !live.finished && (
+          {cansado && !live.finished && !reloj && (
             <div className="pv-aviso">
               <Icon name="descanso" size={16} />
               <span>
@@ -635,20 +758,33 @@ export function PartidoVivo({ state, dispatch }: Props) {
 
       {/* ---------- Pie ---------- */}
       <div className="partido-pie">
-        <div className="confirm-bar">
-          {!live.finished ? (
-            <button className="primary" disabled={!!live.pendingIncident} onClick={() => dispatch({ type: 'PLAY_QUARTER' })}>
-              ▶ Jugar el {Q_LABELS[Math.min(regularPlayed, 3)]} cuarto
-            </button>
+        <div className="confirm-bar pv-pie">
+          {reloj ? (
+            <>
+              <button className="primary" onClick={pausar}>
+                {reloj.pausa ? '▶ Seguir' : '❚❚ Pausar'}
+              </button>
+              <button onClick={saltar}>Saltar al final del cuarto ⏭</button>
+              <span className="hint">{reloj.pausa ? 'El reloj está parado. Mirá la cancha y seguí cuando quieras.' : 'El cuarto se juega en vivo. Los cambios que hagas ahora entran en el próximo.'}</span>
+            </>
+          ) : !live.finished ? (
+            <>
+              <button className="primary" disabled={!!live.pendingIncident || simulando} onClick={jugarCuarto}>
+                ▶ Jugar el {Q_LABELS[Math.min(regularPlayed, 3)]} cuarto
+              </button>
+              <button disabled={!!live.pendingIncident || simulando} title="Juega lo que falta de corrido, con tu plan de cambios (o el DT). Se frena sola si hay una incidencia." onClick={() => setSimulando(true)}>
+                {simulando ? 'Simulando…' : 'Simular el partido ⏩'}
+              </button>
+              {!live.pendingIncident && (
+                <span className="hint">Piernas nuestras en cancha: {Math.round(courtFreshness(live))}. Podés cambiar la táctica antes de cada cuarto; el rival también juega…</span>
+              )}
+              {live.pendingIncident && <span className="hint">Resolvé la incidencia antes de seguir jugando.</span>}
+            </>
           ) : (
             <button className="primary" onClick={() => dispatch({ type: 'FINISH_MATCH' })}>
               Ver el informe del partido →
             </button>
           )}
-          {!live.finished && !live.pendingIncident && (
-            <span className="hint">Piernas nuestras en cancha: {Math.round(courtFreshness(live))}. Podés cambiar la táctica antes de cada cuarto; el rival también juega…</span>
-          )}
-          {live.pendingIncident && <span className="hint">Resolvé la incidencia antes de seguir jugando.</span>}
         </div>
       </div>
     </div>

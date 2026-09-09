@@ -5266,6 +5266,40 @@ button.mini.blue.on {
 .rj-texto b { font-weight: 600; }
 .rj-sub { font-size: var(--fs-xs); color: var(--text-dim); }
 
+/* El reloj en vivo: la canasta que acaba de caer entra con un fundido, el
+   cuarto en juego lleva su punto rojo, y la ficha del que anotó late. */
+.rj.nueva { animation: fila-in 260ms ease-out both; }
+
+.rj-vivo {
+  margin-left: 0.5rem;
+  font-family: var(--display);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bad);
+  animation: rj-late 1.2s ease-in-out infinite;
+}
+
+@keyframes rj-late {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.rj-espera { margin: 0.3rem 0 0.4rem; font-style: italic; }
+
+.pv-ficha.anoto .pv-ficha-num {
+  animation: ficha-anoto 0.9s ease-out;
+  box-shadow: 0 0 0 4px rgba(255, 192, 120, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes ficha-anoto {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+.pv-pie button + button { margin-left: 0.4rem; }
+
 .rj-notas { margin-top: 0.15rem; }
 .rj-notas li { font-size: var(--fs-sm); margin-bottom: 0.15rem; }
 

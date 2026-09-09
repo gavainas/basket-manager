@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { jugadasDelCuarto } from '../src/game/relato';
+import { arranqueDelCuarto, jugadasDelCuarto, largoDelCuarto, momentosDelCuarto } from '../src/game/relato';
 import { jugarPartidoEntero, partidaNueva, paso, resolverEventos } from './jugar';
 
 function partidoJugado(seed = 11) {
@@ -21,25 +21,44 @@ describe('el relato jugada a jugada', () => {
     }
   });
 
-  it('las jugadas cierran con el marcador del cuarto, van en orden, y son a lo sumo cinco por cuarto', () => {
+  it('todas las canastas del cuarto suman el parcial, cierran con el marcador, y van en orden en el reloj', () => {
     const s = partidoJugado(11);
     const live = s.live!;
     let f = 0;
     let a = 0;
     live.quarters.forEach((q, i) => {
-      f += q.for;
-      a += q.against;
       const jugadas = jugadasDelCuarto(s, live, i);
       expect(jugadas.length).toBeGreaterThan(0);
-      expect(jugadas.length).toBeLessThanOrEqual(5);
-      expect(jugadas[jugadas.length - 1].marcador).toBe(`${f}-${a}`);
-      const minutos = jugadas.map((j) => parseInt(j.minuto, 10));
-      for (let k = 1; k < minutos.length; k++) expect(minutos[k]).toBeGreaterThanOrEqual(minutos[k - 1]);
-      for (const j of jugadas) {
+      expect(jugadas.filter((j) => j.lado === 'nosotros').reduce((t, j) => t + j.pts, 0)).toBe(q.for);
+      expect(jugadas.filter((j) => j.lado === 'rival').reduce((t, j) => t + j.pts, 0)).toBe(q.against);
+      f += q.for;
+      a += q.against;
+      const ultima = jugadas[jugadas.length - 1];
+      expect(ultima.marcador).toBe(`${f}-${a}`);
+      expect([ultima.f, ultima.a]).toEqual([f, a]);
+      const inicio = arranqueDelCuarto(live, i);
+      const fin = inicio + largoDelCuarto(q.overtime);
+      for (let k = 0; k < jugadas.length; k++) {
+        const j = jugadas[k];
+        expect(j.t).toBeGreaterThanOrEqual(inicio);
+        expect(j.t).toBeLessThan(fin);
+        if (k > 0) expect(j.t).toBeGreaterThan(jugadas[k - 1].t);
         expect(j.texto.length).toBeGreaterThan(3);
         expect(j.texto).not.toContain('{n}');
         expect(j.sub ?? '').not.toContain('{a}');
+        if (j.lado === 'nosotros') expect(q.onCourt).toContain(j.quienId);
       }
+    });
+  });
+
+  it('los momentos son a lo sumo cinco por cuarto y siempre incluyen el cierre', () => {
+    const s = partidoJugado(11);
+    const live = s.live!;
+    live.quarters.forEach((_q, i) => {
+      const todas = jugadasDelCuarto(s, live, i);
+      const momentos = momentosDelCuarto(s, live, i);
+      expect(momentos.length).toBeLessThanOrEqual(5);
+      expect(momentos[momentos.length - 1]).toEqual(todas[todas.length - 1]);
     });
   });
 
