@@ -461,6 +461,21 @@ Formato sugerido:
 - Próximo paso autorizado: que Gabi lea el brief y diga si va la prueba de registro. Hasta
   entonces, no se genera nada.
 
+### 2026-09-08 — La portada con menú central (aprobada)
+
+- Alcance: la composición del menú principal y tres íconos de acceso (carpeta con
+  disquete, pizarra con pelota y silbato, archivador). Llegó como lote de recursos en
+  la rama `art/portada-menu-central`, generado fuera de este repo, con su README.
+- Aprobado: **la referencia (`public/arte/portada-menu-central/referencia.png`)**,
+  según consta en ese README ("referencia visual aprobada por Gabi"), y el visto bueno
+  de Gabi a implementarla el mismo día ("dale avanza").
+- No aprobado: ningún logo. El título sigue siendo texto (Oswald 700); el README del lote
+  lo dice explícitamente y pide no recortar letras del boceto.
+- Correcciones: el fondo del boceto es una regeneración y **no** reemplaza a
+  `public/portada.webp`, que sigue intacta; los PNG (1,6 a 2,3 MB) no se sirven, el juego
+  carga WebP de 640 px derivados de ellos.
+- Próximo paso autorizado: la implementación en una rama para revisión, sin publicar
+  en `main` hasta que Gabi la vea. Nada más de arte.
 ### 2026-09-09 — La referencia del partido en vivo (aprobada)
 
 - Alcance: la anatomía de la pantalla del partido. Gabi mandó una referencia armada

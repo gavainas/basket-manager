@@ -5316,6 +5316,374 @@ button.mini.blue.on {
   .pv-derecha { grid-column: 1 / -1; }
 }
 
+/* ---------- La portada: menú central (sep 2026) ---------- */
+
+/* Composición aprobada por Gabi (public/arte/portada-menu-central/README.md):
+   la ilustración del asado a sangre, un velo oscuro aparte para el contraste,
+   el título centrado arriba, dos accesos grandes en el medio y uno chico
+   debajo, sin contenedores alrededor de los íconos. Las etiquetas son texto.
+   En escritorio entra sin scrollear (medido a 1280×720 y 1920×1080); en el
+   celular los accesos se apilan y la página scrollea. `.menu-screen` y
+   `.menu-panel` siguen existiendo: los usa la fundación del club (Carrera). */
+.portada {
+  --portada-velo: rgba(20, 16, 12, 0.5);
+  --portada-crema: #f3e9d6;
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--portada-crema);
+  isolation: isolate;
+}
+
+/* La ilustración es cuadrada y el monitor es ancho: se recorta arriba y abajo.
+   Se ancla un poco por encima del centro para que queden las caras y la mesa. */
+.portada-fondo {
+  position: absolute;
+  inset: 0;
+  background: var(--chrome) center 42% / cover no-repeat;
+  z-index: -2;
+}
+
+.portada-velo {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(20, 16, 12, 0.55) 0%, rgba(20, 16, 12, 0.2) 35%, rgba(20, 16, 12, 0.25) 70%, rgba(20, 16, 12, 0.7) 100%),
+    var(--portada-velo);
+  z-index: -1;
+}
+
+.portada-contenido {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  justify-items: center;
+  align-content: start;
+  gap: var(--sp-3);
+  padding: clamp(1rem, 3vh, 2.2rem) var(--sp-5) var(--sp-3);
+  text-align: center;
+}
+
+/* El título: texto, no logo (todavía no hay asset). Oswald 700 en crema y
+   naranja con una sombra dura debajo es la aproximación a la collegiate. */
+.portada-titulo {
+  display: grid;
+  justify-items: center;
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 0.92;
+  letter-spacing: 0.03em;
+  text-shadow:
+    0 2px 0 #3a1d08,
+    0 3px 0 #3a1d08,
+    0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+.portada-t1,
+.portada-t3 {
+  color: var(--portada-crema);
+  font-size: clamp(2.4rem, 6vh, 4.6rem);
+}
+
+.portada-t2 {
+  color: var(--accent);
+  font-size: clamp(3.2rem, 8.6vh, 6.6rem);
+  letter-spacing: 0.04em;
+}
+
+.portada-t3 {
+  font-size: clamp(1.8rem, 4.3vh, 3.3rem);
+  letter-spacing: 0.12em;
+}
+
+.portada-accesos {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: clamp(1.5rem, 6vw, 6rem);
+  align-self: center;
+}
+
+/* El acceso es la imagen y su etiqueta, sin caja: el fondo se ve entre medio. */
+.portada-acceso {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.8rem 0.6rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--portada-crema);
+  cursor: pointer;
+  transition: transform 0.15s, filter 0.15s;
+}
+
+.portada-acceso img {
+  display: block;
+  height: clamp(150px, 34vh, 340px);
+  width: auto;
+  max-width: 42vw;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.55));
+  transition: transform 0.15s, filter 0.15s;
+}
+
+.portada-acceso-chico {
+  gap: 0.25rem;
+}
+
+.portada-acceso-chico img {
+  height: clamp(64px, 12vh, 120px);
+}
+
+.portada-etiqueta {
+  position: relative;
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: none;
+  font-size: clamp(1.4rem, 3vh, 2rem);
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 0 #2a1a08, 0 4px 12px rgba(0, 0, 0, 0.6);
+  padding-bottom: 0.35rem;
+}
+
+.portada-acceso-chico .portada-etiqueta {
+  font-size: clamp(1rem, 2vh, 1.25rem);
+  font-weight: 500;
+}
+
+/* El subrayado naranja del boceto, a pincel: aparece con el foco y el hover. */
+.portada-etiqueta::after {
+  content: '';
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  bottom: 0;
+  height: 0.28em;
+  border-radius: 999px;
+  background: var(--accent);
+  transform: scaleX(0) rotate(-1.5deg);
+  transform-origin: left center;
+  opacity: 0.95;
+  transition: transform 0.18s ease-out;
+}
+
+.portada-acceso:hover:not(:disabled) .portada-etiqueta::after,
+.portada-acceso:focus-visible .portada-etiqueta::after {
+  transform: scaleX(1) rotate(-1.5deg);
+}
+
+.portada-acceso:hover:not(:disabled) img {
+  transform: translateY(-6px) scale(1.03);
+  filter: drop-shadow(0 20px 24px rgba(0, 0, 0, 0.6));
+}
+
+.portada-acceso:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.portada-acceso:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Sin partida guardada, la carpeta queda apagada pero reconocible. */
+.portada-acceso:disabled {
+  cursor: default;
+  opacity: 0.8;
+  filter: grayscale(0.55) brightness(0.8);
+}
+
+.portada-nota {
+  font-size: var(--fs-sm);
+  color: rgba(243, 233, 214, 0.75);
+  text-shadow: 0 1px 0 #2a1a08, 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.portada-version {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: rgba(243, 233, 214, 0.6);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+}
+
+/* El segundo paso (nueva partida, gestionar): un panel oscuro translúcido en
+   el mismo lugar que los accesos, con las tres modalidades y la dificultad. */
+.portada-panel {
+  align-self: center;
+  width: min(100%, 720px);
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-6);
+  border-radius: var(--radius);
+  background: rgba(24, 20, 16, 0.82);
+  border: 1px solid rgba(243, 233, 214, 0.18);
+  box-shadow: var(--sombra-alta);
+  text-align: left;
+}
+
+.portada-panel h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--fs-lg);
+  color: var(--accent);
+}
+
+.portada-panel-p {
+  margin: 0;
+  line-height: 1.5;
+  color: rgba(243, 233, 214, 0.9);
+}
+
+.portada-modos {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.portada-modo {
+  display: grid;
+  gap: 0.15rem;
+  text-align: left;
+  padding: 0.7rem 0.9rem;
+  background: rgba(243, 233, 214, 0.06);
+  border: 1px solid rgba(243, 233, 214, 0.2);
+  color: var(--portada-crema);
+}
+
+.portada-modo:hover,
+.portada-modo:focus-visible {
+  background: rgba(224, 122, 42, 0.16);
+  border-color: var(--accent);
+  outline: none;
+}
+
+.portada-modo-k {
+  font-family: var(--display);
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: rgba(243, 233, 214, 0.6);
+}
+
+.portada-modo-t {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--fs-md);
+}
+
+.portada-modo-d {
+  font-size: var(--fs-sm);
+  color: rgba(243, 233, 214, 0.75);
+  line-height: 1.4;
+}
+
+.portada-dificultad {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.portada-dificultad .segmented {
+  border-color: rgba(243, 233, 214, 0.3);
+}
+
+.portada-dificultad .segmented button {
+  color: var(--portada-crema);
+}
+
+.portada-dificultad .segmented button + button {
+  border-left-color: rgba(243, 233, 214, 0.3);
+}
+
+.portada-dificultad .segmented button.on {
+  color: var(--on-accent);
+}
+
+.portada-dif-k {
+  font-family: var(--display);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: rgba(243, 233, 214, 0.6);
+}
+
+.portada-dif-d {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: rgba(243, 233, 214, 0.75);
+  min-height: 2.2em;
+}
+
+.portada-aviso {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: #f2b8a4;
+}
+
+.portada-panel button.danger {
+  background: transparent;
+  border-color: #e0705f;
+  color: #f2b8a4;
+  justify-self: start;
+}
+
+.portada-volver {
+  justify-self: start;
+  background: transparent;
+  border-color: rgba(243, 233, 214, 0.35);
+  color: var(--portada-crema);
+}
+
+.portada-volver:hover,
+.portada-volver:focus-visible {
+  border-color: var(--accent);
+}
+
+/* A 720p el panel de nueva partida sobraba 21 px: se aprieta sin sacar nada. */
+@media (max-height: 800px) {
+  .portada-panel {
+    gap: var(--sp-3);
+    padding: var(--sp-4) var(--sp-5);
+  }
+
+  .portada-modo {
+    padding: 0.5rem 0.8rem;
+  }
+
+  .portada-dif-d {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .portada-contenido {
+    align-content: start;
+    gap: var(--sp-4);
+    padding: 1.2rem 1rem 1.5rem;
+  }
+
+  .portada-accesos {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+  }
+
+  .portada-acceso img {
+    height: clamp(140px, 26vh, 220px);
+    max-width: 70vw;
+  }
+
+  .portada-panel {
+    padding: var(--sp-4);
+  }
+}
+
 /* ---------- Movimiento (T5, sep 2026): cinco animaciones, y ninguna más ---------- */
 
 /* La regla: el movimiento cuenta algo que pasó (un número que subió, una
