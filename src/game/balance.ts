@@ -133,6 +133,7 @@ export const BALANCE = {
     corredoresTiredBoost: 0.12, // los corredores castigan las piernas gastadas
     // Minutos pedidos (sep 2026, el motor por tramos): el rival lo pide cuando
     // le metemos un parcial en los últimos dos tramos; vos tenés dos por partido.
+    rivalPideMinuto: false, // apagado por pedido de Gabi ("enreda la sesión del partido"); el código queda
     timeoutRun: 6, // parcial (en dos tramos) que hace pedir minuto al rival
     timeoutCut: 0.92, // el ataque del otro baja esto en el tramo del minuto
     timeoutFresh: 2, // piernas que recuperan los cinco con nuestro minuto
@@ -147,6 +148,33 @@ export const BALANCE = {
     boxAstMax: 6,
     estrellaPtsBias: 1.8, // la figura se lleva más tiros con ataque 'estrella'
     equipoAstExtra: 2, // mover la pelota genera más asistencias
+    // La defensa del rival (sep 2026): cambia durante el partido con reglas
+    // que no miran lo que hacés vos, y pega en NUESTRO ataque según cómo
+    // respondemos. Efectos chicos a propósito: responder bien vale unos
+    // puntos por cuarto, no un partido. El harness mide con `contraRival`
+    // que responder siempre bien no le saque más de 3-4 puntos a la zona.
+    rivalDefensa: {
+      presionaDesde: 8, // pierde por esto (o más) → presiona, si tiene piernas
+      presionaConPiernas: 55,
+      zonaDesde: 8, // gana por esto → se mete atrás
+      parejo: 4, // con menos que esto de diferencia, vuelve a lo suyo
+      chanceCambio: 0.5, // por pelota muerta que cumpla la regla (una vez por cuarto)
+      chanceVolver: 0.25,
+      // Contra la presión: mover la pelota rinde si hay piernas; sin piernas, regalo.
+      presionPiernas: 50,
+      presionFundidos: 0.9,
+      presionVsEquipo: 1.04,
+      presionBase: 0.97,
+      presionDesgasteRival: 3, // presionar los gasta (por cuarto)
+      presionDesgasteNuestro: 2, // y a los que la sacan también
+      // Contra la marca hombre: esperan entre dos a la referencia; correr los rompe.
+      hombreVsEstrella: 0.94,
+      hombreVsCorrer: 1.04,
+      // Contra la zona: la referencia con la mano caliente la castiga; correr no sirve.
+      zonaVsEstrellaCaliente: 1.05,
+      zonaVsCorrer: 0.97,
+      manoCaliente: 1.04, // rendimiento del día sobre el nivel a partir del cual "está caliente"
+    },
   },
 
   rotation: {
