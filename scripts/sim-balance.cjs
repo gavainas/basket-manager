@@ -68,6 +68,17 @@ const STRATEGIES = {
     tactics: (s) => ({ defense: s.live.quarters.length < 2 ? 'hombre' : 'zona', attack: 'equipo' }),
     rotate: 'cerradores4',
   },
+  // Contra el rival: zona y el plan por defecto (como zonaEquipo), pero el
+  // ataque responde "bien" a la defensa del rival en cada cuarto. La
+  // diferencia con zonaEquipo mide cuánto vale leer al rival: si pasa de
+  // 3-4 puntos, el piedra-papel-o-tijera domina y hay que achicarlo.
+  contraRival: {
+    tactics: (s) => {
+      const def = s.live.rivalDefense || 'zona';
+      return { defense: 'zona', attack: def === 'presion' ? 'equipo' : def === 'hombre' ? 'correr' : 'estrella' };
+    },
+    rotate: null,
+  },
 };
 
 function playSeason(seed, strategy) {

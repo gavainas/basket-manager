@@ -11,7 +11,9 @@ import { computeRating, type PlayerRating } from './rating';
 import { logClubEvent, logPlayerEvent } from './timeline';
 import { rollRivalMatchday, USER_TEAM_ID } from './world';
 import type {
+  AttackTactic,
   BoxScoreLine,
+  DefenseTactic,
   GameState,
   LineupPreset,
   LiveMatchState,
@@ -609,6 +611,7 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     plan: defaultMatchPlan(rotation.length),
     manualBreak: false,
     rivalFreshness: clamp(M.rivalFreshStart + rng.int(-4, 4)),
+    rivalDefense: rivalDefensePorEstilo(rival.style),
     starId: star.id,
     starName: star.name,
     perfs,
@@ -1003,6 +1006,74 @@ export function pedirMinuto(state: GameState): GameState {
   return { ...state, live: { ...live, minutoPedido: true, minutosPedidos: (live.minutosPedidos ?? 0) + 1 } };
 }
 
+/** Con qué defensa arranca cada estilo de rival. */
+export function rivalDefensePorEstilo(style: Rival['style']): DefenseTactic {
+  return style === 'corredores' ? 'presion' : style === 'internos' ? 'hombre' : 'zona';
+}
+
+/** La defensa del rival ahora (los saves de antes no la tienen: la de su estilo). */
+export function rivalDefenseDe(live: LiveMatchState, rival: Rival): DefenseTactic {
+  return live.rivalDefense ?? rivalDefensePorEstilo(rival.style);
+}
+
+export const RIVAL_DEFENSE_LABELS: Record<DefenseTactic, string> = { zona: 'Zona', hombre: 'Hombre', presion: 'Presión' };
+
+/** Cómo se anuncia el cambio de defensa del rival en el relato (la nota abre con 🛡 y cae al final del tramo: te enterás viéndolos). */
+export function rivalDefenseNote(rivalName: string, def: DefenseTactic): string {
+  return `🛡 ${rivalName} ${def === 'presion' ? 'pasa a presionar la salida' : def === 'hombre' ? 'pasa a marcar hombre' : 'se mete atrás en zona'}.`;
+}
+
+/**
+ * Cuánto pega la defensa del rival en nuestro ataque, según cómo respondemos:
+ * contra la presión hay que mover la pelota (y tener piernas para sacarla);
+ * contra la marca hombre esperan entre dos a la referencia y rinde correr;
+ * contra la zona la referencia con la mano caliente la castiga y correr no
+ * sirve. Es un multiplicador chico: responder bien vale puntos, no partidos.
+ */
+export function rivalDefenseFactor(def: DefenseTactic, attack: AttackTactic, teamFresh: number, hot: number): number {
+  const R = BALANCE.liveMatch.rivalDefensa;
+  if (def === 'presion') {
+    if (teamFresh < R.presionPiernas) return R.presionFundidos;
+    return attack === 'equipo' ? R.presionVsEquipo : R.presionBase;
+  }
+  if (def === 'hombre') {
+    if (attack === 'estrella') return hot >= R.manoCaliente ? 1 : R.hombreVsEstrella;
+    return attack === 'correr' ? R.hombreVsCorrer : 1;
+  }
+  if (attack === 'estrella') return hot >= R.manoCaliente ? R.zonaVsEstrellaCaliente : 1;
+  return attack === 'correr' ? R.zonaVsCorrer : 1;
+}
+
+/**
+ * El rival decide su defensa en la pelota muerta, sin mirar la nuestra: si
+ * pierde por mucho y tiene piernas, presiona; si va cómodo, se mete atrás;
+ * si el partido está parejo, vuelve a lo suyo; si presiona y se quedó sin
+ * piernas, afloja. A lo sumo un cambio por cuarto, y con azar para que no
+ * sea una tabla. Devuelve la nota del cambio, si lo hubo.
+ */
+function rivalDecideDefensa(live: LiveMatchState, rival: Rival, ctx: QuarterContext, rng: Rng): string | null {
+  const R = BALANCE.liveMatch.rivalDefensa;
+  if (ctx.rivalDefChanged) return null;
+  const actual = rivalDefenseDe(live, rival);
+  const suya = rivalDefensePorEstilo(rival.style);
+  const { f, a } = marcador(live);
+  const diffRival = a - f;
+  let nueva = actual;
+  if (diffRival <= -R.presionaDesde && live.rivalFreshness >= R.presionaConPiernas && actual !== 'presion') {
+    if (rng.chance(R.chanceCambio)) nueva = 'presion';
+  } else if (diffRival >= R.zonaDesde && actual !== 'zona') {
+    if (rng.chance(R.chanceCambio)) nueva = 'zona';
+  } else if (actual === 'presion' && live.rivalFreshness < R.presionaConPiernas - 10) {
+    if (rng.chance(R.chanceCambio)) nueva = suya === 'presion' ? 'hombre' : suya;
+  } else if (Math.abs(diffRival) < R.parejo && actual !== suya) {
+    if (rng.chance(R.chanceVolver)) nueva = suya;
+  }
+  if (nueva === actual) return null;
+  live.rivalDefense = nueva;
+  ctx.rivalDefChanged = true;
+  return rivalDefenseNote(rival.name, nueva);
+}
+
 /**
  * La fuerza de los dos lados ahora mismo: el ataque sale de los cinco en
  * cancha con sus piernas y la táctica; la defensa es un multiplicador sobre
@@ -1018,7 +1089,7 @@ function fuerzas(
   onCourt: Player[],
   rng: Rng,
   notes: string[] | null
-): { atk: number; defMult: number; star: Player } {
+): { atk: number; defMult: number; star: Player; hot: number } {
   const M = BALANCE.liveMatch;
   const teamFresh = courtFreshness(live);
   const freshOf = (id: string) => live.playerFresh[id] ?? 70;
@@ -1119,7 +1190,7 @@ function fuerzas(
   }
   if (teamFresh < 30) pushDef(['El equipo juega de memoria: no quedan piernas.']);
 
-  return { atk, defMult, star };
+  return { atk, defMult, star, hot };
 }
 
 /**
@@ -1416,7 +1487,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
     else tramoNotes.push(n);
   }
   const ultimos = q.tramos!.slice(-2).reduce((t, x) => t + x.for - x.against, 0);
-  if (k > 0 && !ctx.rivalTimeout && ultimos >= M.timeoutRun) {
+  if (M.rivalPideMinuto && k > 0 && !ctx.rivalTimeout && ultimos >= M.timeoutRun) {
     ctx.rivalTimeout = true;
     ctx.rivalTimeoutAt = k;
     tramoNotes.push(`⏱ ${rival.name} pide minuto para cortar el parcial.`);
@@ -1428,9 +1499,16 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
     tramoNotes.push('⏱ Minuto pedido: el equipo se junta, respira y se ordena.');
   }
 
+  // El rival decide cómo defender este tramo (sin mirar lo nuestro).
+  const cambioRival = rivalDecideDefensa(live, rival, ctx, rng);
+  if (cambioRival) tramoNotes.push(cambioRival);
+  const defRival = rivalDefenseDe(live, rival);
+
   const courtIds = [...live.onCourt];
   const onCourt = courtIds.map(byId);
-  const { atk, defMult, star } = fuerzas(s, live, rival, ctx, onCourt, rng, null);
+  const { atk: atkBase, defMult, star, hot } = fuerzas(s, live, rival, ctx, onCourt, rng, null);
+  // Y su defensa pega en nuestro ataque según cómo respondemos.
+  const atk = atkBase * rivalDefenseFactor(defRival, live.attack, courtFreshness(live), hot);
   ctx.lastAtk = atk;
   // Las piernas del rival también se gastan tramo a tramo: los dos lados se cansan por igual.
   ctx.rivalEff = rivalEffAhora(live, rival, ctx.rivalDay);
@@ -1488,6 +1566,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
     if (live.defense === 'hombre') drain += M.playerDrainHombre + (rival.style === 'internos' ? M.internosHombreDrain : 0);
     if (live.defense === 'presion') drain += M.presionDrainExtra + (rival.style === 'internos' ? M.internosHombreDrain : 0);
     if (live.attack === 'correr') drain += M.correrDrainExtra;
+    if (defRival === 'presion') drain += M.rivalDefensa.presionDesgasteNuestro;
     drain += Math.max(0, 60 - p.physical) * M.playerDrainLowPhysical;
     live.playerFresh[p.id] = clamp(freshOf(p.id) - drain / K);
     live.minutes[p.id] = (live.minutes[p.id] ?? 0) + M.quarterMinutes / K;
@@ -1499,6 +1578,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
   if (live.defense === 'hombre') rivalDrain += M.hombreRivalDrain;
   if (live.defense === 'presion') rivalDrain += M.presionRivalDrain;
   if (live.attack === 'correr') rivalDrain += 2;
+  if (defRival === 'presion') rivalDrain += M.rivalDefensa.presionDesgasteRival;
   // Si vinieron cortos de banco, se funden más rápido.
   if ((live.rivalSquad?.presentCount ?? 10) <= 6) rivalDrain += 2;
   live.rivalFreshness = clamp(live.rivalFreshness - rivalDrain / K);
@@ -1554,7 +1634,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
     }
   }
 
-  q.tramos!.push({ for: ourT, against: rivalT, box: tPts, onCourt: courtIds, notes: tramoNotes.length > 0 ? tramoNotes : undefined });
+  q.tramos!.push({ for: ourT, against: rivalT, box: tPts, onCourt: courtIds, notes: tramoNotes.length > 0 ? tramoNotes : undefined, rivalDefense: defRival });
 
   if (k + 1 >= K) closeQuarter(s, live, rng);
 }

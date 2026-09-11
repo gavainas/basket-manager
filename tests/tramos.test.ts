@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { BALANCE } from '../src/game/balance';
 import { cuartosDe, marcador, MINUTOS_POR_PARTIDO, TRAMOS_POR_CUARTO } from '../src/game/match';
 import { jugadasDelCuarto } from '../src/game/relato';
 import type { GameState } from '../src/game/types';
@@ -115,12 +116,13 @@ describe('el motor por tramos (sep 2026)', () => {
     expect(s.lastMatch!.scoreFor).toBe(regulares.reduce((t, q) => t + q.for, 0) + (s.lastMatch!.quarters.length > 4 ? s.lastMatch!.quarters[4].for : 0));
   });
 
-  it('el rival responde: si le metemos un parcial, pide minuto (en alguna semilla)', () => {
+  it('el minuto pedido del rival sólo existe si está prendido en balance.ts (hoy está apagado)', () => {
     let pidio = 0;
     for (let seed = 1; seed <= 12; seed++) {
       const s = jugarPartidoEntero(hastaElPartido(seed));
       if (s.live!.quarters.some((q) => (q.tramos ?? []).some((t) => (t.notes ?? []).some((n) => /pide minuto/.test(n))))) pidio += 1;
     }
-    expect(pidio).toBeGreaterThan(0);
+    if (BALANCE.liveMatch.rivalPideMinuto) expect(pidio).toBeGreaterThan(0);
+    else expect(pidio).toBe(0);
   });
 });
