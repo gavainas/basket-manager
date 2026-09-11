@@ -5287,6 +5287,20 @@ button.mini.blue.on {
 
 .rj-espera { margin: 0.3rem 0 0.4rem; font-style: italic; }
 
+/* La pelota muerta en el relato: los cambios y las notas (minuto pedido, la
+   lesión, la presión) son filas más tenues, sin el punto de color. */
+.rj.cambio,
+.rj.nota { color: var(--text-dim); }
+.rj.cambio .rj-texto b,
+.rj.nota .rj-texto b { font-weight: 500; font-style: italic; }
+.rj-icono {
+  width: 10px;
+  align-self: center;
+  justify-self: center;
+  color: var(--text-faint);
+  line-height: 1;
+}
+
 .pv-ficha.anoto .pv-ficha-num {
   animation: ficha-anoto 0.9s ease-out;
   box-shadow: 0 0 0 4px rgba(255, 192, 120, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);

@@ -131,7 +131,12 @@ export const BALANCE = {
     internosHombreDrain: 4, // marcar hombre a los grandotes desgasta extra
     internosVsZona: 0.95, // la zona les cierra la pintura
     corredoresTiredBoost: 0.12, // los corredores castigan las piernas gastadas
-    pushDeficit: 8, // si el rival pierde por esto al entrar al último cuarto, presiona
+    // Minutos pedidos (sep 2026, el motor por tramos): el rival lo pide cuando
+    // le metemos un parcial en los últimos dos tramos; vos tenés dos por partido.
+    timeoutRun: 6, // parcial (en dos tramos) que hace pedir minuto al rival
+    timeoutCut: 0.92, // el ataque del otro baja esto en el tramo del minuto
+    timeoutFresh: 2, // piernas que recuperan los cinco con nuestro minuto
+    pushDeficit: 8, // si el rival pierde por esto en el último cuarto, presiona
     pushFreshCost: 5,
     pushRivalBoost: 1.05,
     hombreWearPerQuarter: 1, // desgaste físico extra post partido por cuarto en hombre

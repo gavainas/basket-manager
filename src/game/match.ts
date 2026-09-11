@@ -15,11 +15,13 @@ import type {
   GameState,
   LineupPreset,
   LiveMatchState,
+  LiveQuarter,
   MatchPlan,
   MatchResult,
   Player,
   PlayerMood,
   Position,
+  QuarterContext,
   Rival,
   TeamEval,
   WorldPlayer,
@@ -838,21 +840,38 @@ export function rivalLineup(state: GameState, live: LiveMatchState): { court: Wo
  */
 export function rivalBoxScore(state: GameState, live: LiveMatchState): Record<string, number> {
   const out: Record<string, number> = {};
-  live.quarters.forEach((_q, i) => {
+  cuartosDe(live).forEach((_q, i) => {
     const share = rivalQuarterBox(state, live, i);
     for (const [id, pts] of Object.entries(share)) out[id] = (out[id] ?? 0) + pts;
   });
   return out;
 }
 
-/** Los puntos rivales de UN cuarto, repartidos entre su quinteto (ver `rivalBoxScore`). */
+/** Los puntos rivales de UN cuarto (jugado o en curso), repartidos entre su quinteto (ver `rivalBoxScore`). */
 export function rivalQuarterBox(state: GameState, live: LiveMatchState, qIndex: number): Record<string, number> {
-  const q = live.quarters[qIndex];
+  const q = cuartoN(live, qIndex);
+  if (!q) return {};
+  if (!q.tramos || q.tramos.length === 0) return rivalPuntosRepartidos(state, live, q.against, `${qIndex}`);
+  const out: Record<string, number> = {};
+  q.tramos.forEach((_t, k) => {
+    for (const [id, pts] of Object.entries(rivalTramoBox(state, live, qIndex, k))) out[id] = (out[id] ?? 0) + pts;
+  });
+  return out;
+}
+
+/** Los puntos rivales de UN tramo, repartidos entre su quinteto. Semilla propia por tramo: lo ya contado no cambia. */
+export function rivalTramoBox(state: GameState, live: LiveMatchState, qIndex: number, k: number): Record<string, number> {
+  const t = cuartoN(live, qIndex)?.tramos?.[k];
+  if (!t) return {};
+  return rivalPuntosRepartidos(state, live, t.against, `${qIndex}:${k}`);
+}
+
+function rivalPuntosRepartidos(state: GameState, live: LiveMatchState, pts: number, clave: string): Record<string, number> {
   const { court } = rivalLineup(state, live);
-  if (!q || court.length === 0) return {};
-  const rng = new Rng(seedFromString(`${live.rivalId}:${state.week}:${qIndex}:${q.against}`));
+  if (court.length === 0) return {};
+  const rng = new Rng(seedFromString(`${live.rivalId}:${state.week}:${clave}:${pts}`));
   return distribute(
-    q.against,
+    pts,
     court.map((p) => ({ id: p.id, w: Math.max(1, p.level - 30) })),
     rng
   );
@@ -951,14 +970,166 @@ function distribute(total: number, weights: { id: string; w: number }[], rng: Rn
 const REB_POS_WEIGHT: Record<Position, number> = { Base: 0.9, Escolta: 1.1, Alero: 1.7, 'Ala-Pívot': 2.4, Pívot: 3 };
 const AST_POS_WEIGHT: Record<Position, number> = { Base: 3, Escolta: 1.8, Alero: 1.2, 'Ala-Pívot': 0.8, Pívot: 0.6 };
 
-/** Juega el próximo cuarto con las tácticas y los 5 en cancha de state.live. */
-export function playQuarter(state: GameState, rng: Rng): GameState {
-  const s: GameState = structuredClone(state);
-  const live = s.live;
-  if (!live || live.finished) return s;
+/** Cuántos tramos tiene un cuarto: uno cada dos minutos, con una pelota muerta entre tramo y tramo. */
+export const TRAMOS_POR_CUARTO = 5;
 
+/** Minutos que podés pedir por partido. */
+export const MINUTOS_POR_PARTIDO = 2;
+
+/** Los cuartos del partido, con el que está en curso al final (si hay). */
+export function cuartosDe(live: LiveMatchState): LiveQuarter[] {
+  return live.enCurso ? [...live.quarters, live.enCurso] : live.quarters;
+}
+
+/** El cuarto número `qIndex`, jugado o en curso. */
+export function cuartoN(live: LiveMatchState, qIndex: number): LiveQuarter | undefined {
+  return cuartosDe(live)[qIndex];
+}
+
+/** Marcador del partido hasta ahora, con el cuarto en curso. */
+export function marcador(live: LiveMatchState): { f: number; a: number } {
+  return cuartosDe(live).reduce((t, q) => ({ f: t.f + q.for, a: t.a + q.against }), { f: 0, a: 0 });
+}
+
+/**
+ * Pedir minuto (sep 2026): corre en el próximo tramo del cuarto en curso, le
+ * baja el ataque al rival ese tramo y les da un respiro a los cinco. Hay dos
+ * por partido, y sólo con la pelota en juego.
+ */
+export function pedirMinuto(state: GameState): GameState {
+  const live = state.live;
+  if (!live || live.finished || !live.enCurso || live.minutoPedido) return state;
+  if ((live.minutosPedidos ?? 0) >= MINUTOS_POR_PARTIDO) return state;
+  return { ...state, live: { ...live, minutoPedido: true, minutosPedidos: (live.minutosPedidos ?? 0) + 1 } };
+}
+
+/**
+ * La fuerza de los dos lados ahora mismo: el ataque sale de los cinco en
+ * cancha con sus piernas y la táctica; la defensa es un multiplicador sobre
+ * el rival. Se calcula al arrancar el cuarto (con las notas de color) y de
+ * nuevo en cada tramo, en silencio, con los cinco y las piernas de ese
+ * momento: un cambio o una táctica nueva pesan desde la próxima pelota muerta.
+ */
+function fuerzas(
+  s: GameState,
+  live: LiveMatchState,
+  rival: Rival,
+  ctx: QuarterContext,
+  onCourt: Player[],
+  rng: Rng,
+  notes: string[] | null
+): { atk: number; defMult: number; star: Player } {
   const M = BALANCE.liveMatch;
-  const rival = s.rivals.find((r) => r.id === live.rivalId)!;
+  const teamFresh = courtFreshness(live);
+  const freshOf = (id: string) => live.playerFresh[id] ?? 70;
+  const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+  const effAvg = avg(onCourt.map((p) => playerEffective(p) * (M.freshFactorMin + M.freshFactorSpan * (freshOf(p.id) / 100))));
+  const covered = new Set(onCourt.map((p) => p.position));
+  const missing = ALL_POSITIONS.filter((pos) => !covered.has(pos)).length;
+  const coverageFactor = 1 - missing * BALANCE.match.positionMissingPenalty;
+  const chemFactor = 0.94 + 0.12 * live.eval.chemistry01;
+  const orgFactor = 0.97 + 0.06 * (s.club.organization / 100);
+
+  // La referencia del ataque: la que elegiste, o el mejor de los que están.
+  const star = onCourt.find((p) => p.id === live.starId) ?? [...onCourt].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
+  const starEff = Math.max(1, playerEffective(star));
+  const hot = (live.perfs[star.id] ?? starEff) / starEff; // 0.78..1.22
+  let atkMult: number;
+  let flavor: string | null = null;
+  const note = (pool: string[]) => (notes ? freshLiveNote(live, pool, rng) : null);
+  if (live.attack === 'estrella') {
+    atkMult = M.estrellaBase + M.estrellaHotSpan * (hot - 0.78) - M.estrellaDecay * live.estrellaQuarters;
+    if (hot > 1.08) flavor = note([`${star.name} está encendido: la pide y la mete.`, `Todo pasa por ${star.name}, y hoy tiene la mano caliente.`]);
+    else if (hot < 0.92)
+      flavor = note([`${star.name} no tiene la mano y el plan de dársela siempre a él hace agua.`, `Insistimos con ${star.name}, pero hoy no le cae una.`]);
+    else if (live.estrellaQuarters >= 2) flavor = note([`El rival ya le tomó la mano a ${star.name}: lo esperan entre dos.`]);
+  } else if (live.attack === 'correr') {
+    atkMult = M.correrBase + M.correrFreshSpan * (teamFresh / 100);
+    flavor =
+      teamFresh >= 60
+        ? note(['Corremos cada rebote: puntos fáciles de contraataque.', 'El partido se juega a nuestro ritmo: correr y correr.'])
+        : note(['Queremos correr pero no queda nafta: las contras las hacen ellos.']);
+  } else {
+    atkMult = M.equipoBase + M.equipoChemBonus * live.eval.chemistry01;
+    if (notes && live.eval.chemistry01 > 0.7 && rng.chance(0.5))
+      flavor = note([
+        'La pelota se mueve sola: el equipo juega de memoria y de buen humor.',
+        'Tres pases de más en cada ataque, y siempre queda uno solo abajo del aro.',
+        'Se nota el buen clima: el que la mueve festeja igual que el que la mete.',
+      ]);
+  }
+  if (notes && flavor) notes.push(flavor);
+  if (notes && missing > 0) {
+    const pos = ALL_POSITIONS.find((p) => !covered.has(p));
+    const n = note([`Con este quinteto falta un ${pos} natural y se nota.`, `Seguimos sin ${pos} de oficio en cancha, y el rival lo huele.`]);
+    if (n) notes.push(n);
+  }
+
+  // Bronca canalizada y tensión con los jueces: pegan en la concentración.
+  if (ctx.rage) atkMult *= 1.05;
+  atkMult *= 1 - 0.012 * (live.refTension ?? 0);
+  // Si el DT maneja los cambios, su lectura del juego suma (o resta).
+  if (live.autoRotation && s.coach) atkMult *= 1 + (s.coach.tactics - 55) * 0.0012;
+
+  const atk = effAvg * chemFactor * orgFactor * coverageFactor * atkMult;
+
+  // --- Defensa ---
+  const pushDef = (pool: string[]) => {
+    const n = note(pool);
+    if (n && notes) notes.push(n);
+  };
+  let defMult = 1;
+  if (live.defense === 'presion') {
+    if (teamFresh < M.presionTiredThreshold) {
+      defMult = M.presionTiredMult;
+      pushDef(['Presionamos sin piernas y nos pasan con dos pases: regalo tras regalo.', 'La presión sin nafta es un colador: cada salida rival termina en bandeja.']);
+    } else if (ctx.presionRota) {
+      defMult = M.presionBreakMult;
+      pushDef(['Nos leyeron la presión: dos pases largos y bandeja. La apuesta salió cara.', 'Rompieron la presión de memoria: pase por arriba y dos puntos fáciles.']);
+    } else {
+      defMult = M.presionRivalMult;
+      pushDef(['La presión a toda cancha ahoga la salida del rival: pelotas recuperadas y bandejas.', 'La presión les hace contar los segundos: sacan la pelota a los tumbos.']);
+    }
+    if (rival.style === 'tiradores') defMult *= M.tiradoresVsHombre;
+  } else if (live.defense === 'hombre') {
+    if (teamFresh >= M.hombreTiredThreshold) {
+      defMult = M.hombreRivalMult;
+      pushDef(['La marca individual asfixia la salida del rival.', 'Cada uno con el suyo y sin regalar un centímetro: el rival no encuentra tiros cómodos.']);
+    } else {
+      defMult = M.hombreTiredMult;
+      pushDef(['Queremos presionar pero las piernas no llegan: quedan pasillos por todos lados.']);
+    }
+    if (rival.style === 'tiradores') defMult *= M.tiradoresVsHombre;
+    if (rival.style === 'internos') pushDef(['Chocar con sus grandotes cuesta doble: cada marca es una batalla.']);
+  } else {
+    if (rival.style === 'tiradores') {
+      defMult *= M.tiradoresVsZona;
+      pushDef(['La zona les deja tiros abiertos y sus tiradores no perdonan.', 'Mueven la pelota hasta encontrar al tirador libre contra la zona: y la meten.']);
+    }
+    if (rival.style === 'internos') defMult *= M.internosVsZona;
+  }
+  if (rival.style === 'corredores') {
+    defMult *= 1 + M.corredoresTiredBoost * (1 - teamFresh / 100);
+    if (teamFresh < 45) pushDef(['Nos corren la cancha entera y llegamos siempre tarde a las marcas.']);
+  }
+  // El rival aprende: cuartos y cuartos de defensa agresiva le enseñan a salir.
+  if ((live.defense === 'hombre' || live.defense === 'presion') && live.hombreQuarters >= 2) {
+    defMult *= 1 + M.aggressiveAdapt * (live.hombreQuarters - 1);
+    pushDef(['El rival ya sabe salir contra nuestra marca: la rompen de memoria.']);
+  }
+  if (teamFresh < 30) pushDef(['El equipo juega de memoria: no quedan piernas.']);
+
+  return { atk, defMult, star };
+}
+
+/**
+ * Arranca un cuarto: el plan de cambios y el DT, los que llegan tarde, el
+ * quinteto completo, las notas del descanso, el empuje del que va abajo, y
+ * todo lo que el motor decide de una vez para el cuarto entero (el día del
+ * rival, la suerte, las rachas y en qué tramo caen). Deja `live.enCurso`.
+ */
+function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng): void {
+  const M = BALANCE.liveMatch;
   const qIndex = live.quarters.length; // 0..3
   const notes: string[] = [];
 
@@ -995,18 +1166,7 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   notes.push(...live.pendingSubNotes);
   live.pendingSubNotes = [];
 
-  const onCourt = live.onCourt.map((id) => s.players.find((p) => p.id === id)!);
-  const teamFresh = courtFreshness(live);
-
-  const sumFor = live.quarters.reduce((t, q) => t + q.for, 0);
-  const sumAgainst = live.quarters.reduce((t, q) => t + q.against, 0);
-
-  // Si el rival entra al último cuarto perdiendo por mucho, presiona a fondo.
-  if (qIndex === 3 && sumFor - sumAgainst >= M.pushDeficit) {
-    live.rivalPush = true;
-    for (const id of live.onCourt) live.playerFresh[id] = clamp((live.playerFresh[id] ?? 70) - M.pushFreshCost);
-    notes.push(`${rival.name} adelantó líneas y presiona a toda cancha: hay que aguantar el cierre.`);
-  }
+  const { f: sumFor, a: sumAgainst } = marcador(live);
 
   // Remontadas: el que va abajo sale a morder y el que va cómodo afloja.
   // Empuje en puntos, proporcional al déficit: nada está sentenciado.
@@ -1040,190 +1200,23 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
     }
   }
 
-  // --- Ataque: la fuerza sale de los 5 en cancha, cada uno con sus piernas ---
-  const freshOf = (id: string) => live.playerFresh[id] ?? 70;
-  const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
-  const effAvg = avg(
-    onCourt.map((p) => playerEffective(p) * (M.freshFactorMin + M.freshFactorSpan * (freshOf(p.id) / 100)))
+  // Lo que se decide una vez por cuarto.
+  const presionRota = rng.chance(
+    M.presionBreakBase + Math.max(0, rival.strength - 55) * M.presionBreakStrength + (rival.style === 'corredores' ? 0.12 : 0)
   );
-  const covered = new Set(onCourt.map((p) => p.position));
-  const missing = ALL_POSITIONS.filter((pos) => !covered.has(pos)).length;
-  const coverageFactor = 1 - missing * BALANCE.match.positionMissingPenalty;
-  const chemFactor = 0.94 + 0.12 * live.eval.chemistry01;
-  const orgFactor = 0.97 + 0.06 * (s.club.organization / 100);
-
-  const star = [...onCourt].sort((a, b) => playerEffective(b) - playerEffective(a))[0];
-  const starEff = Math.max(1, playerEffective(star));
-  const hot = (live.perfs[star.id] ?? starEff) / starEff; // 0.78..1.22
-  let atkMult: number;
-  // Las notas de color no se repiten dentro del partido (freshLiveNote): si el
-  // pool se agota, el relato calla y hablan el marcador y las piernas.
-  let flavor: string | null = null;
-  if (live.attack === 'estrella') {
-    atkMult = M.estrellaBase + M.estrellaHotSpan * (hot - 0.78) - M.estrellaDecay * live.estrellaQuarters;
-    if (hot > 1.08)
-      flavor = freshLiveNote(
-        live,
-        [`${star.name} está encendido: la pide y la mete.`, `Todo pasa por ${star.name}, y hoy tiene la mano caliente.`],
-        rng
-      );
-    else if (hot < 0.92)
-      flavor = freshLiveNote(
-        live,
-        [
-          `${star.name} no tiene la mano y el plan de dársela siempre a él hace agua.`,
-          `Insistimos con ${star.name}, pero hoy no le cae una.`,
-        ],
-        rng
-      );
-    else if (live.estrellaQuarters >= 2)
-      flavor = freshLiveNote(live, [`El rival ya le tomó la mano a ${star.name}: lo esperan entre dos.`], rng);
-  } else if (live.attack === 'correr') {
-    atkMult = M.correrBase + M.correrFreshSpan * (teamFresh / 100);
-    flavor =
-      teamFresh >= 60
-        ? freshLiveNote(
-            live,
-            ['Corremos cada rebote: puntos fáciles de contraataque.', 'El partido se juega a nuestro ritmo: correr y correr.'],
-            rng
-          )
-        : freshLiveNote(
-            live,
-            ['Queremos correr pero no queda nafta: las contras las hacen ellos.'],
-            rng
-          );
-  } else {
-    atkMult = M.equipoBase + M.equipoChemBonus * live.eval.chemistry01;
-    if (live.eval.chemistry01 > 0.7 && rng.chance(0.5))
-      flavor = freshLiveNote(
-        live,
-        [
-          'La pelota se mueve sola: el equipo juega de memoria y de buen humor.',
-          'Tres pases de más en cada ataque, y siempre queda uno solo abajo del aro.',
-          'Se nota el buen clima: el que la mueve festeja igual que el que la mete.',
-        ],
-        rng
-      );
-  }
-  if (flavor) notes.push(flavor);
-  if (missing > 0) {
-    const pos = ALL_POSITIONS.find((p) => !covered.has(p));
-    const n = freshLiveNote(
-      live,
-      [`Con este quinteto falta un ${pos} natural y se nota.`, `Seguimos sin ${pos} de oficio en cancha, y el rival lo huele.`],
-      rng
-    );
-    if (n) notes.push(n);
-  }
-
-  // Bronca canalizada y tensión con los jueces: pegan en la concentración.
-  if (live.rageBoost) {
-    atkMult *= 1.05;
-    live.rageBoost = false;
-  }
-  atkMult *= 1 - 0.012 * (live.refTension ?? 0);
-
-  // Si el DT maneja los cambios, su lectura del juego suma (o resta).
-  if (live.autoRotation && s.coach) {
-    atkMult *= 1 + (s.coach.tactics - 55) * 0.0012;
-  }
-
-  const atk = effAvg * chemFactor * orgFactor * coverageFactor * atkMult;
-
-  // --- Defensa ---
-  const pushDef = (pool: string[]) => {
-    const n = freshLiveNote(live, pool, rng);
-    if (n) notes.push(n);
-  };
-  let defMult = 1;
-  if (live.defense === 'presion') {
-    if (teamFresh < M.presionTiredThreshold) {
-      defMult = M.presionTiredMult;
-      pushDef([
-        'Presionamos sin piernas y nos pasan con dos pases: regalo tras regalo.',
-        'La presión sin nafta es un colador: cada salida rival termina en bandeja.',
-      ]);
-    } else if (
-      // La presión es una apuesta: un rival con buen manejo la puede romper.
-      rng.chance(
-        M.presionBreakBase +
-          Math.max(0, rival.strength - 55) * M.presionBreakStrength +
-          (rival.style === 'corredores' ? 0.12 : 0)
-      )
-    ) {
-      defMult = M.presionBreakMult;
-      pushDef([
-        'Nos leyeron la presión: dos pases largos y bandeja. La apuesta salió cara.',
-        'Rompieron la presión de memoria: pase por arriba y dos puntos fáciles.',
-      ]);
-    } else {
-      defMult = M.presionRivalMult;
-      pushDef([
-        'La presión a toda cancha ahoga la salida del rival: pelotas recuperadas y bandejas.',
-        'La presión les hace contar los segundos: sacan la pelota a los tumbos.',
-      ]);
-    }
-    if (rival.style === 'tiradores') defMult *= M.tiradoresVsHombre;
-  } else if (live.defense === 'hombre') {
-    if (teamFresh >= M.hombreTiredThreshold) {
-      defMult = M.hombreRivalMult;
-      pushDef([
-        'La marca individual asfixia la salida del rival.',
-        'Cada uno con el suyo y sin regalar un centímetro: el rival no encuentra tiros cómodos.',
-      ]);
-    } else {
-      defMult = M.hombreTiredMult;
-      pushDef([
-        'Queremos presionar pero las piernas no llegan: quedan pasillos por todos lados.',
-      ]);
-    }
-    if (rival.style === 'tiradores') defMult *= M.tiradoresVsHombre;
-    if (rival.style === 'internos')
-      pushDef(['Chocar con sus grandotes cuesta doble: cada marca es una batalla.']);
-  } else {
-    if (rival.style === 'tiradores') {
-      defMult *= M.tiradoresVsZona;
-      pushDef([
-        'La zona les deja tiros abiertos y sus tiradores no perdonan.',
-        'Mueven la pelota hasta encontrar al tirador libre contra la zona: y la meten.',
-      ]);
-    }
-    if (rival.style === 'internos') defMult *= M.internosVsZona;
-  }
-  if (rival.style === 'corredores') {
-    defMult *= 1 + M.corredoresTiredBoost * (1 - teamFresh / 100);
-    if (teamFresh < 45)
-      pushDef(['Nos corren la cancha entera y llegamos siempre tarde a las marcas.']);
-  }
-  // El rival aprende: cuartos y cuartos de defensa agresiva le enseñan a salir.
-  if ((live.defense === 'hombre' || live.defense === 'presion') && live.hombreQuarters >= 2) {
-    defMult *= 1 + M.aggressiveAdapt * (live.hombreQuarters - 1);
-    pushDef(['El rival ya sabe salir contra nuestra marca: la rompen de memoria.']);
-  }
-  if (teamFresh < 30) pushDef(['El equipo juega de memoria: no quedan piernas.']);
-
-  const rivalFreshFactor = M.freshFactorMin + M.freshFactorSpan * (live.rivalFreshness / 100);
-  const rivalEff =
-    rival.strength *
-    (live.rivalSquad?.mod ?? 1) *
-    rng.range(1 - M.rivalDayVariance, 1 + M.rivalDayVariance) *
-    rivalFreshFactor *
-    (live.rivalPush ? M.pushRivalBoost : 1);
-
-  // --- Marcador del cuarto ---
+  const rivalDay = rng.range(1 - M.rivalDayVariance, 1 + M.rivalDayVariance);
   const luck = rng.range(-M.luckPerQuarter, M.luckPerQuarter);
   live.luckTotal += luck;
-  // Correr la cancha sube el ritmo: más posesiones (y puntos) para los dos.
-  const pace = live.attack === 'correr' ? M.correrPace : 0;
-  const qBase = BALANCE.match.baseScore / 4 + pace;
-  const diffQ = ((atk - rivalEff) * BALANCE.match.strengthToPoints) / 4 + luck + momentumPts;
 
   // Rachas: a veces a un equipo se le prende el aro y mete un parcial que
   // cambia el partido. Le puede tocar a cualquiera, incluso a los dos.
-  let ourRacha = 0;
-  let rivalRacha = 0;
+  let rachaOurAt = -1;
+  let rachaOurPts = 0;
+  let rachaRivalAt = -1;
+  let rachaRivalPts = 0;
   if (rng.chance(M.rachaChance)) {
-    ourRacha = rng.int(M.rachaMin, M.rachaMax);
+    rachaOurAt = rng.int(0, TRAMOS_POR_CUARTO - 1);
+    rachaOurPts = rng.int(M.rachaMin, M.rachaMax);
     notes.push(
       freshLiveNote(
         live,
@@ -1237,136 +1230,98 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
     );
   }
   if (rng.chance(M.rachaChance)) {
-    rivalRacha = rng.int(M.rachaMin, M.rachaMax);
+    rachaRivalAt = rng.int(0, TRAMOS_POR_CUARTO - 1);
+    rachaRivalPts = rng.int(M.rachaMin, M.rachaMax);
     notes.push(
       freshLiveNote(
         live,
-        [
-          `A ${rival.name} se le prendió el aro: meten de todos lados.`,
-          `Racha de ${rival.name}: tres ataques, tres canastas, y minuto pedido a tiempo.`,
-        ],
+        [`A ${rival.name} se le prendió el aro: meten de todos lados.`, `Racha de ${rival.name}: tres ataques, tres canastas, y minuto pedido a tiempo.`],
         rng
       ) ?? `${rival.name} vuelve a embocar todo.`
     );
   }
 
-  const ourQ = Math.max(4, Math.round(qBase + diffQ / 2 + rng.range(-1.5, 1.5)) + ourRacha);
-  const rivalQ = Math.max(4, Math.round((qBase - diffQ / 2 + rng.range(-1.5, 1.5)) * defMult) + rivalRacha);
+  const ctx: QuarterContext = {
+    rivalDay,
+    rivalEff: rivalEffAhora(live, rival, rivalDay),
+    luck,
+    momentumPts,
+    presionRota,
+    rachaOurAt,
+    rachaOurPts,
+    rachaRivalAt,
+    rachaRivalPts,
+    rebQ: rng.int(M.boxRebMin, M.boxRebMax),
+    astQ: rng.int(M.boxAstMin, M.boxAstMax) + (live.attack === 'equipo' ? M.equipoAstExtra : 0),
+    rebBox: {},
+    carryFor: 0,
+    carryAgainst: 0,
+    rage: !!live.rageBoost,
+    injured: false,
+    rivalTimeout: false,
+    ourTimeoutAt: -1,
+    rivalTimeoutAt: -1,
+    lastAtk: 0,
+    notes,
+  };
+  live.rageBoost = false;
 
-  const qDiff = ourQ - rivalQ;
-  if (qDiff >= 6) notes.push(`Parcial demoledor: ${ourQ}-${rivalQ} en el ${Q_NAMES[qIndex]}.`);
-  else if (qDiff <= -6) notes.push(`Nos pasaron por arriba: ${ourQ}-${rivalQ} en el ${Q_NAMES[qIndex]}.`);
+  // Las notas de color del arranque: la táctica, el quinteto, la defensa.
+  const onCourt = live.onCourt.map((id) => s.players.find((p) => p.id === id)!);
+  fuerzas(s, live, rival, ctx, onCourt, rng, notes);
 
-  // --- Planilla del cuarto: puntos, rebotes y asistencias ---
-  const perfOf = (id: string) => live.perfs[id] ?? 50;
-  const qPts = distribute(
-    ourQ,
-    onCourt.map((p) => ({
-      id: p.id,
-      w: perfOf(p.id) * (live.attack === 'estrella' && p.id === star.id ? M.estrellaPtsBias : 1),
-    })),
-    rng
-  );
-  const qReb = distribute(
-    rng.int(M.boxRebMin, M.boxRebMax),
-    onCourt.map((p) => ({ id: p.id, w: REB_POS_WEIGHT[p.position] * (0.6 + perfOf(p.id) / 150) })),
-    rng
-  );
-  const qAst = distribute(
-    rng.int(M.boxAstMin, M.boxAstMax) + (live.attack === 'equipo' ? M.equipoAstExtra : 0),
-    onCourt.map((p) => ({ id: p.id, w: AST_POS_WEIGHT[p.position] * (0.6 + perfOf(p.id) / 150) })),
-    rng
-  );
-  for (const p of onCourt) {
-    const st = live.stats[p.id] ?? (live.stats[p.id] = { pts: 0, reb: 0, ast: 0 });
-    st.pts += qPts[p.id] ?? 0;
-    st.reb += qReb[p.id] ?? 0;
-    st.ast += qAst[p.id] ?? 0;
-  }
+  live.enCurso = {
+    for: 0,
+    against: 0,
+    defense: live.defense,
+    attack: live.attack,
+    notes: [],
+    box: {},
+    onCourt: [...live.onCourt],
+    tramos: [],
+    ctx,
+  };
+}
+
+/** La fuerza del rival ahora: su nivel del día con las piernas que le quedan (y la presión del cierre, si la metió). */
+function rivalEffAhora(live: LiveMatchState, rival: Rival, rivalDay: number): number {
+  const M = BALANCE.liveMatch;
+  const rivalFreshFactor = M.freshFactorMin + M.freshFactorSpan * (live.rivalFreshness / 100);
+  return rival.strength * (live.rivalSquad?.mod ?? 1) * rivalDay * rivalFreshFactor * (live.rivalPush ? M.pushRivalBoost : 1);
+}
+
+/** Cierra el cuarto en curso: las notas del cierre, la incidencia, el desgaste del descanso, y el final o el suplementario. */
+function closeQuarter(s: GameState, live: LiveMatchState, rng: Rng): void {
+  const M = BALANCE.liveMatch;
+  const q = live.enCurso!;
+  const ctx = q.ctx;
+  const notes = ctx.notes;
+  const qIndex = live.quarters.length;
+  const onCourt = live.onCourt.map((id) => s.players.find((p) => p.id === id)!);
+  const qPts = q.box ?? {};
+
+  const qDiff = q.for - q.against;
+  if (qDiff >= 6) notes.push(`Parcial demoledor: ${q.for}-${q.against} en el ${Q_NAMES[qIndex]}.`);
+  else if (qDiff <= -6) notes.push(`Nos pasaron por arriba: ${q.for}-${q.against} en el ${Q_NAMES[qIndex]}.`);
+
   const qTop = [...onCourt].sort((a, b) => (qPts[b.id] ?? 0) - (qPts[a.id] ?? 0))[0];
-  if ((qPts[qTop.id] ?? 0) >= 7) notes.push(`${qTop.name} metió ${qPts[qTop.id]} puntos en el ${Q_NAMES[qIndex]}.`);
+  if (qTop && (qPts[qTop.id] ?? 0) >= 7) notes.push(`${qTop.name} metió ${qPts[qTop.id]} puntos en el ${Q_NAMES[qIndex]}.`);
 
   // Incidencias deportivas y arbitrales del cuarto.
-  notes.push(...quarterFlavor({ qIndex, ourQ, rivalQ, onCourt, qPts, qReb, starId: star.id, live }, rng));
-  const refNote = rollRefIncident(live, onCourt, qIndex, rng);
-  if (refNote) notes.push(refNote);
+  const star = onCourt.find((p) => p.id === live.starId) ?? onCourt[0];
+  if (star) notes.push(...quarterFlavor({ qIndex, ourQ: q.for, rivalQ: q.against, onCourt, qPts, qReb: ctx.rebBox, starId: star.id, live }, rng));
+  if (onCourt.length > 0) {
+    const refNote = rollRefIncident(live, onCourt, qIndex, rng);
+    if (refNote) notes.push(refNote);
+  }
   if (notes.length === 0) notes.push(fallbackNote(rng));
 
-  // --- Desgaste y minutos ---
   if (live.defense === 'hombre' || live.defense === 'presion') live.hombreQuarters += 1;
   if (live.attack === 'estrella') live.estrellaQuarters += 1;
-
-  for (const p of onCourt) {
-    let drain = M.playerDrainBase;
-    if (live.defense === 'hombre') drain += M.playerDrainHombre + (rival.style === 'internos' ? M.internosHombreDrain : 0);
-    if (live.defense === 'presion') drain += M.presionDrainExtra + (rival.style === 'internos' ? M.internosHombreDrain : 0);
-    if (live.attack === 'correr') drain += M.correrDrainExtra;
-    drain += Math.max(0, 60 - p.physical) * M.playerDrainLowPhysical;
-    live.playerFresh[p.id] = clamp(freshOf(p.id) - Math.round(drain));
-    live.minutes[p.id] = (live.minutes[p.id] ?? 0) + M.quarterMinutes;
-  }
-  for (const id of live.squad) {
-    if (!live.onCourt.includes(id)) live.playerFresh[id] = clamp((live.playerFresh[id] ?? 70) + M.benchRecovery);
-  }
-
-  // Lesiones en cancha: correr fundido o defender a los golpes pasa factura,
-  // y a los frágiles les pasa más seguido. Sale de la cancha y queda de baja.
-  const aggressiveDef = live.defense === 'hombre' || live.defense === 'presion';
-  const injuryDiffMult = BALANCE.absenceDifficulty[s.absenceDifficulty ?? 'medio'].injury;
-  for (const p of onCourt) {
-    const frag = fragilityOf(p);
-    let injChance = M.matchInjuryBase * (0.5 + frag / 60) * injuryDiffMult;
-    if (freshOf(p.id) < 35) injChance *= M.matchInjuryTiredMult;
-    if (aggressiveDef) injChance *= M.matchInjuryAggressiveMult;
-    // Jugarlo fundido fue tu decisión al pasar lista: el cuerpo la cobra.
-    if (s.callUp.some((c) => c.playerId === p.id && c.playingExhausted)) injChance *= 1.6;
-    if (!rng.chance(injChance)) continue;
-
-    const weeks = rollInjuryWeeks(frag, rng);
-    const how = rng.pick(MATCH_INJURY_NOTES);
-    const real = s.players.find((x) => x.id === p.id)!;
-    real.status = 'lesionado';
-    real.injuryWeeks = weeks;
-    logPlayerEvent(real, s.seasonNumber, s.week, 'lesion', `Se lesionó en pleno partido: ${how}`);
-    live.injuries = [...(live.injuries ?? []), { playerId: p.id, name: p.name, weeks }];
-    // Llegó fundido, avisó, lo jugaste igual y se rompió: eso no es mala
-    // suerte, es cómo lo trataron. Entra como bronca por el trato, ya caliente.
-    if (s.callUp.some((c) => c.playerId === p.id && c.playingExhausted)) {
-      bumpGrievance(s, real, 'trato', {
-        floor: 2,
-        note: 'Avisó que llegaba fundido, lo mandaron a la cancha igual y se rompió. Lo toma personal.',
-      });
-    }
-
-    // Sale y entra el recambio con más piernas; sin banco, quedan cuatro.
-    const sub = live.squad
-      .filter((id) => !live.onCourt.includes(id) && canEnterCourt(live, id))
-      .map((id) => s.players.find((x) => x.id === id)!)
-      .filter((x) => isSelectable(x))
-      .sort((a, b) => (live.playerFresh[b.id] ?? 70) - (live.playerFresh[a.id] ?? 70))[0];
-    live.onCourt = live.onCourt.filter((id) => id !== p.id);
-    if (sub) live.onCourt.push(sub.id);
-    notes.unshift(
-      `🚑 ${p.name} ${how} ${sub ? `Entra ${sub.name} en su lugar.` : 'No queda recambio: seguimos con cuatro.'}`
-    );
-    if (live.starId === p.id && live.onCourt.length > 0) {
-      live.starLocked = false;
-      refreshStar(s, live);
-    }
-    break; // una lesión por cuarto alcanza para el drama
-  }
 
   // Aviso de fundidos, para invitar al cambio.
   const gassed = onCourt.filter((p) => (live.playerFresh[p.id] ?? 70) < 30);
   if (gassed.length > 0 && qIndex < 3) notes.push(`${gassed[0].name} está fundido y mira al banco: pide el cambio.`);
-
-  let rivalDrain = rival.style === 'corredores' ? M.rivalDrain - 2 : M.rivalDrain;
-  if (live.defense === 'hombre') rivalDrain += M.hombreRivalDrain;
-  if (live.defense === 'presion') rivalDrain += M.presionRivalDrain;
-  if (live.attack === 'correr') rivalDrain += 2;
-  // Si vinieron cortos de banco, se funden más rápido.
-  if ((live.rivalSquad?.presentCount ?? 10) <= 6) rivalDrain += 2;
-  live.rivalFreshness = clamp(live.rivalFreshness - rivalDrain);
 
   if (qIndex === 1) {
     for (const id of live.squad) live.playerFresh[id] = clamp((live.playerFresh[id] ?? 70) + M.halftimeRecovery);
@@ -1374,27 +1329,29 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
   }
 
   live.quarters.push({
-    for: ourQ,
-    against: rivalQ,
-    defense: live.defense,
-    attack: live.attack,
+    for: q.for,
+    against: q.against,
+    defense: q.defense,
+    attack: q.attack,
     notes: notes.slice(0, 5),
     box: qPts,
     onCourt: [...live.onCourt],
+    tramos: q.tramos,
   });
+  delete live.enCurso;
 
   // --- Final y suplementario ---
   if (qIndex === 3) {
-    const totalFor = sumFor + ourQ;
-    const totalAgainst = sumAgainst + rivalQ;
+    const { f: totalFor, a: totalAgainst } = marcador(live);
     if (totalFor === totalAgainst) {
       let ourOT = rng.int(5, 10);
       let rivalOT = rng.int(5, 10);
       if (ourOT === rivalOT) {
-        if (atk >= rivalEff) ourOT += rng.int(1, 3);
+        if (ctx.lastAtk >= ctx.rivalEff) ourOT += rng.int(1, 3);
         else rivalOT += rng.int(1, 3);
       }
       for (const id of live.onCourt) live.minutes[id] = (live.minutes[id] ?? 0) + M.otMinutes;
+      const perfOf = (id: string) => live.perfs[id] ?? 50;
       const otPts = distribute(
         ourOT,
         live.onCourt.map((id) => ({ id, w: perfOf(id) })),
@@ -1412,18 +1369,215 @@ export function playQuarter(state: GameState, rng: Rng): GameState {
         overtime: true,
         box: otPts,
         onCourt: [...live.onCourt],
-        notes: [
-          ourOT > rivalOT
-            ? 'Suplementario de infarto: lo ganamos con carácter.'
-            : 'Suplementario de infarto: se escapó en el final.',
-        ],
+        notes: [ourOT > rivalOT ? 'Suplementario de infarto: lo ganamos con carácter.' : 'Suplementario de infarto: se escapó en el final.'],
       });
     }
     live.finished = true;
   }
+}
 
+/**
+ * Un tramo del cuarto (sep 2026: el motor por tramos). Dos minutos de juego:
+ * la pelota muerta de antes trae los cambios y los minutos pedidos, la fuerza
+ * se calcula con los cinco que están ahora, y el marcador, la planilla, las
+ * piernas y los minutos avanzan su parte. El quinto tramo cierra el cuarto.
+ * Muta `s` (que tiene que ser un clon).
+ */
+function playTramoInPlace(s: GameState, rng: Rng): void {
+  const live = s.live;
+  if (!live || live.finished || live.pendingIncident) return;
+  const M = BALANCE.liveMatch;
+  const rival = s.rivals.find((r) => r.id === live.rivalId)!;
+  if (!live.enCurso) startQuarter(s, live, rival, rng);
+  const q = live.enCurso!;
+  const ctx = q.ctx;
+  const qIndex = live.quarters.length;
+  const K = TRAMOS_POR_CUARTO;
+  const k = q.tramos!.length;
+  const byId = (id: string) => s.players.find((p) => p.id === id)!;
+  const freshOf = (id: string) => live.playerFresh[id] ?? 70;
+  const tramoNotes: string[] = [];
+
+  // La pelota muerta: los cambios hechos con el reloj corriendo entran acá.
+  if (k > 0 && live.pendingSubNotes.length > 0) {
+    tramoNotes.push(...live.pendingSubNotes);
+    live.pendingSubNotes = [];
+  }
+
+  // El rival responde. Si pierde por mucho en el último cuarto, presiona a
+  // fondo (en cualquier tramo, no sólo al arrancar); si le metimos un parcial
+  // en los últimos tramos, pide minuto para cortarlo.
+  const { f: sumFor, a: sumAgainst } = marcador(live);
+  if (qIndex === 3 && !live.rivalPush && sumFor - sumAgainst >= M.pushDeficit) {
+    live.rivalPush = true;
+    for (const id of live.onCourt) live.playerFresh[id] = clamp(freshOf(id) - M.pushFreshCost);
+    const n = `${rival.name} adelantó líneas y presiona a toda cancha: hay que aguantar el cierre.`;
+    if (k === 0) ctx.notes.push(n);
+    else tramoNotes.push(n);
+  }
+  const ultimos = q.tramos!.slice(-2).reduce((t, x) => t + x.for - x.against, 0);
+  if (k > 0 && !ctx.rivalTimeout && ultimos >= M.timeoutRun) {
+    ctx.rivalTimeout = true;
+    ctx.rivalTimeoutAt = k;
+    tramoNotes.push(`⏱ ${rival.name} pide minuto para cortar el parcial.`);
+  }
+  if (live.minutoPedido) {
+    live.minutoPedido = false;
+    ctx.ourTimeoutAt = k;
+    for (const id of live.onCourt) live.playerFresh[id] = clamp(freshOf(id) + M.timeoutFresh);
+    tramoNotes.push('⏱ Minuto pedido: el equipo se junta, respira y se ordena.');
+  }
+
+  const courtIds = [...live.onCourt];
+  const onCourt = courtIds.map(byId);
+  const { atk, defMult, star } = fuerzas(s, live, rival, ctx, onCourt, rng, null);
+  ctx.lastAtk = atk;
+  // Las piernas del rival también se gastan tramo a tramo: los dos lados se cansan por igual.
+  ctx.rivalEff = rivalEffAhora(live, rival, ctx.rivalDay);
+  const atkT = ctx.rivalTimeoutAt === k ? atk * M.timeoutCut : atk;
+  const defT = ctx.ourTimeoutAt === k ? defMult * M.timeoutCut : defMult;
+
+  // --- Marcador del tramo: la parte que le toca del cuarto, con su ruido y
+  // los restos decimales del tramo anterior, así el cuarto suma lo mismo que
+  // antes de partirlo. ---
+  const pace = live.attack === 'correr' ? M.correrPace : 0;
+  const qBase = BALANCE.match.baseScore / 4 + pace;
+  const diffQ = ((atkT - ctx.rivalEff) * BALANCE.match.strengthToPoints) / 4 + ctx.luck + ctx.momentumPts;
+  const eOur = (qBase + diffQ / 2) / K + rng.range(-0.7, 0.7) + ctx.carryFor;
+  const eRiv = ((qBase - diffQ / 2) * defT) / K + rng.range(-0.7, 0.7) + ctx.carryAgainst;
+  let ourT = Math.max(0, Math.round(eOur));
+  let rivalT = Math.max(0, Math.round(eRiv));
+  ctx.carryFor = Math.max(-1, Math.min(1, eOur - ourT));
+  ctx.carryAgainst = Math.max(-1, Math.min(1, eRiv - rivalT));
+  if (ctx.rachaOurAt === k) ourT += ctx.rachaOurPts;
+  if (ctx.rachaRivalAt === k) rivalT += ctx.rachaRivalPts;
+
+  // --- Planilla del tramo: puntos, y la parte de rebotes y asistencias ---
+  const perfOf = (id: string) => live.perfs[id] ?? 50;
+  const tPts = distribute(
+    ourT,
+    onCourt.map((p) => ({ id: p.id, w: perfOf(p.id) * (live.attack === 'estrella' && p.id === star.id ? M.estrellaPtsBias : 1) })),
+    rng
+  );
+  const parte = (total: number) => Math.floor((total * (k + 1)) / K) - Math.floor((total * k) / K);
+  const tReb = distribute(
+    parte(ctx.rebQ),
+    onCourt.map((p) => ({ id: p.id, w: REB_POS_WEIGHT[p.position] * (0.6 + perfOf(p.id) / 150) })),
+    rng
+  );
+  const tAst = distribute(
+    parte(ctx.astQ),
+    onCourt.map((p) => ({ id: p.id, w: AST_POS_WEIGHT[p.position] * (0.6 + perfOf(p.id) / 150) })),
+    rng
+  );
+  q.box ??= {};
+  for (const p of onCourt) {
+    const st = live.stats[p.id] ?? (live.stats[p.id] = { pts: 0, reb: 0, ast: 0 });
+    st.pts += tPts[p.id] ?? 0;
+    st.reb += tReb[p.id] ?? 0;
+    st.ast += tAst[p.id] ?? 0;
+    q.box[p.id] = (q.box[p.id] ?? 0) + (tPts[p.id] ?? 0);
+    ctx.rebBox[p.id] = (ctx.rebBox[p.id] ?? 0) + (tReb[p.id] ?? 0);
+  }
+  q.for += ourT;
+  q.against += rivalT;
+
+  // --- Desgaste y minutos: la parte del tramo ---
+  for (const p of onCourt) {
+    let drain = M.playerDrainBase;
+    if (live.defense === 'hombre') drain += M.playerDrainHombre + (rival.style === 'internos' ? M.internosHombreDrain : 0);
+    if (live.defense === 'presion') drain += M.presionDrainExtra + (rival.style === 'internos' ? M.internosHombreDrain : 0);
+    if (live.attack === 'correr') drain += M.correrDrainExtra;
+    drain += Math.max(0, 60 - p.physical) * M.playerDrainLowPhysical;
+    live.playerFresh[p.id] = clamp(freshOf(p.id) - drain / K);
+    live.minutes[p.id] = (live.minutes[p.id] ?? 0) + M.quarterMinutes / K;
+  }
+  for (const id of live.squad) {
+    if (!live.onCourt.includes(id)) live.playerFresh[id] = clamp((live.playerFresh[id] ?? 70) + M.benchRecovery / K);
+  }
+  let rivalDrain = rival.style === 'corredores' ? M.rivalDrain - 2 : M.rivalDrain;
+  if (live.defense === 'hombre') rivalDrain += M.hombreRivalDrain;
+  if (live.defense === 'presion') rivalDrain += M.presionRivalDrain;
+  if (live.attack === 'correr') rivalDrain += 2;
+  // Si vinieron cortos de banco, se funden más rápido.
+  if ((live.rivalSquad?.presentCount ?? 10) <= 6) rivalDrain += 2;
+  live.rivalFreshness = clamp(live.rivalFreshness - rivalDrain / K);
+
+  // Lesiones en cancha: correr fundido o defender a los golpes pasa factura,
+  // y a los frágiles les pasa más seguido. Sale de la cancha y queda de baja.
+  // Una por cuarto alcanza para el drama.
+  if (!ctx.injured) {
+    const aggressiveDef = live.defense === 'hombre' || live.defense === 'presion';
+    const injuryDiffMult = BALANCE.absenceDifficulty[s.absenceDifficulty ?? 'medio'].injury;
+    for (const p of onCourt) {
+      const frag = fragilityOf(p);
+      let injChance = (M.matchInjuryBase * (0.5 + frag / 60) * injuryDiffMult) / K;
+      if (freshOf(p.id) < 35) injChance *= M.matchInjuryTiredMult;
+      if (aggressiveDef) injChance *= M.matchInjuryAggressiveMult;
+      // Jugarlo fundido fue tu decisión al pasar lista: el cuerpo la cobra.
+      if (s.callUp.some((c) => c.playerId === p.id && c.playingExhausted)) injChance *= 1.6;
+      if (!rng.chance(injChance)) continue;
+
+      const weeks = rollInjuryWeeks(frag, rng);
+      const how = rng.pick(MATCH_INJURY_NOTES);
+      const real = s.players.find((x) => x.id === p.id)!;
+      real.status = 'lesionado';
+      real.injuryWeeks = weeks;
+      logPlayerEvent(real, s.seasonNumber, s.week, 'lesion', `Se lesionó en pleno partido: ${how}`);
+      live.injuries = [...(live.injuries ?? []), { playerId: p.id, name: p.name, weeks }];
+      // Llegó fundido, avisó, lo jugaste igual y se rompió: eso no es mala
+      // suerte, es cómo lo trataron. Entra como bronca por el trato, ya caliente.
+      if (s.callUp.some((c) => c.playerId === p.id && c.playingExhausted)) {
+        bumpGrievance(s, real, 'trato', {
+          floor: 2,
+          note: 'Avisó que llegaba fundido, lo mandaron a la cancha igual y se rompió. Lo toma personal.',
+        });
+      }
+
+      // Sale y entra el recambio con más piernas; sin banco, quedan cuatro.
+      const sub = live.squad
+        .filter((id) => !live.onCourt.includes(id) && canEnterCourt(live, id))
+        .map((id) => s.players.find((x) => x.id === id)!)
+        .filter((x) => isSelectable(x))
+        .sort((a, b) => (live.playerFresh[b.id] ?? 70) - (live.playerFresh[a.id] ?? 70))[0];
+      live.onCourt = live.onCourt.filter((id) => id !== p.id);
+      if (sub) live.onCourt.push(sub.id);
+      const n = `🚑 ${p.name} ${how} ${sub ? `Entra ${sub.name} en su lugar.` : 'No queda recambio: seguimos con cuatro.'}`;
+      ctx.notes.unshift(n);
+      tramoNotes.push(n);
+      ctx.injured = true;
+      if (live.starId === p.id && live.onCourt.length > 0) {
+        live.starLocked = false;
+        refreshStar(s, live);
+      }
+      break;
+    }
+  }
+
+  q.tramos!.push({ for: ourT, against: rivalT, box: tPts, onCourt: courtIds, notes: tramoNotes.length > 0 ? tramoNotes : undefined });
+
+  if (k + 1 >= K) closeQuarter(s, live, rng);
+}
+
+/** Juega el próximo tramo (dos minutos) del cuarto en curso, o arranca uno nuevo. */
+export function playTramo(state: GameState, rng: Rng): GameState {
+  const s: GameState = structuredClone(state);
+  playTramoInPlace(s, rng);
   return s;
 }
+
+/** Juega lo que falta del cuarto en curso (o el próximo entero) con las tácticas y los 5 en cancha de state.live. */
+export function playQuarter(state: GameState, rng: Rng): GameState {
+  const s: GameState = structuredClone(state);
+  if (!s.live || s.live.finished) return s;
+  const hasta = s.live.quarters.length + 1;
+  let guard = 0;
+  while (s.live && !s.live.finished && s.live.quarters.length < hasta && ++guard <= TRAMOS_POR_CUARTO) {
+    playTramoInPlace(s, rng);
+  }
+  return s;
+}
+
 
 /** Cierra el partido jugado: efectos sobre jugadores y club, tabla e informe. */
 export function finishLiveMatch(state: GameState, rng: Rng): GameState {
@@ -1915,9 +2069,8 @@ export function clubRecord(state: GameState): {
   let wins = row?.wins ?? 0;
   let losses = row?.losses ?? 0;
   const live = state.live;
-  if (!live || live.quarters.length === 0) return { wins, losses, today: null };
-  const scoreFor = live.quarters.reduce((sum, q) => sum + q.for, 0);
-  const scoreAgainst = live.quarters.reduce((sum, q) => sum + q.against, 0);
+  if (!live || (live.quarters.length === 0 && !live.enCurso)) return { wins, losses, today: null };
+  const { f: scoreFor, a: scoreAgainst } = marcador(live);
   if (live.finished && state.week <= state.seasonLength) {
     if (scoreFor > scoreAgainst) wins += 1;
     else losses += 1;
