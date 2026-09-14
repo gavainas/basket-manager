@@ -15,7 +15,7 @@ import {
 import { getPreseasonEvent } from '../game/preseasonEvents';
 import { DIVISIONS } from '../data/worldData';
 import { ORIGIN_SITUATIONS, originSentence } from '../data/market';
-import type { GameState, KnowledgeLevel, MarketPlayer, Player, Position } from '../game/types';
+import type { DemandType, GameState, KnowledgeLevel, MarketPlayer, Player, Position } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { formatMoney, starsFor } from './helpers';
 import { Avatar } from './Avatar';
@@ -1006,6 +1006,12 @@ function MarketProfile({
 
 // ---------- Modales ----------
 
+/** La contraoferta dicha como favor: le pedís que venga con menos de lo que pide. */
+const CONTRA_FAVOR: Partial<Record<DemandType, string>> = {
+  beca: 'Pedirle que venga con media cuota, no gratis',
+  titularidad: 'Pedirle que venga con lugar en la rotación, sin prometerle la titularidad',
+};
+
 function NegotiationModal({ state, dispatch }: Props) {
   const ps = state.preseason!;
   const neg = ps.negotiation;
@@ -1021,8 +1027,14 @@ function NegotiationModal({ state, dispatch }: Props) {
     return (
       <div className="modal-backdrop">
         <div className="modal">
-          <h2>{contacto ? `Pedirle el favor a ${mp.name}` : `Negociación con ${mp.name}`}</h2>
+          <h2>{contacto ? `Pedirle a ${mp.name} que venga a jugar` : `Negociación con ${mp.name}`}</h2>
           <p className="event-text">
+            {contacto && (
+              <>
+                <strong>El favor es ese: que se sume al club esta temporada.</strong> No hay pase ni contrato: le pedís, y él decide.
+                <br />
+              </>
+            )}
             {mp.position} · {mp.age} años · {mp.height} cm.{' '}
             {contacto ? `${mp.relacion}.` : originSentence(mp.previousTeam)}
             <br />
@@ -1048,24 +1060,26 @@ function NegotiationModal({ state, dispatch }: Props) {
               </>
             )}
             {mp.demand ? (
-              <strong>Su condición para venir: {DEMAND_LABELS[mp.demand].toLowerCase()}.</strong>
+              <strong>
+                {contacto ? 'Lo que pide a cambio' : 'Su condición para venir'}: {DEMAND_LABELS[mp.demand].toLowerCase()}.
+              </strong>
             ) : (
-              <strong>No pone condiciones: quiere venir.</strong>
+              <strong>{contacto ? 'No pide nada a cambio.' : 'No pone condiciones: quiere venir.'}</strong>
             )}
           </p>
           <div className="options">
             <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'accept' })}>
               {contacto
                 ? mp.demand
-                  ? 'Pedírselo, aceptando lo que pide'
-                  : 'Pedírselo'
+                  ? 'Pedirle que venga, dándole lo que pide'
+                  : 'Pedirle que venga'
                 : mp.demand
                   ? `Aceptar su condición y ficharlo`
                   : `Ficharlo${mp.signingCost > 0 ? ` ($${mp.signingCost})` : ''}`}
               {contacto ? (
                 <span className="opt-hint">
-                  Un favor: puede decir que sí… o preguntar quién más va.
-                  {mp.demand ? ' Lo que pide queda como promesa del club.' : ''}
+                  Puede decir que sí… o preguntar quién más va.
+                  {mp.demand ? ' Si viene, lo que pide queda como promesa del club.' : ''}
                 </span>
               ) : (
                 mp.demand && <span className="opt-hint">Queda registrado como promesa del club</span>
@@ -1073,26 +1087,28 @@ function NegotiationModal({ state, dispatch }: Props) {
             </button>
             {canCounter && (
               <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'counter' })}>
-                {counter.label}
-                <span className="opt-hint">Puede aceptar o plantarse (una sola vez)</span>
+                {contacto ? (CONTRA_FAVOR[mp.demand!] ?? counter.label) : counter.label}
+                <span className="opt-hint">
+                  {contacto ? 'Menos de lo que pide. Puede aceptar o plantarse (una sola vez).' : 'Puede aceptar o plantarse (una sola vez)'}
+                </span>
               </button>
             )}
             {mp.agenda &&
               (mp.agenda.blockedDays.length > 0 || mp.agenda.onlyTimes.length > 0 || mp.agenda.distanceKm > 50) &&
               !ps.priorityUsed?.[mp.id] && (
                 <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'priority' })}>
-                  Pedirle que priorice al club
-                  <span className="opt-hint">Puede comprometerse a acomodar su agenda… o ser honesto (una sola vez)</span>
+                  {contacto ? 'Pedirle que acomode su agenda por el club' : 'Pedirle que priorice al club'}
+                  <span className="opt-hint">Puede comprometerse a acomodar sus días y horarios… o ser honesto (una sola vez)</span>
                 </button>
               )}
             {mp.demand && (
               <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'reject' })}>
-                "Vení igual, sin condiciones"
+                {contacto ? 'Pedirle que venga igual, sin darle nada' : '"Vení igual, sin condiciones"'}
                 <span className="opt-hint">Arriesgado: puede ofenderse y bajarse</span>
               </button>
             )}
             <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'later' })}>
-              Dejar la negociación pendiente
+              {contacto ? 'Todavía no pedirle nada' : 'Dejar la negociación pendiente'}
             </button>
           </div>
         </div>
@@ -1240,7 +1256,7 @@ export function PreseasonView({ state, dispatch }: Props) {
       label: 'Plantel',
       badge: pending > 0 ? { text: `${pending} a resolver`, cls: 'warn' } : { text: '✓', cls: 'good' },
     },
-    { id: 'mercado', label: 'Mercado', badge: { text: `${disponibles}`, cls: '' } },
+    { id: 'mercado', label: state.preseason?.libreta ? 'La libreta' : 'Mercado', badge: { text: `${disponibles}`, cls: '' } },
   ];
 
   return (
