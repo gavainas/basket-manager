@@ -683,6 +683,10 @@ button.danger {
    dentro de ella. El encuadre baja el centro para no cortar cabezas. */
 .cabecera-arte {
   margin: -0.9rem -1rem 0.9rem;
+  /* El alto que pide la vista (`--cab-alto`) es el techo: en una ventana baja
+     la banda cede hasta 96px, así el panel de abajo sigue mostrando juego. A
+     1080p mide lo que siempre midió; a 720p, unos 45px menos. */
+  height: clamp(96px, 17vh, var(--cab-alto, 175px));
   background-color: var(--sec);
   background-size: cover;
   background-position: center 34%;

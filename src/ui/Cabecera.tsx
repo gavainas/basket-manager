@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 /**
  * Banda ilustrada arriba de una card.
  *
@@ -13,10 +15,13 @@ export function Cabecera({ art, alt, alto }: { art: string; alt: string; alto?: 
   return (
     <div
       className="cabecera-arte"
+      // El alto pedido es el techo: en una ventana baja la banda cede
+      // (ver `.cabecera-arte` en styles.css). A 720p se llevaba un tercio del
+      // panel y el plantel de la pretemporada mostraba dos jugadores.
       style={{
         backgroundImage: `url(${import.meta.env.BASE_URL}arte/${art})`,
-        height: alto ?? 175,
-      }}
+        '--cab-alto': `${alto ?? 175}px`,
+      } as CSSProperties}
       role="img"
       aria-label={alt}
     />
