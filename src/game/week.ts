@@ -28,7 +28,8 @@ export const SAVE_VERSION = 24;
 export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'medio'): GameState {
   const rng = new Rng(seed);
   const players = createInitialRoster(rng);
-  const money = BALANCE.economy.startingMoney - BALANCE.economy.inscriptionFee;
+  // La dificultad también es de caja: colchón con Fácil, menos con Difícil.
+  const money = BALANCE.economy.startingMoney + BALANCE.absenceDifficulty[difficulty].cajaExtra - BALANCE.economy.inscriptionFee;
   const starters = suggestStarters(players);
 
   const state: GameState = {
@@ -71,7 +72,7 @@ export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'med
       { week: 1, text: 'Sos el nuevo manager de Atlético El Parque. El club es tuyo: que sobreviva.', tone: 'good' },
     ],
     ledger: [
-      { week: 1, concept: 'Caja inicial del club', amount: BALANCE.economy.startingMoney },
+      { week: 1, concept: 'Caja inicial del club', amount: BALANCE.economy.startingMoney + BALANCE.absenceDifficulty[difficulty].cajaExtra },
       { week: 1, concept: 'Inscripción a la liga', amount: -BALANCE.economy.inscriptionFee },
     ],
     memorableMoments: [],

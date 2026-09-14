@@ -79,6 +79,14 @@ const STRATEGIES = {
     },
     rotate: null,
   },
+  // Gestión mínima: como zonaEquipo, pero cada semana sin sponsor sale a
+  // buscar uno. Mide la economía con arco: con esto, las quiebras por caja
+  // tienen que desaparecer.
+  zonaSponsor: {
+    tactics: () => ({ defense: 'zona', attack: 'equipo' }),
+    rotate: null,
+    gestion: (s) => (s.sponsor || s.sponsorWeeks > 0 ? [] : ['sponsor']),
+  },
 };
 
 function playSeason(seed, strategy) {
@@ -108,8 +116,10 @@ function playSeason(seed, strategy) {
   };
 
   while (s.phase !== 'gameOver' && s.week <= s.seasonLength) {
-    // Sin acciones ni eventos: se mide el piso, sin gestión del manager.
-    s = { ...s, pendingEvent: null, actionsChosen: [] };
+    // Sin acciones ni eventos: se mide el piso, sin gestión del manager
+    // (salvo la estrategia que declara una gestión mínima).
+    const gestion = STRATEGIES[strategy].gestion;
+    s = { ...s, pendingEvent: null, actionsChosen: gestion ? gestion(s) : [] };
     s = confirmActions(s);
 
     const outs = s.callUp.filter((c) => c.status !== 'confirmado');

@@ -4,6 +4,7 @@ import { coachBoostsTraining } from './coach';
 import { createRecruit } from '../data/recruits';
 import { pickByFragility } from './injuries';
 import { bumpGrievance, sootheGrievance, upsetPlayers } from './mood';
+import { condicionTexto, fraseDe, ofrecerSponsor } from './sponsors';
 import { logClubEvent } from './timeline';
 import type { GameState, GrievanceCause, Player } from './types';
 import type { Rng } from './rng';
@@ -144,13 +145,17 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'raffle',
     name: 'Hacer una rifa',
-    description: 'Organizar una rifa en el barrio. Recauda según el prestigio social del club.',
+    description: 'Organizar una rifa en el barrio. Recauda según el prestigio social del club; si le vendés otra enseguida, el barrio se cansa.',
     costLabel: `Cuesta $${A.raffle.cost} (recauda según prestigio)`,
     available: (s) => needMoney(s, A.raffle.cost),
     apply: (s, rng) => {
       spend(s, 'Premios y papelería de la rifa', A.raffle.cost);
       let income = rng.int(A.raffle.incomeMin, A.raffle.incomeMax);
       income = Math.round(income * (0.7 + (s.club.socialPrestige / 100) * 0.6));
+      // La rifa con historia: el barrio compró la anterior hace poco.
+      const cansado = s.ultimaRifa !== undefined && s.week - s.ultimaRifa < A.raffle.fatigaSemanas;
+      if (cansado) income = Math.round(income * A.raffle.fatigaFactor);
+      s.ultimaRifa = s.week;
       if (s.club.organization < 40 && rng.chance(0.4)) {
         income = Math.round(income / 2);
         earn(s, 'Rifa (mal organizada)', income);
@@ -158,6 +163,9 @@ export const ACTIONS: ActionDef[] = [
         return `La rifa fue un caos: números repetidos y quejas. Se recaudaron solo $${income}.`;
       }
       earn(s, 'Recaudación de la rifa', income);
+      if (cansado) {
+        return `La rifa recaudó $${income}. "¿Otra vez?", te dijeron en la panadería: el barrio compró la anterior hace nada.`;
+      }
       s.club.socialPrestige = clamp(s.club.socialPrestige + 1);
       return `La rifa recaudó $${income}. El barrio respondió.`;
     },
@@ -165,16 +173,19 @@ export const ACTIONS: ActionDef[] = [
   {
     id: 'sponsor',
     name: 'Buscar sponsor',
-    description: 'Golpear puertas de comercios de la zona buscando un aporte semanal.',
+    description: 'Golpear puertas de comercios de la zona. El que acepte pone plata por semana y pide algo a cambio: cumplilo y renueva.',
     costLabel: 'Gratis (éxito según prestigio)',
     available: (s) =>
-      s.sponsorWeeks > 0 ? { ok: false, reason: 'Ya tenés un sponsor activo' } : { ok: true },
+      s.sponsor || s.sponsorWeeks > 0 ? { ok: false, reason: 'Ya tenés un sponsor activo' } : { ok: true },
     apply: (s, rng) => {
-      const chance = A.sponsorSearch.baseChance + (s.club.sportPrestige + s.club.socialPrestige) * A.sponsorSearch.prestigeFactor;
+      const D = BALANCE.absenceDifficulty[s.absenceDifficulty ?? 'medio'];
+      const chance = A.sponsorSearch.baseChance + (s.club.sportPrestige + s.club.socialPrestige) * A.sponsorSearch.prestigeFactor + D.sponsorChance;
       if (rng.chance(chance)) {
-        s.sponsorWeeks = BALANCE.economy.sponsorDurationWeeks;
-        s.news.unshift({ week: s.week, text: `La pizzería del barrio auspicia al club: $${BALANCE.economy.sponsorWeekly} por semana.`, tone: 'good' });
-        return `¡Conseguimos sponsor! La pizzería del barrio aporta $${BALANCE.economy.sponsorWeekly} semanales durante ${BALANCE.economy.sponsorDurationWeeks} semanas.`;
+        const c = ofrecerSponsor(s, rng);
+        s.sponsor = c;
+        s.sponsorWeeks = c.weeksLeft;
+        s.news.unshift({ week: s.week, text: `${c.name} auspicia al club: $${c.weekly} por semana durante ${c.weeksTotal}. Pide ${condicionTexto(c)}.`, tone: 'good' });
+        return `¡Conseguimos sponsor! ${c.name} pone $${c.weekly} por semana durante ${c.weeksTotal} semanas. ${fraseDe(c.id)} Pide ${condicionTexto(c)}: si cumplís, renueva y sube el aporte.`;
       }
       return 'Recorrimos varios comercios pero nadie se animó a poner plata. Quizás con más prestigio…';
     },
