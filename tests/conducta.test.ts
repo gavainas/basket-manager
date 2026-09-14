@@ -152,7 +152,7 @@ describe('el inicio avisa cuando alguien pasa a "aparece cuando quiere"', () => 
       const aviso = watchItems({ ...s, week }).find((i) => i.text.includes(p.name) && i.text.includes('cuando quiere'));
       expect(aviso, `semana ${week}`).toBeDefined();
       expect(aviso!.tile).toBe('plantilla');
-      expect(aviso!.text).toContain('faltó sin avisar 3 de 6 fechas');
+      expect(aviso!.text).toContain('3 faltas sin avisar en 6 fechas');
     }
     expect(watchItems({ ...s, week: s.week + 3 }).some((i) => i.text.includes(p.name) && i.text.includes('cuando quiere'))).toBe(false);
 

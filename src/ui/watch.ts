@@ -202,7 +202,7 @@ export function watchItems(state: GameState): WatchItem[] {
     items.push({
       kind: 'agenda',
       cls: 'warn',
-      text: `${p.name} pasó a "aparece cuando quiere": faltó sin avisar ${r.faltoSinAvisar} de ${r.convocado} fechas. Al pasar lista, no lo des por hecho.`,
+      text: `${p.name} pasó a "aparece cuando quiere": ${r.faltoSinAvisar} faltas sin avisar en ${r.convocado} fechas.`,
       tile: 'plantilla',
     });
   }
