@@ -1,5 +1,6 @@
 import type { GameState } from '../game/types';
 import { BALANCE } from '../game/balance';
+import { CUANDO_QUIERE, conductLabel, recordOf } from '../game/conduct';
 import { refereeOfWeek } from '../game/leagueLife';
 import { activePlayers } from '../game/match';
 import type { NoteKind } from '../game/humanState';
@@ -187,6 +188,22 @@ export function watchItems(state: GameState): WatchItem[] {
           ? `${exhausted[0].name} viene fundido: al pasar lista vas a tener que decidir si lo cuidás.`
           : `${exhausted.length} jugadores vienen fundidos: al pasar lista habrá que decidir quién descansa.`,
       tile: 'lista',
+    });
+  }
+  // La ficha de conducta cambió de mano: el que pasó a "aparece cuando quiere"
+  // se avisa las dos semanas siguientes, con los hechos, para que al pasar
+  // lista no cuentes con él como si nada.
+  for (const p of active) {
+    const desde = recordOf(p).cuandoQuiereDesde;
+    if (!desde || desde.season !== state.seasonNumber || state.week - desde.week > 2) continue;
+    const c = conductLabel(p);
+    if (c.label !== CUANDO_QUIERE) continue;
+    const r = recordOf(p);
+    items.push({
+      kind: 'agenda',
+      cls: 'warn',
+      text: `${p.name} pasó a "aparece cuando quiere": faltó sin avisar ${r.faltoSinAvisar} de ${r.convocado} fechas. Al pasar lista, no lo des por hecho.`,
+      tile: 'plantilla',
     });
   }
   const debtors = active.filter((x) => x.feeStatus === 'pendiente' && x.weeksUnpaid >= 2);

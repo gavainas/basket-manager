@@ -215,6 +215,19 @@ export interface ConductRecord {
   asadosFue: number;
   /** Las últimas convocatorias, para leer la tendencia (la primera impresión puede mentir). */
   ultimas: Presencia[];
+  /**
+   * Iba a faltar y lo diste vuelta vos: una charla, insistirle, recordarle lo
+   * que se juega o pagarle el Uber. Cuenta como presente, pero la ficha lo
+   * dice: hay una diferencia entre el que está y el que está si lo llamás.
+   */
+  convencido?: number;
+  /** Iba a faltar y un compañero lo pasó a buscar. */
+  buscado?: number;
+  /**
+   * Cuándo pasó a "aparece cuando quiere" (temporada y fecha): el inicio lo
+   * avisa las semanas siguientes. Se borra si la etiqueta cambia.
+   */
+  cuandoQuiereDesde?: { season: number; week: number };
 }
 
 export interface Club {

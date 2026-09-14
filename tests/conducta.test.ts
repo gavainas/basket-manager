@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { conductLabel, conductScore, emptyRecord, marketReference, presenciaDe, recordOf } from '../src/game/conduct';
+import { attemptAbsenceAction } from '../src/game/absences';
+import { CUANDO_QUIERE, conductLabel, conductScore, emptyRecord, marketReference, presenciaDe, recordCallUpConduct, recordOf } from '../src/game/conduct';
 import { createPreseasonNewGame } from '../src/game/preseason';
+import { Rng } from '../src/game/rng';
 import type { CallUpEntry, ConductRecord, GameState, Player } from '../src/game/types';
+import { watchItems } from '../src/ui/watch';
 import { jugarFecha, partidaNueva, paso } from './jugar';
 
 /** Un jugador de mentira con la ficha que se le pase. */
@@ -66,6 +69,108 @@ describe('la ficha de conducta (T2)', () => {
     expect(presenciaDe(entrada({ lastMinute: true }))).toBe('f');
     // El fundido al que mandaste a descansar vino: es tu decisión, no su falta.
     expect(presenciaDe(entrada({ exhausted: true, resolved: true }))).toBe('p');
+  });
+});
+
+describe('la charla y el compañero también escriben en la ficha', () => {
+  it('el detalle cuenta las veces que hubo que ir a buscarlo', () => {
+    expect(conductLabel(conFicha({ convocado: 6, presente: 6, convencido: 2 })).detail).toContain('Iba a faltar 2 veces y lo diste vuelta vos.');
+    expect(conductLabel(conFicha({ convocado: 6, presente: 6, buscado: 1 })).detail).toContain('Iba a faltar una vez y un compañero lo pasó a buscar.');
+    expect(conductLabel(conFicha({ convocado: 6, presente: 6, convencido: 2, buscado: 1 })).detail).toContain(
+      'Iba a faltar 3 veces: 2 lo convenciste vos, una lo fue a buscar un compañero.'
+    );
+  });
+
+  it('el que viene porque lo fuiste a buscar no es "de los que están siempre"', () => {
+    const buscado = conductLabel(conFicha({ convocado: 6, presente: 6, convencido: 1, buscado: 1 }));
+    expect(buscado.label).toBe('Está, si lo vas a buscar');
+    expect(buscado.cls).toBe('warn');
+    // Una sola vez no dice nada; dos de seis, sí.
+    expect(conductLabel(conFicha({ convocado: 6, presente: 6, convencido: 1 })).label).toBe('De los que están siempre');
+    // Dos de doce es una de cada seis: sigue siendo de los que están.
+    expect(conductLabel(conFicha({ convocado: 12, presente: 12, convencido: 2 })).label).toBe('De los que están siempre');
+    // Con las primeras fechas, la misma señal en gris.
+    const primeras = conductLabel(conFicha({ convocado: 4, presente: 4, buscado: 2 }));
+    expect(primeras.label).toBe('Viene, si lo vas a buscar');
+    expect(primeras.nivel).toBe('primeras');
+  });
+
+  it('resolver la ausencia con éxito anota en la ficha: charla o compañero, según cómo', () => {
+    let s = partidaNueva(15);
+    s = paso(s, { type: 'CONFIRM_ACTIONS', timing: 'temprana' });
+    expect(s.phase).toBe('callUp');
+    const p = s.players.find((x) => !x.leftClub && x.status !== 'lesionado')!;
+    // Una ausencia floja armada a mano, para no depender del sorteo.
+    const base: GameState = {
+      ...s,
+      callUp: [{ playerId: p.id, playerName: p.name, status: 'ausente', note: 'Se colgó.', reasonId: 'vago' }],
+    };
+    const resolver = (actionId: 'convencer' | 'companero') => {
+      for (let seed = 1; seed < 200; seed++) {
+        const next = attemptAbsenceAction(base, p.id, actionId, new Rng(seed));
+        if (next.callUp[0].status === 'confirmado') return next;
+      }
+      throw new Error(`ninguna semilla dio vuelta la ausencia con ${actionId}`);
+    };
+    const charla = resolver('convencer');
+    expect(recordOf(charla.players.find((x) => x.id === p.id)!).convencido).toBe(1);
+    expect(recordOf(charla.players.find((x) => x.id === p.id)!).buscado).toBeUndefined();
+
+    const companero = resolver('companero');
+    const r = recordOf(companero.players.find((x) => x.id === p.id)!);
+    // Si alguien del grupo fue a buscarlo, cuenta como buscado; si nadie se
+    // ofreció y vino igual, fue la charla.
+    const fueUnAmigo = /lo pasó a buscar/.test(companero.callUp[0].resolution ?? '');
+    expect(fueUnAmigo ? r.buscado : r.convencido).toBe(1);
+
+    // La convocatoria después lo cuenta como presente: vino.
+    const conFecha = structuredClone(charla);
+    recordCallUpConduct(conFecha);
+    expect(recordOf(conFecha.players.find((x) => x.id === p.id)!).presente).toBe(1);
+  });
+});
+
+describe('el inicio avisa cuando alguien pasa a "aparece cuando quiere"', () => {
+  it('la fecha que lo vuelve faltador queda anotada, el aviso dura dos semanas y se apaga si se endereza', () => {
+    const s0 = partidaNueva(15);
+    const p = s0.players.find((x) => !x.leftClub && x.status !== 'lesionado')!;
+    // Cinco fechas con dos faltas: todavía "primeras". La sexta, sin avisar, lo vuelve firme y malo.
+    const s: GameState = structuredClone(s0);
+    const pl = s.players.find((x) => x.id === p.id)!;
+    pl.record = { ...emptyRecord(), convocado: 5, presente: 3, faltoSinAvisar: 2, ultimas: ['p', 'f', 'p', 'f', 'p'] };
+    s.callUp = [{ playerId: p.id, playerName: p.name, status: 'ausente', note: 'Se colgó.', reasonId: 'vago' }];
+    expect(watchItems(s).some((i) => i.text.includes(p.name) && i.text.includes('cuando quiere'))).toBe(false);
+
+    recordCallUpConduct(s);
+    const r = recordOf(pl);
+    expect(conductLabel(pl).label).toBe(CUANDO_QUIERE);
+    expect(r.cuandoQuiereDesde).toEqual({ season: s.seasonNumber, week: s.week });
+    expect(pl.timeline.at(-1)!.text).toMatch(/aparece cuando quiere/);
+
+    // Las dos semanas siguientes el inicio lo dice, en el tile de la plantilla.
+    for (const week of [s.week, s.week + 1, s.week + 2]) {
+      const aviso = watchItems({ ...s, week }).find((i) => i.text.includes(p.name) && i.text.includes('cuando quiere'));
+      expect(aviso, `semana ${week}`).toBeDefined();
+      expect(aviso!.tile).toBe('plantilla');
+      expect(aviso!.text).toContain('faltó sin avisar 3 de 6 fechas');
+    }
+    expect(watchItems({ ...s, week: s.week + 3 }).some((i) => i.text.includes(p.name) && i.text.includes('cuando quiere'))).toBe(false);
+
+    // Otra fecha, y el mismo veredicto: no se vuelve a anotar (el aviso no se estira).
+    const s2: GameState = structuredClone(s);
+    s2.week += 1;
+    s2.callUp = [{ playerId: p.id, playerName: p.name, status: 'ausente', note: 'Se colgó.', reasonId: 'vago' }];
+    recordCallUpConduct(s2);
+    expect(recordOf(s2.players.find((x) => x.id === p.id)!).cuandoQuiereDesde).toEqual(r.cuandoQuiereDesde);
+
+    // Se endereza (tres presentes seguidos): el veredicto se ablanda y el aviso se apaga.
+    const s3: GameState = structuredClone(s);
+    for (let i = 0; i < 3; i++) {
+      s3.week += 1;
+      s3.callUp = [{ playerId: p.id, playerName: p.name, status: 'confirmado', note: null }];
+      recordCallUpConduct(s3);
+    }
+    expect(recordOf(s3.players.find((x) => x.id === p.id)!).cuandoQuiereDesde).toBeUndefined();
   });
 });
 
