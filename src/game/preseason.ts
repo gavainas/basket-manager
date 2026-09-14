@@ -941,7 +941,8 @@ export function signMarketPlayer(
     }
   }
   const origin = ORIGIN_SITUATIONS[mp.previousTeam];
-  psLog(s, `Fichamos a ${mp.name} (${mp.position}).${origin ? ` ${origin}` : ` Viene de ${mp.previousTeam}.`}`);
+  if (p.libreta) psLog(s, `${mp.name} (${mp.position}) dijo que sí: se suma al club.`);
+  else psLog(s, `Fichamos a ${mp.name} (${mp.position}).${origin ? ` ${origin}` : ` Viene de ${mp.previousTeam}.`}`);
   logClubEvent(
     s,
     'llegada',
@@ -951,7 +952,8 @@ export function signMarketPlayer(
     0
   );
   s.news.unshift({ week: 0, text: `Se sumó ${mp.name} al plantel.`, tone: 'good' });
-  return { ok: true, text: `¡${mp.name} es nuevo jugador del club!${extra}` };
+  // En la libreta no hay fichaje: hay un amigo que dijo que sí.
+  return { ok: true, text: p.libreta ? `¡${mp.name} dijo que sí! Se suma al club.${extra}` : `¡${mp.name} es nuevo jugador del club!${extra}` };
 }
 
 /** Resuelve la negociación abierta según la decisión del usuario. */
