@@ -26,6 +26,7 @@ import { rollWeekBanter } from './banter';
 import { abrirAgenda, buildLibreta, favorChance, favorRefusal, libretaPendienteAlCerrar } from './carrera';
 import { rollWeekMoment } from './moments';
 import { weeklyFee } from './economy';
+import { CAUSE_SHORT } from './mood';
 import { generateObjectives } from './objectives';
 import { clubPosition, suggestRotation, suggestStarters } from './match';
 import { buildCoachMarket } from './coach';
@@ -43,6 +44,8 @@ import type {
   ExpectedRole,
   FeeStatus,
   GameState,
+  Grievance,
+  GrievanceCause,
   MarketPlayer,
   NewsTone,
   Player,
@@ -120,14 +123,31 @@ export function projectedWeeklyFees(s: GameState): number {
 
 // ---------- Continuidad del plantel ----------
 
+/** Lo que pide el que se fue de vacaciones masticando bronca, según el motivo. */
+const DEMAND_POR_BRONCA: Record<GrievanceCause, DemandType> = {
+  minutos: 'minutos',
+  promesa: 'titularidad',
+  plata: 'beca_parcial',
+  trato: 'ambiente',
+  grupo: 'ambiente',
+  proyecto: 'competitivo',
+};
+
+/** La bronca que cruza el verano: viva (nivel 2 o más) y de la temporada que terminó. */
+export function broncaQueCruza(p: Player, seasonNumber: number): Grievance | null {
+  const g = p.grievance;
+  return g && g.level >= 2 && g.season === seasonNumber - 1 ? g : null;
+}
+
 function assignContinuity(
   p: Player,
   club: Club,
   rng: Rng,
   firstSeason: boolean,
   seasonNumber: number,
-  inPlaza: boolean
-): { status: ContinuityStatus; demand?: DemandType } {
+  inPlaza: boolean,
+  titulo = false
+): { status: ContinuityStatus; demand?: DemandType; memoria?: 'titulo' | 'bronca' } {
   if (firstSeason) {
     // Temporada 1: el grupo viene junto; solo algunos plantean cosas.
     if (p.personality === 'mercenario') return { status: 'pide_condicion', demand: 'beca_parcial' };
@@ -173,6 +193,21 @@ function assignContinuity(
     return { status: 'dudando' };
   }
 
+  // La memoria entre temporadas (sep 2026, lo que quedaba del informe de
+  // testing). El agravio: el que se fue de vacaciones masticando bronca no
+  // vuelve como si nada: con ruptura (nivel 3) capaz que no vuelve; con bronca
+  // (nivel 2) vuelve pidiendo lo que le faltó.
+  const bronca = broncaQueCruza(p, seasonNumber);
+  if (bronca) {
+    const roll = rng.range(0, 1);
+    if (bronca.level >= 3 && roll < 0.45) return { status: 'quiere_irse', memoria: 'bronca' };
+    if (roll < 0.8) return { status: 'pide_condicion', demand: DEMAND_POR_BRONCA[bronca.cause], memoria: 'bronca' };
+    return { status: 'dudando', memoria: 'bronca' };
+  }
+  // El título: el campeón (o el que subió) no se va. Al que iba a dudar o a
+  // condicionar, la vuelta olímpica lo convence la mitad de las veces.
+  if (titulo && rng.chance(0.5)) return { status: 'confirmado', memoria: 'titulo' };
+
   switch (p.personality) {
     case 'leal':
       return { status: 'confirmado' };
@@ -211,16 +246,33 @@ function buildPreseasonState(
   firstSeason: boolean,
   seasonNumber = 1,
   marketFromWorld: MarketPlayer[] = [],
-  inPlaza = false
+  inPlaza = false,
+  titulo = false
 ): PreseasonState {
   const continuity: Record<string, ContinuityStatus> = {};
   const playerDemands: Record<string, DemandType> = {};
+  const log: string[] = [];
 
   const active = players.filter((p) => !p.leftClub);
+  const porTitulo: string[] = [];
   for (const p of active) {
-    const r = assignContinuity(p, club, rng, firstSeason, seasonNumber, inPlaza);
+    const r = assignContinuity(p, club, rng, firstSeason, seasonNumber, inPlaza, titulo);
     continuity[p.id] = r.status;
     if (r.demand) playerDemands[p.id] = r.demand;
+    if (r.memoria === 'titulo') porTitulo.push(p.name);
+    if (r.memoria === 'bronca') {
+      const g = p.grievance!;
+      log.push(
+        r.status === 'quiere_irse'
+          ? `${p.name} se fue de vacaciones masticando bronca por ${CAUSE_SHORT[g.cause]} y volvió con el bolso armado.`
+          : r.status === 'pide_condicion'
+            ? `${p.name} no se olvidó de ${CAUSE_SHORT[g.cause]}: vuelve, pero con la cuenta hecha.`
+            : `${p.name} sigue masticando bronca por ${CAUSE_SHORT[g.cause]}. Duda.`
+      );
+    }
+  }
+  if (porTitulo.length > 0) {
+    log.push(`El título pesa: ${porTitulo.join(', ')} ${porTitulo.length === 1 ? 'confirmó' : 'confirmaron'} antes de que preguntes.`);
   }
 
   // Red de seguridad: que siempre quede una base de confirmados.
@@ -249,7 +301,7 @@ function buildPreseasonState(
     actionOutcome: null,
     pendingEvent: null,
     eventOutcome: null,
-    log: [],
+    log,
     moneySpent: 0,
     summary: null,
   };
@@ -608,6 +660,13 @@ export function startPreseason(state: GameState): GameState {
     money: state.club.money,
   };
 
+  // La memoria entre temporadas: el título (una copa, o el ascenso) pesa en
+  // el verano: los jugadores vuelven con más ganas y menos ganas de irse.
+  // (Los ascensos y descensos se calculan acá y se aplican más abajo.)
+  const champions = state.playoffs?.champions ?? {};
+  const promo = applyPromotionRelegation(state);
+  const titulo = champions.oro === 'club' || champions.plata === 'club' || promo.userMoved === 'ascenso';
+
   const players = survivors.map((p) => {
     const np = structuredClone(p);
     np.age += 1;
@@ -620,8 +679,8 @@ export function startPreseason(state: GameState): GameState {
     np.seasonTrainings = 0;
     np.techniqueGain = 0;
     np.physical = clamp(75 - Math.max(0, np.age - 28) * 2 + rng.int(-8, 8));
-    np.motivation = clamp(rng.int(60, 78));
-    np.confidence = clamp(rng.int(45, 65));
+    np.motivation = clamp(rng.int(60, 78) + (titulo ? 6 : 0));
+    np.confidence = clamp(rng.int(45, 65) + (titulo ? 5 : 0));
     np.status = 'disponible';
     np.injuryWeeks = 0;
     np.weeksUpset = 0;
@@ -641,7 +700,6 @@ export function startPreseason(state: GameState): GameState {
 
   // Ascensos y descensos: mueve toda la pirámide (divisional por divisional,
   // la juegue el club o no) y, si toca, cambia de categoría al club.
-  const promo = applyPromotionRelegation(state);
   const rivals = promo.nextRivals;
   const promoTone: NewsTone =
     promo.userMoved === 'ascenso' ? 'good' : promo.userMoved === 'descenso' ? 'bad' : 'neutral';
@@ -771,7 +829,8 @@ export function startPreseason(state: GameState): GameState {
     false,
     next.seasonNumber,
     summer.freeAgents.map((fa) => worldToMarket(fa.player, fa.fromClub, rng)),
-    next.divisionId === PLAZA_DIVISION_ID
+    next.divisionId === PLAZA_DIVISION_ID,
+    titulo
   );
   next.seed = rng.nextSeed();
   return next;
