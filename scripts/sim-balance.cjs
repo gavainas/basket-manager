@@ -45,6 +45,14 @@ const { Rng } = require(path.join(OUT, 'game', 'rng.js'));
 
 // Estrategias de referencia: si alguna domina por paliza, el balance cojea.
 const STRATEGIES = {
+  // Con el profe del barrio al mando (DT honorario, directiva "repartir"):
+  // el piloto del DT mueve el banco, no el plan. Mide cómo rota un DT que a
+  // veces lee la pizarra y a veces no (tactics 45-60).
+  conProfe: {
+    tactics: () => ({ defense: 'zona', attack: 'equipo' }),
+    rotate: null,
+    coach: 'profe',
+  },
   // Presión a toda cancha rotando piernas frescas (la ex-dominante).
   presionRotate: {
     tactics: () => ({ defense: 'presion', attack: 'equipo' }),
@@ -83,6 +91,10 @@ const STRATEGIES = {
 
 function playSeason(seed, strategy) {
   let s = createNewGame(seed);
+  if (STRATEGIES[strategy].coach) {
+    const coach = s.coachMarket.find((c) => c.profile === STRATEGIES[strategy].coach);
+    if (coach) s = { ...s, coach: { ...coach }, coachMarket: s.coachMarket.filter((c) => c.id !== coach.id) };
+  }
   const st = {
     wins: 0,
     losses: 0,
@@ -105,6 +117,9 @@ function playSeason(seed, strategy) {
     exhaustedStarts: 0,
     benchMinutes: 0,
     benchGames: 0,
+    // Tramos jugados con una posición natural sin cubrir (el quinteto sin base, sin pívot…).
+    tramos: 0,
+    tramosSinPuesto: 0,
   };
 
   while (s.phase !== 'gameOver' && s.week <= s.seasonLength) {
@@ -145,6 +160,13 @@ function playSeason(seed, strategy) {
         s = playQuarter({ ...s, seed: rng.nextSeed() }, rng);
       }
       st.injuries += (s.live.injuries || []).length;
+      for (const q of s.live.quarters) {
+        for (const t of q.tramos || []) {
+          st.tramos += 1;
+          const positions = new Set(t.onCourt.map((id) => s.players.find((p) => p.id === id)?.position));
+          if (positions.size < 5) st.tramosSinPuesto += 1;
+        }
+      }
       for (const id of s.live.squad) {
         if (starters.includes(id)) continue;
         st.benchMinutes += s.live.minutes[id] || 0;
@@ -207,6 +229,8 @@ for (const strat of Object.keys(STRATEGIES)) {
     exhaustedStarts: 0,
     benchMinutes: 0,
     benchGames: 0,
+    tramos: 0,
+    tramosSinPuesto: 0,
   };
   for (let i = 0; i < RUNS; i++) {
     const st = playSeason(1000 + i * 7919, strat);
@@ -227,6 +251,8 @@ for (const strat of Object.keys(STRATEGIES)) {
     a.exhaustedStarts += st.exhaustedStarts;
     a.benchMinutes += st.benchMinutes;
     a.benchGames += st.benchGames;
+    a.tramos += st.tramos;
+    a.tramosSinPuesto += st.tramosSinPuesto;
     for (const [c, n] of Object.entries(st.grievanceCauses)) a.causes[c] = (a.causes[c] || 0) + n;
     for (const n of st.absenceCounts) a.absCounts[n] = (a.absCounts[n] || 0) + 1;
     for (const [name, c] of Object.entries(st.absencesByPlayer)) a.absByPlayer[name] = (a.absByPlayer[name] || 0) + c;
@@ -258,7 +284,7 @@ for (const strat of Object.keys(STRATEGIES)) {
   console.log(
     `Titulares que llegan fundidos: ${(a.exhaustedStarts / a.games).toFixed(2)}/partido  ·  Minutos por suplente: ${
       a.benchGames > 0 ? (a.benchMinutes / a.benchGames).toFixed(1) : '0'
-    }'`
+    }'  ·  Tramos con un puesto sin cubrir: ${a.tramos > 0 ? ((a.tramosSinPuesto / a.tramos) * 100).toFixed(1) : '0'}%`
   );
 }
 

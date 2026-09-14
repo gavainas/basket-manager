@@ -185,6 +185,11 @@ export const BALANCE = {
     overloadThreshold: 32, // por encima de estos minutos, los titulares rinden menos
     overloadPenaltyPerMin: 0.008, // penalización de rendimiento por minuto de sobrecarga
     coachRestLead: 10, // con esta ventaja al entretiempo, el DT "a ganar" también mueve el banco
+    // Desde esta lectura de juego (`coach.tactics`) el DT mira la pizarra al
+    // cambiar a un fundido: si era el único en su puesto, entra uno del puesto.
+    // El profe del barrio (45-60) a veces sí y a veces no; el proyecto (65-80)
+    // siempre; el ex federado (55-70) casi siempre. Sin DT, el piloto es tuyo y lee.
+    coachReadsGame: 55,
   },
 
   // Las otras broncas (T4): gatillos semanales para plata y grupo, así el humor

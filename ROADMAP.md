@@ -82,9 +82,10 @@ dirección D, y el arte cuando Gabi diga.
 - **Multi-liga humana y etapa 7 (doble partido y fatiga).** Un jugador puede jugar dos
   ligas, o jugar en contra tuya en la otra; el cansancio y los horarios cruzan entre
   ligas; partidos del segundo equipo jugables; el conocimiento de la persona cruza ligas.
-- **Lo que queda del informe de testing**: DT que respete fatiga y posiciones y cuyos
-  sesgos se lean como estilo; memoria entre temporadas completa (títulos y agravios, no
-  sólo la promesa rota); frenar la saturación de los diales sociales ganando.
+- **Lo que queda del informe de testing**: memoria entre temporadas completa (títulos y
+  agravios, no sólo la promesa rota); frenar la saturación de los diales sociales ganando.
+  *(El DT que respeta fatiga y posiciones, con sesgos que se leen como estilo, salió en
+  sep 2026: ver el changelog.)*
 - **Más voces por arquetipo** en las emociones con pool único, los mensajes de amigos de
   afuera y las respuestas a eventos. Regla: voz donde el contraste se lee, no por completar
   la matriz.

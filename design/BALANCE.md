@@ -32,6 +32,8 @@ estrategias de referencia, **sin acciones del manager** (mide el piso):
 - `cincoFijos`: zona pasiva, plan a mano y sin tocar el banco nunca. Es lo que antes de T4
   pasaba si no tocabas nada; ahora hay que elegirlo.
 - `mixta`: hombre temprano, zona al final, cerradores en el último cuarto.
+- `conProfe`: zona y equipo con el profe del barrio al mando (DT honorario, directiva
+  "repartir", lectura de juego 45-60): mide cómo rota el piloto del DT.
 
 Reporta: % de victorias, remontadas (concretadas / oportunidades), lesiones en
 partido por temporada, distribución de ausencias por semana y por jugador, caja
@@ -60,6 +62,7 @@ una partida jugada de verdad.
 | Motivos de bronca al cierre (sin gestión) | Que no sean 100% 'minutos' (T4) | 5ª pasada: minutos 62 · plata 67 · grupo 11 (`zonaEquipo`, 60 temp.) |
 | Titulares que llegan fundidos | Que jugar con cinco se pague la semana siguiente | 5ª pasada: 0.42/partido con cinco fijos · 0.00 rotando |
 | Nota del partido (titulares 30'+) | Media ~6.5-7, banda 1-5 viva (~15%), 9-10 raro (<10%) | media 6.88 · 1-5: 15.6% · 9-10: 7.7% |
+| Tramos con un puesto sin cubrir | Cerca del piso de las ausencias (~11% con cinco fijos): que rotar no deje huecos | 9ª pasada (sep 2026, la rotación mira la pizarra): 25% plan por defecto · 45% frescos · 35% con el profe (antes 49 · 67 · 53) |
 
 Nota de la 2ª pasada: el piso de victorias bajó ~5 pts respecto de la 1ª
 (59.8% → 52.4% la presión). No es una regresión accidental: es la consecuencia
@@ -307,6 +310,46 @@ Es el gradiente que se buscaba.
   módulo para el id y el nombre, así que el mismo estado daba un recluta distinto según
   cuántos se habían creado antes en la sesión (y la misma semilla, dos temporadas
   distintas). Ahora el id sale del RNG y el nombre, del RNG y de los nombres ya en uso.
+
+## La rotación mira la pizarra (septiembre 2026, lo que quedaba del informe de testing)
+
+El informe de testing vio al DT dejar "al equipo sin base dos cuartos seguidos". Medido
+con la métrica nueva del harness, **Tramos con un puesto sin cubrir** (tramos jugados
+con alguna posición natural sin nadie en cancha), el problema era del plan de cambios y
+de las unidades, no sólo del DT: sin tocar nada, `zonaEquipo` (el plan por defecto)
+jugaba el 49% de los tramos con un hueco, y `presionRotate` ("Piernas frescas" en cada
+descanso) el 67%. El piso, con los cinco fijos, es 11%: lo que dejan las ausencias
+cuando faltan los dos del puesto.
+
+Corrida de 60 temporadas, antes y después:
+
+| | Tramos con un puesto sin cubrir | Victorias | Titulares fundidos / partido |
+| --- | --- | --- | --- |
+| `presionRotate` | 67.2% → 44.5% | 54.5% → 54.2% | 0.10 → 0.15 |
+| `zonaEquipo` | 49.2% → 25.4% | 50.4% → 50.8% | 0.00 → 0.00 |
+| `conProfe` (nueva) | 53.0% → 35.2% | 35.7% → 38.1% | 0.07 → 0.06 |
+| `cincoFijos` | 10.9% → 10.9% | 39.4% → 39.4% | 0.44 → 0.44 |
+
+- **Las unidades cubren los puestos** (`conCobertura` en `presetFive`): "Piernas frescas",
+  "2da unidad" y "Cerradores" arman los cinco del orden de siempre, pero si queda una
+  posición sin cubrir y entre los tres siguientes hay uno del puesto, sale el último cuya
+  posición está repetida y entra ese. "Titulares" no se toca: son los que elegiste. Se
+  probó buscar en todo el banco y se descartó: el hueco lo tapaba el titular fundido y
+  eso se pagaba en piernas (0.59 titulares fundidos por partido contra 0.10, cinco puntos
+  menos de victorias en `presionRotate`). Con tres, la mitad de los huecos desaparece
+  sin mover nada más.
+- **El DT lee la pizarra si sabe leerla** (`coachReadsGame`, 55 de `tactics`): al cambiar
+  a un fundido que era el único en su puesto, entra uno del puesto con piernas si lo hay;
+  con la directiva "juegan todos", el que no jugó entra por el más jugado de su mismo
+  puesto. El profe del barrio (45-60) a veces sí y a veces no; el proyecto (65-80)
+  siempre. **Y el que no lee, se lee**: el relato dice "Quedamos sin base natural, y a
+  Larrosa no le quita el sueño"; el que sí lee y no tiene recambio del puesto, "no había
+  recambio del puesto con piernas".
+- Lo que queda como decisión: con "juegan todos" entran dos fríos por descanso, así que
+  en un plantel de once uno o dos no juegan. Subirlo a tres reparte de verdad pero deja a
+  los titulares en 10-20' y suma ~40 broncas de minutos por 60 temporadas: el profe pasa
+  a ser un DT que enoja a los protagonistas, que es su estilo, pero conviene que lo decida
+  Gabi jugando.
 
 ## El modo Carrera (septiembre 2026, lo que quedaba de T3)
 
