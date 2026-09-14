@@ -32,14 +32,7 @@ objetivo.
    cuando:* en 60 temporadas simuladas sin gestión los game over por caja bajan a la mitad,
    y con gestión mínima (un sponsor) desaparecen.
 
-2. **Lo que queda de T2 y T3, juntos** (media sesión). Que la charla y "mandá a un
-   compañero a buscarlo" también escriban en la ficha de conducta, que "Qué mirar hoy"
-   avise cuando alguien pasa a "aparece cuando quiere", y en la Carrera, que la libreta
-   siga viva en la temporada (el que dijo que no en la pretemporada puede volver a
-   aparecer en un evento) y que el modo tenga su propia entrada en `sim` para medir
-   cuántas carreras llegan a inscribirse sin gestión.
-
-3. **T5 · El salto de arte** (gobernado por
+2. **T5 · El salto de arte** (gobernado por
    [`design/ART_PIPELINE.md`](design/ART_PIPELINE.md); depende de Gabi, no de código). El
    brief está en [`design/arte/BRIEFS/`](design/arte/BRIEFS/LEEME.md): el retrato deja de
    ser un archivo y pasa a ser una receta de capas (base × expresión × pelo × barba ×
@@ -47,17 +40,29 @@ objetivo.
    gastar de más (prueba de registro ≈12 créditos, lámina de 12 caras ≈60). *Sale cuando:*
    dos jugadores del mismo arquetipo en la misma pantalla no se ven iguales.
 
-4. **Llevar la dirección D al resto del juego** (1 sesión). La planilla y el relieve a la
+3. **Llevar la dirección D al resto del juego** (1 sesión). La planilla y el relieve a la
    pretemporada, el mercado, la convocatoria y la liga, para que no convivan dos anatomías
    de lista en el mismo juego.
 
-5. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.900 líneas) en sus cinco etapas,
-   ESLint con `react-hooks`, code-splitting (715 kB en un chunk).
+4. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.400 líneas) en sus cinco etapas,
+   ESLint con `react-hooks`, code-splitting (755 kB en un chunk).
 
-**Orden:** la economía primero (es el game over que más se repite sin gestión), después los
-restos, y el arte cuando Gabi diga.
+Lo que quedaba de T2 y T3 salió (sep 2026, ver el changelog): la charla y el compañero
+escriben en la ficha, el inicio avisa al que pasa a "aparece cuando quiere", la libreta
+sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
+
+**Orden:** la economía primero (es el game over que más se repite sin gestión), después la
+dirección D, y el arte cuando Gabi diga.
 
 ## Decisiones que están en la cancha de Gabi
+
+- **¿La pretemporada de la Carrera tiene que apretar?** `npm run sim:carrera` mide que
+  pidiendo favores al azar se llega a inscribirse el 90% de las veces, y con cabeza (el
+  íntimo primero, después los que ya tienen a su amigo adentro) el 100%, con 11 de
+  plantel. Se puede perder, pero al jugador atento no se le escapa ninguna. Si eso está
+  bien (la primera pretemporada como tutorial de la red), no se toca; si tiene que
+  apretar, las perillas están en `BALANCE.carrera` (ver
+  [`design/BALANCE.md`](design/BALANCE.md#el-modo-carrera-septiembre-2026-lo-que-quedaba-de-t3)).
 
 - **El brief de la lámina** (Puerta 3,
   [`design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md`](design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md)):

@@ -601,6 +601,8 @@ export interface ActiveEvent {
   defId: string;
   playerId?: string;
   playerId2?: string;
+  /** Un contacto de la libreta (modo Carrera) que todavía no es jugador: id en `libretaPendiente`. */
+  contactId?: string;
 }
 
 /** Evento encadenado: una decisión de hoy lo agenda para dispararse semanas
@@ -1146,6 +1148,13 @@ export interface GameState {
    * contactos). Opcional: los saves viejos son 'club'.
    */
   mode?: 'club' | 'carrera';
+  /**
+   * La libreta sigue viva en la temporada (modo Carrera): los contactos que
+   * no firmaron en la pretemporada de la fundación —dijeron que no, dudaron,
+   * o no llegaste a llamarlos— pueden volver a aparecer en un evento. Cada
+   * uno sale de acá cuando vuelve a aparecer, firme o no.
+   */
+  libretaPendiente?: MarketPlayer[];
   /** Convocatoria al asado de esta semana (respuestas del plantel); opcional para no migrar saves. */
   asadoPlan?: AsadoPlan | null;
   /** Cómo salió el asado de esta semana (para el informe y el partido). */

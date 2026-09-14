@@ -1,6 +1,9 @@
 import { planAsado, weeksSinceAsado } from './asado';
 import { BALANCE, clamp } from './balance';
+import { contactoQueVuelve, LO_QUE_PIDE, shortName, vueltaDeLaLibreta } from './carrera';
 import { affinity } from './relations';
+import { logClubEvent } from './timeline';
+import { marketToPlayer } from '../data/market';
 import { createRecruit } from '../data/recruits';
 import { bumpGrievance, easeGrievance, sootheGrievance } from './mood';
 import type { ActiveEvent, DelayedNote, GameState, Player, ScheduledEvent, TrialCandidate } from './types';
@@ -19,7 +22,7 @@ export interface EventDef {
   /** Si es true, no entra en el sorteo semanal: solo se dispara encadenado. */
   chained?: boolean;
   /** Elige jugadores implicados. Devuelve null si no hay objetivo válido. */
-  pickTargets?: (state: GameState, rng: Rng) => { playerId?: string; playerId2?: string } | null;
+  pickTargets?: (state: GameState, rng: Rng) => { playerId?: string; playerId2?: string; contactId?: string } | null;
   text: (state: GameState, ev: ActiveEvent) => string;
   options: (state: GameState, ev: ActiveEvent) => EventOptionDef[];
   /** Muta el estado (ya clonado) y devuelve el desenlace. */
@@ -954,6 +957,91 @@ export const EVENTS: EventDef[] = [
       }
       s.club.socialClimate = clamp(s.club.socialClimate - 2);
       return 'El meme no cayó bien en plena pelea. "No es momento de joder", te contestó uno.';
+    },
+  },
+
+  {
+    // La libreta sigue viva (modo Carrera, lo que quedaba de T3): el que no
+    // firmó en el verano —dijo que no, dudó, o no lo llamaste— vuelve a
+    // aparecer cuando el club ya es una cosa real. Cada contacto vuelve una
+    // sola vez: firme o no, sale de la libreta pendiente.
+    id: 'libreta_vuelve',
+    title: 'Uno de la libreta',
+    weight: 6,
+    canFire: (s) => s.mode === 'carrera' && (s.libretaPendiente?.length ?? 0) > 0 && s.week >= 2 && actives(s).length < 14,
+    pickTargets: (s, rng) => {
+      const mp = contactoQueVuelve(s, rng);
+      return mp ? { contactId: mp.id } : null;
+    },
+    text: (s, ev) => {
+      const mp = s.libretaPendiente?.find((m) => m.id === ev.contactId);
+      return mp ? vueltaDeLaLibreta(s, mp) : 'Ya no estaba en la libreta.';
+    },
+    options: (s, ev) => {
+      const mp = s.libretaPendiente?.find((m) => m.id === ev.contactId);
+      const pide = mp?.demand ? LO_QUE_PIDE[mp.demand] : null;
+      return [
+        {
+          label: pide ? 'Que venga, dándole lo que pide' : 'Que venga',
+          hint: pide ? `Se suma al plantel; ${pide} queda como promesa` : 'Se suma al plantel, sin condiciones',
+        },
+        ...(pide ? [{ label: 'Que venga, pero sin condiciones', hint: 'Capaz acepta igual… o se ofende y no viene' }] : []),
+        { label: 'Ya está: el plantel se armó sin él', hint: 'No vuelve a aparecer. El que lo trajo lo va a sentir' },
+      ];
+    },
+    resolve: (s, ev, opt, rng) => {
+      const mp = s.libretaPendiente?.find((m) => m.id === ev.contactId);
+      if (!mp) return 'Ya no estaba en la libreta.';
+      s.libretaPendiente = (s.libretaPendiente ?? []).filter((m) => m.id !== mp.id);
+      const v = shortName(mp.name);
+      const traido = mp.viaDe && mp.viaDe !== 'vos' ? actives(s).find((p) => p.name === mp.viaDe) : undefined;
+      const conCondiciones = !!mp.demand && opt === 0;
+      const sinCondiciones = !!mp.demand && opt === 1;
+      const noViene = mp.demand ? opt === 2 : opt === 1;
+
+      if (noViene) {
+        if (traido) {
+          traido.motivation = clamp(traido.motivation - 4);
+          return `Le dijiste que el plantel ya estaba. ${v} lo entendió, pero ${shortName(traido.name)} se lo tomó a mal: "Era mi gente".`;
+        }
+        return `Le dijiste que el plantel ya estaba. ${v} se lo tomó bien, o eso dijo. No va a volver a preguntar.`;
+      }
+      if (sinCondiciones && !rng.chance(mp.flexibility)) {
+        if (traido) traido.motivation = clamp(traido.motivation - 2);
+        return `Le dijiste que venga, pero sin ${LO_QUE_PIDE[mp.demand!]}. ${v} se quedó callado un rato y después: "Dejá, mejor no". No va a volver a preguntar.`;
+      }
+
+      const demandApplied = conCondiciones ? mp.demand : null;
+      const feeStatus =
+        demandApplied === 'beca'
+          ? 'beca_total'
+          : demandApplied === 'beca_parcial'
+            ? 'beca_parcial'
+            : mp.feeAttitude === 'completa'
+              ? 'pagada'
+              : mp.feeAttitude === 'parcial'
+                ? 'beca_parcial'
+                : 'beca_total';
+      const role = demandApplied === 'titularidad' ? 'titular' : demandApplied === 'minutos' ? 'rotación' : mp.estTechnique >= 65 ? 'rotación' : 'suplente';
+      const player = marketToPlayer(mp, feeStatus, role, s.seasonNumber, rng);
+      const week = Math.min(s.week, s.seasonLength);
+      player.timeline = [{ season: s.seasonNumber, week, kind: 'llegada', text: 'Se sumó con la temporada empezada: era de la libreta y volvió a aparecer.' }];
+      s.players.push(player);
+      // El desenlace muestra su cara, y su historia arranca acá.
+      ev.playerId = player.id;
+      if (demandApplied) {
+        s.promises.push({ playerId: player.id, playerName: player.name, type: demandApplied, label: `${player.name}: ${LO_QUE_PIDE[demandApplied]}`, season: s.seasonNumber });
+      }
+      if (traido) traido.motivation = clamp(traido.motivation + 4);
+      s.club.socialClimate = clamp(s.club.socialClimate + 2);
+      s.news.unshift({ week: s.week, text: `Se sumó ${player.name}: era de la libreta y volvió a aparecer.`, tone: 'good' });
+      logClubEvent(s, 'llegada', `Llegó ${player.name} (${player.position}) con la temporada empezada: uno de la libreta que volvió.`);
+      const cierre = traido ? ` ${shortName(traido.name)} lo abrazó como si hubiera ganado algo.` : '';
+      return demandApplied
+        ? `${v} dijo que sí. Se suma al plantel, y ${LO_QUE_PIDE[demandApplied]} queda como promesa: si no cumplís, se va a acordar.${cierre}`
+        : sinCondiciones
+          ? `${v} lo pensó dos segundos: "Está bien, vengo igual". Se suma al plantel sin pedir nada.${cierre}`
+          : `${v} dijo que sí. Se suma al plantel sin pedir nada.${cierre}`;
     },
   },
 

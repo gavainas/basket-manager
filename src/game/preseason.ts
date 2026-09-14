@@ -23,7 +23,7 @@ import {
   scheduleFor,
 } from './pyramid';
 import { rollWeekBanter } from './banter';
-import { abrirAgenda, buildLibreta, favorChance, favorRefusal } from './carrera';
+import { abrirAgenda, buildLibreta, favorChance, favorRefusal, libretaPendienteAlCerrar } from './carrera';
 import { rollWeekMoment } from './moments';
 import { weeklyFee } from './economy';
 import { generateObjectives } from './objectives';
@@ -1445,6 +1445,9 @@ export function startSeasonFromPreseason(state: GameState): GameState {
     tone: 'good',
   });
   logClubEvent(s, 'hito', `Arranca la temporada ${s.seasonNumber} con ${s.players.filter((p) => !p.leftClub).length} jugadores en el plantel.`, 0);
+  // La libreta sigue viva: los que no firmaron pueden volver a aparecer en la
+  // temporada (ver `libreta_vuelve` en events.ts).
+  if (s.preseason?.libreta) s.libretaPendiente = libretaPendienteAlCerrar(s.preseason.market);
   s.preseason = null;
   // El mundo se rearma cada temporada: planteles rivales nuevos y fixture nuevo.
   s.world = buildWorld(s, rng);
