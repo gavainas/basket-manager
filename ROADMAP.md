@@ -24,22 +24,20 @@ reproducible; lo que falta son aprobaciones de Gabi. El motor tiene build limpio
 que recorren temporadas enteras por el reducer y un harness de balance con los números en
 objetivo.
 
-## Las próximas cinco cosas
+## Las próximas cosas
 
-1. **Economía con arco** (1 sesión). La caja quiebra sola en 8-15% de las temporadas
-   simuladas sin gestión: el sponsor como contrato con condiciones (cumplí X y renueva),
-   la rifa con historia, y la dificultad seleccionable extendida a la economía. *Sale
-   cuando:* en 60 temporadas simuladas sin gestión los game over por caja bajan a la mitad,
-   y con gestión mínima (un sponsor) desaparecen.
+La **economía con arco** salió (sep 2026, ver el changelog): el sponsor es un contrato con
+condiciones, la rifa tiene historia, la dificultad también es de caja, y sin gestión el
+club quiebra la mitad de las veces que antes. Lo que sigue:
 
-2. **Lo que queda de T2 y T3, juntos** (media sesión). Que la charla y "mandá a un
+1. **Lo que queda de T2 y T3, juntos** (media sesión). Que la charla y "mandá a un
    compañero a buscarlo" también escriban en la ficha de conducta, que "Qué mirar hoy"
    avise cuando alguien pasa a "aparece cuando quiere", y en la Carrera, que la libreta
    siga viva en la temporada (el que dijo que no en la pretemporada puede volver a
    aparecer en un evento) y que el modo tenga su propia entrada en `sim` para medir
    cuántas carreras llegan a inscribirse sin gestión.
 
-3. **T5 · El salto de arte** (gobernado por
+2. **T5 · El salto de arte** (gobernado por
    [`design/ART_PIPELINE.md`](design/ART_PIPELINE.md); depende de Gabi, no de código). El
    brief está en [`design/arte/BRIEFS/`](design/arte/BRIEFS/LEEME.md): el retrato deja de
    ser un archivo y pasa a ser una receta de capas (base × expresión × pelo × barba ×
@@ -47,15 +45,14 @@ objetivo.
    gastar de más (prueba de registro ≈12 créditos, lámina de 12 caras ≈60). *Sale cuando:*
    dos jugadores del mismo arquetipo en la misma pantalla no se ven iguales.
 
-4. **Llevar la dirección D al resto del juego** (1 sesión). La planilla y el relieve a la
+3. **Llevar la dirección D al resto del juego** (1 sesión). La planilla y el relieve a la
    pretemporada, el mercado, la convocatoria y la liga, para que no convivan dos anatomías
    de lista en el mismo juego.
 
-5. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.900 líneas) en sus cinco etapas,
-   ESLint con `react-hooks`, code-splitting (715 kB en un chunk).
+4. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.900 líneas) en sus cinco etapas,
+   ESLint con `react-hooks`, code-splitting (750 kB en un chunk).
 
-**Orden:** la economía primero (es el game over que más se repite sin gestión), después los
-restos, y el arte cuando Gabi diga.
+**Orden:** los restos de T2/T3 primero, después la dirección D, y el arte cuando Gabi diga.
 
 ## Decisiones que están en la cancha de Gabi
 

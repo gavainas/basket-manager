@@ -426,7 +426,7 @@ export function createPreseasonNewGame(seed: number, difficulty: AbsenceDifficul
     phase: 'preseason',
     club: {
       name: 'Atlético El Parque',
-      money: BALANCE.economy.startingMoney,
+      money: BALANCE.economy.startingMoney + BALANCE.absenceDifficulty[difficulty].cajaExtra,
       socialClimate: 62,
       organization: 50,
       sportPrestige: 40,
@@ -454,7 +454,7 @@ export function createPreseasonNewGame(seed: number, difficulty: AbsenceDifficul
       { week: 0, text: 'Arranca la pretemporada: hay que confirmar el plantel e inscribir al club antes de la fecha límite.', tone: 'neutral' },
       { week: 0, text: 'Sos el nuevo manager de Atlético El Parque. Primero, armá el equipo.', tone: 'good' },
     ],
-    ledger: [{ week: 0, concept: 'Caja inicial del club', amount: BALANCE.economy.startingMoney }],
+    ledger: [{ week: 0, concept: 'Caja inicial del club', amount: BALANCE.economy.startingMoney + BALANCE.absenceDifficulty[difficulty].cajaExtra }],
     memorableMoments: [],
     clubTimeline: [
       { season: 1, week: 0, kind: 'hito', text: 'Nace Atlético El Parque: hay que armar el plantel para la primera temporada.' },
@@ -462,7 +462,7 @@ export function createPreseasonNewGame(seed: number, difficulty: AbsenceDifficul
     playersLeftCount: 0,
     sponsorWeeks: 0,
     gameOverReason: null,
-    startingMoney: BALANCE.economy.startingMoney,
+    startingMoney: BALANCE.economy.startingMoney + BALANCE.absenceDifficulty[difficulty].cajaExtra,
     promises: [],
     preseason: null,
     world: emptyWorld(),
@@ -507,7 +507,7 @@ export function createCareerNewGame(
     club: {
       name,
       colors: opts.colors,
-      money: C.startingMoney,
+      money: C.startingMoney + BALANCE.absenceDifficulty[difficulty].cajaExtra,
       socialClimate: 55,
       organization: 35,
       sportPrestige: C.sportPrestige,
@@ -539,7 +539,7 @@ export function createCareerNewGame(
       },
       { week: 0, text: 'Te comiste los cruzados. Lo único que te queda del básquet es armar tu propio club.', tone: 'good' },
     ],
-    ledger: [{ week: 0, concept: 'Lo que juntaste entre amigos para arrancar', amount: C.startingMoney }],
+    ledger: [{ week: 0, concept: 'Lo que juntaste entre amigos para arrancar', amount: C.startingMoney + BALANCE.absenceDifficulty[difficulty].cajaExtra }],
     memorableMoments: [],
     clubTimeline: [
       { season: 1, week: 0, kind: 'hito', text: `Nace ${name}: una libreta de contactos, una pelota y cuatro semanas para juntar ocho.` },
@@ -547,7 +547,7 @@ export function createCareerNewGame(
     playersLeftCount: 0,
     sponsorWeeks: 0,
     gameOverReason: null,
-    startingMoney: C.startingMoney,
+    startingMoney: C.startingMoney + BALANCE.absenceDifficulty[difficulty].cajaExtra,
     promises: [],
     preseason: null,
     world: emptyWorld(),

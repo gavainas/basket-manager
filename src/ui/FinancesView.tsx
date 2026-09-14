@@ -1,6 +1,7 @@
 import type { GameState } from '../game/types';
 import { activePlayers } from '../game/match';
 import { weeklyEstimate } from '../game/economy';
+import { condicionTexto } from '../game/sponsors';
 import { feeChipAlways, formatMoney } from './helpers';
 import { PlayerLink } from './PlayerLink';
 
@@ -30,10 +31,16 @@ export function FinancesView({ state }: { state: GameState }) {
           </div>
           <div className="sub">cuotas y gastos fijos</div>
         </div>
-        <div className="stat-tile">
+        <div className="stat-tile" title={state.sponsor ? `${state.sponsor.name}: pide ${condicionTexto(state.sponsor)}. Si cumplís, renueva y sube el aporte.` : undefined}>
           <div className="label">Sponsor</div>
-          <div className="value">{state.sponsorWeeks > 0 ? `${state.sponsorWeeks} sem.` : '—'}</div>
-          <div className="sub">{state.sponsorWeeks > 0 ? 'contrato activo' : 'sin sponsor: se puede buscar uno'}</div>
+          <div className="value">{state.sponsor ? `$${state.sponsor.weekly}/sem` : state.sponsorWeeks > 0 ? `${state.sponsorWeeks} sem.` : '—'}</div>
+          <div className="sub">
+            {state.sponsor
+              ? `${state.sponsor.name} · ${state.sponsor.weeksLeft} sem. · pide ${condicionTexto(state.sponsor)}${state.sponsor.renovaciones > 0 ? ` · renovó ${state.sponsor.renovaciones}` : ''}`
+              : state.sponsorWeeks > 0
+                ? 'contrato activo'
+                : 'sin sponsor: se puede buscar uno'}
+          </div>
         </div>
       </div>
 
