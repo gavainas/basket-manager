@@ -14,6 +14,7 @@ simular desde Node.
 npm run sim          # 80 temporadas por estrategia (~1 min)
 npm run sim -- 30    # menos corridas, más rápido
 npm run sim:notas    # distribución de la nota del partido (1-10) por minutos
+npm run sim:carrera  # modo Carrera: cuántas pretemporadas del club desde cero llegan a inscribirse
 ```
 
 Ojo con comparar corridas entre versiones: cualquier cambio que consuma tiradas
@@ -306,6 +307,37 @@ Es el gradiente que se buscaba.
   módulo para el id y el nombre, así que el mismo estado daba un recluta distinto según
   cuántos se habían creado antes en la sesión (y la misma semilla, dos temporadas
   distintas). Ahora el id sale del RNG y el nombre, del RNG y de los nombres ya en uso.
+
+## El modo Carrera (septiembre 2026, lo que quedaba de T3)
+
+El harness [`scripts/sim-carrera.cjs`](../scripts/sim-carrera.cjs) juega la primera
+pretemporada del club desde cero (la libreta, el favor, la bola de nieve, el corte de
+los ocho en cuatro semanas) con cuatro políticas de pedir favores, y reporta cuántas
+carreras llegan a inscribirse. El roadmap pedía medirlo "sin gestión", pero en la
+Carrera sin gestión no hay club: nadie firma si no le pedís. Por eso el piso se mide
+con políticas mecánicas.
+
+| Política (60 carreras, dificultad medio) | Llegan | Plantel al cierre |
+| --- | --- | --- |
+| `sinGestion`: no llamás a nadie | 0% | 0 |
+| `soloLibreta`: sólo la libreta del arranque, sin la bola de nieve | 10% | 5.9 |
+| `pedirATodos`: a cualquiera disponible, en cualquier orden | 90% | 9.6 |
+| `conCabeza`: el íntimo primero, después los que ya tienen a su amigo adentro | 100% | 11.2 |
+
+Lo que dice: **la bola de nieve es el juego** (sin ella no se llega: 10%), y **el orden
+importa** (con cabeza se dice que no 6% de las veces; al azar, 18%). El criterio de
+salida de T3 —"se puede perder la pretemporada"— se cumple para el que llama al azar;
+al que usa las doce gestiones con cabeza no se le escapa ninguna y cierra con 11.
+**Es una decisión de Gabi si eso está bien** (la primera pretemporada como tutorial
+de la red, con la tensión en llegar con un plantel largo y no corto) **o si tiene que
+apretar** (menos gestiones por semana en la libreta, `favorBase` más bajo o menos
+contactos por agenda). El CI corre 20 carreras por política y falla si sin gestión
+llega alguna, si pidiendo a todos se llega siempre, o si con cabeza se llega en 20%
+o menos.
+
+De paso: en las tres políticas que llegan, la inscripción sale de fiado (50 de 54,
+57 de 60) porque los $200 del arranque no alcanzan para la ficha, que es lo que se
+buscaba en T3.
 
 ## Pendiente (ver ROADMAP)
 
