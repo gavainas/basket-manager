@@ -47,7 +47,8 @@ una partida jugada de verdad.
 
 | Métrica | Objetivo | Última corrida (3ª pasada, 240 temp.) |
 |---|---|---|
-| Mejor táctica vs zona | La agresiva la mejor, pero no dominante (~7-10 pts sobre zona) | 6ª pasada (120 temp., motor por tramos): 51.4% (presión) / 59.4% (mixta) vs 47.6% (zona) · 40.5% cinco fijos |
+| Mejor táctica vs zona | La agresiva la mejor, pero no dominante (~7-10 pts sobre zona) | 7ª pasada (120 temp., defensa del rival): 52.8% (presión) / 60.9% (mixta) vs 49.0% (zona) · 39.7% cinco fijos |
+| Leer al rival (`contraRival` vs `zonaEquipo`) | Que responder bien a su defensa valga puntos, no partidos: ≤ 3-4 pts | 7ª pasada: +1.0 (50.0% vs 49.0%) |
 | Remontadas propias (9+ abajo) | Raras pero reales (~5%) | 8/366 (2.2% — quedó corta: vigilar en la próxima pasada) |
 | Nos remontan (9+ arriba) | Ninguna ventaja sellada (~7-10%) | 44/551 (8%) |
 | Lesiones en partido / temporada | 1-2 | 1.3 |
@@ -89,6 +90,19 @@ abandonos (0.00 / 0.16 / 1.59 / 0.10) y minutos por suplente no se movieron. El
 rival pide minuto solo (`timeoutRun`, `timeoutCut`) cuando le metemos un
 parcial; el harness no pide los nuestros (mide el piso sin manager). Queda
 anotado que mixta le saca 11.8 a la zona, un poco por encima de la banda.
+
+Nota de la 7ª pasada (sep 2026, la defensa del rival): el rival cambia de
+defensa durante el partido con reglas que no miran la nuestra
+(`rivalDecideDefensa`), y su defensa pega en nuestro ataque según cómo
+respondemos (`rivalDefenseFactor`, ±10% como mucho, con la respuesta buena
+condicionada a las piernas y a la mano de la referencia). La estrategia
+`contraRival` del harness responde siempre bien: le saca 1.0 punto a
+`zonaEquipo` (50.0% vs 49.0%), dentro del tope de 3-4 acordado con Gabi para
+que no sea un piedra-papel-o-tijera. En la misma pasada se apagó el minuto
+pedido del rival (`rivalPideMinuto: false`): todas las estrategias suben
+~1,5 puntos respecto de la 6ª por eso, y el gradiente no se mueve (presión
++3.8 y mixta +11.9 sobre zona). Lesiones, abandonos y minutos del banco
+iguales.
 
 ## Sistemas de la 1ª pasada
 

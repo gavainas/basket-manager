@@ -5350,6 +5350,21 @@ button.mini.blue.on {
 .pv-piernas-rival .mini-medidor { margin: 0; }
 .pv-piernas-rival b { text-align: right; color: var(--text); }
 
+/* La defensa del rival que le viste, con la pista de qué hacer contra ella. */
+.pv-defensa-rival {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  gap: 0.15rem 0.5rem;
+  margin: 0.45rem 0 0.2rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+.pv-defensa-rival b { color: var(--text); font-family: var(--display); font-size: var(--fs-sm); letter-spacing: 0.04em; text-transform: uppercase; }
+.pv-defensa-pista { grid-column: 1 / -1; font-style: italic; line-height: 1.3; }
+
 .pv-tablero .pvt-fila {
   display: grid;
   grid-template-columns: 74px minmax(0, 1fr);

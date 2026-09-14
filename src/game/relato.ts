@@ -156,9 +156,11 @@ function jugadasDelReparto(
   let f = f0;
   let a = a0;
   // La pelota muerta abre el tramo: los cambios y las notas, antes de la primera canasta.
-  // La lesión cierra el tramo: pasa al final.
-  const lesion = r.notas.filter((n) => n.startsWith('🚑'));
-  r.notas.filter((n) => !n.startsWith('🚑')).forEach((n, i) => jugadas.push(filaDeNota(n, t0 + i * 0.01, minutoDe(t0), f, a)));
+  // La lesión y el cambio de defensa del rival cierran el tramo: pasan al
+  // final (del rival te enterás viéndolos jugar, no antes).
+  const alFinal = (n: string) => n.startsWith('🚑') || n.startsWith('🛡');
+  const lesion = r.notas.filter(alFinal);
+  r.notas.filter((n) => !alFinal(n)).forEach((n, i) => jugadas.push(filaDeNota(n, t0 + i * 0.01, minutoDe(t0), f, a)));
 
   const compañeros = r.onCourt.map(nombreDe).filter(Boolean).map(apellido);
   eventos.forEach((e, i) => {
@@ -179,7 +181,7 @@ function jugadasDelReparto(
     }
     jugadas.push({ minuto: `${minutoDe(t)}'`, t, marcador: `${f}-${a}`, f, a, lado: e.lado, pts: e.pts, quienId: e.quienId, texto, sub });
   });
-  for (const n of lesion) jugadas.push(filaDeNota(n, t0 + largo - 0.02, minutoDe(t0 + largo - 0.02), f, a));
+  lesion.forEach((n, i) => jugadas.push(filaDeNota(n, t0 + largo - 0.03 + i * 0.005, minutoDe(t0 + largo - 0.03), f, a)));
   return { jugadas, f, a };
 }
 

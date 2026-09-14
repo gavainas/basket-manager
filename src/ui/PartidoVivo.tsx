@@ -13,10 +13,20 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { BALANCE } from '../game/balance';
-import { courtFreshness, cuartosDe, marcador, MINUTOS_POR_PARTIDO, rivalBoxScore, rivalLineup } from '../game/match';
+import {
+  courtFreshness,
+  cuartosDe,
+  marcador,
+  MINUTOS_POR_PARTIDO,
+  RIVAL_DEFENSE_LABELS,
+  rivalBoxScore,
+  rivalDefenseDe,
+  rivalDefensePorEstilo,
+  rivalLineup,
+} from '../game/match';
 import { arranqueDelCuarto, jugadasDelCuarto, largoDelCuarto, largoDelTramo, type Jugada } from '../game/relato';
 import { clubByLegacyId, teamByLegacyRival, userTeam } from '../game/world';
-import type { GameState, Player, Position, WorldPlayer } from '../game/types';
+import type { DefenseTactic, GameState, Player, Position, WorldPlayer } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { CountUp } from './CountUp';
 import { Crest } from './Crest';
@@ -90,6 +100,13 @@ function CanchaLineas() {
 function esDeCambios(n: string): boolean {
   return /cambio|entra |plan de cambios|unidad|cerradores|titulares|movió el banco|descansa|🕘|🚑/i.test(n);
 }
+
+/** Qué hacer contra cada defensa del rival: la pista corta, al lado de la defensa que le viste. */
+const PISTA_DEFENSA_RIVAL: Record<DefenseTactic, string> = {
+  presion: 'Mové la pelota, con piernas: sin piernas te la rompen.',
+  hombre: 'Esperan entre dos a la referencia. Correr los rompe.',
+  zona: 'La referencia con la mano caliente la castiga. Correr no sirve.',
+};
 
 /** Quien pidió menos movimiento no ve correr el reloj: el cuarto aparece jugado. */
 function reducedMotion(): boolean {
@@ -301,6 +318,21 @@ export function PartidoVivo({ state, dispatch }: Props) {
   const legsCls = (v: number) => (v >= 65 ? 'good' : v >= 40 ? 'warn' : 'bad');
 
   const rivalCinco = rivalLineup(state, live);
+  // La defensa del rival que VISTE: con el reloj corriendo, la del último
+  // tramo que terminó (el cambio se anuncia al final del tramo, no antes).
+  const defensaVista: DefenseTactic = (() => {
+    if (!reloj) return rivalDefenseDe(live, rival);
+    let vista: DefenseTactic | undefined;
+    cuartos.forEach((q, i) => {
+      if (i > reloj.q) return;
+      const base = arranqueDelCuarto(live, i);
+      const len = largoDelTramo(q);
+      (q.tramos ?? []).forEach((t, k) => {
+        if (i < reloj.q || base + (k + 1) * len <= reloj.t + 1e-6) vista = t.rivalDefense ?? vista;
+      });
+    });
+    return vista ?? rivalDefensePorEstilo(rival.style);
+  })();
   const rivalPtsTotal = rivalBoxScore(state, live);
   const rivalPts: Record<string, number> = {};
   for (const [id, n] of Object.entries(rivalPtsTotal)) rivalPts[id] = n - ptsOcultos(id);
@@ -676,6 +708,11 @@ export function PartidoVivo({ state, dispatch }: Props) {
               <span><RivalLink id={rival.id}>{rival.name}</RivalLink></span>
               <Crest seed={rivalClub?.id ?? rival.id} name={rival.name} colors={rivalColores} founded={rivalClub?.founded} size={22} />
             </h3>
+            <div className="pv-defensa-rival" title="Cómo están defendiendo. Cambian durante el partido, sin mirar tu pizarra: te enterás por el relato.">
+              <span>Defienden</span>
+              <b>{RIVAL_DEFENSE_LABELS[defensaVista]}</b>
+              <span className="pv-defensa-pista">{PISTA_DEFENSA_RIVAL[defensaVista]}</span>
+            </div>
             <div className="pv-grupo">En cancha</div>
             {rivalCinco.court.length > 0 ? (
               <>

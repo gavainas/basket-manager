@@ -665,6 +665,12 @@ la próxima pelota muerta" mientras corre; "Se aplica desde el próximo cuarto" 
 Si el cuarto queda a mitad (una recarga), el momento dice "2do cuarto · 6' · pelota muerta" y
 el botón, "Seguir el 2do cuarto".
 
+**La defensa del rival (sep 2026).** En la columna del rival, debajo de las piernas, una línea
+"Defienden · HOMBRE" con la pista de qué hacer contra eso (`.pv-defensa-rival`). Muestra la
+defensa que le *viste*: con el reloj corriendo es la del último tramo terminado, y el cambio
+entra al relato como nota al final de su tramo ("🛡 Unión Vecinal pasa a presionar la salida").
+No se dibuja la pizarra del rival: lo que sabés de ellos es lo que se ve desde el banco.
+
 ## La franja del partido (sep 2026)
 
 Regla nueva, salida de medir la pantalla del partido con la ventana de Gabi (815 px de

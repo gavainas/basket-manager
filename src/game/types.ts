@@ -325,6 +325,8 @@ export interface LiveTramo {
   onCourt: string[];
   /** Lo que pasó en la pelota muerta: cambios, minutos pedidos, la lesión. Va al relato en su minuto. */
   notes?: string[];
+  /** Cómo defendió el rival este tramo (sep 2026: la defensa del rival cambia durante el partido). */
+  rivalDefense?: DefenseTactic;
 }
 
 /**
@@ -361,6 +363,8 @@ export interface QuarterContext {
   injured: boolean;
   /** El rival ya pidió minuto en este cuarto. */
   rivalTimeout: boolean;
+  /** El rival ya cambió de defensa en este cuarto (a lo sumo una vez por cuarto). */
+  rivalDefChanged?: boolean;
   /** Tramo en el que corre el minuto pedido (nuestro / del rival), -1 si no. */
   ourTimeoutAt: number;
   rivalTimeoutAt: number;
@@ -442,6 +446,13 @@ export interface LiveMatchState {
    * cuarto nuevo.
    */
   enCurso?: LiveQuarter & { ctx: QuarterContext };
+  /**
+   * Cómo defiende el rival ahora (sep 2026). Arranca según su estilo y cambia
+   * con reglas simples que no miran lo que hacés vos: presiona si pierde por
+   * mucho con piernas, se mete en zona si va cómodo, vuelve a lo suyo si el
+   * partido está parejo. Sin esto (saves viejos), defiende según su estilo.
+   */
+  rivalDefense?: DefenseTactic;
   /** Minutos pedidos por nosotros en el partido (hay dos). */
   minutosPedidos?: number;
   /** Pediste minuto: corre en el próximo tramo. */
