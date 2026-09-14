@@ -3,6 +3,53 @@
 Sale de la sección 6 de [`DIAGNOSTICO_2026-09.md`](DIAGNOSTICO_2026-09.md) y del pedido de
 Gabi sobre el formato de pantalla para Steam.
 
+## La regla cambió (sep 2026, después de jugarlo en la notebook)
+
+Las cinco tandas de abajo se hicieron, se midieron y quedaron en verde. Y Gabi lo jugó en
+su notebook y no le gustó: "todo tiene scroll y no se ven bien las cosas". Tenía razón, y
+el motivo es de la regla, no de las tandas.
+
+La regla de la tanda E decía que **una pantalla con acción tiene que entrar entera** en la
+ventana. En un monitor de 1080p entra. En una notebook de 1366×768 (o 1920 con el escalado
+de Windows al 125%, que deja el mismo alto útil: unos 600 px) no hay lugar, y para cumplir
+la regla cada panel se achicó y se le puso su propio scroll: el relato del partido en 100 px
+con dos jugadas, la pizarra del quinteto por la mitad, el aviso de baja de último momento
+cortado a una tira, el informe en tres columnas con tres scrolls distintos y la planilla sin
+los rebotes. Varias ventanitas que scrollean por separado en vez de una pantalla que se lee.
+
+**La regla nueva** es la de PC Fútbol y la de Football Manager a la vez:
+
+- **El chrome no se mueve nunca.** La barra de arriba y la de recursos son filas del marco
+  (eso no cambia).
+- **El botón de seguir no se mueve nunca.** El pie con la acción de la pantalla (Ir al
+  partido, Jugar el cuarto, Avanzar a la semana) es `.pie-fijo`: `position: sticky;
+  bottom: 0` dentro del área de contenido, con fondo. Se juega de memoria igual que antes.
+- **El contenido scrollea como un solo bloque.** `.app-shell` es el único scroller (como
+  ya lo era para Finanzas, Rankings y Calendario). **Ningún panel scrollea por dentro**:
+  se borraron los `height: 100%` de las ocho pantallas y los `overflow-y: auto` de sus
+  cuerpos. Cada panel mide lo que su contenido pide y nunca queda cortado.
+- **Dos excepciones, a propósito.** El relato del partido en vivo scrollea por dentro con
+  techo `clamp(240px, 46vh, 620px)`: crece jugada a jugada con el reloj y se desplaza solo
+  hasta la última canasta (`PartidoVivo.tsx`), y eso no puede depender del scroll de la
+  ventana. Y el Tablero sigue midiendo la ventana (`.hub { height: 100% }`): es un menú,
+  entra a 720 y queda mejor repartido que amontonado arriba.
+- **Lo que se pega arriba.** En el Quinteto la pizarra es `sticky; top: 0`: mientras
+  recorrés una lista de doce, seguís viendo dónde ponés al que arrastrás.
+
+Medido a 1366×768 y 1920×1080 con capturas de las 22 pantallas: nada cortado, el pie
+siempre a la vista, y a 1080p Plantel, Liga, Finanzas y El club entran sin scrollear. Lo
+que sigue scrolleando (Quinteto con una baja anunciada, Partido, Informe, Plantel a 768)
+scrollea una vez y muestra las cosas enteras.
+
+`npm run check:pantallas` (abajo) sigue sin estar en el repo, y lo que tiene que chequear
+cambió: que ningún panel scrollee por dentro (salvo el relato), que el pie de acción esté
+a la vista en toda pantalla, y que la página (el `.marco`) siga sin scrollear.
+
+Lo que sigue es el plan original, que sigue valiendo como historia y como anatomía de cada
+pantalla; la "regla final" de la tanda E queda reemplazada por esta.
+
+---
+
 ## Qué cambia y qué no
 
 **No se va el scroll. Se va el scroll de la página.**

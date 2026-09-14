@@ -17,8 +17,9 @@ y en su lugar está la ficha de conducta), **T3** (el modo Carrera: el club desd
 con la intro en tres escenas, la libreta de contactos, el favor, la bola de nieve y el
 corte de los ocho) y **T4** (jugar con cinco dejó de ser el default: el partido rota solo
 si hay banco, la pizarra avisa, y las broncas ya no son sólo por minutos), además del
-**marco fijo** (el juego entra en la ventana sin scrollear como página, y en el celular
-vuelve a ser página), la **dirección D** (relieve y planilla) y **las cinco animaciones**.
+**marco fijo** (las dos barras y el botón de seguir quietos; el contenido scrollea como un
+solo bloque y ningún panel por dentro, desde que Gabi lo jugó en la notebook), la
+**dirección D** (relieve y planilla) y **las cinco animaciones**.
 De **T5** (el salto de arte) está hecho lo que era código: el brief de la lámina, escrito y
 reproducible; lo que falta son aprobaciones de Gabi. El motor tiene build limpio, 61 tests
 que recorren temporadas enteras por el reducer y un harness de balance con los números en
@@ -65,10 +66,12 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   [`design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md`](design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md)):
   leerlo y decir si va la **prueba de registro** (1 base, 3 pelos, 2 barbas, ≈12 créditos).
   Hasta entonces no se genera nada.
-- **`npm run check:pantallas`**: el Playwright que mide las 22 pantallas en tres
+- **`npm run check:pantallas`**: el Playwright que recorre las 22 pantallas en tres
   resoluciones existe pero no está en el repo porque suma una dependencia de desarrollo
-  (ver [`design/PLAN_MARCO_FIJO.md`](design/PLAN_MARCO_FIJO.md)). Con el visto bueno entra
-  al CI en cinco minutos.
+  (ver [`design/PLAN_MARCO_FIJO.md`](design/PLAN_MARCO_FIJO.md)). Con la regla nueva lo
+  que tiene que chequear cambió: que ningún panel scrollee por dentro (salvo el relato) y
+  que el pie de acción esté a la vista en toda pantalla. Con el visto bueno entra al CI
+  en cinco minutos.
 - **Registrar la maqueta del tablero como aprobación** en `ART_PIPELINE.md`, con fecha,
   alcance y qué queda fuera.
 - Decidido: **el héroe de cuerpo entero se agrega cuando haya más arte**; el hueco que lo

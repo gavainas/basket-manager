@@ -216,31 +216,48 @@ button.danger {
      ve como "hice todo bien y sigue scrolleando". */
   min-height: 0;
 
-  /* MULETA DE MIGRACIÓN (tanda A; se apaga en la tanda E).
-     Hoy 8 de 13 pantallas miden más que el viewport. Si el contenido no
-     scrollease todavía, esas pantallas quedarían RECORTADAS —el botón de
-     "avanzar" del Informe queda fuera de alcance y el juego se traba—, que es
-     peor que ahora. Así que el marco ya no se mueve, pero el contenido todavía
-     puede scrollear. Cada tanda rediseña sus pantallas para que entren solas;
-     cuando entran todas, esta línea se va y una pantalla que desborda pasa a
-     ser un bug visible. */
+  /* EL ÚNICO SCROLL DEL JUEGO (sep 2026, después de que Gabi lo jugó en la
+     notebook: "todo tiene scroll y no se ven bien las cosas").
+
+     La regla anterior pedía que cada pantalla entrara entera en la ventana, y
+     para cumplirla a 1366x768 cada panel se achicaba y scrolleaba por su
+     cuenta: el relato del partido en 100 px, la pizarra por la mitad, el
+     informe en tres columnas con tres scrolls. La regla nueva es la de PC
+     Fútbol: el chrome (las dos barras) no se mueve nunca, el botón de seguir
+     tampoco (ver `.pie-fijo`), y el CONTENIDO scrollea como un solo bloque.
+     Cada panel mide lo que su contenido pide y nunca queda cortado. En un
+     monitor de 1080p casi todo entra sin scrollear igual; en la notebook se
+     scrollea una vez y se ve todo entero. */
   overflow-y: auto;
   overflow-x: hidden;
 
-  /* Una sola fila que ocupa todo el alto disponible. Es lo que le permite a una
-     pantalla ya convertida decir `height: 100%` y ocupar exactamente lo que
-     hay; una pantalla todavía sin convertir crece por encima y la muleta de
-     arriba la scrollea. Las dos conviven sin un flag que haya que mantener. */
+  /* Una sola fila de todo el alto: el Tablero (el único que sigue midiendo la
+     ventana, porque es un menú y entra) la ocupa con `height: 100%`; las demás
+     pantallas miden lo suyo y quedan arriba. */
   display: grid;
   grid-template-rows: minmax(0, 1fr);
 }
 
+/* El pie con la acción de la pantalla (Ir al partido, Jugar el cuarto, Avanzar
+   a la semana) se pega al borde de abajo del contenido mientras el resto
+   scrollea: se juega de memoria, el botón está siempre en el mismo pixel. Con
+   un fondo para que lo que pasa por detrás no se lea a través. */
+.pie-fijo {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 0 calc(-1 * var(--sp-4));
+  padding: 0.6rem var(--sp-4);
+  background: linear-gradient(to top, rgba(28, 22, 18, 0.97) 0%, rgba(28, 22, 18, 0.97) 82%, transparent);
+}
+
+.pie-fijo .confirm-bar { margin-top: 0; }
+
 /* ---------- Primitivas del marco fijo ---------- */
 
-/* Una pantalla que ocupa el alto disponible y NO scrollea: lo que scrollea son
-   sus paneles. La usan las pantallas a medida que cada tanda las convierte. */
+/* Una pantalla: grilla de paneles con el gap de la casa. Mide lo que su
+   contenido pide; sólo el Tablero la estira al alto de la ventana. */
 .pantalla {
-  height: 100%;
   min-height: 0;
   display: grid;
   gap: var(--sp-4);
@@ -260,8 +277,10 @@ button.danger {
   min-height: 0;
 }
 
-/* Panel con el cabezal quieto y el cuerpo que scrollea adentro: la pieza que
-   reemplaza al scroll de página. El cabezal es el `h3.card-band` de siempre. */
+/* Panel con cabezal (`h3.card-band`) y cuerpo. Desde sep 2026 el cuerpo NO
+   scrollea: mide lo que su contenido pide y el que scrollea es el contenido de
+   la ventana. La única excepción es el relato del partido en vivo, que crece
+   jugada a jugada y se desplaza solo (ver `.pv-relato`). */
 .pane {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -270,10 +289,7 @@ button.danger {
 }
 
 .pane > .pane-body {
-  overflow-y: auto;
-  overflow-x: hidden;
   min-height: 0;
-  scrollbar-width: thin;
 }
 
 /* ---------- Chrome: barra superior ---------- */
@@ -700,8 +716,10 @@ button.danger {
    cards: los bloques son su propia superficie, para que se lea como un tablero
    de madera y no como un informe. */
 .hub {
-  /* `.pantalla` ya lo hace grilla de alto completo (tanda B): acá sólo se dice
-     cómo se reparte — el cuerpo se estira y la tira del plantel toma lo suyo. */
+  /* El único que mide la ventana: es un menú, entra a 720 y queda mejor
+     repartido que amontonado arriba. El cuerpo se estira y la tira del plantel
+     toma lo suyo. */
+  height: 100%;
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 1rem;
 }
@@ -745,18 +763,13 @@ button.danger {
 
 /* ---------- La semana (tanda B) ---------- */
 
-/* Los cinco pasos arriba, el panel de la fase abajo ocupando lo que queda. */
+/* Los cinco pasos arriba, el panel de la fase abajo. */
 .semana-vista {
-  grid-template-rows: auto minmax(0, 1fr);
   gap: 0;
 }
 
-/* Una fase que todavía no se repartió en paneles: scrollea entera adentro del
-   marco en vez de estirar la página. */
 .semana-scroll {
   min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 /* Planning: la decisión de la semana a la izquierda, las acciones a la derecha. */
@@ -769,9 +782,6 @@ button.danger {
 
 .semana-izq {
   min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  padding-right: 0.2rem;
 }
 
 .semana-acciones {
@@ -794,22 +804,13 @@ button.danger {
 /* Cómo llega el partido arriba · la pizarra en el medio · confirmar abajo. */
 .quinteto-pantalla {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: var(--sp-4);
   min-height: 0;
-  height: 100%;
 }
 
-/* La cabecera no puede comerse el cuerpo: una semana con tres bajas de último
-   momento apilaba avisos hasta dejar la pizarra en treinta píxeles. */
-.quinteto-cabecera {
-  /* En `vh` y no en `%`: el porcentaje se resolvería contra una fila `auto`, que
-     se dimensiona por su contenido — la referencia es circular y el resultado
-     es que la card queda con el cuerpo en cero. */
-  max-height: 30vh;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
+/* La cabecera mide lo que sus avisos piden: una baja de último momento se lee
+   entera, no en una tira de 30 px con scroll. */
+.quinteto-cabecera { min-height: 0; }
 
 .quinteto-cabecera > .card { margin-bottom: 0.6rem; }
 .quinteto-cabecera > .card:last-child { margin-bottom: 0; }
@@ -826,29 +827,19 @@ button.danger {
 .quinteto-pie { min-height: 0; }
 .quinteto-pie .confirm-bar { margin-top: 0; }
 
-/* El cuerpo: el plantel a la izquierda, la pizarra a la derecha. La pizarra deja
-   de estar abajo del pliegue —era LA acción de la pantalla y había que buscarla
-   scrolleando— y pasa a estar siempre a la vista. */
+/* El cuerpo: el plantel a la izquierda, la pizarra a la derecha, los dos a
+   tamaño natural. Antes scrolleaban tres cosas a la vez (el plantel, la pizarra
+   y la cabecera) y no se podía ver a quién elegías y dónde lo ponías al mismo
+   tiempo; ahora scrollea la ventana y la pizarra se queda pegada arriba
+   mientras recorrés la lista. */
 .quinteto-pantalla .lineup-layout {
   min-height: 0;
-  align-items: stretch;
+  align-items: start;
 }
 
-/* Un solo scroll en la pantalla, y es el del CUERPO entero (sep 2026).
-   Antes scrolleaban tres cosas a la vez —el plantel, la pizarra y hasta la
-   cabecera—, que son las dos mitades de la misma tarea: no se podía ver a quién
-   elegías y dónde lo ponías al mismo tiempo. Probamos apretarlas para que
-   entraran las dos, y la cancha quedó tan baja que los nombres de los puestos
-   se pisaban con los jugadores.
-
-   Así que el que scrollea es el cuerpo, una sola vez: la lista y la pizarra van
-   a tamaño natural, sin cortarse ni pisarse. La cabecera y la barra de acción
-   siguen fijas —que es lo que el marco fijo tenía que resolver— y el scroll
-   queda para lo único que de verdad no entra: un plantel de doce. */
-.quinteto-pantalla .lineup-layout {
-  overflow-y: auto;
-  scrollbar-width: thin;
-  padding-right: 0.2rem;
+.quinteto-pantalla .lineup-court {
+  position: sticky;
+  top: 0;
 }
 
 .lineup-izq {
@@ -862,7 +853,7 @@ button.danger {
    nada más hasta que lo abrís. */
 .lineup-izq > * { flex: none; }
 
-/* Ni la lista ni la pizarra scrollean por su cuenta: el cuerpo ya lo hace. */
+/* Ni la lista ni la pizarra scrollean por su cuenta: la ventana ya lo hace. */
 .quinteto-pantalla .lineup-list {
   max-height: none;
   overflow: visible;
@@ -878,10 +869,8 @@ button.danger {
 /* Marcador arriba · el juego en tres columnas · el botón del cuarto abajo. */
 .partido-pantalla {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: var(--sp-4);
   min-height: 0;
-  height: 100%;
 }
 
 /* La cabecera es UNA franja (sep 2026): rival y chips a la izquierda, el
@@ -1157,18 +1146,12 @@ button.danger {
   min-height: 0;
 }
 
-/* Columna que scrollea entera (táctica + piernas). En flex y no en grilla: en
-   una grilla con `min-height: 0` los hijos aceptan achicarse por debajo de su
-   contenido y la card de táctica se recortaba a la mitad. `flex: none` les
-   devuelve su alto natural y el que scrollea es el contenedor. */
+/* Columna de la táctica y las piernas: cards apiladas a su alto natural. */
 .partido-col-scroll {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
   min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  padding-right: 0.2rem;
 }
 
 .partido-col-scroll > .card {
@@ -1182,8 +1165,17 @@ button.danger {
   margin-bottom: 0;
 }
 
-/* El relato crece cuarto a cuarto: es el que más gana con scrollear adentro. */
+/* El relato crece jugada a jugada y se desplaza solo hasta la última canasta
+   (PartidoVivo.tsx): es el único panel que scrollea por dentro, con un techo
+   proporcional a la ventana para que la columna no se estire hasta el infinito
+   en el 4to cuarto. */
 .partido-relato .pane-body { padding-top: 0.5rem; }
+.pv-relato > .pane-body {
+  max-height: clamp(240px, 46vh, 620px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+}
 
 .partido-relato-vacio {
   display: grid;
@@ -1206,48 +1198,32 @@ button.danger {
 
 .pretemporada-pantalla {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--sp-3);
   min-height: 0;
-  height: 100%;
 }
 
 .pretemporada-cabecera { min-height: 0; }
 
-.pretemporada-cuerpo {
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  padding-right: 0.2rem;
-}
+.pretemporada-cuerpo { min-height: 0; }
 
 /* ---------- La liga (tanda E) ---------- */
 
 .liga-pantalla {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--sp-3);
   min-height: 0;
-  height: 100%;
 }
 
 .liga-tabs { align-self: start; }
 
-.liga-cuerpo {
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  padding-right: 0.2rem;
-}
+.liga-cuerpo { min-height: 0; }
 
 /* ---------- El informe (tanda D) ---------- */
 
 .informe-pantalla {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: var(--sp-4);
   min-height: 0;
-  height: 100%;
 }
 
 /* La franja del informe: el resumen a la derecha puede ser largo, se corta en
@@ -1262,12 +1238,13 @@ button.danger {
 }
 
 /* La planilla · el relato y las claves · el vestuario. Tres preguntas distintas
-   del mismo partido, que antes se leían scrolleando casi tres pantallas. */
+   del mismo partido, lado a lado y cada una a su alto. */
 .informe-cuerpo {
   display: grid;
-  grid-template-columns: minmax(320px, 1.2fr) minmax(280px, 1fr) minmax(280px, 1fr);
+  grid-template-columns: minmax(360px, 1.3fr) minmax(280px, 1fr) minmax(280px, 1fr);
   gap: var(--sp-4);
   min-height: 0;
+  align-items: start;
 }
 
 .informe-planilla,
@@ -1281,9 +1258,6 @@ button.danger {
   flex-direction: column;
   gap: var(--sp-4);
   min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  padding-right: 0.2rem;
 }
 
 .informe-col > .card {
@@ -1293,9 +1267,17 @@ button.danger {
 
 .informe-pantalla .confirm-bar { margin-top: 0; }
 
-@media (max-width: 1240px) {
+/* Con menos de ~1480 de ancho (la notebook) no hay lugar para tres columnas
+   sin cortar la planilla ni el vestuario a lo ancho: la planilla y el relato
+   quedan lado a lado, y el vestuario pasa abajo en dos columnas de jugadores. */
+@media (max-width: 1480px) {
   .informe-cuerpo { grid-template-columns: minmax(300px, 1.1fr) minmax(280px, 1fr); }
   .informe-moods { grid-column: span 2; }
+  .informe-moods .data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--sp-5);
+  }
 }
 
 /* ---------- El Tablero encoge con la ventana ---------- */
@@ -2592,19 +2574,11 @@ table.planilla tr:last-child td {
 
 .plantel-pantalla {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--sp-3);
   min-height: 0;
-  height: 100%;
 }
 
-/* El cuerpo scrollea; la barra de pestañas y la nota no se van de vista. */
-.plantel-cuerpo {
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  padding-right: 0.2rem;
-}
+.plantel-cuerpo { min-height: 0; }
 
 .roster-head {
   display: flex;
@@ -3242,21 +3216,13 @@ tr.sheet-group td {
 }
 
 /* La lista y la pizarra son las dos mitades de un mismo drag & drop: tienen que
-   verse juntas o estás arrastrando a ciegas. Por eso el par comparte alto y el
-   scroll vive adentro de la lista, no en la página. */
+   verse juntas o estás arrastrando a ciegas. La pizarra se queda pegada arriba
+   (sticky) mientras la lista corre con la ventana. */
 .lineup-layout {
   display: grid;
   grid-template-columns: minmax(340px, 1fr) minmax(300px, 420px);
   gap: var(--sp-4);
   align-items: start;
-}
-
-.lineup-list {
-  /* Alto de la ventana menos la barra superior, la de recursos y el aire de la
-     confirmación: lo que queda es lo que se puede usar sin scrollear. */
-  max-height: calc(100vh - var(--topbar-alto) - var(--recursos-alto) - 7rem);
-  overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 /* La barra de la lista queda fija arriba mientras se scrollea adentro: los
@@ -5990,40 +5956,26 @@ button.mini.blue.on {
      el scroll automático (foco, "scroll into view") le deja el lugar. */
   html { scroll-padding-bottom: 130px; }
 
-  /* Las pantallas dejan de medir el alto de la ventana: sus filas miden lo que
-     su contenido pide (se mantiene la grilla para no perder los gaps). */
-  .pantalla,
-  .semana-vista,
-  .hub,
-  .quinteto-pantalla,
-  .partido-pantalla,
-  .pretemporada-pantalla,
-  .liga-pantalla,
-  .informe-pantalla,
-  .plantel-pantalla {
+  /* El Tablero deja de medir el alto de la ventana (las demás pantallas ya
+     miden lo suyo en escritorio también). */
+  .hub {
     height: auto;
     grid-template-rows: none;
   }
 
-  /* Todo lo que scrolleaba por dentro deja de hacerlo. */
+  /* Lo que todavía scrollea por dentro en escritorio (el relato del partido,
+     el centro del Tablero) deja de hacerlo. */
   .pane,
-  .pane > .pane-body,
-  .semana-scroll,
-  .semana-izq,
-  .quinteto-cabecera,
-  .quinteto-pantalla .lineup-layout,
-  .partido-col-scroll,
-  .pv-centro,
-  .pv-equipo.pane,
-  .pretemporada-cuerpo,
-  .liga-cuerpo,
-  .partido-franja,
-  .informe-col,
-  .plantel-cuerpo,
-  .lineup-list {
+  .pv-relato > .pane-body,
+  .hub-centro {
     overflow: visible;
     max-height: none;
   }
+
+  /* El pie pegado abajo y la pizarra pegada arriba: en una columna no hay
+     dónde pegarse. */
+  .pie-fijo { position: static; margin: 0; padding: 0; background: none; }
+  .quinteto-pantalla .lineup-court { position: static; }
 
   /* --- 2. Una columna, y del ancho de la ventana --- */
 
