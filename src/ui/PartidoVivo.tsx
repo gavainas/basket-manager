@@ -546,7 +546,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
         </div>
 
         {/* La cancha y el relato */}
-        <div className="pv-centro">
+        <div className={`pv-centro${live.pendingIncident && !reloj ? ' con-incidencia' : ''}`}>
           <div className="pv-cancha" style={{ '--nuestro': nuestrosColores[0], '--rival': rivalColores[0] } as React.CSSProperties}>
             <CanchaLineas />
             <div className="pv-cancha-escudo">
@@ -587,13 +587,11 @@ export function PartidoVivo({ state, dispatch }: Props) {
               </h3>
               <div className="pane-body">
                 <p className="previa-consigna">{live.pendingIncident.text}</p>
-                <div className="modal-like options" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div className="options pv-incidencia-opciones">
                   {live.pendingIncident.options.map((opt, i) => (
-                    <button key={i} style={{ textAlign: 'left' }} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })}>
+                    <button key={i} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })}>
                       {opt.label}
-                      <span className="opt-hint" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                        {opt.hint}
-                      </span>
+                      <span className="opt-hint">{opt.hint}</span>
                     </button>
                   ))}
                 </div>
