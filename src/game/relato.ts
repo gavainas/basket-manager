@@ -106,7 +106,7 @@ export function largoDelTramo(q: Pick<LiveQuarter, 'overtime'>): number {
 
 /** Un cambio o una nota de la pelota muerta, como fila del relato. */
 function filaDeNota(n: string, t: number, minuto: number, f: number, a: number): Jugada {
-  const cambio = /cambio|entra |unidad|cerradores|titulares|movió el banco|🕘/i.test(n) && !n.startsWith('🚑');
+  const cambio = /cambio|entra |unidad|cerradores|titulares|movió el banco|🕘/i.test(n) && !n.startsWith('🚑') && !n.startsWith('🟥');
   return { minuto: `${minuto}'`, t, marcador: `${f}-${a}`, f, a, lado: 'nosotros', pts: 0, quienId: '', texto: n, tipo: cambio ? 'cambio' : 'nota' };
 }
 
