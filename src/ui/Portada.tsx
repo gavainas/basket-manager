@@ -20,9 +20,9 @@ import type { ConfirmRequest } from './ConfirmDialog';
 const ARTE = `${import.meta.env.BASE_URL}arte/portada-menu-central/`;
 
 export const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: string }> = {
-  facil: { label: 'Fácil', desc: 'Casi siempre están todos: la vida molesta poco.' },
-  medio: { label: 'Medio', desc: 'La vida pasa: enfermos, viajes y algún lesionado.' },
-  dificil: { label: 'Difícil', desc: 'Cada semana falta gente: armar el equipo con los que vinieron es el juego.' },
+  facil: { label: 'Fácil', desc: 'Casi siempre están todos, hay un colchón en la caja y los comercios se animan.' },
+  medio: { label: 'Medio', desc: 'La vida pasa: enfermos, viajes, algún lesionado y una caja justa.' },
+  dificil: { label: 'Difícil', desc: 'Cada semana falta gente, la caja arranca corta y los imprevistos llueven.' },
 };
 
 type Paso = 'inicio' | 'nueva' | 'gestionar';

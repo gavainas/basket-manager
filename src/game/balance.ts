@@ -21,6 +21,19 @@ export const BALANCE = {
     mishapMax: 90,
     // Fiado de la inscripción: la cuota semanal con que se devuelve.
     debtInstallment: 80,
+    // La economía con arco (sep 2026). Medido con `npm run sim`: sin gestión
+    // el club quebraba en ~10% de las temporadas, y el único camino era la
+    // gorra. Dos cosas que pasan solas y bajan eso a la mitad:
+    // el moroso que se pone al día por su cuenta (paga hasta dos semanas), y
+    // el imprevisto que, cuando no hay caja, se arregla con alambre (cuesta
+    // organización, no plata).
+    morosoPagaSolo: 0.08, // chance semanal de que un moroso pague lo que debe (con 0.18 la quiebra desaparecía del todo)
+    morosoPagaMaxSemanas: 1,
+    alambreColchon: 40, // si el imprevisto dejaría la caja debajo de esto, se arregla con alambre
+    alambreOrganizacion: 3, // lo que cuesta en organización arreglarlo con alambre
+    // El sponsor como contrato: renueva si cumplís, y cada renovación sube el aporte.
+    sponsorRenewBonus: 10,
+    sponsorMaxWeekly: 120,
   },
 
   match: {
@@ -52,10 +65,13 @@ export const BALANCE = {
   // Dificultad de faltas (se elige al crear la partida): multiplica las
   // ausencias y lesiones. En difícil, armar el equipo con los que vinieron
   // es el juego; en fácil, casi siempre están todos.
+  // La dificultad (sep 2026: también la economía): con Fácil hay un colchón de
+  // caja, menos imprevistos y los comercios se animan más; con Difícil, al
+  // revés. `cajaExtra` se suma a la caja inicial en los tres modos.
   absenceDifficulty: {
-    facil: { label: 'Fácil', life: 0.5, excuse: 0.6, injury: 0.6, maxOut: 2 },
-    medio: { label: 'Medio', life: 1, excuse: 1, injury: 1, maxOut: 3 },
-    dificil: { label: 'Difícil', life: 1.9, excuse: 1.6, injury: 1.5, maxOut: 4 },
+    facil: { label: 'Fácil', life: 0.5, excuse: 0.6, injury: 0.6, maxOut: 2, cajaExtra: 120, mishap: 0.6, sponsorChance: 0.1 },
+    medio: { label: 'Medio', life: 1, excuse: 1, injury: 1, maxOut: 3, cajaExtra: 0, mishap: 1, sponsorChance: 0 },
+    dificil: { label: 'Difícil', life: 1.9, excuse: 1.6, injury: 1.5, maxOut: 4, cajaExtra: -60, mishap: 1.4, sponsorChance: -0.08 },
   },
 
   // Confirmación de asistencia previa al partido: los de poco compromiso fallan
@@ -280,7 +296,9 @@ export const BALANCE = {
       // La vida no mira el ánimo: prob. de que a un jugador directamente no le dé el calendario.
       noPuedeChance: 0.13,
     },
-    raffle: { cost: 30, incomeMin: 30, incomeMax: 170 },
+    // La rifa con historia: el barrio compra la primera con ganas; otra
+    // enseguida rinde menos (fatigaFactor) y una tercera seguida, cansa.
+    raffle: { cost: 30, incomeMin: 30, incomeMax: 170, fatigaSemanas: 4, fatigaFactor: 0.6 },
     sponsorSearch: { baseChance: 0.35, prestigeFactor: 0.005 },
     talk: { motivationBoost: 14, failChance: 0.12 },
     collectFees: { motivationHit: -4 },

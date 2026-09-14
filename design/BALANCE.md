@@ -36,6 +36,8 @@ estrategias de referencia, **sin acciones del manager** (mide el piso):
   "repartir", lectura de juego 45-60): mide cómo rota el piloto del DT.
 - `conAsado`: zona y equipo con la gestión mínima del vestuario (asado cada semana que la
   caja lo aguanta, charla con el más caliente): mide desde dónde saturan el clima y la moral.
+- `contraRival`: como `zonaEquipo`, pero el ataque responde a la defensa del rival (mide cuánto vale leerlo).
+- `zonaSponsor`: como `zonaEquipo`, con la gestión mínima: busca sponsor cada semana que no tiene.
 
 Reporta: % de victorias, remontadas (concretadas / oportunidades), lesiones en
 partido por temporada, distribución de ausencias por semana y por jugador, caja
@@ -59,7 +61,8 @@ una partida jugada de verdad.
 | Lesiones en partido / temporada | 1-2 | 1.3 |
 | Semanas sin ausencias | ~1/3 (que "vinieron todos" sea noticia) | ~35% |
 | Top faltador vs resto | Tato ~2/temp, resto ~0.7 (no siempre el mismo) | ✓ |
-| Caja final sin recaudar | Deriva leve, con riesgo real de quiebre | $274-377 y 10-16% de quiebras según estrategia |
+| Caja final sin recaudar | Deriva leve, con riesgo real de quiebre | 8ª pasada (economía con arco, 60 temp.): $430-540 y 2-5% de quiebras según estrategia (antes $310-390 y ~10%) |
+| Quiebras con gestión mínima (`zonaSponsor`) | Cero: un sponsor alcanza para no quebrar | 8ª pasada: 0/60, caja final $1.200 |
 | Abandonos / temporada (sin gestión) | Castigar ignorar al plantel, no ser una masacre | 0.00 rotando · 1.78 sin tocar el banco (5ª pasada, T4: 0.15 con el plan por defecto · 1.50 con cinco fijos) |
 | Motivos de bronca al cierre (sin gestión) | Que no sean 100% 'minutos' (T4) | 5ª pasada: minutos 62 · plata 67 · grupo 11 (`zonaEquipo`, 60 temp.) |
 | Titulares que llegan fundidos | Que jugar con cinco se pague la semana siguiente | 5ª pasada: 0.42/partido con cinco fijos · 0.00 rotando |
@@ -109,6 +112,21 @@ pedido del rival (`rivalPideMinuto: false`): todas las estrategias suben
 ~1,5 puntos respecto de la 6ª por eso, y el gradiente no se mueve (presión
 +3.8 y mixta +11.9 sobre zona). Lesiones, abandonos y minutos del banco
 iguales.
+
+Nota de la 8ª pasada (sep 2026, la economía con arco): dos cosas que pasan
+solas bajan la quiebra sin gestión —el moroso que se pone al día por su
+cuenta (`morosoPagaSolo`) y el imprevisto que sin caja se arregla con
+alambre (`alambreColchon`)—, y el sponsor pasó a ser un contrato con
+condiciones que renueva si cumplís (`sponsors.ts`). A 60 temporadas: sin
+gestión, 1/60, 1/60, 3/60, 2/60 y 1/60 quiebras según estrategia (antes
+~10%), caja final $430-540 (antes $310-390); con `zonaSponsor` (busca sponsor
+cada semana que no tiene), 0/60 y $1.200. Con `morosoPagaSolo` en 0.18 y dos
+semanas de pago la quiebra desaparecía sin gestión y la caja terminaba en
+$700: se bajó a 0.08 y una semana. La deriva quedó algo por encima de "leve":
+anotado para vigilar. El sponsor con renovaciones es un ingreso grande
+(~$100/semana sostenidos): si en una partida jugada la plata deja de
+importar, el lugar para tocar es `sponsorRenewBonus` o las metas de las
+condiciones, no el aporte base.
 
 ## Sistemas de la 1ª pasada
 

@@ -1,5 +1,6 @@
 import { BALANCE, clamp } from './balance';
 import { recordFee } from './conduct';
+import { condicionTexto, semanaDelSponsor } from './sponsors';
 import type { GameState, Player } from './types';
 import type { Rng } from './rng';
 
@@ -32,7 +33,9 @@ export function weeklyEstimate(state: GameState): { income: { concept: string; a
   const income: { concept: string; amount: number }[] = [
     { concept: `Cuotas (${active.filter((p) => weeklyFee(p) > 0).length} jugadores al día)`, amount: fees },
   ];
-  if (state.sponsorWeeks > 0) {
+  if (state.sponsor) {
+    income.push({ concept: `${state.sponsor.name} (${state.sponsor.weeksLeft} sem. · pide ${condicionTexto(state.sponsor)})`, amount: state.sponsor.weekly });
+  } else if (state.sponsorWeeks > 0) {
     income.push({ concept: `Sponsor (${state.sponsorWeeks} sem. restantes)`, amount: BALANCE.economy.sponsorWeekly });
   }
   const expenses = [
@@ -55,8 +58,11 @@ export function weeklyEstimate(state: GameState): { income: { concept: string; a
  */
 export function applyWeeklyEconomy(s: GameState, rng: Rng): void {
   const active = s.players.filter((p) => !p.leftClub);
+  const E = BALANCE.economy;
+  const D = BALANCE.absenceDifficulty[s.absenceDifficulty ?? 'medio'];
 
-  // Algunos jugadores dejan de pagar según compromiso.
+  // Algunos jugadores dejan de pagar según compromiso. Y algunos morosos se
+  // ponen al día solos (cobraron, les dio vergüenza): pagan hasta dos semanas.
   for (const p of active) {
     if (p.feeStatus === 'pagada') {
       const skipChance = p.commitment < 45 ? 0.3 : p.commitment < 65 ? 0.12 : 0.03;
@@ -64,6 +70,12 @@ export function applyWeeklyEconomy(s: GameState, rng: Rng): void {
         p.feeStatus = 'pendiente';
         p.weeksUnpaid = 0;
       }
+    } else if (p.feeStatus === 'pendiente' && p.weeksUnpaid >= 1 && rng.chance(E.morosoPagaSolo)) {
+      const owed = E.feeWeekly * Math.min(p.weeksUnpaid, E.morosoPagaMaxSemanas);
+      s.club.money += owed;
+      s.ledger.push({ week: s.week, concept: `${p.name} se puso al día con la cuota`, amount: owed });
+      p.feeStatus = 'pagada';
+      p.weeksUnpaid = 0;
     }
     if (p.feeStatus === 'pendiente') p.weeksUnpaid += 1;
     // La ficha de conducta: pagó en fecha o debe (los becados no juegan esto).
@@ -78,7 +90,10 @@ export function applyWeeklyEconomy(s: GameState, rng: Rng): void {
     s.ledger.push({ week: s.week, concept: `Cuotas (${payers.length} jugadores)`, amount: feeIncome });
   }
 
-  if (s.sponsorWeeks > 0) {
+  if (s.sponsor) {
+    semanaDelSponsor(s);
+  } else if (s.sponsorWeeks > 0) {
+    // La pizzería de siempre, de los saves de antes del contrato con condiciones.
     s.club.money += BALANCE.economy.sponsorWeekly;
     s.ledger.push({ week: s.week, concept: 'Aporte del sponsor', amount: BALANCE.economy.sponsorWeekly });
     s.sponsorWeeks -= 1;
@@ -140,13 +155,20 @@ export function applyWeeklyEconomy(s: GameState, rng: Rng): void {
     }
   }
 
-  // Imprevistos: la infraestructura del club también juega su partido.
-  if (rng.chance(BALANCE.economy.mishapChance)) {
-    const amount = rng.int(BALANCE.economy.mishapMin, BALANCE.economy.mishapMax);
+  // Imprevistos: la infraestructura del club también juega su partido. Si no
+  // hay caja, se arregla con alambre: no cuesta plata, cuesta organización
+  // (y en algún momento se paga de otra manera).
+  if (rng.chance(E.mishapChance * D.mishap)) {
+    const amount = rng.int(E.mishapMin, E.mishapMax);
     const mishap = rng.pick(MISHAPS);
-    s.club.money -= amount;
-    s.ledger.push({ week: s.week, concept: mishap, amount: -amount });
-    s.news.unshift({ week: s.week, text: `${mishap}: se fueron $${amount} de la caja.`, tone: 'bad' });
+    if (s.club.money - amount < E.alambreColchon) {
+      s.club.organization = clamp(s.club.organization - E.alambreOrganizacion);
+      s.news.unshift({ week: s.week, text: `${mishap}. No había caja: se arregló con alambre y buena voluntad. El club se desordena un poco.`, tone: 'neutral' });
+    } else {
+      s.club.money -= amount;
+      s.ledger.push({ week: s.week, concept: mishap, amount: -amount });
+      s.news.unshift({ week: s.week, text: `${mishap}: se fueron $${amount} de la caja.`, tone: 'bad' });
+    }
   }
 
   // Los cumplidores se molestan si sienten que bancan a los demás.

@@ -60,7 +60,7 @@ const STRATEGIES = {
   conAsado: {
     tactics: () => ({ defense: 'zona', attack: 'equipo' }),
     rotate: null,
-    actions: (s) => (s.club.money >= 300 ? ['asado', 'talk'] : ['talk']),
+    gestion: (s) => (s.club.money >= 300 ? ['asado', 'talk'] : ['talk']),
   },
   // Presión a toda cancha rotando piernas frescas (la ex-dominante).
   presionRotate: {
@@ -95,6 +95,14 @@ const STRATEGIES = {
       return { defense: 'zona', attack: def === 'presion' ? 'equipo' : def === 'hombre' ? 'correr' : 'estrella' };
     },
     rotate: null,
+  },
+  // Gestión mínima: como zonaEquipo, pero cada semana sin sponsor sale a
+  // buscar uno. Mide la economía con arco: con esto, las quiebras por caja
+  // tienen que desaparecer.
+  zonaSponsor: {
+    tactics: () => ({ defense: 'zona', attack: 'equipo' }),
+    rotate: null,
+    gestion: (s) => (s.sponsor || s.sponsorWeeks > 0 ? [] : ['sponsor']),
   },
 };
 
@@ -136,9 +144,9 @@ function playSeason(seed, strategy) {
 
   while (s.phase !== 'gameOver' && s.week <= s.seasonLength) {
     // Sin acciones ni eventos: se mide el piso, sin gestión del manager
-    // (salvo que la estrategia elija acciones: ver `conAsado`).
-    const actions = STRATEGIES[strategy].actions ? STRATEGIES[strategy].actions(s) : [];
-    s = { ...s, pendingEvent: null, actionsChosen: actions };
+    // (salvo la estrategia que declara una gestión mínima).
+    const gestion = STRATEGIES[strategy].gestion;
+    s = { ...s, pendingEvent: null, actionsChosen: gestion ? gestion(s) : [] };
     s = confirmActions(s);
 
     const outs = s.callUp.filter((c) => c.status !== 'confirmado');

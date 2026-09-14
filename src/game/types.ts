@@ -518,6 +518,34 @@ export interface Coach {
   poachRisk?: number;
 }
 
+/** Lo que pide el sponsor para renovar. */
+export type SponsorCondicion =
+  /** Ganar N de los partidos del contrato. */
+  | 'ganar'
+  /** Llegar al final con el prestigio social en N o más. */
+  | 'publico'
+  /** No perder ningún partido por N o más (se corta en el acto). */
+  | 'sin_papelon'
+  /** Llegar al final con N% del plantel al día con la cuota. */
+  | 'cuotas';
+
+/** El sponsor como contrato con condiciones (sep 2026). */
+export interface SponsorContract {
+  id: string;
+  name: string;
+  /** Lo que pone por semana. */
+  weekly: number;
+  weeksLeft: number;
+  weeksTotal: number;
+  condicion: SponsorCondicion;
+  /** La meta de la condición (partidos, prestigio, puntos de paliza, porcentaje). */
+  meta: number;
+  /** Lo que llevás (partidos ganados en el contrato; el resto se mide al final). */
+  progreso: number;
+  /** Cuántas veces renovó ya (cada renovación sube el aporte). */
+  renovaciones: number;
+}
+
 /**
  * Incidencia del partido con decisión pendiente (serializable). Desde sep
  * 2026 hay más situaciones que las arbitrales: cuatro faltas, un roce con un
@@ -1104,8 +1132,16 @@ export interface GameState {
   clubTimeline: TimelineEvent[];
   /** Jugadores que abandonaron el club durante la temporada. */
   playersLeftCount: number;
-  /** Semanas restantes de contrato con sponsor (0 = sin sponsor). */
+  /** Semanas restantes de contrato con sponsor (0 = sin sponsor). Espejo de `sponsor.weeksLeft`. */
   sponsorWeeks: number;
+  /**
+   * El sponsor como contrato con condiciones (sep 2026, la economía con arco):
+   * quién es, cuánto pone, y qué pide para renovar. Sin esto y con
+   * `sponsorWeeks > 0` (saves viejos), es la pizzería de siempre sin condición.
+   */
+  sponsor?: SponsorContract | null;
+  /** Semana de la última rifa: el barrio se cansa si le vendés otra enseguida. */
+  ultimaRifa?: number;
   gameOverReason: string | null;
   startingMoney: number;
   /** Promesas hechas a jugadores (condiciones aceptadas). */

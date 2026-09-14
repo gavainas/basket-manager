@@ -1111,6 +1111,38 @@ button.danger {
 .partido-incidencia { border-color: var(--warn); }
 .vista .partido-incidencia > h3.card-band { background: var(--warn); }
 
+/* Con una incidencia que decidir, la cancha cede alto: las tres opciones
+   tienen que entrar sin scroll a 815 (antes la tercera quedaba escondida). */
+.pv-centro.con-incidencia .pv-cancha { height: clamp(90px, 12vh, 140px); }
+/* En ventanas bajas la cancha se guarda mientras se decide: la decisión es lo que se mira. */
+@media (max-height: 800px) {
+  .pv-centro.con-incidencia .pv-cancha { display: none; }
+}
+/* Las opciones van en columnas (tres a lo ancho del panel), no apiladas:
+   ocupan la mitad de alto y se comparan de un vistazo. */
+.pv-incidencia-opciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 0.35rem;
+  align-items: stretch;
+}
+.pv-incidencia-opciones button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  line-height: 1.25;
+  height: 100%;
+}
+.pv-incidencia-opciones .opt-hint {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
 /* Ya no es sticky: es una fila de la grilla. Por eso dejó de cortar las filas de
    "En cancha" y "Banco" cuando el contenido pasaba por debajo. */
 .partido-pantalla .partido-cabezal {
