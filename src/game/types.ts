@@ -359,6 +359,11 @@ export interface QuarterContext {
   carryAgainst: number;
   /** Bronca canalizada en este cuarto. */
   rage: boolean;
+  /** Lo que dejó la incidencia del descanso para este cuarto. */
+  atkMod: number;
+  defMod: number;
+  /** Lo que se decidió que pasa en este cuarto (un riesgo que se cumplió), en qué tramo. */
+  eventos: { k: number; playerId: string; kind: RiesgoPendiente['kind'] }[];
   /** Ya hubo una lesión en este cuarto. */
   injured: boolean;
   /** El rival ya pidió minuto en este cuarto. */
@@ -418,6 +423,17 @@ export interface LiveMatchState {
   refTension?: number;
   /** El próximo cuarto sale con bronca canalizada (+intensidad). */
   rageBoost?: boolean;
+  /** Multiplicadores de una vez para el próximo cuarto que dejó una incidencia (el que salió apagado, el que defiende blando). */
+  atkModNext?: number;
+  defModNext?: number;
+  /** Riesgos que dejó una decisión, a resolver en el próximo cuarto. */
+  riesgos?: RiesgoPendiente[];
+  /** Multiplicador de la chance de lesión de cada uno por lo que resta del partido (el resentido que siguió). */
+  riesgoLesion?: Record<string, number>;
+  /** Los que no vuelven a entrar en este partido: expulsados, la quinta falta, el que sacaste resentido. */
+  fueraDelPartido?: string[];
+  /** Expulsados (para el informe y las noticias). */
+  expulsados?: { playerId: string; name: string; motivo: string }[];
   /** Incidencia arbitral esperando una decisión del manager. */
   pendingIncident?: PendingRefIncident | null;
   /** Textos de incidencia y de color ya usados en este partido: no se repiten. */
@@ -489,13 +505,30 @@ export interface Coach {
   poachRisk?: number;
 }
 
-/** Incidencia arbitral con decisión pendiente (serializable). */
+/**
+ * Incidencia del partido con decisión pendiente (serializable). Desde sep
+ * 2026 hay más situaciones que las arbitrales: cuatro faltas, un roce con un
+ * rival, uno que se resiente, el árbitro casero. Las pistas de cada opción se
+ * escriben con el contexto (el árbitro, la personalidad, el marcador), porque
+ * la misma opción no siempre conviene.
+ */
 export interface PendingRefIncident {
-  kind: 'falta_dudosa' | 'tecnica' | 'criterio' | 'buen_arbitraje';
+  kind: 'falta_dudosa' | 'tecnica' | 'criterio' | 'buen_arbitraje' | 'cuatro_faltas' | 'roce' | 'resentido' | 'casero';
   playerId?: string;
   playerName?: string;
   text: string;
   options: { label: string; hint: string }[];
+}
+
+/**
+ * Un riesgo que dejó una decisión y se resuelve en el próximo cuarto, en un
+ * tramo al azar: la segunda técnica (expulsión), una técnica más, la quinta
+ * falta. La lesión no va acá: multiplica la chance del jugador (`riesgoLesion`).
+ */
+export interface RiesgoPendiente {
+  playerId: string;
+  kind: 'expulsion' | 'tecnica' | 'quinta';
+  chance: number;
 }
 
 export interface MatchResult {

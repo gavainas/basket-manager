@@ -98,8 +98,34 @@ export function sanitizeLineup(s: GameState): void {
 
 /** ¿Puede pisar la cancha ahora? Los que llegan al segundo tiempo, recién
  *  desde el 3er cuarto (con 2 cuartos ya jugados). */
-function canEnterCourt(live: LiveMatchState, playerId: string): boolean {
+export function canEnterCourt(live: LiveMatchState, playerId: string): boolean {
+  if ((live.fueraDelPartido ?? []).includes(playerId)) return false;
   return live.quarters.length >= 2 || !(live.lateIds ?? []).includes(playerId);
+}
+
+/**
+ * Sale de la cancha (lesión, expulsión, quinta falta, o porque lo sacaste) y
+ * entra el recambio con más piernas que pueda entrar; sin banco, quedan
+ * cuatro. Devuelve el que entró, si hubo. Muta `live`.
+ */
+export function reemplazar(s: GameState, live: LiveMatchState, outId: string): Player | undefined {
+  const sub = live.squad
+    .filter((id) => !live.onCourt.includes(id) && id !== outId && canEnterCourt(live, id))
+    .map((id) => s.players.find((x) => x.id === id)!)
+    .filter((x) => !!x && isSelectable(x))
+    .sort((a, b) => (live.playerFresh[b.id] ?? 70) - (live.playerFresh[a.id] ?? 70))[0];
+  live.onCourt = live.onCourt.filter((id) => id !== outId);
+  if (sub) live.onCourt.push(sub.id);
+  if (live.starId === outId && live.onCourt.length > 0) {
+    live.starLocked = false;
+    refreshStar(s, live);
+  }
+  return sub;
+}
+
+/** Lo que no vuelve a entrar en este partido. */
+export function fueraDelPartido(live: LiveMatchState, playerId: string): void {
+  live.fueraDelPartido = [...(live.fueraDelPartido ?? []), playerId];
 }
 
 /**
@@ -1138,6 +1164,7 @@ function fuerzas(
 
   // Bronca canalizada y tensión con los jueces: pegan en la concentración.
   if (ctx.rage) atkMult *= 1.05;
+  atkMult *= ctx.atkMod;
   atkMult *= 1 - 0.012 * (live.refTension ?? 0);
   // Si el DT maneja los cambios, su lectura del juego suma (o resta).
   if (live.autoRotation && s.coach) atkMult *= 1 + (s.coach.tactics - 55) * 0.0012;
@@ -1189,6 +1216,7 @@ function fuerzas(
     pushDef(['El rival ya sabe salir contra nuestra marca: la rompen de memoria.']);
   }
   if (teamFresh < 30) pushDef(['El equipo juega de memoria: no quedan piernas.']);
+  defMult *= ctx.defMod;
 
   return { atk, defMult, star, hot };
 }
@@ -1328,6 +1356,13 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
     carryFor: 0,
     carryAgainst: 0,
     rage: !!live.rageBoost,
+    atkMod: live.atkModNext ?? 1,
+    defMod: live.defModNext ?? 1,
+    // Los riesgos que dejó la incidencia del descanso: se tiran ahora y, si
+    // se cumplen, caen en un tramo al azar del cuarto.
+    eventos: (live.riesgos ?? [])
+      .filter((r) => rng.chance(r.chance) && live.onCourt.includes(r.playerId))
+      .map((r) => ({ k: rng.int(0, TRAMOS_POR_CUARTO - 1), playerId: r.playerId, kind: r.kind })),
     injured: false,
     rivalTimeout: false,
     ourTimeoutAt: -1,
@@ -1336,6 +1371,9 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
     notes,
   };
   live.rageBoost = false;
+  live.atkModNext = undefined;
+  live.defModNext = undefined;
+  live.riesgos = undefined;
 
   // Las notas de color del arranque: la táctica, el quinteto, la defensa.
   const onCourt = live.onCourt.map((id) => s.players.find((p) => p.id === id)!);
@@ -1382,7 +1420,7 @@ function closeQuarter(s: GameState, live: LiveMatchState, rng: Rng): void {
   const star = onCourt.find((p) => p.id === live.starId) ?? onCourt[0];
   if (star) notes.push(...quarterFlavor({ qIndex, ourQ: q.for, rivalQ: q.against, onCourt, qPts, qReb: ctx.rebBox, starId: star.id, live }, rng));
   if (onCourt.length > 0) {
-    const refNote = rollRefIncident(live, onCourt, qIndex, rng);
+    const refNote = rollRefIncident(s, live, onCourt, qIndex, rng);
     if (refNote) notes.push(refNote);
   }
   if (notes.length === 0) notes.push(fallbackNote(rng));
@@ -1499,6 +1537,34 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
     tramoNotes.push('⏱ Minuto pedido: el equipo se junta, respira y se ordena.');
   }
 
+  // Lo que una decisión tuya dejó pendiente y hoy se cumple: la segunda
+  // técnica, una técnica más, la quinta falta.
+  for (const ev of ctx.eventos.filter((e) => e.k === k && live.onCourt.includes(e.playerId))) {
+    const p = byId(ev.playerId);
+    if (ev.kind === 'tecnica') {
+      p.seasonTechs = (p.seasonTechs ?? 0) + 1;
+      live.refTension = clamp((live.refTension ?? 0) + 1, 0, 5);
+      const n = `Técnica para ${p.name}: volvió a protestar y el árbitro no se lo dejó pasar.`;
+      tramoNotes.push(n);
+      ctx.notes.push(n);
+      continue;
+    }
+    if (ev.kind === 'expulsion') {
+      p.seasonTechs = (p.seasonTechs ?? 0) + 1;
+      live.refTension = clamp((live.refTension ?? 0) + 1, 0, 5);
+      logPlayerEvent(p, s.seasonNumber, s.week, 'hito', 'Expulsado por doble técnica en pleno partido.');
+    }
+    fueraDelPartido(live, p.id);
+    live.expulsados = [...(live.expulsados ?? []), { playerId: p.id, name: p.name, motivo: ev.kind === 'expulsion' ? 'doble técnica' : 'cinco faltas' }];
+    const sub = reemplazar(s, live, p.id);
+    const n =
+      ev.kind === 'expulsion'
+        ? `🟥 Segunda técnica para ${p.name}: expulsado. ${sub ? `Entra ${sub.name}.` : 'No queda recambio: seguimos con cuatro.'}`
+        : `🟥 ${p.name} hizo la quinta falta: afuera. ${sub ? `Entra ${sub.name}.` : 'No queda recambio: seguimos con cuatro.'}`;
+    tramoNotes.push(n);
+    ctx.notes.unshift(n);
+  }
+
   // El rival decide cómo defender este tramo (sin mirar lo nuestro).
   const cambioRival = rivalDecideDefensa(live, rival, ctx, rng);
   if (cambioRival) tramoNotes.push(cambioRival);
@@ -1593,6 +1659,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
       const frag = fragilityOf(p);
       let injChance = (M.matchInjuryBase * (0.5 + frag / 60) * injuryDiffMult) / K;
       if (freshOf(p.id) < 35) injChance *= M.matchInjuryTiredMult;
+      injChance *= live.riesgoLesion?.[p.id] ?? 1;
       if (aggressiveDef) injChance *= M.matchInjuryAggressiveMult;
       // Jugarlo fundido fue tu decisión al pasar lista: el cuerpo la cobra.
       if (s.callUp.some((c) => c.playerId === p.id && c.playingExhausted)) injChance *= 1.6;
@@ -1615,21 +1682,11 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
       }
 
       // Sale y entra el recambio con más piernas; sin banco, quedan cuatro.
-      const sub = live.squad
-        .filter((id) => !live.onCourt.includes(id) && canEnterCourt(live, id))
-        .map((id) => s.players.find((x) => x.id === id)!)
-        .filter((x) => isSelectable(x))
-        .sort((a, b) => (live.playerFresh[b.id] ?? 70) - (live.playerFresh[a.id] ?? 70))[0];
-      live.onCourt = live.onCourt.filter((id) => id !== p.id);
-      if (sub) live.onCourt.push(sub.id);
+      const sub = reemplazar(s, live, p.id);
       const n = `🚑 ${p.name} ${how} ${sub ? `Entra ${sub.name} en su lugar.` : 'No queda recambio: seguimos con cuatro.'}`;
       ctx.notes.unshift(n);
       tramoNotes.push(n);
       ctx.injured = true;
-      if (live.starId === p.id && live.onCourt.length > 0) {
-        live.starLocked = false;
-        refreshStar(s, live);
-      }
       break;
     }
   }
@@ -1961,6 +2018,10 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       text: `${inj.name} se lesionó en el partido: ${inj.weeks} semana${inj.weeks > 1 ? 's' : ''} afuera.`,
       tone: 'bad',
     });
+  }
+  for (const ex of live.expulsados ?? []) {
+    effects.push(`🟥 ${ex.name} se fue expulsado (${ex.motivo}).`);
+    if (ex.motivo === 'doble técnica') s.news.unshift({ week: s.week, text: `${ex.name} fue expulsado por doble técnica. En la liga ya lo tienen fichado.`, tone: 'bad' });
   }
   // Tres técnicas en el año: el informe llega a la liga y cae la suspensión.
   for (const p of s.players) {

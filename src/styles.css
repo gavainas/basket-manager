@@ -5350,6 +5350,10 @@ button.mini.blue.on {
 .pv-piernas-rival .mini-medidor { margin: 0; }
 .pv-piernas-rival b { text-align: right; color: var(--text); }
 
+/* Afuera por hoy (expulsado, cinco faltas, sacado resentido): la fila se apaga. */
+.pv-fila-j.fuera { opacity: 0.45; }
+.pv-fila-j.fuera .pvj-nombre { text-decoration: line-through; }
+
 /* La defensa del rival que le viste, con la pista de qué hacer contra ella. */
 .pv-defensa-rival {
   display: grid;

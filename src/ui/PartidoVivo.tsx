@@ -371,18 +371,20 @@ export function PartidoVivo({ state, dispatch }: Props) {
     const fresh = freshOf(p.id);
     const sel = lado === 'court' ? saleSel === p.id : entraSel === p.id;
     const esRef = live.starId === p.id && lado === 'court';
+    // Expulsado, con cinco faltas o sacado resentido: no vuelve a entrar hoy.
+    const fuera = lado === 'bench' && (live.fueraDelPartido ?? []).includes(p.id);
     return (
       <div
         key={p.id}
-        className={`pv-fila-j${sel ? (lado === 'court' ? ' sale' : ' entra') : ''}`}
-        draggable={!live.finished}
+        className={`pv-fila-j${sel ? (lado === 'court' ? ' sale' : ' entra') : ''}${fuera ? ' fuera' : ''}`}
+        draggable={!live.finished && !fuera}
         onDragStart={(e) => {
           e.dataTransfer.setData('text/plain', p.id);
           e.dataTransfer.effectAllowed = 'move';
         }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDropFila(lado, p)}
-        title={`${p.name} · ${p.position} · piernas ${fresh} · ${minsOf(p.id)}' jugados`}
+        title={fuera ? `${p.name} · afuera por hoy: no vuelve a entrar` : `${p.name} · ${p.position} · piernas ${fresh} · ${minsOf(p.id)}' jugados`}
       >
         <span className="pvj-pos">{POS_ABBR[p.position]}</span>
         <span className="pvj-nombre">
@@ -396,8 +398,8 @@ export function PartidoVivo({ state, dispatch }: Props) {
         </span>
         <button
           className={`pvj-swap${sel ? ' on' : ''}`}
-          disabled={live.finished}
-          title={lado === 'court' ? 'Sale' : 'Entra'}
+          disabled={live.finished || fuera}
+          title={fuera ? 'Afuera por hoy' : lado === 'court' ? 'Sale' : 'Entra'}
           aria-label={lado === 'court' ? `Sacar a ${p.name}` : `Meter a ${p.name}`}
           onClick={() => (lado === 'court' ? setSaleSel(sel ? null : p.id) : setEntraSel(sel ? null : p.id))}
         >
