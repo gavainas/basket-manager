@@ -1339,6 +1339,10 @@ button.danger {
   align-items: center;
   gap: 0.7rem;
   width: 100%;
+  /* Como ítem de la grilla de tiles, sin esto el botón no puede encoger por
+     debajo de su contenido y el aviso largo se cortaba contra el borde del
+     panel en vez de terminar en puntos suspensivos. */
+  min-width: 0;
   text-align: left;
   font: inherit;
   color: var(--text);
@@ -1391,16 +1395,15 @@ button.danger {
   text-transform: uppercase;
 }
 
-/* Dos líneas: el aviso tiene que poder leerse sin entrar, y con una sola
-   "La caja no cubre la semana: $90 contra…" se cortaba justo en el número. */
+/* Un renglón con elipsis (la regla de "El Tablero encoge con la ventana", más
+   arriba). Acá antes había un clamp de dos renglones que quedó pisando a
+   aquella: con `white-space: nowrap` adentro de un `-webkit-box` el aviso se
+   cortaba en seco, sin puntos suspensivos. El texto completo vive en el
+   `title` del tile. */
 .hub-tile-note {
   font-size: var(--fs-sm);
   line-height: 1.3;
   color: var(--text-dim);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .hub-tile.bad .hub-tile-note { color: var(--bad); }
