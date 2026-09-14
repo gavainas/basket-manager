@@ -34,6 +34,8 @@ estrategias de referencia, **sin acciones del manager** (mide el piso):
 - `mixta`: hombre temprano, zona al final, cerradores en el último cuarto.
 - `conProfe`: zona y equipo con el profe del barrio al mando (DT honorario, directiva
   "repartir", lectura de juego 45-60): mide cómo rota el piloto del DT.
+- `conAsado`: zona y equipo con la gestión mínima del vestuario (asado cada semana que la
+  caja lo aguanta, charla con el más caliente): mide desde dónde saturan el clima y la moral.
 
 Reporta: % de victorias, remontadas (concretadas / oportunidades), lesiones en
 partido por temporada, distribución de ausencias por semana y por jugador, caja
@@ -351,18 +353,34 @@ Corrida de 60 temporadas, antes y después:
   a ser un DT que enoja a los protagonistas, que es su estilo, pero conviene que lo decida
   Gabi jugando.
 
-## Los diales sociales al cierre (septiembre 2026, medido, sin tocar)
+## Los diales sociales al cierre (septiembre 2026, el clima ya no se clava en 99)
 
 El informe de testing vio terminar una temporada ganadora con "moral 99 y ambiente 99 sin
-esfuerzo". El harness reporta desde ahora **clima social y moral media al cierre**. Sin
-gestión, a 30 temporadas por estrategia: clima 55-69 y moral 50-67, y **ninguna** temporada
-cierra con alguno de los dos en 90 o más (ni `mixta`, que gana el 60%). El motor ya frena
-la subida (el clima deriva hacia 55 cada semana, `moraleSoftcap*` hace que ganar rinda
-menos cuanto más arriba está el ánimo). La saturación que vio el informe viene de la
-gestión que el harness no juega —asados, charlas, eventos resueltos "bien"—, así que
-frenarla es tocar lo que suman esas acciones, no el partido. Pendiente: una estrategia del
-harness que gestione (asado cada semana que puede, charla al más caliente) para medir
-cuánto suman y desde dónde saturan, antes de bajar ningún número.
+esfuerzo". El harness reporta desde ahora **clima social y moral media al cierre**, y tiene
+una estrategia que gestiona, `conAsado` (asado cada semana que la caja lo aguanta, charla
+con el más caliente). Medido a 30 temporadas:
+
+| | Clima al cierre | Temporadas con clima ≥ 90 | Moral media |
+| --- | --- | --- | --- |
+| Sin gestión (`zonaEquipo` … `mixta`) | 55-69 | 0/30 | 50-67 |
+| `conAsado`, antes | 83 | **10/30** | 68 |
+| `conAsado`, ahora | 74 | 0/30 | 65 |
+
+Sin gestión nunca saturaba: el motor ya derivaba el clima hacia 55 y `moraleSoftcap*` ya
+frenaba el ánimo. Lo que saturaba era el asado semanal: +12 (+16 con fiestón) contra -1 de
+deriva. Dos frenos, los dos en `balance.ts`:
+
+- **Techo blando del clima en el asado** (`asado.climateSoftcapSpan` 40,
+  `climateSoftcapMinFactor` 0.25): la mesa llena rinde menos cuanto más alto está el
+  ambiente, igual que la alegría con el ánimo. A 60 rinde entero, a 80 la mitad, a 90 un
+  cuarto.
+- **La deriva aprieta arriba** (`weekly.climateGravityOver70` 2, `climateGravityOver85` 3):
+  a 99 el clima no se queda sin que alguien lo alimente.
+
+Con el asado semanal el clima se mantiene alto (74) sin clavarse: el asado sigue valiendo
+la plata (`conAsado` gana 52-55% contra 50-52% de `zonaEquipo`: la química empuja, dentro
+del ruido de 30 temporadas) y la segunda mitad de la
+temporada no pierde la tensión social. La moral no estaba saturando (65-68) y no se tocó.
 
 ## El modo Carrera (septiembre 2026, lo que quedaba de T3)
 

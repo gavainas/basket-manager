@@ -210,9 +210,11 @@ export function resolveAsado(s: GameState, rng: Rng): AsadoReport {
   const surprise = attended.find((p) => plan.rsvps.some((r) => r.playerId === p.id && r.answer === 'no_va'));
   if (surprise) highlights.push(`${surprise.name} había dicho que no… y cayó igual, con el postre bajo el brazo.`);
 
+  // Techo blando: la mesa llena rinde menos cuanto más alto está el ambiente.
+  const techo = Math.min(1, Math.max(A.climateSoftcapMinFactor, (100 - s.club.socialClimate) / A.climateSoftcapSpan));
   if (tier === 'fieston' || tier === 'bueno') {
     const big = tier === 'fieston';
-    s.club.socialClimate = clamp(s.club.socialClimate + (A.climate + (big ? 4 : 0)) * factor);
+    s.club.socialClimate = clamp(s.club.socialClimate + (A.climate + (big ? 4 : 0)) * factor * techo);
     s.club.socialPrestige = clamp(s.club.socialPrestige + (A.socialPrestige + (big ? 2 : 0)) * factor);
     for (const p of attended) {
       p.motivation = clamp(p.motivation + (p.personality === 'social' ? 6 : 4) * factor);
@@ -238,7 +240,7 @@ export function resolveAsado(s: GameState, rng: Rng): AsadoReport {
       s.news.unshift({ week: s.week, text: `Asadazo del plantel: ${attended.length} en la mesa. El grupo está más unido que nunca.`, tone: 'good' });
     }
   } else if (tier === 'flojo') {
-    s.club.socialClimate = clamp(s.club.socialClimate + 3 * factor);
+    s.club.socialClimate = clamp(s.club.socialClimate + 3 * factor * techo);
     for (const p of attended) p.motivation = clamp(p.motivation + 2 * factor);
     highlights.push('Mesa corta y sobremesa tibia: se notaron las sillas vacías.');
   } else {

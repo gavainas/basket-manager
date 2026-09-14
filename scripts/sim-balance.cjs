@@ -53,6 +53,15 @@ const STRATEGIES = {
     rotate: null,
     coach: 'profe',
   },
+  // Con gestión mínima del vestuario: asado cada semana que la caja lo
+  // aguanta y la charla con el más caliente. Mide desde dónde saturan el
+  // clima y la moral cuando alguien los atiende (informe de testing: "moral
+  // 99 y ambiente 99 sin esfuerzo").
+  conAsado: {
+    tactics: () => ({ defense: 'zona', attack: 'equipo' }),
+    rotate: null,
+    actions: (s) => (s.club.money >= 300 ? ['asado', 'talk'] : ['talk']),
+  },
   // Presión a toda cancha rotando piernas frescas (la ex-dominante).
   presionRotate: {
     tactics: () => ({ defense: 'presion', attack: 'equipo' }),
@@ -126,8 +135,10 @@ function playSeason(seed, strategy) {
   };
 
   while (s.phase !== 'gameOver' && s.week <= s.seasonLength) {
-    // Sin acciones ni eventos: se mide el piso, sin gestión del manager.
-    s = { ...s, pendingEvent: null, actionsChosen: [] };
+    // Sin acciones ni eventos: se mide el piso, sin gestión del manager
+    // (salvo que la estrategia elija acciones: ver `conAsado`).
+    const actions = STRATEGIES[strategy].actions ? STRATEGIES[strategy].actions(s) : [];
+    s = { ...s, pendingEvent: null, actionsChosen: actions };
     s = confirmActions(s);
 
     const outs = s.callUp.filter((c) => c.status !== 'confirmado');

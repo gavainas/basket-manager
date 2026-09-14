@@ -467,8 +467,14 @@ export function advanceWeek(state: GameState): GameState {
 
   // --- Deriva del club ---
   s.club.organization = clamp(s.club.organization - 1);
-  if (s.club.socialClimate > 55) s.club.socialClimate = clamp(s.club.socialClimate - 1);
-  else if (s.club.socialClimate < 55) s.club.socialClimate = clamp(s.club.socialClimate + 1);
+  const clima = s.club.socialClimate;
+  const W = BALANCE.weekly;
+  // El clima vuelve solo hacia 55, y más rápido cuanto más arriba está: a 99
+  // no se queda sin que alguien lo alimente (informe de testing: "moral 99 y
+  // ambiente 99 sin esfuerzo").
+  const gravedad = clima > 85 ? W.climateGravityOver85 : clima > 70 ? W.climateGravityOver70 : clima > 55 ? 1 : 0;
+  if (gravedad > 0) s.club.socialClimate = clamp(clima - gravedad);
+  else if (clima < 55) s.club.socialClimate = clamp(clima + 1);
 
   // --- Avance ---
   s.week += 1;
