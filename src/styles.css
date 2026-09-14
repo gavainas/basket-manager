@@ -4356,7 +4356,10 @@ button.mini.blue.on {
   display: grid;
   /* La quinta columna era la cifra de compromiso; ahora es la conducta en
      palabras ("Está siempre", "Cuando quiere"), que necesita más ancho. */
-  grid-template-columns: 52px minmax(0, 1fr) 74px 74px minmax(108px, 132px) 74px minmax(200px, 280px) 152px 62px;
+  /* El "quién" no baja de 150px: a 1280 de ancho la nota se lo comía y el
+     nombre se partía en dos renglones (la planilla mostraba dos jugadores y
+     medio a 720p). */
+  grid-template-columns: 52px minmax(150px, 1fr) 74px 74px minmax(108px, 132px) 74px minmax(180px, 280px) 152px 62px;
   gap: var(--sp-3);
   align-items: center;
   padding: 0.55rem 1.4rem;
@@ -4422,16 +4425,26 @@ button.mini.blue.on {
   font-size: var(--fs-2xs);
   color: var(--text-faint);
   margin-left: 0.5rem;
+  /* "BASE · 22" baja de renglón entero o no baja: partido en "BASE ·" y "22"
+     no se lee. */
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .planilla-dicho {
-  display: block;
   font-size: var(--fs-sm);
   font-style: italic;
   color: var(--text-dim);
   line-height: 1.3;
   /* Aire suficiente para que el punteado del nombre no toque la frase. */
   margin-top: 0.3rem;
+  /* Dos renglones y punto: la frase entera vive en el title y en la ficha. Con
+     la bio completa cada renglón medía cinco líneas y a 720p entraban dos
+     jugadores y medio en la pantalla. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* La conducta en palabras (T2): el veredicto lleva el color del semáforo y los

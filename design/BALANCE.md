@@ -351,6 +351,19 @@ Corrida de 60 temporadas, antes y después:
   a ser un DT que enoja a los protagonistas, que es su estilo, pero conviene que lo decida
   Gabi jugando.
 
+## Los diales sociales al cierre (septiembre 2026, medido, sin tocar)
+
+El informe de testing vio terminar una temporada ganadora con "moral 99 y ambiente 99 sin
+esfuerzo". El harness reporta desde ahora **clima social y moral media al cierre**. Sin
+gestión, a 30 temporadas por estrategia: clima 55-69 y moral 50-67, y **ninguna** temporada
+cierra con alguno de los dos en 90 o más (ni `mixta`, que gana el 60%). El motor ya frena
+la subida (el clima deriva hacia 55 cada semana, `moraleSoftcap*` hace que ganar rinda
+menos cuanto más arriba está el ánimo). La saturación que vio el informe viene de la
+gestión que el harness no juega —asados, charlas, eventos resueltos "bien"—, así que
+frenarla es tocar lo que suman esas acciones, no el partido. Pendiente: una estrategia del
+harness que gestione (asado cada semana que puede, charla al más caliente) para medir
+cuánto suman y desde dónde saturan, antes de bajar ningún número.
+
 ## El modo Carrera (septiembre 2026, lo que quedaba de T3)
 
 El harness [`scripts/sim-carrera.cjs`](../scripts/sim-carrera.cjs) juega la primera

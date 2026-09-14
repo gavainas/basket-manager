@@ -120,6 +120,9 @@ function playSeason(seed, strategy) {
     // Tramos jugados con una posición natural sin cubrir (el quinteto sin base, sin pívot…).
     tramos: 0,
     tramosSinPuesto: 0,
+    // Los diales sociales al cierre: ¿saturan ganando? (informe de testing: "moral 99 y ambiente 99").
+    climaEnd: 0,
+    moralEnd: 0,
   };
 
   while (s.phase !== 'gameOver' && s.week <= s.seasonLength) {
@@ -193,6 +196,9 @@ function playSeason(seed, strategy) {
   }
 
   st.moneyEnd = s.club.money;
+  st.climaEnd = s.club.socialClimate;
+  const vivos = s.players.filter((p) => !p.leftClub);
+  st.moralEnd = vivos.length ? vivos.reduce((t, p) => t + p.motivation, 0) / vivos.length : 0;
   st.gameOver = s.phase === 'gameOver';
   st.playersLeft = s.playersLeftCount;
   for (const p of s.players) {
@@ -231,6 +237,8 @@ for (const strat of Object.keys(STRATEGIES)) {
     benchGames: 0,
     tramos: 0,
     tramosSinPuesto: 0,
+    clima: [],
+    moral: [],
   };
   for (let i = 0; i < RUNS; i++) {
     const st = playSeason(1000 + i * 7919, strat);
@@ -253,6 +261,8 @@ for (const strat of Object.keys(STRATEGIES)) {
     a.benchGames += st.benchGames;
     a.tramos += st.tramos;
     a.tramosSinPuesto += st.tramosSinPuesto;
+    a.clima.push(st.climaEnd);
+    a.moral.push(st.moralEnd);
     for (const [c, n] of Object.entries(st.grievanceCauses)) a.causes[c] = (a.causes[c] || 0) + n;
     for (const n of st.absenceCounts) a.absCounts[n] = (a.absCounts[n] || 0) + 1;
     for (const [name, c] of Object.entries(st.absencesByPlayer)) a.absByPlayer[name] = (a.absByPlayer[name] || 0) + c;
@@ -285,6 +295,13 @@ for (const strat of Object.keys(STRATEGIES)) {
     `Titulares que llegan fundidos: ${(a.exhaustedStarts / a.games).toFixed(2)}/partido  ·  Minutos por suplente: ${
       a.benchGames > 0 ? (a.benchMinutes / a.benchGames).toFixed(1) : '0'
     }'  ·  Tramos con un puesto sin cubrir: ${a.tramos > 0 ? ((a.tramosSinPuesto / a.tramos) * 100).toFixed(1) : '0'}%`
+  );
+  // Los diales sociales al cierre: si ganando saturan en 99, la segunda mitad
+  // de la temporada pierde la tensión social (informe de testing).
+  const media = (xs) => (xs.length ? xs.reduce((t, x) => t + x, 0) / xs.length : 0);
+  const sobre90 = (xs) => xs.filter((x) => x >= 90).length;
+  console.log(
+    `Clima social al cierre: ${media(a.clima).toFixed(0)} (≥90 en ${sobre90(a.clima)}/${a.clima.length} temporadas)  ·  Moral media al cierre: ${media(a.moral).toFixed(0)} (≥90 en ${sobre90(a.moral)}/${a.moral.length})`
   );
 }
 
