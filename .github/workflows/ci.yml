@@ -34,3 +34,5 @@ jobs:
         run: npm run sim -- 20
       - name: Pirámide y ligas (4 carreras × 4 temporadas)
         run: npm run sim:ligas -- 4 4
+      - name: Modo Carrera (20 pretemporadas por política)
+        run: npm run sim:carrera -- 20

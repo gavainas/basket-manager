@@ -107,7 +107,7 @@ function Fila({ state, p, indice }: { state: GameState; p: Player; indice: numbe
             {p.position} · {p.age}
           </span>
         </span>
-        <span className="planilla-dicho">{p.description}</span>
+        <span className="planilla-dicho" title={p.description}>{p.description}</span>
       </span>
 
       <Cifra value={p.physical} />

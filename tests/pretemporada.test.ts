@@ -108,3 +108,53 @@ describe('de una temporada a la siguiente', () => {
     expect(siguen / personasAntes.size).toBeGreaterThan(0.6);
   });
 });
+
+describe('la memoria entre temporadas: el título y la bronca cruzan el verano', () => {
+  const arranque = partidaNueva(9);
+  const fin = jugarTemporada({ ...arranque, club: { ...arranque.club, money: 3000 } });
+  const confirmados = (s: GameState) => Object.values(s.preseason!.continuity).filter((c) => c === 'confirmado').length;
+
+  it('el que se fue masticando bronca no vuelve como si nada, y la pretemporada lo cuenta', () => {
+    // Un leal, que siempre confirma, con una ruptura viva al cierre.
+    const leal = activePlayers(fin.players).find((p) => p.personality === 'leal') ?? activePlayers(fin.players)[0];
+    const conBronca: GameState = structuredClone(fin);
+    const p = conBronca.players.find((x) => x.id === leal.id)!;
+    p.grievance = { cause: 'minutos', level: 3, hits: 4, season: fin.seasonNumber, sinceWeek: 3, lastHitWeek: fin.seasonLength };
+    p.grudge = null;
+    let vistos = 0;
+    for (let seed = 1; seed <= 12; seed++) {
+      const ps = paso({ ...conBronca, seed }, { type: 'NEW_SEASON' });
+      const st = ps.preseason!.continuity[leal.id];
+      // Red de seguridad aparte (mínimo de confirmados), la bronca nunca deja un "confirmado" limpio.
+      if (st === 'confirmado') continue;
+      vistos += 1;
+      expect(['quiere_irse', 'pide_condicion', 'dudando']).toContain(st);
+      if (st === 'pide_condicion') expect(ps.preseason!.playerDemands[leal.id]).toBe('minutos');
+      expect(ps.preseason!.log.some((l) => l.includes(leal.name) && /bronca|cuenta hecha|bolso/.test(l))).toBe(true);
+    }
+    expect(vistos).toBeGreaterThan(0);
+    // Sin bronca, el leal confirma siempre.
+    const sinBronca = paso({ ...fin, seed: 1 }, { type: 'NEW_SEASON' });
+    expect(sinBronca.preseason!.continuity[leal.id]).toBe('confirmado');
+  });
+
+  it('el campeón vuelve con más ganas y menos ganas de irse', () => {
+    const campeon: GameState = structuredClone(fin);
+    campeon.playoffs = { qualified: true, userCup: 'oro', ties: [], champions: { oro: 'club' } };
+    let conTitulo = 0;
+    let sinTitulo = 0;
+    let logs = 0;
+    for (let seed = 1; seed <= 16; seed++) {
+      const a = paso({ ...campeon, seed }, { type: 'NEW_SEASON' });
+      const b = paso({ ...fin, playoffs: null, seed }, { type: 'NEW_SEASON' });
+      conTitulo += confirmados(a);
+      sinTitulo += confirmados(b);
+      if (a.preseason!.log.some((l) => /El título pesa/.test(l))) logs += 1;
+      const moralA = activePlayers(a.players).reduce((t, p) => t + p.motivation, 0) / activePlayers(a.players).length;
+      const moralB = activePlayers(b.players).reduce((t, p) => t + p.motivation, 0) / activePlayers(b.players).length;
+      expect(moralA).toBeGreaterThan(moralB);
+    }
+    expect(conTitulo).toBeGreaterThan(sinTitulo);
+    expect(logs).toBeGreaterThan(0);
+  });
+});

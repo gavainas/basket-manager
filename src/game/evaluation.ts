@@ -28,6 +28,13 @@ function grade(score: number): Grade {
   return 'Mala';
 }
 
+/**
+ * Qué alimenta los momentos memorables, dicho para el que los busca (sale de
+ * los `memorableMoments.push` del motor: el partido, el asado, los eventos).
+ */
+export const QUE_LOS_ALIMENTA =
+  'Los dan ganar en la hora o remontar desde 10 abajo, un batacazo o una paliza, sacarse la espina con el rival que te eliminó, un asado con la mesa llena, la charla que hace que alguien se quede, y una despedida como se debe.';
+
 export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   const row = state.standings.find((r) => r.teamId === 'club')!;
   const played = row.wins + row.losses;
@@ -107,10 +114,12 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
       label: 'Momentos memorables',
       score: memorableScore,
       grade: grade(memorableScore),
+      // El informe de testing pidió saber qué los alimenta: "es la métrica más
+      // alineada con la fantasía y la menos comunicada".
       detail:
-        state.memorableMoments.length > 0
-          ? `${state.memorableMoments.length} momento${state.memorableMoments.length > 1 ? 's' : ''} para el recuerdo.`
-          : 'Una temporada sin grandes historias para contar.',
+        state.memorableMoments.length >= 3
+          ? `${state.memorableMoments.length} momentos para el recuerdo.`
+          : `${state.memorableMoments.length === 0 ? 'Una temporada sin grandes historias para contar' : state.memorableMoments.length === 1 ? 'Un momento para el recuerdo' : 'Dos momentos para el recuerdo'}. ${QUE_LOS_ALIMENTA}`,
     },
   ];
 

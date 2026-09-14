@@ -1,5 +1,6 @@
 import { LIFE_REASON_IDS } from './absences';
 import { Rng, seedFromString } from './rng';
+import { logPlayerEvent } from './timeline';
 import type { CallUpEntry, ConductRecord, GameState, MarketPlayer, Player, Presencia } from './types';
 
 /**
@@ -17,9 +18,14 @@ import type { CallUpEntry, ConductRecord, GameState, MarketPlayer, Player, Prese
  *    el que arranca cumpliendo puede aflojar (por eso guardamos las últimas).
  * 2. Las referencias al fichar son interesadas: el amigo miente por lealtad,
  *    el ex DT exagera para sacárselo de encima (ver `marketReference`).
- * 3. El asado y la convocatoria son herramientas de información, no sólo de
- *    humor: cada una escribe en la ficha.
+ * 3. El asado, la convocatoria, la charla y "mandá a un compañero a
+ *    buscarlo" son herramientas de información, no sólo de humor: cada una
+ *    escribe en la ficha. El que viene porque lo fuiste a buscar cuenta como
+ *    presente, pero la ficha lo dice.
  */
+
+/** La etiqueta que alarma: la que el inicio avisa cuando alguien pasa a tenerla. */
+export const CUANDO_QUIERE = 'Aparece cuando quiere';
 
 export function emptyRecord(): ConductRecord {
   return {
@@ -46,8 +52,14 @@ function touch(p: Player): ConductRecord {
   return p.record;
 }
 
-/** Motivos de ausencia que cuentan como "avisó": la vida, la agenda pactada, el momento del mundo. */
-const AVISADOS = new Set<string>([...LIFE_REASON_IDS, 'agenda', 'momento']);
+/**
+ * Motivos de ausencia que cuentan como "avisó": la vida, la agenda pactada, el
+ * momento del mundo. Se arma al primer uso: `absences.ts` también importa de
+ * acá (la ficha anota al que fuiste a buscar), y con el ciclo el orden de
+ * carga no está garantizado.
+ */
+let avisados: Set<string> | null = null;
+const AVISADOS = (): Set<string> => (avisados ??= new Set<string>([...LIFE_REASON_IDS, 'agenda', 'momento']));
 
 /**
  * Cómo se cuenta una respuesta a la convocatoria. `null` si no cuenta: el
@@ -59,7 +71,7 @@ export function presenciaDe(e: CallUpEntry): Presencia | null {
   if (e.status === 'confirmado') return 'p';
   if (e.exhausted && e.resolved) return 'p';
   if (e.lastMinute) return 'f';
-  if (e.reasonId && AVISADOS.has(e.reasonId)) return 'a';
+  if (e.reasonId && AVISADOS().has(e.reasonId)) return 'a';
   return 'f';
 }
 
@@ -69,18 +81,51 @@ export function presenciaDe(e: CallUpEntry): Presencia | null {
  * (el que diste vuelta cuenta como presente) y de las bajas sobre la hora.
  */
 export function recordCallUpConduct(s: GameState): void {
+  const week = Math.min(s.week, s.seasonLength);
   for (const e of s.callUp) {
     const p = s.players.find((x) => x.id === e.playerId);
     if (!p || p.leftClub) continue;
     const k = presenciaDe(e);
     if (!k) continue;
+    const eraCuandoQuiere = esCuandoQuiere(p);
     const r = touch(p);
     r.convocado += 1;
     if (k === 'p') r.presente += 1;
     else if (k === 'a') r.avisoATiempo += 1;
     else r.faltoSinAvisar += 1;
     r.ultimas = [...r.ultimas, k].slice(-8);
+    // La etiqueta cambió de mano: el inicio lo avisa las semanas siguientes,
+    // y queda en su historia. Si se endereza, el aviso se apaga.
+    const esAhora = esCuandoQuiere(p);
+    if (esAhora && !eraCuandoQuiere) {
+      r.cuandoQuiereDesde = { season: s.seasonNumber, week };
+      logPlayerEvent(p, s.seasonNumber, week, 'ausencia', `Con ${r.faltoSinAvisar} faltas sin avisar en ${r.convocado} fechas, el club ya lo tiene fichado: aparece cuando quiere.`);
+    } else if (!esAhora && eraCuandoQuiere) {
+      delete r.cuandoQuiereDesde;
+    }
   }
+}
+
+/** El veredicto firme y malo, sin el atenuante de "viene enderezándose". */
+function esCuandoQuiere(p: Player): boolean {
+  const c = conductLabel(p);
+  return c.label === CUANDO_QUIERE && c.cls === 'bad';
+}
+
+/**
+ * Iba a faltar y vino igual: porque lo convenciste vos (charla, insistencia,
+ * el Uber) o porque un compañero lo pasó a buscar. Se anota al resolver la
+ * ausencia; la convocatoria después lo cuenta como presente.
+ */
+export function recordTurnaround(p: Player, how: 'charla' | 'companero'): void {
+  const r = touch(p);
+  if (how === 'companero') r.buscado = (r.buscado ?? 0) + 1;
+  else r.convencido = (r.convencido ?? 0) + 1;
+}
+
+/** Cuántas veces vino porque alguien fue a buscarlo (vos o un compañero). */
+function rescatado(r: ConductRecord): number {
+  return (r.convencido ?? 0) + (r.buscado ?? 0);
 }
 
 /** La cuota de la semana: pagó en fecha o debe. */
@@ -121,6 +166,16 @@ function detailOf(r: ConductRecord): string {
     if (r.faltoSinAvisar > 0) s += `, faltó sin avisar ${r.faltoSinAvisar}`;
     parts.push(s + '.');
   }
+  const conv = r.convencido ?? 0;
+  const busc = r.buscado ?? 0;
+  const veces = (n: number) => (n === 1 ? 'una vez' : `${n} veces`);
+  if (conv > 0 && busc > 0) {
+    parts.push(`Iba a faltar ${veces(conv + busc)}: ${conv === 1 ? 'una' : conv} lo convenciste vos, ${busc === 1 ? 'una' : busc} lo fue a buscar un compañero.`);
+  } else if (conv > 0) {
+    parts.push(`Iba a faltar ${veces(conv)} y lo diste vuelta vos.`);
+  } else if (busc > 0) {
+    parts.push(`Iba a faltar ${veces(busc)} y un compañero lo pasó a buscar.`);
+  }
   const cuotas = r.cuotaEnFecha + r.cuotaTarde;
   if (cuotas > 0) {
     parts.push(r.cuotaTarde === 0 ? 'La cuota, siempre en fecha.' : `Debió la cuota ${r.cuotaTarde} de ${cuotas} semanas.`);
@@ -148,7 +203,14 @@ export function conductLabel(p: Player): ConductReading {
     };
   }
 
+  // El que viene porque lo fuiste a buscar cuenta como presente, pero no es
+  // lo mismo que el que está: si una de cada tres veces hubo que buscarlo, la
+  // etiqueta lo dice.
+  const resc = rescatado(r);
+  const hayQueBuscarlo = resc >= 2 && resc * 3 >= r.presente;
+
   if (n <= 5) {
+    if (faltas === 0 && hayQueBuscarlo) return { label: 'Viene, si lo vas a buscar', short: 'Si lo buscás', cls: '', detail, nivel: 'primeras' };
     if (faltas === 0) return { label: 'Parece de los que están', short: 'Parece que está', cls: 'good', detail, nivel: 'primeras' };
     if (faltas === 1) return { label: 'Faltó una vez: todavía no dice nada', short: 'Una falta', cls: '', detail, nivel: 'primeras' };
     return { label: `Ya faltó ${faltas} veces`, short: `Ya faltó ${faltas}`, cls: 'warn', detail, nivel: 'primeras' };
@@ -157,10 +219,12 @@ export function conductLabel(p: Player): ConductReading {
   const ratioF = faltas / n;
   const ratioP = r.presente / n;
   let reading: ConductReading;
-  if (ratioF <= 0.1 && ratioP >= 0.75) {
+  if (ratioF <= 0.1 && ratioP >= 0.75 && hayQueBuscarlo) {
+    reading = { label: 'Está, si lo vas a buscar', short: 'Si lo buscás', cls: 'warn', detail, nivel: 'firme' };
+  } else if (ratioF <= 0.1 && ratioP >= 0.75) {
     reading = { label: 'De los que están siempre', short: 'Está siempre', cls: 'good', detail, nivel: 'firme' };
   } else if (ratioF >= 0.34) {
-    reading = { label: 'Aparece cuando quiere', short: 'Cuando quiere', cls: 'bad', detail, nivel: 'firme' };
+    reading = { label: CUANDO_QUIERE, short: 'Cuando quiere', cls: 'bad', detail, nivel: 'firme' };
   } else {
     reading = { label: 'Va cuando puede', short: 'Cuando puede', cls: 'warn', detail, nivel: 'firme' };
   }

@@ -1,10 +1,12 @@
 import { BALANCE } from '../game/balance';
 import { marketReference } from '../game/conduct';
 import { weeklyFee } from '../game/economy';
+import { CAUSE_SHORT } from '../game/mood';
 import {
   CONTINUITY_LABELS,
   COUNTER_OFFERS,
   DEMAND_LABELS,
+  broncaQueCruza,
   confirmedPlayers,
   inscriptionOffer,
   isMarketFigure,
@@ -1120,6 +1122,9 @@ function NegotiationModal({ state, dispatch }: Props) {
   const demand = ps.playerDemands[neg.targetId];
   if (!player || !demand) return null;
   const hasGrudge = !!player.grudge && player.grudge.season >= state.seasonNumber - 1;
+  // La bronca que cruzó el verano (memoria entre temporadas): la condición no
+  // es un capricho, es la cuenta del año pasado.
+  const bronca = broncaQueCruza(player, state.seasonNumber);
   const counter = COUNTER_OFFERS[demand];
   const canCounter = counter && counter.result !== 'medio_pase' && !ps.counterUsed[player.id];
   return (
@@ -1133,6 +1138,12 @@ function NegotiationModal({ state, dispatch }: Props) {
             <>
               {' '}
               🧨 Y esta vez lo quiere en serio: <strong>el año pasado le prometiste y no cumpliste</strong>. "Palabra va, palabra viene, yo ya puse la mía", te dice.
+            </>
+          )}
+          {!hasGrudge && bronca && (
+            <>
+              {' '}
+              🧨 Se fue de vacaciones masticando bronca por <strong>{CAUSE_SHORT[bronca.cause]}</strong> y volvió con la cuenta hecha: "Este año, así no".
             </>
           )}
         </p>

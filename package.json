@@ -12,6 +12,7 @@
     "design:sync": "node scripts/design-sync.mjs",
     "sim": "node scripts/sim-balance.cjs",
     "sim:ligas": "node scripts/sim-ligas.cjs",
+    "sim:carrera": "node scripts/sim-carrera.cjs",
     "sim:notas": "node scripts/sim-notas.cjs"
   },
   "dependencies": {

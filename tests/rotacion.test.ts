@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { defaultMatchPlan, PLAN_MIN_BENCH } from '../src/game/match';
+import { defaultMatchPlan, isSelectable, PLAN_MIN_BENCH, posicionesSinCubrir } from '../src/game/match';
 import { Rng } from '../src/game/rng';
 import { weeklyGrievanceTriggers } from '../src/game/week';
-import type { GameState } from '../src/game/types';
+import type { GameState, Position } from '../src/game/types';
 import { jugarFecha, jugarPartidoEntero, partidaNueva, paso, resolverEventos } from './jugar';
 
 /** Una partida nueva llevada hasta el salto inicial de la fecha 1, con el quinteto sugerido. */
@@ -78,6 +78,115 @@ describe('T4 · jugar con cinco dejó de ser el default', () => {
     // El 3° cuarto vuelve al plan: titulares.
     s = cuarto(s);
     expect(s.live!.quarters[2].notes.some((n) => /Plan de cambios: vuelven los titulares/.test(n))).toBe(true);
+  });
+});
+
+const POSICIONES: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
+
+/** Los que pueden entrar en este partido, en cancha y en el banco. */
+function cancha(s: GameState) {
+  const live = s.live!;
+  const puede = (id: string) => isSelectable(s.players.find((p) => p.id === id)!) && !(live.fueraDelPartido ?? []).includes(id);
+  return {
+    enCancha: live.onCourt.filter(puede),
+    banco: live.squad.filter((id) => !live.onCourt.includes(id) && puede(id)),
+  };
+}
+
+const jugador = (s: GameState, id: string) => s.players.find((p) => p.id === id)!;
+
+describe('la rotación respeta las posiciones (lo que quedaba del informe de testing)', () => {
+  it('"Piernas frescas" no deja un puesto sin cubrir si hay con quién cubrirlo', () => {
+    // Primer cuarto jugado; en el descanso el plan manda a los frescos.
+    const s = cuarto(hastaElPartido(11));
+    const { enCancha, banco } = cancha(s);
+    if (enCancha.length < 5 || banco.length < 5) return;
+    // Los cinco del banco son los más frescos, pero son dos bases y ningún
+    // pívot; el pívot con piernas es un titular. Ingenuamente, "frescos" lo
+    // dejaría afuera.
+    const posBanco: Position[] = ['Base', 'Base', 'Escolta', 'Alero', 'Ala-Pívot'];
+    banco.forEach((id, i) => {
+      jugador(s, id).position = posBanco[i] ?? 'Alero';
+      s.live!.playerFresh[id] = 95 - i;
+    });
+    enCancha.forEach((id, i) => {
+      jugador(s, id).position = POSICIONES[i];
+      s.live!.playerFresh[id] = i === 4 ? 70 : 30;
+    });
+    const s2 = cuarto(s);
+    expect(s2.live!.quarters[1].notes.some((n) => /Piernas frescas/.test(n))).toBe(true);
+    const cinco = s2.live!.quarters[1].onCourt!.map((id) => jugador(s2, id));
+    expect(posicionesSinCubrir(cinco)).toEqual([]);
+    expect(cinco.some((p) => p.id === enCancha[4])).toBe(true);
+  });
+
+  it('el DT que lee el juego cambia a un fundido por uno de su puesto; el que no, mete al más fresco y el relato lo dice', () => {
+    const conDT = (tactics: number) => {
+      const base = cuarto(hastaElPartido(11));
+      const profe = base.coachMarket.find((c) => c.profile === 'profe')!;
+      const s: GameState = { ...base, coach: { ...profe, tactics, directive: 'ganar' }, live: { ...base.live!, autoRotation: true, plan: 'manual' } };
+      const { enCancha, banco } = cancha(s);
+      if (enCancha.length < 5 || banco.length < 2) return null;
+      // El base en cancha está fundido y es el único base; en el banco hay un
+      // base con piernas y un alero todavía más fresco.
+      enCancha.forEach((id, i) => {
+        jugador(s, id).position = POSICIONES[i];
+        s.live!.playerFresh[id] = i === 0 ? 10 : 90;
+      });
+      banco.forEach((id, i) => {
+        jugador(s, id).position = i === 0 ? 'Base' : 'Alero';
+        s.live!.playerFresh[id] = i === 0 ? 80 : 95;
+      });
+      const s2 = cuarto(s);
+      return { s2, saliente: enCancha[0], baseDelBanco: banco[0], aleroFresco: banco[1] };
+    };
+
+    const lee = conDT(75);
+    if (lee) {
+      const notas = lee.s2.live!.quarters[1].notes;
+      expect(notas.some((n) => /Cambio de .*: entra/.test(n))).toBe(true);
+      expect(lee.s2.live!.quarters[1].onCourt).toContain(lee.baseDelBanco);
+      expect(lee.s2.live!.quarters[1].onCourt).not.toContain(lee.saliente);
+      expect(notas.some((n) => /Quedamos sin base/.test(n))).toBe(false);
+    }
+
+    const noLee = conDT(40);
+    if (noLee) {
+      const notas = noLee.s2.live!.quarters[1].notes;
+      expect(noLee.s2.live!.quarters[1].onCourt).toContain(noLee.aleroFresco);
+      expect(noLee.s2.live!.quarters[1].onCourt).not.toContain(noLee.saliente);
+      expect(notas.some((n) => /Quedamos sin base natural, y a .* no le quita el sueño/.test(n))).toBe(true);
+    }
+    expect(lee ?? noLee).not.toBeNull();
+  });
+});
+
+describe('la directiva "repartir" del DT', () => {
+  it('mete de a dos a los que no jugaron, y el que lee el juego los cambia por el más jugado de su puesto', () => {
+    const base = cuarto(hastaElPartido(11));
+    const profe = base.coachMarket.find((c) => c.profile === 'profe')!;
+    const s: GameState = {
+      ...base,
+      coach: { ...profe, tactics: 75, directive: 'repartir' },
+      live: { ...base.live!, autoRotation: true, directive: 'repartir', plan: 'manual' },
+    };
+    const { enCancha, banco } = cancha(s);
+    if (enCancha.length < 5 || banco.length < 3) return;
+    // El banco espeja los puestos de la cancha: cada frío tiene a quién reemplazar.
+    enCancha.forEach((id, i) => {
+      jugador(s, id).position = POSICIONES[i];
+    });
+    banco.forEach((id, i) => {
+      jugador(s, id).position = POSICIONES[i % 5];
+      s.live!.minutes[id] = 0;
+    });
+    const s2 = cuarto(s);
+    const nota = s2.live!.quarters[1].notes.find((n) => /movió el banco: entran/.test(n));
+    expect(nota).toBeDefined();
+    expect(nota!.split(' por ').length - 1).toBe(2);
+    const cinco = s2.live!.quarters[1].onCourt!.map((id) => jugador(s2, id));
+    expect(posicionesSinCubrir(cinco)).toEqual([]);
+    expect(banco.slice(0, 2).every((id) => s2.live!.quarters[1].onCourt!.includes(id))).toBe(true);
   });
 });
 

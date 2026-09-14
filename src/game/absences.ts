@@ -3,6 +3,7 @@
 // Estructura de datos reutilizable: agregar un motivo es agregar una entrada.
 
 import { clamp } from './balance';
+import { recordTurnaround } from './conduct';
 import { bumpGrievance } from './mood';
 import { affinity, coachAffinity, FRIEND_THRESHOLD } from './relations';
 import { logPlayerEvent } from './timeline';
@@ -288,6 +289,8 @@ export function attemptAbsenceAction(
     }
     player.motivation = clamp(player.motivation + 2);
     logPlayerEvent(player, s.seasonNumber, s.week, 'animo', `Iba a faltar y lo diste vuelta (${action.label.toLowerCase()}).`);
+    // La ficha de conducta lo anota: vino, pero porque alguien fue a buscarlo.
+    if (actionId !== 'segundo_tiempo') recordTurnaround(player, actionId === 'companero' && friend ? 'companero' : 'charla');
 
     // Consecuencia social: el plantel mira cómo tratás a cada uno.
     if (rng.chance(0.35)) {

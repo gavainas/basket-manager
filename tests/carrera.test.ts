@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/game/balance';
 import { buildLibreta, favorChance } from '../src/game/carrera';
 import { marketReference } from '../src/game/conduct';
+import { getEvent } from '../src/game/events';
 import { activePlayers } from '../src/game/match';
-import { createCareerNewGame, inscriptionOffer, startPreseason } from '../src/game/preseason';
+import { createCareerNewGame, createPreseasonNewGame, inscriptionOffer, startPreseason } from '../src/game/preseason';
 import { Rng } from '../src/game/rng';
 import type { GameState } from '../src/game/types';
 import { jugarTemporada, paso } from './jugar';
@@ -217,6 +218,63 @@ describe('ocho en cuatro semanas', () => {
     for (let seed = 1; seed < 30; seed++) resultados.add(jugarLibreta(fundar(seed), seed).phase);
     expect(resultados.has('gameOver')).toBe(true);
     expect(resultados.has('preseasonEnd')).toBe(true);
+  });
+
+  it('la libreta sigue viva en la temporada: el que no firmó puede volver a aparecer', () => {
+    let llego: GameState | null = null;
+    for (let seed = 1; seed < 30 && !llego; seed++) {
+      const s = jugarLibreta(fundar(seed), seed);
+      if (s.phase === 'preseasonEnd') llego = s;
+    }
+    const noFirmaron = llego!.preseason!.market.filter((m) => m.status !== 'fichado');
+    expect(noFirmaron.length).toBeGreaterThan(0);
+    let s = paso(llego!, { type: 'START_SEASON' });
+    expect(s.preseason).toBeNull();
+    // Se guardan los que dijeron que no, los que dudaron y los que no llamaste; ningún firmado.
+    expect(s.libretaPendiente!.map((m) => m.id).sort()).toEqual(noFirmaron.map((m) => m.id).sort());
+    for (const m of s.libretaPendiente!) expect(['disponible', 'rechazo']).toContain(m.status);
+
+    // En la primera semana todavía no (el club tiene que ser una cosa real); desde la segunda, sí.
+    const def = getEvent('libreta_vuelve');
+    expect(def.canFire(s)).toBe(false);
+    s = { ...s, week: 2 };
+    expect(def.canFire(s)).toBe(true);
+    const target = def.pickTargets!(s, new Rng(1));
+    expect(target).not.toBeNull();
+    expect(s.libretaPendiente!.some((m) => m.id === target!.contactId)).toBe(true);
+
+    // Vuelve uno: si le decís que venga, se suma al plantel y sale de la libreta.
+    const mp = s.libretaPendiente![0];
+    const antes = activePlayers(s.players).length;
+    const forzado: GameState = { ...s, pendingEvent: { defId: 'libreta_vuelve', contactId: mp.id } };
+    expect(def.text(forzado, forzado.pendingEvent!)).toContain(mp.name);
+    const opciones = def.options(forzado, forzado.pendingEvent!);
+    expect(opciones.length).toBe(mp.demand ? 3 : 2);
+    const viene = paso(forzado, { type: 'RESOLVE_EVENT', optionIndex: 0 });
+    expect(activePlayers(viene.players)).toHaveLength(antes + 1);
+    const nuevo = viene.players.find((p) => p.name === mp.name)!;
+    expect(nuevo).toBeDefined();
+    expect(nuevo.joinedSeason).toBe(1);
+    expect(viene.libretaPendiente!.some((m) => m.id === mp.id)).toBe(false);
+    expect(viene.eventOutcome).toMatch(/Se suma al plantel/);
+    expect(viene.eventOutcomePeople).toContain(nuevo.id);
+    if (mp.demand) expect(viene.promises.some((pr) => pr.playerId === nuevo.id && pr.type === mp.demand)).toBe(true);
+    else expect(viene.promises.some((pr) => pr.playerId === nuevo.id)).toBe(false);
+    expect(viene.news[0].text).toContain(mp.name);
+
+    // Si le decís que el plantel ya está, no se suma y no vuelve a aparecer.
+    const noViene = paso(forzado, { type: 'RESOLVE_EVENT', optionIndex: opciones.length - 1 });
+    expect(activePlayers(noViene.players)).toHaveLength(antes);
+    expect(noViene.libretaPendiente!.some((m) => m.id === mp.id)).toBe(false);
+    expect(noViene.eventOutcome).toMatch(/el plantel ya estaba/);
+  });
+
+  it('en el club en marcha no hay libreta pendiente, y el evento no sale', () => {
+    let s: GameState = paso(null as unknown as GameState, { type: 'LOAD', state: createPreseasonNewGame(21) });
+    s = paso(s, { type: 'PS_CLOSE' });
+    if (s.phase === 'preseasonEnd') s = paso(s, { type: 'START_SEASON' });
+    expect(s.libretaPendiente).toBeUndefined();
+    expect(getEvent('libreta_vuelve').canFire({ ...s, week: 3 })).toBe(false);
   });
 
   it('el mercado de verdad llega en la segunda temporada', () => {

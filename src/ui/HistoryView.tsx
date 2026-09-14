@@ -1,4 +1,5 @@
 import type { GameState } from '../game/types';
+import { QUE_LOS_ALIMENTA } from '../game/evaluation';
 import { activePlayers } from '../game/match';
 import { PlayerLink } from './PlayerLink';
 import { Timeline } from './Timeline';
@@ -84,7 +85,7 @@ export function HistoryView({ state }: { state: GameState }) {
             <h3>Momentos memorables</h3>
             {state.memorableMoments.length === 0 ? (
               <p className="muted" style={{ margin: 0 }}>
-                Todavía no pasó nada digno de contar en el asado. Las historias se construyen.
+                Todavía no pasó nada digno de contar en el asado. Las historias se construyen: {QUE_LOS_ALIMENTA}
               </p>
             ) : (
               <ul className="reason-list">

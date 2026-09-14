@@ -167,7 +167,7 @@ const AGENDA: { relacion: (via: string) => string; porQue: (via: string) => stri
   { relacion: (v) => `El cuñado de ${v}`, porQue: (v) => `Lo trae ${v} medio a la fuerza: "le hace falta salir de casa".` },
 ];
 
-const shortName = (name: string): string => {
+export const shortName = (name: string): string => {
   const nick = name.match(/"([^"]+)"/);
   if (nick) return nick[1];
   return name.trim().split(/\s+/)[0];
@@ -302,6 +302,68 @@ export function favorChance(s: GameState, mp: MarketPlayer): number {
     if (via) chance += C.favorAmigoDentro;
   }
   return Math.min(C.favorMax, chance);
+}
+
+// ---------- La libreta sigue viva en la temporada ----------
+
+/**
+ * Al arrancar la temporada, los contactos que no firmaron se guardan: el que
+ * dijo que no, el que dudó y el que no llegaste a llamar. Los que firmaron ya
+ * son jugadores, y en la libreta no hay "perdidos" (nadie arregla con otro
+ * club: son tus amigos).
+ */
+export function libretaPendienteAlCerrar(market: MarketPlayer[]): MarketPlayer[] {
+  return market.filter((m) => m.status === 'disponible' || m.status === 'rechazo');
+}
+
+/** Lo que pide, dicho como se dice un favor (para el evento de la vuelta). */
+export const LO_QUE_PIDE: Record<DemandType, string> = {
+  fichaje_pagado: 'que el club le pague el pase',
+  beca: 'no pagar la cuota',
+  beca_parcial: 'pagar media cuota',
+  titularidad: 'ser titular',
+  minutos: 'lugar en la rotación',
+  amigo: 'que venga también un amigo suyo',
+  competitivo: 'un equipo que pelee arriba',
+  ambiente: 'un buen ambiente',
+  sin_entrenar: 'no entrenar seguido',
+};
+
+/**
+ * Quién vuelve a aparecer: primero los que tienen a su amigo adentro (vieron
+ * las fotos, escucharon cómo viene la cosa), después cualquiera. El que dijo
+ * que no en serio también puede volver: el club arrancó de verdad y eso
+ * cambia las cosas.
+ */
+export function contactoQueVuelve(s: GameState, rng: Rng): MarketPlayer | null {
+  const pendientes = s.libretaPendiente ?? [];
+  if (pendientes.length === 0) return null;
+  const nombres = new Set(s.players.filter((x) => !x.leftClub).map((x) => x.name));
+  const conAmigo = pendientes.filter((m) => m.viaDe && m.viaDe !== 'vos' && nombres.has(m.viaDe));
+  return rng.pick(conAmigo.length > 0 ? conAmigo : pendientes);
+}
+
+/** Cómo vuelve, según cómo quedó la cosa en el verano. */
+export function vueltaDeLaLibreta(s: GameState, mp: MarketPlayer): string {
+  const v = shortName(mp.name);
+  const quien = `${mp.name} (${(mp.relacion ?? 'de la libreta').toLowerCase()})`;
+  const record = s.standings.find((r) => r.teamId === 'club');
+  const comoViene =
+    record && record.wins + record.losses > 0
+      ? record.wins > record.losses
+        ? 'que el club va ganando'
+        : record.wins === record.losses
+          ? 'que el club está en carrera'
+          : 'que el club juega igual, aunque pierda'
+      : 'que el club arrancó de verdad';
+  const pide = mp.demand ? ` Eso sí: sigue pidiendo ${LO_QUE_PIDE[mp.demand]}.` : ' No pide nada: quiere estar.';
+  if (mp.status === 'rechazo') {
+    return `${quien}, el que en el verano te dijo que no, vio ${comoViene}. Te escribió de la nada: "Che, ¿sigue en pie lo del equipo? Si hay lugar, ${v} va".${pide}`;
+  }
+  if ((mp.dudas ?? 0) > 0) {
+    return `${quien}, el que en el verano preguntaba "¿y quién más va?", vio ${comoViene}. Apareció en la cancha a mirar y al final se acercó: "Si todavía necesitás gente, contá conmigo".${pide}`;
+  }
+  return `${quien}, al que en el verano no llegaste a llamar, se enteró ${comoViene}. Te encaró en el barrio, medio ofendido: "¿Y a mí no me ibas a decir nada? Si hay lugar, voy".${pide}`;
 }
 
 /** Lo que contesta cuando todavía no lo convenciste. */

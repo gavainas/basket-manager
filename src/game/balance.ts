@@ -201,6 +201,11 @@ export const BALANCE = {
     overloadThreshold: 32, // por encima de estos minutos, los titulares rinden menos
     overloadPenaltyPerMin: 0.008, // penalización de rendimiento por minuto de sobrecarga
     coachRestLead: 10, // con esta ventaja al entretiempo, el DT "a ganar" también mueve el banco
+    // Desde esta lectura de juego (`coach.tactics`) el DT mira la pizarra al
+    // cambiar a un fundido: si era el único en su puesto, entra uno del puesto.
+    // El profe del barrio (45-60) a veces sí y a veces no; el proyecto (65-80)
+    // siempre; el ex federado (55-70) casi siempre. Sin DT, el piloto es tuyo y lee.
+    coachReadsGame: 55,
   },
 
   // Las otras broncas (T4): gatillos semanales para plata y grupo, así el humor
@@ -226,6 +231,10 @@ export const BALANCE = {
     upsetWeeksToAlBorde: 2,
     eventChance: 0.65,
     eventCooldownWeeks: 4, // un evento no se repite hasta pasadas estas semanas
+    // La deriva del clima hacia 55: un punto por semana, y más cuando está
+    // muy arriba (el grupo hay que alimentarlo; a 99 no se queda solo).
+    climateGravityOver70: 2,
+    climateGravityOver85: 3,
   },
 
   matchEffects: {
@@ -273,6 +282,12 @@ export const BALANCE = {
     asado: {
       cost: 110,
       climate: 12,
+      // Techo blando del clima (sep 2026): la mesa llena rinde menos cuanto más
+      // alto está el ambiente, como la alegría con el ánimo. Sin esto, un asado
+      // por semana clavaba el clima en 90+ en un tercio de las temporadas
+      // (medido con `conAsado` en el harness).
+      climateSoftcapSpan: 40,
+      climateSoftcapMinFactor: 0.25,
       socialPrestige: 4,
       rainChance: 0.15,
       // Umbrales de respuesta a la convocatoria (score 0-1 por jugador).

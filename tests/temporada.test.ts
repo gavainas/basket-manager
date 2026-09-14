@@ -5,7 +5,13 @@ import { Rng } from '../src/game/rng';
 import { jugarFecha, jugarTemporada, partidaNueva } from './jugar';
 
 describe('una temporada entera por el reducer', () => {
-  const final = jugarTemporada(partidaNueva(2026));
+  // La caja se rellena a propósito: este test mide el flujo de la temporada
+  // por el reducer y sus invariantes, no la economía (eso es `npm run sim`).
+  // Sin gestión el club quiebra en ~10% de las temporadas, y cualquier cambio
+  // en el motor mueve los partidos de esta semilla: con $3.000 el test no se
+  // cae por una quiebra que no está midiendo.
+  const inicio = partidaNueva(2026);
+  const final = jugarTemporada({ ...inicio, club: { ...inicio.club, money: 3000 } });
 
   it('termina en el cierre de temporada, no en game over', () => {
     expect(final.phase).toBe('seasonEnd');

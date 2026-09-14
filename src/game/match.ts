@@ -786,7 +786,45 @@ function presetFive(state: GameState, live: LiveMatchState, preset: LineupPreset
       );
       break;
   }
-  return ordered.slice(0, 5).map((p) => p.id);
+  // Los titulares son los que vos elegiste: se respetan tal cual. Las otras
+  // unidades las arma el juego, y el juego no deja un puesto sin cubrir si
+  // hay con quién cubrirlo.
+  const five = preset === 'titulares' ? ordered.slice(0, 5) : conCobertura(ordered);
+  return five.map((p) => p.id);
+}
+
+/**
+ * Los cinco primeros del orden, pero sin dejar una posición natural sin
+ * cubrir si hay en el banco uno que la cubre: sale el último del quinteto
+ * cuya posición está repetida, entra el que tapa el hueco. Antes "Piernas
+ * frescas" podía mandar dos bases y ningún pívot, y el informe de testing lo
+ * vio ("dejó al equipo sin base dos cuartos seguidos"). Se busca sólo en los
+ * tres siguientes del orden: medido con `npm run sim`, buscar en todo el
+ * banco tapaba el hueco con el titular fundido y eso se pagaba en piernas
+ * (0.59 titulares fundidos por partido contra 0.10, y cinco puntos menos de
+ * victorias); con tres, los tramos sin puesto bajan a la mitad sin mover
+ * nada más.
+ */
+function conCobertura(ordered: Player[], profundidad = 8): Player[] {
+  const five = ordered.slice(0, 5);
+  if (five.length < 5) return five;
+  const pool = ordered.slice(5, profundidad);
+  for (const pos of ALL_POSITIONS) {
+    if (five.some((p) => p.position === pos)) continue;
+    const entra = pool.find((p) => p.position === pos);
+    if (!entra) continue;
+    const sale = [...five].reverse().find((p) => five.filter((q) => q.position === p.position).length > 1);
+    if (!sale) continue;
+    five[five.indexOf(sale)] = entra;
+    pool.splice(pool.indexOf(entra), 1);
+  }
+  return five;
+}
+
+/** Las posiciones naturales que quedan sin cubrir con estos cinco. */
+export function posicionesSinCubrir(players: Player[]): Position[] {
+  const covered = new Set(players.map((p) => p.position));
+  return ALL_POSITIONS.filter((pos) => !covered.has(pos));
 }
 
 /** Aplica un quinteto predefinido (cambios entre cuartos, con nota al relato). */
@@ -931,16 +969,29 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
   // Un DT con poca lectura de juego aguanta de más a los fundidos.
   const tiredThreshold = s.coach ? 30 + s.coach.tactics * 0.28 : 45;
 
+  const leeElJuego = !s.coach || s.coach.tactics >= BALANCE.rotation.coachReadsGame;
+
   if (live.directive === 'repartir' && qIndex <= 2) {
-    // Que todos toquen la pelota: entran los que todavía no jugaron.
+    // Que todos toquen la pelota: entran dos que todavía no jugaron. El DT
+    // que lee el juego los mete por el más jugado de su mismo puesto; el que
+    // no, por el más jugado y listo. (Con dos por descanso, en un plantel de
+    // once uno o dos se quedan sin jugar; subirlo a tres reparte de verdad
+    // pero deja a los titulares en 10-20' y suma ~40 broncas de minutos por
+    // 60 temporadas en el harness: anotado en BALANCE.md como decisión.)
     const cold = live.squad
-      .filter((id) => !live.onCourt.includes(id) && (live.minutes[id] ?? 0) === 0 && canEnterCourt(live, id))
+      .filter((id) => !live.onCourt.includes(id) && (live.minutes[id] ?? 0) === 0 && canEnterCourt(live, id) && isSelectable(byId(id)))
       .slice(0, 2);
+    const cambios: string[] = [];
     for (const inId of cold) {
-      const outId = [...live.onCourt].sort((a, b) => (live.minutes[b] ?? 0) - (live.minutes[a] ?? 0))[0];
+      const porMinutos = [...live.onCourt].sort((a, b) => (live.minutes[b] ?? 0) - (live.minutes[a] ?? 0));
+      const mismoPuesto = porMinutos.find((id) => byId(id).position === byId(inId).position);
+      const outId = leeElJuego && mismoPuesto ? mismoPuesto : porMinutos[0];
       if (!outId) break;
       live.onCourt = live.onCourt.map((id) => (id === outId ? inId : id));
-      notes.push(`${dt} movió el banco: entra ${byId(inId).name} por ${byId(outId).name}.`);
+      cambios.push(`${byId(inId).name} por ${byId(outId).name}`);
+    }
+    if (cambios.length > 0) {
+      notes.push(`${dt} movió el banco: ${cambios.length === 1 ? 'entra' : 'entran'} ${cambios.join(', ')}.`);
     }
   }
 
@@ -960,16 +1011,32 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
       notes.push(`↺ Con el partido cómodo, ${dt} mueve el banco: descansan los titulares.`);
     }
   } else {
-    // Regla general: el fundido descansa si hay recambio con piernas.
+    // Regla general: el fundido descansa si hay recambio con piernas. El DT
+    // que lee el juego mira la pizarra al elegir el recambio: si el que sale
+    // era el único en su puesto, entra uno del puesto aunque tenga un poco
+    // menos de piernas. El que no la lee mete al más fresco y listo, y el
+    // relato lo dice: sus sesgos se leen como estilo, no como ruido.
     for (const outId of [...live.onCourt]) {
       if (freshOf(outId) >= tiredThreshold) continue;
-      const candidate = live.squad
+      const bench = live.squad
         .filter((id) => !live.onCourt.includes(id) && isSelectable(byId(id)) && canEnterCourt(live, id))
-        .sort((a, b) => freshOf(b) - freshOf(a))[0];
-      if (candidate && freshOf(candidate) > freshOf(outId) + 12) {
-        live.onCourt = live.onCourt.map((id) => (id === outId ? candidate : id));
-        notes.push(`Cambio de ${dt}: entra ${byId(candidate).name} por ${byId(outId).name}, que pedía el cambio.`);
-      }
+        .sort((a, b) => freshOf(b) - freshOf(a));
+      const freshest = bench[0];
+      if (!freshest || freshOf(freshest) <= freshOf(outId) + 12) continue;
+      const saliente = byId(outId);
+      const unicoEnSuPuesto = !live.onCourt.some((id) => id !== outId && byId(id).position === saliente.position);
+      const delPuesto = bench.find((id) => byId(id).position === saliente.position && freshOf(id) > freshOf(outId) + 12);
+      const candidate = leeElJuego && unicoEnSuPuesto && delPuesto ? delPuesto : freshest;
+      live.onCourt = live.onCourt.map((id) => (id === outId ? candidate : id));
+      const entrante = byId(candidate);
+      const hueco = unicoEnSuPuesto && entrante.position !== saliente.position;
+      notes.push(
+        hueco
+          ? `Cambio de ${dt}: entra ${entrante.name} por ${saliente.name}, que pedía el cambio. Quedamos sin ${saliente.position.toLowerCase()} natural${
+              leeElJuego ? ': no había recambio del puesto con piernas' : `, y a ${dt} no le quita el sueño`
+            }.`
+          : `Cambio de ${dt}: entra ${entrante.name} por ${saliente.name}, que pedía el cambio.`
+      );
     }
   }
 

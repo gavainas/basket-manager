@@ -30,14 +30,7 @@ La **economía con arco** salió (sep 2026, ver el changelog): el sponsor es un 
 condiciones, la rifa tiene historia, la dificultad también es de caja, y sin gestión el
 club quiebra la mitad de las veces que antes. Lo que sigue:
 
-1. **Lo que queda de T2 y T3, juntos** (media sesión). Que la charla y "mandá a un
-   compañero a buscarlo" también escriban en la ficha de conducta, que "Qué mirar hoy"
-   avise cuando alguien pasa a "aparece cuando quiere", y en la Carrera, que la libreta
-   siga viva en la temporada (el que dijo que no en la pretemporada puede volver a
-   aparecer en un evento) y que el modo tenga su propia entrada en `sim` para medir
-   cuántas carreras llegan a inscribirse sin gestión.
-
-2. **T5 · El salto de arte** (gobernado por
+1. **T5 · El salto de arte** (gobernado por
    [`design/ART_PIPELINE.md`](design/ART_PIPELINE.md); depende de Gabi, no de código). El
    brief está en [`design/arte/BRIEFS/`](design/arte/BRIEFS/LEEME.md): el retrato deja de
    ser un archivo y pasa a ser una receta de capas (base × expresión × pelo × barba ×
@@ -45,16 +38,28 @@ club quiebra la mitad de las veces que antes. Lo que sigue:
    gastar de más (prueba de registro ≈12 créditos, lámina de 12 caras ≈60). *Sale cuando:*
    dos jugadores del mismo arquetipo en la misma pantalla no se ven iguales.
 
-3. **Llevar la dirección D al resto del juego** (1 sesión). La planilla y el relieve a la
+2. **Llevar la dirección D al resto del juego** (1 sesión). La planilla y el relieve a la
    pretemporada, el mercado, la convocatoria y la liga, para que no convivan dos anatomías
    de lista en el mismo juego.
 
-4. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.900 líneas) en sus cinco etapas,
-   ESLint con `react-hooks`, code-splitting (750 kB en un chunk).
+3. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.400 líneas) en sus cinco etapas,
+   ESLint con `react-hooks`, code-splitting (755 kB en un chunk).
 
-**Orden:** los restos de T2/T3 primero, después la dirección D, y el arte cuando Gabi diga.
+Lo que quedaba de T2 y T3 salió (sep 2026, ver el changelog): la charla y el compañero
+escriben en la ficha, el inicio avisa al que pasa a "aparece cuando quiere", la libreta
+sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
+
+**Orden:** la dirección D primero, y el arte cuando Gabi diga.
 
 ## Decisiones que están en la cancha de Gabi
+
+- **¿La pretemporada de la Carrera tiene que apretar?** `npm run sim:carrera` mide que
+  pidiendo favores al azar se llega a inscribirse el 90% de las veces, y con cabeza (el
+  íntimo primero, después los que ya tienen a su amigo adentro) el 100%, con 11 de
+  plantel. Se puede perder, pero al jugador atento no se le escapa ninguna. Si eso está
+  bien (la primera pretemporada como tutorial de la red), no se toca; si tiene que
+  apretar, las perillas están en `BALANCE.carrera` (ver
+  [`design/BALANCE.md`](design/BALANCE.md#el-modo-carrera-septiembre-2026-lo-que-quedaba-de-t3)).
 
 - **El brief de la lámina** (Puerta 3,
   [`design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md`](design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md)):
@@ -74,9 +79,12 @@ club quiebra la mitad de las veces que antes. Lo que sigue:
 - **Multi-liga humana y etapa 7 (doble partido y fatiga).** Un jugador puede jugar dos
   ligas, o jugar en contra tuya en la otra; el cansancio y los horarios cruzan entre
   ligas; partidos del segundo equipo jugables; el conocimiento de la persona cruza ligas.
-- **Lo que queda del informe de testing**: DT que respete fatiga y posiciones y cuyos
-  sesgos se lean como estilo; memoria entre temporadas completa (títulos y agravios, no
-  sólo la promesa rota); frenar la saturación de los diales sociales ganando.
+- **Lo que quedaba del informe de testing salió en sep 2026** (ver el changelog): el DT que
+  respeta fatiga y posiciones con sesgos que se leen como estilo, el freno a la saturación
+  del clima con un asado por semana, y la memoria entre temporadas completa (el título y la
+  bronca cruzan el verano, no sólo la promesa rota). Lo que queda de ese informe son ideas
+  de diseño más grandes: objetivos de comisión que compitan entre sí, un objetivo personal
+  elegido por el jugador, y el feed conversacional en tres hilos.
 - **Más voces por arquetipo** en las emociones con pool único, los mensajes de amigos de
   afuera y las respuestas a eventos. Regla: voz donde el contraste se lee, no por completar
   la matriz.

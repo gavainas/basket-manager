@@ -14,6 +14,7 @@ simular desde Node.
 npm run sim          # 80 temporadas por estrategia (~1 min)
 npm run sim -- 30    # menos corridas, más rápido
 npm run sim:notas    # distribución de la nota del partido (1-10) por minutos
+npm run sim:carrera  # modo Carrera: cuántas pretemporadas del club desde cero llegan a inscribirse
 ```
 
 Ojo con comparar corridas entre versiones: cualquier cambio que consuma tiradas
@@ -31,6 +32,10 @@ estrategias de referencia, **sin acciones del manager** (mide el piso):
 - `cincoFijos`: zona pasiva, plan a mano y sin tocar el banco nunca. Es lo que antes de T4
   pasaba si no tocabas nada; ahora hay que elegirlo.
 - `mixta`: hombre temprano, zona al final, cerradores en el último cuarto.
+- `conProfe`: zona y equipo con el profe del barrio al mando (DT honorario, directiva
+  "repartir", lectura de juego 45-60): mide cómo rota el piloto del DT.
+- `conAsado`: zona y equipo con la gestión mínima del vestuario (asado cada semana que la
+  caja lo aguanta, charla con el más caliente): mide desde dónde saturan el clima y la moral.
 - `contraRival`: como `zonaEquipo`, pero el ataque responde a la defensa del rival (mide cuánto vale leerlo).
 - `zonaSponsor`: como `zonaEquipo`, con la gestión mínima: busca sponsor cada semana que no tiene.
 
@@ -62,6 +67,7 @@ una partida jugada de verdad.
 | Motivos de bronca al cierre (sin gestión) | Que no sean 100% 'minutos' (T4) | 5ª pasada: minutos 62 · plata 67 · grupo 11 (`zonaEquipo`, 60 temp.) |
 | Titulares que llegan fundidos | Que jugar con cinco se pague la semana siguiente | 5ª pasada: 0.42/partido con cinco fijos · 0.00 rotando |
 | Nota del partido (titulares 30'+) | Media ~6.5-7, banda 1-5 viva (~15%), 9-10 raro (<10%) | media 6.88 · 1-5: 15.6% · 9-10: 7.7% |
+| Tramos con un puesto sin cubrir | Cerca del piso de las ausencias (~11% con cinco fijos): que rotar no deje huecos | 9ª pasada (sep 2026, la rotación mira la pizarra): 25% plan por defecto · 45% frescos · 35% con el profe (antes 49 · 67 · 53) |
 
 Nota de la 2ª pasada: el piso de victorias bajó ~5 pts respecto de la 1ª
 (59.8% → 52.4% la presión). No es una regresión accidental: es la consecuencia
@@ -324,6 +330,106 @@ Es el gradiente que se buscaba.
   módulo para el id y el nombre, así que el mismo estado daba un recluta distinto según
   cuántos se habían creado antes en la sesión (y la misma semilla, dos temporadas
   distintas). Ahora el id sale del RNG y el nombre, del RNG y de los nombres ya en uso.
+
+## La rotación mira la pizarra (septiembre 2026, lo que quedaba del informe de testing)
+
+El informe de testing vio al DT dejar "al equipo sin base dos cuartos seguidos". Medido
+con la métrica nueva del harness, **Tramos con un puesto sin cubrir** (tramos jugados
+con alguna posición natural sin nadie en cancha), el problema era del plan de cambios y
+de las unidades, no sólo del DT: sin tocar nada, `zonaEquipo` (el plan por defecto)
+jugaba el 49% de los tramos con un hueco, y `presionRotate` ("Piernas frescas" en cada
+descanso) el 67%. El piso, con los cinco fijos, es 11%: lo que dejan las ausencias
+cuando faltan los dos del puesto.
+
+Corrida de 60 temporadas, antes y después:
+
+| | Tramos con un puesto sin cubrir | Victorias | Titulares fundidos / partido |
+| --- | --- | --- | --- |
+| `presionRotate` | 67.2% → 44.5% | 54.5% → 54.2% | 0.10 → 0.15 |
+| `zonaEquipo` | 49.2% → 25.4% | 50.4% → 50.8% | 0.00 → 0.00 |
+| `conProfe` (nueva) | 53.0% → 35.2% | 35.7% → 38.1% | 0.07 → 0.06 |
+| `cincoFijos` | 10.9% → 10.9% | 39.4% → 39.4% | 0.44 → 0.44 |
+
+- **Las unidades cubren los puestos** (`conCobertura` en `presetFive`): "Piernas frescas",
+  "2da unidad" y "Cerradores" arman los cinco del orden de siempre, pero si queda una
+  posición sin cubrir y entre los tres siguientes hay uno del puesto, sale el último cuya
+  posición está repetida y entra ese. "Titulares" no se toca: son los que elegiste. Se
+  probó buscar en todo el banco y se descartó: el hueco lo tapaba el titular fundido y
+  eso se pagaba en piernas (0.59 titulares fundidos por partido contra 0.10, cinco puntos
+  menos de victorias en `presionRotate`). Con tres, la mitad de los huecos desaparece
+  sin mover nada más.
+- **El DT lee la pizarra si sabe leerla** (`coachReadsGame`, 55 de `tactics`): al cambiar
+  a un fundido que era el único en su puesto, entra uno del puesto con piernas si lo hay;
+  con la directiva "juegan todos", el que no jugó entra por el más jugado de su mismo
+  puesto. El profe del barrio (45-60) a veces sí y a veces no; el proyecto (65-80)
+  siempre. **Y el que no lee, se lee**: el relato dice "Quedamos sin base natural, y a
+  Larrosa no le quita el sueño"; el que sí lee y no tiene recambio del puesto, "no había
+  recambio del puesto con piernas".
+- Lo que queda como decisión: con "juegan todos" entran dos fríos por descanso, así que
+  en un plantel de once uno o dos no juegan. Subirlo a tres reparte de verdad pero deja a
+  los titulares en 10-20' y suma ~40 broncas de minutos por 60 temporadas: el profe pasa
+  a ser un DT que enoja a los protagonistas, que es su estilo, pero conviene que lo decida
+  Gabi jugando.
+
+## Los diales sociales al cierre (septiembre 2026, el clima ya no se clava en 99)
+
+El informe de testing vio terminar una temporada ganadora con "moral 99 y ambiente 99 sin
+esfuerzo". El harness reporta desde ahora **clima social y moral media al cierre**, y tiene
+una estrategia que gestiona, `conAsado` (asado cada semana que la caja lo aguanta, charla
+con el más caliente). Medido a 30 temporadas:
+
+| | Clima al cierre | Temporadas con clima ≥ 90 | Moral media |
+| --- | --- | --- | --- |
+| Sin gestión (`zonaEquipo` … `mixta`) | 55-69 | 0/30 | 50-67 |
+| `conAsado`, antes | 83 | **10/30** | 68 |
+| `conAsado`, ahora | 74 | 0/30 | 65 |
+
+Sin gestión nunca saturaba: el motor ya derivaba el clima hacia 55 y `moraleSoftcap*` ya
+frenaba el ánimo. Lo que saturaba era el asado semanal: +12 (+16 con fiestón) contra -1 de
+deriva. Dos frenos, los dos en `balance.ts`:
+
+- **Techo blando del clima en el asado** (`asado.climateSoftcapSpan` 40,
+  `climateSoftcapMinFactor` 0.25): la mesa llena rinde menos cuanto más alto está el
+  ambiente, igual que la alegría con el ánimo. A 60 rinde entero, a 80 la mitad, a 90 un
+  cuarto.
+- **La deriva aprieta arriba** (`weekly.climateGravityOver70` 2, `climateGravityOver85` 3):
+  a 99 el clima no se queda sin que alguien lo alimente.
+
+Con el asado semanal el clima se mantiene alto (74) sin clavarse: el asado sigue valiendo
+la plata (`conAsado` gana 52-55% contra 50-52% de `zonaEquipo`: la química empuja, dentro
+del ruido de 30 temporadas) y la segunda mitad de la
+temporada no pierde la tensión social. La moral no estaba saturando (65-68) y no se tocó.
+
+## El modo Carrera (septiembre 2026, lo que quedaba de T3)
+
+El harness [`scripts/sim-carrera.cjs`](../scripts/sim-carrera.cjs) juega la primera
+pretemporada del club desde cero (la libreta, el favor, la bola de nieve, el corte de
+los ocho en cuatro semanas) con cuatro políticas de pedir favores, y reporta cuántas
+carreras llegan a inscribirse. El roadmap pedía medirlo "sin gestión", pero en la
+Carrera sin gestión no hay club: nadie firma si no le pedís. Por eso el piso se mide
+con políticas mecánicas.
+
+| Política (60 carreras, dificultad medio) | Llegan | Plantel al cierre |
+| --- | --- | --- |
+| `sinGestion`: no llamás a nadie | 0% | 0 |
+| `soloLibreta`: sólo la libreta del arranque, sin la bola de nieve | 10% | 5.9 |
+| `pedirATodos`: a cualquiera disponible, en cualquier orden | 90% | 9.6 |
+| `conCabeza`: el íntimo primero, después los que ya tienen a su amigo adentro | 100% | 11.2 |
+
+Lo que dice: **la bola de nieve es el juego** (sin ella no se llega: 10%), y **el orden
+importa** (con cabeza se dice que no 6% de las veces; al azar, 18%). El criterio de
+salida de T3 —"se puede perder la pretemporada"— se cumple para el que llama al azar;
+al que usa las doce gestiones con cabeza no se le escapa ninguna y cierra con 11.
+**Es una decisión de Gabi si eso está bien** (la primera pretemporada como tutorial
+de la red, con la tensión en llegar con un plantel largo y no corto) **o si tiene que
+apretar** (menos gestiones por semana en la libreta, `favorBase` más bajo o menos
+contactos por agenda). El CI corre 20 carreras por política y falla si sin gestión
+llega alguna, si pidiendo a todos se llega siempre, o si con cabeza se llega en 20%
+o menos.
+
+De paso: en las tres políticas que llegan, la inscripción sale de fiado (50 de 54,
+57 de 60) porque los $200 del arranque no alcanzan para la ficha, que es lo que se
+buscaba en T3.
 
 ## Pendiente (ver ROADMAP)
 
