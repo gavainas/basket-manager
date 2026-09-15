@@ -75,6 +75,18 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   [`design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md`](design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md)):
   leerlo y decir si va la **prueba de registro** (1 base, 3 pelos, 2 barbas, ≈12 créditos).
   Hasta entonces no se genera nada.
+- **La convocatoria, ¿pasa a la planilla?** (sep 2026, lo único que quedó del punto 2). El
+  mercado, la libreta, el plantel de la pretemporada y las tablas de la Liga ya son la
+  placa de la dirección D. La convocatoria no: sus filas son **historia y gestiones** ("se
+  cayó a última hora: el nene con fiebre", y tres botones para resolverlo), no cifras
+  comparables de arriba abajo. La placa le sumaría materia pero no columnas. Si igual la
+  querés uniforme, es una sesión corta.
+- **ESLint con `react-hooks`** (lo que queda del punto 3 junto con partir `WeekView.tsx`):
+  suma una dependencia de desarrollo, igual que el Playwright de acá abajo. Hoy hay una
+  red parcial —`npm run build` corre `tsc` y los 115 tests pasan por el reducer—, pero
+  nadie chequea las dependencias de los efectos. *(De paso: el 15/9 apareció uno de esos
+  bugs de hooks —dos `return` condicionales antes de la mitad de los hooks de `App`— y se
+  corrigió con el code-splitting.)*
 - **`npm run check:pantallas`**: el Playwright que recorre las 22 pantallas en tres
   resoluciones existe pero no está en el repo porque suma una dependencia de desarrollo
   (ver [`design/PLAN_MARCO_FIJO.md`](design/PLAN_MARCO_FIJO.md)). Con la regla nueva lo
