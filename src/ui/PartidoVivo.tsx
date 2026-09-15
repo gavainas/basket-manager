@@ -11,12 +11,11 @@
 // personas del mundo que vinieron hoy, con sus puntos repartidos cuarto a
 // cuarto (rivalBoxScore, de lectura).
 
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { BALANCE } from '../game/balance';
 import {
   courtFreshness,
   cuartosDe,
-  marcador,
   MINUTOS_POR_PARTIDO,
   RIVAL_DEFENSE_LABELS,
   rivalBoxScore,
@@ -28,7 +27,7 @@ import { arranqueDelCuarto, jugadasDelCuarto, largoDelCuarto, largoDelTramo, typ
 import { clubByLegacyId, teamByLegacyRival, userTeam } from '../game/world';
 import type { DefenseTactic, GameState, Player, Position, WorldPlayer } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
-import { CountUp } from './CountUp';
+import { MatchClockContext, visibleScore, visibleVitals } from './matchPresentation';
 import { Crest } from './Crest';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
@@ -127,20 +126,12 @@ const TICK_MS = 100;
  * muerta, no en el próximo cuarto. Se puede pausar, saltar al final del
  * cuarto, o simular el partido entero.
  */
-interface Reloj {
-  /** El cuarto que se está contando. */
-  q: number;
-  /** Minuto del partido en el que va el reloj (con decimales). */
-  t: number;
-  pausa: boolean;
-}
-
 export function PartidoVivo({ state, dispatch }: Props) {
   const [saleSel, setSaleSel] = useState<string | null>(null);
   const [entraSel, setEntraSel] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<'todo' | 'puntos' | 'cambios'>('todo');
   const [verSuplentesRival, setVerSuplentesRival] = useState(false);
-  const [reloj, setReloj] = useState<Reloj | null>(null);
+  const { reloj, setReloj } = useContext(MatchClockContext);
   const [simulando, setSimulando] = useState(false);
   const ultimaFilaRef = useRef<HTMLDivElement | null>(null);
   const tramoPedidoRef = useRef<string>('');
@@ -260,16 +251,12 @@ export function PartidoVivo({ state, dispatch }: Props) {
     if (i > reloj.q) return [];
     return todas.filter((j) => j.t <= reloj.t);
   };
-  const ocultas: Jugada[] = reloj ? jugadasDelCuarto(state, live, reloj.q).filter((j) => j.t > reloj.t) : [];
+  const ocultas: Jugada[] = reloj ? played.flatMap((_q, i) => i < reloj.q ? [] : jugadasDelCuarto(state, live, i).filter((j) => j.t > reloj.t)) : [];
   const ptsOcultos = (id: string) => ocultas.filter((j) => j.quienId === id).reduce((t, j) => t + j.pts, 0);
   const visibles = reloj ? jugadasDe(reloj.q) : [];
   const ultimaVisible = visibles.length > 0 ? visibles[visibles.length - 1] : null;
   const antesDelReloj = reloj ? played.slice(0, reloj.q).reduce((t, q) => ({ f: t.f + q.for, a: t.a + q.against }), { f: 0, a: 0 }) : null;
-  const mostrado = reloj
-    ? ultimaVisible
-      ? { f: ultimaVisible.f, a: ultimaVisible.a }
-      : antesDelReloj!
-    : marcador(live);
+  const mostrado = visibleScore(state, live, reloj);
   const totalFor = mostrado.f;
   const totalAgainst = mostrado.a;
   const diff = totalFor - totalAgainst;
@@ -292,11 +279,12 @@ export function PartidoVivo({ state, dispatch }: Props) {
   const holdMode = enDescanso && !live.finished && played.length > 0 && diff >= BALANCE.liveMatch.comebackDeficit;
   const injuryNote = enDescanso ? (lastQ?.notes.find((n) => n.startsWith('🚑')) ?? null) : null;
 
-  const minutoReloj = reloj ? Math.min(relojFin, Math.floor(reloj.t) + (reloj.t % 1 > 0 ? 1 : 0)) : 0;
+  const segundosReloj = reloj ? Math.floor(Math.min(relojFin, reloj.t) * 60 + 1e-6) : 0;
+  const tiempoReloj = `${Math.floor(segundosReloj / 60)}:${String(segundosReloj % 60).padStart(2, '0')}`;
   const nombreCuarto = (i: number) => (played[i]?.overtime ? 'Suplementario' : `${Q_LABELS[Math.min(i, 3)]} cuarto`);
   const minutoEnCurso = live.enCurso ? arranqueDelCuarto(live, cuartosCerrados) + largoDelTramo(live.enCurso) * (live.enCurso.tramos?.length ?? 0) : 0;
   const momento = reloj
-    ? `${nombreCuarto(reloj.q)} · ${minutoReloj}'${reloj.pausa ? ' · pausado' : ''}`
+    ? `${nombreCuarto(reloj.q)} · ${tiempoReloj}${reloj.pausa ? ' · pausado' : ''}`
     : live.enCurso
       ? `${nombreCuarto(cuartosCerrados)} · ${minutoEnCurso}' · pelota muerta`
       : live.finished
@@ -310,10 +298,11 @@ export function PartidoVivo({ state, dispatch }: Props) {
               : `Fin del ${Q_LABELS[Math.min(regularPlayed, 4) - 1]} cuarto`;
 
   const byId = (id: string) => state.players.find((p) => p.id === id)!;
-  const onCourt = live.onCourt.map(byId);
-  const bench = live.squad.filter((id) => !live.onCourt.includes(id)).map(byId);
-  const freshOf = (id: string) => Math.round(live.playerFresh[id] ?? 70);
-  const minsOf = (id: string) => live.minutes[id] ?? 0;
+  const vitals = visibleVitals(live, reloj);
+  const onCourt = vitals.onCourt.map(byId);
+  const bench = live.squad.filter((id) => !vitals.onCourt.includes(id)).map(byId);
+  const freshOf = (id: string) => Math.round(vitals.playerFresh[id] ?? 70);
+  const minsOf = (id: string) => Math.floor((vitals.minutes[id] ?? 0) + 1e-6);
   const ptsOf = (id: string) => (live.stats[id]?.pts ?? 0) - ptsOcultos(id);
   const legsCls = (v: number) => (v >= 65 ? 'good' : v >= 40 ? 'warn' : 'bad');
 
@@ -390,6 +379,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
         <span className="pvj-nombre">
           <PlayerLink id={p.id}>{p.name}</PlayerLink>
           {esRef && <Icon name="estrella" size={10} />}
+          {lado === 'bench' && live.heldOut?.includes(p.id) && <small title="Reservado por tu decisión. Vuelve cuando lo pongas vos."> · reservado</small>}
         </span>
         <span className="pvj-pts">{ptsOf(p.id)}</span>
         <span className="pvj-energia">
@@ -448,9 +438,9 @@ export function PartidoVivo({ state, dispatch }: Props) {
 
         <div className="pvc-marcador">
           <div className="pvc-tablero">
-            <span className={`pvc-score ${diff > 0 ? 'win' : diff < 0 ? 'lose' : ''}`}><CountUp value={totalFor} /></span>
+            <span className={`pvc-score ${diff > 0 ? 'win' : diff < 0 ? 'lose' : ''}`}>{totalFor}</span>
             <span className="pvc-vs">vs</span>
-            <span className={`pvc-score ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}><CountUp value={totalAgainst} /></span>
+            <span className={`pvc-score ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}>{totalAgainst}</span>
           </div>
           <div className="pvc-momento">{momento}</div>
           {(hotStreak || coldStreak || comebackMode || holdMode || injuryNote) && (
@@ -722,10 +712,10 @@ export function PartidoVivo({ state, dispatch }: Props) {
             ) : (
               <p className="tactic-hint">Sin plantel conocido para este rival.</p>
             )}
-            <div className="pv-piernas-rival" title="Piernas del equipo rival (el motor las lleva por equipo, no por jugador)">
+            <div className="pv-piernas-rival" title="Estado físico del equipo rival">
               <span>Piernas</span>
-              <span className="mini-medidor"><i className={legsCls(live.rivalFreshness)} style={{ width: `${live.rivalFreshness}%` }} /></span>
-              <b>{Math.round(live.rivalFreshness)}</b>
+              <span className="mini-medidor"><i className={legsCls(vitals.rivalFreshness)} style={{ width: `${vitals.rivalFreshness}%` }} /></span>
+              <b>{Math.round(vitals.rivalFreshness)}</b>
             </div>
             {rivalCinco.bench.length > 0 && (
               <>

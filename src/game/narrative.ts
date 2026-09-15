@@ -48,21 +48,21 @@ export function quarterFlavor(ctx: FlavorContext, rng: Rng): string[] {
   // La figura desaparecida: pasada la mitad, sigue sin aparecer.
   const star = ctx.onCourt.find((p) => p.id === ctx.starId);
   const starTotal = star ? ctx.live.stats[star.id]?.pts ?? 0 : 99;
-  if (star && ctx.qIndex >= 2 && starTotal <= 4) {
-    out.push(`A ${star.name} lo desaparecieron del partido: apenas ${starTotal} punto${starTotal === 1 ? '' : 's'} hasta acá.`);
+  if (star && ctx.qIndex >= 2 && (ctx.live.minutes[star.id] ?? 0) >= 20 && starTotal <= 4) {
+    out.push(`A ${star.name} le cuesta sumar: ${starTotal} punto${starTotal === 1 ? '' : 's'} en ${ctx.live.minutes[star.id]} minutos.`);
   } else if (topGuard && (ctx.qPts[topGuard.id] ?? 0) >= 8 && rng.chance(0.6)) {
-    out.push(`${topGuard.name} metió dos triples seguidos y obligó al rival a pedir minuto.`);
+    out.push(`${topGuard.name} sumó ${ctx.qPts[topGuard.id]} puntos en este cuarto.`);
   } else if (topBig && (ctx.qPts[topBig.id] ?? 0) >= 8 && rng.chance(0.6)) {
-    out.push(`Dominio interior: ${topBig.name} castigó una y otra vez abajo del aro.`);
+    out.push(`${topBig.name} aportó ${ctx.qPts[topBig.id]} puntos en este cuarto.`);
   } else if (bigRebs >= 6 && rng.chance(0.5)) {
-    out.push('Los tableros fueron nuestros: segundas y terceras oportunidades en cada ataque.');
+    out.push(`Nuestros internos juntaron ${bigRebs} rebotes en el cuarto.`);
   }
 
   // Mejora táctica: cambió la defensa y el rival anotó bastante menos.
   const prev = ctx.live.quarters[ctx.live.quarters.length - 1];
   if (prev && prev.defense !== ctx.live.defense && ctx.rivalQ <= prev.against - 4) {
     out.push(
-      `El equipo mejoró con la ${ctx.live.defense === 'zona' ? 'zona' : ctx.live.defense === 'hombre' ? 'marca individual' : 'presión'} y frenó las penetraciones del rival.`
+      `El equipo mejoró con la ${ctx.live.defense === 'zona' ? 'zona' : ctx.live.defense === 'hombre' ? 'marca individual' : 'presión'} y el rival anotó ${ctx.rivalQ} puntos, contra ${prev.against} del cuarto anterior.`
     );
   }
 
@@ -353,6 +353,8 @@ export function resolveIncident(state: GameState, choice: number, rng: Rng): Gam
   const sacar = (p: Player, porQue: string) => {
     if (!live.onCourt.includes(p.id)) return `${p.name} ya no estaba en cancha.`;
     const sub = reemplazar(s, live, p.id);
+    live.heldOut = [...new Set([...(live.heldOut ?? []), p.id])];
+    live.manualBreak = true;
     return `${porQue} ${sub ? `Entró ${sub.name}.` : 'No quedaba recambio: seguimos con cuatro.'}`;
   };
 
@@ -391,7 +393,9 @@ export function resolveIncident(state: GameState, choice: number, rng: Rng): Gam
     if (choice === 0) {
       if (live.onCourt.includes(jugador.id)) {
         const sub = reemplazar(s, live, jugador.id);
-        note(sub ? `Sacaste a ${jugador.name} antes de la segunda técnica: entró ${sub.name}.` : `${jugador.name} se quedó sin recambio: sigue en cancha, con la técnica a cuestas.`);
+        live.heldOut = [...new Set([...(live.heldOut ?? []), jugador.id])];
+        live.manualBreak = true;
+        note(sub ? `Sacaste a ${jugador.name} antes de la segunda técnica: entró ${sub.name}.` : `${jugador.name} sale. No queda recambio: seguimos con cuatro.`);
         if (sub) live.refTension = Math.max(0, (live.refTension ?? 0) - 1);
       }
     } else if (choice === 1) {

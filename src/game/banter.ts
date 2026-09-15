@@ -20,13 +20,13 @@ function rivalOpeners(s: GameState, rivalName: string, rng: Rng): string[] {
   if (last && !last.won) {
     openers.push(
       `¿Se acuerdan del ${last.scoreAgainst}-${last.scoreFor}? Nosotros sí. Guardamos el video.`,
-      `El otro día pasé el video del último partido en el grupo. Buenos recuerdos. Nos vemos el finde.`
+      `El otro día pasé el video del último partido en el grupo. Buenos recuerdos. Nos vemos en la cancha.`
     );
   }
   if (last && last.won) {
     openers.push(
       `La otra vez se nos escapó. Esta no. Avisen si necesitan que les guardemos hielo para después.`,
-      `Venimos con bronca del último cruce. El sábado la devolvemos con intereses.`
+      `Venimos con bronca del último cruce. En el próximo cruce la devolvemos con intereses.`
     );
   }
   const clubRow = s.standings.find((r) => r.teamId === 'club');
@@ -43,7 +43,7 @@ function rivalOpeners(s: GameState, rivalName: string, rng: Rng): string[] {
   openers.push(
     `Che, ¿este año van a traer banco o siguen jugando seis?`,
     `Pregunta seria: ¿el gimnasio de ustedes ya tiene los aros derechos?`,
-    `Nos vemos el finde. Traigan hielo… para los tobillos, digo.`
+    `Nos vemos en la cancha. Traigan hielo… para los tobillos, digo.`
   );
   void rivalName;
   return openers;
@@ -53,16 +53,16 @@ function rivalOpeners(s: GameState, rivalName: string, rng: Rng): string[] {
 function ownReply(p: Player, rng: Rng): string {
   const pools: Partial<Record<Player['personality'], string[]>> = {
     protagonista: [
-      'Que hablen ahora. El sábado el que habla soy yo.',
-      'Guarden ese mensaje. Lo vamos a leer de nuevo el domingo.',
+      'Que hablen ahora. En la cancha el que habla soy yo.',
+      'Guarden ese mensaje. Lo vamos a leer de nuevo después del partido.',
     ],
     competitivo: [
       'Menos chat y más cancha. Ahí nos vemos.',
-      'Perfecto. Más leña para el sábado.',
+      'Perfecto. Más leña para el partido.',
     ],
     social: [
       'Jaja, buenísimo, después del partido asado igual, ¿no? Pero primero los pasamos por arriba.',
-      'Los queremos igual, muchachos. Igual el sábado ni un rebote les dejamos.',
+      'Los queremos igual, muchachos. Igual en el partido ni un rebote les dejamos.',
     ],
     veterano: [
       'Hace veinte años que escucho lo mismo. Después el partido lo juegan los nervios.',
@@ -70,10 +70,10 @@ function ownReply(p: Player, rng: Rng): string {
     ],
     mercenario: ['Que aposten algo si están tan seguros.'],
     talentoso_informal: ['Jaja, me colgué y recién leo. Igual les ganamos.'],
-    leal: ['Acá nadie se esconde. El sábado, en la cancha, con la nuestra.'],
+    leal: ['Acá nadie se esconde. En el partido, con la nuestra.'],
     cumplidor: ['Nosotros vamos a estar los doce, puntuales. Que ellos digan lo mismo.'],
   };
-  const pool = pools[p.personality] ?? ['El sábado se contesta en la cancha.'];
+  const pool = pools[p.personality] ?? ['En el partido se contesta en la cancha.'];
   return rng.pick(pool);
 }
 
@@ -135,7 +135,7 @@ export function rollWeekBanter(s: GameState, rng: Rng): void {
       personality: speaker.personality,
       age: speaker.age,
       text: rng.pick([
-        'Está picante esto. Me gusta. El finde se define.',
+        'Está picante esto. Me gusta. En la cancha se define.',
         'Así da gusto. Nos vemos en la cancha, no borren el chat.',
       ]),
     });
@@ -183,7 +183,7 @@ export function respondAsadoBet(state: GameState, accept: boolean): GameState {
     s.weekBanter?.messages.push({
       side: 'delegado',
       name: `Delegado de ${bet.rivalName}`,
-      text: 'Jaja, se corrieron. Bueno, igual nos vemos el finde. Cobardes pero puntuales, espero.',
+      text: 'Jaja, se corrieron. Bueno, igual nos vemos en la cancha. Cobardes pero puntuales, espero.',
     });
   }
   return s;

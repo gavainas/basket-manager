@@ -59,16 +59,14 @@ function buildComment(i: RatingInput, rating: number): string {
   const { points: pts, rebounds: reb, assists: ast, minutes: min } = i;
   const guard = i.position === 'Base' || i.position === 'Escolta';
 
+  if (rating < 6) return `Noche ${rating === 5 ? 'discreta' : 'floja'} en el balance general: ${pts} puntos, ${reb} rebotes y ${ast} asistencias en ${min} minutos.`;
   if (min < 15 && rating >= 6)
-    return `Entró desde el banco y cumplió: ${pts} punto${pts === 1 ? '' : 's'} y trabajo serio en ${min} minutos.`;
+    return `Cumplió en sus minutos: ${pts} punto${pts === 1 ? '' : 's'} y trabajo serio en ${min} minutos.`;
   if (ast >= 6 && guard)
     return `Manejó el ritmo del equipo y repartió ${ast} asistencias: fue quien rompió la defensa rival.`;
   if (reb >= 9) return `Dueño de los tableros: ${reb} rebotes que valieron oro allá abajo.`;
-  if (pts >= 18) return `Imparable de cara al aro: ${pts} puntos y el rival sin respuestas.`;
+  if (pts >= 18) return `Aporte en ataque: ${pts} puntos en ${min} minutos.`;
   if (rating >= 8)
     return `Partidazo completo: ${pts} puntos, ${reb} rebote${reb === 1 ? '' : 's'} y ${ast} asistencia${ast === 1 ? '' : 's'}.`;
-  if (rating >= 6) return `Cumplió con su rol: ${pts} puntos, aporte silencioso y pocas licencias.`;
-  if (rating === 5) return `Ni fu ni fa: ${pts} punto${pts === 1 ? '' : 's'} en una noche discreta.`;
-  if (ast === 0 && guard) return `Noche floja: el juego no pasó por sus manos y aportó poco (${pts} pts).`;
-  return `Noche floja: poca producción (${pts} pts) y sin peso en el juego.`;
+  return `Cumplió con su rol: ${pts} puntos, aporte silencioso y pocas licencias.`;
 }
