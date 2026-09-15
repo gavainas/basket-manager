@@ -40,7 +40,7 @@ Compatibilidad: campos nuevos opcionales, sin cambiar SAVE_VERSION ni constantes
 
 ## Etapa 4: dos composiciones para revisar
 
-Ver [A y B](propuestas/README.md). Ambas láminas se inspeccionaron renderizadas. B es la recomendación para orientar al jugador nuevo; A prioriza la anticipación del encuentro. No se integró ninguna al juego.
+Ver [A y B y la decisión registrada](propuestas/README.md). Ambas láminas se inspeccionaron renderizadas. Tras compararlas, Gabi eligió A: el partido debe ser central y la gestión debe preparar al equipo para llegar bien. Esta elección supera la recomendación inicial de B. La implementación sigue pendiente.
 
 ## Validación
 
@@ -49,4 +49,4 @@ Ver [A y B](propuestas/README.md). Ambas láminas se inspeccionaron renderizadas
 - `git diff --check`: correcto.
 - No se afirma una validación visual de React: queda pendiente abrir la rama en una vista accesible y probar pausa, sustitución, incidencia, salto de cuarto, suplementario, informe y convocatoria tardía a 1366 × 768.
 
-Antes de integrar: elegir A/B y completar esa prueba de interfaz. Las propuestas no cambian el juego publicado.
+A ya fue elegida por Gabi. Antes de integrar los cambios de la rama, completar la prueba de interfaz pendiente. La implementación del tablero A corresponde al siguiente trabajo; este registro no cambia el juego publicado.
