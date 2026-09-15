@@ -548,9 +548,11 @@ columnas —foto · quién (nombre, puesto · edad · cm, la frase de origen o e
 vendría") · nivel · físico · lo que se sabe (chips) · acción—. Las cifras estimadas van sin
 medidor: "71–85" o "★★★☆☆" ya dicen cuánto se sabe, y en tinta, porque el naranja de esa
 pantalla es la acción. Los que ya no están van apagados (`.planilla-fila.dimmed`) en su
-propia placa. Sigue en cards la elección de liga: son tres o cuatro opciones que se comparan
-de a una, no una lista. **Queda** el plantel de la pretemporada (`.ps-row`), la convocatoria
-y la tabla de la liga.
+propia placa. El plantel de la pretemporada ("¿quiénes siguen?", `RosterRow`) es la misma
+placa con menos columnas (`.planilla-plantel-ps`: quién · valoración · cómo viene · acción);
+las filas `.ps-row` se borraron. Sigue en cards la elección de liga: son tres o cuatro
+opciones que se comparan de a una, no una lista. **Queda** la convocatoria y la tabla de la
+liga.
 
 ## El marco fijo (sep 2026) — implementado
 

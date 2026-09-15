@@ -26,6 +26,7 @@ import { Crest } from './Crest';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
+import { Tip, TIPS } from './Tip';
 import { USER_CLUB_ID } from '../game/world';
 import { dayLabel } from '../game/world';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
@@ -511,7 +512,12 @@ function InscriptionSection({ state, dispatch }: Props) {
 
 // ---------- Plantel: continuidad ----------
 
-function RosterRow({ state, dispatch, p }: Props & { p: Player }) {
+/**
+ * Un renglón del plantel en la pretemporada: la misma planilla que el Plantel
+ * de la temporada y el mercado (dirección D), con lo que acá importa: cómo
+ * viene cada uno (dudando, pide una condición, se retiró) y qué podés hacer.
+ */
+function RosterRow({ state, dispatch, p, indice }: Props & { p: Player; indice: number }) {
   const ps = state.preseason!;
   const st = ps.continuity[p.id];
   const cont = CONTINUITY_LABELS[st];
@@ -519,36 +525,66 @@ function RosterRow({ state, dispatch, p }: Props & { p: Player }) {
   const demand = ps.playerDemands[p.id];
   const needsTalk = st === 'dudando' || st === 'no_respondio' || st === 'quiere_irse';
   const noGestiones = ps.gestionesLeft <= 0;
+  const dicho = st === 'pide_condicion' && demand ? `Pide: ${DEMAND_LABELS[demand].toLowerCase()}.` : p.description;
 
   return (
-    <div className={`ps-row${st === 'retirado' ? ' dimmed' : ''}`}>
-      <div className="avatar">
+    <div className={`planilla-fila${st === 'retirado' ? ' dimmed' : ''}`} style={{ '--fila': indice } as CSSProperties}>
+      <span className="planilla-foto">
         <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} personality={p.personality} />
-      </div>
-      <div className="ps-who">
-        <div className="name">
-          <PlayerLink id={p.id}>{p.name}</PlayerLink>{' '}
-          <span className="muted">
-            · {p.position} · {p.age} años · ≈{p.visibleRating}
+      </span>
+      <span className="planilla-quien">
+        <span className="planilla-nombre">
+          <PlayerLink id={p.id}>{p.name}</PlayerLink>
+          <span className="planilla-pos">
+            {p.position} · {p.age}
           </span>
-        </div>
-        {st === 'pide_condicion' && demand && <div className="muted">Pide: {DEMAND_LABELS[demand].toLowerCase()}</div>}
+        </span>
+        <span className="planilla-dicho" title={dicho}>{dicho}</span>
+      </span>
+      <span className="planilla-valor"><small>≈</small>{p.visibleRating}</span>
+      <span className="planilla-sabe">
+        <span className={`chip ${cont.cls}`}>{cont.label}</span>
+        {feeInfo && <span className={`chip ${feeInfo.cls}`}>{feeInfo.label}</span>}
+      </span>
+      <span className="planilla-accion">
+        {needsTalk && (
+          <button className="small" disabled={noGestiones} title={noGestiones ? 'No te quedan gestiones esta semana' : 'Cuesta 1 gestión'} onClick={() => dispatch({ type: 'PS_TALK', id: p.id })}>
+            Hablar<small> · 1 gestión</small>
+          </button>
+        )}
+        {st === 'pide_condicion' && (
+          <button
+            className="small"
+            disabled={noGestiones}
+            title={noGestiones ? 'No te quedan gestiones esta semana' : 'Cuesta 1 gestión'}
+            onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: p.id, isMarket: false })}
+          >
+            Negociar<small> · 1 gestión</small>
+          </button>
+        )}
+      </span>
+    </div>
+  );
+}
+
+/** La placa del plantel en la pretemporada: cabecera de columnas y un renglón por jugador. */
+function PlanillaPlantelPs({ state, dispatch, lista }: Props & { lista: Player[] }) {
+  return (
+    <div className="planilla planilla-plantel-ps">
+      <span className="tornillo tornillo-si" />
+      <span className="tornillo tornillo-sd" />
+      <span className="tornillo tornillo-ii" />
+      <span className="tornillo tornillo-id" />
+      <div className="planilla-cab">
+        <span />
+        <span>Jugador</span>
+        <Tip text={TIPS.valoracion}><span className="num">Valor.</span></Tip>
+        <span>Cómo viene</span>
+        <span />
       </div>
-      {feeInfo && <span className={`chip ${feeInfo.cls}`}>{feeInfo.label}</span>}
-      <span className={`chip ${cont.cls}`}>{cont.label}</span>
-      {needsTalk && (
-        <button disabled={noGestiones} onClick={() => dispatch({ type: 'PS_TALK', id: p.id })}>
-          Hablar
-        </button>
-      )}
-      {st === 'pide_condicion' && (
-        <button
-          disabled={noGestiones}
-          onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: p.id, isMarket: false })}
-        >
-          Negociar
-        </button>
-      )}
+      {lista.map((p, i) => (
+        <RosterRow key={p.id} state={state} dispatch={dispatch} p={p} indice={i} />
+      ))}
     </div>
   );
 }
@@ -584,11 +620,7 @@ function RosterSection({ state, dispatch }: Props) {
           <h4 className="ps-subtitulo">
             <span className="chip warn">{pending.length}</span> esperan una respuesta tuya
           </h4>
-          <div className="ps-list">
-            {pending.map((p) => (
-              <RosterRow key={p.id} state={state} dispatch={dispatch} p={p} />
-            ))}
-          </div>
+          <PlanillaPlantelPs state={state} dispatch={dispatch} lista={pending} />
           <p className="hint">Cada charla o negociación consume 1 gestión. Los que no estén confirmados al cierre, no juegan la temporada.</p>
         </>
       ) : (
@@ -617,11 +649,7 @@ function RosterSection({ state, dispatch }: Props) {
           <h4 className="ps-subtitulo">
             <span className="chip bad">{retired.length}</span> colgaron las zapatillas
           </h4>
-          <div className="ps-list">
-            {retired.map((p) => (
-              <RosterRow key={p.id} state={state} dispatch={dispatch} p={p} />
-            ))}
-          </div>
+          <PlanillaPlantelPs state={state} dispatch={dispatch} lista={retired} />
         </>
       )}
     </div>

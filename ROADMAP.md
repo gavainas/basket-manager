@@ -41,9 +41,9 @@ club quiebra la mitad de las veces que antes. Lo que sigue:
 
 2. **Llevar la dirección D al resto del juego** (1 sesión, empezada). La planilla y el
    relieve a la pretemporada, el mercado, la convocatoria y la liga, para que no convivan
-   dos anatomías de lista en el mismo juego. *Hecho (sep 2026):* el mercado y la libreta
-   son una planilla (ver el changelog). *Falta:* el plantel de la pretemporada (hoy filas
-   `ps-row`, cerca pero sin la placa), la convocatoria y la tabla de la liga.
+   dos anatomías de lista en el mismo juego. *Hecho (sep 2026):* el mercado, la libreta y el
+   plantel de la pretemporada son una planilla (ver el changelog). *Falta:* la convocatoria
+   y la tabla de la liga.
 
 3. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.400 líneas) en sus cinco etapas,
    ESLint con `react-hooks`, code-splitting (755 kB en un chunk).
