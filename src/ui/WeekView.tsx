@@ -409,14 +409,18 @@ function PlanningPanel({ state, dispatch }: Props) {
                 const selected = state.actionsChosen.includes(a.id);
                 const blocked = !check.ok && !selected;
                 const full = !selected && state.actionsChosen.length >= max;
+                /* Un botón de verdad, no un div clickeable (sep 2026): tiene
+                   foco, se marca y se destilda con el teclado, y el lector de
+                   pantalla sabe si está elegida. La elegida siempre se puede
+                   destildar, aunque el cupo esté lleno. */
                 return (
-                  <div
+                  <button
                     key={a.id}
+                    type="button"
                     className={`action-card${selected ? ' selected' : ''}${blocked || full ? ' disabled' : ''}`}
-                    onClick={() => {
-                      if (!blocked && !full) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
-                      else if (selected) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
-                    }}
+                    aria-pressed={selected}
+                    disabled={(blocked || full) && !selected}
+                    onClick={() => dispatch({ type: 'TOGGLE_ACTION', id: a.id })}
                   >
                     <div className="action-title">
                       <Icon name={actionIcon(a.id)} size={17} /> {a.name}
@@ -427,7 +431,7 @@ function PlanningPanel({ state, dispatch }: Props) {
                     ) : (
                       <div className="action-cost">{a.costLabel}</div>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>

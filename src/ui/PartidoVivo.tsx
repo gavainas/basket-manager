@@ -872,8 +872,14 @@ export function PartidoVivo({ state, dispatch }: Props) {
             </>
           ) : !live.finished ? (
             <>
+              {/* Con una incidencia sin resolver, el motivo va en el botón
+                  mismo, no en letra chica al lado (sep 2026). */}
               <button className="primary" disabled={!!live.pendingIncident || simulando} onClick={jugarCuarto}>
-                {live.enCurso ? `▶ Seguir el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto` : `▶ Jugar el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto`}
+                {live.pendingIncident
+                  ? 'Resolvé la incidencia primero'
+                  : live.enCurso
+                    ? `▶ Seguir el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto`
+                    : `▶ Jugar el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto`}
               </button>
               <button disabled={!!live.pendingIncident || simulando} title="Juega lo que falta de corrido, con tu plan de cambios (o el DT). Se frena sola si hay una incidencia." onClick={() => setSimulando(true)}>
                 {simulando ? 'Simulando…' : 'Simular el partido ⏩'}
@@ -881,7 +887,6 @@ export function PartidoVivo({ state, dispatch }: Props) {
               {!live.pendingIncident && (
                 <span className="hint">Piernas nuestras en cancha: {Math.round(courtFreshness(live))}. Podés cambiar la táctica antes de cada cuarto; el rival también juega…</span>
               )}
-              {live.pendingIncident && <span className="hint">Resolvé la incidencia antes de seguir jugando.</span>}
             </>
           ) : (
             <button className="primary" onClick={() => dispatch({ type: 'FINISH_MATCH' })}>
