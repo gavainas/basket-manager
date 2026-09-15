@@ -847,7 +847,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
       </div>
 
       {/* ---------- Pie ---------- */}
-      <div className="partido-pie">
+      <div className="partido-pie pie-fijo">
         <div className="confirm-bar pv-pie">
           {reloj ? (
             <>

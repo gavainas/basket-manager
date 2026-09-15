@@ -1278,8 +1278,8 @@ export function PreseasonView({ state, dispatch }: Props) {
       <PreseasonTopbar state={state} dispatch={dispatch} />
 
       <div className="app-shell">
-        {/* Tanda E: el estado del club y las pestañas quedan quietos arriba y lo
-            que scrollea es la sección elegida. El panel de estado se repetía
+        {/* Tanda E: el estado del club se colapsó a una línea y las tres
+            secciones pasaron a pestañas. El panel de estado se repetía
             entero en las tres pestañas ocupando 160px cada vez. */}
         <div className="vista sec-plantel pretemporada-pantalla">
           <div className="pretemporada-cabecera">

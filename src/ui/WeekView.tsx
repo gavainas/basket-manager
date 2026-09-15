@@ -512,8 +512,8 @@ function CallUpPanel({ state, dispatch }: Props) {
   const enElPlantel = state.players.filter((p) => !p.leftClub).length;
 
   return (
-    /* Ya entraba en la ventana; con el marco fijo scrollea adentro de sí misma
-       si una semana brava trae seis ausencias con sus gestiones. */
+    /* Una semana brava con seis ausencias y sus gestiones crece hacia abajo y
+       la scrollea la ventana, no el panel. */
     <div className="semana-scroll">
       {state.actionsLog.length > 0 && (
         <div className="card" style={{ marginBottom: '1rem' }}>
@@ -1134,7 +1134,7 @@ function LineupPanel({ state, dispatch }: Props) {
         </div>
       </div>
 
-      <div className="quinteto-pie">
+      <div className="quinteto-pie pie-fijo">
       {lineupPromiseWarnings(state).map((w) => (
         <p key={w.playerId} style={{ color: w.breaksToday ? 'var(--bad)' : 'var(--warn, #c90)', fontWeight: 600, margin: '0 0 0.35rem' }}>
           {w.text}
@@ -1349,20 +1349,24 @@ function MatchResultPanel({ state, dispatch }: Props) {
       )}
       </div>
 
-      <div className="confirm-bar">
-        <button className="primary" onClick={() => dispatch({ type: 'NEXT_WEEK' })}>
-          {nextLabel}
-        </button>
+      {/* El botón de seguir se pega abajo mientras el informe scrollea. */}
+      <div className="pie-fijo">
+        <div className="confirm-bar">
+          <button className="primary" onClick={() => dispatch({ type: 'NEXT_WEEK' })}>
+            {nextLabel}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
 export function WeekView({ state, dispatch }: Props) {
-  /* Migración al marco fijo (design/PLAN_MARCO_FIJO.md): las fases ya
-     convertidas ocupan el alto exacto de la ventana y scrollean por panel; las
-     que todavía no, siguen creciendo hacia abajo y las scrollea `.app-shell`.
-     La lista crece tanda a tanda y desaparece en la E, cuando estén todas. */
+  /* Las fases de la temporada comparten la anatomía de pantalla (los cinco
+     pasos arriba, el panel de la fase abajo). Desde sep 2026 ninguna mide la
+     ventana: cada una crece lo que su contenido pide y la scrollea
+     `.app-shell`, con el pie de acción pegado abajo (design/PLAN_MARCO_FIJO.md,
+     "La regla cambió"). */
   const fija =
     state.phase === 'planning' ||
     state.phase === 'callUp' ||

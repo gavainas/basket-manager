@@ -56,6 +56,25 @@ export function ClubView({ state }: { state: GameState }) {
             {state.playersLeftCount > 0 && ` · se fueron ${state.playersLeftCount} esta temporada`}
           </div>
         </div>
+        {/* Las noticias van debajo del estado: el grupo (tercera columna) ya es
+            largo por sí solo, y con las noticias también ahí la mitad de la
+            pantalla quedaba vacía. */}
+        <div className="card" data-focus="noticias">
+          <h3>Últimos acontecimientos</h3>
+          {state.news.length === 0 ? (
+            <div className="muted">Sin novedades por ahora.</div>
+          ) : (
+            <ul className="news-list">
+              {state.news.slice(0, 12).map((n, i) => (
+                <li key={i}>
+                  <span className={`news-dot ${n.tone}`} />
+                  <span className="news-week">S{n.week}</span>
+                  <span>{n.text}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
       <div>
@@ -135,22 +154,6 @@ export function ClubView({ state }: { state: GameState }) {
             </div>
           </div>
         )}
-        <div className="card" data-focus="noticias">
-          <h3>Últimos acontecimientos</h3>
-          {state.news.length === 0 ? (
-            <div className="muted">Sin novedades por ahora.</div>
-          ) : (
-            <ul className="news-list">
-              {state.news.slice(0, 12).map((n, i) => (
-                <li key={i}>
-                  <span className={`news-dot ${n.tone}`} />
-                  <span className="news-week">S{n.week}</span>
-                  <span>{n.text}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
       </div>
     </div>
   );
