@@ -29,11 +29,9 @@ import { HistoryView } from './ui/HistoryView';
 import { PreseasonView } from './ui/PreseasonView';
 import { PreseasonEndScreen } from './ui/PreseasonEndScreen';
 import { formatMoney, weekLabel } from './ui/helpers';
-import { AvatarGallery } from './ui/AvatarGallery';
 import { ConfirmDialog, type ConfirmRequest } from './ui/ConfirmDialog';
 import { Icon, type IconName } from './ui/Icon';
 import { Crest } from './ui/Crest';
-import { CrestGallery } from './ui/CrestGallery';
 
 type Tab = AppTab;
 
@@ -113,13 +111,11 @@ function scrollContenidoArriba() {
   window.scrollTo({ top: 0 });
 }
 
+/* Las pantallas de validación (`/#retratos`, `/#escudos`) vivían acá como dos
+   `return` condicionales antes de la mitad de los hooks. Se mudaron a
+   `main.tsx`, que las carga sólo si se piden (ver el comentario de allá). */
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, null);
-
-  // Pantallas de validación, solo desarrollo (ver design/AVATAR_SYSTEM.md y
-  // design/SISTEMA_VISUAL.md).
-  if (window.location.hash === '#retratos') return <AvatarGallery />;
-  if (window.location.hash === '#escudos') return <CrestGallery />;
   const [tab, setTab] = useState<Tab>('resumen');
   /* Ancla pedida por el tile del inicio: la vista la marca con `data-focus` y
      el efecto de abajo la trae al centro apenas se monta. */

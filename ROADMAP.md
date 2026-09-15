@@ -48,8 +48,12 @@ club quiebra la mitad de las veces que antes. Lo que sigue:
    no cifras; la placa con tornillos le sumaría materia pero no columnas. Si se quiere
    igual, es una sesión corta.
 
-3. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.400 líneas) en sus cinco etapas,
-   ESLint con `react-hooks`, code-splitting (755 kB en un chunk).
+3. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.400 líneas) en sus cinco etapas y
+   ESLint con `react-hooks` (suma una dependencia de desarrollo: decisión de Gabi, como el
+   Playwright de `check:pantallas`). *El code-splitting está* (sep 2026): el juego, React y
+   las galerías de desarrollo son tres archivos, así que un deploy nuevo no vuelve a bajar
+   React. Lo que queda ahí es partir el chunk del juego (627 kB), que pide separar el
+   reducer para que la pretemporada no viaje con el partido.
 
 Lo que quedaba de T2 y T3 salió (sep 2026, ver el changelog): la charla y el compañero
 escriben en la ficha, el inicio avisa al que pasa a "aparece cuando quiere", la libreta
