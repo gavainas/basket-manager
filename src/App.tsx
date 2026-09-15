@@ -373,9 +373,8 @@ export default function App() {
 
       {/* La clase de área envuelve a la vista: de ahí toman su color las bandas
           de todas sus cards, sin tocar los archivos de las vistas. */}
-      {/* En el inicio la barra de recursos sobra: la semana, la caja y el
-          récord están en el centro del panel. Sin ella, el menú entra entero. */}
-      <div className={`app-shell${tab === 'resumen' ? ' sin-recursos' : ''}`}>
+      {/* A conserva la caja y el récord en la barra común, también en el tablero. */}
+      <div className="app-shell">
         {tab === 'resumen' && (
           <div className="vista sec-tablero">
             <Hub state={state} />
@@ -427,7 +426,7 @@ export default function App() {
       </div>
 
       {/* Los números que mirás siempre, siempre en el mismo lugar. */}
-      <footer className="recursos" hidden={tab === 'resumen'}>
+      <footer className="recursos">
         <div className="recursos-inner">
           <div className="recurso">
             <span className="k">
