@@ -18,6 +18,7 @@ import { WorldPlayerLink } from './WorldPlayerLink';
 import { ScoutingCard } from './ScoutingCard';
 import { Tip, TIPS } from './Tip';
 import { rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
+import { useEspacio } from './teclas';
 import { EMOTION_EXPRESSION } from '../game/humanState';
 import { Avatar } from './Avatar';
 import { PartidoVivo } from './PartidoVivo';
@@ -499,6 +500,11 @@ function AsadoReportCard({ state }: { state: GameState }) {
 }
 
 function CallUpPanel({ state, dispatch }: Props) {
+  /* Espacio sigue el camino de la semana donde no hay nada que decidir: pasar
+     de la convocatoria al quinteto, del quinteto al partido y del informe a la
+     semana siguiente. En "La semana" NO, a propósito: ahí Espacio elegiría por
+     vos entre largar la lista temprano o sobre la hora, que es la decisión. */
+  useEspacio(() => dispatch({ type: 'PROCEED_TO_LINEUP' }));
   const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1])!;
   const entries = state.callUp;
   // Bajas y llegadas tarde: todo lo que el DT tiene que saber antes de armar.
@@ -736,6 +742,9 @@ function CallUpPanel({ state, dispatch }: Props) {
         <button className="primary" onClick={() => dispatch({ type: 'PROCEED_TO_LINEUP' })}>
           Armar el quinteto →
         </button>
+        <span className="hint">
+          <b>Espacio</b> también.
+        </span>
       </div>
     </div>
   );
@@ -814,6 +823,10 @@ function LineupPanel({ state, dispatch }: Props) {
   const shortStart = maxStarters < 5 && available.length >= 5;
   const canPlay = count === 5 || (shortStart && count === maxStarters && count > 0);
   const forfeitRisk = available.length < 5;
+  /* Espacio va al partido cuando el quinteto está listo. Con el quinteto a
+     medio armar no hace nada, igual que el botón apagado; y si hay que
+     presentarse igual (forfeit) tampoco: eso se aprieta a propósito. */
+  useEspacio(canPlay ? () => dispatch({ type: 'START_MATCH' }) : null);
 
   const rotationIds = state.rotation.filter(
     (id) => !state.starters.includes(id) && available.some((p) => p.id === id)
@@ -1154,6 +1167,11 @@ function LineupPanel({ state, dispatch }: Props) {
         >
           {forfeitRisk && !canPlay ? 'Presentarse igual (forfeit) →' : 'Ir al partido →'}
         </button>
+        {canPlay && (
+          <span className="hint">
+            <b>Espacio</b> también.
+          </span>
+        )}
         {!canPlay && !forfeitRisk && (
           <span className="hint">
             {shortStart
@@ -1177,6 +1195,7 @@ function LineupPanel({ state, dispatch }: Props) {
 const POS_CORTA: Record<Position, string> = { Base: 'B', Escolta: 'E', Alero: 'A', 'Ala-Pívot': 'AP', Pívot: 'P' };
 
 function MatchResultPanel({ state, dispatch }: Props) {
+  useEspacio(() => dispatch({ type: 'NEXT_WEEK' }));
   const m = state.lastMatch;
   if (!m) return null;
 
@@ -1417,6 +1436,9 @@ function MatchResultPanel({ state, dispatch }: Props) {
           <button className="primary" onClick={() => dispatch({ type: 'NEXT_WEEK' })}>
             {nextLabel}
           </button>
+          <span className="hint">
+            <b>Espacio</b> también.
+          </span>
         </div>
       </div>
     </div>
