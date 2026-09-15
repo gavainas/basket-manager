@@ -161,7 +161,9 @@ export function Hub({ state }: { state: GameState }) {
         <span>{weekLabel(state.week, state.seasonLength)} · Temporada {state.seasonNumber}</span>
       </header>
       <div className="hub-a-layout">
-        <section className="hub-a-match" aria-label="El partido">
+        {/* Con el partido en curso la card suma el marcador grande: la clase deja
+            que el CSS guarde la cancha y los chips en ventanas bajas (Hub.css). */}
+        <section className={`hub-a-match${score ? ' en-juego' : ''}`} aria-label="El partido">
           <div className="hub-a-match-body">
             <div className="hub-a-match-info">
               <span className="hub-a-eyebrow">{score ? 'Partido en curso' : 'La próxima fecha'}</span>
