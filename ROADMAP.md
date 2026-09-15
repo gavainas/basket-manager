@@ -102,8 +102,10 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   vestuario ya está* (sep 2026): a las cinco emociones que tenían pool se sumaron la figura
   del partido y el que se comió la noche; lo que queda ahí —contento, conforme,
   indiferente— es donde el contraste no se lee y el genérico alcanza.
-- **Más eventos**: cadenas de 3+ eslabones y eventos que dependan del historial del club.
-  Ligas que cobren por fecha o aparezcan y desaparezcan según el año.
+- **Más eventos**: cadenas de 3+ eslabones y más eventos que dependan del historial del
+  club. Ligas que cobren por fecha o aparezcan y desaparezcan según el año. *El primero del
+  historial ya está* (sep 2026): la comisión pide explicaciones con tres derrotas al hilo.
+  El molde queda: mirar `s.history` y no el estado de hoy.
 - **Mediano plazo**: clima liviano (suspensiones, público, recaudación), más profundidad
   táctica (matchups, ritmo), lesiones con recuperación progresiva, influencias entre
   jugadores (un líder que se va arrastra amigos), sponsors y actividades sociales.
