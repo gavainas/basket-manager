@@ -550,9 +550,11 @@ medidor: "71–85" o "★★★☆☆" ya dicen cuánto se sabe, y en tinta, por
 pantalla es la acción. Los que ya no están van apagados (`.planilla-fila.dimmed`) en su
 propia placa. El plantel de la pretemporada ("¿quiénes siguen?", `RosterRow`) es la misma
 placa con menos columnas (`.planilla-plantel-ps`: quién · valoración · cómo viene · acción);
-las filas `.ps-row` se borraron. Sigue en cards la elección de liga: son tres o cuatro
-opciones que se comparan de a una, no una lista. **Queda** la convocatoria y la tabla de la
-liga.
+las filas `.ps-row` se borraron. Las tablas de la Liga (`LeagueView.tsx`: posiciones,
+fixture, pirámide, segundo equipo) son `table.planilla`, la hoja de papel de mesa de control
+de la planilla del informe. Sigue en cards la elección de liga: son tres o cuatro opciones
+que se comparan de a una, no una lista. **Queda** la convocatoria, y es una decisión: sus
+filas son historia y gestiones, no cifras (ver `ROADMAP.md`).
 
 ## El marco fijo (sep 2026) — implementado
 
