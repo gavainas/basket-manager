@@ -7,7 +7,7 @@ import { BALANCE } from '../game/balance';
 import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { userGameDay } from '../game/moments';
 import { lineupPromiseWarnings } from '../game/promises';
-import { evaluateTeam, isSelectable, PLAN_MIN_BENCH } from '../game/match';
+import { clubGamesPlayed, clubPosition, clubRecord, evaluateTeam, isSelectable, PLAN_MIN_BENCH } from '../game/match';
 import { userFixtureOfWeek } from '../game/world';
 import type { WeekDay } from '../game/types';
 import { Icon, type IconName } from './Icon';
@@ -1179,6 +1179,20 @@ const POS_CORTA: Record<Position, string> = { Base: 'B', Escolta: 'E', Alero: 'A
 function MatchResultPanel({ state, dispatch }: Props) {
   const m = state.lastMatch;
   if (!m) return null;
+
+  /* Para qué sirvió ganar: la tabla, contada acá. Antes había que salir a la
+     Liga para saber si el partido movió algo. Sólo en fase regular: en
+     playoffs la tabla está congelada. */
+  const jugadas = clubGamesPlayed(state);
+  const rec = clubRecord(state);
+  const tablaLinea =
+    m.forfeit || jugadas === 0 || state.week > state.seasonLength
+      ? null
+      : `En la tabla quedamos ${clubPosition(state)}° de ${state.standings.length} (${rec.wins}-${rec.losses}), con ${
+          state.seasonLength - jugadas === 0
+            ? 'la fase regular terminada'
+            : `${state.seasonLength - jugadas} ${state.seasonLength - jugadas === 1 ? 'fecha' : 'fechas'} por jugar`
+        }.`;
   const nextLabel =
     state.week < state.seasonLength
       ? `Avanzar a la semana ${state.week + 1} →`
@@ -1332,6 +1346,10 @@ function MatchResultPanel({ state, dispatch }: Props) {
         <div className="card">
           <h3>Consecuencias</h3>
           <ul className="reason-list">
+            {/* Dónde quedamos, sin ir a la Liga: al apretar "Ver el informe" la
+                tabla ya se actualizó con este partido, así que la posición es la
+                de después. En playoffs la tabla está congelada y no se dice. */}
+            {tablaLinea && <li>{tablaLinea}</li>}
             {m.effects.map((e, i) => (
               <li key={i}>{e}</li>
             ))}
