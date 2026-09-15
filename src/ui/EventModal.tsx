@@ -131,7 +131,8 @@ export function EventModal({ state, dispatch }: Props) {
           )}
           <p className="event-text">{state.eventOutcome}</p>
           <div className="options">
-            <button className="primary" onClick={() => dispatch({ type: 'DISMISS_EVENT_OUTCOME' })}>
+            {/* Con el foco puesto, Enter o Espacio siguen: el desenlace se lee y se pasa sin ir al mouse. */}
+            <button className="primary" autoFocus onClick={() => dispatch({ type: 'DISMISS_EVENT_OUTCOME' })}>
               Continuar
             </button>
           </div>

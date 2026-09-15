@@ -2794,6 +2794,10 @@ tr.sheet-group td {
   box-shadow: var(--sombra-alta);
 }
 
+/* El diálogo recibe el foco al abrirse (para que Enter y Escape le lleguen a
+   él y no al botón que lo abrió); el borde naranja ya dice dónde está. */
+.modal:focus { outline: none; }
+
 .modal h2 {
   color: var(--accent);
   font-size: var(--fs-md);

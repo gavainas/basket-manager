@@ -30,6 +30,7 @@ import { USER_CLUB_ID } from '../game/world';
 import { dayLabel } from '../game/world';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
 import { useState } from 'react';
+import { useTeclasModal } from './teclas';
 
 interface Props {
   state: GameState;
@@ -854,6 +855,7 @@ function MarketProfile({
   mp,
   onClose,
 }: Props & { mp: MarketPlayer; onClose: () => void }) {
+  useTeclasModal({ onClose });
   const ps = state.preseason!;
   const noGestiones = ps.gestionesLeft <= 0;
   const know = KNOWLEDGE_LABELS[mp.knowledge];
@@ -1183,7 +1185,7 @@ function PreseasonModals({ state, dispatch }: Props) {
           <h2>Desenlace</h2>
           <p className="event-text">{ps.actionOutcome}</p>
           <div className="options">
-            <button className="primary" onClick={() => dispatch({ type: 'PS_DISMISS_OUTCOME' })}>
+            <button className="primary" autoFocus onClick={() => dispatch({ type: 'PS_DISMISS_OUTCOME' })}>
               Continuar
             </button>
           </div>
@@ -1219,7 +1221,7 @@ function PreseasonModals({ state, dispatch }: Props) {
           <h2>Desenlace</h2>
           <p className="event-text">{ps.eventOutcome}</p>
           <div className="options">
-            <button className="primary" onClick={() => dispatch({ type: 'PS_DISMISS_EVENT_OUTCOME' })}>
+            <button className="primary" autoFocus onClick={() => dispatch({ type: 'PS_DISMISS_EVENT_OUTCOME' })}>
               Continuar
             </button>
           </div>

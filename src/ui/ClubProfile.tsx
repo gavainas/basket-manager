@@ -11,6 +11,7 @@ import { Tip, TIPS } from './Tip';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { NavigateTabContext } from './nav';
 import { formatMoney, rivalDifficulty, starsFor } from './helpers';
+import { useTeclasModal } from './teclas';
 
 interface Props {
   state: GameState;
@@ -42,6 +43,7 @@ function fameLabel(v: number): string {
 /** Ficha institucional: identidad, camiseta, prestigio, fama y equipos. */
 export function ClubProfile({ state, clubId, onClose }: Props) {
   const navigate = useContext(NavigateTabContext);
+  useTeclasModal({ onClose });
   const world = state.world;
   const club: WorldClub | undefined = world.clubs.find((c) => c.id === clubId);
   if (!club) return null;

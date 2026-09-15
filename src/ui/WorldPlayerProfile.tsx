@@ -12,6 +12,7 @@ import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
+import { useTeclasModal } from './teclas';
 
 interface Props {
   state: GameState;
@@ -21,6 +22,7 @@ interface Props {
 
 /** Perfil de un jugador rival: persona, nivel estimado, disponibilidad y ficha. */
 export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
+  useTeclasModal({ onClose });
   const world = state.world;
   const p = worldPlayerById(world, playerId);
   if (!p) return null;
