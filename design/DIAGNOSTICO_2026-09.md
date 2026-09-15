@@ -45,6 +45,11 @@ juego de la pretemporada— se vaciaba solo: **16 → 13 fichables** por "arregl
 club", sin que yo hiciera nada. Con 3 gestiones por semana contra 16 fichables, la presión
 no empuja a decidir: empuja a mirar.
 
+> **Corregido (sep 2026, T3).** Los eventos que regalan jugadores sólo se disparan si te
+> falta gente (y nunca en la libreta de la Carrera), y el mercado no se vacía las semanas
+> en que no hiciste nada. Y el modo **Carrera** hace que la pretemporada se pueda perder:
+> sin ocho en cuatro semanas no hay temporada, medido con `npm run sim:carrera`.
+
 **2. Juegan cinco y el resto mira.**
 Partido 1: cinco jugadores con **40'**, el banco entero con **0'**. Consecuencia inmediata
 en el informe de la fecha 1: dos jugadores *"masticando bronca por sus minutos"*. En la
@@ -52,6 +57,11 @@ simulación de 60 temporadas por estrategia, **el 100% de las broncas registrada
 'minutos'** (162 en mixta, 98 en zona, 12 en presión). El sistema social entero —que tiene
 cinco causas: minutos, promesa, plata, trato, grupo— colapsa a una sola palanca, y esa
 palanca la mueve un default que el jugador nunca eligió.
+
+> **Corregido (sep 2026, T4).** Con banco, el partido **rota solo** (frescos en el 2°,
+> titulares en el 3°, cerradores al final) y jugar con cinco pasó a ser una elección. Las
+> otras causas de bronca consiguieron su gatillo: medido a 60 temporadas, los motivos
+> pasaron de `{minutos: 138}` a `{minutos: 62, plata: 67, grupo: 11}`.
 
 **3. Cuatro respuestas distintas a "¿cuántos somos?".**
 En la misma partida, en la misma semana: la barra de recursos dice **12/13 jugadores**, la
@@ -98,13 +108,24 @@ seguidos con la misma cara. Esto es lo que se lee como "prototipo", más que la 
 paneles.
 
 **8. A 1920×1080 sobra un tercio de pantalla.**
-`--ancho-app: 1360px` y **todas** las media queries del CSS son `max-width` (mobile-down).
+~~`--ancho-app: 1360px` y **todas** las media queries del CSS son `max-width` (mobile-down).
 Para un juego que apunta a Steam, en un monitor normal se ve como una web centrada con
-madera a los costados.
+madera a los costados.~~
+
+> **Corregido (sep 2026, marco fijo).** `--ancho-app` es fluido y la unidad `--u` escala
+> con el viewport: a 1920 el contenido mide 1621 px (medido), no 1360. Lo que quedaba era
+> pantalla reservada y vacía —El club dejaba un tercio en blanco antes de la primera fecha
+> porque la grilla guardaba las tres columnas aunque el grupo todavía no hubiera hablado—,
+> arreglado en septiembre: la columna sin nada no se dibuja.
 
 **9. Nada se mueve.**
-10 apariciones de `transition` / `@keyframes` / `animation` en **3.800 líneas** de CSS. Los
-cambios de pantalla son cortes secos. No hay `prefers-reduced-motion`.
+~~10 apariciones de `transition` / `@keyframes` / `animation` en **3.800 líneas** de CSS. Los
+cambios de pantalla son cortes secos. No hay `prefers-reduced-motion`.~~
+
+> **Corregido (sep 2026, T5).** Las cinco animaciones de la lista de más abajo están: el
+> marcador que sube número a número, las filas escalonadas, el fundido de 120 ms entre
+> pantallas, la barra que se llena y el modal que entra con escala. Todo apagado con
+> `prefers-reduced-motion`. Y el reloj en vivo del partido, que no estaba en la lista.
 
 **10. 28.000 líneas sin una sola prueba.**
 No hay `npm test`, no hay ESLint, no hay CI de calidad. Las "suites de 26 / 27 chequeos"
@@ -131,6 +152,11 @@ decidir qué sigue. Falta la página que diga las próximas cinco cosas.
 **13. La economía quiebra sola.**
 En 60 temporadas simuladas sin acciones del manager hay **5 a 9 GameOvers por caja** según
 la estrategia (8-15%). La rifa y el sponsor son botones, no arcos.
+
+> **Corregido (sep 2026, la economía con arco).** El sponsor es un contrato con
+> condiciones, la rifa tiene historia y la dificultad también es de caja. Medido a 60
+> temporadas: las quiebras sin gestión pasaron de ~10% a 1-5%, y con gestión mínima
+> (buscar sponsor) a **cero**.
 
 ---
 
