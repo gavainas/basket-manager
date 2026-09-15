@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- La pelota: el naranja de la paleta (--accent) con las costuras en grafito. -->
+  <circle cx="32" cy="32" r="29" fill="#e07a2a" stroke="#2b2622" stroke-width="3"/>
+  <g fill="none" stroke="#2b2622" stroke-width="3" stroke-linecap="round">
+    <path d="M32 3v58"/>
+    <path d="M3 32h58"/>
+    <path d="M11.5 11.5c8 6 12.5 12.5 12.5 20.5S19.5 46.5 11.5 52.5"/>
+    <path d="M52.5 11.5c-8 6-12.5 12.5-12.5 20.5s4.5 14.5 12.5 20.5"/>
+  </g>
+</svg>

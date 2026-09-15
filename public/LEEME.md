@@ -21,3 +21,10 @@ con `.menu-portada`.
 
 Los tres accesos del menú (carpeta con disquete, pizarra con pelota, archivador)
 viven en `arte/portada-menu-central/` con su README y su referencia aprobada.
+
+## `favicon.svg` — el ícono de la pestaña
+
+Una pelota en el naranja de la paleta con las costuras en grafito, dibujada a mano
+en SVG (no es arte generado: es el glifo mínimo para que la pestaña no quede en
+blanco y el navegador no pida un `favicon.ico` que no existe en cada carga). Cuando
+haya logo aprobado (ver `arte/portada-menu-central/README.md`), lo reemplaza.
