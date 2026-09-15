@@ -2568,6 +2568,29 @@ table.planilla tr:last-child td {
   border-bottom: 3px double var(--border);
 }
 
+/* La planilla del rival, debajo de la nuestra en el informe: el rótulo con su
+   nombre separa las dos hojas, y los del banco van apagados (no anotan). */
+.informe-lado {
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: var(--fs-xs);
+  color: var(--sec);
+  margin: 1rem 0 0.35rem;
+}
+
+table.planilla-rival th.pos,
+table.planilla-rival td.pos {
+  width: 34px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+table.planilla-rival tr.banco td { opacity: 0.7; }
+
 /* ---------- Plantel: vista planilla (tabla densa estilo mesa de control) ---------- */
 
 /* ---------- El plantel (tanda D) ---------- */

@@ -14,6 +14,7 @@ import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { StyleChip } from './StyleChip';
 import { RivalLink } from './RivalLink';
+import { WorldPlayerLink } from './WorldPlayerLink';
 import { ScoutingCard } from './ScoutingCard';
 import { Tip, TIPS } from './Tip';
 import { rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
@@ -1168,6 +1169,9 @@ function LineupPanel({ state, dispatch }: Props) {
   );
 }
 
+/** La sigla del puesto en la planilla del rival (la misma que usa el partido en vivo). */
+const POS_CORTA: Record<Position, string> = { Base: 'B', Escolta: 'E', Alero: 'A', 'Ala-Pívot': 'AP', Pívot: 'P' };
+
 function MatchResultPanel({ state, dispatch }: Props) {
   const m = state.lastMatch;
   if (!m) return null;
@@ -1261,6 +1265,42 @@ function MatchResultPanel({ state, dispatch }: Props) {
                 ))}
               </tbody>
             </table>
+
+            {/* La planilla de ellos (sep 2026): quién nos anotó. El partido en
+                vivo ya lo mostraba cuarto a cuarto; el informe se quedaba con
+                el marcador y la liga perdía la cara. Los del banco figuran sin
+                puntos: el motor reparte los del rival entre su quinteto. */}
+            {(m.rivalBox ?? []).length > 0 && (
+              <>
+                <h4 className="informe-lado">
+                  <RivalLink id={m.rivalId}>{m.rivalName}</RivalLink>
+                  <span className="muted"> · {m.scoreAgainst} puntos</span>
+                </h4>
+                <table className="planilla planilla-rival">
+                  <thead>
+                    <tr>
+                      <th className="pos">Pos</th>
+                      <th>Jugador</th>
+                      <th className="num">Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {m.rivalBox!.map((line) => (
+                      <tr key={line.playerId} className={line.starter ? '' : 'banco'}>
+                        <td className="pos">{POS_CORTA[line.position]}</td>
+                        <td>
+                          <WorldPlayerLink id={line.playerId}>{line.name}</WorldPlayerLink>
+                          {!line.starter && <span className="muted"> · banco</span>}
+                        </td>
+                        <td className="num" style={{ fontWeight: line.starter ? 700 : 400 }}>
+                          {line.starter ? line.points : '–'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
           </div>
         </div>
       )}

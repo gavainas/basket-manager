@@ -25,6 +25,7 @@ import type {
   Position,
   QuarterContext,
   Rival,
+  RivalBoxLine,
   TeamEval,
   WorldPlayer,
 } from './types';
@@ -931,6 +932,29 @@ export function rivalTramoBox(state: GameState, live: LiveMatchState, qIndex: nu
   const t = cuartoN(live, qIndex)?.tramos?.[k];
   if (!t) return {};
   return rivalPuntosRepartidos(state, live, t.against, `${qIndex}:${k}`);
+}
+
+/**
+ * La planilla del rival para el informe: su quinteto con los puntos que le
+ * repartió `rivalBoxScore` (ordenado por puntos), y detrás el banco que vino,
+ * sin puntos (el motor no los hace anotar). Vacía si no conocemos a nadie del
+ * rival (partidas viejas sin `presentIds`).
+ */
+export function buildRivalBox(state: GameState, live: LiveMatchState): RivalBoxLine[] {
+  const { court, bench } = rivalLineup(state, live);
+  if (court.length === 0) return [];
+  const pts = rivalBoxScore(state, live);
+  const linea = (p: WorldPlayer, starter: boolean): RivalBoxLine => ({
+    playerId: p.id,
+    name: `${p.firstName} ${p.lastName}`,
+    position: p.position,
+    points: starter ? pts[p.id] ?? 0 : 0,
+    starter,
+  });
+  return [
+    ...court.map((p) => linea(p, true)).sort((a, b) => b.points - a.points),
+    ...bench.map((p) => linea(p, false)),
+  ];
 }
 
 function rivalPuntosRepartidos(state: GameState, live: LiveMatchState, pts: number, clave: string): Record<string, number> {
@@ -2159,6 +2183,17 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   );
   if (mvpFromBench) highlights.push(`${mvp.name} entró desde el banco y cambió el partido: figura inesperada.`);
 
+  // La planilla de ellos: el partido en vivo ya decía quién les anotaba
+  // (reparto de lectura, determinista); se guarda al cerrar para que el
+  // informe y la historia tengan nombres del otro lado y no sólo un marcador.
+  const rivalBox = buildRivalBox(s, live);
+  const goleadorRival = rivalBox[0];
+  if (goleadorRival && goleadorRival.points > 0) {
+    highlights.push(
+      `El que más nos lastimó fue ${goleadorRival.name}: ${goleadorRival.points} puntos para ${rival.name}.`
+    );
+  }
+
   const lockerRoom = lockerRoomNotes(
     s,
     { won, margin, shortHanded, clutch, comeback, squadCount: live.squad.length },
@@ -2230,6 +2265,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
     lockerRoom,
     effects,
     box,
+    rivalBox,
     moods,
   };
 
