@@ -1,5 +1,13 @@
 # Changelog
 
+## Tablero A implementado — 15 de septiembre de 2026
+
+- La próxima fecha pasa al primer plano: rival, fecha, horario, cancha y acceso a preparar el partido.
+- La acción principal acompaña convocatoria, quinteto, vivo e informe, sin avanzar la simulación al consultar.
+- «¿Cómo llegamos?» distingue disponibles de confirmados, bajas, cansancio y llegadas tardías; avisos enlazan a su gestión.
+- Último resultado y consecuencias consultables, retratos con perfiles y accesos secundarios conservados.
+- Un solo botón naranja en el tablero; sin scroll vertical dentro de tarjetas. Arte y guardados existentes conservados.
+
 Todo lo hecho, de lo más nuevo a lo más viejo, con el porqué de cada cosa. Es el registro:
 para saber **qué sigue**, ver [`ROADMAP.md`](ROADMAP.md); para el estado del juego y el
 plan de acción vigente, [`design/DIAGNOSTICO_2026-09.md`](design/DIAGNOSTICO_2026-09.md).

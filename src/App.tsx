@@ -465,7 +465,7 @@ export default function App() {
             <span className="s">{phaseHint}</span>
             {/* Ya estando en la semana, el botón primario es el de la vista: dos
                 naranjas compitiendo rompen la regla de uno por pantalla. */}
-            {tab !== 'semana' && <button
+            {tab !== 'semana' && tab !== 'resumen' && <button
               className="avanzar primary"
               onClick={() => navigate('semana')}
             >

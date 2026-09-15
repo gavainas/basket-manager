@@ -1,6 +1,6 @@
 # Dos propuestas de tablero — 15 de septiembre de 2026
 
-**Decisión de Gabi: A elegida como base del tablero (2026-09-15), todavía no integrada al juego.** Resolución: 1366 × 768. No son capturas de una versión implementada ni prototipos navegables.
+**Decisión de Gabi: A elegida como base del tablero (2026-09-15), integrada en `src/ui/Hub.tsx`.** Resolución: 1366 × 768. No son capturas de una versión implementada ni prototipos navegables.
 
 ## A · La próxima fecha — elegida
 
@@ -31,7 +31,7 @@ Criterios acordados para desarrollar A:
 - Cambiar «Tu próxima decisión» por «Preparar el partido»: entrenar, hacer un asado, cobrar cuotas y convocar son decisiones con consecuencias deportivas y sociales, algunas de varias semanas.
 - El informe cierra el recorrido: qué pasó con el equipo preparado y qué consecuencias deja para la próxima fecha.
 
-La elección aprueba A como base de composición y estos criterios de desarrollo. Las láminas conservan el boceto original; los ajustes de texto y la implementación React siguen pendientes. La solicitud de esta tanda es documentar la decisión. Se mantienen la paleta, Oswald y el arte aprobado; la producción de personajes y escenas sigue su proceso en `design/ART_PIPELINE.md`.
+La elección aprueba A como base de composición y estos criterios de desarrollo. Las láminas conservan el boceto original; los ajustes de texto y la implementación React se incorporaron en la siguiente tanda autorizada. Se mantienen la paleta, Oswald y el arte aprobado; la producción de personajes y escenas sigue su proceso en `design/ART_PIPELINE.md`.
 
 ## Archivos
 
@@ -40,4 +40,4 @@ La elección aprueba A como base de composición y estos criterios de desarrollo
 - `estado.json`: datos compartidos de la comparación.
 - `generar.py`: fuente de las dos composiciones. Requiere Python con fontTools y Node con sharp (o `CODEX_PRIMARY_RUNTIME_NODE_MODULES` apuntando a la instalación). Ejecutar `python3 design/propuestas/generar.py` desde la raíz, después de `npm ci`. Para PNG, rasterizar los SVG con sharp.
 
-Verificación realizada: ambas láminas fueron rasterizadas e inspeccionadas a 1366 × 768. La maquetación React final y sus interacciones siguen pendientes; el navegador de esta sesión bloqueó localhost y los archivos locales.
+Verificación realizada: ambas láminas fueron rasterizadas e inspeccionadas a 1366 × 768. La implementación React se verifica con build y tests; la inspección interactiva se realiza en el sitio publicado porque el navegador de esta sesión bloqueó localhost y los archivos locales.
