@@ -5,6 +5,7 @@ import { ABSENCE_ACTIONS, reasonById } from '../game/absences';
 import { ACTIONS } from '../game/actions';
 import { BALANCE } from '../game/balance';
 import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
+import { weekTimeline } from '../game/weekTimeline';
 import { userGameDay } from '../game/moments';
 import { lineupPromiseWarnings } from '../game/promises';
 import { evaluateTeam, isSelectable, PLAN_MIN_BENCH } from '../game/match';
@@ -121,15 +122,12 @@ function SemanaStrip({ state }: { state: GameState }) {
   const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1]);
   const gi = WEEK_DAYS.indexOf(gameDay);
   // Offset de cada fase respecto del partido (0 = día de la fecha).
-  const todayOffset =
-    state.phase === 'planning' ? -3 : state.phase === 'callUp' ? -2 : 0;
+  const { todayOffset, callUpOffset, callUpLabel, asadoOffset, asadoLabel } = weekTimeline(state);
   // La tira muestra 7 días terminando uno después del partido: una cuenta regresiva.
   const offsets = [-5, -4, -3, -2, -1, 0, 1];
   const momentOffset = state.weekMoment
     ? ((WEEK_DAYS.indexOf(state.weekMoment.day) - gi + 7 + 5) % 7) - 5
     : null;
-  const asadoOffset =
-    state.actionsChosen.includes('asado') || state.lastAsado?.week === state.week ? -1 : null;
   const date = shortDate(fx?.date);
 
   return (
@@ -141,8 +139,8 @@ function SemanaStrip({ state }: { state: GameState }) {
         const marks: { icon: IconName; text: string }[] = [];
         if (isMatch && rival) marks.push({ icon: 'pelota', text: `vs ${rival.name}${fx?.time ? ` · ${fx.time}` : ''}` });
         if (momentOffset === off && state.weekMoment) marks.push({ icon: 'destacado', text: state.weekMoment.title });
-        if (asadoOffset === off) marks.push({ icon: 'asado' as IconName, text: 'Asado del plantel' });
-        if (off === -2) marks.push({ icon: 'plantel', text: 'Se larga la lista' });
+        if (asadoOffset === off) marks.push({ icon: 'asado' as IconName, text: asadoLabel });
+        if (off === callUpOffset) marks.push({ icon: 'plantel', text: callUpLabel });
         return (
           <div key={off} className={`dia-cell${isToday ? ' dia-hoy' : ''}${isMatch ? ' dia-partido' : ''}`}>
             <div className="dia-nombre">

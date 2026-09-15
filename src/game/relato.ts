@@ -32,7 +32,7 @@ export interface Jugada {
   tipo?: 'cambio' | 'nota';
 }
 
-/** Corta los puntos de un jugador en canastas: triples, dobles y algún libre. */
+/** Reparte puntos en aportes visuales de 1–3: no representa intentos ni tipos de tiro. */
 function canastas(pts: number, rng: Rng): number[] {
   const out: number[] = [];
   let rest = pts;
@@ -50,42 +50,13 @@ function apellido(nombre: string): string {
   return parts[parts.length - 1];
 }
 
-const NUESTRAS: Record<number, string[]> = {
-  3: ['¡Triple de {n}!', '{n} clava el triple desde la esquina.', 'Triple de {n} en transición.', '{n} la tira de lejos y la mete.'],
-  2: [
-    '{n} recibe de espaldas, gira y convierte.',
-    'Bandeja de {n}.',
-    '{n} la mete tras el rebote ofensivo.',
-    'Doble de {n} en el poste bajo.',
-    '{n} entra por el medio y convierte.',
-    '{n} suma dos más.',
-    '{n} define de media distancia.',
-  ],
-  1: ['{n} mete el libre.', 'Un libre de {n}.', '{n} convierte uno de dos desde la línea.'],
+// El reparto visual no conoce intentos, tipos de tiro ni asistencias por jugada.
+// Cuenta aportes al marcador, sin convertir una reconstrucción en hechos inventados.
+const PUNTOS: Record<number, string[]> = {
+  1: ['{n} suma un punto.', 'Un punto más de {n}.'],
+  2: ['{n} suma dos puntos.', 'Dos puntos más de {n}.'],
+  3: ['{n} suma tres puntos.', 'Tres puntos más de {n}.'],
 };
-
-const RIVALES: Record<number, string[]> = {
-  3: ['Triple de {n}.', '{n} la mete de tres sin marca.', 'Triple de {n} desde la esquina.'],
-  2: [
-    '{n} insiste en la pintura.',
-    '{n} convierte de media distancia.',
-    'Bandeja de {n} en contraataque.',
-    '{n} gana el rebote y la mete.',
-    '{n} anota de espaldas al aro.',
-    '{n} suma dos.',
-  ],
-  1: ['Libre de {n}.', '{n} mete uno desde la línea.'],
-};
-
-const SUB_NUESTRAS = [
-  'Gran lectura de {a} en la jugada.',
-  'La asistencia fue de {a}.',
-  'Se pidió la pelota y la puso.',
-  '{a} lo encontró solo.',
-  'El equipo la movió hasta encontrarlo.',
-];
-
-const SUB_RIVALES = ['Nos cuesta cerrar el rebote.', 'Llegamos tarde a la ayuda.', 'Nos ganaron la espalda.', 'Se nos escapó en la rotación.'];
 
 const MOMENTOS_POR_CUARTO = 5;
 
@@ -162,7 +133,6 @@ function jugadasDelReparto(
   const lesion = r.notas.filter(alFinal);
   r.notas.filter((n) => !alFinal(n)).forEach((n, i) => jugadas.push(filaDeNota(n, t0 + i * 0.01, minutoDe(t0), f, a)));
 
-  const compañeros = r.onCourt.map(nombreDe).filter(Boolean).map(apellido);
   eventos.forEach((e, i) => {
     if (e.lado === 'nosotros') f += e.pts;
     else a += e.pts;
@@ -170,16 +140,8 @@ function jugadasDelReparto(
     // no vengan a intervalos exactos; la última siempre antes de la pelota muerta.
     const paso = largo / eventos.length;
     const t = t0 + Math.min(largo - 0.05, paso * (i + 0.35 + rng.range(0, 0.55)));
-    const pool = e.lado === 'nosotros' ? NUESTRAS[e.pts] : RIVALES[e.pts];
-    const texto = rng.pick(pool).replace('{n}', e.quien);
-    let sub: string | undefined;
-    if (e.lado === 'nosotros' && rng.chance(0.4)) {
-      const otro = compañeros.filter((n) => n !== e.quien);
-      sub = rng.pick(SUB_NUESTRAS).replace('{a}', otro.length ? rng.pick(otro) : 'el equipo');
-    } else if (e.lado === 'rival' && rng.chance(0.3)) {
-      sub = rng.pick(SUB_RIVALES);
-    }
-    jugadas.push({ minuto: `${minutoDe(t)}'`, t, marcador: `${f}-${a}`, f, a, lado: e.lado, pts: e.pts, quienId: e.quienId, texto, sub });
+    const texto = rng.pick(PUNTOS[e.pts]).replace('{n}', e.quien);
+    jugadas.push({ minuto: `${minutoDe(t)}'`, t, marcador: `${f}-${a}`, f, a, lado: e.lado, pts: e.pts, quienId: e.quienId, texto });
   });
   lesion.forEach((n, i) => jugadas.push(filaDeNota(n, t0 + largo - 0.03 + i * 0.005, minutoDe(t0 + largo - 0.03), f, a)));
   return { jugadas, f, a };
