@@ -4618,6 +4618,69 @@ button.mini.blue.on {
   }
 }
 
+/* ---------- La planilla del mercado (dirección D, punto 2 del roadmap) ---------- */
+
+/* La misma placa que el plantel, con sus columnas: quién, nivel, físico, lo que
+   se sabe (chips) y la acción. Los que ya no están (fichados, perdidos, los
+   que dijeron que no) van apagados en su propia placa. */
+.planilla-mercado .planilla-cab,
+.planilla-mercado .planilla-fila {
+  grid-template-columns: 52px minmax(190px, 1.1fr) 76px 76px minmax(260px, 2fr) 176px;
+}
+
+.planilla-fila.dimmed {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+
+/* La cifra estimada del mercado no lleva medidor: "71–85" o "★★★☆☆" ya dicen
+   cuánto se sabe. Tinta, no naranja: el acento es de la acción, no de cada fila. */
+.planilla-mercado .planilla-cifra b {
+  font-size: var(--fs-md);
+  white-space: nowrap;
+}
+
+.planilla-sabe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.planilla-sabe .human-note {
+  flex-basis: 100%;
+  margin: 0.1rem 0 0;
+}
+
+.planilla-relacion {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+}
+
+.planilla-accion {
+  justify-self: end;
+  text-align: right;
+}
+
+.planilla-accion button {
+  white-space: nowrap;
+}
+
+.planilla-accion button small {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+@media (max-width: 1180px) {
+  .planilla-mercado .planilla-cab,
+  .planilla-mercado .planilla-fila {
+    grid-template-columns: 52px minmax(150px, 1fr) 64px 64px minmax(200px, 1.6fr) 150px;
+  }
+}
+
 /* Una card plegada no deja un cuerpo vacío: el cabezal sangra hasta los bordes,
    así que sin contenido el padding de abajo se ve como un hueco blanco. */
 .card.plegada {
