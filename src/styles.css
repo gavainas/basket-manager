@@ -4630,12 +4630,16 @@ button.mini.blue.on {
   margin: 0.1rem 0 0;
 }
 
+/* La relación de la libreta ("Ex compañero de club de Julián") y el chip de
+   quién lo trae van como texto corrido, no como dos cajas flex: en flex el
+   chip le comía el ancho y la relación larga se partía en cuatro renglones
+   de una palabra, empujando el nombre. Así fluye y el chip envuelve al final. */
 .planilla-relacion {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
+  display: block;
   margin-top: 0.2rem;
 }
+
+.planilla-relacion .ps-relacion { display: inline; }
 
 .planilla-accion {
   justify-self: end;
