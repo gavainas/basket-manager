@@ -26,10 +26,12 @@ import { Crest } from './Crest';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
+import { Tip, TIPS } from './Tip';
 import { USER_CLUB_ID } from '../game/world';
 import { dayLabel } from '../game/world';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
+import { useTeclasModal } from './teclas';
 
 interface Props {
   state: GameState;
@@ -510,7 +512,12 @@ function InscriptionSection({ state, dispatch }: Props) {
 
 // ---------- Plantel: continuidad ----------
 
-function RosterRow({ state, dispatch, p }: Props & { p: Player }) {
+/**
+ * Un renglón del plantel en la pretemporada: la misma planilla que el Plantel
+ * de la temporada y el mercado (dirección D), con lo que acá importa: cómo
+ * viene cada uno (dudando, pide una condición, se retiró) y qué podés hacer.
+ */
+function RosterRow({ state, dispatch, p, indice }: Props & { p: Player; indice: number }) {
   const ps = state.preseason!;
   const st = ps.continuity[p.id];
   const cont = CONTINUITY_LABELS[st];
@@ -518,36 +525,66 @@ function RosterRow({ state, dispatch, p }: Props & { p: Player }) {
   const demand = ps.playerDemands[p.id];
   const needsTalk = st === 'dudando' || st === 'no_respondio' || st === 'quiere_irse';
   const noGestiones = ps.gestionesLeft <= 0;
+  const dicho = st === 'pide_condicion' && demand ? `Pide: ${DEMAND_LABELS[demand].toLowerCase()}.` : p.description;
 
   return (
-    <div className={`ps-row${st === 'retirado' ? ' dimmed' : ''}`}>
-      <div className="avatar">
+    <div className={`planilla-fila${st === 'retirado' ? ' dimmed' : ''}`} style={{ '--fila': indice } as CSSProperties}>
+      <span className="planilla-foto">
         <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} personality={p.personality} />
-      </div>
-      <div className="ps-who">
-        <div className="name">
-          <PlayerLink id={p.id}>{p.name}</PlayerLink>{' '}
-          <span className="muted">
-            · {p.position} · {p.age} años · ≈{p.visibleRating}
+      </span>
+      <span className="planilla-quien">
+        <span className="planilla-nombre">
+          <PlayerLink id={p.id}>{p.name}</PlayerLink>
+          <span className="planilla-pos">
+            {p.position} · {p.age}
           </span>
-        </div>
-        {st === 'pide_condicion' && demand && <div className="muted">Pide: {DEMAND_LABELS[demand].toLowerCase()}</div>}
+        </span>
+        <span className="planilla-dicho" title={dicho}>{dicho}</span>
+      </span>
+      <span className="planilla-valor"><small>≈</small>{p.visibleRating}</span>
+      <span className="planilla-sabe">
+        <span className={`chip ${cont.cls}`}>{cont.label}</span>
+        {feeInfo && <span className={`chip ${feeInfo.cls}`}>{feeInfo.label}</span>}
+      </span>
+      <span className="planilla-accion">
+        {needsTalk && (
+          <button className="small" disabled={noGestiones} title={noGestiones ? 'No te quedan gestiones esta semana' : 'Cuesta 1 gestión'} onClick={() => dispatch({ type: 'PS_TALK', id: p.id })}>
+            Hablar<small> · 1 gestión</small>
+          </button>
+        )}
+        {st === 'pide_condicion' && (
+          <button
+            className="small"
+            disabled={noGestiones}
+            title={noGestiones ? 'No te quedan gestiones esta semana' : 'Cuesta 1 gestión'}
+            onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: p.id, isMarket: false })}
+          >
+            Negociar<small> · 1 gestión</small>
+          </button>
+        )}
+      </span>
+    </div>
+  );
+}
+
+/** La placa del plantel en la pretemporada: cabecera de columnas y un renglón por jugador. */
+function PlanillaPlantelPs({ state, dispatch, lista }: Props & { lista: Player[] }) {
+  return (
+    <div className="planilla planilla-plantel-ps">
+      <span className="tornillo tornillo-si" />
+      <span className="tornillo tornillo-sd" />
+      <span className="tornillo tornillo-ii" />
+      <span className="tornillo tornillo-id" />
+      <div className="planilla-cab">
+        <span />
+        <span>Jugador</span>
+        <Tip text={TIPS.valoracion}><span className="num">Valor.</span></Tip>
+        <span>Cómo viene</span>
+        <span />
       </div>
-      {feeInfo && <span className={`chip ${feeInfo.cls}`}>{feeInfo.label}</span>}
-      <span className={`chip ${cont.cls}`}>{cont.label}</span>
-      {needsTalk && (
-        <button disabled={noGestiones} onClick={() => dispatch({ type: 'PS_TALK', id: p.id })}>
-          Hablar
-        </button>
-      )}
-      {st === 'pide_condicion' && (
-        <button
-          disabled={noGestiones}
-          onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: p.id, isMarket: false })}
-        >
-          Negociar
-        </button>
-      )}
+      {lista.map((p, i) => (
+        <RosterRow key={p.id} state={state} dispatch={dispatch} p={p} indice={i} />
+      ))}
     </div>
   );
 }
@@ -583,11 +620,7 @@ function RosterSection({ state, dispatch }: Props) {
           <h4 className="ps-subtitulo">
             <span className="chip warn">{pending.length}</span> esperan una respuesta tuya
           </h4>
-          <div className="ps-list">
-            {pending.map((p) => (
-              <RosterRow key={p.id} state={state} dispatch={dispatch} p={p} />
-            ))}
-          </div>
+          <PlanillaPlantelPs state={state} dispatch={dispatch} lista={pending} />
           <p className="hint">Cada charla o negociación consume 1 gestión. Los que no estén confirmados al cierre, no juegan la temporada.</p>
         </>
       ) : (
@@ -616,11 +649,7 @@ function RosterSection({ state, dispatch }: Props) {
           <h4 className="ps-subtitulo">
             <span className="chip bad">{retired.length}</span> colgaron las zapatillas
           </h4>
-          <div className="ps-list">
-            {retired.map((p) => (
-              <RosterRow key={p.id} state={state} dispatch={dispatch} p={p} />
-            ))}
-          </div>
+          <PlanillaPlantelPs state={state} dispatch={dispatch} lista={retired} />
         </>
       )}
     </div>
@@ -670,7 +699,14 @@ function MarketSection({ state, dispatch }: Props) {
 
   const libreta = !!ps.libreta;
 
-  const renderCard = (mp: MarketPlayer) => {
+  /* El mercado como una sola planilla con renglones (dirección D, punto 2 del
+     roadmap: "que no convivan dos anatomías de lista en el mismo juego"). Antes
+     eran dieciséis cards en una grilla de tres: a 768 de alto entraban tres
+     fichables y para comparar el nivel de dos había que scrollear entre cajas.
+     Acá el nivel y el físico quedan en columna, lo que se sabe de cada uno va
+     en chips en su propia columna, y la acción a la derecha; entran ocho o
+     nueve donde entraban tres. La ficha completa sigue a un click del nombre. */
+  const renderFila = (mp: MarketPlayer, indice: number) => {
     const know = KNOWLEDGE_LABELS[mp.knowledge];
     const active = mp.status === 'disponible';
     const fit = agendaFit(state, mp);
@@ -679,59 +715,58 @@ function MarketSection({ state, dispatch }: Props) {
     const snubs = plazaBound(state) && isMarketFigure(mp);
     // En la libreta, el que lo trajo y por qué vendría valen más que el nivel.
     const contacto = libreta && mp.relacion;
+    const abrirFicha = () => setProfileId(mp.id);
+    const dicho = contacto ? mp.porQue : `${ORIGIN_SITUATIONS[mp.previousTeam] ?? `Viene de ${mp.previousTeam}.`} ${mp.knowledgeSource}`;
     return (
-      <div key={mp.id} className={`player-card${active ? '' : ' dimmed'}`}>
-        <div
-          className="player-head"
-          style={{ cursor: 'pointer' }}
-          title={`Ver ficha de ${mp.name}`}
-          onClick={() => setProfileId(mp.id)}
-        >
-          <div className="avatar">
-            <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} personality={mp.personality} />
-          </div>
-          <div className="who">
-            <div className="name">
-              <span className="plink" role="button" tabIndex={0}>
-                {mp.name}
-              </span>
-            </div>
-            <div className="pos">
-              {mp.position} · {mp.age} años · {mp.height} cm
-            </div>
-          </div>
-          <div className="rating">
-            <div className="num">{estimateLabel(mp.estTechnique, mp.knowledge)}</div>
-            <div className="approx">nivel</div>
-          </div>
-        </div>
-        {contacto ? (
-          <div className="player-desc">
-            <span className="ps-relacion">{mp.relacion}</span>
-            {mp.viaDe && mp.viaDe !== 'vos' && <span className="chip accent ps-via">Lo trae {mp.viaDe}</span>}
-            <br />
-            {mp.porQue}
-          </div>
-        ) : (
-          <div className="player-desc">
-            {originNode(state, mp.previousTeam)} {mp.knowledgeSource}
-          </div>
-        )}
-        {(mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 && (
-          <div className="human-note">
-            <span className="hn-icon">
-              <Icon name="agenda" size={14} />
-            </span>{' '}
-            {mp.agenda!.notes.join(' ')}
-          </div>
-        )}
-        <div className="player-chips">
-          {!contacto && <span className={`chip ${know.cls}`}>{know.label}</span>}
-          <span className="chip">Físico: {estimateLabel(mp.estPhysical, mp.knowledge)}</span>
-          {!contacto && <span className="chip">{mp.signingCost > 0 ? `Pase: $${mp.signingCost}` : 'Pase libre'}</span>}
-          {contacto && (mp.dudas ?? 0) > 0 && active && (
-            <span className="chip warn">Preguntó quién más va</span>
+      <div
+        key={mp.id}
+        className={`planilla-fila${active ? '' : ' dimmed'}`}
+        style={{ '--fila': indice } as CSSProperties}
+      >
+        <span className="planilla-foto" style={{ cursor: 'pointer' }} title={`Ver ficha de ${mp.name}`} onClick={abrirFicha}>
+          <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} personality={mp.personality} />
+        </span>
+
+        <span className="planilla-quien">
+          <span className="planilla-nombre">
+            <span
+              className="plink"
+              role="button"
+              tabIndex={0}
+              title={`Ver ficha de ${mp.name}`}
+              onClick={abrirFicha}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') abrirFicha();
+              }}
+            >
+              {mp.name}
+            </span>
+            <span className="planilla-pos">
+              {mp.position} · {mp.age} · {mp.height} cm
+            </span>
+          </span>
+          {contacto && (
+            <span className="planilla-relacion">
+              <span className="ps-relacion">{mp.relacion}</span>
+              {mp.viaDe && mp.viaDe !== 'vos' && <span className="chip accent ps-via">Lo trae {mp.viaDe}</span>}
+            </span>
           )}
+          <span className="planilla-dicho" title={dicho}>
+            {contacto ? mp.porQue : <>{originNode(state, mp.previousTeam)} {mp.knowledgeSource}</>}
+          </span>
+        </span>
+
+        <span className="planilla-cifra">
+          <b title="Nivel estimado, según cuánto lo conocés">{estimateLabel(mp.estTechnique, mp.knowledge)}</b>
+        </span>
+        <span className="planilla-cifra">
+          <b title="Físico estimado, según cuánto lo conocés">{estimateLabel(mp.estPhysical, mp.knowledge)}</b>
+        </span>
+
+        <span className="planilla-sabe">
+          {!contacto && <span className={`chip ${know.cls}`}>{know.label}</span>}
+          {!contacto && <span className="chip">{mp.signingCost > 0 ? `Pase: $${mp.signingCost}` : 'Pase libre'}</span>}
+          {contacto && (mp.dudas ?? 0) > 0 && active && <span className="chip warn">Preguntó quién más va</span>}
           {fit && <span className={`chip ${fit.cls}`}>{fit.text}</span>}
           {mp.availability === 'escuchando_ofertas' && active && <span className="chip warn">Escucha otras ofertas</span>}
           {snubs && active && <span className="chip bad">Figura: no atiende a un club de la plaza</span>}
@@ -745,31 +780,64 @@ function MarketSection({ state, dispatch }: Props) {
           ) : (
             active && <span className="chip">Exigencias: ? (contactalo)</span>
           )}
-          {mp.status === 'fichado' && <span className="chip good">{contacto ? 'Dijo que sí ✔' : 'Fichado ✔'}</span>}
-          {mp.status === 'perdido' && <span className="chip bad">Arregló con otro club</span>}
-          {mp.status === 'rechazo' && <span className="chip bad">{contacto ? 'Dijo que no' : 'La negociación se cayó'}</span>}
-        </div>
-        {active && (
-          <button
-            disabled={noGestiones}
-            title={noGestiones ? 'No te quedan gestiones esta semana' : undefined}
-            onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true })}
-          >
-            {contacto
-              ? mp.contacted
-                ? 'Insistirle'
-                : 'Pedirle que venga'
-              : snubs
-                ? 'Llamarlo igual'
-                : mp.contacted
-                  ? 'Retomar negociación'
-                  : 'Contactar'}{' '}
-            (1 gestión)
-          </button>
-        )}
+          {(mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 && (
+            <span className="human-note">
+              <span className="hn-icon">
+                <Icon name="agenda" size={14} />
+              </span>{' '}
+              {mp.agenda!.notes.join(' ')}
+            </span>
+          )}
+        </span>
+
+        <span className="planilla-accion">
+          {active ? (
+            <button
+              className="small"
+              disabled={noGestiones}
+              title={noGestiones ? 'No te quedan gestiones esta semana' : 'Cuesta 1 gestión'}
+              onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true })}
+            >
+              {contacto
+                ? mp.contacted
+                  ? 'Insistirle'
+                  : 'Pedirle que venga'
+                : snubs
+                  ? 'Llamarlo igual'
+                  : mp.contacted
+                    ? 'Retomar negociación'
+                    : 'Contactar'}
+              <small> · 1 gestión</small>
+            </button>
+          ) : mp.status === 'fichado' ? (
+            <span className="chip good">{contacto ? 'Dijo que sí ✔' : 'Fichado ✔'}</span>
+          ) : mp.status === 'perdido' ? (
+            <span className="chip bad">Arregló con otro club</span>
+          ) : (
+            <span className="chip bad">{contacto ? 'Dijo que no' : 'La negociación se cayó'}</span>
+          )}
+        </span>
       </div>
     );
   };
+
+  const planilla = (lista: MarketPlayer[]) => (
+    <div className="planilla planilla-mercado">
+      <span className="tornillo tornillo-si" />
+      <span className="tornillo tornillo-sd" />
+      <span className="tornillo tornillo-ii" />
+      <span className="tornillo tornillo-id" />
+      <div className="planilla-cab">
+        <span />
+        <span>{libreta ? 'Contacto' : 'Jugador'}</span>
+        <span className="num">Nivel</span>
+        <span className="num">Físico</span>
+        <span>{libreta ? 'Qué pide y qué se sabe' : 'Lo que se sabe'}</span>
+        <span />
+      </div>
+      {lista.map(renderFila)}
+    </div>
+  );
 
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
@@ -832,13 +900,13 @@ function MarketSection({ state, dispatch }: Props) {
           {libreta ? 'La libreta está vacía: no queda nadie a quien pedirle.' : 'No queda nadie disponible con ese filtro.'}
         </p>
       ) : (
-        <div className="player-grid ps-grid">{available.map(renderCard)}</div>
+        planilla(available)
       )}
 
       {gone.length > 0 && (
         <>
           <h4 className="ps-subtitulo">{libreta ? 'Ya contestaron' : 'Ya no disponibles'}</h4>
-          <div className="player-grid ps-grid">{gone.map(renderCard)}</div>
+          {planilla(gone)}
         </>
       )}
       {profileMp && <MarketProfile state={state} dispatch={dispatch} mp={profileMp} onClose={() => setProfileId(null)} />}
@@ -854,6 +922,7 @@ function MarketProfile({
   mp,
   onClose,
 }: Props & { mp: MarketPlayer; onClose: () => void }) {
+  useTeclasModal({ onClose });
   const ps = state.preseason!;
   const noGestiones = ps.gestionesLeft <= 0;
   const know = KNOWLEDGE_LABELS[mp.knowledge];
@@ -1183,7 +1252,7 @@ function PreseasonModals({ state, dispatch }: Props) {
           <h2>Desenlace</h2>
           <p className="event-text">{ps.actionOutcome}</p>
           <div className="options">
-            <button className="primary" onClick={() => dispatch({ type: 'PS_DISMISS_OUTCOME' })}>
+            <button className="primary" autoFocus onClick={() => dispatch({ type: 'PS_DISMISS_OUTCOME' })}>
               Continuar
             </button>
           </div>
@@ -1219,7 +1288,7 @@ function PreseasonModals({ state, dispatch }: Props) {
           <h2>Desenlace</h2>
           <p className="event-text">{ps.eventOutcome}</p>
           <div className="options">
-            <button className="primary" onClick={() => dispatch({ type: 'PS_DISMISS_EVENT_OUTCOME' })}>
+            <button className="primary" autoFocus onClick={() => dispatch({ type: 'PS_DISMISS_EVENT_OUTCOME' })}>
               Continuar
             </button>
           </div>

@@ -542,6 +542,20 @@ preguntas distintas y las dos valen.
 pantalla que la muestre es código muerto que el próximo que pase va a tener que leer para
 descubrir que no corre. Sigue en la historia de git si alguna vez hace falta.
 
+**Tanda 3 — el mercado: hecha (sep 2026).** `PreseasonView.tsx` (`MarketSection`): los
+fichables y la libreta de la Carrera son una `.planilla.planilla-mercado` con sus propias
+columnas —foto · quién (nombre, puesto · edad · cm, la frase de origen o el "por qué
+vendría") · nivel · físico · lo que se sabe (chips) · acción—. Las cifras estimadas van sin
+medidor: "71–85" o "★★★☆☆" ya dicen cuánto se sabe, y en tinta, porque el naranja de esa
+pantalla es la acción. Los que ya no están van apagados (`.planilla-fila.dimmed`) en su
+propia placa. El plantel de la pretemporada ("¿quiénes siguen?", `RosterRow`) es la misma
+placa con menos columnas (`.planilla-plantel-ps`: quién · valoración · cómo viene · acción);
+las filas `.ps-row` se borraron. Las tablas de la Liga (`LeagueView.tsx`: posiciones,
+fixture, pirámide, segundo equipo) son `table.planilla`, la hoja de papel de mesa de control
+de la planilla del informe. Sigue en cards la elección de liga: son tres o cuatro opciones
+que se comparan de a una, no una lista. **Queda** la convocatoria, y es una decisión: sus
+filas son historia y gestiones, no cifras (ver `ROADMAP.md`).
+
 ## El marco fijo (sep 2026) — implementado
 
 Cinco tandas, una por commit, a pedido de Gabi después de mandar una maqueta de tablero y

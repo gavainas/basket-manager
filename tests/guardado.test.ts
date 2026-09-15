@@ -49,6 +49,42 @@ describe('guardar y cargar', () => {
     expect(saveStatus()).toBe('incompatible');
   });
 
+  it('un save de antes de la planilla del rival carga igual: el informe viejo no la tiene y no rompe', () => {
+    // sep 2026: `MatchResult.rivalBox` es opcional justamente para esto. Un
+    // informe guardado antes no la trae, y lo que la usa (el informe, los
+    // Rankings, la ficha del rival) tiene que aguantarlo sin migración.
+    const s = createNewGame(555);
+    s.history = [
+      {
+        week: 1,
+        rivalId: 'r1',
+        rivalName: 'Unión Vecinal',
+        scoreFor: 70,
+        scoreAgainst: 60,
+        quarters: [],
+        highlights: [],
+        won: true,
+        forfeit: false,
+        mvpId: null,
+        mvpName: null,
+        summary: '',
+        reasons: [],
+        lockerRoom: [],
+        effects: [],
+        box: [],
+      },
+    ];
+    s.lastMatch = s.history[0];
+    expect(saveGame(s)).toBe(true);
+
+    const cargado = loadGame();
+    expect(cargado).not.toBeNull();
+    expect(cargado!.lastMatch!.rivalBox).toBeUndefined();
+    // Así lo leen las pantallas: sin planilla del rival, lista vacía.
+    expect(cargado!.lastMatch!.rivalBox ?? []).toEqual([]);
+    expect(cargado!.history.flatMap((m) => m.rivalBox ?? [])).toEqual([]);
+  });
+
   it('un save de antes de la pirámide (v21) migra hasta la versión actual con el mundo entero', () => {
     const viejo = createNewGame(321) as unknown as Record<string, unknown>;
     viejo.saveVersion = 21;

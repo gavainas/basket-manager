@@ -12,6 +12,7 @@ import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
+import { useTeclasModal } from './teclas';
 
 interface Props {
   state: GameState;
@@ -21,6 +22,7 @@ interface Props {
 
 /** Perfil de un jugador rival: persona, nivel estimado, disponibilidad y ficha. */
 export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
+  useTeclasModal({ onClose });
   const world = state.world;
   const p = worldPlayerById(world, playerId);
   if (!p) return null;
@@ -38,6 +40,15 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
   // enfrentaste varias veces lo conocés, juegue donde juegue.
   const faced = p.timesFaced ?? 0;
   const knowsWell = knowledge >= 3 || faced >= 2 || DEBUG_FULL_SCOUTING;
+  // Lo que nos hizo esta temporada, sumando la planilla de ellos de cada
+  // informe (sep 2026). Los informes viejos no la traen y no cuentan.
+  const contra = state.history.reduce(
+    (acc, m) => {
+      const l = m.rivalBox?.find((x) => x.playerId === p.id);
+      return l ? { pts: acc.pts + l.points, partidos: acc.partidos + 1 } : acc;
+    },
+    { pts: 0, partidos: 0 }
+  );
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -91,6 +102,18 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
                 )}
               </span>
             </div>
+            {contra.partidos > 0 && (
+              <div className="data-row">
+                <span className="data-label">Contra nosotros</span>
+                <span className="data-value">
+                  {contra.pts === 0
+                    ? `Jugó ${contra.partidos === 1 ? 'un partido' : `${contra.partidos} partidos`} y no nos anotó.`
+                    : `${contra.pts} puntos en ${contra.partidos === 1 ? 'un partido' : `${contra.partidos} partidos`}${
+                        contra.partidos > 1 ? ` (${(contra.pts / contra.partidos).toFixed(1)} por partido)` : ''
+                      } esta temporada.`}
+                </span>
+              </div>
+            )}
             <div className="data-row">
               <span className="data-label">Liga</span>
               <span className="data-value">

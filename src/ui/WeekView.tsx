@@ -7,16 +7,18 @@ import { BALANCE } from '../game/balance';
 import { refereeOfWeek, rivalryWith } from '../game/leagueLife';
 import { userGameDay } from '../game/moments';
 import { lineupPromiseWarnings } from '../game/promises';
-import { evaluateTeam, isSelectable, PLAN_MIN_BENCH } from '../game/match';
+import { clubGamesPlayed, clubPosition, clubRecord, evaluateTeam, isSelectable, PLAN_MIN_BENCH } from '../game/match';
 import { userFixtureOfWeek } from '../game/world';
 import type { WeekDay } from '../game/types';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { StyleChip } from './StyleChip';
 import { RivalLink } from './RivalLink';
+import { WorldPlayerLink } from './WorldPlayerLink';
 import { ScoutingCard } from './ScoutingCard';
 import { Tip, TIPS } from './Tip';
 import { rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
+import { useEspacio } from './teclas';
 import { EMOTION_EXPRESSION } from '../game/humanState';
 import { Avatar } from './Avatar';
 import { PartidoVivo } from './PartidoVivo';
@@ -408,14 +410,18 @@ function PlanningPanel({ state, dispatch }: Props) {
                 const selected = state.actionsChosen.includes(a.id);
                 const blocked = !check.ok && !selected;
                 const full = !selected && state.actionsChosen.length >= max;
+                /* Un botón de verdad, no un div clickeable (sep 2026): tiene
+                   foco, se marca y se destilda con el teclado, y el lector de
+                   pantalla sabe si está elegida. La elegida siempre se puede
+                   destildar, aunque el cupo esté lleno. */
                 return (
-                  <div
+                  <button
                     key={a.id}
+                    type="button"
                     className={`action-card${selected ? ' selected' : ''}${blocked || full ? ' disabled' : ''}`}
-                    onClick={() => {
-                      if (!blocked && !full) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
-                      else if (selected) dispatch({ type: 'TOGGLE_ACTION', id: a.id });
-                    }}
+                    aria-pressed={selected}
+                    disabled={(blocked || full) && !selected}
+                    onClick={() => dispatch({ type: 'TOGGLE_ACTION', id: a.id })}
                   >
                     <div className="action-title">
                       <Icon name={actionIcon(a.id)} size={17} /> {a.name}
@@ -426,7 +432,7 @@ function PlanningPanel({ state, dispatch }: Props) {
                     ) : (
                       <div className="action-cost">{a.costLabel}</div>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -494,6 +500,11 @@ function AsadoReportCard({ state }: { state: GameState }) {
 }
 
 function CallUpPanel({ state, dispatch }: Props) {
+  /* Espacio sigue el camino de la semana donde no hay nada que decidir: pasar
+     de la convocatoria al quinteto, del quinteto al partido y del informe a la
+     semana siguiente. En "La semana" NO, a propósito: ahí Espacio elegiría por
+     vos entre largar la lista temprano o sobre la hora, que es la decisión. */
+  useEspacio(() => dispatch({ type: 'PROCEED_TO_LINEUP' }));
   const rival = state.rivals.find((r) => r.id === state.schedule[state.week - 1])!;
   const entries = state.callUp;
   // Bajas y llegadas tarde: todo lo que el DT tiene que saber antes de armar.
@@ -731,6 +742,9 @@ function CallUpPanel({ state, dispatch }: Props) {
         <button className="primary" onClick={() => dispatch({ type: 'PROCEED_TO_LINEUP' })}>
           Armar el quinteto →
         </button>
+        <span className="hint">
+          <b>Espacio</b> también.
+        </span>
       </div>
     </div>
   );
@@ -809,6 +823,10 @@ function LineupPanel({ state, dispatch }: Props) {
   const shortStart = maxStarters < 5 && available.length >= 5;
   const canPlay = count === 5 || (shortStart && count === maxStarters && count > 0);
   const forfeitRisk = available.length < 5;
+  /* Espacio va al partido cuando el quinteto está listo. Con el quinteto a
+     medio armar no hace nada, igual que el botón apagado; y si hay que
+     presentarse igual (forfeit) tampoco: eso se aprieta a propósito. */
+  useEspacio(canPlay ? () => dispatch({ type: 'START_MATCH' }) : null);
 
   const rotationIds = state.rotation.filter(
     (id) => !state.starters.includes(id) && available.some((p) => p.id === id)
@@ -1149,6 +1167,11 @@ function LineupPanel({ state, dispatch }: Props) {
         >
           {forfeitRisk && !canPlay ? 'Presentarse igual (forfeit) →' : 'Ir al partido →'}
         </button>
+        {canPlay && (
+          <span className="hint">
+            <b>Espacio</b> también.
+          </span>
+        )}
         {!canPlay && !forfeitRisk && (
           <span className="hint">
             {shortStart
@@ -1168,9 +1191,27 @@ function LineupPanel({ state, dispatch }: Props) {
   );
 }
 
+/** La sigla del puesto en la planilla del rival (la misma que usa el partido en vivo). */
+const POS_CORTA: Record<Position, string> = { Base: 'B', Escolta: 'E', Alero: 'A', 'Ala-Pívot': 'AP', Pívot: 'P' };
+
 function MatchResultPanel({ state, dispatch }: Props) {
+  useEspacio(() => dispatch({ type: 'NEXT_WEEK' }));
   const m = state.lastMatch;
   if (!m) return null;
+
+  /* Para qué sirvió ganar: la tabla, contada acá. Antes había que salir a la
+     Liga para saber si el partido movió algo. Sólo en fase regular: en
+     playoffs la tabla está congelada. */
+  const jugadas = clubGamesPlayed(state);
+  const rec = clubRecord(state);
+  const tablaLinea =
+    m.forfeit || jugadas === 0 || state.week > state.seasonLength
+      ? null
+      : `En la tabla quedamos ${clubPosition(state)}° de ${state.standings.length} (${rec.wins}-${rec.losses}), con ${
+          state.seasonLength - jugadas === 0
+            ? 'la fase regular terminada'
+            : `${state.seasonLength - jugadas} ${state.seasonLength - jugadas === 1 ? 'fecha' : 'fechas'} por jugar`
+        }.`;
   const nextLabel =
     state.week < state.seasonLength
       ? `Avanzar a la semana ${state.week + 1} →`
@@ -1261,6 +1302,42 @@ function MatchResultPanel({ state, dispatch }: Props) {
                 ))}
               </tbody>
             </table>
+
+            {/* La planilla de ellos (sep 2026): quién nos anotó. El partido en
+                vivo ya lo mostraba cuarto a cuarto; el informe se quedaba con
+                el marcador y la liga perdía la cara. Los del banco figuran sin
+                puntos: el motor reparte los del rival entre su quinteto. */}
+            {(m.rivalBox ?? []).length > 0 && (
+              <>
+                <h4 className="informe-lado">
+                  <RivalLink id={m.rivalId}>{m.rivalName}</RivalLink>
+                  <span className="muted"> · {m.scoreAgainst} puntos</span>
+                </h4>
+                <table className="planilla planilla-rival">
+                  <thead>
+                    <tr>
+                      <th className="pos">Pos</th>
+                      <th>Jugador</th>
+                      <th className="num">Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {m.rivalBox!.map((line) => (
+                      <tr key={line.playerId} className={line.starter ? '' : 'banco'}>
+                        <td className="pos">{POS_CORTA[line.position]}</td>
+                        <td>
+                          <WorldPlayerLink id={line.playerId}>{line.name}</WorldPlayerLink>
+                          {!line.starter && <span className="muted"> · banco</span>}
+                        </td>
+                        <td className="num" style={{ fontWeight: line.starter ? 700 : 400 }}>
+                          {line.starter ? line.points : '–'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -1288,6 +1365,10 @@ function MatchResultPanel({ state, dispatch }: Props) {
         <div className="card">
           <h3>Consecuencias</h3>
           <ul className="reason-list">
+            {/* Dónde quedamos, sin ir a la Liga: al apretar "Ver el informe" la
+                tabla ya se actualizó con este partido, así que la posición es la
+                de después. En playoffs la tabla está congelada y no se dice. */}
+            {tablaLinea && <li>{tablaLinea}</li>}
             {m.effects.map((e, i) => (
               <li key={i}>{e}</li>
             ))}
@@ -1355,6 +1436,9 @@ function MatchResultPanel({ state, dispatch }: Props) {
           <button className="primary" onClick={() => dispatch({ type: 'NEXT_WEEK' })}>
             {nextLabel}
           </button>
+          <span className="hint">
+            <b>Espacio</b> también.
+          </span>
         </div>
       </div>
     </div>

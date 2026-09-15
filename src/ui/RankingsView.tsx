@@ -2,11 +2,14 @@ import type { GameState, Player } from '../game/types';
 import { affinity, RIVALRY_THRESHOLD } from '../game/relations';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
+import { WorldPlayerLink } from './WorldPlayerLink';
 
 interface Row {
   id: string;
   name: string;
   value: string;
+  /** Es una persona del mundo (un rival), no uno de los nuestros: abre la otra ficha. */
+  rival?: boolean;
 }
 
 function RankingCard({ title, icon, rows, empty }: { title: string; icon: IconName; rows: Row[]; empty?: string }) {
@@ -25,7 +28,7 @@ function RankingCard({ title, icon, rows, empty }: { title: string; icon: IconNa
             <li key={r.id}>
               <span className="rk-pos">{i + 1}</span>
               <span className="rk-name">
-                <PlayerLink id={r.id}>{r.name}</PlayerLink>
+                {r.rival ? <WorldPlayerLink id={r.id}>{r.name}</WorldPlayerLink> : <PlayerLink id={r.id}>{r.name}</PlayerLink>}
               </span>
               <span className="rk-value">{r.value}</span>
             </li>
@@ -34,6 +37,35 @@ function RankingCard({ title, icon, rows, empty }: { title: string; icon: IconNa
       )}
     </div>
   );
+}
+
+/**
+ * Los rivales que más nos anotaron esta temporada, sumando la planilla de
+ * ellos de cada informe (`MatchResult.rivalBox`, sep 2026). `history` se
+ * vacía cada verano, así que es de esta temporada. Los informes de partidas
+ * guardadas antes no traen la planilla rival y no cuentan.
+ */
+function verdugos(state: GameState): Row[] {
+  const acum = new Map<string, { name: string; club: string; pts: number; partidos: number }>();
+  for (const m of state.history) {
+    for (const l of m.rivalBox ?? []) {
+      if (!l.starter || l.points <= 0) continue;
+      const prev = acum.get(l.playerId);
+      if (prev) {
+        prev.pts += l.points;
+        prev.partidos += 1;
+      } else acum.set(l.playerId, { name: l.name, club: m.rivalName, pts: l.points, partidos: 1 });
+    }
+  }
+  return [...acum.entries()]
+    .sort((a, b) => b[1].pts - a[1].pts)
+    .slice(0, 5)
+    .map(([id, x]) => ({
+      id,
+      name: x.name,
+      rival: true,
+      value: `${x.pts} pts · ${x.club}${x.partidos > 1 ? ` (${x.partidos} PJ)` : ''}`,
+    }));
 }
 
 /** Rankings del club: los números deportivos y las historias del vestuario. */
@@ -122,6 +154,15 @@ export function RankingsView({ state }: { state: GameState }) {
             (p) => p.matchLog.filter((m) => m.mvp).length,
             (v) => `${v} ${v > 1 ? 'veces' : 'vez'} MVP`
           )}
+        />
+        {/* El otro lado de la planilla: los rivales que más nos anotaron.
+            Le da cara a la liga, y al que te clavó 20 lo vas a mirar distinto
+            en la revancha. */}
+        <RankingCard
+          title="Los que más nos lastimaron"
+          icon="rayo"
+          rows={verdugos(state)}
+          empty="Todavía nadie nos anotó: se construye jugando."
         />
       </div>
 

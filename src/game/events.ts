@@ -1045,6 +1045,62 @@ export const EVENTS: EventDef[] = [
     },
   },
 
+  {
+    /* El primer evento que mira el historial de la temporada y no el estado de
+       hoy (punto del roadmap: "eventos que dependan del historial del club").
+       La comisión no aparece cuando alguien está molesto: aparece cuando la
+       tabla viene mal tres fechas seguidas, que es cuando aparecería de
+       verdad. Las tres salidas se pagan en monedas distintas —organización,
+       vestuario o el crédito con la comisión— y ninguna es gratis. */
+    id: 'comision_aprieta',
+    title: 'La comisión pide explicaciones',
+    weight: 9,
+    canFire: (s) => {
+      if (s.week > s.seasonLength) return false; // en playoffs se habla de otra cosa
+      const jugados = s.history.filter((m) => !m.forfeit);
+      return jugados.length >= 3 && jugados.slice(-3).every((m) => !m.won);
+    },
+    text: (s) => {
+      const ultimas = s.history.filter((m) => !m.forfeit).slice(-3);
+      const marcadores = ultimas.map((m) => `${m.scoreFor}-${m.scoreAgainst}`).join(', ');
+      return `Te citan un martes a las nueve en la sede: los tres de la comisión, el mate y una carpeta abierta. "Tres al hilo (${marcadores}). Nosotros ponemos la cara en el barrio, así que preguntamos: ¿qué está pasando?"`;
+    },
+    options: (s) => [
+      { label: 'Dar la cara: mostrarles el plan y los números', hint: 'Ordena el club; la comisión te da tiempo' },
+      {
+        label: 'Bancar al plantel: "el equipo está, falta que entre"',
+        hint: s.players.some((p) => !p.leftClub) ? 'El vestuario se entera y lo agradece; la comisión no' : 'La comisión no se va a conformar',
+      },
+      { label: 'Cargarle el muerto al plantel', hint: 'Te sacás la presión de encima; el grupo se entera igual' },
+    ],
+    resolve: (s, _ev, opt) => {
+      if (opt === 0) {
+        s.club.organization = clamp(s.club.organization + 7);
+        s.club.socialClimate = clamp(s.club.socialClimate + 2);
+        logClubEvent(s, 'hito', 'La comisión pidió explicaciones por la racha y se fue con un plan sobre la mesa.');
+        return 'Planilla, minutos, lesionados y lo que viene. Se fueron sin aplaudir, pero se fueron tranquilos: "Seguimos hablando en dos fechas".';
+      }
+      if (opt === 1) {
+        for (const p of actives(s)) p.motivation = clamp(p.motivation + 4);
+        s.club.socialClimate = clamp(s.club.socialClimate + 5);
+        s.club.sportPrestige = clamp(s.club.sportPrestige - 2);
+        s.news.unshift({ week: s.week, text: 'El manager bancó al plantel delante de la comisión. En el grupo se enteraron en diez minutos.', tone: 'good' });
+        logClubEvent(s, 'animo', 'Ante la comisión, el manager se puso al plantel al hombro en plena racha negativa.');
+        return 'No diste un nombre. A los diez minutos ya estaba en el grupo del club: "Así da gusto". La comisión, en cambio, te miró de costado.';
+      }
+      // La salida cómoda: la comisión se conforma, el vestuario se entera.
+      s.club.organization = clamp(s.club.organization + 3);
+      s.club.socialClimate = clamp(s.club.socialClimate - 8);
+      for (const p of actives(s).filter((x) => x.personality === 'leal' || x.personality === 'cumplidor')) {
+        p.motivation = clamp(p.motivation - 6);
+        upset(p);
+      }
+      s.news.unshift({ week: s.week, text: 'Se filtró lo que el manager dijo en la comisión: que el plantel no está a la altura.', tone: 'bad' });
+      logClubEvent(s, 'animo', 'El manager le cargó la racha al plantel delante de la comisión, y el vestuario se enteró.');
+      return 'La comisión se fue conforme. El problema es que en un club de barrio todo se sabe: para el jueves, el vestuario ya lo había leído en el grupo.';
+    },
+  },
+
   // --- Eventos encadenados: una decisión de hoy trae otra decisión semanas después ---
   {
     id: 'prueba_jugador',

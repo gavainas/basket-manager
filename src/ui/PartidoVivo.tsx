@@ -35,6 +35,7 @@ import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
+import { useEspacio } from './teclas';
 
 interface Props {
   state: GameState;
@@ -213,9 +214,8 @@ export function PartidoVivo({ state, dispatch }: Props) {
     else if (r.top < c.top) panel.scrollTop -= c.top - r.top + 6;
   });
 
-  if (!live) return null;
-
   const jugarCuarto = () => {
+    if (!live) return;
     if (reducedMotion()) {
       dispatch({ type: 'PLAY_QUARTER' });
       return;
@@ -235,6 +235,24 @@ export function PartidoVivo({ state, dispatch }: Props) {
   };
   const pausar = () => setReloj((r) => (r ? { ...r, pausa: !r.pausa } : r));
   const pedirMinuto = () => dispatch({ type: 'PEDIR_MINUTO' });
+
+  /* La barra espaciadora hace lo que hace el botón principal del pie: jugar el
+     cuarto, pausar el reloj o ir al informe. Con una incidencia sin resolver o
+     mientras simula no hace nada, igual que el botón apagado. */
+  useEspacio(
+    !live
+      ? null
+      : reloj
+        ? pausar
+        : live.finished
+          ? () => dispatch({ type: 'FINISH_MATCH' })
+          : live.pendingIncident || simulando
+            ? null
+            : jugarCuarto
+  );
+
+  if (!live) return null;
+
   const minutosQueQuedan = MINUTOS_POR_PARTIDO - (live.minutosPedidos ?? 0);
   const rival = state.rivals.find((r) => r.id === live.rivalId)!;
   const style = rivalStyleInfo(rival.style);
@@ -867,21 +885,30 @@ export function PartidoVivo({ state, dispatch }: Props) {
                   ? 'Pediste minuto: corre en la próxima pelota muerta.'
                   : reloj.pausa
                     ? 'Reloj parado: armá el cambio y seguí cuando quieras.'
-                    : 'En vivo: los cambios y la táctica entran en la próxima pelota muerta.'}
+                    : 'En vivo: los cambios y la táctica entran en la próxima pelota muerta.'}{' '}
+                <b>Espacio</b> {reloj.pausa ? 'sigue' : 'pausa'}.
               </span>
             </>
           ) : !live.finished ? (
             <>
+              {/* Con una incidencia sin resolver, el motivo va en el botón
+                  mismo, no en letra chica al lado (sep 2026). */}
               <button className="primary" disabled={!!live.pendingIncident || simulando} onClick={jugarCuarto}>
-                {live.enCurso ? `▶ Seguir el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto` : `▶ Jugar el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto`}
+                {live.pendingIncident
+                  ? 'Resolvé la incidencia primero'
+                  : live.enCurso
+                    ? `▶ Seguir el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto`
+                    : `▶ Jugar el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto`}
               </button>
               <button disabled={!!live.pendingIncident || simulando} title="Juega lo que falta de corrido, con tu plan de cambios (o el DT). Se frena sola si hay una incidencia." onClick={() => setSimulando(true)}>
                 {simulando ? 'Simulando…' : 'Simular el partido ⏩'}
               </button>
               {!live.pendingIncident && (
-                <span className="hint">Piernas nuestras en cancha: {Math.round(courtFreshness(live))}. Podés cambiar la táctica antes de cada cuarto; el rival también juega…</span>
+                <span className="hint">
+                  Piernas nuestras en cancha: {Math.round(courtFreshness(live))}. Podés cambiar la táctica antes de
+                  cada cuarto; el rival también juega… <b>Espacio</b> juega el cuarto.
+                </span>
               )}
-              {live.pendingIncident && <span className="hint">Resolvé la incidencia antes de seguir jugando.</span>}
             </>
           ) : (
             <button className="primary" onClick={() => dispatch({ type: 'FINISH_MATCH' })}>

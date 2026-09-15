@@ -208,7 +208,7 @@ function SecondTeamCard({ state }: { state: GameState }) {
       {st.lastResult && <p className="muted" style={{ marginTop: 0 }}>{st.lastResult}</p>}
       <div className="grid cols-2">
         <div className="table-wrap">
-          <table>
+          <table className="planilla">
             <thead>
               <tr>
                 <th>#</th>
@@ -397,7 +397,7 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
           {userLeague && userDivision ? ` · ${userLeague.name} ${userDivision.name}` : ''}
         </h3>
         <div className="table-wrap">
-          <table>
+          <table className="planilla">
             <thead>
               <tr>
                 <th>#</th>
@@ -457,7 +457,7 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
       <div className="card">
         <h3>Fixture</h3>
         <div className="table-wrap">
-          <table>
+          <table className="planilla">
             <thead>
               <tr>
                 <th>Sem.</th>
@@ -471,7 +471,8 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
                 const match = state.history.find((m) => m.week === week);
                 return (
                   <tr key={week} className={week === state.week ? 'highlight' : ''}>
-                    <td>{week}</td>
+                    {/* En una liga de 9 fechas, la fila 10 es la semifinal, no la "semana 10". */}
+                    <td>{week <= state.seasonLength ? week : week === state.seasonLength + 1 ? 'Semis' : 'Final'}</td>
                     <td>
                       {teamName(rivalId)} {styleChip(rivalId)}
                     </td>
@@ -523,7 +524,7 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
             })}
           </div>
           <div className="table-wrap">
-            <table>
+            <table className="planilla">
               <thead>
                 <tr>
                   <th>#</th>

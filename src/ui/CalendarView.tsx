@@ -150,12 +150,14 @@ export function CalendarView({ state }: Props) {
                       <TeamLabel state={state} teamId={fx.homeTeamId} /> vs{' '}
                       <TeamLabel state={state} teamId={fx.awayTeamId} />
                     </td>
+                    {/* El marcador, o un guion si todavía no se jugó: la hora
+                        ya está en la primera columna (decía dos veces lo mismo). */}
                     <td className="num">
                       {fx.status === 'jugado' && fx.scoreHome !== undefined
                         ? `${fx.scoreHome}-${fx.scoreAway}`
                         : fx.status === 'jugado'
                           ? 'jugado'
-                          : fx.time}
+                          : <span className="muted">—</span>}
                     </td>
                   </tr>
                 ))}

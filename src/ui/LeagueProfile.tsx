@@ -5,6 +5,7 @@ import { ClubLink } from './ClubLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
 import { Icon } from './Icon';
+import { useTeclasModal } from './teclas';
 
 interface Props {
   state: GameState;
@@ -21,6 +22,7 @@ const KIND_LABELS: Record<string, string> = {
 /** Ficha de una liga: reglas, divisionales, equipos y la relación con el club. */
 export function LeagueProfile({ state, leagueId, onClose }: Props) {
   const navigate = useContext(NavigateTabContext);
+  useTeclasModal({ onClose });
   const world = state.world;
   const league = world.leagues.find((l) => l.id === leagueId);
   if (!league) return null;

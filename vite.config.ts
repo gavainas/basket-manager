@@ -25,6 +25,18 @@ export default defineConfig({
     __COMMIT_HASH__: JSON.stringify(build.hash),
     __COMMIT_DATE__: JSON.stringify(build.date),
   },
+  build: {
+    rollupOptions: {
+      output: {
+        /* React en su propio archivo. No baja el total, pero sí lo que se
+           descarga en cada deploy: React no cambia de una versión del juego a
+           la otra, así que el navegador lo reusa del caché y sólo baja el
+           chunk del juego. Con un deploy por push (y Gabi probando varios por
+           día), es la mitad del ahorro posible sin tocar una línea de lógica. */
+        manualChunks: { react: ['react', 'react-dom', 'react-dom/client'] },
+      },
+    },
+  },
   server: {
     // Respeta el puerto asignado por el entorno (p. ej. preview del harness).
     port: process.env.PORT ? Number(process.env.PORT) : 5173,

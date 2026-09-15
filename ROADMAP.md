@@ -39,12 +39,21 @@ club quiebra la mitad de las veces que antes. Lo que sigue:
    gastar de más (prueba de registro ≈12 créditos, lámina de 12 caras ≈60). *Sale cuando:*
    dos jugadores del mismo arquetipo en la misma pantalla no se ven iguales.
 
-2. **Llevar la dirección D al resto del juego** (1 sesión). La planilla y el relieve a la
-   pretemporada, el mercado, la convocatoria y la liga, para que no convivan dos anatomías
-   de lista en el mismo juego.
+2. **Llevar la dirección D al resto del juego** (1 sesión, empezada). La planilla y el
+   relieve a la pretemporada, el mercado, la convocatoria y la liga, para que no convivan
+   dos anatomías de lista en el mismo juego. *Hecho (sep 2026):* el mercado, la libreta y el
+   plantel de la pretemporada son una planilla, y las tablas de la Liga llevan la hoja de la
+   planilla (ver el changelog). *Falta, y es decisión de Gabi:* la convocatoria. Sus filas
+   son historia y gestiones ("se cayó a última hora: el nene con fiebre", tres botones),
+   no cifras; la placa con tornillos le sumaría materia pero no columnas. Si se quiere
+   igual, es una sesión corta.
 
-3. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.400 líneas) en sus cinco etapas,
-   ESLint con `react-hooks`, code-splitting (755 kB en un chunk).
+3. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.400 líneas) en sus cinco etapas y
+   ESLint con `react-hooks` (suma una dependencia de desarrollo: decisión de Gabi, como el
+   Playwright de `check:pantallas`). *El code-splitting está* (sep 2026): el juego, React y
+   las galerías de desarrollo son tres archivos, así que un deploy nuevo no vuelve a bajar
+   React. Lo que queda ahí es partir el chunk del juego (627 kB), que pide separar el
+   reducer para que la pretemporada no viaje con el partido.
 
 Lo que quedaba de T2 y T3 salió (sep 2026, ver el changelog): la charla y el compañero
 escriben en la ficha, el inicio avisa al que pasa a "aparece cuando quiere", la libreta
@@ -66,6 +75,18 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   [`design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md`](design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md)):
   leerlo y decir si va la **prueba de registro** (1 base, 3 pelos, 2 barbas, ≈12 créditos).
   Hasta entonces no se genera nada.
+- **La convocatoria, ¿pasa a la planilla?** (sep 2026, lo único que quedó del punto 2). El
+  mercado, la libreta, el plantel de la pretemporada y las tablas de la Liga ya son la
+  placa de la dirección D. La convocatoria no: sus filas son **historia y gestiones** ("se
+  cayó a última hora: el nene con fiebre", y tres botones para resolverlo), no cifras
+  comparables de arriba abajo. La placa le sumaría materia pero no columnas. Si igual la
+  querés uniforme, es una sesión corta.
+- **ESLint con `react-hooks`** (lo que queda del punto 3 junto con partir `WeekView.tsx`):
+  suma una dependencia de desarrollo, igual que el Playwright de acá abajo. Hoy hay una
+  red parcial —`npm run build` corre `tsc` y los 115 tests pasan por el reducer—, pero
+  nadie chequea las dependencias de los efectos. *(De paso: el 15/9 apareció uno de esos
+  bugs de hooks —dos `return` condicionales antes de la mitad de los hooks de `App`— y se
+  corrigió con el code-splitting.)*
 - **`npm run check:pantallas`**: el Playwright que recorre las 22 pantallas en tres
   resoluciones existe pero no está en el repo porque suma una dependencia de desarrollo
   (ver [`design/PLAN_MARCO_FIJO.md`](design/PLAN_MARCO_FIJO.md)). Con la regla nueva lo
@@ -88,11 +109,15 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   bronca cruzan el verano, no sólo la promesa rota). Lo que queda de ese informe son ideas
   de diseño más grandes: objetivos de comisión que compitan entre sí, un objetivo personal
   elegido por el jugador, y el feed conversacional en tres hilos.
-- **Más voces por arquetipo** en las emociones con pool único, los mensajes de amigos de
-  afuera y las respuestas a eventos. Regla: voz donde el contraste se lee, no por completar
-  la matriz.
-- **Más eventos**: cadenas de 3+ eslabones y eventos que dependan del historial del club.
-  Ligas que cobren por fecha o aparezcan y desaparezcan según el año.
+- **Más voces por arquetipo** en los mensajes de amigos de afuera y las respuestas a
+  eventos. Regla: voz donde el contraste se lee, no por completar la matriz. *En el
+  vestuario ya está* (sep 2026): a las cinco emociones que tenían pool se sumaron la figura
+  del partido y el que se comió la noche; lo que queda ahí —contento, conforme,
+  indiferente— es donde el contraste no se lee y el genérico alcanza.
+- **Más eventos**: cadenas de 3+ eslabones y más eventos que dependan del historial del
+  club. Ligas que cobren por fecha o aparezcan y desaparezcan según el año. *El primero del
+  historial ya está* (sep 2026): la comisión pide explicaciones con tres derrotas al hilo.
+  El molde queda: mirar `s.history` y no el estado de hoy.
 - **Mediano plazo**: clima liviano (suspensiones, público, recaudación), más profundidad
   táctica (matchups, ritmo), lesiones con recuperación progresiva, influencias entre
   jugadores (un líder que se va arrastra amigos), sponsors y actividades sociales.

@@ -2156,7 +2156,14 @@ td.num, th.num {
   gap: 0.8rem;
 }
 
+/* Es un <button> (sep 2026): se le quita la ropa de botón chico y se le deja
+   la de card, con el foco visible para el que elige con el teclado. */
 .action-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: inherit;
+  color: inherit;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -2169,6 +2176,13 @@ td.num, th.num {
   border-color: var(--accent);
 }
 
+.action-card:active:not(:disabled) { transform: none; }
+
+.action-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .action-card.selected {
   border-color: var(--accent);
   background: var(--accent-soft);
@@ -2177,6 +2191,12 @@ td.num, th.num {
 .action-card.disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* La elegida con el cupo lleno sigue destildable: no se apaga. */
+.action-card.selected.disabled {
+  opacity: 1;
+  cursor: pointer;
 }
 
 .action-card .action-title {
@@ -2568,6 +2588,29 @@ table.planilla tr:last-child td {
   border-bottom: 3px double var(--border);
 }
 
+/* La planilla del rival, debajo de la nuestra en el informe: el rótulo con su
+   nombre separa las dos hojas, y los del banco van apagados (no anotan). */
+.informe-lado {
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: var(--fs-xs);
+  color: var(--sec);
+  margin: 1rem 0 0.35rem;
+}
+
+table.planilla-rival th.pos,
+table.planilla-rival td.pos {
+  width: 34px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+table.planilla-rival tr.banco td { opacity: 0.7; }
+
 /* ---------- Plantel: vista planilla (tabla densa estilo mesa de control) ---------- */
 
 /* ---------- El plantel (tanda D) ---------- */
@@ -2770,6 +2813,10 @@ tr.sheet-group td {
   padding: 1.4rem;
   box-shadow: var(--sombra-alta);
 }
+
+/* El diálogo recibe el foco al abrirse (para que Enter y Escape le lleguen a
+   él y no al botón que lo abrió); el borde naranja ya dice dónde está. */
+.modal:focus { outline: none; }
 
 .modal h2 {
   color: var(--accent);
@@ -4070,35 +4117,12 @@ button.mini.blue.on {
 
 /* ---------- Pretemporada ---------- */
 
-.ps-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.ps-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  padding: 0.5rem 0.6rem;
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.ps-row.dimmed {
-  opacity: 0.5;
-  filter: saturate(0.6);
-}
-
-.ps-who {
-  flex: 1;
-  min-width: 180px;
-}
-
-.ps-who .name {
-  font-weight: 600;
+/* El plantel de la pretemporada es la misma planilla del Plantel y del
+   mercado (dirección D), con menos columnas: quién, la valoración, cómo viene
+   (chips) y la acción. Las filas `.ps-row` de antes se fueron con esto. */
+.planilla-plantel-ps .planilla-cab,
+.planilla-plantel-ps .planilla-fila {
+  grid-template-columns: 52px minmax(190px, 1.4fr) 62px minmax(220px, 1.6fr) 170px;
 }
 
 /* La pretemporada usa el mismo cromo que la temporada (barra arriba, barra de
@@ -4568,6 +4592,73 @@ button.mini.blue.on {
   .planilla-cab > :nth-child(7),
   .planilla-nota {
     display: none;
+  }
+}
+
+/* ---------- La planilla del mercado (dirección D, punto 2 del roadmap) ---------- */
+
+/* La misma placa que el plantel, con sus columnas: quién, nivel, físico, lo que
+   se sabe (chips) y la acción. Los que ya no están (fichados, perdidos, los
+   que dijeron que no) van apagados en su propia placa. */
+.planilla-mercado .planilla-cab,
+.planilla-mercado .planilla-fila {
+  grid-template-columns: 52px minmax(190px, 1.1fr) 76px 76px minmax(260px, 2fr) 176px;
+}
+
+.planilla-fila.dimmed {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+
+/* La cifra estimada del mercado no lleva medidor: "71–85" o "★★★☆☆" ya dicen
+   cuánto se sabe. Tinta, no naranja: el acento es de la acción, no de cada fila. */
+.planilla-mercado .planilla-cifra b {
+  font-size: var(--fs-md);
+  white-space: nowrap;
+}
+
+.planilla-sabe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.planilla-sabe .human-note {
+  flex-basis: 100%;
+  margin: 0.1rem 0 0;
+}
+
+/* La relación de la libreta ("Ex compañero de club de Julián") y el chip de
+   quién lo trae van como texto corrido, no como dos cajas flex: en flex el
+   chip le comía el ancho y la relación larga se partía en cuatro renglones
+   de una palabra, empujando el nombre. Así fluye y el chip envuelve al final. */
+.planilla-relacion {
+  display: block;
+  margin-top: 0.2rem;
+}
+
+.planilla-relacion .ps-relacion { display: inline; }
+
+.planilla-accion {
+  justify-self: end;
+  text-align: right;
+}
+
+.planilla-accion button {
+  white-space: nowrap;
+}
+
+.planilla-accion button small {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+@media (max-width: 1180px) {
+  .planilla-mercado .planilla-cab,
+  .planilla-mercado .planilla-fila {
+    grid-template-columns: 52px minmax(150px, 1fr) 64px 64px minmax(200px, 1.6fr) 150px;
   }
 }
 
