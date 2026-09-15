@@ -21,6 +21,12 @@ interface Teclas {
 
 const pila: symbol[] = [];
 
+/** ¿El foco está en algo que ya usa el teclado? (ahí decide el navegador). */
+function focoEnControl(): boolean {
+  const tag = (document.activeElement as HTMLElement | null)?.tagName ?? '';
+  return ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'A'].includes(tag);
+}
+
 /**
  * Escucha Escape (y opcionalmente Enter) mientras el componente está montado.
  * `activo` en falso no anota nada: sirve para los componentes que se montan
@@ -45,8 +51,7 @@ export function useTeclasModal(teclas: Teclas, activo = true) {
         return;
       }
       if (e.key === 'Enter' && onConfirm) {
-        const tag = (document.activeElement as HTMLElement | null)?.tagName ?? '';
-        if (['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'A'].includes(tag)) return;
+        if (focoEnControl()) return;
         e.preventDefault();
         onConfirm();
       }
@@ -58,4 +63,34 @@ export function useTeclasModal(teclas: Teclas, activo = true) {
       if (i >= 0) pila.splice(i, 1);
     };
   }, [activo]);
+}
+
+/**
+ * La barra espaciadora de una pantalla: la acción que el pie ya muestra como
+ * botón principal, al alcance de una tecla. Es un juego de PC y el partido se
+ * juega cuarto a cuarto: tener que ir al mouse entre cuarto y cuarto rompe el
+ * ritmo (design/DIAGNOSTICO_2026-09.md, "UX y navegación").
+ *
+ * No hace nada si hay una ficha o un diálogo abierto (ese se lleva el teclado)
+ * ni si el foco está en un botón —ahí Espacio ya activa ese botón y pisarlo
+ * sería activar dos cosas con una tecla—. `accion` en null la apaga: sirve
+ * para los momentos en que la pantalla no acepta la acción (una incidencia
+ * sin resolver, el reloj esperando el tramo).
+ */
+export function useEspacio(accion: (() => void) | null) {
+  const ref = useRef(accion);
+  ref.current = accion;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== ' ' && e.code !== 'Space') return;
+      if (e.repeat || pila.length > 0 || focoEnControl()) return;
+      const fn = ref.current;
+      if (!fn) return;
+      e.preventDefault();
+      fn();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 }
