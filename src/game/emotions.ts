@@ -161,7 +161,7 @@ function moodText(
             '"Que no se corte, eh. Así, todas las semanas."',
           ]);
     case 'orgulloso':
-      return pick([
+      return voiced(ORGULLOSO, [
         '"Cuando el equipo me necesitó, estuve. De esto se trata."',
         '"Los años no vienen solos, pero hoy respondí. Contento por el grupo."',
         '"Me tocó dar un paso al frente y lo di. Así se gana."',
@@ -286,7 +286,7 @@ function moodText(
             '"Perder así, sin siquiera despeinarme, es lo peor que hay."',
           ]);
     case 'decepcionado':
-      return pick([
+      return voiced(DECEPCIONADO, [
         '"Hoy no estuve. El equipo merecía más de mí."',
         '"Noche para el olvido. La próxima la pago con creces."',
         '"No me salió una. Prefiero ni ver el video del partido."',
@@ -298,10 +298,12 @@ function moodText(
 }
 
 // --- Voces por arquetipo ------------------------------------------------
-// Las tres emociones que más se leen en una temporada: la bronca por minutos
-// (la que dispara quejas), la frustración del que ni entró en la lista y la
-// euforia del triunfo. Misma emoción, ocho registros: si tapás el nombre,
-// tenés que poder decir quién habló. Lo que no está acá cae en el genérico.
+// Las emociones que más se leen en una temporada: la bronca por minutos
+// (la que dispara quejas), la frustración del que ni entró en la lista, la
+// euforia del triunfo y —desde sep 2026— las dos caras del que fue
+// protagonista del partido: la figura y el que se comió la noche. Misma
+// emoción, ocho registros: si tapás el nombre, tenés que poder decir quién
+// habló. Lo que no está acá cae en el genérico.
 
 const MOLESTO_GANANDO: VoicePools = {
   competitivo: [
@@ -415,6 +417,81 @@ const EUFORICO_GRANDE: VoicePools = {
   cumplidor: ['"No falté a un entrenamiento en todo el año. Hoy me lo cobré."'],
   veterano: ['"Ya no me quedan muchas de estas. Me la voy a guardar."'],
   talentoso_informal: ['"Y yo que casi no vengo. Mirá si me lo perdía."'],
+};
+
+/* La figura del partido. El contraste es fuerte porque el mérito propio es
+   justo lo que cada arquetipo administra distinto: el competitivo lo usa de
+   combustible, el cumplidor se incomoda, el protagonista pasa factura. */
+const ORGULLOSO: VoicePools = {
+  competitivo: [
+    '"Para esto entreno los martes con lluvia. Hoy se vio."',
+    '"Figura, bárbaro. A mí lo que me importa son los dos puntos."',
+  ],
+  social: [
+    '"La figura fue el grupo, yo puse la puntería nomás. ¿Dónde lo festejamos?"',
+    '"Ya sé que por esto me van a hacer pagar la ronda. La pago contento."',
+  ],
+  protagonista: [
+    '"Cuando la pido, pasa esto. Ni más ni menos."',
+    '"Alguien tiene que agarrarla cuando el partido pesa. Hoy fui yo, como casi siempre."',
+  ],
+  leal: [
+    '"Por este club y por estos tipos me rompo. Hoy salió bien."',
+    '"No lo hice por la planilla: lo hice porque estaban todos ahí mirándome."',
+  ],
+  mercenario: [
+    '"Cuando rindo así, la ficha me la tendrían que pagar ellos."',
+    '"Hoy trabajé bien. Me voy tranquilo, que es lo que vine a buscar."',
+  ],
+  cumplidor: [
+    '"Hice lo que había que hacer, nada más. Lo veníamos entrenando toda la semana."',
+    '"No me gusta el ruido. Ganamos y yo cumplí: con eso me alcanza."',
+  ],
+  veterano: [
+    '"A esta altura uno elige los partidos. Hoy elegí este."',
+    '"Las piernas ya no son las de antes; la cabeza sí, y hoy alcanzó."',
+  ],
+  talentoso_informal: [
+    '"Ni sabía que iba tan bien hasta que vi la planilla."',
+    '"Me salió. No me pidas que te explique cómo, porque no sé."',
+  ],
+};
+
+/* La otra cara: jugó, perdió y se comió la noche. Acá el arquetipo decide
+   qué hace con la culpa — el competitivo la guarda, el mercenario la suelta. */
+const DECEPCIONADO: VoicePools = {
+  competitivo: [
+    '"Esto no me lo perdono hasta el sábado que viene."',
+    '"No quiero hablar. Quiero el video y la llave del gimnasio."',
+  ],
+  social: [
+    '"Los dejé a pata, muchachos. El asado de esta semana lo pago yo, mínimo."',
+    '"Perdón al grupo. Me voy con un nudo que no se me va con nada."',
+  ],
+  protagonista: [
+    '"Si yo no aparezco, el equipo se cae. Hoy no aparecí."',
+    '"Me equivoqué de noche. Me pasa una vez cada mucho, eh."',
+  ],
+  leal: [
+    '"Al club no le fallo nunca. Hoy le fallé."',
+    '"Me da bronca por los muchachos, no por mí."',
+  ],
+  mercenario: [
+    '"Un partido malo lo tiene cualquiera. No me voy a matar por esto."',
+    '"Pagué la ficha para esto. Bueno: la semana que viene será."',
+  ],
+  cumplidor: [
+    '"No hay excusa. Entrené igual que siempre y no me salió nada."',
+    '"El martes voy a estar primero en el gimnasio. Es lo único que sé hacer."',
+  ],
+  veterano: [
+    '"Estas noches le avisan cosas a uno. Mejor no escuchar todavía."',
+    '"Ya me pasó mil veces. No se hace más fácil, te aviso."',
+  ],
+  talentoso_informal: [
+    '"Día de esos. Mañana me sale todo y nadie se acuerda de hoy."',
+    '"No la metí ni de rebote. En fin: pasa."',
+  ],
 };
 
 /** ¿Tiene promesa activa (sin romper) de titularidad o minutos esta temporada? */

@@ -93,9 +93,11 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   bronca cruzan el verano, no sólo la promesa rota). Lo que queda de ese informe son ideas
   de diseño más grandes: objetivos de comisión que compitan entre sí, un objetivo personal
   elegido por el jugador, y el feed conversacional en tres hilos.
-- **Más voces por arquetipo** en las emociones con pool único, los mensajes de amigos de
-  afuera y las respuestas a eventos. Regla: voz donde el contraste se lee, no por completar
-  la matriz.
+- **Más voces por arquetipo** en los mensajes de amigos de afuera y las respuestas a
+  eventos. Regla: voz donde el contraste se lee, no por completar la matriz. *En el
+  vestuario ya está* (sep 2026): a las cinco emociones que tenían pool se sumaron la figura
+  del partido y el que se comió la noche; lo que queda ahí —contento, conforme,
+  indiferente— es donde el contraste no se lee y el genérico alcanza.
 - **Más eventos**: cadenas de 3+ eslabones y eventos que dependan del historial del club.
   Ligas que cobren por fecha o aparezcan y desaparezcan según el año.
 - **Mediano plazo**: clima liviano (suspensiones, público, recaudación), más profundidad
