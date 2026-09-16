@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { getEvent } from '../src/game/events';
+import { Rng } from '../src/game/rng';
 import { buildSocialMap } from '../src/game/socialMap';
-import { affinity, FRIEND_THRESHOLD } from '../src/game/relations';
+import { affinity, FRIEND_THRESHOLD, pairKey, RIVALRY_THRESHOLD } from '../src/game/relations';
 import type { GameState } from '../src/game/types';
-import { jugarFecha, partidaNueva } from './jugar';
+import { jugarFecha, partidaNueva, paso } from './jugar';
 
 /** Ids de los que el mapa nombra en las mesas, entre los sueltos y entre los aislados. */
 function nombrados(s: GameState) {
@@ -69,5 +71,63 @@ describe('el vestuario por dentro (sep 2026: cuenta a todo el plantel)', () => {
     expect(map.groups).toEqual([]);
     expect(map.sueltos).toEqual([]);
     expect(map.loners.length).toBe(frio.players.filter((p) => !p.leftClub).length);
+  });
+});
+
+/** Un plantel con una pareja que no se banca: los dos primeros, con lo vivido en contra. */
+function conRoce(seed: number): { s: GameState; a: string; b: string } {
+  const s: GameState = structuredClone(partidaNueva(seed));
+  const activos = s.players.filter((p) => !p.leftClub);
+  const [a, b] = activos;
+  s.affinityBonus = { ...(s.affinityBonus ?? {}), [pairKey(a.id, b.id)]: -12 };
+  a.social = 20;
+  b.social = 20;
+  if (affinity(a, b, s.affinityBonus) > RIVALRY_THRESHOLD) throw new Error('el par de prueba no llega a roce');
+  return { s, a: a.id, b: b.id };
+}
+
+describe('el mapa social juega (sep 2026): las peleas caen sobre el roce real y las charlas lo mueven', () => {
+  it('"Se fueron a las manos" elige a los dos que no se bancan, si los hay', () => {
+    for (const seed of [1, 2, 3]) {
+      const { s, a, b } = conRoce(seed);
+      const map = buildSocialMap(s);
+      const roce = map.pairs.find((p) => p.kind === 'roce')!;
+      expect([roce.a.id, roce.b.id].sort()).toEqual([a, b].sort());
+      const t = getEvent('bronca_fuerte').pickTargets!(s, new Rng(seed))!;
+      expect([t.playerId, t.playerId2].sort()).toEqual([a, b].sort());
+    }
+  });
+
+  it('sin roce, la pelea sigue cayendo entre dos al azar', () => {
+    const s = partidaNueva(4);
+    for (const p of s.players) p.social = 90;
+    expect(buildSocialMap(s).pairs.some((p) => p.kind === 'roce')).toBe(false);
+    const t = getEvent('bronca_fuerte').pickTargets!(s, new Rng(4))!;
+    expect(t.playerId).toBeTruthy();
+    expect(t.playerId2).toBeTruthy();
+    expect(t.playerId).not.toBe(t.playerId2);
+  });
+
+  it('enterrar el hacha sube la afinidad del par y el roce desaparece del vestuario; mirar para otro lado la baja', () => {
+    const { s, a, b } = conRoce(1);
+    const key = pairKey(a, b);
+    // El desenlace de la secuela: la charla a fondo, con una semilla que la hace funcionar.
+    let enterrado: GameState | null = null;
+    for (let seed = 1; seed <= 40 && !enterrado; seed++) {
+      const conEvento: GameState = { ...structuredClone(s), seed, pendingEvent: { defId: 'bronca_secuela', playerId: a, playerId2: b } };
+      const r = paso(conEvento, { type: 'RESOLVE_EVENT', optionIndex: 2 });
+      if (/enterraron el hacha/.test(r.memorableMoments.join(' '))) enterrado = r;
+    }
+    expect(enterrado).not.toBeNull();
+    expect(enterrado!.affinityBonus[key]).toBeGreaterThan(s.affinityBonus[key]);
+    expect(buildSocialMap(enterrado!).pairs.some((p) => p.kind === 'roce' && [p.a.id, p.b.id].sort().join() === [a, b].sort().join())).toBe(false);
+
+    // Mirar para otro lado en la pelea: el par queda peor (el bonus ya estaba en el piso: no baja de -12, pero no sube).
+    const pelea: GameState = { ...structuredClone(s), seed: 7, pendingEvent: { defId: 'bronca_fuerte', playerId: a, playerId2: b } };
+    const vista = paso(pelea, { type: 'RESOLVE_EVENT', optionIndex: 2 });
+    expect(vista.affinityBonus[key]).toBeLessThanOrEqual(s.affinityBonus[key]);
+    // Y con un par que arranca en cero, la vista gorda lo baja de verdad.
+    const neutro: GameState = { ...structuredClone(s), seed: 7, affinityBonus: {}, pendingEvent: { defId: 'bronca_fuerte', playerId: a, playerId2: b } };
+    expect(paso(neutro, { type: 'RESOLVE_EVENT', optionIndex: 2 }).affinityBonus[key]).toBeLessThan(0);
   });
 });
