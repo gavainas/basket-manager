@@ -2036,7 +2036,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
           logPlayerEvent(faltador, s.seasonNumber, Math.min(s.week, s.seasonLength), 'ausencia', `Faltó con excusa floja el día que el equipo jugó con ${n}. El grupo tomó nota.`);
         }
         const names = weakAbsent.map((c) => c.playerName).join(' y ');
-        s.news.unshift({ week: s.week, text: `Quedó picando en el grupo: ${names} faltó justo cuando el equipo fue con ${n}.`, tone: 'bad' });
+        s.news.unshift({ week: s.week, text: `Quedó picando en el grupo: ${names} ${weakAbsent.length === 1 ? 'faltó' : 'faltaron'} justo cuando el equipo fue con ${n}.`, tone: 'bad' });
       }
     }
   }

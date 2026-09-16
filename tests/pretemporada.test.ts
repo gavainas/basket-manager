@@ -157,4 +157,26 @@ describe('la memoria entre temporadas: el título y la bronca cruzan el verano',
     expect(conTitulo).toBeGreaterThan(sinTitulo);
     expect(logs).toBeGreaterThan(0);
   });
+
+  it('el subcampeón que sube sin copa lo cuenta como ascenso, no como título', () => {
+    // Perdió la final de la Copa de Oro: no hay título, pero los dos finalistas suben.
+    const rival = fin.rivals[0];
+    const subcampeon: GameState = structuredClone(fin);
+    subcampeon.playoffs = {
+      qualified: true,
+      userCup: 'oro',
+      ties: [
+        { id: 'f', cup: 'oro', round: 'final', week: fin.seasonLength + 2, homeId: 'club', awayId: rival.id, scoreHome: 60, scoreAway: 70, winnerId: rival.id, isUserMatch: true },
+      ],
+      champions: { oro: rival.id },
+    };
+    let ascensos = 0;
+    for (let seed = 1; seed <= 16; seed++) {
+      const a = paso({ ...subcampeon, seed }, { type: 'NEW_SEASON' });
+      const log = a.preseason!.log;
+      expect(log.some((l) => /El título pesa/.test(l))).toBe(false);
+      if (log.some((l) => /El ascenso pesa/.test(l))) ascensos += 1;
+    }
+    expect(ascensos).toBeGreaterThan(0);
+  });
 });

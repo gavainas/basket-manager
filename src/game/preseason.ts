@@ -139,6 +139,9 @@ export function broncaQueCruza(p: Player, seasonNumber: number): Grievance | nul
   return g && g.level >= 2 && g.season === seasonNumber - 1 ? g : null;
 }
 
+/** Lo que el verano tiene para recordar: una copa, el ascenso sin copa, o nada. */
+type Titulo = false | 'titulo' | 'ascenso';
+
 function assignContinuity(
   p: Player,
   club: Club,
@@ -146,7 +149,7 @@ function assignContinuity(
   firstSeason: boolean,
   seasonNumber: number,
   inPlaza: boolean,
-  titulo = false
+  titulo: Titulo = false
 ): { status: ContinuityStatus; demand?: DemandType; memoria?: 'titulo' | 'bronca' } {
   if (firstSeason) {
     // Temporada 1: el grupo viene junto; solo algunos plantean cosas.
@@ -247,7 +250,7 @@ function buildPreseasonState(
   seasonNumber = 1,
   marketFromWorld: MarketPlayer[] = [],
   inPlaza = false,
-  titulo = false
+  titulo: Titulo = false
 ): PreseasonState {
   const continuity: Record<string, ContinuityStatus> = {};
   const playerDemands: Record<string, DemandType> = {};
@@ -272,7 +275,8 @@ function buildPreseasonState(
     }
   }
   if (porTitulo.length > 0) {
-    log.push(`El título pesa: ${porTitulo.join(', ')} ${porTitulo.length === 1 ? 'confirmó' : 'confirmaron'} antes de que preguntes.`);
+    // El subcampeón que subió no ganó nada: lo que pesa es el ascenso.
+    log.push(`${titulo === 'ascenso' ? 'El ascenso' : 'El título'} pesa: ${porTitulo.join(', ')} ${porTitulo.length === 1 ? 'confirmó' : 'confirmaron'} antes de que preguntes.`);
   }
 
   // Red de seguridad: que siempre quede una base de confirmados.
@@ -665,7 +669,8 @@ export function startPreseason(state: GameState): GameState {
   // (Los ascensos y descensos se calculan acá y se aplican más abajo.)
   const champions = state.playoffs?.champions ?? {};
   const promo = applyPromotionRelegation(state);
-  const titulo = champions.oro === 'club' || champions.plata === 'club' || promo.userMoved === 'ascenso';
+  const titulo: Titulo =
+    champions.oro === 'club' || champions.plata === 'club' ? 'titulo' : promo.userMoved === 'ascenso' ? 'ascenso' : false;
 
   const players = survivors.map((p) => {
     const np = structuredClone(p);

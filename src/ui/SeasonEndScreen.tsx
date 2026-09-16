@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { GameState } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
+import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
 import { computeSeasonEvaluation } from '../game/evaluation';
 import { userSeasonFate } from '../game/pyramid';
 import { objectiveStatus } from '../game/objectives';
@@ -19,6 +21,20 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
   const fate = userSeasonFate(state);
   const canContinue = !ev.isGameOver;
   const shortOnMoney = state.club.money < BALANCE.economy.inscriptionFee;
+  /* "Empezar de cero" pisaba la partida con un click: el club, el plantel y
+     la historia entera. Pide confirmación como la portada, y en rojo. */
+  const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
+  const empezarDeCero = () =>
+    setConfirmReq({
+      title: 'Empezar de cero',
+      message: canContinue
+        ? `Se pierden ${state.club.name}, el plantel y toda su historia: arranca otro club en la temporada 1. Si querés seguir con este, la pretemporada está al lado.`
+        : `Se pierden ${state.club.name}, el plantel y toda su historia: arranca otro club en la temporada 1.`,
+      confirmLabel: 'Empezar de cero',
+      danger: true,
+      icon: 'alerta',
+      onConfirm: () => dispatch({ type: 'NEW_GAME' }),
+    });
 
   return (
     <div className="season-end">
@@ -119,11 +135,12 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
             Ojo: no alcanza para la inscripción (${BALANCE.economy.inscriptionFee}). Habrá que recaudar en la pretemporada.
           </span>
         )}
-        <button className={canContinue ? '' : 'primary'} onClick={() => dispatch({ type: 'NEW_GAME' })}>
+        <button className={canContinue ? '' : 'primary'} onClick={empezarDeCero}>
           Empezar de cero
         </button>
         <button onClick={() => dispatch({ type: 'QUIT_TO_MENU' })}>Volver al menú</button>
       </div>
+      <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
     </div>
   );
 }
