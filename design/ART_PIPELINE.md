@@ -506,6 +506,49 @@ Formato sugerido:
 - B queda archivada como exploración. La recomendación inicial de B queda superada por esta elección; no se aprueba una mezcla A/B.
 - Alcance: elección de composición y criterio de diseño. En esta tanda se documenta; la implementación del tablero y los ajustes de la lámina siguen pendientes. Se conserva el arte, la paleta y la tipografía aprobados; no se reabren las puertas de personajes ni se autoriza producción masiva de assets.
 
+### 2026-09-16 — Las seis láminas del juego entero (recibidas, SIN aprobar)
+
+- Alcance: Gabi entregó un set de referencia armado fuera del repo —seis láminas de
+  1536×1024, veinticuatro pantallas numeradas— que cubre el juego de punta a punta.
+  Guardadas en `arte/referencias/2026-09-16-ref-0X-*.png`, sin retocar.
+
+  | Lámina | Pantallas |
+  | --- | --- |
+  | [01 · Inicio y club](arte/referencias/2026-09-16-ref-01-inicio-y-club.png) | Menú principal · Nueva partida · Fundar tu club · Partidas guardadas |
+  | [02 · La semana](arte/referencias/2026-09-16-ref-02-la-semana.png) | Tablero · Decisiones de la semana · Pasar lista · Noticias del club |
+  | [03 · Las personas](arte/referencias/2026-09-16-ref-03-las-personas.png) | Plantilla · Ficha de jugador · Vestuario · Cuerpo técnico |
+  | [04 · Armar la temporada](arte/referencias/2026-09-16-ref-04-armar-la-temporada.png) | Mercado de fichajes · Pretemporada · Elegir liga · Calendario |
+  | [05 · El partido es el centro](arte/referencias/2026-09-16-ref-05-el-partido.png) | La previa · Quinteto y táctica · Partido en vivo · Postpartido |
+  | [06 · Competir y sostener el club](arte/referencias/2026-09-16-ref-06-competir-y-sostener.png) | Liga · Rankings · Finanzas y estado del club · Historia del club |
+
+- Aprobado: **nada todavía.** Esta entrada sólo registra que el set existe y dónde está.
+  Se archiva como referencia entregada, no como dirección vigente: hasta que Gabi diga lo
+  contrario, la UI aprobada sigue siendo la de la Puerta 2 (papel claro, Oswald, bandas de
+  sección) y el tablero sigue siendo A.
+- **La decisión de fondo que hay que tomar primero: el tema.** Las seis láminas están en
+  oscuro (azul noche con naranja), y el juego publicado es papel claro desde agosto.
+  No es un ajuste de pantalla: es reabrir la Puerta 2 para todas las vistas a la vez.
+  Mientras eso no se resuelva, cualquier pantalla que se copie de acá entra en conflicto
+  con el resto del juego.
+- Lo que coincide con el juego que ya existe: la barra de arriba con semana y caja, el
+  tablero con el próximo partido y los asuntos urgentes, pasar lista con la disponibilidad
+  contada, el vestuario con grupos y tensiones, la ficha con pestañas, el partido en vivo
+  con relato y cambios, el informe con figura y momentos clave, la tabla, los rankings,
+  las finanzas con cuotas y objetivos de la comisión, y la historia del club. Ahí las
+  láminas se leen como una versión más terminada de lo mismo.
+- Lo que **no existe en el motor** y no se dibuja hasta que exista: mercado de fichajes con
+  costo mensual y "invitar al club", elegir liga entre tres competencias con inscripción y
+  distancia, pretemporada como plan de cuatro semanas con renovaciones pendientes, fundar
+  el club eligiendo barrio, escudo y camisetas, partidas guardadas múltiples con importar y
+  exportar, cuerpo técnico de tres puestos (hoy hay uno), y controles del partido que la
+  referencia de 2026-09-09 ya había dejado fuera (ritmo, presión en niveles).
+- Detalle a resolver si el set avanza: el club de las láminas es "Atlético El Parque" en
+  Montevideo, que es el mismo mundo del juego, pero los planteles y los rivales dibujados
+  no son los que genera el motor. Son nombres de muestra, no datos.
+- Próximo paso autorizado: ninguno de arte. Falta que Gabi diga qué es esto —dirección
+  nueva, exploración, o referencia pantalla por pantalla— y, si es dirección, qué pasa con
+  el tema claro.
+
 ## Estado de aprobación actual
 
 > **Corregido en sep 2026.** Este bloque contradecía al resto del documento y a lo que hay
@@ -519,7 +562,9 @@ Formato sugerido:
 - **Tablero: A elegida** (2026-09-15), con el partido como eje de la semana. Implementación pendiente; ver [decisión y criterios](propuestas/README.md).
 - **UI: aprobada** (Puerta 2, ago 2026). Papel claro, Oswald, bandas de sección, iconos de
   línea, naranja reservado a la acción. El **marco fijo** de sep 2026 no la reabre: es
-  layout dentro de esa dirección (ver [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md)).
+  layout dentro de esa dirección (ver [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md)). Las seis
+  láminas del 2026-09-16 tampoco la reabren *todavía*: están en oscuro y quedaron
+  archivadas como referencia sin aprobar, a la espera de que Gabi decida qué es ese set.
 - **Personajes: el retrato ilustrado por arquetipo es la foto oficial** del jugador (Puerta
   2). Ocho caras para planteles enteros es una limitación **conocida y aceptada**; su
   solución es la Puerta 3, que sigue abierta.
