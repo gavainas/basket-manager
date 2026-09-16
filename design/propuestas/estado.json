@@ -1,0 +1,231 @@
+{
+  "source": "Simulación del motor con semilla 11; tres fechas completas, sin gestiones y con quinteto sugerido. Datos de prueba, no la partida del usuario.",
+  "week": 4,
+  "seasonLength": 9,
+  "club": {
+    "name": "Atlético El Parque",
+    "money": 303,
+    "socialClimate": 65,
+    "organization": 47,
+    "sportPrestige": 44,
+    "socialPrestige": 45
+  },
+  "position": 3,
+  "record": {
+    "wins": 2,
+    "losses": 1,
+    "today": null
+  },
+  "rival": "Ferro del Norte",
+  "fixture": {
+    "id": "fx_s1_w4_u",
+    "seasonId": "s1",
+    "leagueId": "lg_universitaria",
+    "divisionId": "dv_lu_b",
+    "week": 4,
+    "date": "2026-04-27",
+    "time": "20:00",
+    "homeTeamId": "tm_r3",
+    "awayTeamId": "tm_user",
+    "venueId": "vn_r3",
+    "status": "programado",
+    "isUserMatch": true
+  },
+  "venue": "Gimnasio de Norte",
+  "players": [
+    {
+      "id": "p1",
+      "name": "\"Chino\" Rodríguez",
+      "personality": "veterano",
+      "position": "Base",
+      "physical": 66,
+      "motivation": 74,
+      "feeStatus": "pagada",
+      "weeksUnpaid": 0,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 63
+    },
+    {
+      "id": "p2",
+      "name": "Facundo Silva",
+      "personality": "protagonista",
+      "position": "Base",
+      "physical": 78,
+      "motivation": 73,
+      "feeStatus": "pagada",
+      "weeksUnpaid": 0,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 70
+    },
+    {
+      "id": "p3",
+      "name": "Martín Techera",
+      "personality": "competitivo",
+      "position": "Escolta",
+      "physical": 74,
+      "motivation": 77,
+      "feeStatus": "pagada",
+      "weeksUnpaid": 0,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 67
+    },
+    {
+      "id": "p4",
+      "name": "Diego Núñez",
+      "personality": "social",
+      "position": "Escolta",
+      "physical": 81,
+      "motivation": 73,
+      "feeStatus": "pagada",
+      "weeksUnpaid": 0,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 56
+    },
+    {
+      "id": "p5",
+      "name": "Nacho Pereyra",
+      "personality": "cumplidor",
+      "position": "Alero",
+      "physical": 81,
+      "motivation": 64,
+      "feeStatus": "pagada",
+      "weeksUnpaid": 0,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 60
+    },
+    {
+      "id": "p6",
+      "name": "\"Tato\" Fernández",
+      "personality": "talentoso_informal",
+      "position": "Alero",
+      "physical": 77,
+      "motivation": 61,
+      "feeStatus": "pendiente",
+      "weeksUnpaid": 4,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 76
+    },
+    {
+      "id": "p7",
+      "name": "Bruno Acosta",
+      "personality": "leal",
+      "position": "Ala-Pívot",
+      "physical": 77,
+      "motivation": 72,
+      "feeStatus": "pagada",
+      "weeksUnpaid": 0,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 65
+    },
+    {
+      "id": "p8",
+      "name": "Seba Cardozo",
+      "personality": "mercenario",
+      "position": "Ala-Pívot",
+      "physical": 78,
+      "motivation": 70,
+      "feeStatus": "beca_parcial",
+      "weeksUnpaid": 0,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 68
+    },
+    {
+      "id": "p9",
+      "name": "Gonzalo Viera",
+      "personality": "competitivo",
+      "position": "Pívot",
+      "physical": 77,
+      "motivation": 74,
+      "feeStatus": "pagada",
+      "weeksUnpaid": 0,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 71
+    },
+    {
+      "id": "p10",
+      "name": "\"Flaco\" Morales",
+      "personality": "veterano",
+      "position": "Pívot",
+      "physical": 62,
+      "motivation": 72,
+      "feeStatus": "pendiente",
+      "weeksUnpaid": 3,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 59
+    },
+    {
+      "id": "p11",
+      "name": "Rodri Batista",
+      "personality": "social",
+      "position": "Escolta",
+      "physical": 87,
+      "motivation": 88,
+      "feeStatus": "pagada",
+      "weeksUnpaid": 0,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 47
+    },
+    {
+      "id": "p12",
+      "name": "Agustín Lemos",
+      "personality": "protagonista",
+      "position": "Alero",
+      "physical": 81,
+      "motivation": 65,
+      "feeStatus": "pendiente",
+      "weeksUnpaid": 1,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 60
+    },
+    {
+      "id": "n1qnhz32ief",
+      "name": "Mati Olivera",
+      "personality": "social",
+      "position": "Ala-Pívot",
+      "physical": 61,
+      "motivation": 79,
+      "feeStatus": "pagada",
+      "weeksUnpaid": 0,
+      "status": "disponible",
+      "injuryWeeks": 0,
+      "visibleRating": 84
+    }
+  ],
+  "last": {
+    "scoreFor": 69,
+    "scoreAgainst": 66,
+    "rivalName": "Bohemios del Parque",
+    "mvpName": "Seba Cardozo",
+    "won": true
+  },
+  "grievances": [
+    {
+      "name": "Martín Techera",
+      "cause": "plata"
+    },
+    {
+      "name": "Nacho Pereyra",
+      "cause": "minutos"
+    },
+    {
+      "name": "\"Tato\" Fernández",
+      "cause": "plata"
+    },
+    {
+      "name": "Gonzalo Viera",
+      "cause": "plata"
+    }
+  ]
+}
