@@ -3,7 +3,7 @@ import { quarterFlavor } from '../src/game/narrative';
 import { Rng } from '../src/game/rng';
 import { computeRating } from '../src/game/rating';
 import { jugadasDelCuarto } from '../src/game/relato';
-import { partidaNueva, paso, resolverEventos } from './jugar';
+import { jugarPartidoEntero, partidaNueva, paso, resolverEventos } from './jugar';
 
 function inicio() {
   let s = resolverEventos(partidaNueva(11));
@@ -40,6 +40,40 @@ describe('regresiones de la partida observada', () => {
     const jugadas = jugadasDelCuarto(s, s.live!, 0).filter(j => !j.tipo);
     expect(jugadas.length).toBeGreaterThan(0);
     expect(jugadas.map(j => `${j.texto} ${j.sub ?? ''}`).join(' ')).not.toMatch(/asistencia|rebote|triple|libre|bandeja|esquina|sin marca|de espaldas/i);
+  });
+
+  it('el color del relato sale del marcador: lo que dice la segunda línea pasó de verdad', () => {
+    let s = inicio();
+    s = paso(s, { type: 'PLAY_QUARTER' });
+    const jugadas = jugadasDelCuarto(s, s.live!, 0).filter(j => !j.tipo);
+    // No es una planilla: el mismo cuarto no se cuenta con cuatro frases.
+    expect(new Set(jugadas.map(j => j.texto)).size).toBeGreaterThan(5);
+    // Y cada nota del marcador coincide con lo que hizo el marcador en esa jugada.
+    for (let i = 0; i < jugadas.length; i++) {
+      const j = jugadas[i];
+      if (!j.sub) continue;
+      const antes = i === 0 ? 0 : jugadas[i - 1].f - jugadas[i - 1].a;
+      const ahora = j.f - j.a;
+      if (/igual/i.test(j.sub)) expect(ahora).toBe(0);
+      if (/Damos vuelta|Pasamos al frente/i.test(j.sub)) expect(antes < 0 && ahora > 0).toBe(true);
+      if (/Se ponen arriba|Nos pasan/i.test(j.sub)) expect(antes > 0 && ahora < 0).toBe(true);
+      if (/un punto\.$/i.test(j.sub)) expect(Math.abs(ahora)).toBe(1);
+      if (/Diez arriba/i.test(j.sub)) expect(ahora).toBeGreaterThanOrEqual(10);
+      if (/Diez abajo/i.test(j.sub)) expect(ahora).toBeLessThanOrEqual(-10);
+    }
+  });
+
+  // Dos apellidos iguales en equipos distintos pasa: el mundo genera nombres.
+  it('"otra vez" es el mismo jugador, aunque el rival tenga un apellido repetido', () => {
+    const s = jugarPartidoEntero(inicio());
+    const jugadas = s.live!.quarters.flatMap((_q, i) => jugadasDelCuarto(s, s.live!, i)).filter(j => !j.tipo);
+    jugadas.forEach((j, i) => {
+      if (!/Otra vez|de nuevo|Insiste/i.test(j.texto)) return;
+      const previa = jugadas[i - 1];
+      expect(previa).toBeDefined();
+      expect(previa.lado).toBe(j.lado);
+      expect(previa.quienId).toBe(j.quienId);
+    });
   });
 
   it('una referencia recién llegada no recibe el juicio de todo un partido', () => {

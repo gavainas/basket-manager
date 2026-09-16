@@ -50,13 +50,61 @@ function apellido(nombre: string): string {
   return parts[parts.length - 1];
 }
 
-// El reparto visual no conoce intentos, tipos de tiro ni asistencias por jugada.
-// Cuenta aportes al marcador, sin convertir una reconstrucción en hechos inventados.
+// El reparto visual no conoce intentos, tipos de tiro ni asistencias por jugada:
+// cuenta aportes al marcador, y no convierte una reconstrucción en hechos
+// inventados (nada de "triple desde la esquina" ni "la asistencia fue de X").
+//
+// Pero el marcador SÍ es un hecho, y es de donde sale el color: quién anota,
+// cuántos, y qué pasa con el partido cuando entran esos puntos —se empata, se
+// da vuelta, se estira, van siete sin respuesta—. Esas líneas son ciertas
+// siempre, y son las que hacen que el relato se lea como un partido y no como
+// una planilla.
+// El de un punto no canta la cifra siempre: con cinco jugadores repartiendo
+// dos minutos, el motor deja muchos aportes de uno y "suma de a uno" veinte
+// veces por cuarto suena a tambor. La cantidad exacta está en el marcador de
+// al lado.
 const PUNTOS: Record<number, string[]> = {
-  1: ['{n} suma un punto.', 'Un punto más de {n}.'],
-  2: ['{n} suma dos puntos.', 'Dos puntos más de {n}.'],
-  3: ['{n} suma tres puntos.', 'Tres puntos más de {n}.'],
+  1: ['Anota {n}.', 'Suma {n}.', '{n}, uno más.', 'Un punto de {n}.'],
+  2: ['Dos de {n}.', '{n} suma dos.', 'Anota {n}: dos más.', 'Dos más para {n}.'],
+  3: ['Tres de una para {n}.', '{n} mete tres de golpe.', 'Tres puntos juntos de {n}.'],
 };
+
+/** Contra qué defensa se jugó el tramo: es un dato del tramo, no un invento. */
+const CONTRA: Record<string, string[]> = {
+  zona: ['Contra la zona, ', 'Con la zona armada enfrente, '],
+  hombre: ['Con marca individual encima, ', 'Mano a mano en toda la cancha, '],
+  presion: ['Contra la presión, ', 'Con la presión encima, '],
+};
+
+/** Vuelve a anotar el mismo, sin que nadie del otro lado haya contestado. */
+const REPITE = ['Otra vez {n}.', '{n} de nuevo.', 'Insiste {n}: {p} más.'];
+
+/**
+ * Lo que el marcador dice después de la canasta. Sale de restar dos números
+ * que el motor ya calculó, así que nunca afirma nada que no haya pasado; y
+ * calla cuando no hay nada que contar, que es la mayoría de las veces.
+ */
+function notaDelMarcador(
+  antes: number,
+  ahora: number,
+  racha: number,
+  lado: 'nosotros' | 'rival',
+  f: number,
+  a: number,
+  rng: Rng
+): string | undefined {
+  const nuestra = lado === 'nosotros';
+  // En un partido parejo el empate se repite mucho: no se canta siempre.
+  if (ahora === 0) return rng.chance(0.7) ? rng.pick([`Partido igualado: ${f}-${a}.`, 'Quedamos iguales.', 'Todo igual.']) : undefined;
+  if (antes < 0 && ahora > 0) return rng.pick([`Damos vuelta el partido: ${f}-${a}.`, 'Pasamos al frente.']);
+  if (antes > 0 && ahora < 0) return rng.pick([`Se ponen arriba: ${f}-${a}.`, 'Nos pasan en el marcador.']);
+  if (racha >= 7) return nuestra ? `Parcial nuestro de ${racha} sin respuesta.` : `Parcial de ${racha} del rival.`;
+  if (ahora >= 10 && antes < 10) return 'Diez arriba: el partido se acomoda.';
+  if (ahora <= -10 && antes > -10) return 'Diez abajo: se hace cuesta arriba.';
+  if (Math.abs(ahora) === 1 && rng.chance(0.4)) return nuestra ? 'Queda todo en un punto.' : 'Nos dejan a un punto.';
+  if (racha >= 5 && rng.chance(0.5)) return nuestra ? `Van ${racha} seguidos nuestros.` : `Van ${racha} seguidos de ellos.`;
+  return undefined;
+}
 
 const MOMENTOS_POR_CUARTO = 5;
 
@@ -88,6 +136,8 @@ interface Reparto {
   rivalBox: Record<string, number>;
   /** Lo que pasó en la pelota muerta antes de este tramo. */
   notas: string[];
+  /** Con qué defensa jugó el rival el tramo, si quedó anotada. */
+  defensaRival?: string;
 }
 
 /**
@@ -120,6 +170,18 @@ function jugadasDelReparto(
   // Si el rival no tiene plantel conocido, sus puntos igual entran al marcador.
   const rivalSinNombre = r.against - Object.values(r.rivalBox).reduce((t, n) => t + n, 0);
   for (const c of canastas(Math.max(0, rivalSinNombre), rng)) eventos.push({ lado: 'rival', pts: c, quien: live.rivalName, quienId: '', orden: rng.next() });
+  // El que anotó dos veces en estos dos minutos a veces las mete seguidas: el
+  // orden ya es una reconstrucción, y juntarlas no afirma nada que no haya
+  // pasado —anotó las dos acá—, pero se ve al que está caliente.
+  const porAutor = new Map<string, Evento[]>();
+  for (const e of eventos) {
+    const k = `${e.lado}:${e.quienId || e.quien}`;
+    porAutor.set(k, [...(porAutor.get(k) ?? []), e]);
+  }
+  for (const suyas of porAutor.values()) {
+    if (suyas.length < 2 || !rng.chance(0.55)) continue;
+    suyas.slice(1).forEach((e, i) => (e.orden = suyas[0].orden + (i + 1) * 1e-6));
+  }
   eventos.sort((a, b) => a.orden - b.orden);
 
   const minutoDe = (t: number) => base + Math.max(1, Math.ceil(t - base));
@@ -133,15 +195,40 @@ function jugadasDelReparto(
   const lesion = r.notas.filter(alFinal);
   r.notas.filter((n) => !alFinal(n)).forEach((n, i) => jugadas.push(filaDeNota(n, t0 + i * 0.01, minutoDe(t0), f, a)));
 
+  // El parcial y la seguidilla se cuentan sólo dentro del tramo: así lo que
+  // dice el relato pasó de verdad. Se pierde algún parcial que viene del tramo
+  // anterior, pero nunca se canta uno que no existió.
+  let rachaLado: 'nosotros' | 'rival' | '' = '';
+  let racha = 0;
+  let ultimoAutor = '';
   eventos.forEach((e, i) => {
+    const antes = f - a;
     if (e.lado === 'nosotros') f += e.pts;
     else a += e.pts;
+    racha = e.lado === rachaLado ? racha + e.pts : e.pts;
+    rachaLado = e.lado;
     // Cada canasta cae en su parte del tramo, con un poco de ruido para que
     // no vengan a intervalos exactos; la última siempre antes de la pelota muerta.
     const paso = largo / eventos.length;
     const t = t0 + Math.min(largo - 0.05, paso * (i + 0.35 + rng.range(0, 0.55)));
-    const texto = rng.pick(PUNTOS[e.pts]).replace('{n}', e.quien);
-    jugadas.push({ minuto: `${minutoDe(t)}'`, t, marcador: `${f}-${a}`, f, a, lado: e.lado, pts: e.pts, quienId: e.quienId, texto });
+    // "Otra vez X" tiene que ser el MISMO X: dos apellidos iguales en equipos
+    // distintos pasa (el mundo genera nombres), así que la comparación va por
+    // jugador y lado, no por apellido.
+    const autor = `${e.lado}:${e.quienId || e.quien}`;
+    const repite = autor === ultimoAutor && e.quien !== '';
+    // De vez en cuando la canasta nuestra dice contra qué defensa fue: da
+    // textura sin inventar nada, porque la defensa del tramo está guardada.
+    const contra = !repite && e.lado === 'nosotros' && r.defensaRival && rng.chance(0.1) ? rng.pick(CONTRA[r.defensaRival] ?? []) : '';
+    const frase = rng
+      .pick(repite ? REPITE : PUNTOS[e.pts])
+      .replace('{n}', e.quien)
+      .replace('{p}', e.pts === 1 ? 'uno' : e.pts === 2 ? 'dos' : 'tres');
+    // Con prefijo la frase sigue: en minúscula, salvo que arranque con el
+    // apellido ("…, Cardozo suma uno más", no "…, cardozo suma uno más").
+    const texto = contra ? contra + (frase.startsWith(e.quien) ? frase : frase[0].toLowerCase() + frase.slice(1)) : frase;
+    const sub = notaDelMarcador(antes, f - a, racha, e.lado, f, a, rng);
+    ultimoAutor = autor;
+    jugadas.push({ minuto: `${minutoDe(t)}'`, t, marcador: `${f}-${a}`, f, a, lado: e.lado, pts: e.pts, quienId: e.quienId, texto, sub });
   });
   lesion.forEach((n, i) => jugadas.push(filaDeNota(n, t0 + largo - 0.03 + i * 0.005, minutoDe(t0 + largo - 0.03), f, a)));
   return { jugadas, f, a };
@@ -172,7 +259,7 @@ export function jugadasDelCuarto(state: GameState, live: LiveMatchState, qIndex:
   let f = antes.f;
   let a = antes.a;
   q.tramos.forEach((t, k) => {
-    const r: Reparto = { box: t.box, onCourt: t.onCourt, against: t.against, rivalBox: rivalTramoBox(state, live, qIndex, k), notas: t.notes ?? [] };
+    const r: Reparto = { box: t.box, onCourt: t.onCourt, against: t.against, rivalBox: rivalTramoBox(state, live, qIndex, k), notas: t.notes ?? [], defensaRival: t.rivalDefense };
     const out = jugadasDelReparto(state, live, r, `${claveBase}:${k}:${t.for}:${t.against}`, base + k * largoTramo, largoTramo, base, f, a);
     todas.push(...out.jugadas);
     f = out.f;
