@@ -6309,3 +6309,59 @@ button.mini.blue.on {
   border-color: rgba(246, 244, 241, 0.35);
   color: rgba(246, 244, 241, 0.85);
 }
+
+/* ---------- El vestuario por dentro (mapa social) ---------- */
+
+/* Dos columnas: a la izquierda las mesas y quién se arrima a cuál; a la
+   derecha la unión del grupo, los puentes y las parejas. Antes era una sola
+   columna que nombraba a la mitad del plantel y dejaba dos tercios del panel
+   vacíos a 768 de alto. */
+.vest-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 0.5rem 1.6rem;
+  margin-top: 0.7rem;
+}
+
+.vest-sub {
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  margin: 0.9rem 0 0.4rem;
+}
+
+.vest-col > .vest-sub:first-child { margin-top: 0; }
+.vest-sub .muted { text-transform: none; letter-spacing: 0.02em; }
+
+.vest-grupo { margin: 0.25rem 0 0.6rem; }
+
+.vest-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+/* Un renglón por persona: la cara con el nombre a la izquierda y la lectura
+   a la derecha, alineadas arriba para que el texto largo no descuelgue el chip. */
+.vest-fila {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0.3rem 0;
+  line-height: 1.4;
+}
+
+/* Las caras alineadas en columna: el texto arranca en el mismo x en todos
+   los renglones aunque "Viera" y "Fernández" midan distinto. */
+.vest-fila > .chip { flex: 0 0 auto; min-width: 7rem; justify-content: flex-start; }
+.vest-fila > span:last-child { padding-top: 0.15rem; }
+
+.vest-pareja { margin: 0.35rem 0; }
+
+@media (max-width: 900px) {
+  .vest-cuerpo { grid-template-columns: 1fr; }
+}
