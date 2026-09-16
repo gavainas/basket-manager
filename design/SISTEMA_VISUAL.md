@@ -1,5 +1,14 @@
 # Sistema visual — dirección "club de barrio"
 
+> **⚠️ SUPERADO EN PARTE (2026-09-16).** Gabi definió que la dirección visual sale de
+> [las seis láminas de referencia](arte/referencias/) y que **el papel claro es un
+> placeholder**: «esas imágenes se sienten más juego. Lo claro es placeholder». Lo que
+> sigue valiendo de este documento es el **sistema**: tokens en `:root`, escala
+> tipográfica, escala de espaciado, chrome neutro, color por área, naranja reservado a la
+> acción, densidad de manager. Lo que cambia es **a qué apuntan los tokens** (a oscuro) y
+> los hex de abajo, que quedan como el valor del placeholder. La migración es por
+> pantalla, no de una vez. Ver [ART_PIPELINE.md](ART_PIPELINE.md#2026-09-16--las-seis-láminas-son-la-dirección-el-papel-claro-era-placeholder).
+
 Sistema extraído de la referencia aprobada del 2026-08-16 (tablero de Club Atlético
 Barrio Sur). Reemplaza la dirección cálida (madera y papel) y la dirección AAA oscura,
 que quedan registradas como exploraciones descartadas.

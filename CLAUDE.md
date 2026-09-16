@@ -21,4 +21,12 @@ Toda la lógica del juego vive en `src/game/` y es independiente de React. Los n
 
 Qué sigue está en `ROADMAP.md` (una página); lo hecho, en `CHANGELOG.md`. Al terminar una feature, la entrada va al changelog, no al roadmap.
 
+## Arte y dirección visual (sep 2026)
+
+**El arte lo define Gabi, no Claude.** Claude implementa contra la referencia; no genera assets, no propone paletas ni composiciones propias, y no arma láminas A/B para elegir. Si una pantalla no está en la referencia, se pide — no se dibuja.
+
+La referencia son **las seis láminas de `design/arte/referencias/2026-09-16-ref-0X-*.png`** (24 pantallas, del menú principal al historial del club). Están en oscuro: ese es el destino. **El papel claro que se ve hoy es un placeholder**, no la meta.
+
+La migración es **por pantalla, no de una vez**: primero los tokens de `:root` apuntan al oscuro, después cada vista se acerca a su lámina cuando le toque, y cada tanda deja escrito en `design/ART_PIPELINE.md` qué pantallas ya migraron. Se conservan el sistema de tokens, la escala tipográfica y de espaciado, el chrome neutro, el color por área, Oswald y el naranja reservado a la acción (`design/SISTEMA_VISUAL.md`). Las pantallas de la referencia que no tienen motor detrás (fichajes, elegir liga, pretemporada de cuatro semanas, fundar el club, partidas múltiples) no se maquetan hasta que el motor exista.
+
 La versión jugable vive en **https://gavainas.github.io/basket-manager/** (es la build que Gabi prueba, a veces incluso desde el celular, pero el formato objetivo es PC): cada push a `main` la redeploya solo vía GitHub Actions (`.github/workflows/deploy.yml`). Por eso todo trabajo termina commiteado **y pusheado**, con mensaje detallado — cada commit es una versión a la que Gabi puede pedir volver.

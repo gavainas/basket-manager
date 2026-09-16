@@ -506,10 +506,12 @@ Formato sugerido:
 - B queda archivada como exploración. La recomendación inicial de B queda superada por esta elección; no se aprueba una mezcla A/B.
 - Alcance: elección de composición y criterio de diseño. En esta tanda se documenta; la implementación del tablero y los ajustes de la lámina siguen pendientes. Se conserva el arte, la paleta y la tipografía aprobados; no se reabren las puertas de personajes ni se autoriza producción masiva de assets.
 
-### 2026-09-16 — Las seis láminas del juego entero (recibidas, SIN aprobar)
+### 2026-09-16 — Las seis láminas son la dirección; el papel claro era placeholder
 
 - Alcance: Gabi entregó un set de referencia armado fuera del repo —seis láminas de
-  1536×1024, veinticuatro pantallas numeradas— que cubre el juego de punta a punta.
+  1536×1024, veinticuatro pantallas numeradas— que cubre el juego de punta a punta, y lo
+  **aprobó como dirección visual**: «que nos basemos en esas referencias que te pase,
+  porque esas imágenes se sienten más juego. Lo claro es placeholder».
   Guardadas en `arte/referencias/2026-09-16-ref-0X-*.png`, sin retocar.
 
   | Lámina | Pantallas |
@@ -521,15 +523,22 @@ Formato sugerido:
   | [05 · El partido es el centro](arte/referencias/2026-09-16-ref-05-el-partido.png) | La previa · Quinteto y táctica · Partido en vivo · Postpartido |
   | [06 · Competir y sostener el club](arte/referencias/2026-09-16-ref-06-competir-y-sostener.png) | Liga · Rankings · Finanzas y estado del club · Historia del club |
 
-- Aprobado: **nada todavía.** Esta entrada sólo registra que el set existe y dónde está.
-  Se archiva como referencia entregada, no como dirección vigente: hasta que Gabi diga lo
-  contrario, la UI aprobada sigue siendo la de la Puerta 2 (papel claro, Oswald, bandas de
-  sección) y el tablero sigue siendo A.
-- **La decisión de fondo que hay que tomar primero: el tema.** Las seis láminas están en
-  oscuro (azul noche con naranja), y el juego publicado es papel claro desde agosto.
-  No es un ajuste de pantalla: es reabrir la Puerta 2 para todas las vistas a la vez.
-  Mientras eso no se resuelva, cualquier pantalla que se copie de acá entra en conflicto
-  con el resto del juego.
+- **Quién hace el arte: Gabi, no Claude.** Desde acá, la dirección visual y los assets
+  vienen de afuera del repo. Claude **implementa** contra estas láminas y **no genera arte
+  ni inventa dirección**: ni paletas nuevas, ni composiciones propias, ni láminas A/B para
+  elegir. Si falta una pantalla en la referencia, se pide; no se dibuja.
+- **El papel claro pasa a ser placeholder.** La Puerta 2 (papel claro, ago 2026) queda
+  superada como destino: sigue en pantalla hasta que cada vista migre, pero ya no es la
+  meta. El destino es el oscuro de las láminas (azul noche, naranja de acción).
+- **La migración es por pantalla, no de una vez.** Gabi lo dijo explícitamente: «no tenés
+  que cambiar todo el juego». El sistema de tokens de `:root` aguanta el cambio —el papel
+  claro ya fue en su momento un repunteo de tokens sobre el mismo CSS—, así que el orden
+  es: primero los tokens apuntan al oscuro, después cada pantalla se acerca a su lámina
+  cuando le toque. Lo que **no** se hace es dejar mitad y mitad sin registrar: cada tanda
+  dice qué pantallas ya migraron.
+- Lo que se conserva del sistema viejo (no se tira): tokens en `:root`, escala tipográfica,
+  escala de espaciado, chrome neutro, color por área, naranja reservado a la acción,
+  densidad de manager, Oswald. Ver [`SISTEMA_VISUAL.md`](SISTEMA_VISUAL.md).
 - Lo que coincide con el juego que ya existe: la barra de arriba con semana y caja, el
   tablero con el próximo partido y los asuntos urgentes, pasar lista con la disponibilidad
   contada, el vestuario con grupos y tensiones, la ficha con pestañas, el partido en vivo
@@ -545,9 +554,10 @@ Formato sugerido:
 - Detalle a resolver si el set avanza: el club de las láminas es "Atlético El Parque" en
   Montevideo, que es el mismo mundo del juego, pero los planteles y los rivales dibujados
   no son los que genera el motor. Son nombres de muestra, no datos.
-- Próximo paso autorizado: ninguno de arte. Falta que Gabi diga qué es esto —dirección
-  nueva, exploración, o referencia pantalla por pantalla— y, si es dirección, qué pasa con
-  el tema claro.
+- Próximo paso autorizado: la migración del tema a los tokens del oscuro, y después las
+  pantallas de a una contra su lámina. Ningún asset nuevo: los retratos, escudos, escenas
+  y la cancha siguen siendo los aprobados. Las pantallas sin motor detrás no se dibujan
+  hasta que el motor exista.
 
 ## Estado de aprobación actual
 
@@ -560,11 +570,14 @@ Formato sugerido:
 > concreta de que el proceso se sintiera desordenado.
 
 - **Tablero: A elegida** (2026-09-15), con el partido como eje de la semana. Implementación pendiente; ver [decisión y criterios](propuestas/README.md).
-- **UI: aprobada** (Puerta 2, ago 2026). Papel claro, Oswald, bandas de sección, iconos de
-  línea, naranja reservado a la acción. El **marco fijo** de sep 2026 no la reabre: es
-  layout dentro de esa dirección (ver [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md)). Las seis
-  láminas del 2026-09-16 tampoco la reabren *todavía*: están en oscuro y quedaron
-  archivadas como referencia sin aprobar, a la espera de que Gabi decida qué es ese set.
+- **UI: la dirección son las seis láminas** (2026-09-16), en oscuro. El papel claro de la
+  Puerta 2 (ago 2026) queda como **placeholder** hasta que cada pantalla migre: sigue
+  siendo lo que se ve, ya no es la meta. Se conservan el sistema de tokens, la escala
+  tipográfica y de espaciado, el chrome neutro, el color por área, Oswald y el naranja
+  reservado a la acción. El **marco fijo** de sep 2026 es layout y no lo toca nada de
+  esto (ver [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md)).
+- **El arte lo define Gabi, no Claude.** Claude implementa contra la referencia; no genera
+  assets ni propone direcciones visuales. Lo que falte en la referencia se pide.
 - **Personajes: el retrato ilustrado por arquetipo es la foto oficial** del jugador (Puerta
   2). Ocho caras para planteles enteros es una limitación **conocida y aceptada**; su
   solución es la Puerta 3, que sigue abierta.
