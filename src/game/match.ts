@@ -90,10 +90,19 @@ export function sanitizeLineup(s: GameState): void {
     s.rotation = suggestRotation(s.players, s.starters, absent);
     return;
   }
+  const antes = s.rotation.length;
   s.rotation = s.rotation.filter((id) => {
     const p = byId(id);
     return !!p && isSelectable(p) && !absent.has(id) && !s.starters.includes(id);
   });
+  // Si el banco perdió a alguien (una baja de último momento, un fundido que
+  // mandaste a descansar), el lugar se vuelve a llenar con los que vinieron y
+  // quedaban mirando: la pizarra decía "vas con 9 y tenés 11" con un banco de
+  // cuatro. Sólo se agrega, nunca se saca a los que elegiste.
+  if (s.rotation.length < antes && s.rotation.length < BALANCE.rotation.maxPlayers) {
+    const extra = suggestRotation(s.players, [...s.starters, ...s.rotation], absent);
+    s.rotation = [...s.rotation, ...extra].slice(0, BALANCE.rotation.maxPlayers);
+  }
 }
 
 /** ¿Puede pisar la cancha ahora? Los que llegan al segundo tiempo, recién
@@ -2288,11 +2297,26 @@ export function clubRecord(state: GameState): {
 
 /** Rotación sugerida: los mejores disponibles que no son titulares. */
 export function suggestRotation(players: Player[], starterIds: string[], absent: Set<string> = new Set()): string[] {
-  return players
+  const pool = players
     .filter((p) => isSelectable(p) && !absent.has(p.id) && !starterIds.includes(p.id))
-    .sort((a, b) => playerEffective(b) - playerEffective(a))
-    .slice(0, BALANCE.rotation.maxPlayers)
-    .map((p) => p.id);
+    .sort((a, b) => playerEffective(b) - playerEffective(a));
+  const max = BALANCE.rotation.maxPlayers;
+  // Primero un recambio por puesto, después los mejores que sobren. Antes eran
+  // los cinco mejores a secas: con once confirmados quedaba afuera el único
+  // suplente de un puesto, y el plan de cambios no podía descansar a ese
+  // titular ("Viera jugó todo el partido: terminó fundido" con el plan por
+  // defecto). Mismo criterio que el quinteto sugerido.
+  const chosen: Player[] = [];
+  for (const pos of ALL_POSITIONS) {
+    if (chosen.length >= max) break;
+    const best = pool.find((p) => p.position === pos && !chosen.includes(p));
+    if (best) chosen.push(best);
+  }
+  for (const p of pool) {
+    if (chosen.length >= max) break;
+    if (!chosen.includes(p)) chosen.push(p);
+  }
+  return chosen.sort((a, b) => playerEffective(b) - playerEffective(a)).map((p) => p.id);
 }
 
 /** Quinteto sugerido: los 5 disponibles más fuertes cubriendo posiciones. */
