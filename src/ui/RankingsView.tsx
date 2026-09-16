@@ -152,11 +152,14 @@ export function RankingsView({ state }: { state: GameState }) {
           empty="Nadie organizó nada todavía. ¿Un asado?"
         />
         <RankingCard
-          title="Más impuntual"
+          /* Cuenta las ausencias a fechas, con o sin aviso; la conducta de la
+             ficha cuenta sólo las sin avisar. Decía "faltazos" y con "Faltó
+             una vez" al lado parecía una contradicción. */
+          title="Más ausencias"
           icon="cruz"
           rows={top(
             (p) => countTimeline(p, (k) => k === 'ausencia'),
-            (v) => `${v} faltazo${v > 1 ? 's' : ''}`
+            (v) => `${v} ausencia${v > 1 ? 's' : ''}`
           )}
           empty="Por ahora vinieron todos, siempre."
         />

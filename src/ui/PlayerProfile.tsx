@@ -332,8 +332,10 @@ function SocialTab({ state, p }: { state: GameState; p: Player }) {
             ? `Organizó o encabezó ${socialCount} movida${socialCount > 1 ? 's' : ''} del grupo (asados, pizzas, festejos).`
             : 'Por ahora no organizó ninguna movida para el grupo.'}
         </DataRow>
-        <DataRow label="Faltazos">
-          {absences > 0 ? `${absences} falta${absences > 1 ? 's' : ''} al partido con excusa.` : 'Nunca faltó con excusa.'}
+        <DataRow label="Ausencias">
+          {absences > 0
+            ? `${absences} ausencia${absences > 1 ? 's' : ''} a fechas, con o sin aviso (la conducta cuenta sólo las sin avisar).`
+            : 'Nunca faltó a una fecha.'}
         </DataRow>
       </div>
       <h4 className="profile-subtitle">Conducta</h4>
