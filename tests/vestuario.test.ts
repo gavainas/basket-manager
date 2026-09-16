@@ -131,3 +131,18 @@ describe('el mapa social juega (sep 2026): las peleas caen sobre el roce real y 
     expect(paso(neutro, { type: 'RESOLVE_EVENT', optionIndex: 2 }).affinityBonus[key]).toBeLessThan(0);
   });
 });
+
+describe('el radar avisa del roce cuando el ambiente está bajo (sep 2026)', () => {
+  it('con dos que no se bancan y el clima flojo, el tile del vestuario lo dice; con buen clima, no', async () => {
+    const { watchItems } = await import('../src/ui/watch');
+    const { s, a, b } = conRoce(1);
+    const nombres = s.players.filter((p) => p.id === a || p.id === b).map((p) => p.name);
+    const frio: GameState = { ...s, club: { ...s.club, socialClimate: 45 } };
+    const aviso = watchItems(frio).find((i) => /no se bancan/.test(i.text));
+    expect(aviso).toBeTruthy();
+    expect(aviso!.tile).toBe('vestuario');
+    for (const n of nombres) expect(aviso!.text).toContain(n);
+    const calido: GameState = { ...s, club: { ...s.club, socialClimate: 75 } };
+    expect(watchItems(calido).some((i) => /no se bancan/.test(i.text))).toBe(false);
+  });
+});
