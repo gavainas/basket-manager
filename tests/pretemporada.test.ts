@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/game/balance';
 import { activePlayers } from '../src/game/match';
+import { computeSeasonEvaluation } from '../src/game/evaluation';
 import { confirmedPlayers, createPreseasonNewGame, inscriptionOffer } from '../src/game/preseason';
 import type { GameState } from '../src/game/types';
 import { jugarTemporada, partidaNueva, paso } from './jugar';
@@ -170,6 +171,13 @@ describe('la memoria entre temporadas: el título y la bronca cruzan el verano',
       ],
       champions: { oro: rival.id },
     };
+    // El cierre lo llama subcampeón sólo si la final perdida fue la de Oro:
+    // la de Plata (los del 5° al 8°) es "Finalistas de la Copa de Plata".
+    expect(computeSeasonEvaluation(subcampeon).outcomeTitle).toMatch(/Subcampeones/);
+    const plata: GameState = structuredClone(subcampeon);
+    plata.playoffs = { ...plata.playoffs!, userCup: 'plata', ties: [{ ...plata.playoffs!.ties[0], cup: 'plata' }], champions: { plata: rival.id } };
+    expect(computeSeasonEvaluation(plata).outcomeTitle).toMatch(/Finalistas de la Copa de Plata/);
+    expect(computeSeasonEvaluation(plata).outcomeTitle).not.toMatch(/Subcampeones/);
     let ascensos = 0;
     for (let seed = 1; seed <= 16; seed++) {
       const a = paso({ ...subcampeon, seed }, { type: 'NEW_SEASON' });
@@ -180,6 +188,11 @@ describe('la memoria entre temporadas: el título y la bronca cruzan el verano',
       // que pisa por primera vez: le dice que subió, y de dónde.
       expect(a.divisionId).not.toBe(fin.divisionId);
       expect(a.preseason!.movido).toEqual({ kind: 'ascenso', fromDivisionId: fin.divisionId });
+      // Y el palmarés anota en qué categoría se jugó y que el año terminó subiendo.
+      const ultima = a.pastSeasons[a.pastSeasons.length - 1];
+      expect(ultima.division).toMatch(/Liga Universitaria · Divisional/);
+      expect(ultima.moved?.kind).toBe('ascenso');
+      expect(ultima.moved?.to).toBeTruthy();
       const actual = inscriptionOffer(a).find((o) => o.isCurrent)!;
       expect(actual.note).toMatch(/La categoría a la que subiste/);
       expect(actual.note).not.toMatch(/de siempre/);
@@ -190,5 +203,6 @@ describe('la memoria entre temporadas: el título y la bronca cruzan el verano',
     const quieto = paso({ ...fin, playoffs: null, seed: 1 }, { type: 'NEW_SEASON' });
     expect(quieto.preseason!.movido).toBeUndefined();
     expect(inscriptionOffer(quieto).find((o) => o.isCurrent)!.note).toMatch(/de siempre/);
+    expect(quieto.pastSeasons[quieto.pastSeasons.length - 1].moved).toBeUndefined();
   });
 });

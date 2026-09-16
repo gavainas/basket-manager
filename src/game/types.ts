@@ -609,6 +609,10 @@ export interface PastSeason {
   position: number;
   outcome: string;
   money: number;
+  /** En qué categoría se jugó ("Liga Universitaria · Divisional B"). Saves viejos: sin dato. */
+  division?: string;
+  /** Si esa temporada terminó con ascenso o descenso, y a dónde. */
+  moved?: { kind: 'ascenso' | 'descenso'; to: string };
 }
 
 export type NewsTone = 'good' | 'bad' | 'neutral';

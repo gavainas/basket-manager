@@ -225,7 +225,9 @@ export function RosterSheet({ state }: { state: GameState }) {
               <Th k="fis" label="Fís" title="Físico" num />
               <Th k="mot" label="Mot" title="Motivación" num />
               <Th k="com" label="Conducta" title="Lo que el club vio de él: fechas, faltas sin avisar, cuota y asados" />
-              <Th k="afi" label="Afi" title="Afinidad social" num />
+              {/* Es el atributo social del jugador, el mismo "Social" de la
+                  planilla del Plantel; "Afi" se leía como afinidad con alguien. */}
+              <Th k="afi" label="Social" title="Cuánto suma al grupo: el mismo Social de la planilla del Plantel" num />
               <Th k="ult" label="Últ" title="Nota del último partido" num />
               <Th k="min" label="Min" title="Minutos jugados esta temporada" num />
               {/* Se llamaba "Falt": al lado de una conducta que dice "Una falta"

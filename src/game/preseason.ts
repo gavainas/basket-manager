@@ -48,6 +48,7 @@ import type {
   GrievanceCause,
   MarketPlayer,
   NewsTone,
+  PastSeason,
   Player,
   PreseasonState,
   PreseasonSummaryEntry,
@@ -663,20 +664,27 @@ export function startPreseason(state: GameState): GameState {
   const prize = seasonPrize(state);
   const inheritedMoney = state.club.money - debtSettled + (prize?.amount ?? 0);
 
-  const finishedRow = state.standings.find((r) => r.teamId === 'club')!;
-  const finishedSeason = {
-    season: state.seasonNumber,
-    record: `${finishedRow.wins}-${finishedRow.losses}`,
-    position: clubPosition(state),
-    outcome: computeSeasonEvaluation(state).outcomeTitle,
-    money: state.club.money,
-  };
-
   // La memoria entre temporadas: el título (una copa, o el ascenso) pesa en
   // el verano: los jugadores vuelven con más ganas y menos ganas de irse.
   // (Los ascensos y descensos se calculan acá y se aplican más abajo.)
   const champions = state.playoffs?.champions ?? {};
   const promo = applyPromotionRelegation(state);
+
+  const finishedRow = state.standings.find((r) => r.teamId === 'club')!;
+  const jugadaEn = divisionById(state.divisionId);
+  const jugadaEnLiga = jugadaEn ? LEAGUES.find((l) => l.id === jugadaEn.leagueId) : undefined;
+  const finishedSeason: PastSeason = {
+    season: state.seasonNumber,
+    record: `${finishedRow.wins}-${finishedRow.losses}`,
+    position: clubPosition(state),
+    outcome: computeSeasonEvaluation(state).outcomeTitle,
+    money: state.club.money,
+    // El palmarés dice en qué categoría se jugó y si el año terminó subiendo o bajando.
+    division: jugadaEn ? `${jugadaEnLiga?.name ?? ''} · ${jugadaEn.name}`.replace(/^ · /, '') : undefined,
+    moved: promo.userMoved
+      ? { kind: promo.userMoved, to: divisionById(promo.nextDivisionId)?.name ?? 'otra divisional' }
+      : undefined,
+  };
   const titulo: Titulo =
     champions.oro === 'club' || champions.plata === 'club' ? 'titulo' : promo.userMoved === 'ascenso' ? 'ascenso' : false;
 
