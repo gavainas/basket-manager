@@ -1516,6 +1516,11 @@ export function startSeasonFromPreseason(state: GameState): GameState {
   s.objectives = generateObjectives(s.seasonNumber, s.club.sportPrestige, rng, s.seasonLength, { fundacion });
   s.week = 1;
   s.phase = 'planning';
+  // "Arrancaste con": la caja con la que empieza la temporada, después de la
+  // pretemporada y la inscripción, como en la partida directa. Antes quedaba
+  // la heredada del verano y el cierre decía "arrancaste con $255" con una
+  // temporada que empezó con $95.
+  s.startingMoney = s.club.money;
   s.starters = suggestStarters(s.players);
   s.rotation = suggestRotation(s.players, s.starters);
   s.news.unshift({

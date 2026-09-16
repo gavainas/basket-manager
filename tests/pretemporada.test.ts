@@ -67,6 +67,8 @@ describe('la pretemporada de una partida nueva', () => {
     s = paso(s, { type: 'START_SEASON' });
     expect(s.phase).toBe('planning');
     expect(s.week).toBe(1);
+    // "Arrancaste con" es la caja del arranque de la temporada, no la de antes de la pretemporada.
+    expect(s.startingMoney).toBe(s.club.money);
     expect(s.divisionId).toBe(actual.divisionId);
     expect(activePlayers(s.players).length).toBeGreaterThanOrEqual(BALANCE.preseason.minPlayers);
     // La temporada que arranca es coherente con la liga elegida.
