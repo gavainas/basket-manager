@@ -643,6 +643,22 @@ button.danger {
   font-weight: 400;
 }
 
+/* Un chip dentro de la banda (la convocatoria lleva "Faltas: medio" y "Lista
+   2 días antes" al lado del título) se pintaba con su tinta de siempre —gris
+   o pizarra— sobre el azul de la sección y no se leía. Sobre el color de
+   sección la tinta es clara, como el `.band-right`. */
+.vista .card > h3:first-child > .chip,
+.vista .card > h3.card-band > .chip {
+  color: var(--text-light);
+  border-color: rgba(246, 244, 241, 0.55);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.vista .card > h3:first-child > .chip.warn,
+.vista .card > h3.card-band > .chip.warn {
+  background: rgba(246, 244, 241, 0.16);
+}
+
 .vista .card > h3 > .band-right ~ .band-btn {
   margin-left: 0.4rem;
 }

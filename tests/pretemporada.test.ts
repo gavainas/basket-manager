@@ -176,7 +176,19 @@ describe('la memoria entre temporadas: el título y la bronca cruzan el verano',
       const log = a.preseason!.log;
       expect(log.some((l) => /El título pesa/.test(l))).toBe(false);
       if (log.some((l) => /El ascenso pesa/.test(l))) ascensos += 1;
+      // Y la inscripción no le dice "tu categoría de siempre" a la divisional
+      // que pisa por primera vez: le dice que subió, y de dónde.
+      expect(a.divisionId).not.toBe(fin.divisionId);
+      expect(a.preseason!.movido).toEqual({ kind: 'ascenso', fromDivisionId: fin.divisionId });
+      const actual = inscriptionOffer(a).find((o) => o.isCurrent)!;
+      expect(actual.note).toMatch(/La categoría a la que subiste/);
+      expect(actual.note).not.toMatch(/de siempre/);
+      expect(actual.trusts).toBe(true);
     }
     expect(ascensos).toBeGreaterThan(0);
+    // Sin movimiento, la de siempre sigue siendo la de siempre.
+    const quieto = paso({ ...fin, playoffs: null, seed: 1 }, { type: 'NEW_SEASON' });
+    expect(quieto.preseason!.movido).toBeUndefined();
+    expect(inscriptionOffer(quieto).find((o) => o.isCurrent)!.note).toMatch(/de siempre/);
   });
 });

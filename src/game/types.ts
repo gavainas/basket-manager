@@ -850,6 +850,13 @@ export interface PreseasonState {
    * juntás el mínimo no hay temporada.
    */
   libreta?: boolean;
+  /**
+   * El club cambió de categoría en el verano que abre esta pretemporada
+   * (ascenso o descenso, y de dónde viene). La inscripción lo cuenta en vez
+   * de decir "tu categoría de siempre" de una divisional que pisás por
+   * primera vez. undefined = no se movió, o save de antes.
+   */
+  movido?: { kind: 'ascenso' | 'descenso'; fromDivisionId: string };
 }
 
 // ---------- Mundo: ligas, clubes, equipos y jugadores rivales ----------
