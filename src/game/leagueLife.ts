@@ -3,7 +3,7 @@
 // solo se le pone nombre, memoria y voz.
 
 import { clamp } from './balance';
-import { logClubEvent } from './timeline';
+import { fechaLabel, logClubEvent } from './timeline';
 import { teamByLegacyRival, teamRoster, worldPlayerName } from './world';
 import type { GameState } from './types';
 import type { Rng } from './rng';
@@ -106,7 +106,7 @@ export function settleRivalryAfterMatch(s: GameState): string | null {
     logClubEvent(s, 'partido', `Revancha cumplida ante ${m.rivalName}: ${m.scoreFor}-${m.scoreAgainst}.`, Math.min(s.week, s.seasonLength));
     s.news.unshift({ week: s.week, text: `Nos sacamos la espina: le ganamos a ${m.rivalName} y el vestuario lo gritó como un título.`, tone: 'good' });
     if (wasNemesis) s.nemesis = null;
-    return `Semana ${s.week}: nos sacamos la espina contra ${m.rivalName} (${m.scoreFor}-${m.scoreAgainst}).`;
+    return `${fechaLabel(s)}: nos sacamos la espina contra ${m.rivalName} (${m.scoreFor}-${m.scoreAgainst}).`;
   }
   if (riv && riv.heat >= 2) {
     s.news.unshift({ week: s.week, text: `Otra vez ${m.rivalName}. En el grupo ya ni cargadas quedan: bronca en serio.`, tone: 'bad' });

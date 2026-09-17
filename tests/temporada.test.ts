@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRecruit } from '../src/data/recruits';
 import { activePlayers } from '../src/game/match';
 import { Rng } from '../src/game/rng';
+import { fechaLabel } from '../src/game/timeline';
 import { jugarFecha, jugarTemporada, partidaNueva } from './jugar';
 
 describe('los momentos memorables del partido', () => {
@@ -15,7 +16,7 @@ describe('los momentos memorables del partido', () => {
       const porSemana = new Map<string, string[]>();
       for (const m of final.memorableMoments) {
         if (!DEL_PARTIDO.test(m)) continue;
-        const semana = m.match(/^Semana (\d+):/)?.[1] ?? '?';
+        const semana = m.match(/^(Semana \d+|Semifinales|Finales):/)?.[1] ?? '?';
         porSemana.set(semana, [...(porSemana.get(semana) ?? []), m]);
       }
       for (const [semana, lista] of porSemana) {
@@ -25,6 +26,12 @@ describe('los momentos memorables del partido', () => {
     }
     // Que el test mida algo: en ocho temporadas alguna fecha deja historia.
     expect(momentosDePartido).toBeGreaterThan(0);
+  });
+
+  it('en los playoffs el momento se anota como "Semifinales" o "Finales", no como "Semana 11"', () => {
+    expect(fechaLabel({ week: 4, seasonLength: 9 })).toBe('Semana 4');
+    expect(fechaLabel({ week: 10, seasonLength: 9 })).toBe('Semifinales');
+    expect(fechaLabel({ week: 11, seasonLength: 9 })).toBe('Finales');
   });
 });
 
