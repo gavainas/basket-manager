@@ -89,23 +89,29 @@ export function rivalryWith(s: GameState, rivalId: string): Rivalry | null {
   return null;
 }
 
-/** Al ganarle a un rival con historia: la espina se saca y el club lo celebra. */
-export function settleRivalryAfterMatch(s: GameState): void {
+/**
+ * Al ganarle a un rival con historia: la espina se saca y el club lo celebra.
+ * Devuelve el momento memorable que deja (si lo deja): quien cierra el partido
+ * decide cuál de los momentos de la fecha se guarda, porque se guarda uno solo.
+ */
+export function settleRivalryAfterMatch(s: GameState): string | null {
   const m = s.lastMatch;
-  if (!m || m.forfeit) return;
+  if (!m || m.forfeit) return null;
   const riv = rivalryWith(s, m.rivalId);
   const wasNemesis = s.nemesis?.rivalId === m.rivalId;
-  if (!riv && !wasNemesis) return;
+  if (!riv && !wasNemesis) return null;
 
   if (m.won) {
     s.club.sportPrestige = clamp(s.club.sportPrestige + 2);
-    s.memorableMoments.push(`Semana ${s.week}: nos sacamos la espina contra ${m.rivalName} (${m.scoreFor}-${m.scoreAgainst}).`);
     logClubEvent(s, 'partido', `Revancha cumplida ante ${m.rivalName}: ${m.scoreFor}-${m.scoreAgainst}.`, Math.min(s.week, s.seasonLength));
     s.news.unshift({ week: s.week, text: `Nos sacamos la espina: le ganamos a ${m.rivalName} y el vestuario lo gritó como un título.`, tone: 'good' });
     if (wasNemesis) s.nemesis = null;
-  } else if (riv && riv.heat >= 2) {
+    return `Semana ${s.week}: nos sacamos la espina contra ${m.rivalName} (${m.scoreFor}-${m.scoreAgainst}).`;
+  }
+  if (riv && riv.heat >= 2) {
     s.news.unshift({ week: s.week, text: `Otra vez ${m.rivalName}. En el grupo ya ni cargadas quedan: bronca en serio.`, tone: 'bad' });
   }
+  return null;
 }
 
 // ---------- Noticias de la fecha ----------

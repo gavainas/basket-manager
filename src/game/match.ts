@@ -346,8 +346,28 @@ function lockerRoomNotes(
   return notes.slice(0, 2);
 }
 
+/** Candidato a momento memorable de un partido: se guarda el más grande, no todos. */
+interface MatchMoment {
+  peso: number;
+  texto: string;
+}
+
+/**
+ * Un partido deja a lo sumo UN momento memorable: el más grande. Antes una
+ * final ganada en la hora, de batacazo y contra el rival de la espina dejaba
+ * tres ("la ganamos en la hora", "batacazo histórico", "nos sacamos la
+ * espina"), y la evaluación de la temporada —25 puntos por momento— los
+ * contaba como tres historias distintas: un solo partido la ponía en
+ * "Excelente". La historia es una: la que más pesa.
+ */
+function keepBestMoment(s: GameState, candidatos: MatchMoment[]): void {
+  if (candidatos.length === 0) return;
+  const mejor = candidatos.reduce((a, b) => (b.peso > a.peso ? b : a));
+  s.memorableMoments.push(mejor.texto);
+}
+
 /** Tabla, partidos de los demás rivales, historial y noticias: común a todo final de partido. */
-function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
+function concludeMatch(s: GameState, result: MatchResult, rng: Rng, momentos: MatchMoment[] = []): void {
   const rivalId = result.rivalId;
   // En playoffs (semana > fase regular) la tabla queda congelada: los cruces
   // de copa no suman a la fase regular y los resuelve el módulo de playoffs.
@@ -430,7 +450,9 @@ function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
     tone: result.won ? 'good' : 'bad',
   });
   // La liga habla: revanchas cumplidas y lo que pasó en las otras canchas.
-  settleRivalryAfterMatch(s);
+  const espina = settleRivalryAfterMatch(s);
+  if (espina) momentos.push({ peso: 4, texto: espina });
+  keepBestMoment(s, momentos);
   // La apuesta del asado se liquida acá: el que pierde paga, sin apelación.
   const betLine = settleAsadoBet(s);
   if (betLine) result.effects.push(betLine);
@@ -1997,13 +2019,16 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   else if (margin > 15) s.club.socialClimate = clamp(s.club.socialClimate - 4);
 
   // Confianza y memoria de la épica (los np ya están asignados a s.players).
+  // Los momentos del partido se juntan acá y al cierre queda uno solo, el que
+  // más pesa (ver keepBestMoment).
   const byIdNow = (id: string) => s.players.find((p) => p.id === id);
+  const momentos: MatchMoment[] = [];
   if (clutch && won) {
     for (const id of live.onCourt) {
       const p = byIdNow(id);
       if (p) p.confidence = clamp(p.confidence + B.clutchConfidence);
     }
-    if (rng.chance(0.4)) s.memorableMoments.push(`Semana ${s.week}: la ganamos en la hora contra ${rival.name} (${scoreFor}-${scoreAgainst}).`);
+    if (rng.chance(0.4)) momentos.push({ peso: 2, texto: `Semana ${s.week}: la ganamos en la hora contra ${rival.name} (${scoreFor}-${scoreAgainst}).` });
   }
   if (clutch && !won) {
     for (const x of played) {
@@ -2016,7 +2041,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       const p = byIdNow(x.p.id);
       if (p) p.confidence = clamp(p.confidence + 3);
     }
-    s.memorableMoments.push(`Semana ${s.week}: de ${maxDeficit} abajo a ganarle a ${rival.name}. Remontada para contar.`);
+    momentos.push({ peso: 4, texto: `Semana ${s.week}: de ${maxDeficit} abajo a ganarle a ${rival.name}. Remontada para contar.` });
     s.news.unshift({ week: s.week, text: `Remontada épica ante ${rival.name}: estuvimos ${maxDeficit} abajo y la dimos vuelta.`, tone: 'good' });
   }
   if (!won && margin >= B.blowoutMargin) {
@@ -2028,7 +2053,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   if (shortHanded) {
     const n = live.squad.length;
     if (won) {
-      s.memorableMoments.push(`Semana ${s.week}: ganamos siendo ${n}. Los que estuvieron, estuvieron.`);
+      momentos.push({ peso: 3, texto: `Semana ${s.week}: ganamos siendo ${n}. Los que estuvieron, estuvieron.` });
       s.news.unshift({ week: s.week, text: `Gesta con lo justo: le ganamos a ${rival.name} siendo ${n}. El barrio todavía lo comenta.`, tone: 'good' });
       logClubEvent(s, 'partido', `Gesta: victoria ante ${rival.name} con solo ${n} jugadores.`, Math.min(s.week, s.seasonLength));
       for (const x of played) {
@@ -2247,15 +2272,15 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   };
 
   if (upset) {
-    s.memorableMoments.push(`Semana ${s.week}: batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);
+    momentos.push({ peso: 5, texto: `Semana ${s.week}: batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).` });
     logClubEvent(s, 'partido', `Batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);
   }
   if (won && margin >= 25) {
-    s.memorableMoments.push(`Semana ${s.week}: paliza inolvidable a ${rival.name} por ${margin} puntos.`);
+    momentos.push({ peso: 1, texto: `Semana ${s.week}: paliza inolvidable a ${rival.name} por ${margin} puntos.` });
     logClubEvent(s, 'partido', `Paliza inolvidable a ${rival.name} por ${margin} puntos.`);
   }
 
-  concludeMatch(s, result, rng);
+  concludeMatch(s, result, rng, momentos);
   return s;
 }
 
