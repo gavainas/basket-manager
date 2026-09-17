@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/game/balance';
 import { activePlayers } from '../src/game/match';
 import { confirmedPlayers, createPreseasonNewGame, inscriptionOffer } from '../src/game/preseason';
+import { PRESEASON_EVENTS } from '../src/game/preseasonEvents';
 import type { GameState } from '../src/game/types';
 import { jugarTemporada, partidaNueva, paso } from './jugar';
 
@@ -84,6 +85,35 @@ describe('la pretemporada de una partida nueva', () => {
     expect(jugando.divisionId).toBe(actual.divisionId);
     expect(jugando.club.money).toBeLessThan(cajaAntes);
     expect(confirmedPlayers(s).length).toBeGreaterThanOrEqual(BALANCE.preseason.minPlayers);
+  });
+});
+
+describe('la tesorera mira la ficha de verdad', () => {
+  const evento = PRESEASON_EVENTS.find((e) => e.id === 'ps_rifa_urgente')!;
+  const base = paso(null as unknown as GameState, { type: 'LOAD', state: createPreseasonNewGame(5) });
+  const actual = inscriptionOffer(base).find((o) => o.isCurrent)!;
+  const conCaja = (money: number, week = base.preseason!.totalWeeks - 1): GameState => {
+    const s: GameState = structuredClone(base);
+    s.club.money = money;
+    s.preseason!.week = week;
+    s.preseason!.chosenDivisionId = actual.divisionId;
+    return s;
+  };
+
+  it('no avisa que "la caja no llega" cuando la caja cubre la ficha y el mantenimiento que queda', () => {
+    // Una semana antes del cierre queda un mantenimiento por pagar.
+    const sobra = conCaja(actual.fee + BALANCE.preseason.weeklyUpkeep + 10);
+    expect(evento.canFire(sobra)).toBe(false);
+  });
+
+  it('avisa cuando falta, y dice cuánto cuesta la ficha de la liga elegida', () => {
+    const corta = conCaja(actual.fee - 50);
+    expect(evento.canFire(corta)).toBe(true);
+    expect(evento.text(corta, [])).toContain(`hay $${actual.fee - 50} y la inscripción cuesta $${actual.fee}`);
+    // Cubre la ficha pero no el mantenimiento que queda: lo dice con las dos cifras.
+    const justa = conCaja(actual.fee + 10);
+    expect(evento.canFire(justa)).toBe(true);
+    expect(evento.text(justa, [])).toContain(`de acá al cierre se van otros $${BALANCE.preseason.weeklyUpkeep}`);
   });
 });
 
