@@ -105,14 +105,22 @@ function PlantelStrip({ state }: { state: GameState }) {
 /** La próxima fecha organiza el tablero; consultar nunca avanza la simulación. */
 export function hubReadiness(state: GameState) {
   const players = activePlayers(state.players);
-  const available = players.filter(p => p.status !== 'lesionado' && !(p.suspendedWeeks && p.suspendedWeeks > 0));
+  const fit = players.filter(p => p.status !== 'lesionado' && !(p.suspendedWeeks && p.suspendedWeeks > 0));
   const called = ['callUp', 'lineup', 'match'].includes(state.phase);
+  /* Con la lista pasada, "de baja" son todos los que no van a estar —los que
+     no vienen, los lesionados y los suspendidos—, el mismo número que la
+     convocatoria llama "bajas". Antes contaba sólo lesionados y suspendidos y
+     el tablero decía "6 confirmados · 0 de baja" con seis que no venían. */
+  const confirmedIds = called
+    ? new Set(state.callUp.filter(p => p.status === 'confirmado').map(p => p.playerId))
+    : null;
+  const counted = confirmedIds ? fit.filter(p => confirmedIds.has(p.id)) : fit;
   return {
-    available: available.length,
-    confirmed: called ? state.callUp.filter(p => p.status === 'confirmado').length : null,
+    available: fit.length,
+    confirmed: confirmedIds ? confirmedIds.size : null,
     late: called ? state.callUp.filter(p => p.status === 'confirmado' && p.lateArrival).length : 0,
-    tired: available.filter(p => p.physical <= BALANCE.callUp.exhaustedThreshold).length,
-    unavailable: players.length - available.length,
+    tired: counted.filter(p => p.physical <= BALANCE.callUp.exhaustedThreshold).length,
+    unavailable: players.length - (confirmedIds ? confirmedIds.size : fit.length),
   };
 }
 
@@ -168,8 +176,13 @@ export function Hub({ state }: { state: GameState }) {
             <div className="hub-a-match-info">
               <span className="hub-a-eyebrow">{score ? 'Partido en curso' : 'La próxima fecha'}</span>
               {rival ? <>
-                {rivalClub && <Crest seed={rivalClub.id} name={rivalClub.name} colors={rivalClub.colors} founded={rivalClub.founded} size={70} />}
-                <h3><span className="hub-a-versus">vs</span> <RivalLink id={rival.id}>{rival.name}</RivalLink></h3>
+                {/* El escudo va al lado del nombre, no arriba: apilados, con un
+                    rival de nombre largo la columna no entraba a 768 y los chips
+                    y el link al calendario quedaban recortados (Hub.css). */}
+                <div className="hub-a-match-head">
+                  {rivalClub && <Crest seed={rivalClub.id} name={rivalClub.name} colors={rivalClub.colors} founded={rivalClub.founded} size={64} />}
+                  <h3><span className="hub-a-versus">vs</span> <RivalLink id={rival.id}>{rival.name}</RivalLink></h3>
+                </div>
                 {score && <strong className="hub-a-score">{score.f} – {score.a}</strong>}
                 <p>{fixture ? `${formatDateLong(fixture.date)} · ${fixture.time} h` : 'Fecha y horario por confirmar'}</p>
                 <p className="muted">{venue ? `${venue.name} · ${venue.neighborhood}` : 'Cancha por confirmar'}</p>

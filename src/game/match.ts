@@ -2151,13 +2151,14 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       extraReasons.push({ weight: 11, text: 'Las caras largas del asado fallido entraron a la cancha con el equipo.', sign: 'contra' });
   }
 
+  const porPuntos = margin === 1 ? 'por 1 punto' : `por ${margin} puntos`;
   const summary = won
     ? margin > 15
-      ? `Victoria amplia ante ${rival.name}, por ${margin} puntos.`
-      : `Triunfo contra ${rival.name} por ${margin} puntos.`
+      ? `Victoria amplia ante ${rival.name}, ${porPuntos}.`
+      : `Triunfo contra ${rival.name} ${porPuntos}.`
     : margin > 15
-      ? `Derrota amplia contra ${rival.name}, por ${margin} puntos.`
-      : `Derrota ante ${rival.name}, por ${margin} puntos.`;
+      ? `Derrota amplia contra ${rival.name}, ${porPuntos}.`
+      : `Derrota ante ${rival.name}, ${porPuntos}.`;
 
   // El relato del informe sale de lo que realmente pasó cuarto a cuarto
   // (sin repetir la misma observación de cuartos consecutivos).
