@@ -87,6 +87,38 @@ describe('la pretemporada de una partida nueva', () => {
   });
 });
 
+describe('el cierre no se contradice con el que firmó y después se borró', () => {
+  it('no lo lista como fichaje ni le deja una promesa viva: está en "no siguieron"', () => {
+    let s = paso(null as unknown as GameState, { type: 'LOAD', state: createPreseasonNewGame(5) });
+    s = { ...s, club: { ...s.club, money: 5000 } };
+    const mp = s.preseason!.market.find((m) => m.status === 'disponible')!;
+    s = paso(s, { type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true });
+    s = paso(s, { type: 'PS_NEGOTIATE', decision: 'accept' });
+    s = paso(s, { type: 'PS_DISMISS_OUTCOME' });
+    const fichado = s.players.find((p) => !p.leftClub && p.name === mp.name)!;
+    expect(fichado).toBeDefined();
+    expect(s.preseason!.continuity[fichado.id]).toBe('confirmado');
+    // Se borra antes del cierre (el evento "Un confirmado se borró"), con una
+    // promesa hecha en la negociación.
+    const conPromesa: GameState = structuredClone(s);
+    conPromesa.preseason!.continuity[fichado.id] = 'no_respondio';
+    if (!conPromesa.promises.some((pr) => pr.playerId === fichado.id)) {
+      conPromesa.promises.push({ playerId: fichado.id, playerName: fichado.name, type: 'cuota', label: `${fichado.name}: Pagar media cuota`, season: s.seasonNumber });
+    }
+    const fin = cerrarSinJugarla(conPromesa);
+    expect(fin.phase).toBe('preseasonEnd');
+    const summary = fin.preseason!.summary!;
+    expect(summary.lost.some((e) => e.id === fichado.id)).toBe(true);
+    expect(summary.signed.some((e) => e.label === fichado.name)).toBe(false);
+    expect(summary.roster.some((e) => e.id === fichado.id)).toBe(false);
+    expect(summary.promises.some((l) => l.includes(fichado.name))).toBe(false);
+    expect(fin.promises.some((pr) => pr.playerId === fichado.id)).toBe(false);
+    // El que firmó y sigue, en cambio, es fichaje con ficha.
+    const sigue = cerrarSinJugarla(s).preseason!.summary!;
+    expect(sigue.signed.some((e) => e.id === fichado.id)).toBe(true);
+  });
+});
+
 describe('de una temporada a la siguiente', () => {
   it('el cierre abre la pretemporada con el mismo plantel, y el verano mueve al mundo', () => {
     // Sin gestión del manager la caja puede quebrar antes del cierre (hallazgo

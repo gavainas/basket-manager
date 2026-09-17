@@ -6236,6 +6236,22 @@ button.mini.blue.on {
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
+/* La fundación en la notebook: a 768 de alto el formulario medía 950 px y el
+   botón "Fundar el club" —el que empieza la partida— quedaba abajo del
+   pliegue, detrás de un scroll que nada invitaba a hacer. Todo baja un
+   escalón (escudo, títulos, aires) para que entre entero. */
+@media (max-height: 820px) {
+  .menu-panel-carrera { padding: 1.1rem 2rem; justify-content: flex-start; }
+  .menu-panel-carrera .carrera-setup { gap: 0.6rem; }
+  .menu-panel-carrera .carrera-intro h1 { font-size: var(--fs-xl); margin-bottom: 0.3rem; }
+  .menu-panel-carrera .carrera-intro p { font-size: var(--fs-sm); margin-bottom: 0; }
+  .menu-panel-carrera .carrera-escudo { padding: 0.3rem 0 0.5rem; gap: 0.25rem; }
+  .menu-panel-carrera .carrera-escudo .crest { width: 72px; height: 84px; }
+  .menu-panel-carrera .carrera-escudo-nombre { font-size: var(--fs-md); }
+  .menu-panel-carrera .carrera-campo { margin-bottom: 0.5rem; gap: 0.25rem; }
+  .menu-panel-carrera .carrera-color { width: 32px; height: 32px; }
+}
+
 /* La libreta: quién es para vos, en versalita; el "lo trae X" como chip. */
 .ps-relacion {
   font-family: var(--display);

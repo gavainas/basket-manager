@@ -1315,6 +1315,13 @@ export function closePreseason(state: GameState): GameState {
     }
   }
 
+  // Las promesas hechas a los que no siguen se van con ellos. El motor ya no
+  // las evaluaba (el jugador no está para romperlas), pero El club las
+  // mostraba como "rota" toda la temporada y el cierre las listaba entre las
+  // promesas vivas del club: una deuda con alguien que no está.
+  const seFueron = new Set(lostEntries.map((e) => e.id));
+  s.promises = s.promises.filter((pr) => !(pr.season === s.seasonNumber && seFueron.has(pr.playerId)));
+
   let roster = s.players.filter((x) => !x.leftClub);
 
   // Modo Carrera: con siete no hay temporada. Nadie sale a buscar jugadores
@@ -1335,7 +1342,7 @@ export function closePreseason(state: GameState): GameState {
       strengths: [],
       risks: [],
       consequences: [
-        `Juntaste ${roster.length} y la liga pide ${BALANCE.preseason.minPlayers}: faltaron ${faltan === 1 ? 'uno' : faltan}. Sin ocho fichas no hay inscripción, y sin inscripción no hay temporada.`,
+        `Juntaste ${roster.length} y la liga pide ${BALANCE.preseason.minPlayers}: ${faltan === 1 ? 'faltó uno' : `faltaron ${faltan}`}. Sin ocho fichas no hay inscripción, y sin inscripción no hay temporada.`,
       ],
     };
     s.gameOverReason = `No juntaste ${BALANCE.preseason.minPlayers} para inscribir al club: la temporada se jugó sin vos.`;
@@ -1466,9 +1473,12 @@ export function closePreseason(state: GameState): GameState {
   p.summary = {
     roster: roster.map((x) => ({ id: x.id, label: `${x.name} (${x.position})` })),
     lost: lostEntries,
+    // Fichajes son los que dijeron que sí Y siguen: el que firmó y después se
+    // borró está en "No siguieron", no en las dos listas a la vez.
     signed: p.market
       .filter((m) => m.status === 'fichado')
-      .map((m) => ({ id: s.players.find((x) => !x.leftClub && x.name === m.name)?.id ?? '', label: m.name })),
+      .map((m) => ({ id: s.players.find((x) => !x.leftClub && x.name === m.name)?.id ?? '', label: m.name }))
+      .filter((e) => e.id !== ''),
     emergency: emergencyEntries,
     moneySpent: p.moneySpent,
     projectedWeeklyFees: roster.reduce((sum, x) => sum + weeklyFee(x), 0),
