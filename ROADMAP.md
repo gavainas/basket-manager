@@ -69,6 +69,14 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   15 (con "el plantel está cerrado" en el mercado y la libreta), o se deja y que la bronca
   lo regule?
 
+- **¿La Carrera tiene que quebrar en la fecha 2?** Jugada por la interfaz sin gestionar la
+  caja: se inscribe con 10, paga la ficha entera y arranca con **$8**; con cuotas de $240
+  contra gastos de $245 cierra la fecha 1 con $3 y la fecha 2 con **$-2: "Fracaso
+  financiero"**, game over. El radar avisa en rojo desde la fecha 1 y dice qué hacer (rifa,
+  sponsor, gorra), así que el jugador atento se salva; el que no mira, pierde el club por
+  dos pesos en la segunda semana. ¿Está bien así (la Carrera aprieta de verdad), o el
+  primer rojo tendría que ser un aviso de la comisión y recién el segundo, la quiebra?
+
 - **El brief de la lámina** (Puerta 3,
   [`design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md`](design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md)):
   leerlo y decir si va la **prueba de registro** (1 base, 3 pelos, 2 barbas, ≈12 créditos).

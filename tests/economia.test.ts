@@ -25,7 +25,8 @@ describe('el aviso de la caja mira cómo cierra la semana, no la caja contra los
   const base = partidaNueva(11);
   const conCaja = (money: number, extra: Partial<GameState> = {}): GameState => ({ ...base, ...extra, club: { ...base.club, money } });
   const becados = (s: GameState): GameState => ({ ...s, players: s.players.map((p) => ({ ...p, feeStatus: 'beca_total' as const })) });
-  const avisoCaja = (s: GameState) => watchItems(s).find((i) => i.kind === 'plata' && i.tile === 'gastos');
+  // El aviso lleva a La semana (tile 'lista'), donde están la rifa, el sponsor y la gorra.
+  const avisoCaja = (s: GameState) => watchItems(s).find((i) => i.kind === 'plata' && i.tile === 'lista');
 
   it('la cuenta del cierre es la de Finanzas sumada a la caja, y cuenta el sueldo del DT', () => {
     const s = conCaja(200);

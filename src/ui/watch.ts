@@ -61,20 +61,24 @@ export function watchItems(state: GameState): WatchItem[] {
   // tablero en rojo seis semanas seguidas con el balance en positivo. Ahora
   // avisa en rojo si la semana cierra en rojo (eso es el game over), y en
   // amarillo si cierra tan justa que un imprevisto la deja en rojo.
+  // El aviso lleva a La semana, que es donde se arregla (la rifa, el sponsor,
+  // pasar la gorra), no a Finanzas, que sólo muestra la cuenta. En una Carrera
+  // recién inscripta ($8 en caja, cuotas $240 contra gastos $245) el club
+  // quiebra en la fecha 2 si no hacés nada: el aviso tiene que decir qué hacer.
   const caja = projectedWeekClose(state);
   if (caja.close < 0) {
     items.push({
       kind: 'plata',
       cls: 'bad',
-      text: `Así la semana cierra en rojo: $${state.club.money} en caja y $${caja.income} de ingresos contra $${caja.expenses} de gastos. Sin caja, el club se retira de la liga.`,
-      tile: 'gastos',
+      text: `Así la semana cierra en rojo ($${state.club.money} en caja, $${caja.income} de ingresos contra $${caja.expenses} de gastos) y el club se retira de la liga: esta semana va una rifa, un sponsor o pasar la gorra.`,
+      tile: 'lista',
     });
   } else if (caja.close < BALANCE.economy.mishapMax) {
     items.push({
       kind: 'plata',
       cls: 'warn',
-      text: `La caja cierra la semana justa ($${caja.close} después de cuotas y gastos): un imprevisto la deja en rojo.`,
-      tile: 'gastos',
+      text: `La caja cierra la semana justa ($${caja.close} después de cuotas y gastos): un imprevisto la deja en rojo. Una rifa o un sponsor la despejan.`,
+      tile: 'lista',
     });
   }
   // El fiado de la inscripción: la liga no se olvida, y el radar tampoco.
