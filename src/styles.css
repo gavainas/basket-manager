@@ -2641,6 +2641,23 @@ table.sheet td {
   padding: 0.3rem 0.5rem;
 }
 
+/* En la notebook (1366 y 1280 de ancho) la planilla medía 985 px contra los
+   922 del panel cuando las columnas de la derecha tenían texto ("Lesionado
+   (2 sem.)", "Beca parcial"): las celdas no envuelven y "Estado" y "Cuota"
+   quedaban cortadas contra el borde, con el scroll de costado escondido. La
+   pizarra lateral cede 40 px y las celdas medio paso de aire cada una. */
+@media (max-width: 1500px) {
+  .sheet-layout {
+    grid-template-columns: minmax(0, 1fr) 190px;
+    gap: 0.75rem;
+  }
+  table.sheet td,
+  table.sheet th {
+    padding-left: 0.32rem;
+    padding-right: 0.32rem;
+  }
+}
+
 table.sheet .sheet-avatar {
   padding-right: 0;
   line-height: 0;

@@ -205,7 +205,7 @@ export function Hub({ state }: { state: GameState }) {
             {readiness.late > 0 && <p className="hub-a-note">{readiness.late} de los confirmados llegan para el segundo tiempo.</p>}
             {state.phase === 'matchResult' && <p className="hub-a-note">Estado al cierre del partido; la próxima convocatoria todavía no está hecha.</p>}
             <div className="hub-a-alerts">{warnings.length ? warnings.slice(0, 2).map(warningButton) : <p className="hub-a-note">Sin avisos pendientes. Revisá el plantel y prepará el encuentro.</p>}
-              {warnings.length > 2 && <details><summary>Ver otros {warnings.length - 2} avisos</summary>{warnings.slice(2).map(warningButton)}</details>}
+              {warnings.length > 2 && <details><summary>{warnings.length === 3 ? 'Ver otro aviso' : `Ver otros ${warnings.length - 2} avisos`}</summary>{warnings.slice(2).map(warningButton)}</details>}
             </div>
             <button className="hub-a-link" onClick={() => navigate('plantilla', 'vestuario')}>Entrar al vestuario →</button>
           </section>
