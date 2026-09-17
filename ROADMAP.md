@@ -62,6 +62,13 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   apretar, las perillas están en `BALANCE.carrera` (ver
   [`design/BALANCE.md`](design/BALANCE.md#el-modo-carrera-septiembre-2026-lo-que-quedaba-de-t3)).
 
+- **¿Hay tope de plantel?** En la pretemporada del club en marcha, aceptando todas las
+  negociaciones se cierra con **21 fichas** (12 fichajes en 4 semanas, medido por la
+  interfaz): no hay tope ni en el motor ni en la UI, y el único freno es el pase. Con 21
+  la tira del tablero se desborda y la bronca por minutos se dispara sola. ¿Tope de 14 o
+  15 (con "el plantel está cerrado" en el mercado y la libreta), o se deja y que la bronca
+  lo regule?
+
 - **El brief de la lámina** (Puerta 3,
   [`design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md`](design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md)):
   leerlo y decir si va la **prueba de registro** (1 base, 3 pelos, 2 barbas, ≈12 créditos).

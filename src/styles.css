@@ -1731,6 +1731,14 @@ img.retrato-img.v2 {
   display: none;
 }
 
+/* `hidden` manda sobre cualquier `display` de una clase. Sin esto, la grilla
+   de la tabla y el fixture (`.grid { display: grid }`) seguía a la vista en
+   las pestañas "La pirámide" y "Las ligas" de la Liga, y la pirámide quedaba
+   debajo del pliegue: la pestaña parecía no hacer nada. */
+[hidden] {
+  display: none !important;
+}
+
 /* Por debajo del piso de diseño (1280x720) el Tablero deja de ser tres columnas:
    se va el héroe —es lo primero que sobra cuando falta ancho— y quedan el panel
    del club y los bloques. */
