@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { getAction } from '../src/game/actions';
 import { BALANCE } from '../src/game/balance';
-import { applyWeeklyEconomy } from '../src/game/economy';
+import { applyWeeklyEconomy, projectedWeekClose, weeklyEstimate } from '../src/game/economy';
+import { hireCoach } from '../src/game/coach';
+import { watchItems } from '../src/ui/watch';
 import { Rng } from '../src/game/rng';
 import { condicionCumplida, SPONSORS } from '../src/game/sponsors';
 import { createNewGame } from '../src/game/week';
@@ -18,6 +20,46 @@ function conSponsor(seed: number): GameState {
   }
   return s;
 }
+
+describe('el aviso de la caja mira cómo cierra la semana, no la caja contra los gastos fijos', () => {
+  const base = partidaNueva(11);
+  const conCaja = (money: number, extra: Partial<GameState> = {}): GameState => ({ ...base, ...extra, club: { ...base.club, money } });
+  const becados = (s: GameState): GameState => ({ ...s, players: s.players.map((p) => ({ ...p, feeStatus: 'beca_total' as const })) });
+  const avisoCaja = (s: GameState) => watchItems(s).find((i) => i.kind === 'plata' && i.tile === 'gastos');
+
+  it('la cuenta del cierre es la de Finanzas sumada a la caja, y cuenta el sueldo del DT', () => {
+    const s = conCaja(200);
+    const est = weeklyEstimate(s);
+    const neto = est.income.reduce((t, i) => t + i.amount, 0) + est.expenses.reduce((t, e) => t + e.amount, 0);
+    expect(projectedWeekClose(s).close).toBe(200 + neto);
+    const pago = s.coachMarket.find((c) => c.weeklyWage > 0)!;
+    const conDT = hireCoach(conCaja(500), pago.id);
+    expect(conDT.coach?.id).toBe(pago.id);
+    expect(weeklyEstimate(conDT).expenses.some((e) => e.concept.startsWith('Sueldo del DT'))).toBe(true);
+    expect(projectedWeekClose(conDT).close).toBe(projectedWeekClose({ ...conDT, coach: null }).close - pago.weeklyWage);
+  });
+
+  it('con la caja por debajo de los gastos fijos pero las cuotas cubriendo, no hay aviso', () => {
+    // El caso de la partida jugada: $200 en caja, $255 de cuotas, $245 de gastos.
+    const s = conCaja(200);
+    expect(s.club.money).toBeLessThan(BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly);
+    expect(projectedWeekClose(s).close).toBeGreaterThanOrEqual(BALANCE.economy.mishapMax);
+    expect(avisoCaja(s)).toBeUndefined();
+  });
+
+  it('avisa en rojo si la semana cierra en rojo, y en amarillo si cierra tan justa que un imprevisto la hunde', () => {
+    const gastos = BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly;
+    const rojo = becados(conCaja(gastos - 10));
+    expect(projectedWeekClose(rojo).close).toBe(-10);
+    expect(avisoCaja(rojo)?.cls).toBe('bad');
+    expect(avisoCaja(rojo)?.text).toContain('cierra en rojo');
+    const justa = becados(conCaja(gastos + 30));
+    expect(avisoCaja(justa)?.cls).toBe('warn');
+    expect(avisoCaja(justa)?.text).toContain('$30');
+    const holgada = becados(conCaja(gastos + BALANCE.economy.mishapMax + 50));
+    expect(avisoCaja(holgada)).toBeUndefined();
+  });
+});
 
 describe('la economía con arco (sep 2026)', () => {
   it('buscar sponsor firma un contrato con condiciones, que paga por semana y se ve en la estimación', () => {
