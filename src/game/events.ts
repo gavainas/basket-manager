@@ -2,7 +2,7 @@ import { addPairBonus, planAsado, weeksSinceAsado } from './asado';
 import { BALANCE, clamp } from './balance';
 import { contactoQueVuelve, LO_QUE_PIDE, shortName, vueltaDeLaLibreta } from './carrera';
 import { affinity, RIVALRY_THRESHOLD } from './relations';
-import { logClubEvent } from './timeline';
+import { fechaLabel, logClubEvent } from './timeline';
 import { marketToPlayer } from '../data/market';
 import { createRecruit } from '../data/recruits';
 import { bumpGrievance, easeGrievance, sootheGrievance } from './mood';
@@ -421,7 +421,7 @@ export const EVENTS: EventDef[] = [
         if (rng.chance(0.3 + s.club.socialClimate / 180 + p.social / 300)) {
           p.motivation = clamp(p.motivation + 15);
           calm(p);
-          s.memorableMoments.push(`Semana ${s.week}: la charla que hizo que ${p.name} se quedara.`);
+          s.memorableMoments.push(`${fechaLabel(s)}:la charla que hizo que ${p.name} se quedara.`);
           return `${p.name} se emocionó con la charla: "Está bien, me quedo. Pero que esto mejore". Una para el recuerdo.`;
         }
         makeLeave(s, p, 'Ni la charla lo convenció.');
@@ -536,7 +536,7 @@ export const EVENTS: EventDef[] = [
         s.club.socialClimate = clamp(s.club.socialClimate + 8);
         s.club.socialPrestige = clamp(s.club.socialPrestige + 3);
         if (rng.chance(0.3)) {
-          s.memorableMoments.push(`Semana ${s.week}: el festejo del viernes que terminó con todos cantando el himno del club (que no existe).`);
+          s.memorableMoments.push(`${fechaLabel(s)}:el festejo del viernes que terminó con todos cantando el himno del club (que no existe).`);
           return 'Noche redonda: hasta inventaron un himno del club. El grupo está más unido que nunca.';
         }
         return 'La ronda cayó de maravilla. El manager también sabe festejar.';
@@ -675,7 +675,7 @@ export const EVENTS: EventDef[] = [
           climate: 1,
         });
         if (rng.chance(0.2)) {
-          s.memorableMoments.push(`Semana ${s.week}: el cumpleaños de ${p.name} terminó con torta en la cara y fotos épicas.`);
+          s.memorableMoments.push(`${fechaLabel(s)}:el cumpleaños de ${p.name} terminó con torta en la cara y fotos épicas.`);
           return `El festejo de ${p.name} se fue de las manos (para bien). Torta en la cara incluida.`;
         }
         return `Torta, velitas y abrazos para ${p.name}. Estas cosas hacen club.`;
@@ -700,7 +700,7 @@ export const EVENTS: EventDef[] = [
         s.club.sportPrestige = clamp(s.club.sportPrestige + 2);
         for (const p of actives(s).filter((x) => x.personality === 'protagonista')) p.motivation = clamp(p.motivation + 4);
         if (rng.chance(0.25)) {
-          s.memorableMoments.push(`Semana ${s.week}: la nota en "Pasión Deportiva Zonal" que compartió medio barrio.`);
+          s.memorableMoments.push(`${fechaLabel(s)}:la nota en "Pasión Deportiva Zonal" que compartió medio barrio.`);
           return 'La nota explotó en el barrio: cientos de compartidos. Los protagonistas están en su salsa.';
         }
         return 'Salió la nota con foto grupal. El club suena en el barrio y a más de uno le gustó verse.';
@@ -736,7 +736,7 @@ export const EVENTS: EventDef[] = [
         s.club.socialPrestige = clamp(s.club.socialPrestige + 3);
         makeLeave(s, p, 'Se mudó por trabajo, despedido como se debe.');
         if (rng.chance(0.4)) {
-          s.memorableMoments.push(`Semana ${s.week}: la despedida de ${p.name}, con discurso y camiseta firmada por todos.`);
+          s.memorableMoments.push(`${fechaLabel(s)}:la despedida de ${p.name}, con discurso y camiseta firmada por todos.`);
         }
         return `La despedida de ${p.name} terminó con camiseta firmada y algún lagrimón. Así se despide a los que hacen club.`;
       }
@@ -863,7 +863,7 @@ export const EVENTS: EventDef[] = [
         star.social = clamp(star.social + 4);
         s.club.socialClimate = clamp(s.club.socialClimate + 6);
         s.memorableMoments.push(
-          `Semana ${s.week}: el veterano ${vet.name} y el joven ${star.name} combinaron para una jugada que gritó todo el club.`,
+          `${fechaLabel(s)}:el veterano ${vet.name} y el joven ${star.name} combinaron para una jugada que gritó todo el club.`,
         );
         return 'Los sentaste a hablar y prendió: el veterano guía, el pibe brilla. La sociedad promete.';
       }
@@ -1316,7 +1316,7 @@ export const EVENTS: EventDef[] = [
         s.club.socialClimate = clamp(s.club.socialClimate + 7);
         // Enterrar el hacha se nota en el mapa: el roce deja de serlo.
         addPairBonus(s, a.id, b.id, 10);
-        s.memorableMoments.push(`Semana ${s.week}: ${a.name} y ${b.name} enterraron el hacha tras semanas de tensión.`);
+        s.memorableMoments.push(`${fechaLabel(s)}: ${a.name} y ${b.name} enterraron el hacha tras semanas de tensión.`);
         return 'Hablaste con cada uno y funcionó: se pidieron disculpas frente al grupo. El vestuario respiró.';
       }
       s.club.socialClimate = clamp(s.club.socialClimate - 5);

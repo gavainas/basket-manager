@@ -989,7 +989,11 @@ export function rollRivalMatchday(state: GameState, rivalLegacyId: string, rng: 
   if (!present.some((p) => p.id === star.id)) {
     notes.unshift(`No vino su figura, ${worldPlayerName(star)} (${absenceReason(star, division)}).`);
   }
-  if (present.length <= 6) notes.push(`Llegan cortos: ${present.length} jugadores en la planilla.`);
+  // Es el rival el que llega corto: sin el sujeto, la nota se leía como nuestra.
+  if (present.length <= 6) {
+    const rivalName = world.clubs.find((c) => c.id === team.clubId)?.name ?? 'El rival';
+    notes.push(`${rivalName} llega corto: ${present.length} jugadores en su planilla.`);
+  }
   const interiorGuest = present.find((p) => p.availability.distanceKm > 50 && p.level >= star.level - 6);
   if (interiorGuest) {
     notes.push(`${worldPlayerName(interiorGuest)} justo está en la ciudad y refuerza al rival.`);

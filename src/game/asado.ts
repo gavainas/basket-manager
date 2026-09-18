@@ -5,7 +5,7 @@
 import { BALANCE, clamp } from './balance';
 import { recordAsado } from './conduct';
 import { affinity, pairKey, FRIEND_THRESHOLD } from './relations';
-import { logPlayerEvent } from './timeline';
+import { fechaLabel, logPlayerEvent } from './timeline';
 import { pickVoicedRng, type VoicePools } from './voices';
 import type { AsadoPlan, AsadoReport, AsadoRsvp, AsadoTier, GameState, Player } from './types';
 import type { Rng } from './rng';
@@ -234,7 +234,7 @@ export function resolveAsado(s: GameState, rng: Rng): AsadoReport {
         logPlayerEvent(p, s.seasonNumber, s.week, 'social', `Estuvo en el asadazo de la semana ${s.week}: mesa llena y sobremesa larga.`);
       }
       if (rng.chance(0.35)) {
-        s.memorableMoments.push(`Semana ${s.week}: el asado con ${attended.length} en la mesa que se va a contar por años.`);
+        s.memorableMoments.push(`${fechaLabel(s)}: el asado con ${attended.length} en la mesa que se va a contar por años.`);
         highlights.push('Hubo anécdota grande: de las que se cuentan por años.');
       }
       s.news.unshift({ week: s.week, text: `Asadazo del plantel: ${attended.length} en la mesa. El grupo está más unido que nunca.`, tone: 'good' });

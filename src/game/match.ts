@@ -8,7 +8,7 @@ import { leagueNewsForWeek, refereeOfWeek, rivalryWith, settleRivalryAfterMatch,
 import { bumpGrievance, sootheGrievance } from './mood';
 import { fallbackNote, quarterFlavor, rollRefIncident } from './narrative';
 import { computeRating, type PlayerRating } from './rating';
-import { logClubEvent, logPlayerEvent } from './timeline';
+import { fechaLabel, logClubEvent, logPlayerEvent } from './timeline';
 import { rollRivalMatchday, USER_TEAM_ID } from './world';
 import type {
   AttackTactic,
@@ -355,8 +355,28 @@ function lockerRoomNotes(
   return notes.slice(0, 2);
 }
 
+/** Candidato a momento memorable de un partido: se guarda el más grande, no todos. */
+interface MatchMoment {
+  peso: number;
+  texto: string;
+}
+
+/**
+ * Un partido deja a lo sumo UN momento memorable: el más grande. Antes una
+ * final ganada en la hora, de batacazo y contra el rival de la espina dejaba
+ * tres ("la ganamos en la hora", "batacazo histórico", "nos sacamos la
+ * espina"), y la evaluación de la temporada —25 puntos por momento— los
+ * contaba como tres historias distintas: un solo partido la ponía en
+ * "Excelente". La historia es una: la que más pesa.
+ */
+function keepBestMoment(s: GameState, candidatos: MatchMoment[]): void {
+  if (candidatos.length === 0) return;
+  const mejor = candidatos.reduce((a, b) => (b.peso > a.peso ? b : a));
+  s.memorableMoments.push(mejor.texto);
+}
+
 /** Tabla, partidos de los demás rivales, historial y noticias: común a todo final de partido. */
-function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
+function concludeMatch(s: GameState, result: MatchResult, rng: Rng, momentos: MatchMoment[] = []): void {
   const rivalId = result.rivalId;
   // En playoffs (semana > fase regular) la tabla queda congelada: los cruces
   // de copa no suman a la fase regular y los resuelve el módulo de playoffs.
@@ -439,7 +459,9 @@ function concludeMatch(s: GameState, result: MatchResult, rng: Rng): void {
     tone: result.won ? 'good' : 'bad',
   });
   // La liga habla: revanchas cumplidas y lo que pasó en las otras canchas.
-  settleRivalryAfterMatch(s);
+  const espina = settleRivalryAfterMatch(s);
+  if (espina) momentos.push({ peso: 4, texto: espina });
+  keepBestMoment(s, momentos);
   // La apuesta del asado se liquida acá: el que pierde paga, sin apelación.
   const betLine = settleAsadoBet(s);
   if (betLine) result.effects.push(betLine);
@@ -1568,6 +1590,44 @@ function closeQuarter(s: GameState, live: LiveMatchState, rng: Rng): void {
   }
 }
 
+/** Cómo se anuncia cada pizarra nuestra cuando cambia (la nota abre con 📋 y cae en la pelota muerta). */
+const PIZARRA_DEFENSA: Record<DefenseTactic, string> = {
+  zona: 'nos metemos en zona',
+  hombre: 'pasamos a marcar hombre',
+  presion: 'salimos a presionar',
+};
+const PIZARRA_ATAQUE: Record<AttackTactic, string> = {
+  equipo: 'la movemos entre todos',
+  estrella: 'todo pasa por {n}',
+  correr: 'a correr',
+};
+
+/**
+ * La nota de la pizarra: qué cambiaste respecto de lo que se jugó en el tramo
+ * anterior (o en el cuarto anterior, si este recién arranca). Sin cambio no hay
+ * nota; en el primer tramo del partido tampoco (la pizarra inicial se ve en la
+ * cabecera del cuarto). Devuelve una sola frase aunque cambien las dos cosas.
+ */
+export function notaDePizarra(s: GameState, live: LiveMatchState, qIndex: number, k: number): string | null {
+  const q = live.enCurso;
+  // El tramo anterior; al arrancar un cuarto, el último tramo del cuarto
+  // anterior (la pizarra del cuarto es la de su arranque y pudo cambiar
+  // adentro), y si no tiene tramos (saves viejos), la del cuarto.
+  const prevQ = k === 0 && qIndex > 0 ? live.quarters[qIndex - 1] : undefined;
+  const prevTramo = k > 0 ? q?.tramos?.[k - 1] : prevQ?.tramos?.[prevQ.tramos.length - 1];
+  const prevDef = prevTramo?.defense ?? prevQ?.defense;
+  const prevAtk = prevTramo?.attack ?? prevQ?.attack;
+  const partes: string[] = [];
+  if (prevDef && prevDef !== live.defense) partes.push(PIZARRA_DEFENSA[live.defense]);
+  if (prevAtk && prevAtk !== live.attack) {
+    const star = s.players.find((p) => p.id === live.starId);
+    partes.push(PIZARRA_ATAQUE[live.attack].replace('{n}', star ? star.name : 'la referencia'));
+  }
+  if (partes.length === 0) return null;
+  const frase = partes.join(' y ');
+  return `📋 Pizarra: ${frase}.`;
+}
+
 /**
  * Un tramo del cuarto (sep 2026: el motor por tramos). Dos minutos de juego:
  * la pelota muerta de antes trae los cambios y los minutos pedidos, la fuerza
@@ -1647,6 +1707,18 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
         : `🟥 ${p.name} hizo la quinta falta: afuera. ${sub ? `Entra ${sub.name}.` : 'No queda recambio: seguimos con cuatro.'}`;
     tramoNotes.push(n);
     ctx.notes.unshift(n);
+  }
+
+  // Tu pizarra: si cambiaste la defensa o el ataque desde el tramo anterior
+  // (o desde el cuarto anterior, si es el arranque), el relato lo dice en la
+  // pelota muerta. El rival avisaba sus cambios y vos no: tocabas "Presión" y
+  // nada confirmaba que había entrado.
+  const pizarra = notaDePizarra(s, live, qIndex, k);
+  if (pizarra) {
+    // Al arrancar el cuarto va primera entre las notas del cuarto (que el
+    // informe recorta a cinco): es tu decisión, no color.
+    if (k === 0) ctx.notes.unshift(pizarra);
+    else tramoNotes.push(pizarra);
   }
 
   // El rival decide cómo defender este tramo (sin mirar lo nuestro).
@@ -1779,6 +1851,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
     presentation: { before, after: { minutes: { ...live.minutes }, playerFresh: { ...live.playerFresh }, rivalFreshness: live.rivalFreshness } },
     for: ourT, against: rivalT, box: tPts, onCourt: courtIds,
     notes: tramoNotes.length > 0 ? tramoNotes : undefined, rivalDefense: defRival,
+    defense: live.defense, attack: live.attack,
   });
 
   if (k + 1 >= K) closeQuarter(s, live, rng);
@@ -2006,13 +2079,16 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   else if (margin > 15) s.club.socialClimate = clamp(s.club.socialClimate - 4);
 
   // Confianza y memoria de la épica (los np ya están asignados a s.players).
+  // Los momentos del partido se juntan acá y al cierre queda uno solo, el que
+  // más pesa (ver keepBestMoment).
   const byIdNow = (id: string) => s.players.find((p) => p.id === id);
+  const momentos: MatchMoment[] = [];
   if (clutch && won) {
     for (const id of live.onCourt) {
       const p = byIdNow(id);
       if (p) p.confidence = clamp(p.confidence + B.clutchConfidence);
     }
-    if (rng.chance(0.4)) s.memorableMoments.push(`Semana ${s.week}: la ganamos en la hora contra ${rival.name} (${scoreFor}-${scoreAgainst}).`);
+    if (rng.chance(0.4)) momentos.push({ peso: 2, texto: `${fechaLabel(s)}:la ganamos en la hora contra ${rival.name} (${scoreFor}-${scoreAgainst}).` });
   }
   if (clutch && !won) {
     for (const x of played) {
@@ -2025,7 +2101,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       const p = byIdNow(x.p.id);
       if (p) p.confidence = clamp(p.confidence + 3);
     }
-    s.memorableMoments.push(`Semana ${s.week}: de ${maxDeficit} abajo a ganarle a ${rival.name}. Remontada para contar.`);
+    momentos.push({ peso: 4, texto: `${fechaLabel(s)}:de ${maxDeficit} abajo a ganarle a ${rival.name}. Remontada para contar.` });
     s.news.unshift({ week: s.week, text: `Remontada épica ante ${rival.name}: estuvimos ${maxDeficit} abajo y la dimos vuelta.`, tone: 'good' });
   }
   if (!won && margin >= B.blowoutMargin) {
@@ -2037,7 +2113,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   if (shortHanded) {
     const n = live.squad.length;
     if (won) {
-      s.memorableMoments.push(`Semana ${s.week}: ganamos siendo ${n}. Los que estuvieron, estuvieron.`);
+      momentos.push({ peso: 3, texto: `${fechaLabel(s)}:ganamos siendo ${n}. Los que estuvieron, estuvieron.` });
       s.news.unshift({ week: s.week, text: `Gesta con lo justo: le ganamos a ${rival.name} siendo ${n}. El barrio todavía lo comenta.`, tone: 'good' });
       logClubEvent(s, 'partido', `Gesta: victoria ante ${rival.name} con solo ${n} jugadores.`, Math.min(s.week, s.seasonLength));
       for (const x of played) {
@@ -2160,13 +2236,14 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       extraReasons.push({ weight: 11, text: 'Las caras largas del asado fallido entraron a la cancha con el equipo.', sign: 'contra' });
   }
 
+  const porPuntos = margin === 1 ? 'por 1 punto' : `por ${margin} puntos`;
   const summary = won
     ? margin > 15
-      ? `Victoria amplia ante ${rival.name}, por ${margin} puntos.`
-      : `Triunfo contra ${rival.name} por ${margin} puntos.`
+      ? `Victoria amplia ante ${rival.name}, ${porPuntos}.`
+      : `Triunfo contra ${rival.name} ${porPuntos}.`
     : margin > 15
-      ? `Derrota amplia contra ${rival.name}, por ${margin} puntos.`
-      : `Derrota ante ${rival.name}, por ${margin} puntos.`;
+      ? `Derrota amplia contra ${rival.name}, ${porPuntos}.`
+      : `Derrota ante ${rival.name}, ${porPuntos}.`;
 
   // El relato del informe sale de lo que realmente pasó cuarto a cuarto
   // (sin repetir la misma observación de cuartos consecutivos).
@@ -2255,15 +2332,15 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   };
 
   if (upset) {
-    s.memorableMoments.push(`Semana ${s.week}: batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);
+    momentos.push({ peso: 5, texto: `${fechaLabel(s)}:batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).` });
     logClubEvent(s, 'partido', `Batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);
   }
   if (won && margin >= 25) {
-    s.memorableMoments.push(`Semana ${s.week}: paliza inolvidable a ${rival.name} por ${margin} puntos.`);
+    momentos.push({ peso: 1, texto: `${fechaLabel(s)}:paliza inolvidable a ${rival.name} por ${margin} puntos.` });
     logClubEvent(s, 'partido', `Paliza inolvidable a ${rival.name} por ${margin} puntos.`);
   }
 
-  concludeMatch(s, result, rng);
+  concludeMatch(s, result, rng, momentos);
   return s;
 }
 

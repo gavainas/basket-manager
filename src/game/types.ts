@@ -351,6 +351,9 @@ export interface LiveTramo {
   notes?: string[];
   /** Cómo defendió el rival este tramo (sep 2026: la defensa del rival cambia durante el partido). */
   rivalDefense?: DefenseTactic;
+  /** Con qué pizarra jugamos este tramo: así la próxima pelota muerta sabe si cambiaste algo. */
+  defense?: DefenseTactic;
+  attack?: AttackTactic;
 }
 
 /**

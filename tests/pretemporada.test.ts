@@ -3,6 +3,7 @@ import { BALANCE } from '../src/game/balance';
 import { activePlayers } from '../src/game/match';
 import { computeSeasonEvaluation } from '../src/game/evaluation';
 import { confirmedPlayers, createPreseasonNewGame, inscriptionOffer } from '../src/game/preseason';
+import { PRESEASON_EVENTS } from '../src/game/preseasonEvents';
 import type { GameState } from '../src/game/types';
 import { jugarTemporada, partidaNueva, paso } from './jugar';
 
@@ -87,6 +88,67 @@ describe('la pretemporada de una partida nueva', () => {
     expect(jugando.divisionId).toBe(actual.divisionId);
     expect(jugando.club.money).toBeLessThan(cajaAntes);
     expect(confirmedPlayers(s).length).toBeGreaterThanOrEqual(BALANCE.preseason.minPlayers);
+  });
+});
+
+describe('la tesorera mira la ficha de verdad', () => {
+  const evento = PRESEASON_EVENTS.find((e) => e.id === 'ps_rifa_urgente')!;
+  const base = paso(null as unknown as GameState, { type: 'LOAD', state: createPreseasonNewGame(5) });
+  const actual = inscriptionOffer(base).find((o) => o.isCurrent)!;
+  const conCaja = (money: number, week = base.preseason!.totalWeeks - 1): GameState => {
+    const s: GameState = structuredClone(base);
+    s.club.money = money;
+    s.preseason!.week = week;
+    s.preseason!.chosenDivisionId = actual.divisionId;
+    return s;
+  };
+
+  it('no avisa que "la caja no llega" cuando la caja cubre la ficha y el mantenimiento que queda', () => {
+    // Una semana antes del cierre queda un mantenimiento por pagar.
+    const sobra = conCaja(actual.fee + BALANCE.preseason.weeklyUpkeep + 10);
+    expect(evento.canFire(sobra)).toBe(false);
+  });
+
+  it('avisa cuando falta, y dice cuánto cuesta la ficha de la liga elegida', () => {
+    const corta = conCaja(actual.fee - 50);
+    expect(evento.canFire(corta)).toBe(true);
+    expect(evento.text(corta, [])).toContain(`hay $${actual.fee - 50} y la inscripción cuesta $${actual.fee}`);
+    // Cubre la ficha pero no el mantenimiento que queda: lo dice con las dos cifras.
+    const justa = conCaja(actual.fee + 10);
+    expect(evento.canFire(justa)).toBe(true);
+    expect(evento.text(justa, [])).toContain(`de acá al cierre se van otros $${BALANCE.preseason.weeklyUpkeep}`);
+  });
+});
+
+describe('el cierre no se contradice con el que firmó y después se borró', () => {
+  it('no lo lista como fichaje ni le deja una promesa viva: está en "no siguieron"', () => {
+    let s = paso(null as unknown as GameState, { type: 'LOAD', state: createPreseasonNewGame(5) });
+    s = { ...s, club: { ...s.club, money: 5000 } };
+    const mp = s.preseason!.market.find((m) => m.status === 'disponible')!;
+    s = paso(s, { type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true });
+    s = paso(s, { type: 'PS_NEGOTIATE', decision: 'accept' });
+    s = paso(s, { type: 'PS_DISMISS_OUTCOME' });
+    const fichado = s.players.find((p) => !p.leftClub && p.name === mp.name)!;
+    expect(fichado).toBeDefined();
+    expect(s.preseason!.continuity[fichado.id]).toBe('confirmado');
+    // Se borra antes del cierre (el evento "Un confirmado se borró"), con una
+    // promesa hecha en la negociación.
+    const conPromesa: GameState = structuredClone(s);
+    conPromesa.preseason!.continuity[fichado.id] = 'no_respondio';
+    if (!conPromesa.promises.some((pr) => pr.playerId === fichado.id)) {
+      conPromesa.promises.push({ playerId: fichado.id, playerName: fichado.name, type: 'cuota', label: `${fichado.name}: Pagar media cuota`, season: s.seasonNumber });
+    }
+    const fin = cerrarSinJugarla(conPromesa);
+    expect(fin.phase).toBe('preseasonEnd');
+    const summary = fin.preseason!.summary!;
+    expect(summary.lost.some((e) => e.id === fichado.id)).toBe(true);
+    expect(summary.signed.some((e) => e.label === fichado.name)).toBe(false);
+    expect(summary.roster.some((e) => e.id === fichado.id)).toBe(false);
+    expect(summary.promises.some((l) => l.includes(fichado.name))).toBe(false);
+    expect(fin.promises.some((pr) => pr.playerId === fichado.id)).toBe(false);
+    // El que firmó y sigue, en cambio, es fichaje con ficha.
+    const sigue = cerrarSinJugarla(s).preseason!.summary!;
+    expect(sigue.signed.some((e) => e.id === fichado.id)).toBe(true);
   });
 });
 
