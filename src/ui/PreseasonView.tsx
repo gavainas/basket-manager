@@ -300,6 +300,30 @@ function PreseasonRecursos({ state, dispatch }: Props) {
   const opt = chosenLeague(state);
   const fee = opt ? opt.fee : BALANCE.economy.inscriptionFee;
   const isLastWeek = ps.week >= ps.totalWeeks;
+  const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
+
+  /* Cerrar la lista es irreversible y con un click se llevaba puesto lo que
+     los chips de la cabecera venían avisando: sin liga elegida (recargo y
+     mala imagen), menos del mínimo (en la Carrera, no hay temporada), la caja
+     que no cubre la ficha. Con riesgos abiertos, se pregunta con los mismos
+     porqués de los chips; sin riesgos, cierra directo. */
+  const cerrar = () => {
+    const risks = closingRisks(state);
+    if (risks.length === 0) {
+      dispatch({ type: 'PS_CLOSE' });
+      return;
+    }
+    const carrera = state.mode === 'carrera' && !!ps.libreta;
+    const sinTemporada = carrera && confirmed.length < min;
+    setConfirmReq({
+      title: sinTemporada ? 'Si cerrás así, no hay temporada' : '¿Cerrar la lista así?',
+      message: `${risks.map((r) => r.long).join(' ')} Después del cierre no se vuelve atrás.`,
+      confirmLabel: sinTemporada ? 'Cerrar igual' : 'Cerrar e inscribir igual',
+      danger: sinTemporada,
+      icon: 'alerta',
+      onConfirm: () => dispatch({ type: 'PS_CLOSE' }),
+    });
+  };
 
   return (
     <footer className="recursos">
@@ -355,12 +379,13 @@ function PreseasonRecursos({ state, dispatch }: Props) {
           </span>
           <button
             className="avanzar primary"
-            onClick={() => dispatch({ type: isLastWeek ? 'PS_CLOSE' : 'PS_ADVANCE' })}
+            onClick={() => (isLastWeek ? cerrar() : dispatch({ type: 'PS_ADVANCE' }))}
           >
             {isLastWeek ? '» Cerrar e inscribir' : `» Semana ${ps.week + 1}`}
           </button>
         </div>
       </div>
+      <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
     </footer>
   );
 }
