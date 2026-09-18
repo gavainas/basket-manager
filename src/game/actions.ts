@@ -255,10 +255,16 @@ export const ACTIONS: ActionDef[] = [
         // apretarlo todas las semanas es una forma de romper una relación.
         if (p.feeStatus === 'pendiente' && rng.chance(0.3)) bumpGrievance(s, p, 'trato');
       }
-      if (collected > 0) earn(s, `Cuotas atrasadas (${paidCount} jugadores)`, collected);
+      if (collected > 0) earn(s, `Cuotas atrasadas (${paidCount} jugador${paidCount === 1 ? '' : 'es'})`, collected);
       const grumbled = debtors.length - paidCount;
       return paidCount > 0
-        ? `Se recuperaron $${collected} de ${paidCount} deudor${paidCount > 1 ? 'es' : ''}.${grumbled > 0 ? ` ${grumbled} siguen debiendo y quedaron masticando bronca.` : ''}`
+        ? `Se recuperaron $${collected} de ${paidCount} deudor${paidCount > 1 ? 'es' : ''}.${
+            grumbled > 0
+              ? grumbled === 1
+                ? ' Uno sigue debiendo y quedó masticando bronca.'
+                : ` ${grumbled} siguen debiendo y quedaron masticando bronca.`
+              : ''
+          }`
         : 'Nadie pagó. Puras excusas, y encima algunos quedaron molestos por el apriete.';
     },
   },

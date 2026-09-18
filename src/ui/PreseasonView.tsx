@@ -180,15 +180,20 @@ function closingRisks(state: GameState): ClosingRisk[] {
       short: `Caja en rojo (${formatMoney(state.club.money)})`,
       long: `La caja está en rojo ($${state.club.money}). Si cerrás así, la comisión va a tener que tapar el agujero, y eso cuesta prestigio.`,
     });
-  if (confirmed.length < min)
+  if (confirmed.length < min) {
+    const faltan = min - confirmed.length;
+    // Con siete de ocho, "Faltan 1 jugadores" era lo más común de leer.
+    const faltanTxt = faltan === 1 ? 'Falta 1' : `Faltan ${faltan}`;
+    const faltanJug = faltan === 1 ? 'Falta 1 jugador' : `Faltan ${faltan} jugadores`;
     risks.push({
       short: carrera
-        ? `Faltan ${min - confirmed.length} de los ${min}: sin eso no hay temporada`
-        : `Faltan ${min - confirmed.length} para el mínimo de ${min}`,
+        ? `${faltanTxt} de los ${min}: sin eso no hay temporada`
+        : `${faltanTxt} para el mínimo de ${min}`,
       long: carrera
-        ? `Faltan ${min - confirmed.length} jugadores para los ${min} que pide la liga. Acá no hay jugadores de emergencia: si cerrás así, no hay temporada.`
-        : `Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`,
+        ? `${faltanJug} para los ${min} que pide la liga. Acá no hay jugadores de emergencia: si cerrás así, no hay temporada.`
+        : `${faltanJug} para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`,
     });
+  }
   if (fee > 0 && state.club.money < fee)
     risks.push(
       chosenOpt?.trusts
@@ -312,7 +317,11 @@ function PreseasonRecursos({ state, dispatch }: Props) {
           </span>
           <div className={`v ${confirmed.length >= min ? 'good' : 'bad'}`}>{confirmed.length}</div>
           <div className="s">
-            {confirmed.length >= min ? `mínimo ${min}: cubierto` : `faltan ${min - confirmed.length} para el mínimo`}
+            {confirmed.length >= min
+              ? `mínimo ${min}: cubierto`
+              : min - confirmed.length === 1
+                ? 'falta 1 para el mínimo'
+                : `faltan ${min - confirmed.length} para el mínimo`}
           </div>
         </div>
         <div className="recurso">
