@@ -1,220 +1,20 @@
 import { useContext } from 'react';
 import type { GameState, Player } from '../game/types';
 import { BALANCE } from '../game/balance';
-import { rivalryWith } from '../game/leagueLife';
-import { activePlayers, clubGamesPlayed, clubPosition, clubRecord } from '../game/match';
+import { activePlayers } from '../game/match';
 import { CAUSE_SHORT } from '../game/mood';
-import { clubByLegacyId, USER_CLUB_ID, userFixtureOfWeek } from '../game/world';
-import { ClubLink } from './ClubLink';
+import { clubByLegacyId, userFixtureOfWeek } from '../game/world';
 import { Crest } from './Crest';
-import { Icon, type IconName } from './Icon';
+import { Icon } from './Icon';
 import { Avatar } from './Avatar';
 import { OpenProfileContext } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { StyleChip } from './StyleChip';
 import { NavigateTabContext, type AppFocus, type AppTab } from './nav';
-import { watchByTile, type TileId, type WatchItem } from './watch';
-import { avgMotivation, formatDateLong, formatMoney, rivalDifficulty, weekLabel } from './helpers';
-
-/**
- * El inicio: un menú, no un tablero.
- *
- * La referencia que eligió Gabi (ago 2026) es un panel de club con cuatro
- * bloques de accesos, el escudo y el partido de la semana en el medio, y el
- * plantel entero abajo. Lo importante no es que sea más lindo: es que la
- * primera pantalla vuelve a ser una *decisión* ("¿a dónde entro?") en vez de un
- * informe que se lee y se abandona.
- *
- * Por eso "Qué mirar hoy" dejó de ser una lista acá: cada urgencia se cuelga del
- * tile que la resuelve (ver watch.ts). El menú se enciende solo y entrar al menú
- * es leer el aviso.
- */
-
-interface Tile {
-  id: TileId;
-  label: string;
-  icon: IconName;
-  tab: AppTab;
-  focus?: AppFocus;
-  /** Lo que dice el tile cuando no hay nada urgente que contar. */
-  hint: string;
-}
-
-interface Block {
-  title: string;
-  sec: string;
-  icon: IconName;
-  tiles: Tile[];
-}
-
-function blocks(state: GameState): Block[] {
-  const phase = state.phase;
-  const active = activePlayers(state.players);
-  const alDia = active.filter((p) => p.weeksUnpaid === 0).length;
-
-  /* El orden de esta lista ES el orden de lectura del inicio: los dos primeros
-     van en la columna izquierda y los dos últimos en la derecha (ver `.hub-col`
-     más abajo). A la izquierda quedan las dos cosas que se tocan todas las
-     semanas —lo que hay que hacer y quiénes lo hacen— y a la derecha las de
-     consulta. */
-  return [
-    {
-      title: 'La semana',
-      sec: 'sec-partidos',
-      icon: 'semana',
-      tiles: [
-        {
-          id: 'lista',
-          label: 'Pasar lista',
-          icon: 'inscripcion',
-          tab: 'semana',
-          hint:
-            phase === 'planning'
-              ? 'Primero las decisiones de la semana'
-              : phase === 'callUp'
-                ? 'Ahora: mirá quién confirmó'
-                : 'Lista cerrada',
-        },
-        {
-          id: 'quinteto',
-          label: 'El quinteto',
-          icon: 'cancha',
-          tab: 'semana',
-          hint:
-            phase === 'lineup'
-              ? 'Ahora: armá la pizarra'
-              : phase === 'match' || phase === 'matchResult'
-                ? 'Ya está en cancha'
-                : 'Después de pasar lista',
-        },
-        {
-          id: 'partido',
-          label: 'El partido',
-          icon: 'liga',
-          tab: 'semana',
-          hint:
-            phase === 'match'
-              ? state.live?.finished
-                ? 'Terminó: mirá el informe'
-                : 'Ahora: se juega'
-              : phase === 'matchResult'
-                ? 'Mirá cómo quedó'
-                : 'Al final de la semana',
-        },
-      ],
-    },
-    {
-      title: 'El plantel',
-      sec: 'sec-plantel',
-      icon: 'plantel',
-      tiles: [
-        { id: 'plantilla', label: 'Plantilla', icon: 'plantel', tab: 'plantilla', hint: `${active.length} en el plantel` },
-        {
-          id: 'vestuario',
-          label: 'Vestuario',
-          icon: 'vestuario',
-          tab: 'plantilla',
-          focus: 'vestuario',
-          hint: 'Cómo está el grupo por dentro',
-        },
-        {
-          id: 'cuerpo',
-          label: 'Cuerpo técnico',
-          icon: 'destacado',
-          tab: 'plantilla',
-          focus: 'cuerpo-tecnico',
-          hint: state.coach ? state.coach.name : 'Sin entrenador: dirigís vos',
-        },
-      ],
-    },
-    {
-      title: 'La liga',
-      sec: 'sec-partidos',
-      icon: 'liga',
-      tiles: [
-        {
-          id: 'tabla',
-          label: 'Tabla',
-          icon: 'liga',
-          tab: 'liga',
-          hint:
-            clubGamesPlayed(state) === 0
-              ? `${state.standings.length} equipos · sin fechas jugadas`
-              : `Vas ${clubPosition(state)}° de ${state.standings.length}`,
-        },
-        { id: 'calendario', label: 'Calendario', icon: 'agenda', tab: 'agenda', hint: 'Fechas, canchas y horarios' },
-        { id: 'rankings', label: 'Rankings', icon: 'rankings', tab: 'rankings', hint: 'Quién anota y quién rinde' },
-      ],
-    },
-    {
-      title: 'La caja',
-      sec: 'sec-finanzas',
-      icon: 'finanzas',
-      tiles: [
-        {
-          id: 'cuotas',
-          label: 'Cuotas',
-          icon: 'plata',
-          tab: 'finanzas',
-          focus: 'cuotas',
-          hint: `${alDia} de ${active.length} al día`,
-        },
-        { id: 'gastos', label: 'Gastos', icon: 'caja', tab: 'finanzas', focus: 'gastos', hint: 'Qué entra y qué sale' },
-        {
-          id: 'objetivos',
-          label: 'La comisión',
-          icon: 'inscripcion',
-          tab: 'club',
-          focus: 'objetivos',
-          hint: `${state.objectives.length} objetivos de temporada`,
-        },
-      ],
-    },
-  ];
-}
-
-/** El texto que el tile pone al frente: la urgencia le gana al dato de rutina. */
-function tileNote(tile: Tile, items: WatchItem[] | undefined): { text: string; cls: string } {
-  if (!items || items.length === 0) return { text: tile.hint, cls: '' };
-  const extra = items.length > 1 ? ` (+${items.length - 1})` : '';
-  return { text: items[0].text + extra, cls: items[0].cls };
-}
-
-function MenuBlock({ block, watch }: { block: Block; watch: Map<TileId, WatchItem[]> }) {
-  const navigate = useContext(NavigateTabContext);
-
-  return (
-    <section className={`hub-block ${block.sec}`}>
-      <h3 className="hub-block-title">
-        <Icon name={block.icon} size={17} />
-        {block.title}
-      </h3>
-      <div className="hub-tiles">
-        {block.tiles.map((t) => {
-          const items = watch.get(t.id);
-          const note = tileNote(t, items);
-          return (
-            <button
-              key={t.id}
-              className={`hub-tile ${note.cls}`}
-              onClick={() => navigate(t.tab, t.focus)}
-              title={note.text}
-            >
-              <span className="hub-tile-ico">
-                <Icon name={t.icon} size={22} />
-              </span>
-              <span className="hub-tile-body">
-                <span className="hub-tile-label">{t.label}</span>
-                <span className="hub-tile-note">{note.text}</span>
-              </span>
-              {note.cls && <span className={`hub-tile-dot ${note.cls}`} />}
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
+import { watchItems, type TileId } from './watch';
+import { formatDateLong, rivalDifficulty, weekLabel } from './helpers';
+import { MatchClockContext, visibleScore } from './matchPresentation';
+import './Hub.css';
 
 /** Los tres semáforos de la tira: ánimo, cuota y físico. */
 function playerSignals(p: Player): { cls: string; label: string }[] {
@@ -302,153 +102,112 @@ function PlantelStrip({ state }: { state: GameState }) {
   );
 }
 
-const PHASE_ACTION: Record<string, string> = {
-  planning: 'Decidir la semana',
-  callUp: 'Pasar lista',
-  lineup: 'Armar el quinteto',
-  match: 'Dirigir el partido',
-  matchResult: 'Ver el resultado',
+/** La próxima fecha organiza el tablero; consultar nunca avanza la simulación. */
+export function hubReadiness(state: GameState) {
+  const players = activePlayers(state.players);
+  const available = players.filter(p => p.status !== 'lesionado' && !(p.suspendedWeeks && p.suspendedWeeks > 0));
+  const called = ['callUp', 'lineup', 'match'].includes(state.phase);
+  return {
+    available: available.length,
+    confirmed: called ? state.callUp.filter(p => p.status === 'confirmado').length : null,
+    late: called ? state.callUp.filter(p => p.status === 'confirmado' && p.lateArrival).length : 0,
+    tired: available.filter(p => p.physical <= BALANCE.callUp.exhaustedThreshold).length,
+    unavailable: players.length - available.length,
+  };
+}
+
+const ROUTES: Record<TileId, [AppTab, AppFocus?]> = {
+  lista: ['semana'], quinteto: ['semana'], partido: ['semana'],
+  tabla: ['liga'], calendario: ['agenda'], rankings: ['rankings'],
+  plantilla: ['plantilla'], vestuario: ['plantilla', 'vestuario'],
+  cuerpo: ['plantilla', 'cuerpo-tecnico'], cuotas: ['finanzas', 'cuotas'],
+  gastos: ['finanzas', 'gastos'], objetivos: ['club', 'objetivos'],
+  noticias: ['club', 'noticias'], historia: ['historia'],
+};
+const ACTIONS: Record<string, [string, string]> = {
+  planning: ['Preparar el partido', 'Decidí la semana y después confirmá quién viene.'],
+  callUp: ['Resolver la convocatoria', 'Revisá las ausencias antes de armar el quinteto.'],
+  lineup: ['Armar el quinteto', 'Elegí los cinco, el banco y el plan de juego.'],
+  match: ['Volver al partido', 'Los cambios y las decisiones se hacen desde la cancha.'],
+  matchResult: ['Ver el informe y seguir', 'Revisá lo que dejó el partido antes de avanzar.'],
 };
 
 export function Hub({ state }: { state: GameState }) {
   const navigate = useContext(NavigateTabContext);
-  const watch = watchByTile(state);
-  const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
-  const record = clubRecord(state);
-
-  // Tras el partido (matchResult) la semana aún no avanzó: el "próximo" es el que sigue.
+  const { reloj } = useContext(MatchClockContext);
+  const readiness = hubReadiness(state);
+  const warnings = watchItems(state);
   const upcomingWeek = state.phase === 'matchResult' ? state.week + 1 : state.week;
-  // En playoffs el rival de semis/final también vive en schedule (lo escribe
-  // advancePlayoffs), así que el Hub muestra ese cruce en vez de "sin partido".
-  const nextRivalId = state.schedule[upcomingWeek - 1] ?? null;
-  const nextRival = nextRivalId ? state.rivals.find((r) => r.id === nextRivalId)! : null;
-  const rivalClub = nextRivalId ? clubByLegacyId(state.world, nextRivalId) : undefined;
+  const rival = state.rivals.find(r => r.id === state.schedule[upcomingWeek - 1]);
+  const rivalClub = rival ? clubByLegacyId(state.world, rival.id) : undefined;
   const fixture = userFixtureOfWeek(state.world, upcomingWeek);
-  // "lunes 20:30 h": el día alcanza — la fecha completa vive en el calendario.
-  const dia = fixture ? formatDateLong(fixture.date).split(' ')[0] : '';
-  const cuando = fixture ? `${dia[0].toUpperCase()}${dia.slice(1)} ${fixture.time} h` : null;
-  const revancha = nextRival ? rivalryWith(state, nextRival.id) : null;
+  const venue = state.world.venues.find(v => v.id === fixture?.venueId);
+  const score = state.phase === 'match' && state.live ? visibleScore(state, state.live, reloj) : null;
+  // El resultado del encuentro en curso permanece oculto hasta salir del vivo.
+  const previous = state.phase === 'match'
+    ? [...state.history].reverse().find(m => m.week < state.week)
+    : state.lastMatch;
+  const action = ACTIONS[state.phase] ?? ['Continuar la temporada', 'Seguí con el próximo paso del club.'];
+  const warningButton = (item: typeof warnings[number], i: number) => (
+    <button key={`${item.tile}-${i}`} className={`hub-a-alert ${item.cls}`} onClick={() => navigate(...ROUTES[item.tile])}>
+      <span>{item.text}</span><span aria-hidden="true">→</span>
+    </button>
+  );
 
   return (
-    <div className="hub pantalla">
-      <div className="hub-grid">
-        {/* Izquierda: lo que se toca todas las semanas. Acá vivía el retrato del
-            referente, sacado por pedido de Gabi (sep 2026): se llevaba la mejor
-            columna de la pantalla y ninguna acción del juego lo cambiaba, así
-            que no era ni información ni decisión. */}
-        <div className="hub-bloques">
-          {blocks(state)
-            .slice(0, 2)
-            .map((b) => (
-              <MenuBlock key={b.title} block={b} watch={watch} />
-            ))}
-        </div>
-
-        <div className="hub-centro">
-          <div className="hub-escudo">
-            {userClub && (
-              <Crest
-                seed={userClub.id}
-                name={userClub.name}
-                colors={userClub.colors}
-                founded={userClub.founded}
-                size={132}
-              />
-            )}
-          </div>
-          <h2 className="hub-club">
-            <ClubLink id={USER_CLUB_ID}>{state.club.name}</ClubLink>
-          </h2>
-          <div className="hub-semana">
-            {state.week <= state.seasonLength
-              ? `Semana ${Math.min(state.week, state.seasonLength)} de ${state.seasonLength}`
-              : weekLabel(state.week, state.seasonLength)}
-          </div>
-
-          <div className="hub-rival">
-            {nextRival ? (
-              <>
-                <div className="hub-rival-linea">
-                  {rivalClub && (
-                    <Crest
-                      seed={rivalClub.id}
-                      name={rivalClub.name}
-                      colors={rivalClub.colors}
-                      founded={rivalClub.founded}
-                      size={30}
-                    />
-                  )}
-                  <span className="hub-rival-nombre">
-                    vs <RivalLink id={nextRival.id}>{nextRival.name}</RivalLink>
-                  </span>
-                </div>
-                {cuando && <div className="hub-rival-cuando">{cuando}</div>}
-                <div className="hub-rival-chips">
-                  <span className={`chip ${rivalDifficulty(nextRival).cls}`}>{rivalDifficulty(nextRival).label}</span>
-                  <StyleChip style={nextRival.style} />
-                  {revancha && <span className="chip bad">Revancha</span>}
-                </div>
-              </>
-            ) : (
-              <div className="hub-rival-cuando">Sin partido esta semana</div>
-            )}
-          </div>
-
-          <div className="hub-caja">
-            <span className="hub-caja-k">Caja del club</span>
-            <span className={`hub-caja-v ${state.club.money < 0 ? 'bad' : ''}`}>{formatMoney(state.club.money)}</span>
-          </div>
-
-          {/* Sin fechas jugadas no hay posición: la tabla ordena diez ceros y
-              el club salía "1°" antes de tocar una pelota. El récord cuenta el
-              partido de hoy apenas termina (ver clubRecord). */}
-          <div className="hub-cifras">
-            <div>
-              <span className="k">Posición</span>
-              <span className="v">{clubGamesPlayed(state) === 0 ? '—' : `${clubPosition(state)}°`}</span>
+    <div className="hub-a pantalla">
+      <header className="hub-a-heading">
+        <div><span className="hub-a-eyebrow">El tablero del club</span><h2>{state.club.name}</h2></div>
+        <span>{weekLabel(state.week, state.seasonLength)} · Temporada {state.seasonNumber}</span>
+      </header>
+      <div className="hub-a-layout">
+        {/* Con el partido en curso la card suma el marcador grande: la clase deja
+            que el CSS guarde la cancha y los chips en ventanas bajas (Hub.css). */}
+        <section className={`hub-a-match${score ? ' en-juego' : ''}`} aria-label="El partido">
+          <div className="hub-a-match-body">
+            <div className="hub-a-match-info">
+              <span className="hub-a-eyebrow">{score ? 'Partido en curso' : 'La próxima fecha'}</span>
+              {rival ? <>
+                {rivalClub && <Crest seed={rivalClub.id} name={rivalClub.name} colors={rivalClub.colors} founded={rivalClub.founded} size={70} />}
+                <h3><span className="hub-a-versus">vs</span> <RivalLink id={rival.id}>{rival.name}</RivalLink></h3>
+                {score && <strong className="hub-a-score">{score.f} – {score.a}</strong>}
+                <p>{fixture ? `${formatDateLong(fixture.date)} · ${fixture.time} h` : 'Fecha y horario por confirmar'}</p>
+                <p className="muted">{venue ? `${venue.name} · ${venue.neighborhood}` : 'Cancha por confirmar'}</p>
+                <div className="hub-a-chips"><span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span><StyleChip style={rival.style} /></div>
+              </> : <><h3>{state.phase === 'matchResult' ? 'Esperando el próximo cruce' : 'Sin partido programado'}</h3><p>{state.phase === 'matchResult' ? 'Cerrá el informe para conocer el siguiente paso de la temporada.' : 'Consultá el calendario y continuá la temporada.'}</p></>}
+              <button className="hub-a-link" onClick={() => navigate('agenda')}>Ver calendario →</button>
             </div>
-            <div>
-              <span className="k">Récord</span>
-              <span className="v">
-                {record.wins}-{record.losses}
-              </span>
-            </div>
-            <div>
-              <span className="k">Moral</span>
-              <span className="v">{avgMotivation(state.players)}</span>
-            </div>
+            <div className="hub-a-scene" aria-hidden="true" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}arte/cab-vestuario.webp)` }} />
           </div>
-
-          <button className="hub-avanzar" onClick={() => navigate('semana')}>
-            » {PHASE_ACTION[state.phase] ?? 'Avanzar semana'}
-          </button>
-
-          <div className="hub-secundarios">
-            <button onClick={() => navigate('club', 'noticias')}>
-              <Icon name="chat" size={15} /> Noticias
-            </button>
-            <button onClick={() => navigate('club', 'grupo')}>
-              <Icon name="tablero" size={15} /> El club
-            </button>
-            <button onClick={() => navigate('historia')}>
-              <Icon name="historia" size={15} /> Historia
-            </button>
-          </div>
-        </div>
-
-        {/* Derecha: lo que se consulta. Los cuatro bloques siguen siendo el
-            corazón del Tablero —son los que se encienden solos con los avisos
-            de watch.ts—, pero ahora reparten dos y dos alrededor del club. */}
-        <div className="hub-bloques">
-          {blocks(state)
-            .slice(2)
-            .map((b) => (
-              <MenuBlock key={b.title} block={b} watch={watch} />
-            ))}
-        </div>
+          <div className="hub-a-prepare"><div><strong>{score ? 'El equipo te espera en la cancha' : 'Llegar bien también se juega'}</strong><p>{action[1]}</p></div><button className="primary" onClick={() => navigate('semana')}>{action[0]} →</button></div>
+        </section>
+        <aside className="hub-a-side">
+          <section className="hub-a-card">
+            <h3 className="hub-a-band">¿Cómo llegamos?</h3>
+            <div className="hub-a-readiness">
+              <button onClick={() => navigate(readiness.confirmed === null ? 'plantilla' : 'semana')}><strong>{readiness.confirmed ?? readiness.available}</strong><span>{readiness.confirmed === null ? 'disponibles · sin confirmar' : 'confirmados'}</span></button>
+              <button onClick={() => navigate('plantilla')}><strong>{readiness.unavailable}</strong><span>de baja</span></button>
+              <button onClick={() => navigate('plantilla')}><strong>{readiness.tired}</strong><span>fundidos</span></button>
+            </div>
+            {readiness.late > 0 && <p className="hub-a-note">{readiness.late} de los confirmados llegan para el segundo tiempo.</p>}
+            {state.phase === 'matchResult' && <p className="hub-a-note">Estado al cierre del partido; la próxima convocatoria todavía no está hecha.</p>}
+            <div className="hub-a-alerts">{warnings.length ? warnings.slice(0, 2).map(warningButton) : <p className="hub-a-note">Sin avisos pendientes. Revisá el plantel y prepará el encuentro.</p>}
+              {warnings.length > 2 && <details><summary>Ver otros {warnings.length - 2} avisos</summary>{warnings.slice(2).map(warningButton)}</details>}
+            </div>
+            <button className="hub-a-link" onClick={() => navigate('plantilla', 'vestuario')}>Entrar al vestuario →</button>
+          </section>
+          <section className="hub-a-card hub-a-previous">
+            <h3 className="hub-a-band">Lo que dejó el último partido</h3>
+            {previous ? <div className="hub-a-result"><span>Semana {previous.week} · vs {previous.rivalName}</span><strong className="hub-a-score">{previous.scoreFor} – {previous.scoreAgainst}</strong><p>{previous.summary}</p>{previous.mvpName && <p className="muted">Figura: {previous.mvpName}</p>}
+              <details><summary>Leer informe del partido</summary><ul>{previous.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>{previous.effects.map((e, i) => <p key={i}>{e}</p>)}{previous.lockerRoom.map((e, i) => <p key={i}>{e}</p>)}</details>
+            </div> : <div className="hub-a-result"><strong>La historia empieza en la cancha</strong><p>Después del primer partido vas a ver el resultado, la figura y lo que dejó en el equipo.</p></div>}
+          </section>
+        </aside>
       </div>
-
       <PlantelStrip state={state} />
+      <nav className="hub-a-shortcuts" aria-label="Consultas del club">
+        <button onClick={() => navigate('plantilla', 'cuerpo-tecnico')}>Cuerpo técnico</button><button onClick={() => navigate('liga')}>Tabla</button><button onClick={() => navigate('rankings')}>Rankings</button><button onClick={() => navigate('finanzas', 'cuotas')}>Cuotas</button><button onClick={() => navigate('finanzas', 'gastos')}>Gastos</button><button onClick={() => navigate('club', 'objetivos')}>La comisión</button><button onClick={() => navigate('club', 'noticias')}>Noticias</button>
+      </nav>
     </div>
   );
 }

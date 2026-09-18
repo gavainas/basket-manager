@@ -498,6 +498,14 @@ Formato sugerido:
   *(Hecho el mismo día: `src/game/relato.ts`, ver CHANGELOG.)* Siguen sin dibujarse
   presión en tres niveles, ritmo, marca especial y energía individual del rival.
 
+### 2026-09-15 — Tablero A: el partido ordena la semana
+
+- **Elegida por Gabi: A · La próxima fecha**, de las [dos propuestas de tablero](propuestas/README.md). Confirmación explícita: «perfecto. tomemos A y documento la decision en el repo».
+- Motivo: el estrés de manejar un equipo es llegar bien al partido. El próximo encuentro es el centro; la gestión semanal se entiende por cómo prepara al equipo y por las consecuencias que deja en el club.
+- Criterios: rival, día, horario y cancha al frente; «¿Cómo llegamos?» para disponibilidad, físico y vestuario; distinguir disponible de confirmado; usar «Preparar el partido» para las gestiones. El informe conecta la preparación con el resultado y la próxima fecha.
+- B queda archivada como exploración. La recomendación inicial de B queda superada por esta elección; no se aprueba una mezcla A/B.
+- Alcance: elección de composición y criterio de diseño. En esta tanda se documenta; la implementación del tablero y los ajustes de la lámina siguen pendientes. Se conserva el arte, la paleta y la tipografía aprobados; no se reabren las puertas de personajes ni se autoriza producción masiva de assets.
+
 ## Estado de aprobación actual
 
 > **Corregido en sep 2026.** Este bloque contradecía al resto del documento y a lo que hay
@@ -508,6 +516,7 @@ Formato sugerido:
 > tamaño). Un documento que gobierna el arte no puede tener dos verdades: era la causa
 > concreta de que el proceso se sintiera desordenado.
 
+- **Tablero: A elegida** (2026-09-15), con el partido como eje de la semana. Implementación pendiente; ver [decisión y criterios](propuestas/README.md).
 - **UI: aprobada** (Puerta 2, ago 2026). Papel claro, Oswald, bandas de sección, iconos de
   línea, naranja reservado a la acción. El **marco fijo** de sep 2026 no la reabre: es
   layout dentro de esa dirección (ver [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md)).

@@ -112,6 +112,11 @@ export function canEnterCourt(live: LiveMatchState, playerId: string): boolean {
   return live.quarters.length >= 2 || !(live.lateIds ?? []).includes(playerId);
 }
 
+/** Elegibilidad automática: una reserva del manager no la levanta el DT. */
+function canAutoEnter(live: LiveMatchState, id: string): boolean {
+  return canEnterCourt(live, id) && !(live.heldOut ?? []).includes(id);
+}
+
 /**
  * Sale de la cancha (lesión, expulsión, quinta falta, o porque lo sacaste) y
  * entra el recambio con más piernas que pueda entrar; sin banco, quedan
@@ -119,7 +124,7 @@ export function canEnterCourt(live: LiveMatchState, playerId: string): boolean {
  */
 export function reemplazar(s: GameState, live: LiveMatchState, outId: string): Player | undefined {
   const sub = live.squad
-    .filter((id) => !live.onCourt.includes(id) && id !== outId && canEnterCourt(live, id))
+    .filter((id) => !live.onCourt.includes(id) && id !== outId && canAutoEnter(live, id))
     .map((id) => s.players.find((x) => x.id === id)!)
     .filter((x) => !!x && isSelectable(x))
     .sort((a, b) => (live.playerFresh[b.id] ?? 70) - (live.playerFresh[a.id] ?? 70))[0];
@@ -688,6 +693,7 @@ export function substitute(state: GameState, outId: string, inId: string): GameS
       // Si la referencia elegida fue la que salió, se suelta.
       starLocked: !!live.starLocked && onCourt.includes(star.id) && star.id === live.starId,
       manualBreak: true,
+      heldOut: (live.heldOut ?? []).filter((id) => id !== inId),
       pendingSubNotes: [...live.pendingSubNotes, `Cambio: entra ${inP.name} por ${outP.name}.`],
     },
   };
@@ -764,10 +770,10 @@ export const PRESET_LABELS: Record<LineupPreset, string> = {
 };
 
 /** Los 5 del preset, elegidos entre los citados del partido. */
-function presetFive(state: GameState, live: LiveMatchState, preset: LineupPreset): string[] {
+function presetFive(state: GameState, live: LiveMatchState, preset: LineupPreset, manual = false): string[] {
   const squad = live.squad
     .map((id) => state.players.find((p) => p.id === id))
-    .filter((p): p is Player => !!p && isSelectable(p) && canEnterCourt(live, p.id));
+    .filter((p): p is Player => !!p && isSelectable(p) && (manual ? canEnterCourt(live, p.id) : canAutoEnter(live, p.id)));
   const freshOf = (id: string) => live.playerFresh[id] ?? 70;
   const originalStarters = new Set(state.starters);
 
@@ -841,8 +847,9 @@ export function applyLineupPreset(state: GameState, preset: LineupPreset): GameS
   const s: GameState = structuredClone(state);
   const live = s.live;
   if (!live || live.finished) return s;
-  const five = presetFive(s, live, preset);
+  const five = presetFive(s, live, preset, true);
   if (five.length < 5) return s;
+  live.heldOut = (live.heldOut ?? []).filter((id) => !five.includes(id));
   const changed = five.some((id) => !live.onCourt.includes(id));
   live.onCourt = five;
   live.manualBreak = true;
@@ -988,7 +995,7 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
     // pero deja a los titulares en 10-20' y suma ~40 broncas de minutos por
     // 60 temporadas en el harness: anotado en BALANCE.md como decisión.)
     const cold = live.squad
-      .filter((id) => !live.onCourt.includes(id) && (live.minutes[id] ?? 0) === 0 && canEnterCourt(live, id) && isSelectable(byId(id)))
+      .filter((id) => !live.onCourt.includes(id) && (live.minutes[id] ?? 0) === 0 && canAutoEnter(live, id) && isSelectable(byId(id)))
       .slice(0, 2);
     const cambios: string[] = [];
     for (const inId of cold) {
@@ -1028,7 +1035,7 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
     for (const outId of [...live.onCourt]) {
       if (freshOf(outId) >= tiredThreshold) continue;
       const bench = live.squad
-        .filter((id) => !live.onCourt.includes(id) && isSelectable(byId(id)) && canEnterCourt(live, id))
+        .filter((id) => !live.onCourt.includes(id) && isSelectable(byId(id)) && canAutoEnter(live, id))
         .sort((a, b) => freshOf(b) - freshOf(a));
       const freshest = bench[0];
       if (!freshest || freshOf(freshest) <= freshOf(outId) + 12) continue;
@@ -1214,7 +1221,7 @@ function fuerzas(
     atkMult = M.estrellaBase + M.estrellaHotSpan * (hot - 0.78) - M.estrellaDecay * live.estrellaQuarters;
     if (hot > 1.08) flavor = note([`${star.name} está encendido: la pide y la mete.`, `Todo pasa por ${star.name}, y hoy tiene la mano caliente.`]);
     else if (hot < 0.92)
-      flavor = note([`${star.name} no tiene la mano y el plan de dársela siempre a él hace agua.`, `Insistimos con ${star.name}, pero hoy no le cae una.`]);
+      flavor = note([`${star.name} no tiene la mano y el plan de dársela siempre a él hace agua.`, `Insistimos con ${star.name}, aunque está rindiendo por debajo de lo esperado.`]);
     else if (live.estrellaQuarters >= 2) flavor = note([`El rival ya le tomó la mano a ${star.name}: lo esperan entre dos.`]);
   } else if (live.attack === 'correr') {
     atkMult = M.correrBase + M.correrFreshSpan * (teamFresh / 100);
@@ -1227,7 +1234,7 @@ function fuerzas(
     if (notes && live.eval.chemistry01 > 0.7 && rng.chance(0.5))
       flavor = note([
         'La pelota se mueve sola: el equipo juega de memoria y de buen humor.',
-        'Tres pases de más en cada ataque, y siempre queda uno solo abajo del aro.',
+        'El equipo se entiende: la química ayuda a mover la pelota.',
         'Se nota el buen clima: el que la mueve festeja igual que el que la mete.',
       ]);
   }
@@ -1328,7 +1335,7 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
     const cand = live.squad
       .filter((id) => {
         const p = s.players.find((x) => x.id === id);
-        return !!p && isSelectable(p) && !live.onCourt.includes(id) && canEnterCourt(live, id);
+        return !!p && isSelectable(p) && !live.onCourt.includes(id) && canAutoEnter(live, id);
       })
       .sort((a, b) => (live.playerFresh[b] ?? 70) - (live.playerFresh[a] ?? 70))[0];
     if (!cand) break;
@@ -1396,8 +1403,8 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
       freshLiveNote(
         live,
         [
-          'Entramos en racha: cae un triple atrás de otro y el banco está de pie.',
-          'Se prendió el aro nuestro: minutos de no fallar ni de espaldas.',
+          'Entramos en racha: nuestro ataque encuentra un impulso.',
+          'Se prendió el aro nuestro: buen momento para sumar.',
           'Parcial nuestro a pura corrida: el gimnasio se vino abajo.',
         ],
         rng
@@ -1410,7 +1417,7 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
     notes.push(
       freshLiveNote(
         live,
-        [`A ${rival.name} se le prendió el aro: meten de todos lados.`, `Racha de ${rival.name}: tres ataques, tres canastas, y minuto pedido a tiempo.`],
+        [`A ${rival.name} se le prendió el aro: meten de todos lados.`, `Racha de ${rival.name}: levantaron el ataque.`],
         rng
       ) ?? `${rival.name} vuelve a embocar todo.`
     );
@@ -1582,6 +1589,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
   const byId = (id: string) => s.players.find((p) => p.id === id)!;
   const freshOf = (id: string) => live.playerFresh[id] ?? 70;
   const tramoNotes: string[] = [];
+  const before = { minutes: { ...live.minutes }, playerFresh: { ...live.playerFresh }, rivalFreshness: live.rivalFreshness };
 
   // La pelota muerta: los cambios hechos con el reloj corriendo entran acá.
   if (k > 0 && live.pendingSubNotes.length > 0) {
@@ -1767,7 +1775,11 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
     }
   }
 
-  q.tramos!.push({ for: ourT, against: rivalT, box: tPts, onCourt: courtIds, notes: tramoNotes.length > 0 ? tramoNotes : undefined, rivalDefense: defRival });
+  q.tramos!.push({
+    presentation: { before, after: { minutes: { ...live.minutes }, playerFresh: { ...live.playerFresh }, rivalFreshness: live.rivalFreshness } },
+    for: ourT, against: rivalT, box: tPts, onCourt: courtIds,
+    notes: tramoNotes.length > 0 ? tramoNotes : undefined, rivalDefense: defRival,
+  });
 
   if (k + 1 >= K) closeQuarter(s, live, rng);
 }
@@ -2150,11 +2162,11 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
 
   const summary = won
     ? margin > 15
-      ? `Victoria contundente ante ${rival.name}. El equipo fue superior de principio a fin.`
-      : `Triunfo trabajado contra ${rival.name}, definido en el cierre.`
+      ? `Victoria amplia ante ${rival.name}, por ${margin} puntos.`
+      : `Triunfo contra ${rival.name} por ${margin} puntos.`
     : margin > 15
-      ? `Dura derrota contra ${rival.name}. Nunca estuvimos en partido.`
-      : `Derrota ajustada ante ${rival.name}. Se escapó por detalles.`;
+      ? `Derrota amplia contra ${rival.name}, por ${margin} puntos.`
+      : `Derrota ante ${rival.name}, por ${margin} puntos.`;
 
   // El relato del informe sale de lo que realmente pasó cuarto a cuarto
   // (sin repetir la misma observación de cuartos consecutivos).
