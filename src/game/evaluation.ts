@@ -44,9 +44,13 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
 
   const oroChamp = state.playoffs?.champions.oro === 'club';
   const plataChamp = state.playoffs?.champions.plata === 'club';
-  const lostFinal = !!state.playoffs?.ties.some(
+  const finalPerdida = state.playoffs?.ties.find(
     (t) => t.round === 'final' && t.isUserMatch && t.winnerId !== undefined && t.winnerId !== 'club'
   );
+  const lostFinal = !!finalPerdida;
+  // Perder la final de la Copa de Plata (la de los que terminaron 5° a 8°) no
+  // es ser subcampeón: el 7° de 10 leía "Subcampeones: la final se escapó".
+  const lostPlataFinal = finalPerdida?.cup === 'plata';
   const cupBonus = oroChamp ? 18 : plataChamp ? 10 : lostFinal ? 5 : 0;
   const sportScore = Math.min(100, Math.round(winPct * 65 + ((10 - position) / 9) * 35) + cupBonus);
   const moneyRatio = state.club.money / Math.max(state.startingMoney, 1);
@@ -142,6 +146,9 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   } else if (plataChamp) {
     outcomeTitle = 'Campeones de la Copa de Plata';
     outcomeText = 'No era la copa grande, pero es una vuelta olímpica igual. El grupo la festejó como corresponde.';
+  } else if (lostPlataFinal) {
+    outcomeTitle = 'Finalistas de la Copa de Plata';
+    outcomeText = 'No era la copa grande y tampoco entró, pero de los que arrancaron los playoffs desde abajo, llegaron más lejos que casi todos.';
   } else if (lostFinal) {
     outcomeTitle = 'Subcampeones: la final se escapó';
     outcomeText = 'Llegar a la final ya fue un logro, pero la última pelota no quiso entrar. El año que viene es revancha.';

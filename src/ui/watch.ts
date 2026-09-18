@@ -7,6 +7,7 @@ import { activePlayers } from '../game/match';
 import type { NoteKind } from '../game/humanState';
 import { aggrieved, grievanceWarning } from '../game/mood';
 import { objectiveStatus } from '../game/objectives';
+import { buildSocialMap } from '../game/socialMap';
 
 /**
  * Qué mirar hoy, repartido por tile del inicio.
@@ -249,6 +250,20 @@ export function watchItems(state: GameState): WatchItem[] {
             ? `La comisión mira de reojo: "${atRisk[0].o.label}" viene flojo.`
             : `${atRisk.length} objetivos de la comisión vienen flojos, y al cierre se cobran.`,
         tile: 'objetivos',
+      });
+    }
+  }
+  // El roce del vestuario, ahora que juega: con el clima bajo, "Se fueron a
+  // las manos" cae sobre esos dos. El radar lo avisa antes de que estalle.
+  // Sólo en temporada y con el clima flojo, para no encender el tile siempre.
+  if (state.week <= state.seasonLength && state.club.socialClimate < 60) {
+    const roce = buildSocialMap(state).pairs.find((p) => p.kind === 'roce');
+    if (roce) {
+      items.push({
+        kind: 'social',
+        cls: 'warn',
+        text: `${roce.a.name} y ${roce.b.name} no se bancan, y con el ambiente así de bajo la cosa puede pasar a mayores.`,
+        tile: 'vestuario',
       });
     }
   }

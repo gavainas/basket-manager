@@ -89,6 +89,22 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   en cinco minutos.
 - **Registrar la maqueta del tablero como aprobación** en `ART_PIPELINE.md`, con fecha,
   alcance y qué queda fuera.
+- **El banco que cubre los puestos y el profe** (sep 2026, ver
+  [`design/BALANCE.md`](design/BALANCE.md#el-banco-sugerido-cubre-los-puestos-septiembre-2026-10ª-pasada)):
+  "Sugerir" arma el banco con un recambio por puesto y con el plan por defecto los
+  tramos con un hueco bajan de 26% a 15%, sin mover las victorias. La excepción es el
+  DT honorario con "juegan todos" (-3 de victorias, +3 de huecos, dentro del ruido pero
+  las dos para el mismo lado): un banco elegido por cobertura es un poco más flojo y él
+  lo juega entero, y cuando no lee la pizarra mete al frío sin mirar el puesto. ¿Se deja
+  así (es su estilo: "el que no lee, se lee") o el cambio a ciegas del DT también
+  prefiere el mismo puesto cuando lo tiene en el banco?
+- **"Sentar a los dos que no se bancan" como acción de la semana** (sep 2026). El mapa
+  social ya juega: la pelea cae sobre la pareja con roce y las charlas de los eventos
+  mueven lo vivido entre ellos. Lo que el manager todavía no puede hacer es ir a
+  buscarlos antes de que estalle: hoy sólo "Hablar con un jugador molesto" (uno solo, el
+  más caliente). Una acción de una gestión que siente a los dos —con la misma chance que
+  la mediación de la discusión— cerraría el círculo. Es un sistema chico pero nuevo:
+  se hace cuando lo digas.
 - Decidido: **el héroe de cuerpo entero se agrega cuando haya más arte**; el hueco que lo
   espera es la ficha del jugador.
 

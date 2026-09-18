@@ -240,3 +240,87 @@ describe('T4 · las otras broncas tienen gatillo', () => {
     }
   });
 });
+
+describe('el banco sugerido cubre los puestos (sep 2026)', () => {
+  it('con once para diez lugares, el único recambio de un puesto entra aunque sea el más flojo', async () => {
+    const { suggestRotation, suggestStarters, playerEffective } = await import('../src/game/match');
+    for (const seed of [1, 5, 9, 21]) {
+      const s = partidaNueva(seed);
+      const players = s.players.filter((p) => !p.leftClub);
+      const starters = suggestStarters(players);
+      const startersPos = new Set(players.filter((p) => starters.includes(p.id)).map((p) => p.position));
+      // El banco propuesto, con la regla: por cada puesto con recambio disponible, hay uno.
+      const bench = suggestRotation(players, starters).map((id) => players.find((p) => p.id === id)!);
+      expect(bench.length).toBeLessThanOrEqual(5);
+      expect(bench.some((p) => starters.includes(p.id))).toBe(false);
+      const disponibles = players.filter((p) => !starters.includes(p.id));
+      for (const pos of startersPos) {
+        const hayRecambio = disponibles.some((p) => p.position === pos);
+        if (hayRecambio) expect(bench.some((p) => p.position === pos)).toBe(true);
+      }
+      // Y el más flojo del plantel, si es el único de su puesto fuera del quinteto, igual entra.
+      const flojo = [...disponibles].sort((a, b) => playerEffective(a) - playerEffective(b))[0];
+      const unicoDeSuPuesto = disponibles.filter((p) => p.position === flojo.position).length === 1;
+      if (unicoDeSuPuesto) expect(bench.some((p) => p.id === flojo.id)).toBe(true);
+    }
+  });
+
+  it('un recambio por puesto primero, y los mejores después: nunca dos del mismo puesto antes de cubrir otro con recambio', async () => {
+    const { suggestRotation, suggestStarters } = await import('../src/game/match');
+    const s = partidaNueva(3);
+    const players = s.players.filter((p) => !p.leftClub);
+    // Un pívot suplente muy flojo y dos escoltas buenos fuera del quinteto.
+    const starters = suggestStarters(players);
+    const fuera = players.filter((p) => !starters.includes(p.id));
+    const pivots = fuera.filter((p) => p.position === 'Pívot');
+    if (pivots.length === 1) {
+      pivots[0].technique = 20;
+      pivots[0].visibleRating = 20;
+      const bench = suggestRotation(players, starters);
+      expect(bench).toContain(pivots[0].id);
+    }
+  });
+});
+
+describe('el banco se vuelve a llenar cuando pierde a alguien (sep 2026)', () => {
+  it('una baja en el banco después de armarlo trae al que quedaba mirando, sin tocar a los elegidos', async () => {
+    const { sanitizeLineup } = await import('../src/game/match');
+    let hallado = 0;
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      let s = resolverEventos(partidaNueva(seed));
+      s = paso(s, { type: 'CONFIRM_ACTIONS', timing: 'temprana' });
+      const activos = s.players.filter((p) => !p.leftClub);
+      const disponibles = activos.filter((p) => s.callUp.some((c) => c.playerId === p.id && c.status === 'confirmado') && p.status !== 'lesionado');
+      // Hace falta alguien que vino y no entró ni en el quinteto ni en el banco.
+      const afuera = disponibles.filter((p) => !s.starters.includes(p.id) && !s.rotation.includes(p.id));
+      if (afuera.length === 0 || s.rotation.length < 5) continue;
+      hallado += 1;
+      const clon: GameState = structuredClone(s);
+      const baja = clon.rotation[0];
+      const c = clon.callUp.find((x) => x.playerId === baja)!;
+      c.status = 'ausente';
+      const quedan = clon.rotation.slice(1);
+      sanitizeLineup(clon);
+      expect(clon.rotation).not.toContain(baja);
+      for (const id of quedan) expect(clon.rotation).toContain(id);
+      expect(clon.rotation.length).toBe(5);
+      expect(afuera.map((p) => p.id)).toContain(clon.rotation[4]);
+    }
+    expect(hallado).toBeGreaterThan(0);
+  });
+
+  it('si el banco quedó corto porque vos sacaste a alguien, no se rellena solo', async () => {
+    const { sanitizeLineup } = await import('../src/game/match');
+    let s = resolverEventos(partidaNueva(2));
+    s = paso(s, { type: 'CONFIRM_ACTIONS', timing: 'temprana' });
+    s = paso(s, { type: 'PROCEED_TO_LINEUP' });
+    if (s.rotation.length === 5) {
+      const sacado = s.rotation[0];
+      s = paso(s, { type: 'TOGGLE_ROTATION', id: sacado });
+      expect(s.rotation).not.toContain(sacado);
+      const clon: GameState = structuredClone(s);
+      sanitizeLineup(clon);
+      expect(clon.rotation).toEqual(s.rotation);
+    }
+  });
+});

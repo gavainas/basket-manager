@@ -90,10 +90,19 @@ export function sanitizeLineup(s: GameState): void {
     s.rotation = suggestRotation(s.players, s.starters, absent);
     return;
   }
+  const antes = s.rotation.length;
   s.rotation = s.rotation.filter((id) => {
     const p = byId(id);
     return !!p && isSelectable(p) && !absent.has(id) && !s.starters.includes(id);
   });
+  // Si el banco perdió a alguien (una baja de último momento, un fundido que
+  // mandaste a descansar), el lugar se vuelve a llenar con los que vinieron y
+  // quedaban mirando: la pizarra decía "vas con 9 y tenés 11" con un banco de
+  // cuatro. Sólo se agrega, nunca se saca a los que elegiste.
+  if (s.rotation.length < antes && s.rotation.length < BALANCE.rotation.maxPlayers) {
+    const extra = suggestRotation(s.players, [...s.starters, ...s.rotation], absent);
+    s.rotation = [...s.rotation, ...extra].slice(0, BALANCE.rotation.maxPlayers);
+  }
 }
 
 /** ¿Puede pisar la cancha ahora? Los que llegan al segundo tiempo, recién
@@ -2079,7 +2088,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       const p = byIdNow(id);
       if (p) p.confidence = clamp(p.confidence + B.clutchConfidence);
     }
-    if (rng.chance(0.4)) momentos.push({ peso: 2, texto: `${fechaLabel(s)}:la ganamos en la hora contra ${rival.name} (${scoreFor}-${scoreAgainst}).` });
+    if (rng.chance(0.4)) momentos.push({ peso: 2, texto: `${fechaLabel(s)}: la ganamos en la hora contra ${rival.name} (${scoreFor}-${scoreAgainst}).` });
   }
   if (clutch && !won) {
     for (const x of played) {
@@ -2092,7 +2101,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       const p = byIdNow(x.p.id);
       if (p) p.confidence = clamp(p.confidence + 3);
     }
-    momentos.push({ peso: 4, texto: `${fechaLabel(s)}:de ${maxDeficit} abajo a ganarle a ${rival.name}. Remontada para contar.` });
+    momentos.push({ peso: 4, texto: `${fechaLabel(s)}: de ${maxDeficit} abajo a ganarle a ${rival.name}. Remontada para contar.` });
     s.news.unshift({ week: s.week, text: `Remontada épica ante ${rival.name}: estuvimos ${maxDeficit} abajo y la dimos vuelta.`, tone: 'good' });
   }
   if (!won && margin >= B.blowoutMargin) {
@@ -2104,7 +2113,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   if (shortHanded) {
     const n = live.squad.length;
     if (won) {
-      momentos.push({ peso: 3, texto: `${fechaLabel(s)}:ganamos siendo ${n}. Los que estuvieron, estuvieron.` });
+      momentos.push({ peso: 3, texto: `${fechaLabel(s)}: ganamos siendo ${n}. Los que estuvieron, estuvieron.` });
       s.news.unshift({ week: s.week, text: `Gesta con lo justo: le ganamos a ${rival.name} siendo ${n}. El barrio todavía lo comenta.`, tone: 'good' });
       logClubEvent(s, 'partido', `Gesta: victoria ante ${rival.name} con solo ${n} jugadores.`, Math.min(s.week, s.seasonLength));
       for (const x of played) {
@@ -2124,7 +2133,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
           logPlayerEvent(faltador, s.seasonNumber, Math.min(s.week, s.seasonLength), 'ausencia', `Faltó con excusa floja el día que el equipo jugó con ${n}. El grupo tomó nota.`);
         }
         const names = weakAbsent.map((c) => c.playerName).join(' y ');
-        s.news.unshift({ week: s.week, text: `Quedó picando en el grupo: ${names} faltó justo cuando el equipo fue con ${n}.`, tone: 'bad' });
+        s.news.unshift({ week: s.week, text: `Quedó picando en el grupo: ${names} ${weakAbsent.length === 1 ? 'faltó' : 'faltaron'} justo cuando el equipo fue con ${n}.`, tone: 'bad' });
       }
     }
   }
@@ -2323,11 +2332,11 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   };
 
   if (upset) {
-    momentos.push({ peso: 5, texto: `${fechaLabel(s)}:batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).` });
+    momentos.push({ peso: 5, texto: `${fechaLabel(s)}: batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).` });
     logClubEvent(s, 'partido', `Batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);
   }
   if (won && margin >= 25) {
-    momentos.push({ peso: 1, texto: `${fechaLabel(s)}:paliza inolvidable a ${rival.name} por ${margin} puntos.` });
+    momentos.push({ peso: 1, texto: `${fechaLabel(s)}: paliza inolvidable a ${rival.name} por ${margin} puntos.` });
     logClubEvent(s, 'partido', `Paliza inolvidable a ${rival.name} por ${margin} puntos.`);
   }
 
@@ -2377,11 +2386,26 @@ export function clubRecord(state: GameState): {
 
 /** Rotación sugerida: los mejores disponibles que no son titulares. */
 export function suggestRotation(players: Player[], starterIds: string[], absent: Set<string> = new Set()): string[] {
-  return players
+  const pool = players
     .filter((p) => isSelectable(p) && !absent.has(p.id) && !starterIds.includes(p.id))
-    .sort((a, b) => playerEffective(b) - playerEffective(a))
-    .slice(0, BALANCE.rotation.maxPlayers)
-    .map((p) => p.id);
+    .sort((a, b) => playerEffective(b) - playerEffective(a));
+  const max = BALANCE.rotation.maxPlayers;
+  // Primero un recambio por puesto, después los mejores que sobren. Antes eran
+  // los cinco mejores a secas: con once confirmados quedaba afuera el único
+  // suplente de un puesto, y el plan de cambios no podía descansar a ese
+  // titular ("Viera jugó todo el partido: terminó fundido" con el plan por
+  // defecto). Mismo criterio que el quinteto sugerido.
+  const chosen: Player[] = [];
+  for (const pos of ALL_POSITIONS) {
+    if (chosen.length >= max) break;
+    const best = pool.find((p) => p.position === pos && !chosen.includes(p));
+    if (best) chosen.push(best);
+  }
+  for (const p of pool) {
+    if (chosen.length >= max) break;
+    if (!chosen.includes(p)) chosen.push(p);
+  }
+  return chosen.sort((a, b) => playerEffective(b) - playerEffective(a)).map((p) => p.id);
 }
 
 /** Quinteto sugerido: los 5 disponibles más fuertes cubriendo posiciones. */

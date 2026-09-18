@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/game/balance';
 import { activePlayers } from '../src/game/match';
+import { computeSeasonEvaluation } from '../src/game/evaluation';
 import { confirmedPlayers, createPreseasonNewGame, inscriptionOffer } from '../src/game/preseason';
 import { PRESEASON_EVENTS } from '../src/game/preseasonEvents';
 import type { GameState } from '../src/game/types';
@@ -67,6 +68,8 @@ describe('la pretemporada de una partida nueva', () => {
     s = paso(s, { type: 'START_SEASON' });
     expect(s.phase).toBe('planning');
     expect(s.week).toBe(1);
+    // "Arrancaste con" es la caja del arranque de la temporada, no la de antes de la pretemporada.
+    expect(s.startingMoney).toBe(s.club.money);
     expect(s.divisionId).toBe(actual.divisionId);
     expect(activePlayers(s.players).length).toBeGreaterThanOrEqual(BALANCE.preseason.minPlayers);
     // La temporada que arranca es coherente con la liga elegida.
@@ -218,5 +221,52 @@ describe('la memoria entre temporadas: el título y la bronca cruzan el verano',
     }
     expect(conTitulo).toBeGreaterThan(sinTitulo);
     expect(logs).toBeGreaterThan(0);
+  });
+
+  it('el subcampeón que sube sin copa lo cuenta como ascenso, no como título', () => {
+    // Perdió la final de la Copa de Oro: no hay título, pero los dos finalistas suben.
+    const rival = fin.rivals[0];
+    const subcampeon: GameState = structuredClone(fin);
+    subcampeon.playoffs = {
+      qualified: true,
+      userCup: 'oro',
+      ties: [
+        { id: 'f', cup: 'oro', round: 'final', week: fin.seasonLength + 2, homeId: 'club', awayId: rival.id, scoreHome: 60, scoreAway: 70, winnerId: rival.id, isUserMatch: true },
+      ],
+      champions: { oro: rival.id },
+    };
+    // El cierre lo llama subcampeón sólo si la final perdida fue la de Oro:
+    // la de Plata (los del 5° al 8°) es "Finalistas de la Copa de Plata".
+    expect(computeSeasonEvaluation(subcampeon).outcomeTitle).toMatch(/Subcampeones/);
+    const plata: GameState = structuredClone(subcampeon);
+    plata.playoffs = { ...plata.playoffs!, userCup: 'plata', ties: [{ ...plata.playoffs!.ties[0], cup: 'plata' }], champions: { plata: rival.id } };
+    expect(computeSeasonEvaluation(plata).outcomeTitle).toMatch(/Finalistas de la Copa de Plata/);
+    expect(computeSeasonEvaluation(plata).outcomeTitle).not.toMatch(/Subcampeones/);
+    let ascensos = 0;
+    for (let seed = 1; seed <= 16; seed++) {
+      const a = paso({ ...subcampeon, seed }, { type: 'NEW_SEASON' });
+      const log = a.preseason!.log;
+      expect(log.some((l) => /El título pesa/.test(l))).toBe(false);
+      if (log.some((l) => /El ascenso pesa/.test(l))) ascensos += 1;
+      // Y la inscripción no le dice "tu categoría de siempre" a la divisional
+      // que pisa por primera vez: le dice que subió, y de dónde.
+      expect(a.divisionId).not.toBe(fin.divisionId);
+      expect(a.preseason!.movido).toEqual({ kind: 'ascenso', fromDivisionId: fin.divisionId });
+      // Y el palmarés anota en qué categoría se jugó y que el año terminó subiendo.
+      const ultima = a.pastSeasons[a.pastSeasons.length - 1];
+      expect(ultima.division).toMatch(/Liga Universitaria · Divisional/);
+      expect(ultima.moved?.kind).toBe('ascenso');
+      expect(ultima.moved?.to).toBeTruthy();
+      const actual = inscriptionOffer(a).find((o) => o.isCurrent)!;
+      expect(actual.note).toMatch(/La categoría a la que subiste/);
+      expect(actual.note).not.toMatch(/de siempre/);
+      expect(actual.trusts).toBe(true);
+    }
+    expect(ascensos).toBeGreaterThan(0);
+    // Sin movimiento, la de siempre sigue siendo la de siempre.
+    const quieto = paso({ ...fin, playoffs: null, seed: 1 }, { type: 'NEW_SEASON' });
+    expect(quieto.preseason!.movido).toBeUndefined();
+    expect(inscriptionOffer(quieto).find((o) => o.isCurrent)!.note).toMatch(/de siempre/);
+    expect(quieto.pastSeasons[quieto.pastSeasons.length - 1].moved).toBeUndefined();
   });
 });

@@ -156,7 +156,8 @@ function closeCups(s: GameState): void {
       s.news.unshift({ week: final.week, text: `¡CAMPEONES de la ${CUP_LABELS[cup]}!`, tone: 'good' });
     } else if (final.isUserMatch) {
       s.club.sportPrestige = clamp(s.club.sportPrestige + 2);
-      logClubEvent(s, 'hito', `Subcampeones de la ${CUP_LABELS[cup]}: la final se escapó.`, final.week);
+      // Perder la final de Plata no es ser subcampeón (mismo criterio que el cierre).
+      logClubEvent(s, 'hito', cup === 'oro' ? 'Subcampeones de la Copa de Oro: la final se escapó.' : 'Finalistas de la Copa de Plata: la final se escapó.', final.week);
       s.news.unshift({ week: final.week, text: `Perdimos la final de la ${CUP_LABELS[cup]}. Dolió.`, tone: 'bad' });
       // La espina queda clavada: este rival se recuerda hasta la revancha.
       s.nemesis = {

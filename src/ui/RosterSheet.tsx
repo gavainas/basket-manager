@@ -225,10 +225,15 @@ export function RosterSheet({ state }: { state: GameState }) {
               <Th k="fis" label="Fís" title="Físico" num />
               <Th k="mot" label="Mot" title="Motivación" num />
               <Th k="com" label="Conducta" title="Lo que el club vio de él: fechas, faltas sin avisar, cuota y asados" />
-              <Th k="afi" label="Afi" title="Afinidad social" num />
+              {/* Es el atributo social del jugador, el mismo "Social" de la
+                  planilla del Plantel; "Afi" se leía como afinidad con alguien. */}
+              <Th k="afi" label="Social" title="Cuánto suma al grupo: el mismo Social de la planilla del Plantel" num />
               <Th k="ult" label="Últ" title="Nota del último partido" num />
               <Th k="min" label="Min" title="Minutos jugados esta temporada" num />
-              <Th k="faltas" label="Falt" title="Faltazos de la temporada" num />
+              {/* Se llamaba "Falt": al lado de una conducta que dice "Una falta"
+                  (una sin avisar) y un 4 en esta columna (cuatro ausencias, con
+                  o sin aviso), parecía que el juego se contradecía. */}
+              <Th k="faltas" label="Aus." title="Ausencias a fechas esta temporada, con o sin aviso (la conducta cuenta sólo las que fueron sin avisar)" num />
               <th>Estado</th>
               <Th k="cuota" label="Cuota" title="Semanas de cuota adeudadas" />
             </tr>

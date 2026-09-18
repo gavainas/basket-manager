@@ -434,8 +434,9 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
           </table>
         </div>
         <p className="muted" style={{ marginBottom: 0 }}>
-          Al cierre de la fase regular: 1°-4° juegan la Copa de Oro, 5°-8° la Copa de Plata. Los últimos dos
-          se van a casa.
+          Al cierre de la fase regular: 1°-4° juegan la Copa de Oro, 5°-8° la Copa de Plata.
+          {/* Con ocho equipos (la Liga del Comercio) juegan todos las copas: nadie se va a casa. */}
+          {state.standings.length > 8 ? ' Los últimos dos se van a casa.' : ' Juegan todos.'}
           {promotes && divisionAbove && (
             <>
               {' '}
