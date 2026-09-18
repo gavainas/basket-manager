@@ -97,7 +97,7 @@ function CanchaLineas() {
 
 /** Notas de cambios para el filtro "Cambios": entradas, salidas, el plan, el DT, la lesión. */
 function esDeCambios(n: string): boolean {
-  return /cambio|entra |plan de cambios|unidad|cerradores|titulares|movió el banco|descansa|🕘|🚑/i.test(n);
+  return /cambio|entra |plan de cambios|unidad|cerradores|titulares|movió el banco|descansa|🕘|🚑|📋/i.test(n);
 }
 
 /** Qué hacer contra cada defensa del rival: la pista corta, al lado de la defensa que le viste. */
