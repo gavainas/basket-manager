@@ -831,6 +831,8 @@ button.danger {
 
 .quinteto-pie { min-height: 0; }
 .quinteto-pie .confirm-bar { margin-top: 0; }
+.callup-pie { min-height: 0; }
+.callup-pie .confirm-bar { margin-top: 0; }
 
 /* El cuerpo: el plantel a la izquierda, la pizarra a la derecha, los dos a
    tamaño natural. Antes scrolleaban tres cosas a la vez (el plantel, la pizarra
