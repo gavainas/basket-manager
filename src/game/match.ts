@@ -2088,7 +2088,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       const p = byIdNow(id);
       if (p) p.confidence = clamp(p.confidence + B.clutchConfidence);
     }
-    if (rng.chance(0.4)) momentos.push({ peso: 2, texto: `${fechaLabel(s)}:la ganamos en la hora contra ${rival.name} (${scoreFor}-${scoreAgainst}).` });
+    if (rng.chance(0.4)) momentos.push({ peso: 2, texto: `${fechaLabel(s)}: la ganamos en la hora contra ${rival.name} (${scoreFor}-${scoreAgainst}).` });
   }
   if (clutch && !won) {
     for (const x of played) {
@@ -2101,7 +2101,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       const p = byIdNow(x.p.id);
       if (p) p.confidence = clamp(p.confidence + 3);
     }
-    momentos.push({ peso: 4, texto: `${fechaLabel(s)}:de ${maxDeficit} abajo a ganarle a ${rival.name}. Remontada para contar.` });
+    momentos.push({ peso: 4, texto: `${fechaLabel(s)}: de ${maxDeficit} abajo a ganarle a ${rival.name}. Remontada para contar.` });
     s.news.unshift({ week: s.week, text: `Remontada épica ante ${rival.name}: estuvimos ${maxDeficit} abajo y la dimos vuelta.`, tone: 'good' });
   }
   if (!won && margin >= B.blowoutMargin) {
@@ -2113,7 +2113,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   if (shortHanded) {
     const n = live.squad.length;
     if (won) {
-      momentos.push({ peso: 3, texto: `${fechaLabel(s)}:ganamos siendo ${n}. Los que estuvieron, estuvieron.` });
+      momentos.push({ peso: 3, texto: `${fechaLabel(s)}: ganamos siendo ${n}. Los que estuvieron, estuvieron.` });
       s.news.unshift({ week: s.week, text: `Gesta con lo justo: le ganamos a ${rival.name} siendo ${n}. El barrio todavía lo comenta.`, tone: 'good' });
       logClubEvent(s, 'partido', `Gesta: victoria ante ${rival.name} con solo ${n} jugadores.`, Math.min(s.week, s.seasonLength));
       for (const x of played) {
@@ -2332,11 +2332,11 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   };
 
   if (upset) {
-    momentos.push({ peso: 5, texto: `${fechaLabel(s)}:batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).` });
+    momentos.push({ peso: 5, texto: `${fechaLabel(s)}: batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).` });
     logClubEvent(s, 'partido', `Batacazo histórico ante ${rival.name} (${scoreFor}-${scoreAgainst}).`);
   }
   if (won && margin >= 25) {
-    momentos.push({ peso: 1, texto: `${fechaLabel(s)}:paliza inolvidable a ${rival.name} por ${margin} puntos.` });
+    momentos.push({ peso: 1, texto: `${fechaLabel(s)}: paliza inolvidable a ${rival.name} por ${margin} puntos.` });
     logClubEvent(s, 'partido', `Paliza inolvidable a ${rival.name} por ${margin} puntos.`);
   }
 
