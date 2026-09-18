@@ -13,6 +13,19 @@ describe('tablero A', () => {
     s.phase = 'matchResult';
     expect(hubReadiness(s).confirmed).toBeNull();
   });
+  it('con la lista pasada, "de baja" cuenta a los que no vienen, no sólo a lesionados y suspendidos', () => {
+    let s = resolverEventos(partidaNueva(11));
+    const plantel = s.players.filter((p) => !p.leftClub).length;
+    s = paso(s, { type: 'CONFIRM_ACTIONS', timing: 'temprana' });
+    // Que haya al menos un ausente para que la cuenta signifique algo.
+    const e = s.callUp.find((c) => c.status === 'confirmado')!;
+    e.status = 'ausente';
+    const r = hubReadiness(s);
+    const confirmados = s.callUp.filter((c) => c.status === 'confirmado').length;
+    expect(r.confirmed).toBe(confirmados);
+    expect(r.unavailable).toBe(plantel - confirmados);
+    expect(r.confirmed! + r.unavailable).toBe(plantel);
+  });
   it('descuenta bajas y suspensiones de la disponibilidad', () => {
     const s = partidaNueva(11);
     const p = s.players.find(p => !p.leftClub && p.status !== 'lesionado')!;

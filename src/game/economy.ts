@@ -45,6 +45,12 @@ export function weeklyEstimate(state: GameState): { income: { concept: string; a
     { concept: 'Alquiler de cancha', amount: -BALANCE.economy.courtRentWeekly },
     { concept: 'Árbitros y planilla', amount: -BALANCE.economy.refereeWeekly },
   ];
+  // El sueldo del DT es un gasto fijo más: sin él, Finanzas decía "+$10" de
+  // balance con un DT de $48 por semana, y el radar del tablero avisaba con
+  // otra cuenta.
+  if (state.coach && state.coach.weeklyWage > 0) {
+    expenses.push({ concept: `Sueldo del DT (${state.coach.name})`, amount: -state.coach.weeklyWage });
+  }
   const debt = state.inscriptionDebt;
   if (debt && debt.remaining > 0) {
     expenses.push({
@@ -53,6 +59,20 @@ export function weeklyEstimate(state: GameState): { income: { concept: string; a
     });
   }
   return { income, expenses };
+}
+
+/**
+ * Cómo cierra la caja esta semana si pasa lo previsto: lo que hay, más las
+ * cuotas y el sponsor, menos los gastos fijos. Es la misma cuenta que el
+ * "balance semanal estimado" de Finanzas, sumada a la caja. Las cuotas se
+ * cobran antes de pagar la cancha (ver applyWeeklyEconomy), así que es esto,
+ * y no "la caja contra los gastos fijos", lo que dice si hay peligro.
+ */
+export function projectedWeekClose(state: GameState): { close: number; income: number; expenses: number } {
+  const est = weeklyEstimate(state);
+  const income = est.income.reduce((t, i) => t + i.amount, 0);
+  const expenses = -est.expenses.reduce((t, e) => t + e.amount, 0);
+  return { close: state.club.money + income - expenses, income, expenses };
 }
 
 /**

@@ -12,7 +12,7 @@ import { DELEGATE_NAMES, NEIGHBORHOODS } from '../data/names';
 import { BALANCE, clamp } from './balance';
 import { fragilityOf, pickByFragility, rollInjuryWeeks } from './injuries';
 import { playerEffective } from './match';
-import { logClubEvent, logPlayerEvent } from './timeline';
+import { fechaLabel, logClubEvent, logPlayerEvent } from './timeline';
 import { dayLabel, registerPlayer, USER_CLUB_ID } from './world';
 import { Rng, seedFromString } from './rng';
 import type { GameState, League, Player, SecondTeamRow, SecondTeamState } from './types';
@@ -337,6 +337,6 @@ export function secondTeamWeeklyTick(s: GameState, rng: Rng): void {
         ? `${st.name} se consagró campeón de ${leagueName} en su primera incursión.`
         : `${st.name} cerró su torneo de ${leagueName} en la ${pos}° posición.`
     );
-    if (pos === 1) s.memorableMoments.push(`Semana ${s.week}: ${st.name} campeón de ${leagueName}.`);
+    if (pos === 1) s.memorableMoments.push(`${fechaLabel(s)}: ${st.name} campeón de ${leagueName}.`);
   }
 }
