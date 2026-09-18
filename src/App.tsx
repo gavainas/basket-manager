@@ -433,7 +433,8 @@ export default function App() {
               <Icon name="agenda" size={14} /> Semana
             </span>
             <div className="v">{semanaLabel}</div>
-            <div className="s">de {state.seasonLength}</div>
+            {/* En los playoffs la fecha ya no es "de 9": son las semifinales o las finales. */}
+            <div className="s">{state.week <= state.seasonLength ? `de ${state.seasonLength}` : 'playoffs'}</div>
           </div>
           <div className="recurso">
             <span className="k">

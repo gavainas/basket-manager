@@ -1,6 +1,7 @@
 import { BALANCE, clamp } from './balance';
 import { createRecruit } from '../data/recruits';
 import { marketToPlayer } from '../data/market';
+import { inscriptionOffer } from './preseason';
 import { Rng } from './rng';
 import type { GameState, MarketPlayer, Player, PreseasonEventState } from './types';
 
@@ -49,6 +50,19 @@ function spend(s: GameState, concept: string, amount: number): void {
 function earn(s: GameState, concept: string, amount: number): void {
   s.club.money += amount;
   s.ledger.push({ week: 0, concept, amount });
+}
+
+/** La ficha que se paga al cierre: la de la liga elegida, o la de siempre si todavía no elegiste. */
+function feeAlCierre(s: GameState): number {
+  const offer = inscriptionOffer(s);
+  const chosen = offer.find((o) => o.divisionId === s.preseason!.chosenDivisionId && !o.locked);
+  return (chosen ?? offer.find((o) => o.isCurrent))?.fee ?? BALANCE.economy.inscriptionFee;
+}
+
+/** Lo que se va de mantenimiento entre esta semana y el cierre. */
+function upkeepHastaElCierre(s: GameState): number {
+  const p = s.preseason!;
+  return Math.max(0, p.totalWeeks - p.week) * BALANCE.preseason.weeklyUpkeep;
 }
 
 // ---------- Eventos ----------
@@ -202,9 +216,20 @@ export const PRESEASON_EVENTS: PreseasonEventDef[] = [
     id: 'ps_rifa_urgente',
     title: 'La caja no llega',
     weight: 12,
-    canFire: (s) => s.club.money < BALANCE.economy.inscriptionFee + 150,
-    text: (s) =>
-      `La tesorera te muestra la planilla: hay $${s.club.money} y la inscripción cuesta $${BALANCE.economy.inscriptionFee}. "Podemos armar una rifa relámpago este fin de semana, pero hay que ponerse ya".`,
+    // La tesorera mira la ficha de la liga elegida (o la de siempre) y lo que
+    // falta gastar hasta el cierre. Antes comparaba contra la ficha de la
+    // divisional de siempre más un margen fijo, y decía "hay $410 y la
+    // inscripción cuesta $300" con la caja sobrando.
+    canFire: (s) => s.club.money < feeAlCierre(s) + upkeepHastaElCierre(s),
+    text: (s) => {
+      const fee = feeAlCierre(s);
+      const resto = upkeepHastaElCierre(s);
+      const planilla =
+        s.club.money < fee
+          ? `hay $${s.club.money} y la inscripción cuesta $${fee}`
+          : `hay $${s.club.money}, la inscripción cuesta $${fee} y de acá al cierre se van otros $${resto} de mantenimiento: no llega`;
+      return `La tesorera te muestra la planilla: ${planilla}. "Podemos armar una rifa relámpago este fin de semana, pero hay que ponerse ya".`;
+    },
     options: () => [
       { label: 'Organizar la rifa ($25)', hint: 'Recauda según el prestigio social' },
       { label: 'No hay tiempo para eso', hint: 'La caja queda como está' },

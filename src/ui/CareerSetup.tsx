@@ -107,7 +107,7 @@ export function CareerSetup({ difficulty, onStart, onBack, portada }: Props) {
   return (
     <div className="menu-screen">
       <div className="menu-portada" style={{ backgroundImage: `url(${portada})` }} role="img" aria-label="Asado en la cantina del club" />
-      <div className="menu-panel">
+      <div className="menu-panel menu-panel-carrera">
         <div className="carrera-setup">
           <div className="carrera-intro">
             <h1>
