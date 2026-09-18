@@ -27,6 +27,7 @@ export function HistoryView({ state }: { state: GameState }) {
               <thead>
                 <tr>
                   <th>Temporada</th>
+                  <th>Categoría</th>
                   <th>Récord</th>
                   <th>Posición</th>
                   <th>Balance</th>
@@ -37,6 +38,15 @@ export function HistoryView({ state }: { state: GameState }) {
                 {state.pastSeasons.map((ps) => (
                   <tr key={ps.season}>
                     <td>T{ps.season}</td>
+                    {/* Los saves de antes no traen la categoría: guion, no invento. */}
+                    <td>
+                      {ps.division ?? '—'}
+                      {ps.moved && (
+                        <span className={`chip ${ps.moved.kind === 'ascenso' ? 'good' : 'bad'}`} style={{ marginLeft: '0.4rem' }}>
+                          {ps.moved.kind === 'ascenso' ? `↑ subió a la ${ps.moved.to}` : `↓ bajó a la ${ps.moved.to}`}
+                        </span>
+                      )}
+                    </td>
                     <td>{ps.record}</td>
                     <td>{ps.position}°</td>
                     <td>{ps.outcome}</td>

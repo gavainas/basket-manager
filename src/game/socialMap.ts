@@ -2,7 +2,7 @@
 // aislados de las afinidades vivas (base + lo compartido: asados, sociedades,
 // peleas). No guarda nada: se calcula al mirar, siempre al día.
 
-import { affinity, personalityCompat, RIVALRY_THRESHOLD } from './relations';
+import { affinity, FRIEND_THRESHOLD, personalityCompat, RIVALRY_THRESHOLD } from './relations';
 import type { GameState, Player } from './types';
 
 /**
@@ -25,11 +25,27 @@ export interface NotablePair {
   text: string;
 }
 
+/**
+ * Un jugador sin mesa fija: no arma grupo con nadie (ningún lazo llega al
+ * umbral) pero tampoco está solo. El mapa dice con quién se junta y, si ese
+ * compañero tiene grupo, a qué mesa se arrima.
+ */
+export interface SueltoEntry {
+  p: Player;
+  /** El compañero con el que mejor se lleva. */
+  closest: Player;
+  /** El grupo de ese compañero, si tiene. */
+  mesa?: SocialGroup;
+  text: string;
+}
+
 export interface SocialMapData {
   groups: SocialGroup[];
   /** Jugadores con buena onda en más de un grupo: pegamento del vestuario. */
   bridges: { p: Player; text: string }[];
   pairs: NotablePair[];
+  /** Los que no tienen grupo fijo pero tampoco están solos. */
+  sueltos: SueltoEntry[];
   loners: { p: Player; text: string }[];
   /** Qué tan unido está el plantel en promedio (0-100). */
   cohesion: number;
@@ -170,5 +186,35 @@ export function buildSocialMap(state: GameState): SocialMapData {
             : 'Va por la suya: saluda, entrena y no se queda a la birra.',
     }));
 
-  return { groups, bridges, pairs, loners, cohesion };
+  // Los sueltos: sin grupo y sin ser aislados. Antes el mapa no los nombraba y
+  // con doce en el plantel podía contar a seis y callarse sobre los otros seis.
+  // Cada uno con su compañero más cercano y la mesa a la que se arrima.
+  const lonerIds = new Set(loners.map((l) => l.p.id));
+  const sueltos: SueltoEntry[] = [];
+  for (const p of players) {
+    if (inGroup.has(p.id) || lonerIds.has(p.id)) continue;
+    let closest: Player | null = null;
+    let best = -1;
+    for (const q of players) {
+      if (q.id === p.id) continue;
+      const v = aff(p, q);
+      if (v > best) {
+        best = v;
+        closest = q;
+      }
+    }
+    if (!closest) continue;
+    const mesa = groups.find((g) => g.members.some((m) => m.id === closest!.id));
+    const amigo = best >= FRIEND_THRESHOLD;
+    const text = mesa
+      ? amigo
+        ? `Amigo de ${closest.name}: se arrima a ${mesa.label} sin ser de la mesa.`
+        : `Se sienta cerca de ${mesa.label}: con ${closest.name} se lleva bien, con el resto se saluda.`
+      : amigo
+        ? `Se junta con ${closest.name}, que tampoco tiene mesa fija.`
+        : `Saluda a todos y no se queda con nadie: el más cercano es ${closest.name}.`;
+    sueltos.push({ p, closest, mesa, text });
+  }
+
+  return { groups, bridges, pairs, sueltos, loners, cohesion };
 }

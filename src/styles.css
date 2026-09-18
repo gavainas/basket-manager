@@ -648,6 +648,22 @@ button.danger {
   font-weight: 400;
 }
 
+/* Un chip dentro de la banda (la convocatoria lleva "Faltas: medio" y "Lista
+   2 días antes" al lado del título) se pintaba con su tinta de siempre —gris
+   o pizarra— sobre el azul de la sección y no se leía. Sobre el color de
+   sección la tinta es clara, como el `.band-right`. */
+.vista .card > h3:first-child > .chip,
+.vista .card > h3.card-band > .chip {
+  color: var(--text-light);
+  border-color: rgba(246, 244, 241, 0.55);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.vista .card > h3:first-child > .chip.warn,
+.vista .card > h3.card-band > .chip.warn {
+  background: rgba(246, 244, 241, 0.16);
+}
+
 .vista .card > h3 > .band-right ~ .band-btn {
   margin-left: 0.4rem;
 }
@@ -831,6 +847,8 @@ button.danger {
 
 .quinteto-pie { min-height: 0; }
 .quinteto-pie .confirm-bar { margin-top: 0; }
+.callup-pie { min-height: 0; }
+.callup-pie .confirm-bar { margin-top: 0; }
 
 /* El cuerpo: el plantel a la izquierda, la pizarra a la derecha, los dos a
    tamaño natural. Antes scrolleaban tres cosas a la vez (el plantel, la pizarra
@@ -1729,6 +1747,14 @@ img.retrato-img.v2 {
 
 .recursos[hidden] {
   display: none;
+}
+
+/* `hidden` manda sobre cualquier `display` de una clase. Sin esto, la grilla
+   de la tabla y el fixture (`.grid { display: grid }`) seguía a la vista en
+   las pestañas "La pirámide" y "Las ligas" de la Liga, y la pirámide quedaba
+   debajo del pliegue: la pestaña parecía no hacer nada. */
+[hidden] {
+  display: none !important;
 }
 
 /* Por debajo del piso de diseño (1280x720) el Tablero deja de ser tres columnas:
@@ -2682,6 +2708,23 @@ table.planilla-rival tr.banco td { opacity: 0.7; }
 
 table.sheet td {
   padding: 0.3rem 0.5rem;
+}
+
+/* En la notebook (1366 y 1280 de ancho) la planilla medía 985 px contra los
+   922 del panel cuando las columnas de la derecha tenían texto ("Lesionado
+   (2 sem.)", "Beca parcial"): las celdas no envuelven y "Estado" y "Cuota"
+   quedaban cortadas contra el borde, con el scroll de costado escondido. La
+   pizarra lateral cede 40 px y las celdas medio paso de aire cada una. */
+@media (max-width: 1500px) {
+  .sheet-layout {
+    grid-template-columns: minmax(0, 1fr) 190px;
+    gap: 0.75rem;
+  }
+  table.sheet td,
+  table.sheet th {
+    padding-left: 0.32rem;
+    padding-right: 0.32rem;
+  }
 }
 
 table.sheet .sheet-avatar {
@@ -4685,6 +4728,12 @@ button.mini.blue.on {
   max-width: 1000px;
   display: grid;
   grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  /* La única fila tiene que poder encoger hasta el techo de la ficha (90vh):
+     sin el minmax(0, 1fr) la fila medía lo que pedía la pestaña más larga y
+     el `overflow: hidden` de abajo la recortaba sin scroll. A 1366×768 la
+     pestaña Deportiva terminaba en "Últimos partidos" a medias, y la Historia
+     se iba acortando con la temporada. */
+  grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
   overflow: hidden;
 }
@@ -4816,6 +4865,8 @@ button.mini.blue.on {
 @media (max-width: 820px) {
   .profile-ficha {
     grid-template-columns: minmax(0, 1fr);
+    /* Dos filas: la foto mide lo suyo y los datos se quedan con el resto. */
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .profile-cara {
@@ -5191,13 +5242,41 @@ button.mini.blue.on {
 
 .pv-cambio-flecha { font-size: var(--fs-md); color: var(--text-dim); }
 
-.pv-cambio-botones {
+.pv-cambio-nota { margin: 0; font-size: var(--fs-xs); color: var(--text-dim); }
+
+/* La tira del cambio en el pie del partido: el "Sale → Entra" con Confirmar y
+   Cancelar, en el único lugar que nunca se va de la vista. Reemplaza la letra
+   chica mientras hay un cambio a medio armar. */
+.pv-pie-cambio {
   display: flex;
-  gap: 0.6rem;
   align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
-.pv-cambio-botones .primary { flex: 1 1 auto; }
+.pv-pie-caja {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 24ch;
+  min-width: 0;
+}
+
+.pv-pie-caja > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+.pv-pie-caja.sale { background: color-mix(in srgb, var(--warn) 18%, var(--panel)); border-color: var(--warn); }
+.pv-pie-caja.entra { background: color-mix(in srgb, var(--sec-partidos) 14%, var(--panel)); border-color: var(--sec-partidos); }
+.pv-pie-caja.vacia { background: transparent; font-weight: 400; color: var(--text-dim); border-style: dashed; }
+.pv-pie-cambio .pv-cambio-flecha { color: var(--text-faint); }
+.pv-pie-cambio button + button { margin-left: 0; }
 
 .pv-link {
   background: transparent;
@@ -6327,6 +6406,22 @@ button.mini.blue.on {
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
+/* La fundación en la notebook: a 768 de alto el formulario medía 950 px y el
+   botón "Fundar el club" —el que empieza la partida— quedaba abajo del
+   pliegue, detrás de un scroll que nada invitaba a hacer. Todo baja un
+   escalón (escudo, títulos, aires) para que entre entero. */
+@media (max-height: 820px) {
+  .menu-panel-carrera { padding: 1.1rem 2rem; justify-content: flex-start; }
+  .menu-panel-carrera .carrera-setup { gap: 0.6rem; }
+  .menu-panel-carrera .carrera-intro h1 { font-size: var(--fs-xl); margin-bottom: 0.3rem; }
+  .menu-panel-carrera .carrera-intro p { font-size: var(--fs-sm); margin-bottom: 0; }
+  .menu-panel-carrera .carrera-escudo { padding: 0.3rem 0 0.5rem; gap: 0.25rem; }
+  .menu-panel-carrera .carrera-escudo .crest { width: 72px; height: 84px; }
+  .menu-panel-carrera .carrera-escudo-nombre { font-size: var(--fs-md); }
+  .menu-panel-carrera .carrera-campo { margin-bottom: 0.5rem; gap: 0.25rem; }
+  .menu-panel-carrera .carrera-color { width: 32px; height: 32px; }
+}
+
 /* La libreta: quién es para vos, en versalita; el "lo trae X" como chip. */
 .ps-relacion {
   font-family: var(--display);
@@ -6404,4 +6499,60 @@ button.mini.blue.on {
   background: transparent;
   border-color: rgba(246, 244, 241, 0.35);
   color: rgba(246, 244, 241, 0.85);
+}
+
+/* ---------- El vestuario por dentro (mapa social) ---------- */
+
+/* Dos columnas: a la izquierda las mesas y quién se arrima a cuál; a la
+   derecha la unión del grupo, los puentes y las parejas. Antes era una sola
+   columna que nombraba a la mitad del plantel y dejaba dos tercios del panel
+   vacíos a 768 de alto. */
+.vest-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 0.5rem 1.6rem;
+  margin-top: 0.7rem;
+}
+
+.vest-sub {
+  font-family: var(--display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  margin: 0.9rem 0 0.4rem;
+}
+
+.vest-col > .vest-sub:first-child { margin-top: 0; }
+.vest-sub .muted { text-transform: none; letter-spacing: 0.02em; }
+
+.vest-grupo { margin: 0.25rem 0 0.6rem; }
+
+.vest-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+/* Un renglón por persona: la cara con el nombre a la izquierda y la lectura
+   a la derecha, alineadas arriba para que el texto largo no descuelgue el chip. */
+.vest-fila {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0.3rem 0;
+  line-height: 1.4;
+}
+
+/* Las caras alineadas en columna: el texto arranca en el mismo x en todos
+   los renglones aunque "Viera" y "Fernández" midan distinto. */
+.vest-fila > .chip { flex: 0 0 auto; min-width: 7rem; justify-content: flex-start; }
+.vest-fila > span:last-child { padding-top: 0.15rem; }
+
+.vest-pareja { margin: 0.35rem 0; }
+
+@media (max-width: 900px) {
+  .vest-cuerpo { grid-template-columns: 1fr; }
 }

@@ -736,13 +736,19 @@ function CallUpPanel({ state, dispatch }: Props) {
         )}
       </div>
 
-      <div className="confirm-bar">
-        <button className="primary" onClick={() => dispatch({ type: 'PROCEED_TO_LINEUP' })}>
-          Armar el quinteto →
-        </button>
-        <span className="hint">
-          <b>Espacio</b> también.
-        </span>
+      {/* El pie fijo, como en el quinteto, el partido y el informe: con la
+          crónica del asado y cuatro bajas la lista mide más que la ventana y
+          el botón quedaba abajo del pliegue; y a 1280×720 ni siquiera hace
+          falta el asado. */}
+      <div className="callup-pie pie-fijo">
+        <div className="confirm-bar">
+          <button className="primary" onClick={() => dispatch({ type: 'PROCEED_TO_LINEUP' })}>
+            Armar el quinteto →
+          </button>
+          <span className="hint">
+            <b>Espacio</b> también.
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -366,6 +366,9 @@ export interface LiveTramo {
   notes?: string[];
   /** Cómo defendió el rival este tramo (sep 2026: la defensa del rival cambia durante el partido). */
   rivalDefense?: DefenseTactic;
+  /** Con qué pizarra jugamos este tramo: así la próxima pelota muerta sabe si cambiaste algo. */
+  defense?: DefenseTactic;
+  attack?: AttackTactic;
 }
 
 /**
@@ -639,6 +642,10 @@ export interface PastSeason {
   position: number;
   outcome: string;
   money: number;
+  /** En qué categoría se jugó ("Liga Universitaria · Divisional B"). Saves viejos: sin dato. */
+  division?: string;
+  /** Si esa temporada terminó con ascenso o descenso, y a dónde. */
+  moved?: { kind: 'ascenso' | 'descenso'; to: string };
 }
 
 export type NewsTone = 'good' | 'bad' | 'neutral';
@@ -880,6 +887,13 @@ export interface PreseasonState {
    * juntás el mínimo no hay temporada.
    */
   libreta?: boolean;
+  /**
+   * El club cambió de categoría en el verano que abre esta pretemporada
+   * (ascenso o descenso, y de dónde viene). La inscripción lo cuenta en vez
+   * de decir "tu categoría de siempre" de una divisional que pisás por
+   * primera vez. undefined = no se movió, o save de antes.
+   */
+  movido?: { kind: 'ascenso' | 'descenso'; fromDivisionId: string };
 }
 
 // ---------- Mundo: ligas, clubes, equipos y jugadores rivales ----------

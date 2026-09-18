@@ -59,7 +59,12 @@ function buildComment(i: RatingInput, rating: number): string {
   const { points: pts, rebounds: reb, assists: ast, minutes: min } = i;
   const guard = i.position === 'Base' || i.position === 'Escolta';
 
-  if (rating < 6) return `Noche ${rating === 5 ? 'discreta' : 'floja'} en el balance general: ${pts} puntos, ${reb} rebotes y ${ast} asistencias en ${min} minutos.`;
+  // Con una noche floja las cifras son chicas, y "1 puntos, 1 rebotes" se
+  // leía seguido en el tooltip de la nota.
+  const puntos = `${pts} punto${pts === 1 ? '' : 's'}`;
+  const rebotes = `${reb} rebote${reb === 1 ? '' : 's'}`;
+  const asistencias = `${ast} asistencia${ast === 1 ? '' : 's'}`;
+  if (rating < 6) return `Noche ${rating === 5 ? 'discreta' : 'floja'} en el balance general: ${puntos}, ${rebotes} y ${asistencias} en ${min} minutos.`;
   if (min < 15 && rating >= 6)
     return `Cumplió en sus minutos: ${pts} punto${pts === 1 ? '' : 's'} y trabajo serio en ${min} minutos.`;
   if (ast >= 6 && guard)
@@ -67,6 +72,6 @@ function buildComment(i: RatingInput, rating: number): string {
   if (reb >= 9) return `Dueño de los tableros: ${reb} rebotes que valieron oro allá abajo.`;
   if (pts >= 18) return `Aporte en ataque: ${pts} puntos en ${min} minutos.`;
   if (rating >= 8)
-    return `Partidazo completo: ${pts} puntos, ${reb} rebote${reb === 1 ? '' : 's'} y ${ast} asistencia${ast === 1 ? '' : 's'}.`;
-  return `Cumplió con su rol: ${pts} puntos, aporte silencioso y pocas licencias.`;
+    return `Partidazo completo: ${puntos}, ${rebotes} y ${asistencias}.`;
+  return `Cumplió con su rol: ${puntos}, aporte silencioso y pocas licencias.`;
 }

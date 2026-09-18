@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { GameState, Player } from '../game/types';
 import { affinity, coachAffinity, FRIEND_THRESHOLD, groupStanding, RIVALRY_THRESHOLD } from '../game/relations';
 import { friendshipsOf } from '../game/friendsAbroad';
+import { buildSocialMap } from '../game/socialMap';
 import { worldPlayerName } from '../game/world';
 import { fragilityHint, fragilityOf } from '../game/injuries';
 import { playerNotes } from '../game/humanState';
@@ -234,10 +235,40 @@ function RelacionesTab({ state, p }: { state: GameState; p: Player }) {
   const friends = rows.filter((r) => r.aff >= FRIEND_THRESHOLD);
   const rivals = rows.filter((r) => r.aff <= RIVALRY_THRESHOLD);
   const coach = coachAffinity(p);
+  // Su lugar en el mapa del vestuario, con las mismas palabras que la pestaña
+  // Vestuario: la mesa de la que es, o con quién se junta si no tiene mesa.
+  const map = buildSocialMap(state);
+  const mesa = map.groups.find((g) => g.members.some((m) => m.id === p.id));
+  const suelto = map.sueltos.find((e) => e.p.id === p.id);
+  const solo = map.loners.find((e) => e.p.id === p.id);
 
   return (
     <div>
       <div className="data-grid">
+        <DataRow label="En el vestuario">
+          {mesa ? (
+            <>
+              De la mesa de <strong>{mesa.label}</strong>, con{' '}
+              {mesa.members
+                .filter((m) => m.id !== p.id)
+                .map((m, i, arr) => (
+                  <span key={m.id}>
+                    {i > 0 && (i === arr.length - 1 ? ' y ' : ', ')}
+                    <PlayerLink id={m.id}>{m.name}</PlayerLink>
+                  </span>
+                ))}
+              .
+            </>
+          ) : suelto ? (
+            <>
+              Sin mesa fija. {suelto.text.slice(0, suelto.text.indexOf(suelto.closest.name))}
+              <PlayerLink id={suelto.closest.id}>{suelto.closest.name}</PlayerLink>
+              {suelto.text.slice(suelto.text.indexOf(suelto.closest.name) + suelto.closest.name.length)}
+            </>
+          ) : (
+            solo?.text ?? 'Va por la suya.'
+          )}
+        </DataRow>
         <DataRow label="Amigos">
           {friends.length > 0
             ? friends.map((r, i) => (
@@ -302,8 +333,10 @@ function SocialTab({ state, p }: { state: GameState; p: Player }) {
             ? `Organizó o encabezó ${socialCount} movida${socialCount > 1 ? 's' : ''} del grupo (asados, pizzas, festejos).`
             : 'Por ahora no organizó ninguna movida para el grupo.'}
         </DataRow>
-        <DataRow label="Faltazos">
-          {absences > 0 ? `${absences} falta${absences > 1 ? 's' : ''} al partido con excusa.` : 'Nunca faltó con excusa.'}
+        <DataRow label="Ausencias">
+          {absences > 0
+            ? `${absences} ausencia${absences > 1 ? 's' : ''} a fechas, con o sin aviso (la conducta cuenta sólo las sin avisar).`
+            : 'Nunca faltó a una fecha.'}
         </DataRow>
       </div>
       <h4 className="profile-subtitle">Conducta</h4>

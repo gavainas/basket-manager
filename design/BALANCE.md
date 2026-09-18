@@ -67,7 +67,7 @@ una partida jugada de verdad.
 | Motivos de bronca al cierre (sin gestión) | Que no sean 100% 'minutos' (T4) | 5ª pasada: minutos 62 · plata 67 · grupo 11 (`zonaEquipo`, 60 temp.) |
 | Titulares que llegan fundidos | Que jugar con cinco se pague la semana siguiente | 5ª pasada: 0.42/partido con cinco fijos · 0.00 rotando |
 | Nota del partido (titulares 30'+) | Media ~6.5-7, banda 1-5 viva (~15%), 9-10 raro (<10%) | media 6.88 · 1-5: 15.6% · 9-10: 7.7% |
-| Tramos con un puesto sin cubrir | Cerca del piso de las ausencias (~11% con cinco fijos): que rotar no deje huecos | 9ª pasada (sep 2026, la rotación mira la pizarra): 25% plan por defecto · 45% frescos · 35% con el profe (antes 49 · 67 · 53) |
+| Tramos con un puesto sin cubrir | Cerca del piso de las ausencias (~11% con cinco fijos): que rotar no deje huecos | 10ª pasada (sep 2026, el banco sugerido cubre los puestos): 15% plan por defecto · 28% frescos · 40% con el profe (9ª: 25 · 45 · 35; antes 49 · 67 · 53) |
 
 Nota de la 2ª pasada: el piso de victorias bajó ~5 pts respecto de la 1ª
 (59.8% → 52.4% la presión). No es una regresión accidental: es la consecuencia
@@ -430,6 +430,39 @@ o menos.
 De paso: en las tres políticas que llegan, la inscripción sale de fiado (50 de 54,
 57 de 60) porque los $200 del arranque no alcanzan para la ficha, que es lo que se
 buscaba en T3.
+
+## El banco sugerido cubre los puestos (septiembre 2026, 10ª pasada)
+
+De jugarlo: con once confirmados y diez lugares, "Sugerir" armaba el banco con los cinco
+mejores a secas y dejaba afuera al único suplente de un puesto; el plan de cambios no
+podía descansar a ese titular ("Viera jugó todo el partido: terminó fundido" con el plan
+por defecto, en la fecha 1). Ahora `suggestRotation` hace lo mismo que `suggestStarters`:
+primero un recambio por puesto, después los mejores que sobren. Y `sanitizeLineup`
+vuelve a llenar el banco cuando pierde a alguien (una baja de último momento, un fundido
+mandado a descansar) con los que vinieron y quedaban mirando, sin sacar a los elegidos.
+
+Corrida de 60 temporadas, mismas seeds, antes → después:
+
+| | Tramos con un puesto sin cubrir | Victorias |
+| --- | --- | --- |
+| `zonaEquipo` (plan por defecto) | 26.0% → 15.4% | 47.0% → 48.3% |
+| `conAsado` | 23.9% → 15.5% | 54.5% → 54.8% |
+| `presionRotate` | 44.9% → 27.7% | 53.5% → 52.8% |
+| `mixta` | 28.2% → 18.7% | 61.9% → 60.7% |
+| `contraRival` | 25.7% → 16.4% | 53.3% → 53.9% |
+| `zonaSponsor` | 25.5% → 16.3% | 45.9% → 46.1% |
+| `cincoFijos` | 12.0% → 12.0% | 41.6% → 41.9% |
+| `conProfe` | 36.8% → 39.8% | 36.6% → 33.6% |
+
+Con el plan por defecto los huecos quedan a cuatro puntos del piso de las ausencias (11-12%),
+que era el objetivo de la fila de arriba, y las victorias no se mueven (todo dentro de ±1.3,
+el ruido de 60 temporadas). **La excepción es el profe** (`conProfe`: DT honorario con
+"juegan todos", que a veces lee la pizarra y a veces no): -3 de victorias y +3 de huecos.
+Un banco elegido por cobertura es un banco un poco más flojo, y el DT que reparte minutos
+entre todos lo juega entero; y cuando no lee la pizarra, el frío que mete no respeta el
+puesto, así que la cobertura no lo ayuda. Está dentro del ruido (1.4σ en las dos cifras)
+pero las dos van para el mismo lado: anotado para vigilar. Abandonos, lesiones y minutos
+por suplente no se movieron.
 
 ## Pendiente (ver ROADMAP)
 

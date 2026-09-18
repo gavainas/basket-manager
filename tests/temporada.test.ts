@@ -2,7 +2,38 @@ import { describe, expect, it } from 'vitest';
 import { createRecruit } from '../src/data/recruits';
 import { activePlayers } from '../src/game/match';
 import { Rng } from '../src/game/rng';
+import { fechaLabel } from '../src/game/timeline';
 import { jugarFecha, jugarTemporada, partidaNueva } from './jugar';
+
+describe('los momentos memorables del partido', () => {
+  const DEL_PARTIDO = /en la hora|Remontada|ganamos siendo|batacazo|paliza|espina/;
+
+  it('cada fecha deja a lo sumo un momento memorable de partido, el que más pesa', () => {
+    let momentosDePartido = 0;
+    for (let seed = 1; seed <= 8; seed++) {
+      const inicio = partidaNueva(seed);
+      const final = jugarTemporada({ ...inicio, club: { ...inicio.club, money: 3000 } });
+      const porSemana = new Map<string, string[]>();
+      for (const m of final.memorableMoments) {
+        if (!DEL_PARTIDO.test(m)) continue;
+        const semana = m.match(/^(Semana \d+|Semifinales|Finales):/)?.[1] ?? '?';
+        porSemana.set(semana, [...(porSemana.get(semana) ?? []), m]);
+      }
+      for (const [semana, lista] of porSemana) {
+        expect(lista, `semilla ${seed}, semana ${semana}: ${lista.join(' | ')}`).toHaveLength(1);
+        momentosDePartido += 1;
+      }
+    }
+    // Que el test mida algo: en ocho temporadas alguna fecha deja historia.
+    expect(momentosDePartido).toBeGreaterThan(0);
+  });
+
+  it('en los playoffs el momento se anota como "Semifinales" o "Finales", no como "Semana 11"', () => {
+    expect(fechaLabel({ week: 4, seasonLength: 9 })).toBe('Semana 4');
+    expect(fechaLabel({ week: 10, seasonLength: 9 })).toBe('Semifinales');
+    expect(fechaLabel({ week: 11, seasonLength: 9 })).toBe('Finales');
+  });
+});
 
 describe('una temporada entera por el reducer', () => {
   // La caja se rellena a propósito: este test mide el flujo de la temporada

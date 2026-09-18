@@ -182,15 +182,20 @@ function closingRisks(state: GameState): ClosingRisk[] {
       short: `Caja en rojo (${formatMoney(state.club.money)})`,
       long: `La caja está en rojo ($${state.club.money}). Si cerrás así, la comisión va a tener que tapar el agujero, y eso cuesta prestigio.`,
     });
-  if (confirmed.length < min)
+  if (confirmed.length < min) {
+    const faltan = min - confirmed.length;
+    // Con siete de ocho, "Faltan 1 jugadores" era lo más común de leer.
+    const faltanTxt = faltan === 1 ? 'Falta 1' : `Faltan ${faltan}`;
+    const faltanJug = faltan === 1 ? 'Falta 1 jugador' : `Faltan ${faltan} jugadores`;
     risks.push({
       short: carrera
-        ? `Faltan ${min - confirmed.length} de los ${min}: sin eso no hay temporada`
-        : `Faltan ${min - confirmed.length} para el mínimo de ${min}`,
+        ? `${faltanTxt} de los ${min}: sin eso no hay temporada`
+        : `${faltanTxt} para el mínimo de ${min}`,
       long: carrera
-        ? `Faltan ${min - confirmed.length} jugadores para los ${min} que pide la liga. Acá no hay jugadores de emergencia: si cerrás así, no hay temporada.`
-        : `Faltan ${min - confirmed.length} jugadores para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`,
+        ? `${faltanJug} para los ${min} que pide la liga. Acá no hay jugadores de emergencia: si cerrás así, no hay temporada.`
+        : `${faltanJug} para el mínimo de ${min}: si no llegás, habrá que aceptar jugadores de emergencia.`,
     });
+  }
   if (fee > 0 && state.club.money < fee)
     risks.push(
       chosenOpt?.trusts
@@ -297,6 +302,30 @@ function PreseasonRecursos({ state, dispatch }: Props) {
   const opt = chosenLeague(state);
   const fee = opt ? opt.fee : BALANCE.economy.inscriptionFee;
   const isLastWeek = ps.week >= ps.totalWeeks;
+  const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
+
+  /* Cerrar la lista es irreversible y con un click se llevaba puesto lo que
+     los chips de la cabecera venían avisando: sin liga elegida (recargo y
+     mala imagen), menos del mínimo (en la Carrera, no hay temporada), la caja
+     que no cubre la ficha. Con riesgos abiertos, se pregunta con los mismos
+     porqués de los chips; sin riesgos, cierra directo. */
+  const cerrar = () => {
+    const risks = closingRisks(state);
+    if (risks.length === 0) {
+      dispatch({ type: 'PS_CLOSE' });
+      return;
+    }
+    const carrera = state.mode === 'carrera' && !!ps.libreta;
+    const sinTemporada = carrera && confirmed.length < min;
+    setConfirmReq({
+      title: sinTemporada ? 'Si cerrás así, no hay temporada' : '¿Cerrar la lista así?',
+      message: `${risks.map((r) => r.long).join(' ')} Después del cierre no se vuelve atrás.`,
+      confirmLabel: sinTemporada ? 'Cerrar igual' : 'Cerrar e inscribir igual',
+      danger: sinTemporada,
+      icon: 'alerta',
+      onConfirm: () => dispatch({ type: 'PS_CLOSE' }),
+    });
+  };
 
   return (
     <footer className="recursos">
@@ -314,7 +343,11 @@ function PreseasonRecursos({ state, dispatch }: Props) {
           </span>
           <div className={`v ${confirmed.length >= min ? 'good' : 'bad'}`}>{confirmed.length}</div>
           <div className="s">
-            {confirmed.length >= min ? `mínimo ${min}: cubierto` : `faltan ${min - confirmed.length} para el mínimo`}
+            {confirmed.length >= min
+              ? `mínimo ${min}: cubierto`
+              : min - confirmed.length === 1
+                ? 'falta 1 para el mínimo'
+                : `faltan ${min - confirmed.length} para el mínimo`}
           </div>
         </div>
         <div className="recurso">
@@ -348,12 +381,13 @@ function PreseasonRecursos({ state, dispatch }: Props) {
           </span>
           <button
             className="avanzar primary"
-            onClick={() => dispatch({ type: isLastWeek ? 'PS_CLOSE' : 'PS_ADVANCE' })}
+            onClick={() => (isLastWeek ? cerrar() : dispatch({ type: 'PS_ADVANCE' }))}
           >
             {isLastWeek ? '» Cerrar e inscribir' : `» Semana ${ps.week + 1}`}
           </button>
         </div>
       </div>
+      <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
     </footer>
   );
 }

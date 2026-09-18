@@ -198,7 +198,9 @@ export function ClubProfile({ state, clubId, onClose }: Props) {
                       <div className="data-row" key={ps.season}>
                         <span className="data-label">T{ps.season}</span>
                         <span className="data-value">
+                          {ps.division ? `${ps.division.replace(/^.* · /, '')} · ` : ''}
                           {ps.position}° ({ps.record}) · {ps.outcome}
+                          {ps.moved && (ps.moved.kind === 'ascenso' ? ` · ↑ subió a la ${ps.moved.to}` : ` · ↓ bajó a la ${ps.moved.to}`)}
                         </span>
                       </div>
                     ))}

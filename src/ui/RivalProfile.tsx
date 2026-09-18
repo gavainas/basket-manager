@@ -6,7 +6,7 @@ import { Jersey } from './ClubProfile';
 import { Crest } from './Crest';
 import { LeagueLink } from './LeagueLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
-import { initials, rivalDifficulty, rivalStyleInfo } from './helpers';
+import { initials, rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
 import { useTeclasModal } from './teclas';
 
 interface Props {
@@ -206,7 +206,7 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
               <div className="data-grid">
                 {headToHead.map((m) => (
                   <div className="data-row" key={m.week}>
-                    <span className="data-label">Semana {m.week}</span>
+                    <span className="data-label">{weekLabel(m.week, state.seasonLength)}</span>
                     <span className="data-value" style={{ color: m.won ? 'var(--good)' : 'var(--bad)', fontWeight: 700 }}>
                       {m.forfeit ? 'Forfeit' : `${m.won ? 'G' : 'P'} ${m.scoreFor}-${m.scoreAgainst}`}
                     </span>

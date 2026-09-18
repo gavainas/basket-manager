@@ -5,7 +5,7 @@ import { LeagueLink } from './LeagueLink';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
-import { formatDateLong, formatDateShort, monthLabel } from './helpers';
+import { formatDateLong, formatDateShort, monthLabel, weekLabel } from './helpers';
 
 interface Props {
   state: GameState;
@@ -67,7 +67,9 @@ export function CalendarView({ state }: Props) {
     <div>
       {userFx && (
         <div className="card" style={{ marginBottom: '1rem' }}>
-          <h3>Esta semana · fecha {week}</h3>
+          {/* En los playoffs no es "fecha 10" de una liga de 9: es la semifinal
+              o la final, como dice la barra de recursos. */}
+          <h3>Esta semana · {week <= state.seasonLength ? `fecha ${week}` : weekLabel(week, state.seasonLength).toLowerCase()}</h3>
           <div className="data-grid">
             <div className="data-row">
               <span className="data-label">Partido</span>

@@ -48,6 +48,7 @@ import type {
   GrievanceCause,
   MarketPlayer,
   NewsTone,
+  PastSeason,
   Player,
   PreseasonState,
   PreseasonSummaryEntry,
@@ -139,6 +140,9 @@ export function broncaQueCruza(p: Player, seasonNumber: number): Grievance | nul
   return g && g.level >= 2 && g.season === seasonNumber - 1 ? g : null;
 }
 
+/** Lo que el verano tiene para recordar: una copa, el ascenso sin copa, o nada. */
+type Titulo = false | 'titulo' | 'ascenso';
+
 function assignContinuity(
   p: Player,
   club: Club,
@@ -146,7 +150,7 @@ function assignContinuity(
   firstSeason: boolean,
   seasonNumber: number,
   inPlaza: boolean,
-  titulo = false
+  titulo: Titulo = false
 ): { status: ContinuityStatus; demand?: DemandType; memoria?: 'titulo' | 'bronca' } {
   if (firstSeason) {
     // Temporada 1: el grupo viene junto; solo algunos plantean cosas.
@@ -247,7 +251,7 @@ function buildPreseasonState(
   seasonNumber = 1,
   marketFromWorld: MarketPlayer[] = [],
   inPlaza = false,
-  titulo = false
+  titulo: Titulo = false
 ): PreseasonState {
   const continuity: Record<string, ContinuityStatus> = {};
   const playerDemands: Record<string, DemandType> = {};
@@ -272,7 +276,8 @@ function buildPreseasonState(
     }
   }
   if (porTitulo.length > 0) {
-    log.push(`El título pesa: ${porTitulo.join(', ')} ${porTitulo.length === 1 ? 'confirmó' : 'confirmaron'} antes de que preguntes.`);
+    // El subcampeón que subió no ganó nada: lo que pesa es el ascenso.
+    log.push(`${titulo === 'ascenso' ? 'El ascenso' : 'El título'} pesa: ${porTitulo.join(', ')} ${porTitulo.length === 1 ? 'confirmó' : 'confirmaron'} antes de que preguntes.`);
   }
 
   // Red de seguridad: que siempre quede una base de confirmados.
@@ -377,12 +382,20 @@ function optionFor(s: GameState, divisionId: string, opts: { held?: boolean } = 
   // El club nuevo del modo Carrera no tiene "categoría de siempre": lo anotan
   // porque al delegado lo conocés de jugador, y te fía la ficha a cuenta de eso.
   const nuevo = s.mode === 'carrera' && s.seasonNumber === 1;
+  // El que acaba de subir o bajar no tiene "categoría de siempre": la pisa
+  // por primera vez (o vuelve a ella). La liga lo conoce igual, y le fía igual.
+  const movido = isCurrent ? s.preseason?.movido : undefined;
+  const desde = movido ? divisionById(movido.fromDivisionId)?.name ?? 'la categoría anterior' : '';
   const note = isCurrent
     ? nuevo
       ? `La liga del barrio, donde jugaste hasta la rodilla. Al delegado lo conocés de jugador: a un club nuevo lo anota igual, y si no llegás con la plata te fía la ficha a cuenta de tu cara. La categoría se mueve: ${movimientos.join(' y ')}.${remate}`
-      : leaguePromotes(league.id)
-        ? `Tu categoría de siempre: acá te conocen y te fían la ficha si no llegás con la plata. La categoría se mueve: ${movimientos.join(' y ')}.${remate}`
-        : 'Tu liga de siempre: acá te conocen, y si no llegás con la plata, te la fían (deuda que se paga en temporada).'
+      : movido?.kind === 'ascenso'
+        ? `La categoría a la que subiste: en la liga te conocen de la ${desde} y te fían la ficha si no llegás con la plata. Otros rivales, más duros. La categoría se mueve: ${movimientos.join(' y ')}.${remate}`
+        : movido?.kind === 'descenso'
+          ? `La categoría a la que bajaste desde la ${desde}: en la liga te conocen igual y te fían la ficha si no llegás con la plata. A pelear para volver. La categoría se mueve: ${movimientos.join(' y ')}.${remate}`
+          : leaguePromotes(league.id)
+            ? `Tu categoría de siempre: acá te conocen y te fían la ficha si no llegás con la plata. La categoría se mueve: ${movimientos.join(' y ')}.${remate}`
+            : 'Tu liga de siempre: acá te conocen, y si no llegás con la plata, te la fían (deuda que se paga en temporada).'
     : held
       ? 'Te guardaron el lugar: el dueño de la liga te conoce, y si no llegás con la plata, te la fía. Volvés a la categoría que dejaste.'
       : entry?.note ?? 'Una liga nueva para el club.';
@@ -651,21 +664,29 @@ export function startPreseason(state: GameState): GameState {
   const prize = seasonPrize(state);
   const inheritedMoney = state.club.money - debtSettled + (prize?.amount ?? 0);
 
-  const finishedRow = state.standings.find((r) => r.teamId === 'club')!;
-  const finishedSeason = {
-    season: state.seasonNumber,
-    record: `${finishedRow.wins}-${finishedRow.losses}`,
-    position: clubPosition(state),
-    outcome: computeSeasonEvaluation(state).outcomeTitle,
-    money: state.club.money,
-  };
-
   // La memoria entre temporadas: el título (una copa, o el ascenso) pesa en
   // el verano: los jugadores vuelven con más ganas y menos ganas de irse.
   // (Los ascensos y descensos se calculan acá y se aplican más abajo.)
   const champions = state.playoffs?.champions ?? {};
   const promo = applyPromotionRelegation(state);
-  const titulo = champions.oro === 'club' || champions.plata === 'club' || promo.userMoved === 'ascenso';
+
+  const finishedRow = state.standings.find((r) => r.teamId === 'club')!;
+  const jugadaEn = divisionById(state.divisionId);
+  const jugadaEnLiga = jugadaEn ? LEAGUES.find((l) => l.id === jugadaEn.leagueId) : undefined;
+  const finishedSeason: PastSeason = {
+    season: state.seasonNumber,
+    record: `${finishedRow.wins}-${finishedRow.losses}`,
+    position: clubPosition(state),
+    outcome: computeSeasonEvaluation(state).outcomeTitle,
+    money: state.club.money,
+    // El palmarés dice en qué categoría se jugó y si el año terminó subiendo o bajando.
+    division: jugadaEn ? `${jugadaEnLiga?.name ?? ''} · ${jugadaEn.name}`.replace(/^ · /, '') : undefined,
+    moved: promo.userMoved
+      ? { kind: promo.userMoved, to: divisionById(promo.nextDivisionId)?.name ?? 'otra divisional' }
+      : undefined,
+  };
+  const titulo: Titulo =
+    champions.oro === 'club' || champions.plata === 'club' ? 'titulo' : promo.userMoved === 'ascenso' ? 'ascenso' : false;
 
   const players = survivors.map((p) => {
     const np = structuredClone(p);
@@ -832,6 +853,7 @@ export function startPreseason(state: GameState): GameState {
     next.divisionId === PLAZA_DIVISION_ID,
     titulo
   );
+  if (promo.userMoved) next.preseason.movido = { kind: promo.userMoved, fromDivisionId: state.divisionId };
   next.seed = rng.nextSeed();
   return next;
 }
@@ -1315,6 +1337,13 @@ export function closePreseason(state: GameState): GameState {
     }
   }
 
+  // Las promesas hechas a los que no siguen se van con ellos. El motor ya no
+  // las evaluaba (el jugador no está para romperlas), pero El club las
+  // mostraba como "rota" toda la temporada y el cierre las listaba entre las
+  // promesas vivas del club: una deuda con alguien que no está.
+  const seFueron = new Set(lostEntries.map((e) => e.id));
+  s.promises = s.promises.filter((pr) => !(pr.season === s.seasonNumber && seFueron.has(pr.playerId)));
+
   let roster = s.players.filter((x) => !x.leftClub);
 
   // Modo Carrera: con siete no hay temporada. Nadie sale a buscar jugadores
@@ -1335,7 +1364,7 @@ export function closePreseason(state: GameState): GameState {
       strengths: [],
       risks: [],
       consequences: [
-        `Juntaste ${roster.length} y la liga pide ${BALANCE.preseason.minPlayers}: faltaron ${faltan === 1 ? 'uno' : faltan}. Sin ocho fichas no hay inscripción, y sin inscripción no hay temporada.`,
+        `Juntaste ${roster.length} y la liga pide ${BALANCE.preseason.minPlayers}: ${faltan === 1 ? 'faltó uno' : `faltaron ${faltan}`}. Sin ocho fichas no hay inscripción, y sin inscripción no hay temporada.`,
       ],
     };
     s.gameOverReason = `No juntaste ${BALANCE.preseason.minPlayers} para inscribir al club: la temporada se jugó sin vos.`;
@@ -1466,9 +1495,12 @@ export function closePreseason(state: GameState): GameState {
   p.summary = {
     roster: roster.map((x) => ({ id: x.id, label: `${x.name} (${x.position})` })),
     lost: lostEntries,
+    // Fichajes son los que dijeron que sí Y siguen: el que firmó y después se
+    // borró está en "No siguieron", no en las dos listas a la vez.
     signed: p.market
       .filter((m) => m.status === 'fichado')
-      .map((m) => ({ id: s.players.find((x) => !x.leftClub && x.name === m.name)?.id ?? '', label: m.name })),
+      .map((m) => ({ id: s.players.find((x) => !x.leftClub && x.name === m.name)?.id ?? '', label: m.name }))
+      .filter((e) => e.id !== ''),
     emergency: emergencyEntries,
     moneySpent: p.moneySpent,
     projectedWeeklyFees: roster.reduce((sum, x) => sum + weeklyFee(x), 0),
@@ -1494,6 +1526,11 @@ export function startSeasonFromPreseason(state: GameState): GameState {
   s.objectives = generateObjectives(s.seasonNumber, s.club.sportPrestige, rng, s.seasonLength, { fundacion });
   s.week = 1;
   s.phase = 'planning';
+  // "Arrancaste con": la caja con la que empieza la temporada, después de la
+  // pretemporada y la inscripción, como en la partida directa. Antes quedaba
+  // la heredada del verano y el cierre decía "arrancaste con $255" con una
+  // temporada que empezó con $95.
+  s.startingMoney = s.club.money;
   s.starters = suggestStarters(s.players);
   s.rotation = suggestRotation(s.players, s.starters);
   s.news.unshift({

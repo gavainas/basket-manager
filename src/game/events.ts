@@ -1,8 +1,8 @@
-import { planAsado, weeksSinceAsado } from './asado';
+import { addPairBonus, planAsado, weeksSinceAsado } from './asado';
 import { BALANCE, clamp } from './balance';
 import { contactoQueVuelve, LO_QUE_PIDE, shortName, vueltaDeLaLibreta } from './carrera';
-import { affinity } from './relations';
-import { logClubEvent } from './timeline';
+import { affinity, RIVALRY_THRESHOLD } from './relations';
+import { fechaLabel, logClubEvent } from './timeline';
 import { marketToPlayer } from '../data/market';
 import { createRecruit } from '../data/recruits';
 import { bumpGrievance, easeGrievance, sootheGrievance } from './mood';
@@ -36,6 +36,24 @@ function actives(s: GameState): Player[] {
 /** Las figuras de verdad: el top 3 de técnica del plantel. Si un evento habla de "tu figura", tiene que ser una de estas. */
 function figuras(s: GameState): Player[] {
   return [...actives(s)].sort((a, b) => b.technique - a.technique).slice(0, 3);
+}
+
+/**
+ * La pareja que no se banca: la de peor afinidad del plantel, si llega al
+ * umbral de roce (la misma que el vestuario muestra con "hay que manejarlo").
+ * Las peleas caen sobre ella y no sobre dos nombres al azar: el mapa social
+ * deja de ser un póster.
+ */
+function worstPair(s: GameState): [Player, Player] | null {
+  const ps = actives(s);
+  let worst: { a: Player; b: Player; v: number } | null = null;
+  for (let i = 0; i < ps.length; i++) {
+    for (let j = i + 1; j < ps.length; j++) {
+      const v = affinity(ps[i], ps[j], s.affinityBonus);
+      if (!worst || v < worst.v) worst = { a: ps[i], b: ps[j], v };
+    }
+  }
+  return worst && worst.v <= RIVALRY_THRESHOLD ? [worst.a, worst.b] : null;
 }
 
 function byId(s: GameState, id: string | undefined): Player {
@@ -150,6 +168,8 @@ export const EVENTS: EventDef[] = [
           s.club.socialClimate = clamp(s.club.socialClimate + 5);
           a.social = clamp(a.social + 3);
           b.social = clamp(b.social + 3);
+          // Lo que se arregla entre dos queda entre los dos: el vestuario lo ve.
+          addPairBonus(s, a.id, b.id, 6);
           later(s, 1, {
             text: `${a.name} y ${b.name} se quedaron charlando después de entrenar: la pelea quedó oficialmente enterrada.`,
             tone: 'good',
@@ -161,6 +181,7 @@ export const EVENTS: EventDef[] = [
         return 'La mediación quedó a mitad de camino: se saludan, pero la tensión sigue ahí.';
       }
       s.club.socialClimate = clamp(s.club.socialClimate - 6);
+      addPairBonus(s, a.id, b.id, -4);
       const worse = rng.pick([a, b]);
       worse.motivation = clamp(worse.motivation - 6);
       upset(worse);
@@ -400,7 +421,7 @@ export const EVENTS: EventDef[] = [
         if (rng.chance(0.3 + s.club.socialClimate / 180 + p.social / 300)) {
           p.motivation = clamp(p.motivation + 15);
           calm(p);
-          s.memorableMoments.push(`Semana ${s.week}: la charla que hizo que ${p.name} se quedara.`);
+          s.memorableMoments.push(`${fechaLabel(s)}: la charla que hizo que ${p.name} se quedara.`);
           return `${p.name} se emocionó con la charla: "Está bien, me quedo. Pero que esto mejore". Una para el recuerdo.`;
         }
         makeLeave(s, p, 'Ni la charla lo convenció.');
@@ -515,7 +536,7 @@ export const EVENTS: EventDef[] = [
         s.club.socialClimate = clamp(s.club.socialClimate + 8);
         s.club.socialPrestige = clamp(s.club.socialPrestige + 3);
         if (rng.chance(0.3)) {
-          s.memorableMoments.push(`Semana ${s.week}: el festejo del viernes que terminó con todos cantando el himno del club (que no existe).`);
+          s.memorableMoments.push(`${fechaLabel(s)}: el festejo del viernes que terminó con todos cantando el himno del club (que no existe).`);
           return 'Noche redonda: hasta inventaron un himno del club. El grupo está más unido que nunca.';
         }
         return 'La ronda cayó de maravilla. El manager también sabe festejar.';
@@ -654,7 +675,7 @@ export const EVENTS: EventDef[] = [
           climate: 1,
         });
         if (rng.chance(0.2)) {
-          s.memorableMoments.push(`Semana ${s.week}: el cumpleaños de ${p.name} terminó con torta en la cara y fotos épicas.`);
+          s.memorableMoments.push(`${fechaLabel(s)}: el cumpleaños de ${p.name} terminó con torta en la cara y fotos épicas.`);
           return `El festejo de ${p.name} se fue de las manos (para bien). Torta en la cara incluida.`;
         }
         return `Torta, velitas y abrazos para ${p.name}. Estas cosas hacen club.`;
@@ -679,7 +700,7 @@ export const EVENTS: EventDef[] = [
         s.club.sportPrestige = clamp(s.club.sportPrestige + 2);
         for (const p of actives(s).filter((x) => x.personality === 'protagonista')) p.motivation = clamp(p.motivation + 4);
         if (rng.chance(0.25)) {
-          s.memorableMoments.push(`Semana ${s.week}: la nota en "Pasión Deportiva Zonal" que compartió medio barrio.`);
+          s.memorableMoments.push(`${fechaLabel(s)}: la nota en "Pasión Deportiva Zonal" que compartió medio barrio.`);
           return 'La nota explotó en el barrio: cientos de compartidos. Los protagonistas están en su salsa.';
         }
         return 'Salió la nota con foto grupal. El club suena en el barrio y a más de uno le gustó verse.';
@@ -715,7 +736,7 @@ export const EVENTS: EventDef[] = [
         s.club.socialPrestige = clamp(s.club.socialPrestige + 3);
         makeLeave(s, p, 'Se mudó por trabajo, despedido como se debe.');
         if (rng.chance(0.4)) {
-          s.memorableMoments.push(`Semana ${s.week}: la despedida de ${p.name}, con discurso y camiseta firmada por todos.`);
+          s.memorableMoments.push(`${fechaLabel(s)}: la despedida de ${p.name}, con discurso y camiseta firmada por todos.`);
         }
         return `La despedida de ${p.name} terminó con camiseta firmada y algún lagrimón. Así se despide a los que hacen club.`;
       }
@@ -842,7 +863,7 @@ export const EVENTS: EventDef[] = [
         star.social = clamp(star.social + 4);
         s.club.socialClimate = clamp(s.club.socialClimate + 6);
         s.memorableMoments.push(
-          `Semana ${s.week}: el veterano ${vet.name} y el joven ${star.name} combinaron para una jugada que gritó todo el club.`,
+          `${fechaLabel(s)}: el veterano ${vet.name} y el joven ${star.name} combinaron para una jugada que gritó todo el club.`,
         );
         return 'Los sentaste a hablar y prendió: el veterano guía, el pibe brilla. La sociedad promete.';
       }
@@ -1260,6 +1281,9 @@ export const EVENTS: EventDef[] = [
     weight: 6,
     canFire: (s) => actives(s).length >= 4 && s.club.socialClimate < 60,
     pickTargets: (s, rng) => {
+      // Si hay dos que no se bancan, son ellos los que se van a las manos.
+      const roce = worstPair(s);
+      if (roce) return { playerId: roce[0].id, playerId2: roce[1].id };
       const cands = rng.shuffle(actives(s));
       if (cands.length < 2) return null;
       return { playerId: cands[0].id, playerId2: cands[1].id };
@@ -1281,20 +1305,24 @@ export const EVENTS: EventDef[] = [
         }
         s.club.socialClimate = clamp(s.club.socialClimate - 2);
         s.club.organization = clamp(s.club.organization + 3);
+        addPairBonus(s, a.id, b.id, -2);
         return 'Los sentaste a los dos un partido. Entendieron el mensaje, aunque alguno lo mastica.';
       }
       if (opt === 1) {
         if (rng.chance(0.35 + s.club.socialClimate / 200)) {
           for (const p of [a, b]) p.social = clamp(p.social + 4);
           s.club.socialClimate = clamp(s.club.socialClimate + 6);
+          addPairBonus(s, a.id, b.id, 6);
           return 'La charla destrabó todo: se dieron la mano de verdad. A veces alguien tiene que poner el pecho.';
         }
         s.club.socialClimate = clamp(s.club.socialClimate - 3);
+        addPairBonus(s, a.id, b.id, -3);
         chain(s, 2, { defId: 'bronca_secuela', playerId: a.id, playerId2: b.id });
         return 'La reunión no alcanzó: se dijeron las cosas, pero el clima quedó pesado. Esto no terminó acá.';
       }
       s.club.socialClimate = clamp(s.club.socialClimate - 4);
       for (const p of [a, b]) bumpGrievance(s, p, 'grupo');
+      addPairBonus(s, a.id, b.id, -5);
       chain(s, 2, { defId: 'bronca_secuela', playerId: a.id, playerId2: b.id });
       return 'Hiciste la vista gorda. Por ahora se toleran, pero el rencor sigue ahí abajo, latente.';
     },
@@ -1321,12 +1349,14 @@ export const EVENTS: EventDef[] = [
         stays.motivation = clamp(stays.motivation + 4);
         hurt.motivation = clamp(hurt.motivation - 8);
         upset(hurt);
+        addPairBonus(s, a.id, b.id, -4);
         return `Respaldaste a ${stays.name}. ${hurt.name} lo sintió como una traición y quedó picado.`;
       }
       if (opt === 1) {
         if (rng.chance(0.4)) {
           for (const p of [a, b]) p.motivation = clamp(p.motivation - 3);
           s.club.socialClimate = clamp(s.club.socialClimate + 4);
+          addPairBonus(s, a.id, b.id, 2);
           return 'El ultimátum los ordenó: prefieren aguantarse antes que irse. Tensa calma, pero calma al fin.';
         }
         const goes = rng.pick([a, b]);
@@ -1340,10 +1370,13 @@ export const EVENTS: EventDef[] = [
           calm(p);
         }
         s.club.socialClimate = clamp(s.club.socialClimate + 7);
-        s.memorableMoments.push(`Semana ${s.week}: ${a.name} y ${b.name} enterraron el hacha tras semanas de tensión.`);
+        // Enterrar el hacha se nota en el mapa: el roce deja de serlo.
+        addPairBonus(s, a.id, b.id, 10);
+        s.memorableMoments.push(`${fechaLabel(s)}: ${a.name} y ${b.name} enterraron el hacha tras semanas de tensión.`);
         return 'Hablaste con cada uno y funcionó: se pidieron disculpas frente al grupo. El vestuario respiró.';
       }
       s.club.socialClimate = clamp(s.club.socialClimate - 5);
+      addPairBonus(s, a.id, b.id, -4);
       return 'Ni las charlas por separado alcanzaron. Se toleran a regañadientes y el grupo sigue partido.';
     },
   },
