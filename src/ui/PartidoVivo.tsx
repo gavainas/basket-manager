@@ -345,6 +345,30 @@ export function PartidoVivo({ state, dispatch }: Props) {
     setSaleSel(null);
     setEntraSel(null);
   };
+  const cambioEnCurso = (saleSel || entraSel) && !live.finished;
+  /* El botón de confirmar vive en el pie, no debajo del banco: con el scroll
+     único, a 1366×768 (y a 1280×720, el piso de diseño) el panel del cambio
+     caía debajo del pie y tocar ⇄ dos veces no mostraba ningún botón. El pie
+     es lo único que nunca se mueve (design/PLAN_MARCO_FIJO.md), así que el
+     "Sale → Entra" se repite ahí en una tira, con Confirmar y Cancelar. */
+  const nombreCorto = (id: string) => `${POS_ABBR[byId(id).position]} · ${shortName(byId(id).name)}`;
+  const cambioEnPie = cambioEnCurso ? (
+    <div className="pv-pie-cambio" role="group" aria-label="Cambio preparado">
+      <span className={`pv-pie-caja sale${saleSel ? '' : ' vacia'}`}>
+        <span className="pv-cambio-k">Sale</span>
+        <span>{saleSel ? nombreCorto(saleSel) : 'tocá ⇄ en la cancha'}</span>
+      </span>
+      <span className="pv-cambio-flecha">→</span>
+      <span className={`pv-pie-caja entra${entraSel ? '' : ' vacia'}`}>
+        <span className="pv-cambio-k">Entra</span>
+        <span>{entraSel ? nombreCorto(entraSel) : 'tocá ⇄ en el banco'}</span>
+      </span>
+      <button className="primary" disabled={!preparado} onClick={confirmar}>
+        Confirmar cambio
+      </button>
+      <button className="pv-link" onClick={cancelar}>Cancelar</button>
+    </div>
+  ) : null;
   const onDropFila = (lado: 'court' | 'bench', target: Player) => (e: React.DragEvent) => {
     e.preventDefault();
     if (live.finished) return;
@@ -510,7 +534,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
               <p className="tactic-hint">No citaste suplentes: no hay cambios posibles.</p>
             )}
 
-            {(saleSel || entraSel) && !live.finished && (
+            {cambioEnCurso && (
               <div className="pv-cambio">
                 <div className="pv-cambio-t"><Icon name="cambio" size={14} /> Cambio preparado</div>
                 <div className="pv-cambio-par">
@@ -524,12 +548,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
                     <span>{entraSel ? `${POS_ABBR[byId(entraSel).position]} · ${byId(entraSel).name}` : 'Tocá ⇄ en uno del banco'}</span>
                   </div>
                 </div>
-                <div className="pv-cambio-botones">
-                  <button className="primary" disabled={!preparado} onClick={confirmar}>
-                    Confirmar cambio
-                  </button>
-                  <button className="pv-link" onClick={cancelar}>Cancelar</button>
-                </div>
+                <p className="pv-cambio-nota">Se confirma abajo, en la barra del partido.</p>
               </div>
             )}
           </div>
@@ -852,13 +871,15 @@ export function PartidoVivo({ state, dispatch }: Props) {
                 ⏱ Minuto{minutosQueQuedan > 0 ? ` (${minutosQueQuedan})` : ''}
               </button>
               <button onClick={saltar}>Saltar el cuarto ⏭</button>
-              <span className="hint">
-                {live.minutoPedido
-                  ? 'Pediste minuto: corre en la próxima pelota muerta.'
-                  : reloj.pausa
-                    ? 'Reloj parado: armá el cambio y seguí cuando quieras.'
-                    : 'En vivo: los cambios y la táctica entran en la próxima pelota muerta.'}
-              </span>
+              {cambioEnPie ?? (
+                <span className="hint">
+                  {live.minutoPedido
+                    ? 'Pediste minuto: corre en la próxima pelota muerta.'
+                    : reloj.pausa
+                      ? 'Reloj parado: armá el cambio y seguí cuando quieras.'
+                      : 'En vivo: los cambios y la táctica entran en la próxima pelota muerta.'}
+                </span>
+              )}
             </>
           ) : !live.finished ? (
             <>
@@ -868,10 +889,11 @@ export function PartidoVivo({ state, dispatch }: Props) {
               <button disabled={!!live.pendingIncident || simulando} title="Juega lo que falta de corrido, con tu plan de cambios (o el DT). Se frena sola si hay una incidencia." onClick={() => setSimulando(true)}>
                 {simulando ? 'Simulando…' : 'Simular el partido ⏩'}
               </button>
-              {!live.pendingIncident && (
-                <span className="hint">Piernas nuestras en cancha: {Math.round(courtFreshness(live))}. Podés cambiar la táctica antes de cada cuarto; el rival también juega…</span>
+              {cambioEnPie ?? (
+                live.pendingIncident
+                  ? <span className="hint">Resolvé la incidencia antes de seguir jugando.</span>
+                  : <span className="hint">Piernas nuestras en cancha: {Math.round(courtFreshness(live))}. Podés cambiar la táctica antes de cada cuarto; el rival también juega…</span>
               )}
-              {live.pendingIncident && <span className="hint">Resolvé la incidencia antes de seguir jugando.</span>}
             </>
           ) : (
             <button className="primary" onClick={() => dispatch({ type: 'FINISH_MATCH' })}>

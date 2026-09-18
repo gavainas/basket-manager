@@ -5100,13 +5100,41 @@ button.mini.blue.on {
 
 .pv-cambio-flecha { font-size: var(--fs-md); color: var(--text-dim); }
 
-.pv-cambio-botones {
+.pv-cambio-nota { margin: 0; font-size: var(--fs-xs); color: var(--text-dim); }
+
+/* La tira del cambio en el pie del partido: el "Sale → Entra" con Confirmar y
+   Cancelar, en el único lugar que nunca se va de la vista. Reemplaza la letra
+   chica mientras hay un cambio a medio armar. */
+.pv-pie-cambio {
   display: flex;
-  gap: 0.6rem;
   align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
-.pv-cambio-botones .primary { flex: 1 1 auto; }
+.pv-pie-caja {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 24ch;
+  min-width: 0;
+}
+
+.pv-pie-caja > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+.pv-pie-caja.sale { background: color-mix(in srgb, var(--warn) 18%, var(--panel)); border-color: var(--warn); }
+.pv-pie-caja.entra { background: color-mix(in srgb, var(--sec-partidos) 14%, var(--panel)); border-color: var(--sec-partidos); }
+.pv-pie-caja.vacia { background: transparent; font-weight: 400; color: var(--text-dim); border-style: dashed; }
+.pv-pie-cambio .pv-cambio-flecha { color: var(--text-faint); }
+.pv-pie-cambio button + button { margin-left: 0; }
 
 .pv-link {
   background: transparent;
