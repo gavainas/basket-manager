@@ -244,11 +244,16 @@ button.danger {
    un fondo para que lo que pasa por detrás no se lea a través. */
 .pie-fijo {
   position: sticky;
-  bottom: 0;
+  /* El scroll tiene `--sp-6` de aire abajo (el padding de `.app-shell`) y un
+     `bottom: 0` se pega al borde de ESE aire, no al de la ventana: el botón
+     quedaba flotando a 36 px del piso, con una franja de contenido corriendo
+     por debajo, entre él y la barra de recursos. Con el bottom negativo el pie
+     baja hasta el borde real y su padding de abajo tapa esa franja. */
+  bottom: calc(-1 * var(--sp-6));
   z-index: 5;
   margin: 0 calc(-1 * var(--sp-4));
-  padding: 0.6rem var(--sp-4);
-  background: linear-gradient(to top, rgba(28, 22, 18, 0.97) 0%, rgba(28, 22, 18, 0.97) 82%, transparent);
+  padding: 0.6rem var(--sp-4) calc(0.6rem + var(--sp-6));
+  background: linear-gradient(to top, rgb(28, 22, 18) 0%, rgb(28, 22, 18) 82%, transparent);
 }
 
 .pie-fijo .confirm-bar { margin-top: 0; }

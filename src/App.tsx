@@ -2,6 +2,7 @@ import { useEffect, useReducer, useState } from 'react';
 import { gameReducer, type GameAction } from './state/gameReducer';
 import { Portada } from './ui/Portada';
 import { loadGame, saveGame, saveStatus } from './persistence/storage';
+import { MatchClockContext, visibleScore, type Reloj } from './ui/matchPresentation';
 import { Hub } from './ui/Hub';
 import { ClubView } from './ui/ClubView';
 import { RosterView } from './ui/RosterView';
@@ -116,6 +117,8 @@ function scrollContenidoArriba() {
    `main.tsx`, que las carga sólo si se piden (ver el comentario de allá). */
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, null);
+  const [reloj, setReloj] = useState<Reloj | null>(null);
+  useEffect(() => { if (!state?.live) setReloj(null); }, [state?.live]);
   const [tab, setTab] = useState<Tab>('resumen');
   /* Ancla pedida por el tile del inicio: la vista la marca con `data-focus` y
      el efecto de abajo la trae al centro apenas se monta. */
@@ -198,6 +201,7 @@ export default function App() {
   // Todas las pantallas comparten los providers de fichas: cualquier nombre
   // (jugador, rival, liga) es clickeable también en pretemporada y cierres.
   const withProviders = (screen: React.ReactNode) => (
+    <MatchClockContext.Provider value={{ reloj, setReloj }}>
     <OpenProfileContext.Provider value={setProfileId}>
     <OpenRivalContext.Provider value={setRivalProfileId}>
     <OpenWorldPlayerContext.Provider value={setWorldPlayerId}>
@@ -232,6 +236,7 @@ export default function App() {
     </OpenWorldPlayerContext.Provider>
     </OpenRivalContext.Provider>
     </OpenProfileContext.Provider>
+    </MatchClockContext.Provider>
   );
 
   if (state.phase === 'preseason') {
@@ -251,8 +256,9 @@ export default function App() {
   /* El récord cuenta el partido de hoy apenas termina: la tabla se entera
      recién con el informe, y mientras tanto la barra decía 0-0 con el partido
      ganado. Y con el partido terminado ya no se "dirige cuarto a cuarto". */
-  const record = clubRecord(state);
-  const matchOver = state.phase === 'match' && !!state.live?.finished;
+  const record = clubRecord(reloj && state.live ? { ...state, live: { ...state.live, finished: false } } : state);
+  const score = state.live ? visibleScore(state, state.live, reloj) : null;
+  const matchOver = state.phase === 'match' && !!state.live?.finished && !reloj;
   const phaseHint =
     state.phase === 'planning'
       ? 'Elegí las decisiones de la semana'
@@ -266,7 +272,7 @@ export default function App() {
               : 'Dirigí el partido cuarto a cuarto'
             : 'Mirá el resultado del partido';
   const recordSub = record.today
-    ? `${record.today.finished ? 'hoy' : 'en juego'} ${record.today.scoreFor}-${record.today.scoreAgainst}`
+    ? `${record.today.finished ? 'hoy' : 'en juego'} ${score?.f ?? record.today.scoreFor}-${score?.a ?? record.today.scoreAgainst}`
     : 'en la liga';
 
   const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
@@ -363,9 +369,8 @@ export default function App() {
 
       {/* La clase de área envuelve a la vista: de ahí toman su color las bandas
           de todas sus cards, sin tocar los archivos de las vistas. */}
-      {/* En el inicio la barra de recursos sobra: la semana, la caja y el
-          récord están en el centro del panel. Sin ella, el menú entra entero. */}
-      <div className={`app-shell${tab === 'resumen' ? ' sin-recursos' : ''}`}>
+      {/* A conserva la caja y el récord en la barra común, también en el tablero. */}
+      <div className="app-shell">
         {tab === 'resumen' && (
           <div className="vista sec-tablero">
             <Hub state={state} />
@@ -417,7 +422,7 @@ export default function App() {
       </div>
 
       {/* Los números que mirás siempre, siempre en el mismo lugar. */}
-      <footer className="recursos" hidden={tab === 'resumen'}>
+      <footer className="recursos">
         <div className="recursos-inner">
           <div className="recurso">
             <span className="k">
@@ -455,12 +460,12 @@ export default function App() {
             <span className="s">{phaseHint}</span>
             {/* Ya estando en la semana, el botón primario es el de la vista: dos
                 naranjas compitiendo rompen la regla de uno por pantalla. */}
-            <button
-              className={`avanzar ${tab === 'semana' ? '' : 'primary'}`}
+            {tab !== 'semana' && tab !== 'resumen' && <button
+              className="avanzar primary"
               onClick={() => navigate('semana')}
             >
-              » Avanzar semana
-            </button>
+              Ir a la semana →
+            </button>}
           </div>
         </div>
       </footer>

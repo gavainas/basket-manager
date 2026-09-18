@@ -343,8 +343,19 @@ export interface LiveQuarter {
   tramos?: LiveTramo[];
 }
 
+export interface LiveVitals {
+  minutes: Record<string, number>;
+  playerFresh: Record<string, number>;
+  rivalFreshness: number;
+}
+
 /** Un tramo del cuarto: dos minutos de juego entre dos pelotas muertas. */
 export interface LiveTramo {
+  /** Datos reales de los extremos del tramo para acompañar el reloj visual. Opcional en saves anteriores. */
+  presentation?: {
+    before: LiveVitals;
+    after: LiveVitals;
+  };
   for: number;
   against: number;
   /** Puntos de cada uno de los nuestros en el tramo. */
@@ -482,6 +493,8 @@ export interface LiveMatchState {
   plan?: MatchPlan;
   /** Tocaste el quinteto a mano en este descanso: el plan no te lo pisa. */
   manualBreak?: boolean;
+  /** Reservados por una incidencia: sólo vuelven por un cambio o unidad elegidos por vos. */
+  heldOut?: string[];
   /** Lesionados durante el partido (para el informe y las noticias). */
   injuries?: { playerId: string; name: string; weeks: number }[];
   /**
