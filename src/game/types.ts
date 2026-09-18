@@ -69,6 +69,21 @@ export interface BoxScoreLine {
   comment?: string;
 }
 
+/**
+ * Renglón de la planilla del rival: quién les anotó. Es lo que el partido en
+ * vivo ya mostraba cuarto a cuarto (`rivalBoxScore`), guardado al cerrar para
+ * que el informe y la historia tengan la cara de la liga, no sólo un marcador.
+ */
+export interface RivalBoxLine {
+  /** Id de persona del mundo (abre su ficha). */
+  playerId: string;
+  name: string;
+  position: Position;
+  points: number;
+  /** Arrancó en el quinteto rival (los del banco figuran sin puntos). */
+  starter: boolean;
+}
+
 // ---------- Estado emocional postpartido ----------
 
 export type PlayerEmotion =
@@ -608,6 +623,8 @@ export interface MatchResult {
   effects: string[];
   /** Planilla del partido, ordenada por puntos (vacía en forfeit). */
   box: BoxScoreLine[];
+  /** La planilla de ellos: quién les anotó, ordenada por puntos (opcional: los informes de antes no la tienen). */
+  rivalBox?: RivalBoxLine[];
   /** Cómo quedó cada uno del plantel al terminar (vacío en forfeit). */
   moods?: PlayerMood[];
 }

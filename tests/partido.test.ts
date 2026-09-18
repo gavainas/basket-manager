@@ -63,6 +63,25 @@ describe('el récord y la posición que ve el jugador (T1)', () => {
     expect(clubPosition(s)).toBeLessThanOrEqual(s.standings.length);
   });
 
+  it('el informe guarda la planilla del rival: quién les anotó suma exactamente su marcador (sep 2026)', () => {
+    let s = jugarPartidoEntero(hastaElPartido());
+    s = paso(s, { type: 'FINISH_MATCH' });
+    const m = s.lastMatch!;
+    const rivalBox = m.rivalBox ?? [];
+    expect(rivalBox.length).toBeGreaterThanOrEqual(5);
+
+    const quinteto = rivalBox.filter((l) => l.starter);
+    expect(quinteto.length).toBe(5);
+    expect(quinteto.reduce((t, l) => t + l.points, 0)).toBe(m.scoreAgainst);
+    // Ordenados por puntos, y los del banco al final sin puntos.
+    for (let i = 1; i < quinteto.length; i++) expect(quinteto[i - 1].points).toBeGreaterThanOrEqual(quinteto[i].points);
+    for (const l of rivalBox.filter((x) => !x.starter)) expect(l.points).toBe(0);
+    // Son personas del mundo: cada renglón abre una ficha.
+    for (const l of rivalBox) expect(s.world.players.some((p) => p.id === l.playerId)).toBe(true);
+    // Y el relato del informe nombra al goleador de ellos.
+    expect(m.highlights.some((h) => h.includes(quinteto[0].name) && h.includes(`${quinteto[0].points} puntos`))).toBe(true);
+  });
+
   it('en playoffs el partido de hoy no suma al récord de la fase regular', () => {
     const base = jugarPartidoEntero(hastaElPartido());
     const enPlayoffs = { ...base, week: base.seasonLength + 1 };

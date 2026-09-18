@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { GameState } from '../game/types';
 import { activePlayers } from '../game/match';
 import { EMOTION_EXPRESSION } from '../game/humanState';
@@ -30,6 +31,12 @@ const PROMISE_BADGE: Record<PromiseHealth, { cls: string; label: string }> = {
  * Son las cards que vivían en el viejo tablero. El inicio pasó a ser un menú
  * (ver Hub.tsx) y esto necesitaba una casa propia: la comisión, el ánimo del
  * club y lo que se dijo después del partido son de la misma conversación.
+ *
+ * Las tres columnas son tres conversaciones distintas, pero **la que no tiene
+ * nada no ocupa lugar** (sep 2026): en la semana 1 no hay promesas ni grupo
+ * —el vestuario habla después del partido— y la grilla reservaba las tres
+ * igual, así que un tercio de la pantalla era madera. Ahora las columnas con
+ * contenido se reparten el ancho.
  */
 export function ClubView({ state }: { state: GameState }) {
   const active = activePlayers(state.players);
@@ -41,43 +48,45 @@ export function ClubView({ state }: { state: GameState }) {
   const opinionated = moods.filter((m) => m.emotion !== 'conforme' && m.emotion !== 'indiferente');
   const groupChat = (opinionated.length >= 3 ? opinionated : moods).slice(0, 6);
 
-  return (
-    <div className="grid cols-3">
-      <div>
-        <div className="card">
-          <h3>Estado del club</h3>
-          <Bar label="Moral general" value={morale} hint={TIPS.moralGeneral} />
-          <Bar label="Ambiente social" value={state.club.socialClimate} hint={TIPS.ambienteSocial} />
-          <Bar label="Organización" value={state.club.organization} hint={TIPS.organizacion} />
-          <Bar label="Prestigio deportivo" value={state.club.sportPrestige} hint={TIPS.prestigioDeportivo} />
-          <Bar label="Prestigio social" value={state.club.socialPrestige} hint={TIPS.prestigioSocial} />
-          <div className="muted" style={{ marginTop: '0.6rem' }}>
-            En el plantel: <strong>{active.length}</strong>
-            {state.playersLeftCount > 0 && ` · se fueron ${state.playersLeftCount} esta temporada`}
-          </div>
-        </div>
-        {/* Las noticias van debajo del estado: el grupo (tercera columna) ya es
-            largo por sí solo, y con las noticias también ahí la mitad de la
-            pantalla quedaba vacía. */}
-        <div className="card" data-focus="noticias">
-          <h3>Últimos acontecimientos</h3>
-          {state.news.length === 0 ? (
-            <div className="muted">Sin novedades por ahora.</div>
-          ) : (
-            <ul className="news-list">
-              {state.news.slice(0, 12).map((n, i) => (
-                <li key={i}>
-                  <span className={`news-dot ${n.tone}`} />
-                  <span className="news-week">S{n.week}</span>
-                  <span>{n.text}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+  const estado = (
+    <>
+      <div className="card">
+        <h3>Estado del club</h3>
+        <Bar label="Moral general" value={morale} hint={TIPS.moralGeneral} />
+        <Bar label="Ambiente social" value={state.club.socialClimate} hint={TIPS.ambienteSocial} />
+        <Bar label="Organización" value={state.club.organization} hint={TIPS.organizacion} />
+        <Bar label="Prestigio deportivo" value={state.club.sportPrestige} hint={TIPS.prestigioDeportivo} />
+        <Bar label="Prestigio social" value={state.club.socialPrestige} hint={TIPS.prestigioSocial} />
+        <div className="muted" style={{ marginTop: '0.6rem' }}>
+          En el plantel: <strong>{active.length}</strong>
+          {state.playersLeftCount > 0 && ` · se fueron ${state.playersLeftCount} esta temporada`}
         </div>
       </div>
+      {/* Las noticias van debajo del estado: el grupo (tercera columna) ya es
+          largo por sí solo, y con las noticias también ahí la mitad de la
+          pantalla quedaba vacía. */}
+      <div className="card" data-focus="noticias">
+        <h3>Últimos acontecimientos</h3>
+        {state.news.length === 0 ? (
+          <div className="muted">Sin novedades por ahora.</div>
+        ) : (
+          <ul className="news-list">
+            {state.news.slice(0, 12).map((n, i) => (
+              <li key={i}>
+                <span className={`news-dot ${n.tone}`} />
+                <span className="news-week">S{n.week}</span>
+                <span>{n.text}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
+  );
 
-      <div>
+  const comision =
+    state.objectives.length === 0 && state.promises.length === 0 ? null : (
+      <>
         {state.objectives.length > 0 && (
           <div className="card" data-focus="objetivos">
             <h3>Objetivos de la comisión (temporada {state.seasonNumber})</h3>
@@ -116,45 +125,55 @@ export function ClubView({ state }: { state: GameState }) {
             </ul>
           </div>
         )}
-      </div>
+      </>
+    );
 
-      <div>
-        {groupChat.length > 0 && (
-          /* El chat del plantel es vestuario puro. */
-          <div className="card sec-vestuario" data-focus="grupo">
-            <h3>
-              <Icon name="chat" size={17} /> El grupo del club
-            </h3>
-            <div className="chat-list">
-              {groupChat.map((m) => {
-                const pl = state.players.find((p) => p.id === m.playerId);
-                return (
-                  <div className="chat-row" key={m.playerId}>
-                    {pl && (
-                      <div className="avatar chat-avatar">
-                        <Avatar
-                          seed={pl.id}
-                          age={pl.age}
-                          appearance={pl.appearance}
-                          expressionOverride={EMOTION_EXPRESSION[m.emotion]}
-                          title={pl.name}
-                          personality={pl.personality}
-                        />
-                      </div>
-                    )}
-                    <div className="chat-bubble">
-                      <div className="chat-name">
-                        <PlayerLink id={m.playerId}>{m.name}</PlayerLink>
-                      </div>
-                      <div className="chat-text">{m.text}</div>
-                    </div>
+  /* El grupo sólo habla después de un partido. Antes de la primera fecha la
+     columna quedaba en blanco sin decir por qué: ahora no se dibuja. */
+  const grupo =
+    groupChat.length === 0 ? null : (
+      /* El chat del plantel es vestuario puro. */
+      <div className="card sec-vestuario" data-focus="grupo">
+        <h3>
+          <Icon name="chat" size={17} /> El grupo del club
+        </h3>
+        <div className="chat-list">
+          {groupChat.map((m) => {
+            const pl = state.players.find((p) => p.id === m.playerId);
+            return (
+              <div className="chat-row" key={m.playerId}>
+                {pl && (
+                  <div className="avatar chat-avatar">
+                    <Avatar
+                      seed={pl.id}
+                      age={pl.age}
+                      appearance={pl.appearance}
+                      expressionOverride={EMOTION_EXPRESSION[m.emotion]}
+                      title={pl.name}
+                      personality={pl.personality}
+                    />
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+                )}
+                <div className="chat-bubble">
+                  <div className="chat-name">
+                    <PlayerLink id={m.playerId}>{m.name}</PlayerLink>
+                  </div>
+                  <div className="chat-text">{m.text}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
+    );
+
+  const columnas: ReactNode[] = [estado, comision, grupo].filter((c) => c !== null);
+
+  return (
+    <div className={`grid${columnas.length > 1 ? ` cols-${columnas.length}` : ''}`}>
+      {columnas.map((col, i) => (
+        <div key={i}>{col}</div>
+      ))}
     </div>
   );
 }

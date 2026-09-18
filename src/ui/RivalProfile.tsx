@@ -7,6 +7,7 @@ import { Crest } from './Crest';
 import { LeagueLink } from './LeagueLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { initials, rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
+import { useTeclasModal } from './teclas';
 
 interface Props {
   state: GameState;
@@ -16,6 +17,7 @@ interface Props {
 
 /** Ficha de un club rival: cómo juega, cómo viene y el historial contra nosotros. */
 export function RivalProfile({ state, rivalId, onClose }: Props) {
+  useTeclasModal({ onClose });
   const rival = state.rivals.find((r) => r.id === rivalId);
   if (!rival) return null;
 

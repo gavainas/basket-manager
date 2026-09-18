@@ -16,6 +16,7 @@ import { Timeline } from './Timeline';
 import { TIPS } from './Tip';
 import { feeChip, feeChipAlways, roleLabel, statusChipAlways } from './helpers';
 import { Icon } from './Icon';
+import { useTeclasModal } from './teclas';
 
 type ProfileTab = 'general' | 'deportiva' | 'relaciones' | 'historia' | 'social';
 
@@ -356,6 +357,7 @@ function SocialTab({ state, p }: { state: GameState; p: Player }) {
 
 export function PlayerProfile({ state, playerId, onClose }: Props) {
   const [tab, setTab] = useState<ProfileTab>('general');
+  useTeclasModal({ onClose });
   const p = state.players.find((x) => x.id === playerId);
   if (!p) return null;
   const status = statusChipAlways(p);
