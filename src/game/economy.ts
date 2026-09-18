@@ -26,12 +26,15 @@ export function weeklyFee(p: Player): number {
   }
 }
 
+/** "1 jugador" / "N jugadores": en una Carrera corta se cobra a uno solo. */
+const plantelTxt = (n: number) => `${n} jugador${n === 1 ? '' : 'es'}`;
+
 /** Estimación de ingresos/gastos semanales para mostrar en Finanzas. */
 export function weeklyEstimate(state: GameState): { income: { concept: string; amount: number }[]; expenses: { concept: string; amount: number }[] } {
   const active = state.players.filter((p) => !p.leftClub);
   const fees = active.reduce((sum, p) => sum + weeklyFee(p), 0);
   const income: { concept: string; amount: number }[] = [
-    { concept: `Cuotas (${active.filter((p) => weeklyFee(p) > 0).length} jugadores al día)`, amount: fees },
+    { concept: `Cuotas (${plantelTxt(active.filter((p) => weeklyFee(p) > 0).length)} al día)`, amount: fees },
   ];
   if (state.sponsor) {
     income.push({ concept: `${state.sponsor.name} (${state.sponsor.weeksLeft} sem. · pide ${condicionTexto(state.sponsor)})`, amount: state.sponsor.weekly });
@@ -107,7 +110,7 @@ export function applyWeeklyEconomy(s: GameState, rng: Rng): void {
   const feeIncome = payers.reduce((sum, p) => sum + weeklyFee(p), 0);
   if (feeIncome > 0) {
     s.club.money += feeIncome;
-    s.ledger.push({ week: s.week, concept: `Cuotas (${payers.length} jugadores)`, amount: feeIncome });
+    s.ledger.push({ week: s.week, concept: `Cuotas (${plantelTxt(payers.length)})`, amount: feeIncome });
   }
 
   if (s.sponsor) {

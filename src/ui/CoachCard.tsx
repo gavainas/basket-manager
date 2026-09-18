@@ -4,6 +4,7 @@ import type { GameAction } from '../state/gameReducer';
 import { COACH_PROFILE_INFO, COACH_TYPE_LABELS } from '../game/coach';
 import { activePlayers } from '../game/match';
 import { Bar } from './Bar';
+import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
 import { PlayerLink } from './PlayerLink';
 import { formatMoney } from './helpers';
 
@@ -15,9 +16,32 @@ interface Props {
 /** Ficha del cuerpo técnico: DT pago, honorario, jugador-DT o dirigís vos. */
 export function CoachCard({ state, dispatch }: Props) {
   const [playerPick, setPlayerPick] = useState('');
+  const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
   const coach = state.coach;
   const candidates = state.coachMarket;
   const actives = activePlayers(state.players);
+
+  /* Despedir al DT es irreversible: no vuelve a la lista de candidatos, el
+     clima se resiente y, si era un jugador, le cae mal. Era un botón chico en
+     rojo que lo hacía con un click; ahora pregunta, como "Empezar de cero". */
+  const despedir = () => {
+    if (!coach) return;
+    const nombre = coach.type === 'jugador' ? coach.name.split(' ').slice(-1)[0] : coach.name;
+    const message =
+      coach.type === 'jugador'
+        ? `${coach.name} deja de dirigir y vuelve a ser uno más del plantel. Se lo va a tomar mal (motivación -6) y el vestuario lo va a comentar (ambiente social -3).`
+        : `${coach.name} se va del club y no vuelve: desaparece de la lista de candidatos. El vestuario lo va a comentar (ambiente social -3)${
+            coach.weeklyWage > 0 ? ` y te ahorrás su sueldo de ${formatMoney(coach.weeklyWage)} por semana` : ''
+          }.`;
+    setConfirmReq({
+      title: `¿Despedir a ${nombre}?`,
+      message,
+      confirmLabel: 'Despedirlo',
+      danger: true,
+      icon: 'salir',
+      onConfirm: () => dispatch({ type: 'FIRE_COACH' }),
+    });
+  };
 
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
@@ -61,7 +85,7 @@ export function CoachCard({ state, dispatch }: Props) {
                 Juegan todos
               </button>
             </div>
-            <button className="small danger" onClick={() => dispatch({ type: 'FIRE_COACH' })}>
+            <button className="small danger" onClick={despedir}>
               Despedirlo
             </button>
           </div>
@@ -148,6 +172,7 @@ export function CoachCard({ state, dispatch }: Props) {
           </div>
         </div>
       )}
+      <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
     </div>
   );
 }

@@ -211,7 +211,7 @@ export function Hub({ state }: { state: GameState }) {
           </section>
           <section className="hub-a-card hub-a-previous">
             <h3 className="hub-a-band">Lo que dejó el último partido</h3>
-            {previous ? <div className="hub-a-result"><span>Semana {previous.week} · vs {previous.rivalName}</span><strong className="hub-a-score">{previous.scoreFor} – {previous.scoreAgainst}</strong><p>{previous.summary}</p>{previous.mvpName && <p className="muted">Figura: {previous.mvpName}</p>}
+            {previous ? <div className="hub-a-result"><span>{weekLabel(previous.week, state.seasonLength)} · vs {previous.rivalName}</span><strong className="hub-a-score">{previous.scoreFor} – {previous.scoreAgainst}</strong><p>{previous.summary}</p>{previous.mvpName && <p className="muted">Figura: {previous.mvpName}</p>}
               <details><summary>Leer informe del partido</summary><ul>{previous.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>{previous.effects.map((e, i) => <p key={i}>{e}</p>)}{previous.lockerRoom.map((e, i) => <p key={i}>{e}</p>)}</details>
             </div> : <div className="hub-a-result"><strong>La historia empieza en la cancha</strong><p>Después del primer partido vas a ver el resultado, la figura y lo que dejó en el equipo.</p></div>}
           </section>

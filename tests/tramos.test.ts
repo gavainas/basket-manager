@@ -126,3 +126,35 @@ describe('el motor por tramos (sep 2026)', () => {
     else expect(pidio).toBe(0);
   });
 });
+
+describe('la pizarra avisa en el relato (sep 2026)', () => {
+  it('cambiar la defensa con la pelota en juego deja la nota en la próxima pelota muerta, como cambio', () => {
+    let s = hastaElPartido(11);
+    s = tramo(s);
+    expect(s.live!.enCurso!.tramos![0].notes?.some((n) => n.startsWith('📋'))).toBeFalsy();
+    s = paso(s, { type: 'SET_TACTIC', defense: 'presion' });
+    s = tramo(s);
+    const t = s.live!.enCurso!.tramos![1];
+    expect(t.defense).toBe('presion');
+    expect(t.notes).toContain('📋 Pizarra: salimos a presionar.');
+    const filas = jugadasDelCuarto(s, s.live!, 0);
+    const nota = filas.find((j) => j.texto.startsWith('📋'));
+    expect(nota?.tipo).toBe('cambio');
+    expect(nota?.t).toBe(2);
+    // Sin tocar nada, el tramo siguiente no repite la nota.
+    s = tramo(s);
+    expect(s.live!.enCurso!.tramos![2].notes?.some((n) => n.startsWith('📋'))).toBeFalsy();
+  });
+
+  it('cambiar las dos cosas en el descanso da una sola frase, en las notas del cuarto', () => {
+    let s = hastaElPartido(11);
+    s = paso(s, { type: 'PLAY_QUARTER' });
+    s = paso(s, { type: 'SET_TACTIC', defense: 'zona', attack: 'correr' });
+    s = paso(s, { type: 'SET_TACTIC', defense: 'hombre' });
+    s = paso(s, { type: 'PLAY_QUARTER' });
+    const q = s.live!.quarters[1];
+    const notas = q.notes.filter((n) => n.startsWith('📋'));
+    expect(notas).toHaveLength(1);
+    expect(notas[0]).toBe('📋 Pizarra: pasamos a marcar hombre y a correr.');
+  });
+});

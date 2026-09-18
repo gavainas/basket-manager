@@ -1581,6 +1581,44 @@ function closeQuarter(s: GameState, live: LiveMatchState, rng: Rng): void {
   }
 }
 
+/** Cómo se anuncia cada pizarra nuestra cuando cambia (la nota abre con 📋 y cae en la pelota muerta). */
+const PIZARRA_DEFENSA: Record<DefenseTactic, string> = {
+  zona: 'nos metemos en zona',
+  hombre: 'pasamos a marcar hombre',
+  presion: 'salimos a presionar',
+};
+const PIZARRA_ATAQUE: Record<AttackTactic, string> = {
+  equipo: 'la movemos entre todos',
+  estrella: 'todo pasa por {n}',
+  correr: 'a correr',
+};
+
+/**
+ * La nota de la pizarra: qué cambiaste respecto de lo que se jugó en el tramo
+ * anterior (o en el cuarto anterior, si este recién arranca). Sin cambio no hay
+ * nota; en el primer tramo del partido tampoco (la pizarra inicial se ve en la
+ * cabecera del cuarto). Devuelve una sola frase aunque cambien las dos cosas.
+ */
+export function notaDePizarra(s: GameState, live: LiveMatchState, qIndex: number, k: number): string | null {
+  const q = live.enCurso;
+  // El tramo anterior; al arrancar un cuarto, el último tramo del cuarto
+  // anterior (la pizarra del cuarto es la de su arranque y pudo cambiar
+  // adentro), y si no tiene tramos (saves viejos), la del cuarto.
+  const prevQ = k === 0 && qIndex > 0 ? live.quarters[qIndex - 1] : undefined;
+  const prevTramo = k > 0 ? q?.tramos?.[k - 1] : prevQ?.tramos?.[prevQ.tramos.length - 1];
+  const prevDef = prevTramo?.defense ?? prevQ?.defense;
+  const prevAtk = prevTramo?.attack ?? prevQ?.attack;
+  const partes: string[] = [];
+  if (prevDef && prevDef !== live.defense) partes.push(PIZARRA_DEFENSA[live.defense]);
+  if (prevAtk && prevAtk !== live.attack) {
+    const star = s.players.find((p) => p.id === live.starId);
+    partes.push(PIZARRA_ATAQUE[live.attack].replace('{n}', star ? star.name : 'la referencia'));
+  }
+  if (partes.length === 0) return null;
+  const frase = partes.join(' y ');
+  return `📋 Pizarra: ${frase}.`;
+}
+
 /**
  * Un tramo del cuarto (sep 2026: el motor por tramos). Dos minutos de juego:
  * la pelota muerta de antes trae los cambios y los minutos pedidos, la fuerza
@@ -1660,6 +1698,18 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
         : `🟥 ${p.name} hizo la quinta falta: afuera. ${sub ? `Entra ${sub.name}.` : 'No queda recambio: seguimos con cuatro.'}`;
     tramoNotes.push(n);
     ctx.notes.unshift(n);
+  }
+
+  // Tu pizarra: si cambiaste la defensa o el ataque desde el tramo anterior
+  // (o desde el cuarto anterior, si es el arranque), el relato lo dice en la
+  // pelota muerta. El rival avisaba sus cambios y vos no: tocabas "Presión" y
+  // nada confirmaba que había entrado.
+  const pizarra = notaDePizarra(s, live, qIndex, k);
+  if (pizarra) {
+    // Al arrancar el cuarto va primera entre las notas del cuarto (que el
+    // informe recorta a cinco): es tu decisión, no color.
+    if (k === 0) ctx.notes.unshift(pizarra);
+    else tramoNotes.push(pizarra);
   }
 
   // El rival decide cómo defender este tramo (sin mirar lo nuestro).
@@ -1792,6 +1842,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
     presentation: { before, after: { minutes: { ...live.minutes }, playerFresh: { ...live.playerFresh }, rivalFreshness: live.rivalFreshness } },
     for: ourT, against: rivalT, box: tPts, onCourt: courtIds,
     notes: tramoNotes.length > 0 ? tramoNotes : undefined, rivalDefense: defRival,
+    defense: live.defense, attack: live.attack,
   });
 
   if (k + 1 >= K) closeQuarter(s, live, rng);
