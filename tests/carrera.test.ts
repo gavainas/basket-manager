@@ -99,6 +99,31 @@ describe('fundar el club (modo Carrera)', () => {
     const b = buildLibreta(new Rng(9)).map((c) => c.name);
     expect(a).toEqual(b);
   });
+
+  it('la ficha cumple lo que dice el "por qué": el pibe del edificio mide uno noventa y cinco, y nadie es un pívot de 1,72', () => {
+    const rangos: Record<string, [number, number]> = {
+      Base: [172, 186],
+      Escolta: [178, 192],
+      Alero: [183, 196],
+      'Ala-Pívot': [188, 201],
+      Pívot: [192, 207],
+    };
+    let pibes = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      for (const c of buildLibreta(new Rng(seed))) {
+        const [min, max] = rangos[c.position];
+        expect(c.height).toBeGreaterThanOrEqual(min);
+        expect(c.height).toBeLessThanOrEqual(max);
+        if (c.relacion === 'El pibe del edificio') {
+          pibes++;
+          expect(c.height).toBeGreaterThanOrEqual(194);
+          expect(c.height).toBeLessThanOrEqual(197);
+          expect(['Ala-Pívot', 'Pívot']).toContain(c.position);
+        }
+      }
+    }
+    expect(pibes).toBeGreaterThan(0);
+  });
 });
 
 describe('pedir favores', () => {
@@ -204,7 +229,8 @@ describe('ocho en cuatro semanas', () => {
     }
     const s = paso(llego!, { type: 'START_SEASON' });
     expect(s.objectives.map((o) => o.id).sort()).toEqual(['asados', 'retention', 'wins']);
-    expect(s.news[0].text).toMatch(/pusieron plata/);
+    // La noticia de fundación sale al arrancar; una previa picada de la fecha 1 puede quedar encima.
+    expect(s.news.some((n) => /pusieron plata/.test(n.text))).toBe(true);
     const venue = s.world.venues.find((v) => v.id === 'vn_user')!;
     expect(venue.name).toContain('Club de Prueba');
     expect(venue.name).not.toMatch(/Parque/);
