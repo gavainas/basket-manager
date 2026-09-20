@@ -46,10 +46,10 @@ export function quarterFlavor(ctx: FlavorContext, rng: Rng): string[] {
   const topBig = [...interior].sort(porPuntos)[0];
   const bigRebs = interior.reduce((t, p) => t + (ctx.qReb[p.id] ?? 0), 0);
   // El goleador del cuarto ya tiene su nota en el cierre del cuarto ("metió N
-  // puntos en el 1er cuarto", match.ts, desde 7): acá no se lo repite con
+  // puntos en el 1er cuarto", match.ts, desde 9): acá no se lo repite con
   // otras palabras. Se cuenta al segundo, si también la rompió.
   const goleador = [...ctx.onCourt].sort(porPuntos)[0];
-  const yaContado = (p: Player | undefined) => !!p && !!goleador && p.id === goleador.id && (ctx.qPts[goleador.id] ?? 0) >= 7;
+  const yaContado = (p: Player | undefined) => !!p && !!goleador && p.id === goleador.id && (ctx.qPts[goleador.id] ?? 0) >= 9;
 
   // La figura desaparecida: pasada la mitad, sigue sin aparecer.
   const star = ctx.onCourt.find((p) => p.id === ctx.starId);

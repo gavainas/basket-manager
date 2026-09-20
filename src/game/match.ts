@@ -1583,7 +1583,10 @@ function closeQuarter(s: GameState, live: LiveMatchState, rng: Rng): void {
   else if (qDiff <= -6) notes.push(`Nos pasaron por arriba: ${q.for}-${q.against} en el ${Q_NAMES[qIndex]}.`);
 
   const qTop = [...onCourt].sort((a, b) => (qPts[b.id] ?? 0) - (qPts[a.id] ?? 0))[0];
-  if (qTop && (qPts[qTop.id] ?? 0) >= 7) notes.push(`${qTop.name} metió ${qPts[qTop.id]} puntos en el ${Q_NAMES[qIndex]}.`);
+  // Desde 9, no desde 7: con el reparto en canastas (sep 2026) un jugador
+  // llega a 7 u 8 en casi todos los cuartos y la nota salía 1,7 veces por
+  // partido; con 9 sale una de cada dos y vuelve a ser un cuarto de racha.
+  if (qTop && (qPts[qTop.id] ?? 0) >= 9) notes.push(`${qTop.name} metió ${qPts[qTop.id]} puntos en el ${Q_NAMES[qIndex]}.`);
 
   // Incidencias deportivas y arbitrales del cuarto.
   const star = onCourt.find((p) => p.id === live.starId) ?? onCourt[0];
