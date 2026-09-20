@@ -901,9 +901,20 @@ export function PartidoVivo({ state, dispatch }: Props) {
               <button className="primary" onClick={pausar}>
                 {reloj.pausa ? '▶ Seguir' : '❚❚ Pausar'}
               </button>
+              {/* El botón apagado dice por qué: en el último tramo el cuarto ya
+                  está cerrado en el motor (el reloj sólo lo cuenta) y no queda
+                  pelota muerta donde meter el minuto; antes se apagaba mudo. */}
               <button
                 disabled={!live.enCurso || !!live.minutoPedido || minutosQueQuedan <= 0}
-                title="Corta el juego en la próxima pelota muerta: el rival ataca peor ese tramo y los cinco respiran. Tenés dos por partido."
+                title={
+                  minutosQueQuedan <= 0
+                    ? 'Ya pediste los dos minutos del partido.'
+                    : live.minutoPedido
+                      ? 'Minuto pedido: corre en la próxima pelota muerta.'
+                      : !live.enCurso
+                        ? 'En este cuarto ya no queda pelota muerta: el minuto se pide en el próximo.'
+                        : 'Corta el juego en la próxima pelota muerta: el rival ataca peor ese tramo y los cinco respiran. Tenés dos por partido.'
+                }
                 onClick={pedirMinuto}
               >
                 ⏱ Minuto{minutosQueQuedan > 0 ? ` (${minutosQueQuedan})` : ''}
