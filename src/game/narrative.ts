@@ -41,18 +41,24 @@ export function quarterFlavor(ctx: FlavorContext, rng: Rng): string[] {
   const interior = ctx.onCourt.filter((p) => p.position === 'Ala-Pívot' || p.position === 'Pívot');
   const guards = ctx.onCourt.filter((p) => p.position === 'Base' || p.position === 'Escolta');
 
-  const topGuard = [...guards].sort((a, b) => (ctx.qPts[b.id] ?? 0) - (ctx.qPts[a.id] ?? 0))[0];
-  const topBig = [...interior].sort((a, b) => (ctx.qPts[b.id] ?? 0) - (ctx.qPts[a.id] ?? 0))[0];
+  const porPuntos = (a: Player, b: Player) => (ctx.qPts[b.id] ?? 0) - (ctx.qPts[a.id] ?? 0);
+  const topGuard = [...guards].sort(porPuntos)[0];
+  const topBig = [...interior].sort(porPuntos)[0];
   const bigRebs = interior.reduce((t, p) => t + (ctx.qReb[p.id] ?? 0), 0);
+  // El goleador del cuarto ya tiene su nota en el cierre del cuarto ("metió N
+  // puntos en el 1er cuarto", match.ts, desde 7): acá no se lo repite con
+  // otras palabras. Se cuenta al segundo, si también la rompió.
+  const goleador = [...ctx.onCourt].sort(porPuntos)[0];
+  const yaContado = (p: Player | undefined) => !!p && !!goleador && p.id === goleador.id && (ctx.qPts[goleador.id] ?? 0) >= 7;
 
   // La figura desaparecida: pasada la mitad, sigue sin aparecer.
   const star = ctx.onCourt.find((p) => p.id === ctx.starId);
   const starTotal = star ? ctx.live.stats[star.id]?.pts ?? 0 : 99;
   if (star && ctx.qIndex >= 2 && (ctx.live.minutes[star.id] ?? 0) >= 20 && starTotal <= 4) {
     out.push(`A ${star.name} le cuesta sumar: ${starTotal} punto${starTotal === 1 ? '' : 's'} en ${ctx.live.minutes[star.id]} minutos.`);
-  } else if (topGuard && (ctx.qPts[topGuard.id] ?? 0) >= 8 && rng.chance(0.6)) {
+  } else if (topGuard && !yaContado(topGuard) && (ctx.qPts[topGuard.id] ?? 0) >= 8 && rng.chance(0.6)) {
     out.push(`${topGuard.name} sumó ${ctx.qPts[topGuard.id]} puntos en este cuarto.`);
-  } else if (topBig && (ctx.qPts[topBig.id] ?? 0) >= 8 && rng.chance(0.6)) {
+  } else if (topBig && !yaContado(topBig) && (ctx.qPts[topBig.id] ?? 0) >= 8 && rng.chance(0.6)) {
     out.push(`${topBig.name} aportó ${ctx.qPts[topBig.id]} puntos en este cuarto.`);
   } else if (bigRebs >= 6 && rng.chance(0.5)) {
     out.push(`Nuestros internos juntaron ${bigRebs} rebotes en el cuarto.`);

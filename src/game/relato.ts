@@ -32,15 +32,25 @@ export interface Jugada {
   tipo?: 'cambio' | 'nota';
 }
 
-/** Reparte puntos en aportes visuales de 1–3: no representa intentos ni tipos de tiro. */
+/**
+ * Reparte los puntos de un jugador en el tramo en canastas de 1–3. Desde sep
+ * 2026 el motor ya reparte el tramo en canastas (`distributeBaskets`), así
+ * que lo que llega acá es una suma de dobles y triples: se vuelve a partir
+ * prefiriendo dobles, y el libre (un punto) queda para cuando la cuenta es
+ * impar y no entra un triple. No representa intentos ni tipos de tiro; sólo
+ * evita cantar "un punto de X" veinte veces por cuarto.
+ */
 function canastas(pts: number, rng: Rng): number[] {
   const out: number[] = [];
   let rest = pts;
   while (rest > 0) {
-    if (rest >= 3 && rng.chance(0.28)) out.push(3);
-    else if (rest >= 2 && (rest !== 3 || rng.chance(0.6))) out.push(2);
-    else out.push(1);
-    rest -= out[out.length - 1];
+    let c: number;
+    if (rest === 1) c = 1;
+    else if (rest % 2 === 1) c = 3; // impar: un triple, no un doble y un libre
+    else if (rest >= 6 && rng.chance(0.15)) c = 3; // dos triples seguidos, de vez en cuando
+    else c = 2;
+    out.push(c);
+    rest -= c;
   }
   return out;
 }
@@ -59,12 +69,10 @@ function apellido(nombre: string): string {
 // da vuelta, se estira, van siete sin respuesta—. Esas líneas son ciertas
 // siempre, y son las que hacen que el relato se lea como un partido y no como
 // una planilla.
-// El de un punto no canta la cifra siempre: con cinco jugadores repartiendo
-// dos minutos, el motor deja muchos aportes de uno y "suma de a uno" veinte
-// veces por cuarto suena a tambor. La cantidad exacta está en el marcador de
-// al lado.
+// El de un punto es un libre (no hay otra forma de sumar uno), y ahora que el
+// motor reparte en canastas aparece pocas veces por cuarto: se puede decir.
 const PUNTOS: Record<number, string[]> = {
-  1: ['Anota {n}.', 'Suma {n}.', '{n}, uno más.', 'Un punto de {n}.'],
+  1: ['Un libre de {n}.', '{n}, desde la línea.', 'Un punto de {n}.', '{n}, uno más.'],
   2: ['Dos de {n}.', '{n} suma dos.', 'Anota {n}: dos más.', 'Dos más para {n}.'],
   3: ['Tres de una para {n}.', '{n} mete tres de golpe.', 'Tres puntos juntos de {n}.'],
 };
