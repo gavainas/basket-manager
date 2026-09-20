@@ -42,4 +42,32 @@ describe('tablero A', () => {
     s.schedule = [];
     expect(renderToStaticMarkup(createElement(Hub, { state: s }))).toContain('Sin partido programado');
   });
+  it('de la temporada 2 en adelante, sin partidos jugados, cuenta la temporada pasada en vez de "la historia empieza"', () => {
+    const s = resolverEventos(partidaNueva(11));
+    s.seasonNumber = 2;
+    s.lastMatch = null;
+    s.pastSeasons = [
+      {
+        season: 1,
+        record: '8-1',
+        position: 1,
+        outcome: '¡Campeones de la Copa de Oro!',
+        money: 1256,
+        division: 'Liga Universitaria · Divisional B',
+        moved: { kind: 'ascenso', to: 'Divisional A' },
+      },
+    ];
+    const html = renderToStaticMarkup(createElement(Hub, { state: s }));
+    expect(html).toContain('La temporada pasada');
+    expect(html).toContain('Temporada 1 · Divisional B');
+    expect(html).toContain('¡Campeones de la Copa de Oro!');
+    expect(html).toContain('Subimos a la Divisional A.');
+    expect(html).not.toContain('La historia empieza en la cancha');
+    // Un save viejo sin categoría ni movimiento tampoco inventa nada.
+    s.pastSeasons = [{ season: 1, record: '4-5', position: 6, outcome: 'Temporada para el olvido', money: 80 }];
+    const viejo = renderToStaticMarkup(createElement(Hub, { state: s }));
+    expect(viejo).toContain('Temporada 1</span>');
+    expect(viejo).not.toContain('Subimos');
+    expect(viejo).not.toContain('Bajamos');
+  });
 });
