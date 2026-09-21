@@ -833,7 +833,7 @@ function MarketSection({ state, dispatch }: Props) {
               onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true })}
             >
               {contacto
-                ? mp.contacted
+                ? (mp.dudas ?? 0) > 0
                   ? 'Insistirle'
                   : 'Pedirle que venga'
                 : snubs
@@ -1214,6 +1214,13 @@ function NegotiationModal({ state, dispatch }: Props) {
             )}
             <button onClick={() => dispatch({ type: 'PS_NEGOTIATE', decision: 'later' })}>
               {contacto ? 'Todavía no pedirle nada' : 'Dejar la negociación pendiente'}
+              {/* La gestión ya se gastó al abrir la charla (es lo que compra
+                  saber qué pide): que no parezca que cerrar el modal la devuelve. */}
+              <span className="opt-hint">
+                {contacto
+                  ? `Ya sabés ${mp.demand ? 'lo que pide' : 'que no pide nada'}. Volver a llamarlo cuesta otra gestión.`
+                  : `Ya sabés ${mp.demand ? 'su condición' : 'que quiere venir'}. Retomar la negociación cuesta otra gestión.`}
+              </span>
             </button>
           </div>
         </div>
