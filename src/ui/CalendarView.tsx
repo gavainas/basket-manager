@@ -120,6 +120,10 @@ export function CalendarView({ state }: Props) {
                   <span className="muted">
                     Sin conflictos: nadie del plantel tiene otro partido comprometido ese día.
                   </span>
+                ) : conflicted.length === state.players.filter((p) => !p.leftClub).length ? (
+                  /* Con el plantel entero en las dos ligas, doce nombres seguidos
+                     no dicen nada: el dato es que son todos. */
+                  <>Los {conflicted.length} del plantel tienen ficha en las dos ligas: revisar horarios.</>
                 ) : (
                   <>
                     {conflicted.map((p, i) => (

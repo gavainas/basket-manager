@@ -220,7 +220,7 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
             <>
               <h4 className="profile-subtitle">Próximos cruces</h4>
               <p style={{ margin: 0 }}>
-                {upcoming.map((x) => `Semana ${x.week}`).join(' · ')}
+                {upcoming.map((x) => (x.week === state.week ? 'Esta semana' : `Semana ${x.week}`)).join(' · ')}
               </p>
             </>
           )}

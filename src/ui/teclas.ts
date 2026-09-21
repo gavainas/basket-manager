@@ -114,6 +114,29 @@ export function useTeclasSecciones(teclas: { onSeccion: (numero: number) => void
 }
 
 /**
+ * Escape para deshacer algo a medio hacer en la pantalla (el cambio armado
+ * del partido): va antes que el Escape del marco, que vuelve al Tablero.
+ * Escucha en la fase de captura y, si `accion` devuelve true (había algo que
+ * deshacer), corta el evento para que el marco no navegue. Con un modal
+ * abierto no hace nada: ahí Escape es del modal.
+ */
+export function useEscape(accion: () => boolean) {
+  const ref = useRef(accion);
+  ref.current = accion;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || hayModal()) return;
+      if (!ref.current()) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, []);
+}
+
+/**
  * La barra espaciadora de una pantalla: la acción que el pie ya muestra como
  * botón principal, al alcance de una tecla. Es un juego de PC y el partido se
  * juega cuarto a cuarto: tener que ir al mouse entre cuarto y cuarto rompe el
