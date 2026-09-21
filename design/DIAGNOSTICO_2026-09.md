@@ -294,8 +294,12 @@ Puerta 3 cierre.
 
 ### UX y navegación
 
-- **Atajos de teclado.** Es un juego de PC: `1-5` para los pasos de la semana, `Espacio`
+- ✅ **Atajos de teclado.** Es un juego de PC: `1-5` para los pasos de la semana, `Espacio`
   para avanzar el cuarto, `Esc` para volver al Hub, `Enter` para confirmar el modal.
+  *(Hecho en sep 2026, en tres tandas: `Esc` cierra fichas y `Enter` contesta el diálogo;
+  `Espacio` juega el cuarto y sigue el camino de la semana; `1-7` abren las secciones de la
+  barra y `Esc` vuelve al Tablero. Los pasos de la semana no se numeran: son fases, no
+  pestañas.)*
 - **Un solo botón de "siguiente".** Hoy conviven "Armar el quinteto →" y "» AVANZAR SEMANA"
   en la misma pantalla y hacen cosas distintas. Uno tiene que ser claramente el camino.
 - Las cards de acciones semanales **no son `<button>`**: no hay foco, no hay teclado, no hay
