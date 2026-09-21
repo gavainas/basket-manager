@@ -13,9 +13,29 @@
 
 import { useEffect, useState } from 'react';
 import type { AbsenceDifficulty } from '../game/types';
-import { clearSave, saveStatus } from '../persistence/storage';
+import { clearSave, loadGame, saveStatus } from '../persistence/storage';
 import { CareerSetup } from './CareerSetup';
 import type { ConfirmRequest } from './ConfirmDialog';
+import { weekLabel } from './helpers';
+
+/**
+ * Qué partida es la guardada, en una línea: "Atlético El Parque · Temporada 1
+ * · Semana 6 de 9". Antes la portada decía sólo "Hay una partida guardada" y
+ * había que entrar para saber de qué club y en qué punto estaba.
+ */
+function resumenGuardado(): string | null {
+  const s = loadGame();
+  if (!s) return null;
+  const donde =
+    s.phase === 'preseason' || s.phase === 'preseasonEnd'
+      ? 'pretemporada'
+      : s.phase === 'seasonEnd'
+        ? 'cierre de la temporada'
+        : s.phase === 'gameOver'
+          ? 'partida terminada'
+          : `${weekLabel(s.week, s.seasonLength)}${s.week <= s.seasonLength ? ` de ${s.seasonLength}` : ''}`;
+  return `${s.club.name} · Temporada ${s.seasonNumber} · ${donde}`;
+}
 
 const ARTE = `${import.meta.env.BASE_URL}arte/portada-menu-central/`;
 
@@ -44,6 +64,7 @@ export function Portada({ portada, onNew, onNewPreseason, onNewCareer, onContinu
   const [carrera, setCarrera] = useState(false);
   const status = saveStatus();
   const saved = status === 'ok';
+  const resumen = saved ? resumenGuardado() : null;
 
   // Escape vuelve al menú central desde cualquiera de los dos pasos.
   useEffect(() => {
@@ -94,7 +115,9 @@ export function Portada({ portada, onNew, onNewPreseason, onNewCareer, onContinu
               >
                 <img src={`${ARTE}continuar.webp`} alt="" draggable={false} />
                 <span className="portada-etiqueta">Continuar partida</span>
-                {!saved && (
+                {saved ? (
+                  resumen && <span className="portada-nota">{resumen}</span>
+                ) : (
                   <span className="portada-nota">
                     {status === 'incompatible' ? 'La partida guardada es de una versión vieja' : 'Sin partida guardada'}
                   </span>
@@ -161,7 +184,7 @@ export function Portada({ portada, onNew, onNewPreseason, onNewCareer, onContinu
             <h2 id="portada-gestionar-t">Gestionar partida</h2>
             <p className="portada-panel-p">
               {status === 'ok'
-                ? 'Hay una partida guardada. El juego guarda solo, en este navegador, cada vez que pasa algo.'
+                ? `Hay una partida guardada: ${resumen ?? 'la de siempre'}. El juego guarda solo, en este navegador, cada vez que pasa algo.`
                 : status === 'incompatible'
                   ? 'Hay una partida guardada de una versión que este juego ya no puede leer. No se va a cargar.'
                   : 'No hay ninguna partida guardada en este navegador.'}
