@@ -784,9 +784,39 @@ button.danger {
 
 /* ---------- La semana (tanda B) ---------- */
 
-/* Los cinco pasos arriba, el panel de la fase abajo. */
+/* Los cinco pasos arriba, el panel de la fase abajo.
+
+   El panel mide por lo menos lo que queda de ventana (sep 2026): con una
+   convocatoria corta —vinieron todos, o una sola baja— la pantalla medía 450
+   px en una ventana de 600 y el pie con "Armar el quinteto" quedaba flotando
+   a mitad de pantalla, con su franja oscura (el padding que tapa el aire del
+   scroll cuando está pegado) pintada en el medio de la madera. `sticky` sólo
+   mueve al pie cuando hay scroll; cuando no hay, el pie tiene que estar abajo
+   por layout. La fila de la etapa crece hasta el borde y el pie se va al
+   fondo con `margin-top: auto`; con contenido largo la fila mide lo suyo
+   (`max-content`) y el pie se pega como siempre. */
 .semana-vista {
   gap: 0;
+  min-height: 100%;
+  grid-template-rows: auto minmax(max-content, 1fr);
+}
+
+/* Las cuatro etapas con pie son una columna que empuja el pie al fondo (el
+   quinteto, el partido y el informe lo declaran en su propia regla, abajo). */
+.semana-scroll {
+  display: flex;
+  flex-direction: column;
+}
+
+/* El pie termina en el borde real del scroll: su padding de abajo ya cubre el
+   aire de `.app-shell` cuando está pegado, y el margen negativo evita que ese
+   mismo aire lo separe de la barra de recursos cuando está en flujo. */
+.semana-scroll > .pie-fijo,
+.quinteto-pantalla > .pie-fijo,
+.partido-pantalla > .pie-fijo,
+.informe-pantalla > .pie-fijo {
+  margin-top: auto;
+  margin-bottom: calc(-1 * var(--sp-6));
 }
 
 .semana-scroll {
@@ -824,7 +854,10 @@ button.danger {
 
 /* Cómo llega el partido arriba · la pizarra en el medio · confirmar abajo. */
 .quinteto-pantalla {
-  display: grid;
+  /* Columna, no grilla: el pie se va al fondo con `margin-top: auto` (ver
+     `.semana-vista`). Una grilla de una columna no puede empujarlo. */
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-4);
   min-height: 0;
 }
@@ -891,7 +924,9 @@ button.danger {
 
 /* Marcador arriba · el juego en tres columnas · el botón del cuarto abajo. */
 .partido-pantalla {
-  display: grid;
+  /* Columna, no grilla: el pie se va al fondo (ver `.semana-vista`). */
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-4);
   min-height: 0;
 }
@@ -1244,7 +1279,9 @@ button.danger {
 /* ---------- El informe (tanda D) ---------- */
 
 .informe-pantalla {
-  display: grid;
+  /* Columna, no grilla: el pie se va al fondo (ver `.semana-vista`). */
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-4);
   min-height: 0;
 }
@@ -6149,7 +6186,11 @@ button.mini.blue.on {
 
   /* El pie pegado abajo y la pizarra pegada arriba: en una columna no hay
      dónde pegarse. */
-  .pie-fijo { position: static; margin: 0; padding: 0; background: none; }
+  .pie-fijo,
+  .semana-scroll > .pie-fijo,
+  .quinteto-pantalla > .pie-fijo,
+  .partido-pantalla > .pie-fijo,
+  .informe-pantalla > .pie-fijo { position: static; margin: 0; padding: 0; background: none; }
   .quinteto-pantalla .lineup-court { position: static; }
 
   /* --- 2. Una columna, y del ancho de la ventana --- */
