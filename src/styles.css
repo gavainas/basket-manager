@@ -462,6 +462,25 @@ button.danger {
 
 .secciones .seccion-label { grid-area: label; }
 
+/* La tecla de cada sección (1 a 7), en la esquina: un juego de PC muestra sus
+   atajos. Va fuera de la grilla del botón para no mover el nombre ni el ícono. */
+.secciones .seccion { position: relative; }
+.secciones .seccion-tecla {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-family: var(--display);
+  font-size: 9px;
+  line-height: 1;
+  padding: 1px 3px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  opacity: 0.35;
+  transition: opacity 0.15s;
+}
+.secciones .seccion:hover .seccion-tecla,
+.secciones .seccion.on .seccion-tecla { opacity: 0.6; }
+
 .secciones .seccion .ico {
   grid-area: ico;
   opacity: 0.55;
@@ -6295,6 +6314,7 @@ button.mini.blue.on {
 
   .secciones .seccion { flex: 1 1 0; padding: 0.3rem 0.2rem 0.25rem; }
   .secciones .seccion-label { display: none; }
+  .secciones .seccion-tecla { display: none; } /* sin teclado, sin tecla */
   .secciones .seccion-punto { margin-right: 0; }
 
   /* La barra de recursos: los cuatro números en una fila (sin la letra chica)

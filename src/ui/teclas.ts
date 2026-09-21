@@ -65,6 +65,54 @@ export function useTeclasModal(teclas: Teclas, activo = true) {
   }, [activo]);
 }
 
+/** ¿El foco está en un campo de texto o un desplegable? (ahí los números y las letras son suyos). */
+function focoEnCampo(): boolean {
+  const tag = (document.activeElement as HTMLElement | null)?.tagName ?? '';
+  return ['INPUT', 'SELECT', 'TEXTAREA'].includes(tag);
+}
+
+/**
+ * ¿Hay una ficha, un diálogo o un evento abierto? Los que pasan por
+ * `useTeclasModal` están en la pila; el modal de los eventos de la semana no
+ * (no se cierra con Escape: hay que contestarlo), así que se mira también el
+ * DOM. Mientras haya uno abierto, el teclado es de él.
+ */
+function hayModal(): boolean {
+  return pila.length > 0 || document.querySelector('.modal-backdrop') !== null;
+}
+
+/**
+ * Las teclas de navegación del marco (sep 2026, del diagnóstico: "es un juego
+ * de PC: atajos para las secciones y Esc para volver al tablero"): los números
+ * 1 a 7 llevan a cada sección de la barra de arriba y Escape vuelve al
+ * Tablero. Con una ficha, un diálogo o un evento abierto no hacen nada (Escape
+ * ahí cierra la ficha, y lo maneja `useTeclasModal`); con el foco en un campo
+ * o un desplegable tampoco (los números son del campo). Ctrl, Alt y Cmd
+ * quedan para el navegador.
+ */
+export function useTeclasSecciones(teclas: { onSeccion: (numero: number) => void; onEscape: () => void }) {
+  const ref = useRef(teclas);
+  ref.current = teclas;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+      if (hayModal() || focoEnCampo()) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        ref.current.onEscape();
+        return;
+      }
+      if (/^[1-9]$/.test(e.key)) {
+        e.preventDefault();
+        ref.current.onSeccion(Number(e.key));
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+}
+
 /**
  * La barra espaciadora de una pantalla: la acción que el pie ya muestra como
  * botón principal, al alcance de una tecla. Es un juego de PC y el partido se

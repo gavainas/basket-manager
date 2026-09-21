@@ -31,6 +31,7 @@ import { PreseasonView } from './ui/PreseasonView';
 import { PreseasonEndScreen } from './ui/PreseasonEndScreen';
 import { formatMoney, weekLabel } from './ui/helpers';
 import { ConfirmDialog, type ConfirmRequest } from './ui/ConfirmDialog';
+import { useTeclasSecciones } from './ui/teclas';
 import { Icon, type IconName } from './ui/Icon';
 import { Crest } from './ui/Crest';
 
@@ -163,6 +164,22 @@ export default function App() {
     setTab(t);
     setFocus(f ?? null);
   };
+
+  /* Las teclas 1 a 7 son las siete secciones de la barra, en su orden, y
+     Escape vuelve al Tablero. Sólo en la temporada: la pretemporada y los
+     cierres no tienen la barra. El hook va antes de los `return` de abajo
+     porque es un hook. */
+  const enTemporada =
+    !!state && state.phase !== 'preseason' && state.phase !== 'preseasonEnd' && state.phase !== 'seasonEnd' && state.phase !== 'gameOver';
+  useTeclasSecciones({
+    onSeccion: (n) => {
+      const s = SECCIONES[n - 1];
+      if (enTemporada && s) navigate(s.tab);
+    },
+    onEscape: () => {
+      if (enTemporada && tab !== 'resumen') navigate('resumen');
+    },
+  });
 
   if (!state) {
     const startNew = (action: GameAction) => {
@@ -317,7 +334,7 @@ export default function App() {
           </div>
 
           <nav className="secciones">
-            {SECCIONES.map((s) => {
+            {SECCIONES.map((s, i) => {
               const activa = tab === s.tab || (s.incluye?.includes(tab) ?? false);
               return (
                 <button
@@ -325,10 +342,13 @@ export default function App() {
                   className={`seccion ${VIEWS[s.tab].sec}${activa ? ' on' : ''}`}
                   onClick={() => navigate(s.tab)}
                   aria-current={activa ? 'page' : undefined}
+                  title={`${s.label} · tecla ${i + 1}${s.tab === 'resumen' ? ' (o Esc desde cualquier pantalla)' : ''}`}
                 >
                   <span className="seccion-punto" />
                   <span className="seccion-label">{s.label}</span>
                   <Icon name={s.icon} size={22} />
+                  {/* La tecla, chiquita en la esquina: se ve que existe sin competir con el nombre. */}
+                  <kbd className="seccion-tecla" aria-hidden="true">{i + 1}</kbd>
                 </button>
               );
             })}
