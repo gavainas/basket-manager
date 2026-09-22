@@ -154,7 +154,7 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
     outcomeText = 'Llegar a la final ya fue un logro, pero la última pelota no quiso entrar. El año que viene es revancha.';
   } else if (position === 1) {
     outcomeTitle = 'Los mejores de la fase regular';
-    outcomeText = 'Dominaron la temporada... hasta los playoffs. La tabla dice campeones morales; la copa dice otra cosa.';
+    outcomeText = 'Dominaron la temporada… hasta los playoffs. La tabla dice campeones morales; la copa dice otra cosa.';
   } else if (state.memorableMoments.length >= 3 && sportScore >= 45 && retentionScore >= 60) {
     outcomeTitle = 'Temporada inolvidable';
     outcomeText = 'Más allá de la tabla, esta temporada dejó historias que el grupo va a contar durante años.';

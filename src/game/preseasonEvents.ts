@@ -135,7 +135,7 @@ export const PRESEASON_EVENTS: PreseasonEventDef[] = [
       }
       const cost = a.signingCost + b.signingCost;
       if (s.club.money < cost) {
-        return `No te alcanza la caja para los dos ($${cost}). El dúo sigue esperando... por ahora.`;
+        return `No te alcanza la caja para los dos ($${cost}). El dúo sigue esperando… por ahora.`;
       }
       if (cost > 0) spend(s, `Fichaje doble: ${a.name} y ${b.name}`, cost);
       for (const mp of [a, b]) {

@@ -215,12 +215,12 @@ function moodText(
       if (!ctx.inSquad && (ctx.grievanceLevel ?? 0) >= 2) {
         return (ctx.grievanceLevel ?? 0) >= 3
           ? pick([
-              `"${weeks} semanas sin entrar en la lista. Ya está, me quedó claro dónde estoy parado."`,
+              `"${weeks === 1 ? 'Una semana' : `${weeks} semanas`} sin entrar en la lista. Ya está, me quedó claro dónde estoy parado."`,
               '"No me avises más para el partido, avisame cuando me necesites de verdad."',
               '"Vengo, me cambio, miro y me voy. Un día de estos dejo de venir."',
             ])
           : pick([
-              `"Otra vez afuera de la lista. Van ${weeks} semanas, ya no es casualidad."`,
+              `"Otra vez afuera de la lista. ${weeks === 1 ? 'Va una semana' : `Van ${weeks} semanas`}, ya no es casualidad."`,
               '"Che, ¿me estás bajando o es mi impresión? Preguntá al grupo, no soy solo yo."',
               '"Ni citado. Alguna explicación en algún momento me van a tener que dar."',
             ]);
@@ -256,14 +256,14 @@ function moodText(
     case 'molesto_minutos':
       if ((ctx.grievanceLevel ?? 0) >= 3) {
         return pick([
-          `"${weeks} semanas igual. No es un mal día, es una decisión tuya y ya la entendí."`,
+          `"${weeks === 1 ? 'Una semana' : `${weeks} semanas`} igual. No es un mal día, es una decisión tuya y ya la entendí."`,
           '"Dejá, no me expliques nada. A fin de año hablamos, si es que sigo."',
           `"${ctx.minutes || 'Cero'} minutos otra vez. Se lo dije al grupo: así no sigo."`,
         ]);
       }
       if ((ctx.grievanceLevel ?? 0) === 2) {
         return pick([
-          `"Van ${weeks} fechas con lo mismo. Ya te lo dije de buena manera, eh."`,
+          `"${weeks === 1 ? 'Va una fecha' : `Van ${weeks} fechas`} con lo mismo. Ya te lo dije de buena manera, eh."`,
           '"No es el partido de hoy, es que se está haciendo costumbre."',
           '"Me estás usando de bulto para llenar la planilla. Bárbaro."',
         ]);

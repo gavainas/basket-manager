@@ -100,6 +100,17 @@ const REF_MOOD_NOTES = [
   'De nuestro lado ya nadie discute las jugadas: discuten los fallos.',
 ];
 
+/* Las mismas notas con el juez anunciado, en singular y declinadas: antes se
+   reemplazaba "los jueces" por el nombre y quedaba "el Flaco Medina están
+   cobrando" y "Cada silbato de el Flaco Medina". {r} es el nombre tal cual,
+   {dr} con el "de" que corresponde ("del Flaco Medina", "de la Colo Ramírez"). */
+const REF_MOOD_NOTES_JUEZ = [
+  'El equipo siente que {r} está cobrando distinto en cada aro.',
+  'Dos criterios distintos según el aro: eso creen todos de este lado de la cancha.',
+  'Cada silbato {dr} enciende un poco más al banco.',
+  'De nuestro lado ya nadie discute las jugadas: discuten los fallos {dr}.',
+];
+
 const ROCES = [
   '{n} y {r} se trabaron en un rebote y se dijeron de todo. Los separaron los compañeros.',
   '{r} le pegó un codazo a {n} sin pelota y {n} fue a buscarlo. Quedaron cara a cara.',
@@ -140,6 +151,16 @@ function refNombre(live: LiveMatchState): string {
   return live.refName ?? 'el árbitro';
 }
 
+/** El juez arrancando la frase: "El Flaco Medina", "La Colo Ramírez", "Suárez", "El árbitro". */
+function mayus(nombre: string): string {
+  return nombre.charAt(0).toUpperCase() + nombre.slice(1);
+}
+
+/** "de" más el juez, declinado: "del Flaco Medina", "de la Colo Ramírez", "de Suárez", "del árbitro". */
+function deRef(nombre: string): string {
+  return nombre.startsWith('el ') ? `del ${nombre.slice(3)}` : `de ${nombre}`;
+}
+
 function apellido(nombre: string): string {
   const parts = nombre.replace(/"[^"]*"\s*/g, '').trim().split(/\s+/);
   return parts[parts.length - 1];
@@ -165,8 +186,8 @@ export function rollRefIncident(s: GameState, live: LiveMatchState, onCourt: Pla
   // Último cuarto: sin decisión pendiente, sólo el clima con los jueces.
   if (qIndex >= 3) {
     live.refTension = clamp(tension + 1, 0, 5);
-    const note = freshIncident(live, REF_MOOD_NOTES, rng);
-    return live.refName ? note.replace('los jueces', live.refName) : note;
+    if (!live.refName) return freshIncident(live, REF_MOOD_NOTES, rng);
+    return freshIncident(live, REF_MOOD_NOTES_JUEZ, rng).replace(/\{r\}/g, live.refName).replace(/\{dr\}/g, deRef(live.refName));
   }
 
   // Entre los calentones en cancha se sortea: que no sea siempre el mismo el
@@ -217,7 +238,7 @@ export function rollRefIncident(s: GameState, live: LiveMatchState, onCourt: Pla
           hint: severo
             ? `Con ${ref}, cortito con las protestas, suele terminar en otra técnica.`
             : live.refStyle === 'permisivo'
-              ? `${ref} deja pasar: el grupo se siente defendido y sale a morder.`
+              ? `${mayus(ref)} deja pasar: el grupo se siente defendido y sale a morder.`
               : `Con ${ref} es una moneda al aire: el grupo se une, o cae una técnica.`,
         },
         { label: 'Que nadie hable con los jueces', hint: 'Perfil bajo. Seguro, pero al que se comió la falta lo dejás solo.' },
@@ -330,14 +351,14 @@ export function rollRefIncident(s: GameState, live: LiveMatchState, onCourt: Pla
   live.refTension = clamp(tension + 1, 0, 5);
   live.pendingIncident = {
     kind: 'casero',
-    text: `${ref} cobra todo en contra: dos faltas seguidas que nadie vio, y el gimnasio festeja cada silbato.`,
+    text: `${mayus(ref)} cobra todo en contra: dos faltas seguidas que nadie vio, y el gimnasio festeja cada silbato.`,
     options: [
       { label: 'Meter zona para no hacer faltas', hint: 'Menos contacto, menos silbatos. Y la zona es la zona.' },
       { label: 'Hablar con la mesa', hint: 'A veces baja la temperatura. A veces la sube.' },
       { label: 'Bancársela', hint: 'Nada cambia. Los jueces se olvidan solos… o no.' },
     ],
   };
-  return `${ref} cobra en contra y el equipo lo siente.`;
+  return `${mayus(ref)} cobra en contra y el equipo lo siente.`;
 }
 
 /** Resuelve la decisión del manager ante la incidencia pendiente. */
@@ -453,17 +474,17 @@ export function resolveIncident(state: GameState, choice: number, rng: Rng): Gam
     if (choice === 0) {
       live.defense = 'zona';
       live.refTension = Math.max(0, (live.refTension ?? 0) - 1);
-      note(`Metiste zona para no regalar faltas: menos contacto, menos silbatos de ${ref}.`);
+      note(`Metiste zona para no regalar faltas: menos contacto, menos silbatos ${deRef(ref)}.`);
     } else if (choice === 1) {
       if (rng.chance(0.4)) {
         live.refTension = Math.max(0, (live.refTension ?? 0) - 2);
-        note(`Hablaste con la mesa con buenos modos. ${ref} bajó un cambio.`);
+        note(`Hablaste con la mesa con buenos modos. ${mayus(ref)} bajó un cambio.`);
       } else {
         live.refTension = clamp((live.refTension ?? 0) + 1, 0, 5);
         note(`Fuiste a la mesa y ${ref} te vio venir: "Volvé al banco". Ahora también te tiene fichado a vos.`);
       }
     } else {
-      note(`Te la bancaste. ${ref} siguió cobrando lo suyo y el equipo jugó con eso.`);
+      note(`Te la bancaste. ${mayus(ref)} siguió cobrando lo suyo y el equipo jugó con eso.`);
     }
   }
 
