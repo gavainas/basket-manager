@@ -37,6 +37,7 @@ if (tsc.status !== 0) {
 fs.writeFileSync(path.join(OUT, 'package.json'), '{"type":"commonjs"}\n');
 
 const { createNewGame } = require(path.join(OUT, 'game', 'week.js'));
+const { createPreseasonNewGame, createCareerNewGame } = require(path.join(OUT, 'game', 'preseason.js'));
 const { ACTIONS } = require(path.join(OUT, 'game', 'actions.js'));
 const { ABSENCE_ACTIONS } = require(path.join(OUT, 'game', 'absences.js'));
 const { getEvent } = require(path.join(OUT, 'game', 'events.js'));
@@ -100,6 +101,12 @@ function paso(s, a) {
   const next = gameReducer(s, a);
   if (!next) throw new Error(`el reducer devolvió null ante ${a.type}`);
   cosechar(next);
+  // El duplicado se anota en la acción que lo mete, no al final de la semana.
+  const ids = next.players.map((p) => p.id);
+  const dup = ids.find((id, i) => ids.indexOf(id) !== i);
+  if (dup && !(s && s.players.some((p, i) => s.players.findIndex((q) => q.id === p.id) !== i))) {
+    nota(`jugador duplicado ${dup} recién metido por ${a.type} ${JSON.stringify({ ...a, state: undefined })}`);
+  }
   const json = JSON.stringify(next);
   const i = json.indexOf('NaN') >= 0 ? json.indexOf('NaN') : json.indexOf('undefined');
   if (i >= 0) nota(`NaN/undefined en el guardado tras ${a.type}: …${json.slice(Math.max(0, i - 120), i + 40)}…`);
@@ -268,16 +275,17 @@ let jugadas = 0;
 for (let seed = 1; seed <= semillas; seed++) {
   contexto.seed = seed;
   // Un tercio de las partidas arranca por la Carrera (la libreta), otro por la
-  // pretemporada del club en marcha, otro directo a la fecha 1.
+  // pretemporada del club en marcha, otro directo a la fecha 1. Siempre con la
+  // semilla del fuzz (las acciones NEW_GAME_* sortean la suya y la corrida
+  // dejaría de ser reproducible).
   const modo = seed % 3;
-  let s = paso(
-    null,
+  const inicial =
     modo === 0
-      ? { type: 'NEW_GAME_CAREER', clubName: 'Club Fuzz', colors: ['#123456', '#abcdef'] }
+      ? createCareerNewGame(seed, 'medio', { clubName: 'Club Fuzz', colors: ['#123456', '#abcdef'] })
       : modo === 1
-        ? { type: 'NEW_GAME_PRESEASON' }
-        : { type: 'LOAD', state: createNewGame(seed) }
-  );
+        ? createPreseasonNewGame(seed)
+        : createNewGame(seed);
+  let s = paso(null, { type: 'LOAD', state: inicial });
   try {
     if (s.phase === 'preseason') {
       s = jugarPretemporada(s);

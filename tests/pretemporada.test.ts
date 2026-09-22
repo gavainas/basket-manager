@@ -5,6 +5,8 @@ import { computeSeasonEvaluation } from '../src/game/evaluation';
 import { confirmedPlayers, createPreseasonNewGame, inscriptionOffer } from '../src/game/preseason';
 import { PRESEASON_EVENTS } from '../src/game/preseasonEvents';
 import type { GameState } from '../src/game/types';
+import { marketToPlayer } from '../src/data/market';
+import { Rng } from '../src/game/rng';
 import { jugarTemporada, partidaNueva, paso } from './jugar';
 
 /** Avanza la pretemporada semana a semana sin contactar a nadie y la cierra. */
@@ -268,5 +270,26 @@ describe('la memoria entre temporadas: el título y la bronca cruzan el verano',
     expect(quieto.preseason!.movido).toBeUndefined();
     expect(inscriptionOffer(quieto).find((o) => o.isCurrent)!.note).toMatch(/de siempre/);
     expect(quieto.pastSeasons[quieto.pastSeasons.length - 1].moved).toBeUndefined();
+  });
+});
+
+/**
+ * El id del fichado lleva la temporada: los ids de mercado (mk1, mk2…) se
+ * repiten cada verano, y sin ella el mk5 de la T2 heredaba el id del mk5 de la
+ * T1 si los nombres medían lo mismo. Dos personas con un id: las estadísticas
+ * se sumaban en una y la ficha abría la otra. Lo encontró el fuzz (sep 2026).
+ */
+describe('el id del fichado es único entre temporadas (sep 2026)', () => {
+  it('el mismo lugar del mercado da ids distintos en la T1 y la T2', () => {
+    const s = createPreseasonNewGame(5);
+    const mp = s.preseason!.market[0];
+    const t1 = marketToPlayer(mp, 'pagada', 'suplente', 1, new Rng(1));
+    const t2 = marketToPlayer(mp, 'pagada', 'suplente', 2, new Rng(1));
+    expect(t1.id).not.toBe(t2.id);
+    expect(t1.id).toMatch(/^sg_1_/);
+    expect(t2.id).toMatch(/^sg_2_/);
+    // Y dos lugares distintos del mismo mercado tampoco se pisan.
+    const otro = marketToPlayer(s.preseason!.market[1], 'pagada', 'suplente', 1, new Rng(1));
+    expect(otro.id).not.toBe(t1.id);
   });
 });

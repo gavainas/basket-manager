@@ -427,7 +427,13 @@ export function marketToPlayer(
 ): Player {
   const bg = rollBackground(mp.position, rng);
   return {
-    id: `sg_${mp.id}_${mp.name.length}`,
+    // Con la temporada adentro: los ids de mercado (mk1, mk2…) se repiten cada
+    // verano, y sin ella el fichado del mk5 de la T2 heredaba el id del mk5 de
+    // la T1 si los nombres medían lo mismo. Dos personas con un id: las
+    // estadísticas se sumaban en una, la ficha abría la otra y React avisaba
+    // de claves repetidas. Lo encontró el fuzz (sep 2026). Los fichados de
+    // antes conservan su id viejo: no hay migración que hacer.
+    id: `sg_${season}_${mp.id}_${mp.name.length}`,
     name: mp.name,
     age: mp.age,
     // La misma cara que se vio en el mercado. La seed incluye el nombre porque
