@@ -1308,6 +1308,11 @@ button.danger {
 /* La franja del informe: el resumen a la derecha puede ser largo, se corta en
    dos líneas con puntos suspensivos y se lee entero en el tooltip. */
 .informe-franja .franja-quien { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.6rem; }
+/* El título del informe se parte en dos renglones antes que recortarse: a 1280
+   y 1366 de ancho la columna mide 365 px, el chip del resultado se lleva 90 y
+   "Semana 6 · vs Los Cardales" (277 px) leía "SEMANA 6 · VS LOS CARDA…" en la
+   pantalla que más se mira. A 1920 entra en uno. */
+.informe-franja .franja-quien h3 { white-space: normal; line-height: 1.15; }
 .informe-franja .result-badge { font-size: var(--fs-sm); padding: 0.2rem 0.8rem; }
 .informe-franja .franja-linea {
   display: -webkit-box;

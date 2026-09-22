@@ -381,10 +381,15 @@ export function LineupPanel({ state, dispatch }: Props) {
                   </div>
                   <div className={`slot-name${pl ? '' : ' dim'}`}>{pl ? shortName(pl.name) : 'Libre'}</div>
                   {pl && (
-                    <div className={`slot-sub${oop ? ' oop-text' : ''}`}>
-                      ≈{pl.visibleRating} · {(pl.height / 100).toFixed(2)} m
-                      {oop ? ` · es ${pl.position}` : ''}
-                    </div>
+                    <>
+                      <div className="slot-sub">
+                        ≈{pl.visibleRating} · {(pl.height / 100).toFixed(2)} m
+                      </div>
+                      {/* El puesto de verdad va en su renglón: pegado a la altura
+                          ("≈62 · 1.87 m · es Alero") partía en "… · es" y "Alero"
+                          al ancho de la ficha. */}
+                      {oop && <div className="slot-sub oop-text">es {pl.position}</div>}
+                    </>
                   )}
                 </div>
               );
