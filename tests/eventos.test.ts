@@ -3,6 +3,7 @@ import { getEvent } from '../src/game/events';
 import { Rng } from '../src/game/rng';
 import type { GameState, MatchResult } from '../src/game/types';
 import { partidaNueva } from './jugar';
+import { watchItems } from '../src/ui/watch';
 
 /** Un partido terminado, con lo justo para el historial. */
 function partido(week: number, won: boolean): MatchResult {
@@ -193,5 +194,24 @@ describe('el barrio se enteró de la racha (sep 2026, el segundo evento que mira
     // En las semifinales ya no hay dónde cobrar otra: no se ofrece redoblar.
     const semis = conHistorial([true, true, true, true, true, true, true, true, true], 10);
     expect(factura.options(semis, { defId: 'racha_factura', fromWeek: 8 }).map((o) => o.label)).toEqual(['Pasar por el almacén a agradecer']);
+  });
+
+  it('el radar recuerda la promesa abierta: cuándo se cobra y cómo viene la cuenta', () => {
+    const s = conHistorial([true, true, true, false], 5);
+    const sin = watchItems(s).filter((i) => i.text.includes('peleamos arriba'));
+    expect(sin).toHaveLength(0);
+    const con = { ...s, scheduledEvents: [{ defId: 'racha_factura', season: s.seasonNumber, week: 7, fromWeek: 4 }] };
+    const items = watchItems(con).filter((i) => i.text.includes('peleamos arriba'));
+    expect(items).toHaveLength(1);
+    expect(items[0].text).toContain('en 2 fechas');
+    expect(items[0].text).toContain('vas 0-1');
+    expect(items[0].cls).toBe('warn');
+    expect(items[0].tile).toBe('noticias');
+    // Ganando desde la nota, el aviso es bueno y dice "esta semana" cuando llega el día.
+    const bien = { ...conHistorial([false, true, true, true], 7), scheduledEvents: [{ defId: 'racha_factura', season: s.seasonNumber, week: 7, fromWeek: 2 }] };
+    const item = watchItems(bien).find((i) => i.text.includes('peleamos arriba'))!;
+    expect(item.cls).toBe('good');
+    expect(item.text).toContain('esta semana');
+    expect(item.text).toContain('vas 3-0');
   });
 });
