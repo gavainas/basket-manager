@@ -316,7 +316,7 @@ export function rollRefIncident(s: GameState, live: LiveMatchState, onCourt: Pla
       playerName: p.name,
       text: `${freshIncident(live, RESENTIDOS, rng).replace(/\{n\}/g, p.name)} Tiene ${p.age} y ${cuerpo}.`,
       options: [
-        { label: 'Sacarlo ya, no arriesgar', hint: 'Se queda afuera lo que resta del partido. Sin lesión.' },
+        { label: 'Sacarlo ya, no arriesgar', hint: 'Se queda afuera lo que resta del partido y no vuelve a entrar. Sin lesión.' },
         {
           label: 'Que siga si aguanta',
           hint: frag >= 45 ? 'Con su historial, es probable que termine en el kinesiólogo.' : 'Probablemente aguante. Probablemente.',

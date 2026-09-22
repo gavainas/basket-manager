@@ -310,7 +310,7 @@ function lockerRoomNotes(
   if (result.shortHanded && result.won) {
     notes.push(`Los ${n} que estuvieron se abrazaron como campeones. Gesta para contar en el asado por años.`);
   } else if (result.shortHanded && !result.won) {
-    notes.push(`"Con ${n} no se podía más", dijo alguien. Adentro del vestuario nadie reprochó nada. Adentro.`);
+    notes.push(`"Con ${n} no se podía más", dijo alguien. Adentro del vestuario nadie reprochó nada; afuera, en el barrio, ya se verá.`);
   } else if (result.comeback) {
     notes.push('El vestuario tardó en creerlo: la remontada se festejó dos veces.');
   } else if (result.clutch && result.won) {

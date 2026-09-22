@@ -5213,6 +5213,12 @@ button.mini.blue.on {
   gap: 0.25rem;
 }
 
+/* La nota al lado del nombre ("· reservado", "· afuera") no se recorta: en la
+   fila del banco, con "Gonzalo Viera · reservado" el flex le comía la nota y
+   quedaba "· reser". Lo que cede es el nombre, con sus puntos suspensivos. */
+.pvj-nombre > .plink { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pvj-nombre > .pvj-nota { flex-shrink: 0; color: var(--text-dim); font-weight: 500; }
+
 .pvj-pts {
   text-align: right;
   font-weight: 700;
@@ -5575,6 +5581,11 @@ button.mini.blue.on {
   display: flex;
   align-items: center;
   gap: 0.55rem;
+  /* Mide lo que dice, no la fila de la grilla: con una incidencia en una
+     ventana baja la cancha se esconde y el aviso caía en la fila `1fr` del
+     relato, estirado a 348 px con el texto centrado debajo del pie. Un cajón
+     amarillo vacío al lado de la decisión. */
+  align-self: start;
   padding: 0.45rem 0.7rem;
   border-radius: var(--radius);
   border: 1px solid color-mix(in srgb, var(--warn) 50%, transparent);
