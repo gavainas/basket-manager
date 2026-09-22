@@ -57,11 +57,27 @@ club quiebra la mitad de las veces que antes. Lo que sigue:
    queda ahí es partir el chunk del juego (627 kB), que pide separar el reducer para que la
    pretemporada no viaje con el partido.
 
+4. **Decidido por Gabi el 22/9, pendiente de hacer** (dos sesiones cortas, sin más
+   preguntas):
+   - **La Carrera no quiebra en el primer rojo.** Hoy la caja en negativo al cierre de la
+     semana es game over ("Fracaso financiero"), y jugada sin gestionar la Carrera
+     quiebra en la fecha 2 por dos pesos. Pasa a dos pasos: el **primer rojo es un aviso de
+     la comisión** (la semana cierra igual, con la caja en negativo y el radar en rojo
+     diciendo qué hacer), y **la quiebra recién con el segundo rojo**. Vale para los dos
+     modos (la regla es del motor, `advanceWeek` en `week.ts`); medir con `npm run sim` y
+     `npm run sim:carrera` que las quiebras sin gestión no se disparen.
+   - **"Sentar a los dos que no se bancan"**, acción de la semana (una gestión): sienta a la
+     pareja con roce del vestuario (la misma que el radar avisa y sobre la que cae la
+     pelea), con la chance de la mediación de la discusión. Sale bien: sube lo vivido entre
+     ellos (`affinityBonus`) y el roce deja de serlo; sale mal: baja, y alguno se pudre.
+     Sólo disponible si hay un par con roce.
+
 Lo que quedaba de T2 y T3 salió (sep 2026, ver el changelog): la charla y el compañero
 escriben en la ficha, el inicio avisa al que pasa a "aparece cuando quiere", la libreta
 sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
 
-**Orden:** la dirección D primero, y el arte cuando Gabi diga.
+**Orden:** el punto 4 primero (está decidido), la dirección D después, y el arte cuando
+Gabi diga.
 
 ## Decisiones que están en la cancha de Gabi
 
@@ -73,20 +89,14 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   apretar, las perillas están en `BALANCE.carrera` (ver
   [`design/BALANCE.md`](design/BALANCE.md#el-modo-carrera-septiembre-2026-lo-que-quedaba-de-t3)).
 
-- **¿Hay tope de plantel?** En la pretemporada del club en marcha, aceptando todas las
-  negociaciones se cierra con **21 fichas** (12 fichajes en 4 semanas, medido por la
-  interfaz): no hay tope ni en el motor ni en la UI, y el único freno es el pase. Con 21
-  la tira del tablero se desborda y la bronca por minutos se dispara sola. ¿Tope de 14 o
-  15 (con "el plantel está cerrado" en el mercado y la libreta), o se deja y que la bronca
-  lo regule?
+- ~~**¿Hay tope de plantel?**~~ **Decidido (22/9): no hay tope, por ahora.** Se deja que el
+  pase y la bronca por minutos lo regulen. (Contexto: aceptando todas las negociaciones se
+  cierra con 21 fichas, y con 21 la tira del tablero se desborda: si algún día molesta, es
+  un tope de 14 o 15 con "el plantel está cerrado" en el mercado y la libreta.)
 
-- **¿La Carrera tiene que quebrar en la fecha 2?** Jugada por la interfaz sin gestionar la
-  caja: se inscribe con 10, paga la ficha entera y arranca con **$8**; con cuotas de $240
-  contra gastos de $245 cierra la fecha 1 con $3 y la fecha 2 con **$-2: "Fracaso
-  financiero"**, game over. El radar avisa en rojo desde la fecha 1 y dice qué hacer (rifa,
-  sponsor, gorra), así que el jugador atento se salva; el que no mira, pierde el club por
-  dos pesos en la segunda semana. ¿Está bien así (la Carrera aprieta de verdad), o el
-  primer rojo tendría que ser un aviso de la comisión y recién el segundo, la quiebra?
+- ~~**¿La Carrera tiene que quebrar en la fecha 2?**~~ **Decidido (22/9): no puede quebrar en
+  el primer aviso.** El primer rojo es aviso de la comisión y la quiebra recién con el
+  segundo. Está en el punto 4 de "Las próximas cosas".
 
 - **El brief de la lámina** (Puerta 3,
   [`design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md`](design/arte/BRIEFS/2026-09-08-puerta3-lamina-por-capas.md)):
@@ -118,16 +128,11 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   tramos con un hueco bajan de 26% a 15%, sin mover las victorias. La excepción es el
   DT honorario con "juegan todos" (-3 de victorias, +3 de huecos, dentro del ruido pero
   las dos para el mismo lado): un banco elegido por cobertura es un poco más flojo y él
-  lo juega entero, y cuando no lee la pizarra mete al frío sin mirar el puesto. ¿Se deja
-  así (es su estilo: "el que no lee, se lee") o el cambio a ciegas del DT también
-  prefiere el mismo puesto cuando lo tiene en el banco?
-- **"Sentar a los dos que no se bancan" como acción de la semana** (sep 2026). El mapa
-  social ya juega: la pelea cae sobre la pareja con roce y las charlas de los eventos
-  mueven lo vivido entre ellos. Lo que el manager todavía no puede hacer es ir a
-  buscarlos antes de que estalle: hoy sólo "Hablar con un jugador molesto" (uno solo, el
-  más caliente). Una acción de una gestión que siente a los dos —con la misma chance que
-  la mediación de la discusión— cerraría el círculo. Es un sistema chico pero nuevo:
-  se hace cuando lo digas.
+  lo juega entero, y cuando no lee la pizarra mete al frío sin mirar el puesto.
+  **Decidido (22/9): se deja así.** El profe con "juegan todos" no mira nada, hace
+  cualquier cosa y todos juegan minutos; es malo, y ese es su estilo. No se toca.
+- ~~**"Sentar a los dos que no se bancan" como acción de la semana**~~ **Decidido (22/9):
+  va.** Está en el punto 4 de "Las próximas cosas".
 - Decidido: **el héroe de cuerpo entero se agrega cuando haya más arte**; el hueco que lo
   espera es la ficha del jugador.
 
