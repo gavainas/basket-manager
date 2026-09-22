@@ -36,3 +36,5 @@ jobs:
         run: npm run sim:ligas -- 4 4
       - name: Modo Carrera (20 pretemporadas por política)
         run: npm run sim:carrera -- 20
+      - name: Fuzz del reducer (24 partidas al azar × 2 temporadas)
+        run: npm run fuzz -- 24 2

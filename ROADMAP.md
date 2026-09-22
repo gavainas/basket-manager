@@ -160,7 +160,10 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   jugadores (un líder que se va arrastra amigos), sponsors y actividades sociales.
 - **Largo plazo**: historias emergentes desde los datos, versión móvil, reskin fútbol 5.
 - **Programación, lo que no entra en la sesión de arriba**: que cada migración de save
-  nueva llegue con su test en `tests/guardado.test.ts`.
+  nueva llegue con su test en `tests/guardado.test.ts`. *Desde sep 2026 hay un fuzz*
+  (`npm run fuzz`, en el CI) que juega partidas eligiendo al azar y vigila que ninguna
+  decisión rompa el guardado ni los textos; cuando aparezca un patrón de texto nuevo que
+  valga la pena vigilar, la lista está en `scripts/fuzz.cjs`.
 
 ## Diseño
 

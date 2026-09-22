@@ -13,7 +13,8 @@
     "sim": "node scripts/sim-balance.cjs",
     "sim:ligas": "node scripts/sim-ligas.cjs",
     "sim:carrera": "node scripts/sim-carrera.cjs",
-    "sim:notas": "node scripts/sim-notas.cjs"
+    "sim:notas": "node scripts/sim-notas.cjs",
+    "fuzz": "node scripts/fuzz.cjs"
   },
   "dependencies": {
     "@fontsource/oswald": "^5.3.0",
