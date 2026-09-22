@@ -148,9 +148,13 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   del partido y el que se comió la noche; lo que queda ahí —contento, conforme,
   indiferente— es donde el contraste no se lee y el genérico alcanza.
 - **Más eventos**: cadenas de 3+ eslabones y más eventos que dependan del historial del
-  club. Ligas que cobren por fecha o aparezcan y desaparezcan según el año. *El primero del
-  historial ya está* (sep 2026): la comisión pide explicaciones con tres derrotas al hilo.
-  El molde queda: mirar `s.history` y no el estado de hoy.
+  club. Ligas que cobren por fecha o aparezcan y desaparezcan según el año. *Los dos
+  primeros del historial ya están* (sep 2026): la comisión pide explicaciones con tres
+  derrotas al hilo, y con tres victorias el barrio se entera y, si te agrandás en la nota,
+  te la cobra tres fechas después mirando lo que pasó desde entonces (`fromWeek` en los
+  eventos encadenados: el molde para un eslabón que juzga el historial). Esa cadena ya es
+  de largo abierto (se redobla mientras el club gane); lo que falta es una de 3+ eslabones
+  con decisiones distintas en cada uno.
 - **Mediano plazo**: clima liviano (suspensiones, público, recaudación), más profundidad
   táctica (matchups, ritmo), lesiones con recuperación progresiva, influencias entre
   jugadores (un líder que se va arrastra amigos), sponsors y actividades sociales.

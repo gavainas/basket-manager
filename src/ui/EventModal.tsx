@@ -33,6 +33,8 @@ const EVENT_ICONS: Record<string, IconName> = {
   sobrino_socio: 'plantel',
   libreta_vuelve: 'chat',
   comision_aprieta: 'inscripcion',
+  racha_barrio: 'social',
+  racha_factura: 'historia',
 };
 
 // Eventos festivos: acá la gorra está permitida (nunca en la ficha deportiva).

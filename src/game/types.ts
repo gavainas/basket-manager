@@ -668,6 +668,8 @@ export interface ActiveEvent {
   playerId2?: string;
   /** Un contacto de la libreta (modo Carrera) que todavía no es jugador: id en `libretaPendiente`. */
   contactId?: string;
+  /** La semana en que se hizo la promesa que este eslabón cobra (mira el historial desde ahí). */
+  fromWeek?: number;
 }
 
 /** Evento encadenado: una decisión de hoy lo agenda para dispararse semanas
@@ -679,6 +681,8 @@ export interface ScheduledEvent {
   week: number;
   playerId?: string;
   playerId2?: string;
+  /** La semana del eslabón anterior, para los que juzgan lo que pasó desde entonces. */
+  fromWeek?: number;
 }
 
 export type Phase =

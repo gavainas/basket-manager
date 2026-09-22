@@ -92,3 +92,106 @@ describe('la comisión pide explicaciones (sep 2026)', () => {
     expect(s.clubTimeline.some((e) => e.text.includes('le cargó la racha al plantel'))).toBe(true);
   });
 });
+
+const racha = getEvent('racha_barrio');
+const factura = getEvent('racha_factura');
+const ev = (defId: string) => ({ defId });
+
+describe('el barrio se enteró de la racha (sep 2026, el segundo evento que mira el historial)', () => {
+  it('aparece con tres victorias seguidas, una sola vez por racha', () => {
+    expect(racha.canFire(conHistorial([]))).toBe(false);
+    expect(racha.canFire(conHistorial([true, true]))).toBe(false);
+    expect(racha.canFire(conHistorial([true, true, true]))).toBe(true);
+    expect(racha.canFire(conHistorial([false, true, true, true]))).toBe(true);
+    // La cuarta seguida no lo vuelve a disparar: la racha ya se contó.
+    expect(racha.canFire(conHistorial([true, true, true, true]))).toBe(false);
+    // Una derrota en el medio la corta.
+    expect(racha.canFire(conHistorial([true, false, true, true]))).toBe(false);
+  });
+
+  it('en playoffs no aparece, ni con una promesa todavía abierta', () => {
+    const s = conHistorial([true, true, true]);
+    expect(racha.canFire({ ...s, week: s.seasonLength + 1 })).toBe(false);
+    expect(racha.canFire({ ...s, scheduledEvents: [{ defId: 'racha_factura', season: s.seasonNumber, week: s.week + 2 }] })).toBe(false);
+  });
+
+  it('el texto trae los tres marcadores', () => {
+    const s = conHistorial([false, true, true, true]);
+    const texto = racha.text(s, ev('racha_barrio'));
+    expect(texto).toContain('70-60, 70-60, 70-60');
+    expect(texto).not.toContain('60-70');
+  });
+
+  it('abrir la cancha deja plata en el libro y prestigio social, y desordena; bajar la espuma ordena', () => {
+    const base = conHistorial([true, true, true]);
+    const rng = new Rng(1);
+
+    const cancha = structuredClone(base);
+    racha.resolve(cancha, ev('racha_barrio'), 0, rng);
+    expect(cancha.club.money).toBeGreaterThan(base.club.money);
+    expect(cancha.ledger[cancha.ledger.length - 1].amount).toBe(cancha.club.money - base.club.money);
+    expect(cancha.club.socialPrestige).toBeGreaterThan(base.club.socialPrestige);
+    expect(cancha.club.organization).toBeLessThan(base.club.organization);
+    expect(cancha.scheduledEvents ?? []).toHaveLength(0);
+
+    const espuma = structuredClone(base);
+    racha.resolve(espuma, ev('racha_barrio'), 1, rng);
+    expect(espuma.club.organization).toBeGreaterThan(base.club.organization);
+    expect(espuma.club.money).toBe(base.club.money);
+  });
+
+  it('agrandarse levanta al plantel y deja la promesa agendada para tres semanas después', () => {
+    const s = conHistorial([true, true, true]);
+    const moralAntes = s.players.filter((p) => !p.leftClub).map((p) => p.motivation);
+    racha.resolve(s, ev('racha_barrio'), 2, new Rng(1));
+    const moralDespues = s.players.filter((p) => !p.leftClub).map((p) => p.motivation);
+    expect(moralDespues.some((m, i) => m > moralAntes[i])).toBe(true);
+    expect(s.scheduledEvents).toEqual([{ defId: 'racha_factura', season: s.seasonNumber, week: s.week + 3, fromWeek: s.week }]);
+    expect(s.news[0].text).toContain('pelea arriba');
+  });
+
+  it('cerca del cierre, la factura cae a más tardar en las semifinales', () => {
+    // Racha en la semana 8 de 9: el barrio cobra en la semana 10 (semis), con dos fechas jugadas.
+    const s = conHistorial([false, false, false, false, false, true, true, true], 8);
+    expect(s.seasonLength).toBe(9);
+    racha.resolve(s, ev('racha_barrio'), 2, new Rng(1));
+    expect(s.scheduledEvents).toEqual([{ defId: 'racha_factura', season: s.seasonNumber, week: 10, fromWeek: 8 }]);
+  });
+
+  it('el barrio cobra la promesa mirando las fechas que siguieron a la nota, no las de la racha', () => {
+    const cobra = { defId: 'racha_factura', fromWeek: 4 };
+    // Cumplida: dos de tres desde la nota (semanas 4, 5 y 6). Agradecer cierra la cadena con prestigio social.
+    const bien = conHistorial([true, true, true, true, false, true], 7);
+    expect(factura.options(bien, cobra)[0].label).toContain('agradecer');
+    expect(factura.text(bien, cobra)).toContain('2 de 3');
+    const antes = bien.club.socialPrestige;
+    factura.resolve(bien, cobra, 0, new Rng(1));
+    expect(bien.club.socialPrestige).toBeGreaterThan(antes);
+    expect(bien.scheduledEvents ?? []).toHaveLength(0);
+
+    // Cumplida y redoblada: la cadena sigue tres semanas más, contando desde hoy.
+    const redobla = conHistorial([true, true, true, true, false, true], 7);
+    factura.resolve(redobla, cobra, 1, new Rng(1));
+    expect(redobla.scheduledEvents).toEqual([{ defId: 'racha_factura', season: redobla.seasonNumber, week: 10, fromWeek: 7 }]);
+
+    // Incumplida: una de tres desde la nota (la racha de antes no cuenta). Hacerse el distraído se paga en imagen y en el vestuario.
+    const mal = conHistorial([true, true, true, false, false, true], 7);
+    expect(factura.options(mal, cobra)[0].label).toContain('Dar la cara');
+    expect(factura.text(mal, cobra)).toContain('1 de 3');
+    const social = mal.club.socialPrestige;
+    const clima = mal.club.socialClimate;
+    factura.resolve(mal, cobra, 1, new Rng(1));
+    expect(mal.club.socialPrestige).toBeLessThan(social);
+    expect(mal.club.socialClimate).toBeLessThan(clima);
+    expect(mal.news[0].tone).toBe('bad');
+
+    // Dar la cara cuesta menos imagen que esconderse.
+    const cara = conHistorial([true, true, true, false, false, true], 7);
+    factura.resolve(cara, cobra, 0, new Rng(1));
+    expect(cara.club.socialPrestige).toBeGreaterThan(mal.club.socialPrestige);
+
+    // En las semifinales ya no hay dónde cobrar otra: no se ofrece redoblar.
+    const semis = conHistorial([true, true, true, true, true, true, true, true, true], 10);
+    expect(factura.options(semis, { defId: 'racha_factura', fromWeek: 8 }).map((o) => o.label)).toEqual(['Pasar por el almacén a agradecer']);
+  });
+});
