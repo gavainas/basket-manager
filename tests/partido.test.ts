@@ -90,3 +90,27 @@ describe('el récord y la posición que ve el jugador (T1)', () => {
     expect(r.today!.finished).toBe(true);
   });
 });
+
+describe('el informe nombra a los que vinieron y no entraron (sep 2026)', () => {
+  it('con más citados que jugadores con minutos, la línea de Minutos dice quiénes se quedaron en el banco', () => {
+    let nombrados = 0;
+    for (const seed of [7, 11, 21, 33]) {
+      let s = jugarPartidoEntero(hastaElPartido(seed));
+      const live = s.live!;
+      const sinEntrar = s.players.filter((p) => live.squad.includes(p.id) && !(live.minutes[p.id] > 0) && p.status !== 'lesionado');
+      s = paso(s, { type: 'FINISH_MATCH' });
+      const linea = s.lastMatch!.effects.find((e) => e.startsWith('Minutos: '))!;
+      expect(linea).toBeDefined();
+      if (sinEntrar.length === 0) {
+        expect(linea).not.toMatch(/no entr/);
+        continue;
+      }
+      nombrados += 1;
+      expect(linea).toMatch(sinEntrar.length > 1 ? / no entraron\.$/ : / no entró\.$/);
+      for (const p of sinEntrar) expect(linea).toContain(p.name);
+      // Ningún "A, B, C": el último va con "y".
+      if (sinEntrar.length > 1) expect(linea).toMatch(/ y [^,]+ no entraron\.$/);
+    }
+    expect(nombrados).toBeGreaterThan(0);
+  });
+});

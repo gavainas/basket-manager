@@ -2244,17 +2244,21 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   effects.push(`Motivación del plantel ${baseMorale >= 0 ? '+' : ''}${baseMorale}${moraleTag}`);
   effects.push(`Prestigio deportivo ${prestigeDelta >= 0 ? '+' : ''}${prestigeDelta}${shortHanded && won ? ' (la liga habla de la gesta)' : ''}`);
   const mostUsed = [...played].sort((a, b) => b.mins - a.mins);
+  // "Silva, Fernández y Viera", no "Silva, Fernández, Viera".
+  const listaY = (nombres: string[]) => (nombres.length > 1 ? `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}` : nombres[0]);
   if (mostUsed.length > 0) {
+    // Los que vinieron y se quedaron en el banco los 40: el informe los nombra,
+    // así la bronca por minutos de abajo tiene su porqué arriba.
+    const sinEntrar = s.players.filter((p) => live.squad.includes(p.id) && minutesOf(p.id) === 0 && isSelectable(p) && !absent.has(p.id));
     effects.push(
-      `Minutos: ${played.length} jugador${played.length > 1 ? 'es' : ''} sumaron cancha; el más exigido, ${mostUsed[0].p.name} (${mostUsed[0].mins}', desgaste -${wearFor(mostUsed[0].mins)} aprox.).`
+      `Minutos: ${played.length} jugador${played.length > 1 ? 'es' : ''} sumaron cancha; el más exigido, ${mostUsed[0].p.name} (${mostUsed[0].mins}', desgaste -${wearFor(mostUsed[0].mins)} aprox.).${
+        sinEntrar.length > 0 ? ` ${listaY(sinEntrar.map((p) => p.name))} no ${sinEntrar.length > 1 ? 'entraron' : 'entró'}.` : ''
+      }`
     );
     const ironmen = mostUsed.filter((x) => x.mins >= totalMinutes);
     if (ironmen.length > 0) {
-      // "Silva, Fernández y Viera", no "Silva, Fernández, Viera".
-      const nombres = ironmen.map((x) => x.p.name);
-      const lista = nombres.length > 1 ? `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}` : nombres[0];
       effects.push(
-        `${lista} ${ironmen.length > 1 ? 'jugaron todo el partido: terminaron fundidos' : 'jugó todo el partido: terminó fundido'}.`
+        `${listaY(ironmen.map((x) => x.p.name))} ${ironmen.length > 1 ? 'jugaron todo el partido: terminaron fundidos' : 'jugó todo el partido: terminó fundido'}.`
       );
     }
   }
