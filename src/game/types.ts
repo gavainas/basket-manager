@@ -670,6 +670,8 @@ export interface ActiveEvent {
   contactId?: string;
   /** La semana en que se hizo la promesa que este eslabón cobra (mira el historial desde ahí). */
   fromWeek?: number;
+  /** Lo que los eslabones anteriores dejaron decidido (tarjetas vendidas, precio…): números chicos, sin estado aparte. */
+  payload?: Record<string, number>;
 }
 
 /** Evento encadenado: una decisión de hoy lo agenda para dispararse semanas
@@ -683,6 +685,8 @@ export interface ScheduledEvent {
   playerId2?: string;
   /** La semana del eslabón anterior, para los que juzgan lo que pasó desde entonces. */
   fromWeek?: number;
+  /** Lo decidido en los eslabones anteriores, que el siguiente necesita. */
+  payload?: Record<string, number>;
 }
 
 export type Phase =

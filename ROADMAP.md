@@ -155,8 +155,10 @@ Gabi la quiere), y el arte cuando Gabi diga.
   derrotas al hilo, y con tres victorias el barrio se entera y, si te agrandás en la nota,
   te la cobra tres fechas después mirando lo que pasó desde entonces (`fromWeek` en los
   eventos encadenados: el molde para un eslabón que juzga el historial). Esa cadena ya es
-  de largo abierto (se redobla mientras el club gane); lo que falta es una de 3+ eslabones
-  con decisiones distintas en cada uno.
+  de largo abierto (se redobla mientras el club gane). *La de tres eslabones con decisiones
+  distintas ya está* (23/9): la cena del club (quién la lleva → qué hacer con las tarjetas →
+  cómo cerrar la noche), con lo decidido viajando en `payload`; los números son de
+  primera mano y están en `CENA` (`events.ts`) por si a Gabi le parecen fuertes o flojos.
 - **Mediano plazo**: clima liviano (suspensiones, público, recaudación), más profundidad
   táctica (matchups, ritmo), lesiones con recuperación progresiva, influencias entre
   jugadores (un líder que se va arrastra amigos), sponsors y actividades sociales.

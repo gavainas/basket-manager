@@ -35,6 +35,9 @@ const EVENT_ICONS: Record<string, IconName> = {
   comision_aprieta: 'inscripcion',
   racha_barrio: 'social',
   racha_factura: 'historia',
+  cena_propuesta: 'caja',
+  cena_tarjetas: 'plata',
+  cena_noche: 'asado',
 };
 
 // Eventos festivos: acá la gorra está permitida (nunca en la ficha deportiva).
