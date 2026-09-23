@@ -307,6 +307,13 @@ export const BALANCE = {
     raffle: { cost: 30, incomeMin: 30, incomeMax: 170, fatigaSemanas: 4, fatigaFactor: 0.6 },
     sponsorSearch: { baseChance: 0.35, prestigeFactor: 0.005 },
     talk: { motivationBoost: 14, failChance: 0.12 },
+    // Sentar a los dos que no se bancan (sep 2026, decidido por Gabi): la
+    // misma chance que la mediación de la discusión del vestuario (45% más
+    // la organización del club, hasta 95%). Si sale bien, lo vivido entre
+    // los dos sube hasta que el roce deje de serlo (afinidad por encima del
+    // umbral más este margen, con un techo propio por encima del ±12 de la
+    // vida del club); si sale mal, baja y alguno se pudre.
+    mediate: { baseChance: 0.45, margenSobreRoce: 4, minBonus: 6, capBonus: 30, failPairHit: -3, climateGain: 4, climateHit: -3 },
     collectFees: { motivationHit: -4 },
     scholarship: { motivationBoost: 12, climateHit: -5 },
     jerseys: { cost: 200, socialPrestige: 6, organization: 8, motivation: 3 },

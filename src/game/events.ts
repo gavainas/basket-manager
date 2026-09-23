@@ -1,7 +1,8 @@
 import { addPairBonus, planAsado, weeksSinceAsado } from './asado';
 import { BALANCE, clamp } from './balance';
 import { contactoQueVuelve, LO_QUE_PIDE, shortName, vueltaDeLaLibreta } from './carrera';
-import { affinity, RIVALRY_THRESHOLD } from './relations';
+import { affinity } from './relations';
+import { worstPair } from './socialMap';
 import { fechaLabel, logClubEvent } from './timeline';
 import { marketToPlayer } from '../data/market';
 import { createRecruit } from '../data/recruits';
@@ -36,24 +37,6 @@ function actives(s: GameState): Player[] {
 /** Las figuras de verdad: el top 3 de técnica del plantel. Si un evento habla de "tu figura", tiene que ser una de estas. */
 function figuras(s: GameState): Player[] {
   return [...actives(s)].sort((a, b) => b.technique - a.technique).slice(0, 3);
-}
-
-/**
- * La pareja que no se banca: la de peor afinidad del plantel, si llega al
- * umbral de roce (la misma que el vestuario muestra con "hay que manejarlo").
- * Las peleas caen sobre ella y no sobre dos nombres al azar: el mapa social
- * deja de ser un póster.
- */
-function worstPair(s: GameState): [Player, Player] | null {
-  const ps = actives(s);
-  let worst: { a: Player; b: Player; v: number } | null = null;
-  for (let i = 0; i < ps.length; i++) {
-    for (let j = i + 1; j < ps.length; j++) {
-      const v = affinity(ps[i], ps[j], s.affinityBonus);
-      if (!worst || v < worst.v) worst = { a: ps[i], b: ps[j], v };
-    }
-  }
-  return worst && worst.v <= RIVALRY_THRESHOLD ? [worst.a, worst.b] : null;
 }
 
 function byId(s: GameState, id: string | undefined): Player {

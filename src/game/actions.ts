@@ -1,11 +1,13 @@
-import { asadoSummary, resolveAsado } from './asado';
+import { addPairBonus, asadoSummary, resolveAsado } from './asado';
 import { BALANCE, clamp } from './balance';
 import { coachBoostsTraining } from './coach';
 import { createRecruit } from '../data/recruits';
 import { pickByFragility } from './injuries';
 import { bumpGrievance, sootheGrievance, upsetPlayers } from './mood';
+import { affinity, pairKey, RIVALRY_THRESHOLD } from './relations';
+import { worstPair } from './socialMap';
 import { condicionTexto, fraseDe, ofrecerSponsor } from './sponsors';
-import { logClubEvent } from './timeline';
+import { logClubEvent, logPlayerEvent } from './timeline';
 import type { GameState, GrievanceCause, Player } from './types';
 import type { Rng } from './rng';
 
@@ -221,6 +223,66 @@ export const ACTIONS: ActionDef[] = [
           : `Larga charla con ${target.name} por ${CAUSE_TALK[g.cause]}. Quedaron a mano.`;
       }
       return `Larga charla con ${target.name}. Se fue más tranquilo y con ganas de volver a jugar.`;
+    },
+  },
+  {
+    id: 'mediate',
+    name: 'Sentar a los dos que no se bancan',
+    description:
+      'Juntar en una mesa a la pareja con roce del vestuario antes de que estalle. Sale mejor con el club organizado; si sale mal, alguno se levanta peor.',
+    costLabel: 'Gratis (puede salir mal)',
+    // La misma pareja que el vestuario marca con "no se bancan", la que avisa el
+    // radar y sobre la que cae "Se fueron a las manos" (sep 2026, decidido por
+    // Gabi): hasta ahora el manager sólo podía esperar a que estallara.
+    available: (s) => (worstPair(s) ? { ok: true } : { ok: false, reason: 'No hay dos que no se banquen' }),
+    apply: (s, rng) => {
+      const M = A.mediate;
+      const [a, b] = worstPair(s)!;
+      const week = Math.min(s.week, s.seasonLength);
+      // La chance de la mediación de la discusión del vestuario.
+      if (rng.chance(M.baseChance + s.club.organization / 200)) {
+        // Lo vivido entre los dos sube hasta que el roce deje de serlo: lo
+        // que haga falta para pasar el umbral con margen, y nunca menos que
+        // el empujón mínimo.
+        const key = pairKey(a.id, b.id);
+        const actual = s.affinityBonus?.[key] ?? 0;
+        const sinNada = affinity(a, b, { ...(s.affinityBonus ?? {}), [key]: 0 });
+        const necesario = RIVALRY_THRESHOLD + M.margenSobreRoce - sinNada;
+        addPairBonus(s, a.id, b.id, Math.max(M.minBonus, necesario - actual), M.capBonus);
+        for (const p of [a, b]) {
+          p.social = clamp(p.social + 2);
+          if (p.grievance?.cause === 'grupo') sootheGrievance(s, p, 'hechos');
+          logPlayerEvent(p, s.seasonNumber, week, 'social', `Se sentó con ${p === a ? b.name : a.name}, con el manager en el medio: se dijeron lo que tenían que decirse.`);
+        }
+        s.club.socialClimate = clamp(s.club.socialClimate + M.climateGain);
+        const cerrado = affinity(a, b, s.affinityBonus) > RIVALRY_THRESHOLD;
+        s.news.unshift({
+          week,
+          text: cerrado
+            ? `${a.name} y ${b.name} se sentaron a hablar con vos en el medio y terminaron pidiendo dos birras. El vestuario lo notó.`
+            : `${a.name} y ${b.name} se sentaron a hablar con vos en el medio. No son amigos, pero ya no se miran de reojo.`,
+          tone: 'good',
+        });
+        return cerrado
+          ? `Los sentaste a ${a.name} y ${b.name} en la cantina. Se dijeron lo que tenían que decirse, se dieron la mano y pidieron dos birras: el roce dejó de serlo.`
+          : `Los sentaste a ${a.name} y ${b.name} en la cantina. Se dijeron lo que tenían que decirse y se dieron la mano; amigos no van a ser, pero el vestuario respira.`;
+      }
+      addPairBonus(s, a.id, b.id, M.failPairHit);
+      s.club.socialClimate = clamp(s.club.socialClimate + M.climateHit);
+      const peor = rng.pick([a, b]);
+      const otro = peor === a ? b : a;
+      peor.motivation = clamp(peor.motivation - 5);
+      bumpGrievance(s, peor, 'grupo', { note: `Lo sentaste con ${otro.name} y se levantó de la mesa: "con ese no tengo nada que hablar".` });
+      if (peor.status === 'disponible' && peor.motivation < BALANCE.weekly.lowMotivationThreshold) {
+        peor.status = 'molesto';
+        peor.weeksUpset = 0;
+      }
+      s.news.unshift({
+        week,
+        text: `La mesa entre ${a.name} y ${b.name} duró cinco minutos: ${peor.name} se levantó y se fue. En el grupo no se habló de otra cosa.`,
+        tone: 'bad',
+      });
+      return `${a.name} y ${b.name} se sentaron de mala gana y ${peor.name} se levantó a los cinco minutos: "con ese no tengo nada que hablar". Quedaron peor que antes, y el grupo lo vio.`;
     },
   },
   {

@@ -63,18 +63,18 @@ club quiebra la mitad de las veces que antes. Lo que sigue:
      primer rojo es un aviso de la comisión y la quiebra llega con el segundo seguido, en
      los dos modos; el radar distingue los dos pasos. Medido: las quiebras sin gestión
      bajan de 3 a 1 en 160 temporadas.
-   - **"Sentar a los dos que no se bancan"**, acción de la semana (una gestión): sienta a la
-     pareja con roce del vestuario (la misma que el radar avisa y sobre la que cae la
-     pelea), con la chance de la mediación de la discusión. Sale bien: sube lo vivido entre
-     ellos (`affinityBonus`) y el roce deja de serlo; sale mal: baja, y alguno se pudre.
-     Sólo disponible si hay un par con roce.
+   - ~~**"Sentar a los dos que no se bancan"**~~ *Hecho (23/9, ver el changelog):* la acción
+     sienta a la pareja con roce con la chance de la mediación; si sale bien el roce deja
+     de serlo, si sale mal alguno se pudre. El radar del roce lleva a La semana.
+
+   Con eso el punto 4 está cerrado.
 
 Lo que quedaba de T2 y T3 salió (sep 2026, ver el changelog): la charla y el compañero
 escriben en la ficha, el inicio avisa al que pasa a "aparece cuando quiere", la libreta
 sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
 
-**Orden:** el punto 4 primero (está decidido), la dirección D después, y el arte cuando
-Gabi diga.
+**Orden:** el punto 4 salió (23/9); lo que sigue es la dirección D (la convocatoria, si
+Gabi la quiere), y el arte cuando Gabi diga.
 
 ## Decisiones que están en la cancha de Gabi
 

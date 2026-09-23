@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { getAction } from '../src/game/actions';
+import { BALANCE } from '../src/game/balance';
 import { getEvent } from '../src/game/events';
 import { Rng } from '../src/game/rng';
-import { buildSocialMap } from '../src/game/socialMap';
+import { buildSocialMap, worstPair } from '../src/game/socialMap';
 import { affinity, FRIEND_THRESHOLD, pairKey, RIVALRY_THRESHOLD } from '../src/game/relations';
 import type { GameState } from '../src/game/types';
 import { jugarFecha, partidaNueva, paso } from './jugar';
@@ -140,9 +142,89 @@ describe('el radar avisa del roce cuando el ambiente está bajo (sep 2026)', () 
     const frio: GameState = { ...s, club: { ...s.club, socialClimate: 45 } };
     const aviso = watchItems(frio).find((i) => /no se bancan/.test(i.text));
     expect(aviso).toBeTruthy();
-    expect(aviso!.tile).toBe('vestuario');
+    // Lleva a La semana, que es donde está la acción que los sienta.
+    expect(aviso!.tile).toBe('lista');
+    expect(aviso!.text).toMatch(/Sentarlos a los dos/);
     for (const n of nombres) expect(aviso!.text).toContain(n);
     const calido: GameState = { ...s, club: { ...s.club, socialClimate: 75 } };
     expect(watchItems(calido).some((i) => /no se bancan/.test(i.text))).toBe(false);
+  });
+});
+
+describe('"Sentar a los dos que no se bancan" (sep 2026, decidido por Gabi): la acción de la semana', () => {
+  const mediar = () => getAction('mediate');
+
+  it('sólo está disponible con un par con roce, y sienta a esa pareja', () => {
+    const { s, a, b } = conRoce(1);
+    expect(mediar().available(s).ok).toBe(true);
+    expect(worstPair(s)!.map((p) => p.id).sort()).toEqual([a, b].sort());
+    const sinRoce = partidaNueva(4);
+    for (const p of sinRoce.players) p.social = 90;
+    expect(worstPair(sinRoce)).toBeNull();
+    expect(mediar().available(sinRoce)).toEqual({ ok: false, reason: 'No hay dos que no se banquen' });
+  });
+
+  it('si sale bien, lo vivido entre los dos sube hasta que el roce deja de serlo y el ambiente mejora', () => {
+    const { s, a, b } = conRoce(1);
+    const key = pairKey(a, b);
+    let bien: GameState | null = null;
+    let texto = '';
+    for (let seed = 1; seed <= 40 && !bien; seed++) {
+      const t: GameState = structuredClone(s);
+      const r = mediar().apply(t, new Rng(seed));
+      if (/dejó de serlo|el vestuario respira/.test(r)) {
+        bien = t;
+        texto = r;
+      }
+    }
+    expect(bien).not.toBeNull();
+    expect(bien!.affinityBonus![key]).toBeGreaterThan(s.affinityBonus![key]);
+    // El par de prueba arranca con lo social por el piso y -12 de lo vivido: aun así, el hacha se entierra.
+    expect(affinity(bien!.players.find((p) => p.id === a)!, bien!.players.find((p) => p.id === b)!, bien!.affinityBonus)).toBeGreaterThan(RIVALRY_THRESHOLD);
+    expect(texto).toMatch(/dejó de serlo/);
+    expect(buildSocialMap(bien!).pairs.some((p) => p.kind === 'roce' && [p.a.id, p.b.id].sort().join() === [a, b].sort().join())).toBe(false);
+    // Si queda otro par con roce, la acción sigue, pero ya no sienta a estos dos.
+    expect(worstPair(bien!)?.map((p) => p.id).sort()).not.toEqual([a, b].sort());
+    expect(bien!.club.socialClimate).toBe(s.club.socialClimate + BALANCE.actions.mediate.climateGain);
+    expect(bien!.news[0].tone).toBe('good');
+    for (const id of [a, b]) {
+      const p = bien!.players.find((x) => x.id === id)!;
+      expect(p.timeline.at(-1)!.text).toMatch(/Se sentó con/);
+    }
+  });
+
+  it('si sale mal, el par queda peor, el ambiente baja y uno se pudre con el grupo', () => {
+    const { s } = conRoce(2);
+    // Con -12 de lo vivido ya está en el piso: se prueba desde cero para ver la caída.
+    s.affinityBonus = {};
+    const [a, b] = worstPair(s)!.map((p) => p.id);
+    const key = pairKey(a, b);
+    let mal: GameState | null = null;
+    let texto = '';
+    for (let seed = 1; seed <= 60 && !mal; seed++) {
+      const t: GameState = structuredClone(s);
+      const r = mediar().apply(t, new Rng(seed));
+      if (/se levantó a los cinco minutos/.test(r)) {
+        mal = t;
+        texto = r;
+      }
+    }
+    expect(mal).not.toBeNull();
+    expect(mal!.affinityBonus![key]).toBe(BALANCE.actions.mediate.failPairHit);
+    expect(mal!.club.socialClimate).toBe(s.club.socialClimate + BALANCE.actions.mediate.climateHit);
+    const podridos = [a, b].map((id) => mal!.players.find((p) => p.id === id)!).filter((p) => p.grievance?.cause === 'grupo');
+    expect(podridos).toHaveLength(1);
+    expect(texto).toContain(podridos[0].name);
+    expect(mal!.news[0].tone).toBe('bad');
+    // Sigue habiendo roce: la acción queda para volver a intentarlo.
+    expect(mediar().available(mal!).ok).toBe(true);
+  });
+
+  it('por el reducer: se elige en La semana y se aplica al pasar lista', () => {
+    const { s } = conRoce(3);
+    const elegida = paso({ ...s, pendingEvent: null }, { type: 'TOGGLE_ACTION', id: 'mediate' });
+    expect(elegida.actionsChosen).toContain('mediate');
+    const lista = paso(elegida, { type: 'CONFIRM_ACTIONS', timing: 'temprana' });
+    expect(lista.actionsLog.some((l) => l.startsWith('Sentar a los dos que no se bancan: '))).toBe(true);
   });
 });

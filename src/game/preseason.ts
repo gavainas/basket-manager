@@ -270,7 +270,7 @@ function buildPreseasonState(
         r.status === 'quiere_irse'
           ? `${p.name} se fue de vacaciones masticando bronca por ${CAUSE_SHORT[g.cause]} y volvió con el bolso armado.`
           : r.status === 'pide_condicion'
-            ? `${p.name} no se olvidó de ${CAUSE_SHORT[g.cause]}: vuelve, pero con la cuenta hecha.`
+            ? `${p.name} no se olvidó de ${CAUSE_SHORT[g.cause]}: vuelve, pero con la cuenta hecha.`.replace(' de el ', ' del ')
             : `${p.name} sigue masticando bronca por ${CAUSE_SHORT[g.cause]}. Duda.`
       );
     }

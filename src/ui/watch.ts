@@ -274,7 +274,8 @@ export function watchItems(state: GameState): WatchItem[] {
     }
   }
   // El roce del vestuario, ahora que juega: con el clima bajo, "Se fueron a
-  // las manos" cae sobre esos dos. El radar lo avisa antes de que estalle.
+  // las manos" cae sobre esos dos. El radar lo avisa antes de que estalle y
+  // lleva a La semana, donde está la acción que los sienta (sep 2026).
   // Sólo en temporada y con el clima flojo, para no encender el tile siempre.
   if (state.week <= state.seasonLength && state.club.socialClimate < 60) {
     const roce = buildSocialMap(state).pairs.find((p) => p.kind === 'roce');
@@ -282,8 +283,8 @@ export function watchItems(state: GameState): WatchItem[] {
       items.push({
         kind: 'social',
         cls: 'warn',
-        text: `${roce.a.name} y ${roce.b.name} no se bancan, y con el ambiente así de bajo la cosa puede pasar a mayores.`,
-        tile: 'vestuario',
+        text: `${roce.a.name} y ${roce.b.name} no se bancan, y con el ambiente así de bajo la cosa puede pasar a mayores. Sentarlos a los dos es una acción de la semana.`,
+        tile: 'lista',
       });
     }
   }

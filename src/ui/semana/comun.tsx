@@ -37,6 +37,7 @@ const ACTION_ICON: Record<string, IconName> = {
   raffle: 'rifa',
   sponsor: 'comercio',
   talk: 'chat',
+  mediate: 'vestuario',
   collect: 'plata',
   scholarship: 'beca',
   jerseys: 'camiseta',
