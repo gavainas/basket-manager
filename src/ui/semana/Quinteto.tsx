@@ -4,7 +4,7 @@
 import type { Player } from '../../game/types';
 import { BALANCE } from '../../game/balance';
 import { lineupPromiseWarnings } from '../../game/promises';
-import { evaluateTeam, isSelectable, PLAN_MIN_BENCH } from '../../game/match';
+import { evaluateTeam, isSelectable, PLAN_MIN_BENCH, titularesSinRecambio } from '../../game/match';
 import { Icon } from '../Icon';
 import { PlayerLink } from '../PlayerLink';
 import { RivalLink } from '../RivalLink';
@@ -111,6 +111,11 @@ export function LineupPanel({ state, dispatch }: Props) {
   const leftOutHot = leftOut.filter(
     (p) => p.personality === 'protagonista' || p.expectedRole === 'titular' || p.grievance?.cause === 'minutos'
   );
+  // El plan rota por puesto: el titular sin nadie de su puesto en el banco no
+  // descansa. Antes se descubría en el informe ("jugó todo el partido:
+  // terminó fundido"); acá se puede arreglar, o aceptarlo sabiendo.
+  const sinRecambio = rotationIds.length >= PLAN_MIN_BENCH ? titularesSinRecambio(state.players, state.starters, rotationIds) : [];
+  const conRecambioAfuera = sinRecambio.filter((t) => leftOut.some((p) => p.position === t.position));
 
   // Drag & drop: el id viaja en el dataTransfer; los guards viven en el reducer.
   const dragStart = (id: string) => (e: React.DragEvent) => {
@@ -207,6 +212,16 @@ export function LineupPanel({ state, dispatch }: Props) {
             {rotationIds.length >= PLAN_MIN_BENCH
               ? 'Con banco, el partido rota solo: frescos en el 2° cuarto, titulares en el 3°, cerradores al final. En el partido lo podés pasar a mano.'
               : 'Con un solo suplente los cambios son tuyos: el plan rota solo desde dos en el banco.'}
+          </p>
+        )}
+        {count === 5 && sinRecambio.length > 0 && (
+          <p className="muted" style={{ marginBottom: 0, color: 'var(--warn)' }}>
+            {sinRecambio.length === 1
+              ? `Sin ${sinRecambio[0].position.toLowerCase()} de recambio en el banco: el plan no tiene con quién descansar a ${shortName(sinRecambio[0].name)}, que va a jugar casi los 40.`
+              : `Sin recambio de su puesto en el banco: el plan no tiene con quién descansar a ${sinRecambio.map((p) => shortName(p.name)).join(', ')}, que van a jugar casi los 40.`}{' '}
+            {conRecambioAfuera.length > 0
+              ? `Tenés ${conRecambioAfuera.map((t) => t.position.toLowerCase()).join(' y ')} en la planilla sin lugar en el banco.`
+              : 'Si querés cuidarlo, poné a alguien fuera de puesto en el banco o hacé los cambios a mano.'}
           </p>
         )}
       </div>

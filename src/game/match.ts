@@ -859,6 +859,20 @@ function conCobertura(ordered: Player[], profundidad = 8): Player[] {
   return five;
 }
 
+/**
+ * Los titulares que el plan de cambios no tiene con quién descansar: los de
+ * un puesto sin nadie del mismo puesto en el banco (sep 2026, de jugar la
+ * fecha 1 con el único base lesionado: la pizarra decía "Batista mira desde
+ * afuera" y el informe "Silva jugó todo el partido: terminó fundido", sin que
+ * nada dijera por qué el plan no lo descansó). "Piernas frescas" tapa el
+ * puesto con el titular más fresco (`conCobertura`), así que ese titular
+ * juega casi los 40; o, si ni así lo alcanza, el cuarto va sin ese puesto.
+ */
+export function titularesSinRecambio(players: Player[], starterIds: string[], rotationIds: string[]): Player[] {
+  const banco = players.filter((p) => rotationIds.includes(p.id) && !starterIds.includes(p.id));
+  return players.filter((p) => starterIds.includes(p.id) && !banco.some((b) => b.position === p.position));
+}
+
 /** Las posiciones naturales que quedan sin cubrir con estos cinco. */
 export function posicionesSinCubrir(players: Player[]): Position[] {
   const covered = new Set(players.map((p) => p.position));
@@ -2235,12 +2249,14 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
       `Minutos: ${played.length} jugador${played.length > 1 ? 'es' : ''} sumaron cancha; el más exigido, ${mostUsed[0].p.name} (${mostUsed[0].mins}', desgaste -${wearFor(mostUsed[0].mins)} aprox.).`
     );
     const ironmen = mostUsed.filter((x) => x.mins >= totalMinutes);
-    if (ironmen.length > 0)
+    if (ironmen.length > 0) {
+      // "Silva, Fernández y Viera", no "Silva, Fernández, Viera".
+      const nombres = ironmen.map((x) => x.p.name);
+      const lista = nombres.length > 1 ? `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}` : nombres[0];
       effects.push(
-        `${ironmen.map((x) => x.p.name).join(', ')} ${
-          ironmen.length > 1 ? 'jugaron todo el partido: terminaron fundidos' : 'jugó todo el partido: terminó fundido'
-        }.`
+        `${lista} ${ironmen.length > 1 ? 'jugaron todo el partido: terminaron fundidos' : 'jugó todo el partido: terminó fundido'}.`
       );
+    }
   }
   if (hombreQ + presionQ > 0)
     effects.push(
