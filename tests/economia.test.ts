@@ -276,3 +276,32 @@ describe('la quiebra en dos pasos (sep 2026, decidido por Gabi): el primer rojo 
     expect(aviso(justa)?.text).toMatch(/otra vez en rojo/);
   });
 });
+
+describe('la proyección de la caja sigue la regla del fiado (sep 2026, de jugar una Carrera por la interfaz)', () => {
+  it('la cuota del fiado entra en la cuenta sólo si la caja llega después de los gastos fijos, como en el cobro', () => {
+    const base = partidaNueva(21);
+    const fijos = BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly;
+    const conFiado = (money: number): GameState => ({
+      ...base,
+      club: { ...base.club, money },
+      players: base.players.map((p) => ({ ...p, feeStatus: 'beca_total' as const })),
+      sponsor: null,
+      sponsorWeeks: 0,
+      inscriptionDebt: { total: 300, remaining: 200, leagueName: 'Liga Universitaria', missedWeeks: 0 },
+    });
+    // Con $270 en caja y sin cuotas, quedan $25 después de la cancha: el fiado ($80) no se cobra.
+    const justa = conFiado(fijos + 25);
+    expect(projectedWeekClose(justa).close).toBe(25);
+    expect(projectedWeekClose(justa).expenses).toBe(fijos);
+    const real: GameState = structuredClone(justa);
+    real.seed = 1;
+    applyWeeklyEconomy(real, new Rng(1));
+    // El cobro real coincide (salvo un imprevisto, que con $25 se arregla con alambre).
+    expect(real.club.money).toBe(25);
+    expect(real.inscriptionDebt!.missedWeeks).toBe(1);
+    // Con caja para el fiado, se descuenta entero.
+    const holgada = conFiado(fijos + 100);
+    expect(projectedWeekClose(holgada).close).toBe(100 - BALANCE.economy.debtInstallment);
+    expect(projectedWeekClose(holgada).expenses).toBe(fijos + BALANCE.economy.debtInstallment);
+  });
+});

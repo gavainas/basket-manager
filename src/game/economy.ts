@@ -71,8 +71,17 @@ export function weeklyEstimate(state: GameState): { income: { concept: string; a
 export function projectedWeekClose(state: GameState): { close: number; income: number; expenses: number } {
   const est = weeklyEstimate(state);
   const income = est.income.reduce((t, i) => t + i.amount, 0);
-  const expenses = -est.expenses.reduce((t, e) => t + e.amount, 0);
-  return { close: state.club.money + income - expenses, income, expenses };
+  // La cuota del fiado no es un gasto como la cancha: el motor la cobra sólo
+  // si la caja llega después de los gastos fijos, y si no la deja impaga (con
+  // presión, no con descubierto). Contarla siempre hacía decir al radar
+  // "cierra en rojo ($270 contra $316)" en una Carrera que cerraba en $25
+  // con el fiado sin pagar: la proyección sigue la misma regla que el cobro.
+  const fiado = est.expenses.find((e) => e.concept.startsWith('Cuota del fiado'));
+  const fijos = -est.expenses.filter((e) => e !== fiado).reduce((t, e) => t + e.amount, 0);
+  const antesDelFiado = state.club.money + income - fijos;
+  const cuotaFiado = fiado && antesDelFiado >= -fiado.amount ? -fiado.amount : 0;
+  const expenses = fijos + cuotaFiado;
+  return { close: antesDelFiado - cuotaFiado, income, expenses };
 }
 
 /**
