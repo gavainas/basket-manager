@@ -519,7 +519,7 @@ export function advanceWeek(state: GameState): GameState {
     } else {
       s.news.unshift({
         week: semanaCerrada,
-        text: `La caja cerró la semana en rojo ($${s.club.money}) y la comisión te citó a la sede: "una vez pasa; dos seguidas, no". Si la semana que viene vuelve a cerrar en rojo, el club se retira de la liga. Una rifa, un sponsor o pasar la gorra: algo hay que hacer ya.`,
+        text: `La caja cerró la semana en rojo ($${s.club.money}) y la comisión te citó a la sede: "una vez pasa; dos seguidas, no". Con otra semana así, el club se retira de la liga. Una rifa, un sponsor o pasar la gorra: algo hay que hacer ya.`,
         tone: 'bad',
       });
       logClubEvent(s, 'hito', `La comisión avisó: la caja cerró en rojo ($${s.club.money}). Con otra semana así, el club se retira de la liga.`, semanaCerrada);
