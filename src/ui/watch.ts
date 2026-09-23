@@ -64,14 +64,34 @@ export function watchItems(state: GameState): WatchItem[] {
   // amarillo si cierra tan justa que un imprevisto la deja en rojo.
   // El aviso lleva a La semana, que es donde se arregla (la rifa, el sponsor,
   // pasar la gorra), no a Finanzas, que sólo muestra la cuenta. En una Carrera
-  // recién inscripta ($8 en caja, cuotas $240 contra gastos $245) el club
-  // quiebra en la fecha 2 si no hacés nada: el aviso tiene que decir qué hacer.
+  // recién inscripta ($8 en caja, cuotas $240 contra gastos $245) la caja
+  // cierra en rojo en la fecha 2 si no hacés nada: el aviso tiene que decir
+  // qué hacer. Y desde que la quiebra es en dos pasos (sep 2026), el radar
+  // distingue el primer rojo (la comisión te cita) del segundo (el club se
+  // retira): con el aviso ya dado, la semana en curso es la última.
   const caja = projectedWeekClose(state);
-  if (caja.close < 0) {
+  const avisada = (state.semanasEnRojo ?? 0) > 0;
+  if (avisada && caja.close < 0) {
     items.push({
       kind: 'plata',
       cls: 'bad',
-      text: `Así la semana cierra en rojo ($${state.club.money} en caja, $${caja.income} de ingresos contra $${caja.expenses} de gastos) y el club se retira de la liga: esta semana va una rifa, un sponsor o pasar la gorra.`,
+      text: `La comisión ya avisó: la semana pasada cerró en rojo y así ésta cierra en rojo otra vez ($${state.club.money} en caja, $${caja.income} de ingresos contra $${caja.expenses} de gastos). Con dos seguidas el club se retira de la liga: esta semana va una rifa, un sponsor o pasar la gorra, sí o sí.`,
+      tile: 'lista',
+    });
+  } else if (avisada) {
+    items.push({
+      kind: 'plata',
+      cls: caja.close < BALANCE.economy.mishapMax ? 'bad' : 'warn',
+      text: `La semana pasada cerró en rojo y la comisión avisó: así ésta cierra con $${caja.close}${
+        caja.close < BALANCE.economy.mishapMax ? ', y un imprevisto la deja otra vez en rojo. Con dos seguidas el club se retira de la liga' : ' y el aviso queda en el olvido'
+      }. Una rifa o un sponsor la despejan.`,
+      tile: 'lista',
+    });
+  } else if (caja.close < 0) {
+    items.push({
+      kind: 'plata',
+      cls: 'bad',
+      text: `Así la semana cierra en rojo ($${state.club.money} en caja, $${caja.income} de ingresos contra $${caja.expenses} de gastos) y la comisión te cita: con dos semanas seguidas en rojo el club se retira de la liga. Esta semana va una rifa, un sponsor o pasar la gorra.`,
       tile: 'lista',
     });
   } else if (caja.close < BALANCE.economy.mishapMax) {

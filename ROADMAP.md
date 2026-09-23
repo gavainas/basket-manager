@@ -59,13 +59,10 @@ club quiebra la mitad de las veces que antes. Lo que sigue:
 
 4. **Decidido por Gabi el 22/9, pendiente de hacer** (dos sesiones cortas, sin más
    preguntas):
-   - **La Carrera no quiebra en el primer rojo.** Hoy la caja en negativo al cierre de la
-     semana es game over ("Fracaso financiero"), y jugada sin gestionar la Carrera
-     quiebra en la fecha 2 por dos pesos. Pasa a dos pasos: el **primer rojo es un aviso de
-     la comisión** (la semana cierra igual, con la caja en negativo y el radar en rojo
-     diciendo qué hacer), y **la quiebra recién con el segundo rojo**. Vale para los dos
-     modos (la regla es del motor, `advanceWeek` en `week.ts`); medir con `npm run sim` y
-     `npm run sim:carrera` que las quiebras sin gestión no se disparen.
+   - ~~**La Carrera no quiebra en el primer rojo.**~~ *Hecho (23/9, ver el changelog):* el
+     primer rojo es un aviso de la comisión y la quiebra llega con el segundo seguido, en
+     los dos modos; el radar distingue los dos pasos. Medido: las quiebras sin gestión
+     bajan de 3 a 1 en 160 temporadas.
    - **"Sentar a los dos que no se bancan"**, acción de la semana (una gestión): sienta a la
      pareja con roce del vestuario (la misma que el radar avisa y sobre la que cae la
      pelea), con la chance de la mediación de la discusión. Sale bien: sube lo vivido entre

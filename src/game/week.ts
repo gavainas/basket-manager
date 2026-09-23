@@ -506,10 +506,37 @@ export function advanceWeek(state: GameState): GameState {
 
   const active = activePlayers(s.players);
 
+  // La caja en rojo, en dos pasos (sep 2026, decidido por Gabi): el primer
+  // cierre en rojo es un aviso de la comisión —la semana sigue, con la caja en
+  // negativo y el radar en rojo diciendo qué hacer— y la quiebra llega recién
+  // con el segundo seguido. Una semana en positivo borra el aviso.
+  const semanaCerrada = Math.min(s.week, s.seasonLength);
+  let quiebra = false;
   if (s.club.money < 0) {
+    s.semanasEnRojo = (s.semanasEnRojo ?? 0) + 1;
+    if (s.semanasEnRojo >= BALANCE.economy.semanasEnRojoParaQuebrar) {
+      quiebra = true;
+    } else {
+      s.news.unshift({
+        week: semanaCerrada,
+        text: `La caja cerró la semana en rojo ($${s.club.money}) y la comisión te citó a la sede: "una vez pasa; dos seguidas, no". Si la semana que viene vuelve a cerrar en rojo, el club se retira de la liga. Una rifa, un sponsor o pasar la gorra: algo hay que hacer ya.`,
+        tone: 'bad',
+      });
+      logClubEvent(s, 'hito', `La comisión avisó: la caja cerró en rojo ($${s.club.money}). Con otra semana así, el club se retira de la liga.`, semanaCerrada);
+    }
+  } else if ((s.semanasEnRojo ?? 0) > 0) {
+    s.semanasEnRojo = 0;
+    s.news.unshift({
+      week: semanaCerrada,
+      text: `La caja volvió al positivo ($${s.club.money}). En la comisión respiran: el aviso queda en el olvido, mientras no se repita.`,
+      tone: 'good',
+    });
+  }
+
+  if (quiebra) {
     s.phase = 'gameOver';
-    s.gameOverReason = 'El club se quedó sin dinero. Sin caja no hay cancha, ni árbitros, ni liga: la temporada se termina acá.';
-    logClubEvent(s, 'salida', 'La caja llegó a cero y el club no pudo seguir en la liga.', Math.min(s.week, s.seasonLength));
+    s.gameOverReason = `El club cerró ${s.semanasEnRojo === 2 ? 'dos' : s.semanasEnRojo} semanas seguidas en rojo. La comisión ya había avisado: sin caja no hay cancha, ni árbitros, ni liga. La temporada se termina acá.`;
+    logClubEvent(s, 'salida', 'La caja siguió en rojo después del aviso de la comisión y el club no pudo seguir en la liga.', semanaCerrada);
   } else if (active.length < 5) {
     s.phase = 'gameOver';
     s.gameOverReason = 'Quedaron menos de 5 jugadores en el plantel. No hay equipo para presentar: el club se retira de la liga.';

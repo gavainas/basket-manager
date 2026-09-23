@@ -1191,6 +1191,13 @@ export interface GameState {
   /** Semana de la última rifa: el barrio se cansa si le vendés otra enseguida. */
   ultimaRifa?: number;
   gameOverReason: string | null;
+  /**
+   * Semanas seguidas que la caja cerró en rojo (sep 2026, decidido por Gabi:
+   * la Carrera no quiebra en el primer aviso). La primera es un aviso de la
+   * comisión; a la segunda el club se retira de la liga. Vuelve a cero apenas
+   * una semana cierra en positivo. Opcional: los saves viejos arrancan en cero.
+   */
+  semanasEnRojo?: number;
   startingMoney: number;
   /** Promesas hechas a jugadores (condiciones aceptadas). */
   promises: ClubPromise[];

@@ -34,6 +34,12 @@ export const BALANCE = {
     // El sponsor como contrato: renueva si cumplís, y cada renovación sube el aporte.
     sponsorRenewBonus: 10,
     sponsorMaxWeekly: 120,
+    // La quiebra en dos pasos (sep 2026, decidido por Gabi el 22/9): la
+    // primera semana que cierra en rojo es un aviso de la comisión, y el club
+    // se retira de la liga recién con esta cantidad de semanas seguidas en
+    // rojo. Antes el primer rojo era game over, y una Carrera inscripta con
+    // $8 quebraba en la fecha 2 por dos pesos.
+    semanasEnRojoParaQuebrar: 2,
   },
 
   match: {
