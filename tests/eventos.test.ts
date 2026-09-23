@@ -378,3 +378,23 @@ describe('la cena del club (sep 2026): tres eslabones, una decisión distinta en
     expect(s.clubTimeline.at(-1)!.text).toMatch(/cena show del club/i);
   });
 });
+
+describe('el radar recuerda la cena del club en marcha (sep 2026)', () => {
+  it('dice cuál es el próximo eslabón, cuándo cae, quién la lleva y lo vendido', () => {
+    const s = partidaNueva(4);
+    const org = s.players.find((p) => !p.leftClub)!;
+    expect(watchItems({ ...s, week: 4 }).some((i) => /cena show/.test(i.text))).toBe(false);
+    const tarjetas = { ...s, week: 4, scheduledEvents: [{ defId: 'cena_tarjetas', season: s.seasonNumber, week: 5, playerId: org.id, fromWeek: 3, payload: { manager: 0 } }] };
+    const a = watchItems(tarjetas).find((i) => /cena show/.test(i.text))!;
+    expect(a.text).toContain(`la lleva ${org.name}`);
+    expect(a.text).toContain('la fecha que viene');
+    expect(a.tile).toBe('noticias');
+    const noche = { ...s, week: 5, scheduledEvents: [{ defId: 'cena_noche', season: s.seasonNumber, week: 7, fromWeek: 3, payload: { manager: 1, vendidas: 41, precio: 8 } }] };
+    const b = watchItems(noche).find((i) => /cena show/.test(i.text))!;
+    expect(b.text).toContain('en 2 fechas');
+    expect(b.text).toContain('la llevás vos');
+    expect(b.text).toContain('41 tarjetas vendidas');
+    // De otra temporada, no cuenta.
+    expect(watchItems({ ...noche, seasonNumber: s.seasonNumber + 1 }).some((i) => /cena show/.test(i.text))).toBe(false);
+  });
+});

@@ -305,6 +305,25 @@ export function watchItems(state: GameState): WatchItem[] {
       tile: 'noticias',
     });
   }
+  // La cena del club en marcha: el próximo eslabón y cuándo cae, con quién la
+  // lleva y lo que ya se vendió, así la cadena no se olvida entre fecha y fecha.
+  const cena = (state.scheduledEvents ?? []).find((e) => (e.defId === 'cena_tarjetas' || e.defId === 'cena_noche') && e.season === state.seasonNumber);
+  if (cena) {
+    const faltan = cena.week - state.week;
+    const cuando = faltan <= 0 ? 'esta semana' : faltan === 1 ? 'la fecha que viene' : `en ${faltan} fechas`;
+    const org = cena.playerId ? state.players.find((p) => p.id === cena.playerId) : undefined;
+    const quien = org ? `la lleva ${org.name}` : 'la llevás vos';
+    const vendidas = cena.payload?.vendidas;
+    items.push({
+      kind: 'social',
+      cls: 'good',
+      text:
+        cena.defId === 'cena_tarjetas'
+          ? `La cena show del club está en marcha (${quien}): ${cuando} se ve cómo viene la venta de tarjetas.`
+          : `La cena show del club es ${cuando} (${quien})${vendidas ? `: ${vendidas} tarjetas vendidas` : ''}.`,
+      tile: 'noticias',
+    });
+  }
   if (state.secondTeam && !state.secondTeam.finished) {
     const fit = state.players.filter(
       (p) => state.secondTeam!.playerIds.includes(p.id) && !p.leftClub && p.status !== 'lesionado'
