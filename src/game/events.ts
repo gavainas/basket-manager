@@ -6,7 +6,7 @@ import { fechaLabel, logClubEvent } from './timeline';
 import { marketToPlayer } from '../data/market';
 import { createRecruit } from '../data/recruits';
 import { bumpGrievance, easeGrievance, sootheGrievance } from './mood';
-import type { ActiveEvent, DelayedNote, GameState, Player, ScheduledEvent, TrialCandidate } from './types';
+import type { ActiveEvent, DelayedNote, GameState, MatchResult, Player, ScheduledEvent, TrialCandidate } from './types';
 import type { Rng } from './rng';
 
 export interface EventOptionDef {
@@ -91,6 +91,35 @@ function later(s: GameState, weeksAhead: number, note: Omit<DelayedNote, 'week' 
 /** Encadena un evento interactivo: la decisión de hoy trae otra decisión semanas después. */
 function chain(s: GameState, weeksAhead: number, ev: Omit<ScheduledEvent, 'week' | 'season'>): void {
   (s.scheduledEvents ??= []).push({ ...ev, season: s.seasonNumber, week: s.week + weeksAhead });
+}
+
+/**
+ * Las fechas jugadas desde la nota del barrio (`racha_barrio`): la promesa se
+ * hace en la planificación de una semana (`fromWeek`), antes del partido de
+ * esa semana, así que cuentan ese partido y los que siguieron. Los forfeits
+ * no cuentan: no se jugaron.
+ */
+function partidosDesdeLaNota(s: GameState, ev: ActiveEvent): MatchResult[] {
+  const desde = ev.fromWeek ?? s.week - 3;
+  return s.history.filter((m) => !m.forfeit && m.week >= desde && m.week < s.week);
+}
+
+/** Se cumplió "peleamos arriba" si se ganaron dos de las tres (o todas, si fueron menos). */
+function promesaCumplida(s: GameState, ev: ActiveEvent): boolean {
+  const desde = partidosDesdeLaNota(s, ev);
+  if (desde.length === 0) return false;
+  const ganados = desde.filter((m) => m.won).length;
+  return desde.length >= 3 ? ganados >= 2 : ganados === desde.length;
+}
+
+/**
+ * Cuántas semanas después cobra el barrio: tres, o antes si la fase regular
+ * termina, para que la factura caiga a más tardar en las semifinales (la
+ * semana que juegan todos los que entraron a los playoffs). Cero si ya no
+ * queda fecha donde cobrarla.
+ */
+function semanasHastaLaFactura(s: GameState): number {
+  return Math.max(0, Math.min(3, s.seasonLength + 1 - s.week));
 }
 
 function makeLeave(s: GameState, p: Player, reason: string): void {
@@ -1122,6 +1151,128 @@ export const EVENTS: EventDef[] = [
     },
   },
 
+  {
+    /* El espejo de la comisión: el segundo evento que mira el historial. Con
+       tres victorias al hilo el barrio se entera, y hay que decidir qué hacer
+       con eso. Se dispara una vez por racha (cuando la racha es exactamente
+       de tres), no cada semana que sigue ganando. La tercera salida es una
+       promesa pública, y el barrio la cobra tres fechas después en un evento
+       encadenado que vuelve a mirar el historial (`racha_factura`). */
+    id: 'racha_barrio',
+    title: 'El barrio se enteró de la racha',
+    weight: 9,
+    canFire: (s) => {
+      if (s.week > s.seasonLength) return false; // en playoffs la racha es la copa
+      if ((s.scheduledEvents ?? []).some((e) => e.defId === 'racha_factura')) return false; // ya hay una promesa abierta
+      const jugados = s.history.filter((m) => !m.forfeit);
+      if (jugados.length < 3) return false;
+      const racha = jugados.slice(-3).every((m) => m.won);
+      const anterior = jugados[jugados.length - 4];
+      return racha && (!anterior || !anterior.won);
+    },
+    text: (s) => {
+      const ultimas = s.history.filter((m) => !m.forfeit).slice(-3);
+      const marcadores = ultimas.map((m) => `${m.scoreFor}-${m.scoreAgainst}`).join(', ');
+      return `El del almacén te frena en la esquina con el diario del barrio doblado bajo el brazo: "Tres al hilo (${marcadores}), ¿eh? Acá se está hablando. El lunes va medio barrio a la cancha. ¿Qué hacemos?"`;
+    },
+    options: (s) => {
+      const n = semanasHastaLaFactura(s);
+      const cuando = n >= 3 ? 'en tres fechas' : n === 2 ? 'en dos fechas' : 'en la próxima fecha';
+      return [
+        { label: 'Abrir la cancha: cantina a full y la gorra en la puerta', hint: 'Entra plata y el barrio se acerca; el club anda a las corridas' },
+        { label: 'Bajar la espuma: "todavía no ganamos nada"', hint: 'Ordena la cabeza del grupo; los que se agrandan, se desinflan' },
+        { label: 'Agrandarse en la nota del barrio: "este año peleamos arriba"', hint: `El plantel se agranda; el barrio se lo anota y te lo cobra ${cuando}` },
+      ];
+    },
+    resolve: (s, _ev, opt) => {
+      if (opt === 0) {
+        const recaudado = 30 + Math.round(s.club.socialPrestige / 3);
+        s.club.money += recaudado;
+        s.ledger.push({ week: s.week, concept: 'Cantina y gorra: el barrio vino a ver la racha', amount: recaudado });
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 3);
+        s.club.organization = clamp(s.club.organization - 3);
+        s.news.unshift({ week: s.week, text: `El gimnasio se llenó de vecinos por la racha: la cantina y la gorra dejaron $${recaudado}.`, tone: 'good' });
+        logClubEvent(s, 'social', 'Con tres al hilo, el club abrió la cancha al barrio: cantina llena y gorra en la puerta.');
+        return `Se llenó. Chorizos, gaseosa tibia y la gorra pasando de mano en mano: $${recaudado} para la caja y un montón de caras nuevas en la tribuna. Eso sí: la utilería fue un caos y el árbitro esperó diez minutos la planilla.`;
+      }
+      if (opt === 1) {
+        s.club.organization = clamp(s.club.organization + 4);
+        s.club.sportPrestige = clamp(s.club.sportPrestige + 1);
+        for (const p of actives(s).filter((x) => x.personality === 'protagonista')) p.motivation = clamp(p.motivation - 3);
+        logClubEvent(s, 'hito', 'Tres al hilo y el manager bajó la espuma: "todavía no ganamos nada".');
+        return '"Todavía no ganamos nada", dijiste, y el del almacén asintió despacio. En el vestuario lo repitieron como consigna; a los que ya se veían campeones les cayó como un balde de agua.';
+      }
+      for (const p of actives(s)) p.motivation = clamp(p.motivation + 5);
+      s.club.socialClimate = clamp(s.club.socialClimate + 3);
+      s.club.sportPrestige = clamp(s.club.sportPrestige + 2);
+      s.news.unshift({ week: s.week, text: `El manager, en la página del barrio: "${s.club.name} pelea arriba este año".`, tone: 'good' });
+      logClubEvent(s, 'hito', 'Con tres al hilo, el manager prometió en el barrio que el club pelea arriba.');
+      chain(s, semanasHastaLaFactura(s), { defId: 'racha_factura', fromWeek: s.week });
+      return 'Salió la nota con foto y todo: "Peleamos arriba". El grupo la compartió veinte veces y al entrenamiento fueron todos, hasta los que nunca van. El barrio te la guardó: en unas fechas te la va a recordar.';
+    },
+  },
+  {
+    /* El barrio pasa factura: el segundo eslabón de la racha, que vuelve a
+       mirar el historial. Se cumplió la promesa si de las fechas que pasaron
+       desde la nota se ganaron dos de tres (o todas, si fueron menos). Y si
+       se cumplió, se puede redoblar: la cadena sigue mientras el club gane y
+       vos te sigas agrandando. */
+    id: 'racha_factura',
+    title: 'El barrio se acuerda de lo que dijiste',
+    weight: 0,
+    chained: true,
+    canFire: () => false,
+    text: (s, ev) => {
+      const desde = partidosDesdeLaNota(s, ev);
+      const ganados = desde.filter((m) => m.won).length;
+      const marcadores = desde.map((m) => `${m.scoreFor}-${m.scoreAgainst}`).join(', ');
+      return promesaCumplida(s, ev)
+        ? `El del almacén te espera con el diario abierto en tu nota: "'Peleamos arriba', dijiste. Y mirá (${marcadores}): ${ganados} de ${desde.length}. Acá te hicieron caso, ¿eh?"`
+        : `El del almacén te muestra tu nota pegada al lado de la caja, con los resultados anotados en birome (${marcadores}): "'Peleamos arriba', decía acá. ${ganados === 0 ? 'Ni una.' : `${ganados} de ${desde.length}.`} El barrio se acuerda, ¿sabés?"`;
+    },
+    options: (s, ev) =>
+      promesaCumplida(s, ev)
+        ? [
+            { label: 'Pasar por el almacén a agradecer', hint: 'El barrio te lo reconoce; se cierra acá' },
+            // Redoblar sólo si queda fecha donde cobrarla.
+            ...(semanasHastaLaFactura(s) > 0
+              ? [{ label: 'Redoblar: "y falta lo mejor"', hint: 'El plantel se agranda otra vez; el barrio vuelve a anotar' }]
+              : []),
+          ]
+        : [
+            { label: 'Dar la cara en el grupo del barrio: "nos agrandamos de más"', hint: 'Cuesta algo de imagen; ordena el club' },
+            { label: 'Hacerse el distraído', hint: 'El barrio se ríe y el vestuario lo escucha' },
+          ],
+    resolve: (s, ev, opt) => {
+      if (promesaCumplida(s, ev)) {
+        if (opt === 0 || semanasHastaLaFactura(s) === 0) {
+          s.club.socialPrestige = clamp(s.club.socialPrestige + 4);
+          s.news.unshift({ week: s.week, text: 'El barrio le tomó la palabra al club: prometió pelear arriba y está cumpliendo.', tone: 'good' });
+          logClubEvent(s, 'hito', 'El club cumplió lo que prometió en el barrio: "peleamos arriba", y pelea.');
+          return 'Fuiste con una docena de facturas y te tuvieron media hora contando el partido como si hubieran jugado ellos. En el barrio, el club es tema de conversación.';
+        }
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
+        s.club.sportPrestige = clamp(s.club.sportPrestige + 2);
+        for (const p of actives(s)) p.motivation = clamp(p.motivation + 3);
+        s.news.unshift({ week: s.week, text: `El manager, otra vez en la página del barrio: "${s.club.name} va por todo".`, tone: 'good' });
+        chain(s, semanasHastaLaFactura(s), { defId: 'racha_factura', fromWeek: s.week });
+        return '"Y falta lo mejor", dijiste, y lo pusieron de título. El plantel se agrandó otra vez. El barrio, con la birome en la mano, siguió anotando.';
+      }
+      if (opt === 0) {
+        s.club.socialPrestige = clamp(s.club.socialPrestige - 2);
+        s.club.organization = clamp(s.club.organization + 2);
+        logClubEvent(s, 'animo', 'El club no cumplió lo que prometió en el barrio, y el manager dio la cara.');
+        return 'Escribiste en el grupo del barrio: "Nos agrandamos de más. Seguimos laburando". Te cargaron un rato y después te dejaron en paz: dar la cara, en el barrio, vale.';
+      }
+      s.club.socialPrestige = clamp(s.club.socialPrestige - 5);
+      s.club.sportPrestige = clamp(s.club.sportPrestige - 2);
+      s.club.socialClimate = clamp(s.club.socialClimate - 4);
+      s.news.unshift({ week: s.week, text: 'En el barrio se ríen de la nota: "peleamos arriba", decía, y no se pudo.', tone: 'bad' });
+      logClubEvent(s, 'animo', 'El club prometió pelear arriba, no cumplió, y el manager se hizo el distraído.');
+      return 'No dijiste nada. La nota quedó pegada al lado de la caja del almacén, con los resultados en birome, y cada uno del plantel que pasó a comprar algo la vio.';
+    },
+  },
+
   // --- Eventos encadenados: una decisión de hoy trae otra decisión semanas después ---
   {
     id: 'prueba_jugador',
@@ -1448,7 +1599,7 @@ export function takeScheduledEvent(s: GameState): ActiveEvent | null {
   s.scheduledEvents = idx === -1 ? alive : alive.filter((_, i) => i !== idx);
   if (idx === -1) return null;
   const e = alive[idx];
-  return { defId: e.defId, playerId: e.playerId, playerId2: e.playerId2 };
+  return { defId: e.defId, playerId: e.playerId, playerId2: e.playerId2, fromWeek: e.fromWeek };
 }
 
 /** Sortea un evento para la semana (o ninguno). Devuelve el ActiveEvent listo. */

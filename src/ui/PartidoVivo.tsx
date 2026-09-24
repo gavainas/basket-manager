@@ -447,7 +447,18 @@ export function PartidoVivo({ state, dispatch }: Props) {
         <span className="pvj-nombre">
           <PlayerLink id={p.id}>{p.name}</PlayerLink>
           {esRef && <Icon name="estrella" size={10} />}
-          {lado === 'bench' && live.heldOut?.includes(p.id) && <small title="Reservado por tu decisión. Vuelve cuando lo pongas vos."> · reservado</small>}
+          {/* El que salió por tu decisión y puede volver (el que guardaste con
+              cuatro faltas, el que sacaste hasta que se enfríe) lleva
+              "reservado". El que no vuelve hoy (resentido, expulsado, cinco
+              faltas) ya va tachado y con su título: decirle también
+              "reservado · vuelve cuando lo pongas vos" era contradecir la
+              incidencia que acababa de prometer "se queda afuera lo que resta". */}
+          {lado === 'bench' && !fuera && live.heldOut?.includes(p.id) && (
+            <small className="pvj-nota" title="Reservado por tu decisión. Vuelve cuando lo pongas vos.">
+              · reservado
+            </small>
+          )}
+          {fuera && <small className="pvj-nota">· afuera</small>}
         </span>
         <span className="pvj-pts">{ptsOf(p.id)}</span>
         <span className="pvj-energia">

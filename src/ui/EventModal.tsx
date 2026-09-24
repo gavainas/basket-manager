@@ -33,6 +33,8 @@ const EVENT_ICONS: Record<string, IconName> = {
   sobrino_socio: 'plantel',
   libreta_vuelve: 'chat',
   comision_aprieta: 'inscripcion',
+  racha_barrio: 'social',
+  racha_factura: 'historia',
 };
 
 // Eventos festivos: acá la gorra está permitida (nunca en la ficha deportiva).
@@ -44,6 +46,19 @@ function wearsCap(p: Player, festive: boolean): boolean {
   let sum = 0;
   for (let i = 0; i < p.id.length; i++) sum += p.id.charCodeAt(i);
   return sum % 3 === 0;
+}
+
+/**
+ * Debajo de la cara entra el apodo si lo tiene, y si no el apellido (la misma
+ * regla que la tira del plantel): el nombre entero se recortaba a "Bruno Aco…"
+ * en los 76 px de la ficha. El nombre completo queda en el título y en el
+ * texto del evento, que siempre lo nombra.
+ */
+function nombreCorto(name: string): string {
+  const nick = name.match(/"([^"]+)"/);
+  if (nick) return nick[1];
+  const parts = name.split(' ');
+  return parts[parts.length - 1];
 }
 
 /** La cara del implicado, con la expresión que pide la situación. */
@@ -68,7 +83,7 @@ function EventPerson({ p, festive }: { p: Player; festive?: boolean }) {
           title={p.name}
         />
       </div>
-      <span><PlayerLink id={p.id}>{p.name}</PlayerLink></span>
+      <span title={p.name}><PlayerLink id={p.id}>{nombreCorto(p.name)}</PlayerLink></span>
     </div>
   );
 }

@@ -267,6 +267,23 @@ export function watchItems(state: GameState): WatchItem[] {
       });
     }
   }
+  // La promesa al barrio ("peleamos arriba", del evento de la racha): el
+  // barrio la cobra en unas fechas mirando lo que pasó desde la nota. Que no
+  // se olvide: cuántas fechas faltan y cómo viene la cuenta desde entonces.
+  const promesa = (state.scheduledEvents ?? []).find((e) => e.defId === 'racha_factura' && e.season === state.seasonNumber);
+  if (promesa) {
+    const desde = state.history.filter((m) => !m.forfeit && m.week >= (promesa.fromWeek ?? 0));
+    const ganados = desde.filter((m) => m.won).length;
+    const faltan = promesa.week - state.week;
+    const cuando = faltan <= 0 ? 'esta semana' : faltan === 1 ? 'la fecha que viene' : `en ${faltan} fechas`;
+    const cuenta = desde.length === 0 ? 'todavía no se jugó ninguna' : `desde entonces vas ${ganados}-${desde.length - ganados}`;
+    items.push({
+      kind: 'social',
+      cls: desde.length > 0 && ganados * 2 < desde.length ? 'warn' : 'good',
+      text: `El barrio anotó tu "peleamos arriba" y te lo cobra ${cuando}: ${cuenta}.`,
+      tile: 'noticias',
+    });
+  }
   if (state.secondTeam && !state.secondTeam.finished) {
     const fit = state.players.filter(
       (p) => state.secondTeam!.playerIds.includes(p.id) && !p.leftClub && p.status !== 'lesionado'

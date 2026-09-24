@@ -310,7 +310,7 @@ function lockerRoomNotes(
   if (result.shortHanded && result.won) {
     notes.push(`Los ${n} que estuvieron se abrazaron como campeones. Gesta para contar en el asado por años.`);
   } else if (result.shortHanded && !result.won) {
-    notes.push(`"Con ${n} no se podía más", dijo alguien. Adentro del vestuario nadie reprochó nada. Adentro.`);
+    notes.push(`"Con ${n} no se podía más", dijo alguien. Adentro del vestuario nadie reprochó nada; afuera, en el barrio, ya se verá.`);
   } else if (result.comeback) {
     notes.push('El vestuario tardó en creerlo: la remontada se festejó dos veces.');
   } else if (result.clutch && result.won) {
@@ -1025,7 +1025,14 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
 
   const freshOf = (id: string) => live.playerFresh[id] ?? 70;
   const byId = (id: string) => s.players.find((p) => p.id === id)!;
+  // Sin DT contratado, "el DT" es quien hace los cambios (el botón del
+  // tablero táctico lo ofrece igual): con artículo, hay que declinarlo
+  // ("Cambio del DT", "al DT no le quita el sueño", "El DT movió el banco"),
+  // que "Cambio de el DT" se leía en el relato de cada partido dirigido así.
   const dt = s.coach ? s.coach.name : 'el DT';
+  const dtSujeto = s.coach ? s.coach.name : 'El DT';
+  const dtDe = s.coach ? `de ${s.coach.name}` : 'del DT';
+  const dtA = s.coach ? `a ${s.coach.name}` : 'al DT';
   const notes: string[] = [];
 
   // Un DT con poca lectura de juego aguanta de más a los fundidos.
@@ -1053,7 +1060,7 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
       cambios.push(`${byId(inId).name} por ${byId(outId).name}`);
     }
     if (cambios.length > 0) {
-      notes.push(`${dt} movió el banco: ${cambios.length === 1 ? 'entra' : 'entran'} ${cambios.join(', ')}.`);
+      notes.push(`${dtSujeto} movió el banco: ${cambios.length === 1 ? 'entra' : 'entran'} ${cambios.join(', ')}.`);
     }
   }
 
@@ -1062,7 +1069,7 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
     const closers = presetFive(s, live, 'cerradores');
     if (closers.some((id) => !live.onCourt.includes(id))) {
       live.onCourt = closers;
-      notes.push(`↺ ${dt} mandó a los cerradores para el último cuarto.`);
+      notes.push(`↺ ${dtSujeto} mandó a los cerradores para el último cuarto.`);
     }
   } else if (qIndex === 2 && live.directive !== 'repartir' && matchDiff(live) >= BALANCE.rotation.coachRestLead) {
     // Entretiempo con el partido cómodo: hasta el DT que juega a ganar le da
@@ -1094,10 +1101,10 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
       const hueco = unicoEnSuPuesto && entrante.position !== saliente.position;
       notes.push(
         hueco
-          ? `Cambio de ${dt}: entra ${entrante.name} por ${saliente.name}, que pedía el cambio. Quedamos sin ${saliente.position.toLowerCase()} natural${
-              leeElJuego ? ': no había recambio del puesto con piernas' : `, y a ${dt} no le quita el sueño`
+          ? `Cambio ${dtDe}: entra ${entrante.name} por ${saliente.name}, que pedía el cambio. Quedamos sin ${saliente.position.toLowerCase()} natural${
+              leeElJuego ? ': no había recambio del puesto con piernas' : `, y ${dtA} no le quita el sueño`
             }.`
-          : `Cambio de ${dt}: entra ${entrante.name} por ${saliente.name}, que pedía el cambio.`
+          : `Cambio ${dtDe}: entra ${entrante.name} por ${saliente.name}, que pedía el cambio.`
       );
     }
   }

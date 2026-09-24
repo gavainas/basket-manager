@@ -161,6 +161,32 @@ describe('la rotación respeta las posiciones (lo que quedaba del informe de tes
   });
 });
 
+describe('los cambios sin DT contratado (sep 2026)', () => {
+  it('el relato dice "Cambio del DT" y "al DT no le quita el sueño", no "de el DT"', () => {
+    // El botón "DT" del tablero táctico se ofrece aunque no haya DT: quien
+    // cambia es "el DT", y con artículo hay que declinarlo.
+    const base = cuarto(hastaElPartido(11));
+    const s: GameState = { ...base, coach: null, live: { ...base.live!, autoRotation: true, plan: 'manual' } };
+    const { enCancha, banco } = cancha(s);
+    if (enCancha.length < 5 || banco.length < 2) return;
+    enCancha.forEach((id, i) => {
+      jugador(s, id).position = POSICIONES[i];
+      s.live!.playerFresh[id] = i === 0 ? 10 : 90;
+    });
+    banco.forEach((id, i) => {
+      jugador(s, id).position = i === 0 ? 'Base' : 'Alero';
+      s.live!.playerFresh[id] = i === 0 ? 80 : 95;
+    });
+    const s2 = cuarto(s);
+    const notas = s2.live!.quarters[1].notes;
+    expect(notas.some((n) => /^Cambio del DT: entra/.test(n))).toBe(true);
+    for (const n of notas) {
+      expect(n).not.toMatch(/de el DT|a el DT/);
+      expect(n).not.toMatch(/^el DT/);
+    }
+  });
+});
+
 describe('la directiva "repartir" del DT', () => {
   it('mete de a dos a los que no jugaron, y el que lee el juego los cambia por el más jugado de su puesto', () => {
     const base = cuarto(hastaElPartido(11));
