@@ -4,6 +4,7 @@ import { BALANCE } from '../game/balance';
 import { activePlayers } from '../game/match';
 import { CAUSE_SHORT } from '../game/mood';
 import { clubByLegacyId, userFixtureOfWeek } from '../game/world';
+import { apodoOApellido } from '../game/nombres';
 import { Crest } from './Crest';
 import { Icon } from './Icon';
 import { Avatar } from './Avatar';
@@ -55,13 +56,8 @@ const POS_ABBR: Record<string, string> = {
   Pívot: 'PIV',
 };
 
-/** En la tira entra el apodo si lo tiene, y si no el apellido. */
-function shortName(name: string): string {
-  const nick = name.match(/"([^"]+)"/);
-  if (nick) return nick[1];
-  const parts = name.split(' ');
-  return parts[parts.length - 1];
-}
+/** En la tira entra el apodo si lo tiene, y si no el apellido (nombres.ts). */
+const shortName = apodoOApellido;
 
 function PlantelStrip({ state }: { state: GameState }) {
   const open = useContext(OpenProfileContext);

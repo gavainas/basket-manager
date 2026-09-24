@@ -2,6 +2,7 @@ import { BALANCE } from '../game/balance';
 import { marketReference } from '../game/conduct';
 import { weeklyFee } from '../game/economy';
 import { CAUSE_SHORT } from '../game/mood';
+import { listaY } from '../game/nombres';
 import {
   CONTINUITY_LABELS,
   COUNTER_OFFERS,
@@ -124,7 +125,7 @@ function agendaFit(state: GameState, mp: MarketPlayer): { cls: string; text: str
   const missed =
     mp.agenda.onlyTimes.length > 0 ? d.gameTimes.filter((t) => !mp.agenda!.onlyTimes.includes(t)) : [];
   if (missed.length > 0) {
-    return { cls: 'warn', text: `A los partidos de ${missed.join(' y ')} llegaría para el 2do tiempo` };
+    return { cls: 'warn', text: `A los partidos de ${listaY(missed)} llegaría para el 2do tiempo` };
   }
   return { cls: 'good', text: `Puede los ${dayLabel(d.gameDay)}, nuestro día de partido` };
 }

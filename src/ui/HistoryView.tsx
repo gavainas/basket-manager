@@ -2,8 +2,8 @@ import type { GameState } from '../game/types';
 import { QUE_LOS_ALIMENTA } from '../game/evaluation';
 import { activePlayers } from '../game/match';
 import { PlayerLink } from './PlayerLink';
-import { Timeline } from './Timeline';
-import { formatMoney } from './helpers';
+import { largoDeTemporada, Timeline } from './Timeline';
+import { formatMoney, weekShort } from './helpers';
 import { Icon } from './Icon';
 
 export function HistoryView({ state }: { state: GameState }) {
@@ -63,6 +63,7 @@ export function HistoryView({ state }: { state: GameState }) {
         <h3>La historia del club</h3>
         <Timeline
           events={state.clubTimeline}
+          seasonLength={largoDeTemporada(state)}
           emptyText="La historia del club se está escribiendo: jugá y van a llegar los momentos."
         />
       </div>
@@ -116,7 +117,7 @@ export function HistoryView({ state }: { state: GameState }) {
               {state.news.map((n, i) => (
                 <li key={i}>
                   <span className={`news-dot ${n.tone}`} />
-                  <span className="news-week">S{n.week}</span>
+                  <span className="news-week">{weekShort(n.week, state.seasonLength)}</span>
                   <span>{n.text}</span>
                 </li>
               ))}

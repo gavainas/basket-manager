@@ -6,6 +6,8 @@
 import { BALANCE } from './balance';
 import { CLUB_COLORS, DIVISIONS, LEAGUES, USER_LEAGUE_ID, WORLD_DIVISION_IDS } from '../data/worldData';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
+import { RECRUIT_NAMES } from '../data/recruits';
+import { MARKET_SEED_NAMES } from '../data/market';
 import { momentById } from './moments';
 import { Rng, seedFromString } from './rng';
 import type {
@@ -296,8 +298,10 @@ function newWorldPlayer(
   const identity = clubIdentity(clubName);
   let first = rng.pick(FIRST_NAMES);
   let last = rng.pick(LAST_NAMES);
-  // Dos "Diego Sosa" en el mismo vestuario confunden: se re-sortea.
-  for (let guard = 0; takenNames?.has(`${first} ${last}`) && guard < 8; guard++) {
+  // Dos "Diego Sosa" en el mismo vestuario confunden: se re-sortea. Con el
+  // mundo entero en `takenNames` (unos 800 nombres de 2025 combinaciones),
+  // ocho intentos dejaban casi un homónimo por mundo; con cuarenta, ninguno.
+  for (let guard = 0; takenNames?.has(`${first} ${last}`) && guard < 40; guard++) {
     first = rng.pick(FIRST_NAMES);
     last = rng.pick(LAST_NAMES);
   }
@@ -332,9 +336,42 @@ function newWorldPlayer(
   };
 }
 
+/**
+ * Los nombres que el mundo no puede repetir: los de la gente del club (los
+ * que están y los que se fueron: siguen siendo personas de esta historia),
+ * los fichables y contactos de la pretemporada y la libreta que sigue viva.
+ * Salen de los mismos pools que el mundo, así que sin esto un rival se
+ * llamaba igual que uno de los nuestros (sep 2026: "Facundo Silva · banco" en
+ * la planilla de Bohemios, el mismo nombre que nuestro base y figura de esa
+ * fecha, y el relato no decía cuál de los dos había anotado).
+ */
+export function nombresReservados(state: GameState): Set<string> {
+  // Los fichables de catálogo y los reclutas tienen nombre fijo: pueden
+  // llegar al club cualquier verano o cualquier semana, así que el mundo
+  // tampoco los usa.
+  const names = new Set<string>([...MARKET_SEED_NAMES, ...RECRUIT_NAMES]);
+  for (const p of state.players) names.add(p.name);
+  for (const m of state.preseason?.market ?? []) names.add(m.name);
+  for (const m of state.libretaPendiente ?? []) names.add(m.name);
+  if (state.trialCandidate) names.add(state.trialCandidate.player.name);
+  return names;
+}
+
+/**
+ * Al firmar a un fichable que venía del mundo, la persona se muda a tu
+ * plantel: sale del pool (el mundo no duplica gente). Lo hacía sólo la
+ * negociación; el dúo que "viene junto o no viene ninguno" los fichaba sin
+ * sacarlos, y al verano siguiente el libre "se acomodaba solo" en otro club
+ * con tu mismo jugador adentro (lo encontró el fuzz, sep 2026).
+ */
+export function mudarAlClub(world: WorldState, mp: { worldPlayerId?: string }): void {
+  if (!mp.worldPlayerId) return;
+  world.players = world.players.filter((wp) => wp.id !== mp.worldPlayerId);
+}
+
 /** Plantel entero desde cero (club nuevo en el mundo, o primer arranque). */
-function genRosterFor(world: WorldState, clubName: string, strength: number, seasonNumber: number, rng: Rng): WorldPlayer[] {
-  const taken = new Set<string>();
+function genRosterFor(world: WorldState, clubName: string, strength: number, seasonNumber: number, rng: Rng, reservados: Set<string>): WorldPlayer[] {
+  const taken = new Set(reservados);
   return ROSTER_TEMPLATE.map((position, i) =>
     newWorldPlayer(world, clubName, position, strength, i === 0 ? 'estrella' : 'plantel', seasonNumber, rng, taken)
   );
@@ -351,11 +388,12 @@ function refillRoster(
   strength: number,
   current: WorldPlayer[],
   seasonNumber: number,
-  rng: Rng
+  rng: Rng,
+  reservados: Set<string>
 ): WorldPlayer[] {
   const added: WorldPlayer[] = [];
   const target = 11;
-  const taken = new Set(current.map((p) => `${p.firstName} ${p.lastName}`));
+  const taken = new Set([...reservados, ...current.map((p) => `${p.firstName} ${p.lastName}`)]);
   const covered = new Set(current.map((p) => p.position));
   const missing = (['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'] as Position[]).filter((pos) => !covered.has(pos));
   while (current.length + added.length < target) {
@@ -393,17 +431,22 @@ function rosterForClub(
   clubName: string,
   strength: number,
   seasonNumber: number,
-  rng: Rng
+  rng: Rng,
+  reservados: Set<string>
 ): WorldPlayer[] {
   const current = world.players.filter((p) => p.clubName === clubName);
+  // Ni un nombre del club ni uno que ya esté en otro vestuario del mundo: dos
+  // "Gabriel Torres" en clubes distintos eran un homónimo esperando a que
+  // uno quedara libre y firmara con vos (el fuzz lo encontró en la T2).
+  const enUso = new Set([...reservados, ...world.players.map(worldPlayerName)]);
   if (current.length === 0) {
-    const fresh = genRosterFor(world, clubName, strength, seasonNumber, rng);
+    const fresh = genRosterFor(world, clubName, strength, seasonNumber, rng, enUso);
     world.players.push(...fresh);
     return fresh;
   }
   nudgeRosterTowards(current, strength, rng);
   if (current.length < 11) {
-    const extra = refillRoster(world, clubName, strength, current, seasonNumber, rng);
+    const extra = refillRoster(world, clubName, strength, current, seasonNumber, rng, enUso);
     world.players.push(...extra);
     return [...current, ...extra];
   }
@@ -451,6 +494,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   // asignado no persisten: esa partida arranca su memoria del mundo acá.
   world.players = (state.world.players ?? []).filter((p) => p.clubName !== undefined || !p.id.startsWith('wp_t'));
   world.playerSeq = state.world.playerSeq ?? 1;
+  const reservados = nombresReservados(state);
   const division = DIVISIONS.find((d) => d.id === state.divisionId)!;
   // La liga del usuario sale de su divisional (Universitaria o la plaza).
   const leagueId = division.leagueId;
@@ -522,7 +566,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
       legacyRivalId: rival.id,
     });
 
-    const roster = rosterForClub(world, rival.name, rival.strength, state.seasonNumber, rng);
+    const roster = rosterForClub(world, rival.name, rival.strength, state.seasonNumber, rng, reservados);
     for (const p of roster) {
       registerPlayer(world, { playerId: p.id, teamId, leagueId, seasonId, week: 0 });
     }
@@ -643,7 +687,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
         registeredWeek: 0,
       });
       if (!withRosters.includes(divisionId)) continue;
-      const roster = rosterForClub(world, seed.name, seed.strength, state.seasonNumber, worldRng);
+      const roster = rosterForClub(world, seed.name, seed.strength, state.seasonNumber, worldRng, reservados);
       for (const p of roster) {
         registerPlayer(world, { playerId: p.id, teamId, leagueId: worldDiv.leagueId, seasonId, week: 0 });
       }

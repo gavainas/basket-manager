@@ -167,7 +167,9 @@ Gabi la quiere), y el arte cuando Gabi diga.
   nueva llegue con su test en `tests/guardado.test.ts`. *Desde sep 2026 hay un fuzz*
   (`npm run fuzz`, en el CI) que juega partidas eligiendo al azar y vigila que ninguna
   decisión rompa el guardado ni los textos; cuando aparezca un patrón de texto nuevo que
-  valga la pena vigilar, la lista está en `scripts/fuzz.cjs`.
+  valga la pena vigilar, la lista está en `scripts/fuzz.cjs`. *Desde el 24/9 también
+  vigila que ningún rival se llame igual que uno de los nuestros* (y con eso encontró
+  al dúo de la pretemporada que quedaba duplicado en el mundo, ver el changelog).
 
 ## Diseño
 

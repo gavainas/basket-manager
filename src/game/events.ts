@@ -514,7 +514,8 @@ export const EVENTS: EventDef[] = [
       if (opt === 0) {
         p.status = 'lesionado';
         p.injuryWeeks = rng.int(1, 2);
-        return `${p.name} para ${p.injuryWeeks === 1 ? 'una semana' : 'dos semanas'} para curarse bien. Mejor prevenir.`;
+        // "X para una semana para curarse" se leía con los dos "para" pegados.
+        return `${p.name} se toma ${p.injuryWeeks === 1 ? 'una semana' : 'dos semanas'} para curarse bien. Mejor prevenir.`;
       }
       p.physical = clamp(p.physical - 15);
       if (rng.chance(0.3)) {

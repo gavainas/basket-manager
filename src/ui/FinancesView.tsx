@@ -2,7 +2,7 @@ import type { GameState } from '../game/types';
 import { activePlayers } from '../game/match';
 import { weeklyEstimate } from '../game/economy';
 import { condicionTexto } from '../game/sponsors';
-import { feeChipAlways, formatMoney } from './helpers';
+import { feeChipAlways, formatMoney, weekShort } from './helpers';
 import { PlayerLink } from './PlayerLink';
 
 export function FinancesView({ state }: { state: GameState }) {
@@ -83,7 +83,7 @@ export function FinancesView({ state }: { state: GameState }) {
                   {recentLedger.map((e, i) => (
                     <tr key={i}>
                       <td className="num" style={{ color: 'var(--text-dim)', width: 40 }}>
-                        S{e.week}
+                        {weekShort(e.week, state.seasonLength)}
                       </td>
                       <td>{e.concept}</td>
                       <td className="num" style={{ color: e.amount >= 0 ? 'var(--good)' : 'var(--bad)' }}>

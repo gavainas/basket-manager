@@ -12,9 +12,9 @@ import { Bar } from './Bar';
 import { ConductaFicha } from './Conducta';
 import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
-import { Timeline } from './Timeline';
+import { largoDeTemporada, Timeline } from './Timeline';
 import { TIPS } from './Tip';
-import { feeChip, feeChipAlways, roleLabel, statusChipAlways } from './helpers';
+import { feeChip, feeChipAlways, roleLabel, statusChipAlways, weekShort } from './helpers';
 import { Icon } from './Icon';
 import { useTeclasModal } from './teclas';
 
@@ -99,7 +99,7 @@ function GeneralTab({ state, p }: { state: GameState; p: Player }) {
   );
 }
 
-function DeportivaTab({ p }: { p: Player }) {
+function DeportivaTab({ p, largo }: { p: Player; largo: (season: number) => number }) {
   const log = p.matchLog;
   const played = log.length;
   const minutes = log.reduce((t, m) => t + m.minutes, 0);
@@ -177,7 +177,7 @@ function DeportivaTab({ p }: { p: Player }) {
               {last.map((m, i) => (
                 <tr key={i}>
                   <td>
-                    T{m.season} · S{m.week}
+                    T{m.season} · {weekShort(m.week, largo(m.season))}
                   </td>
                   <td>
                     {m.rivalName} {m.mvp ? <Icon name="estrella" size={11} /> : ''}
@@ -426,10 +426,10 @@ export function PlayerProfile({ state, playerId, onClose }: Props) {
 
           <div className="profile-body">
             {tab === 'general' && <GeneralTab state={state} p={p} />}
-            {tab === 'deportiva' && <DeportivaTab p={p} />}
+            {tab === 'deportiva' && <DeportivaTab p={p} largo={largoDeTemporada(state)} />}
             {tab === 'relaciones' && <RelacionesTab state={state} p={p} />}
             {tab === 'historia' && (
-              <Timeline events={p.timeline} emptyText="Su historia en el club está por escribirse." />
+              <Timeline events={p.timeline} seasonLength={largoDeTemporada(state)} emptyText="Su historia en el club está por escribirse." />
             )}
             {tab === 'social' && <SocialTab state={state} p={p} />}
           </div>

@@ -1,6 +1,7 @@
 import { clamp } from './balance';
 import { activePlayers, clubPosition } from './match';
-import { logClubEvent } from './timeline';
+import { listaY } from './nombres';
+import { logClubEvent, semanaDeCierre } from './timeline';
 import type { GameState, Objective } from './types';
 import type { Rng } from './rng';
 
@@ -153,12 +154,14 @@ export function settleObjectives(s: GameState): void {
       s.club.socialPrestige = clamp(s.club.socialPrestige - 3);
       s.club.sportPrestige = clamp(s.club.sportPrestige - 1);
       s.news.unshift({ week, text: `La comisión no perdona: quedó incumplido "${obj.label}". Lo van a recordar.`, tone: 'bad' });
-      logClubEvent(s, 'hito', `Objetivo de la comisión incumplido: ${obj.label}.`, week);
+      // En la historia va al cierre, después de los playoffs (las noticias
+      // siguen con la última semana de la fase regular, que es su etiqueta).
+      logClubEvent(s, 'hito', `Objetivo de la comisión incumplido: ${obj.label}.`, semanaDeCierre(s));
     }
   }
   const met = s.objectives.filter((o) => objectiveStatus(s, o, true) === 'cumplido').length;
   if (met === s.objectives.length && s.objectives.length > 0) {
-    logClubEvent(s, 'hito', 'La comisión cerró el año conforme: los tres objetivos, cumplidos.', week);
+    logClubEvent(s, 'hito', 'La comisión cerró el año conforme: los tres objetivos, cumplidos.', semanaDeCierre(s));
   }
 }
 
@@ -182,7 +185,7 @@ export function midSeasonObjectiveCheck(s: GameState): void {
     });
     return;
   }
-  const labels = atRisk.map((o) => `"${o.label}"`).join(' y ');
+  const labels = listaY(atRisk.map((o) => `"${o.label}"`));
   s.news.unshift({
     week,
     text: `Visita de la comisión a mitad de temporada: ${labels} ${atRisk.length > 1 ? 'vienen flojos' : 'viene flojo'}. "Confiamos en vos, pero mirá el almanaque", dejaron dicho.`,

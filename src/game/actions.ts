@@ -4,6 +4,7 @@ import { coachBoostsTraining } from './coach';
 import { createRecruit } from '../data/recruits';
 import { pickByFragility } from './injuries';
 import { bumpGrievance, sootheGrievance, upsetPlayers } from './mood';
+import { listaY } from './nombres';
 import { affinity, pairKey, RIVALRY_THRESHOLD } from './relations';
 import { worstPair } from './socialMap';
 import { condicionTexto, fraseDe, ofrecerSponsor } from './sponsors';
@@ -110,7 +111,7 @@ export const ACTIONS: ActionDef[] = [
         }
       }
       const absent =
-        skipped.length === 0 ? '' : skipped.length === 1 ? ` Faltó ${skipped[0]}.` : ` Faltaron ${skipped.join(' y ')}.`;
+        skipped.length === 0 ? '' : skipped.length === 1 ? ` Faltó ${skipped[0]}.` : ` Faltaron ${listaY(skipped)}.`;
       if (attendees.length > 0 && rng.chance(A.training.injuryChance)) {
         // El que se resiente no es al azar: los cuerpos frágiles pagan primero.
         const injured = pickByFragility(attendees, rng);

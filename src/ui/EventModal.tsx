@@ -1,6 +1,7 @@
 import type { GameState, Player } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { getEvent } from '../game/events';
+import { apodoOApellido } from '../game/nombres';
 import { Avatar } from './Avatar';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
@@ -57,12 +58,7 @@ function wearsCap(p: Player, festive: boolean): boolean {
  * en los 76 px de la ficha. El nombre completo queda en el título y en el
  * texto del evento, que siempre lo nombra.
  */
-function nombreCorto(name: string): string {
-  const nick = name.match(/"([^"]+)"/);
-  if (nick) return nick[1];
-  const parts = name.split(' ');
-  return parts[parts.length - 1];
-}
+const nombreCorto = apodoOApellido;
 
 /** La cara del implicado, con la expresión que pide la situación. */
 function EventPerson({ p, festive }: { p: Player; festive?: boolean }) {

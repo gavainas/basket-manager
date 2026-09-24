@@ -3,6 +3,7 @@ import type { GameState } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { COACH_PROFILE_INFO, COACH_TYPE_LABELS } from '../game/coach';
 import { activePlayers } from '../game/match';
+import { apellido } from '../game/nombres';
 import { Bar } from './Bar';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
 import { PlayerLink } from './PlayerLink';
@@ -26,7 +27,7 @@ export function CoachCard({ state, dispatch }: Props) {
      rojo que lo hacía con un click; ahora pregunta, como "Empezar de cero". */
   const despedir = () => {
     if (!coach) return;
-    const nombre = coach.type === 'jugador' ? coach.name.split(' ').slice(-1)[0] : coach.name;
+    const nombre = coach.type === 'jugador' ? apellido(coach.name) : coach.name;
     const message =
       coach.type === 'jugador'
         ? `${coach.name} deja de dirigir y vuelve a ser uno más del plantel. Se lo va a tomar mal (motivación -6) y el vestuario lo va a comentar (ambiente social -3).`

@@ -240,6 +240,9 @@ const MARKET_SEEDS: MarketSeed[] = [
   },
 ];
 
+/** Los nombres del catálogo: el mundo no se los pone a un rival (world.ts, nombresReservados). */
+export const MARKET_SEED_NAMES: readonly string[] = MARKET_SEEDS.map((s) => s.name);
+
 /**
  * `previousTeam` mezcla clubes reales con situaciones de vida ("Trabaja de
  * noche", "Sin club"). Para los clubes, "Viene de X" funciona; para las
