@@ -88,7 +88,7 @@ export function quarterFlavor(ctx: FlavorContext, rng: Rng): string[] {
 const DOUBTFUL_FOULS = [
   'Una falta dudosa sobre el cierre encendió al banco: todos mirando a los jueces.',
   'Cargaron una falta en ataque que nadie vio: el banco se levantó entero a protestar.',
-  'Un pasos inexistente en el mejor momento nuestro. El grito fue unánime desde afuera.',
+  'Unos pasos inexistentes en el mejor momento nuestro. El grito fue unánime desde afuera.',
   'No cobraron una falta clarísima abajo del aro y el que la recibió quedó en el piso, mirando al árbitro.',
   'Dudosa en la línea de tres: el árbitro sacó dos tiros libres y de nuestro lado juraban que eran tres.',
 ];

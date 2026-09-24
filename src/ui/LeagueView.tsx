@@ -13,6 +13,7 @@ import { leaguePromotes, MOVE_COUNT } from '../game/pyramid';
 import { WORLD_DIVISION_IDS } from '../data/worldData';
 import type { GameAction } from '../state/gameReducer';
 import { ClubLink } from './ClubLink';
+import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
 import { Crest } from './Crest';
 import { StyleChip } from './StyleChip';
 import { LeagueLink } from './LeagueLink';
@@ -96,8 +97,36 @@ function ExpansionPanel({
   const check = checkExpansion(state, league.id);
   const eligible = state.players.filter((p) => eligibleForLeague(p, league));
   const [selected, setSelected] = useState<Set<string>>(() => new Set(eligible.map((p) => p.id)));
+  const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
   const planning = state.phase === 'planning';
   const canConfirm = check.ok && planning && selected.size >= E.minPlayers;
+  const semanal = E.weeklyUpkeep - E.canteenIncome;
+
+  /* Inscribir es gastar de un click la ficha entera —$250, la caja completa
+     de una partida recién empezada— por un equipo que no se puede dar de baja
+     en toda la temporada, mientras que despedir al DT o cerrar la pretemporada
+     preguntan. El diálogo dice lo que va a pasar con la caja y con los
+     viernes; en rojo si la caja queda por debajo de lo que la semana se lleva. */
+  const pedirConfirmacion = () => {
+    const queda = state.club.money - check.fee;
+    const nombre = league.minAge ? `${state.club.name} +35` : `${state.club.name} "B"`;
+    const dia = check.gameDay ? ` los ${check.gameDay}` : '';
+    const justa = queda < BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly;
+    setConfirmReq({
+      title: `¿Inscribir a ${nombre} en ${league.name}?`,
+      message:
+        `Se pagan $${check.fee} ahora y la caja queda en $${queda}${justa ? ' (menos de lo que se lleva una semana de cancha y árbitros)' : ''}. ` +
+        `Después, el equipo cuesta ~$${semanal} por semana entre cancha, árbitros y cantina, y juega${dia} toda la temporada con ${selected.size} fichas. ` +
+        'Una vez inscripto no se puede dar de baja hasta el verano.',
+      confirmLabel: `Inscribir por $${check.fee}`,
+      danger: justa,
+      icon: 'liga',
+      onConfirm: () => {
+        dispatch({ type: 'REGISTER_SECOND_TEAM', leagueId: league.id, playerIds: [...selected] });
+        onClose();
+      },
+    });
+  };
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -164,17 +193,15 @@ function ExpansionPanel({
         <button
           disabled={!canConfirm}
           title={canConfirm ? `Se paga la inscripción de $${check.fee}` : (check.reason ?? 'Elegí al menos las fichas mínimas en semana de planificación')}
-          onClick={() => {
-            dispatch({ type: 'REGISTER_SECOND_TEAM', leagueId: league.id, playerIds: [...selected] });
-            onClose();
-          }}
+          onClick={pedirConfirmacion}
         >
-          Inscribir por ${check.fee}
+          Inscribir por ${check.fee}…
         </button>
         <button className="small" onClick={onClose}>
           Cancelar
         </button>
       </div>
+      <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
     </div>
   );
 }

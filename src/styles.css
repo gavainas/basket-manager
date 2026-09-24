@@ -462,6 +462,25 @@ button.danger {
 
 .secciones .seccion-label { grid-area: label; }
 
+/* La tecla de cada sección (1 a 7), en la esquina: un juego de PC muestra sus
+   atajos. Va fuera de la grilla del botón para no mover el nombre ni el ícono. */
+.secciones .seccion { position: relative; }
+.secciones .seccion-tecla {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-family: var(--display);
+  font-size: 9px;
+  line-height: 1;
+  padding: 1px 3px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  opacity: 0.35;
+  transition: opacity 0.15s;
+}
+.secciones .seccion:hover .seccion-tecla,
+.secciones .seccion.on .seccion-tecla { opacity: 0.6; }
+
 .secciones .seccion .ico {
   grid-area: ico;
   opacity: 0.55;
@@ -784,9 +803,39 @@ button.danger {
 
 /* ---------- La semana (tanda B) ---------- */
 
-/* Los cinco pasos arriba, el panel de la fase abajo. */
+/* Los cinco pasos arriba, el panel de la fase abajo.
+
+   El panel mide por lo menos lo que queda de ventana (sep 2026): con una
+   convocatoria corta —vinieron todos, o una sola baja— la pantalla medía 450
+   px en una ventana de 600 y el pie con "Armar el quinteto" quedaba flotando
+   a mitad de pantalla, con su franja oscura (el padding que tapa el aire del
+   scroll cuando está pegado) pintada en el medio de la madera. `sticky` sólo
+   mueve al pie cuando hay scroll; cuando no hay, el pie tiene que estar abajo
+   por layout. La fila de la etapa crece hasta el borde y el pie se va al
+   fondo con `margin-top: auto`; con contenido largo la fila mide lo suyo
+   (`max-content`) y el pie se pega como siempre. */
 .semana-vista {
   gap: 0;
+  min-height: 100%;
+  grid-template-rows: auto minmax(max-content, 1fr);
+}
+
+/* Las cuatro etapas con pie son una columna que empuja el pie al fondo (el
+   quinteto, el partido y el informe lo declaran en su propia regla, abajo). */
+.semana-scroll {
+  display: flex;
+  flex-direction: column;
+}
+
+/* El pie termina en el borde real del scroll: su padding de abajo ya cubre el
+   aire de `.app-shell` cuando está pegado, y el margen negativo evita que ese
+   mismo aire lo separe de la barra de recursos cuando está en flujo. */
+.semana-scroll > .pie-fijo,
+.quinteto-pantalla > .pie-fijo,
+.partido-pantalla > .pie-fijo,
+.informe-pantalla > .pie-fijo {
+  margin-top: auto;
+  margin-bottom: calc(-1 * var(--sp-6));
 }
 
 .semana-scroll {
@@ -824,7 +873,10 @@ button.danger {
 
 /* Cómo llega el partido arriba · la pizarra en el medio · confirmar abajo. */
 .quinteto-pantalla {
-  display: grid;
+  /* Columna, no grilla: el pie se va al fondo con `margin-top: auto` (ver
+     `.semana-vista`). Una grilla de una columna no puede empujarlo. */
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-4);
   min-height: 0;
 }
@@ -891,7 +943,9 @@ button.danger {
 
 /* Marcador arriba · el juego en tres columnas · el botón del cuarto abajo. */
 .partido-pantalla {
-  display: grid;
+  /* Columna, no grilla: el pie se va al fondo (ver `.semana-vista`). */
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-4);
   min-height: 0;
 }
@@ -1244,7 +1298,9 @@ button.danger {
 /* ---------- El informe (tanda D) ---------- */
 
 .informe-pantalla {
-  display: grid;
+  /* Columna, no grilla: el pie se va al fondo (ver `.semana-vista`). */
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-4);
   min-height: 0;
 }
@@ -1862,7 +1918,12 @@ img.retrato-img.v2 {
 
 .bar-row {
   display: grid;
-  grid-template-columns: 110px 1fr 34px;
+  /* 128 px: entran "Prestigio deportivo", "Lectura de juego" y "Manejo de
+     grupo" enteros (con 110 se leían "Prestigio depo…" y "Manejo de gru…" en
+     El club, la ficha del club y el cuerpo técnico, a cualquier ancho). Cada
+     fila es su propia grilla, así que el ancho es fijo y no `max-content`:
+     si no, las barras de un mismo panel quedarían desalineadas. */
+  grid-template-columns: 128px 1fr 34px;
   align-items: center;
   gap: 0.6rem;
   margin: 0.3rem 0;
@@ -6149,7 +6210,11 @@ button.mini.blue.on {
 
   /* El pie pegado abajo y la pizarra pegada arriba: en una columna no hay
      dónde pegarse. */
-  .pie-fijo { position: static; margin: 0; padding: 0; background: none; }
+  .pie-fijo,
+  .semana-scroll > .pie-fijo,
+  .quinteto-pantalla > .pie-fijo,
+  .partido-pantalla > .pie-fijo,
+  .informe-pantalla > .pie-fijo { position: static; margin: 0; padding: 0; background: none; }
   .quinteto-pantalla .lineup-court { position: static; }
 
   /* --- 2. Una columna, y del ancho de la ventana --- */
@@ -6254,6 +6319,7 @@ button.mini.blue.on {
 
   .secciones .seccion { flex: 1 1 0; padding: 0.3rem 0.2rem 0.25rem; }
   .secciones .seccion-label { display: none; }
+  .secciones .seccion-tecla { display: none; } /* sin teclado, sin tecla */
   .secciones .seccion-punto { margin-right: 0; }
 
   /* La barra de recursos: los cuatro números en una fila (sin la letra chica)

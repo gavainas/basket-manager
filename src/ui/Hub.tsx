@@ -222,9 +222,9 @@ export function Hub({ state }: { state: GameState }) {
             <div className="hub-a-readiness">
               <button onClick={() => navigate(readiness.confirmed === null ? 'plantilla' : 'semana')}><strong>{readiness.confirmed ?? readiness.available}</strong><span>{readiness.confirmed === null ? 'disponibles · sin confirmar' : 'confirmados'}</span></button>
               <button onClick={() => navigate('plantilla')}><strong>{readiness.unavailable}</strong><span>de baja</span></button>
-              <button onClick={() => navigate('plantilla')}><strong>{readiness.tired}</strong><span>fundidos</span></button>
+              <button onClick={() => navigate('plantilla')}><strong>{readiness.tired}</strong><span>{readiness.tired === 1 ? 'fundido' : 'fundidos'}</span></button>
             </div>
-            {readiness.late > 0 && <p className="hub-a-note">{readiness.late} de los confirmados llegan para el segundo tiempo.</p>}
+            {readiness.late > 0 && <p className="hub-a-note">{readiness.late === 1 ? 'Uno de los confirmados llega' : `${readiness.late} de los confirmados llegan`} para el segundo tiempo.</p>}
             {state.phase === 'matchResult' && <p className="hub-a-note">Estado al cierre del partido; la próxima convocatoria todavía no está hecha.</p>}
             <div className="hub-a-alerts">{warnings.length ? warnings.slice(0, 2).map(warningButton) : <p className="hub-a-note">Sin avisos pendientes. Revisá el plantel y prepará el encuentro.</p>}
               {warnings.length > 2 && <details><summary>{warnings.length === 3 ? 'Ver otro aviso' : `Ver otros ${warnings.length - 2} avisos`}</summary>{warnings.slice(2).map(warningButton)}</details>}

@@ -34,7 +34,7 @@ import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
-import { useEspacio } from './teclas';
+import { useEscape, useEspacio } from './teclas';
 
 interface Props {
   state: GameState;
@@ -384,6 +384,12 @@ export function PartidoVivo({ state, dispatch }: Props) {
     setEntraSel(null);
   };
   const cambioEnCurso = (saleSel || entraSel) && !live.finished;
+  // Escape deshace el cambio a medio armar; sin cambio armado, el marco lo usa para volver al Tablero.
+  useEscape(() => {
+    if (!cambioEnCurso) return false;
+    cancelar();
+    return true;
+  });
   /* El botón de confirmar vive en el pie, no debajo del banco: con el scroll
      único, a 1366×768 (y a 1280×720, el piso de diseño) el panel del cambio
      caía debajo del pie y tocar ⇄ dos veces no mostraba ningún botón. El pie

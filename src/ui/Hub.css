@@ -37,10 +37,13 @@
 .hub-a-prepare p { margin: .25rem 0 0; max-width: 40ch; }
 .hub-a-prepare .primary { padding: .85rem 1rem; font-size: 1.1rem; flex-shrink: 0; white-space: nowrap; }
 .hub-a-side { display: grid; gap: 1rem; min-width: 0; min-height: 0; align-content: start; }
-/* Las cards empiezan arriba y sólo el informe del último partido, si lo abrís,
-   se desplaza por dentro: es el único contenido que crece por un click. */
-.hub-a-card { display: grid; grid-template-rows: auto; align-content: start; }
-.hub-a-previous { overflow-y: auto; overscroll-behavior: contain; }
+/* Las cards empiezan arriba. El Tablero es la única pantalla que mide la
+   ventana en vez de scrollear, así que lo que no entra en una card se desplaza
+   por dentro de ella: el informe del último partido si lo abrís, y en la
+   notebook (1280×720) una semana brava de "¿Cómo llegamos?" —dos avisos
+   largos, "Ver otro aviso" y el link al vestuario— que medía 16 px más que la
+   card y, con `overflow: hidden`, cortaba el link sin dar forma de llegar. */
+.hub-a-card { display: grid; grid-template-rows: auto; align-content: start; overflow-y: auto; overscroll-behavior: contain; }
 .hub-a-band { background: #315c7d; color: #fff; margin: 0; padding: .55rem .9rem; font-size: 1rem; letter-spacing: .04em; }
 .hub-a-previous .hub-a-band { background: #555952; }
 .hub-a-readiness { display: grid; grid-template-columns: 1.6fr 1fr 1fr; padding: .75rem .65rem; gap: .4rem; }
