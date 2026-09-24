@@ -1014,38 +1014,67 @@ export function buildRivalBox(state: GameState, live: LiveMatchState): RivalBoxL
 }
 
 /**
- * Cuándo entra cada suplente del rival (sep 2026, de jugar contra Unión
- * Vecinal: "sólo hacen puntos los titulares"). Hasta tres de su banco, los
- * mejores, entran por un titular en estos tramos de los tres primeros cuartos;
- * el último cuarto y el suplementario los cierran los titulares. Cuarto → tramos.
+ * La rotación del rival en un partido (sep 2026, de jugar contra Unión Vecinal:
+ * "sólo hacen puntos los titulares"; Gabi: "que jueguen entre el 80 y el 100%
+ * del plantel"). De los que vinieron juega, al azar, entre el 80% y el 100%:
+ * los titulares y los mejores del banco que hagan falta para llegar. Cada
+ * suplente entra en turnos de dos tramos en los tres primeros cuartos (los
+ * tres mejores, dos turnos; el resto, uno) por un titular, de su puesto si se
+ * puede. El último cuarto y el suplementario los cierran los titulares.
+ * Determinista por partido: la misma fecha da siempre la misma rotación.
+ * Devuelve, por tramo (`"cuarto:tramo"`), qué titular descansa y quién lo cubre.
  */
-const RIVAL_ROTACION: Array<Record<number, number[]>> = [
-  { 0: [3, 4], 1: [0, 1], 2: [3, 4] },
-  { 0: [4], 1: [1, 2], 2: [4], 3: [0] },
-  { 1: [2, 3], 2: [0, 1] },
-];
+function rivalRotacion(state: GameState, live: LiveMatchState): Map<string, Map<string, WorldPlayer>> {
+  const { court, bench } = rivalLineup(state, live);
+  const turnos = new Map<string, Map<string, WorldPlayer>>();
+  if (court.length < 5 || bench.length === 0) return turnos;
+  // Semilla del partido: el rival, la fecha, la temporada y quiénes vinieron
+  // (no `state.seed`, que avanza durante el partido y movería la rotación).
+  const vinieron = (live.rivalSquad?.presentIds ?? []).join(',');
+  const rng = new Rng(seedFromString(`${live.rivalId}:${state.seasonNumber}:${state.week}:${vinieron}:rotacion`));
+  const presentes = court.length + bench.length;
+  const juegan = Math.min(presentes, Math.max(5, Math.round(presentes * rng.range(0.8, 1))));
+  const TURNO = 2;
+  const libre = (q: number, k: number, id: string) =>
+    Array.from({ length: TURNO }, (_x, d) => !turnos.get(`${q}:${k + d}`)?.has(id)).every(Boolean);
+  bench.slice(0, juegan - 5).forEach((sub, j) => {
+    const preferidos = [
+      ...court.filter((p) => p.position === sub.position),
+      ...court.filter((p) => p.position !== sub.position && sub.secondaryPositions.includes(p.position)),
+    ];
+    const resto = court.filter((p) => !preferidos.includes(p)).sort((a, b) => a.level - b.level);
+    const candidatos = [...preferidos, ...resto];
+    const huecos: Array<[number, number]> = [];
+    for (let q = 0; q < 3; q++) for (let k = 0; k <= TRAMOS_POR_CUARTO - TURNO; k++) huecos.push([q, k]);
+    const usados = new Set<number>();
+    for (let n = 0; n < (j < 3 ? 2 : 1); n++) {
+      for (const [q, k] of rng.shuffle(huecos)) {
+        if (usados.has(q)) continue;
+        const sale = candidatos.find((p) => libre(q, k, p.id));
+        if (!sale) continue;
+        for (let d = 0; d < TURNO; d++) {
+          const clave = `${q}:${k + d}`;
+          if (!turnos.has(clave)) turnos.set(clave, new Map());
+          turnos.get(clave)!.set(sale.id, sub);
+        }
+        usados.add(q);
+        break;
+      }
+    }
+  });
+  return turnos;
+}
 
 /**
  * Los cinco del rival en cancha en un tramo. Como `rivalLineup`, es de
- * lectura: el motor juega con la fuerza del equipo, esto dice quiénes eran.
- * Cada suplente de la rotación entra por el titular de su puesto (o por el
- * más flojo que quede), así el quinteto nunca queda con dos del mismo lado.
+ * lectura: el motor juega con la fuerza del equipo, esto dice quiénes eran
+ * (la rotación sale de `rivalRotacion`).
  */
 export function rivalEnCancha(state: GameState, live: LiveMatchState, qIndex: number, k: number): WorldPlayer[] {
-  const { court, bench } = rivalLineup(state, live);
+  const { court } = rivalLineup(state, live);
   if (cuartoN(live, qIndex)?.overtime) return court;
-  const five = [...court];
-  const reemplazados = new Set<string>();
-  bench.slice(0, RIVAL_ROTACION.length).forEach((sub, j) => {
-    const porPuesto = court.find((p) => !reemplazados.has(p.id) && p.position === sub.position);
-    const porSecundario = court.find((p) => !reemplazados.has(p.id) && sub.secondaryPositions.includes(p.position));
-    const masFlojo = [...court].filter((p) => !reemplazados.has(p.id)).sort((a, b) => a.level - b.level)[0];
-    const sale = porPuesto ?? porSecundario ?? masFlojo;
-    if (!sale) return;
-    reemplazados.add(sale.id);
-    if (RIVAL_ROTACION[j][qIndex]?.includes(k)) five[five.indexOf(sale)] = sub;
-  });
-  return five;
+  const cubre = rivalRotacion(state, live).get(`${qIndex}:${k}`);
+  return cubre ? court.map((p) => cubre.get(p.id) ?? p) : court;
 }
 
 /** Los que jugaron al menos un tramo del partido, titulares o no. */

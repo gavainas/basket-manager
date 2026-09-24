@@ -83,25 +83,30 @@ describe('el récord y la posición que ve el jugador (T1)', () => {
     expect(m.highlights.some((h) => h.includes(goleador.name) && h.includes(`${goleador.points} puntos`))).toBe(true);
   });
 
-  it('el rival también rota: con banco, sus suplentes entran y suman (sep 2026, "sólo hacen puntos los titulares")', () => {
+  it('el rival también rota: juega entre el 80% y el 100% de los que vinieron (sep 2026, "sólo hacen puntos los titulares")', () => {
     let entraron = 0;
     let anotaron = 0;
-    let conBanco = 0;
-    for (const seed of [11, 12, 13, 14, 15, 16]) {
+    const porcentajes: number[] = [];
+    for (const seed of [11, 12, 13, 14, 15, 16, 17, 18]) {
       let s = jugarPartidoEntero(hastaElPartido(seed));
       s = paso(s, { type: 'FINISH_MATCH' });
-      const banco = (s.lastMatch!.rivalBox ?? []).filter((l) => !l.starter);
+      const box = s.lastMatch!.rivalBox ?? [];
+      const banco = box.filter((l) => !l.starter);
       if (banco.length === 0) continue;
-      conBanco++;
-      // Entran hasta tres: el resto se queda mirando.
-      const jugaron = banco.filter((l) => l.played);
-      expect(jugaron.length).toBe(Math.min(3, banco.length));
-      entraron += jugaron.length;
-      anotaron += jugaron.filter((l) => l.points > 0).length;
+      const jugaron = box.filter((l) => l.played);
+      // Los titulares juegan siempre; del banco, los mejores que hagan falta.
+      expect(box.filter((l) => l.starter).every((l) => l.played)).toBe(true);
+      expect(jugaron.length).toBeGreaterThanOrEqual(Math.max(5, Math.round(box.length * 0.8)));
+      porcentajes.push(jugaron.length / box.length);
+      const suplentes = banco.filter((l) => l.played);
+      entraron += suplentes.length;
+      anotaron += suplentes.filter((l) => l.points > 0).length;
     }
-    expect(conBanco).toBeGreaterThan(0);
+    expect(porcentajes.length).toBeGreaterThan(0);
+    // Al azar: no siempre juegan todos.
+    expect(new Set(porcentajes).size).toBeGreaterThan(1);
     expect(entraron).toBeGreaterThan(0);
-    // Juegan unos seis tramos cada uno: casi siempre alguno la mete.
+    // Juegan entre dos y cuatro tramos cada uno: más de la mitad la mete.
     expect(anotaron).toBeGreaterThan(entraron / 2);
   });
 
