@@ -73,6 +73,24 @@ function labelGroup(members: Player[], state: GameState): string {
   return `La banda de${'aeiou'.includes(apodo(leader)[0]?.toLowerCase() ?? '') ? 'l' : ''} ${apodo(leader)}`;
 }
 
+/**
+ * La pareja que no se banca: la de peor afinidad del plantel, si llega al
+ * umbral de roce (la misma que el vestuario muestra con "hay que manejarlo",
+ * sobre la que cae "Se fueron a las manos" y a la que sienta la acción de la
+ * semana). Null si nadie llega al roce.
+ */
+export function worstPair(state: GameState): [Player, Player] | null {
+  const ps = state.players.filter((p) => !p.leftClub);
+  let worst: { a: Player; b: Player; v: number } | null = null;
+  for (let i = 0; i < ps.length; i++) {
+    for (let j = i + 1; j < ps.length; j++) {
+      const v = affinity(ps[i], ps[j], state.affinityBonus);
+      if (!worst || v < worst.v) worst = { a: ps[i], b: ps[j], v };
+    }
+  }
+  return worst && worst.v <= RIVALRY_THRESHOLD ? [worst.a, worst.b] : null;
+}
+
 /** Deriva el mapa social completo del plantel activo. */
 export function buildSocialMap(state: GameState): SocialMapData {
   const players = state.players.filter((p) => !p.leftClub);
@@ -169,7 +187,7 @@ export function buildSocialMap(state: GameState): SocialMapData {
     });
   }
   if (worst && worst.v <= RIVALRY_THRESHOLD) {
-    pairs.push({ a: worst.a, b: worst.b, kind: 'roce', text: 'No se bancan y el vestuario lo sabe: hay que manejarlo.' });
+    pairs.push({ a: worst.a, b: worst.b, kind: 'roce', text: 'No se bancan y el vestuario lo sabe: sentarlos a los dos es una acción de la semana.' });
   }
 
   // Aislados: sin ningún lazo que llegue a 50.

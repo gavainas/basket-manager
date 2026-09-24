@@ -61,7 +61,7 @@ una partida jugada de verdad.
 | Lesiones en partido / temporada | 1-2 | 1.3 |
 | Semanas sin ausencias | ~1/3 (que "vinieron todos" sea noticia) | ~35% |
 | Top faltador vs resto | Tato ~2/temp, resto ~0.7 (no siempre el mismo) | ✓ |
-| Caja final sin recaudar | Deriva leve, con riesgo real de quiebre | 8ª pasada (economía con arco, 60 temp.): $430-540 y 2-5% de quiebras según estrategia (antes $310-390 y ~10%) |
+| Caja final sin recaudar | Deriva leve, con riesgo real de quiebre | 8ª pasada (economía con arco, 60 temp.): $430-540 y 2-5% de quiebras según estrategia (antes $310-390 y ~10%). 11ª pasada (sep 2026, la quiebra en dos pasos: `semanasEnRojoParaQuebrar` 2, el primer rojo es aviso): 1/160 a 20 temp. por estrategia (antes 3/160 con el mismo motor) |
 | Quiebras con gestión mínima (`zonaSponsor`) | Cero: un sponsor alcanza para no quebrar | 8ª pasada: 0/60, caja final $1.200 |
 | Abandonos / temporada (sin gestión) | Castigar ignorar al plantel, no ser una masacre | 0.00 rotando · 1.78 sin tocar el banco (5ª pasada, T4: 0.15 con el plan por defecto · 1.50 con cinco fijos) |
 | Motivos de bronca al cierre (sin gestión) | Que no sean 100% 'minutos' (T4) | 5ª pasada: minutos 62 · plata 67 · grupo 11 (`zonaEquipo`, 60 temp.) |

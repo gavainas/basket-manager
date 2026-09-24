@@ -59,25 +59,22 @@ club quiebra la mitad de las veces que antes. Lo que sigue:
 
 4. **Decidido por Gabi el 22/9, pendiente de hacer** (dos sesiones cortas, sin más
    preguntas):
-   - **La Carrera no quiebra en el primer rojo.** Hoy la caja en negativo al cierre de la
-     semana es game over ("Fracaso financiero"), y jugada sin gestionar la Carrera
-     quiebra en la fecha 2 por dos pesos. Pasa a dos pasos: el **primer rojo es un aviso de
-     la comisión** (la semana cierra igual, con la caja en negativo y el radar en rojo
-     diciendo qué hacer), y **la quiebra recién con el segundo rojo**. Vale para los dos
-     modos (la regla es del motor, `advanceWeek` en `week.ts`); medir con `npm run sim` y
-     `npm run sim:carrera` que las quiebras sin gestión no se disparen.
-   - **"Sentar a los dos que no se bancan"**, acción de la semana (una gestión): sienta a la
-     pareja con roce del vestuario (la misma que el radar avisa y sobre la que cae la
-     pelea), con la chance de la mediación de la discusión. Sale bien: sube lo vivido entre
-     ellos (`affinityBonus`) y el roce deja de serlo; sale mal: baja, y alguno se pudre.
-     Sólo disponible si hay un par con roce.
+   - ~~**La Carrera no quiebra en el primer rojo.**~~ *Hecho (23/9, ver el changelog):* el
+     primer rojo es un aviso de la comisión y la quiebra llega con el segundo seguido, en
+     los dos modos; el radar distingue los dos pasos. Medido: las quiebras sin gestión
+     bajan de 3 a 1 en 160 temporadas.
+   - ~~**"Sentar a los dos que no se bancan"**~~ *Hecho (23/9, ver el changelog):* la acción
+     sienta a la pareja con roce con la chance de la mediación; si sale bien el roce deja
+     de serlo, si sale mal alguno se pudre. El radar del roce lleva a La semana.
+
+   Con eso el punto 4 está cerrado.
 
 Lo que quedaba de T2 y T3 salió (sep 2026, ver el changelog): la charla y el compañero
 escriben en la ficha, el inicio avisa al que pasa a "aparece cuando quiere", la libreta
 sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
 
-**Orden:** el punto 4 primero (está decidido), la dirección D después, y el arte cuando
-Gabi diga.
+**Orden:** el punto 4 salió (23/9); lo que sigue es la dirección D (la convocatoria, si
+Gabi la quiere), y el arte cuando Gabi diga.
 
 ## Decisiones que están en la cancha de Gabi
 
@@ -158,8 +155,10 @@ Gabi diga.
   derrotas al hilo, y con tres victorias el barrio se entera y, si te agrandás en la nota,
   te la cobra tres fechas después mirando lo que pasó desde entonces (`fromWeek` en los
   eventos encadenados: el molde para un eslabón que juzga el historial). Esa cadena ya es
-  de largo abierto (se redobla mientras el club gane); lo que falta es una de 3+ eslabones
-  con decisiones distintas en cada uno.
+  de largo abierto (se redobla mientras el club gane). *La de tres eslabones con decisiones
+  distintas ya está* (23/9): la cena del club (quién la lleva → qué hacer con las tarjetas →
+  cómo cerrar la noche), con lo decidido viajando en `payload`; los números son de
+  primera mano y están en `CENA` (`events.ts`) por si a Gabi le parecen fuertes o flojos.
 - **Mediano plazo**: clima liviano (suspensiones, público, recaudación), más profundidad
   táctica (matchups, ritmo), lesiones con recuperación progresiva, influencias entre
   jugadores (un líder que se va arrastra amigos), sponsors y actividades sociales.

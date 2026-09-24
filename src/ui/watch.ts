@@ -64,14 +64,34 @@ export function watchItems(state: GameState): WatchItem[] {
   // amarillo si cierra tan justa que un imprevisto la deja en rojo.
   // El aviso lleva a La semana, que es donde se arregla (la rifa, el sponsor,
   // pasar la gorra), no a Finanzas, que sólo muestra la cuenta. En una Carrera
-  // recién inscripta ($8 en caja, cuotas $240 contra gastos $245) el club
-  // quiebra en la fecha 2 si no hacés nada: el aviso tiene que decir qué hacer.
+  // recién inscripta ($8 en caja, cuotas $240 contra gastos $245) la caja
+  // cierra en rojo en la fecha 2 si no hacés nada: el aviso tiene que decir
+  // qué hacer. Y desde que la quiebra es en dos pasos (sep 2026), el radar
+  // distingue el primer rojo (la comisión te cita) del segundo (el club se
+  // retira): con el aviso ya dado, la semana en curso es la última.
   const caja = projectedWeekClose(state);
-  if (caja.close < 0) {
+  const avisada = (state.semanasEnRojo ?? 0) > 0;
+  if (avisada && caja.close < 0) {
     items.push({
       kind: 'plata',
       cls: 'bad',
-      text: `Así la semana cierra en rojo ($${state.club.money} en caja, $${caja.income} de ingresos contra $${caja.expenses} de gastos) y el club se retira de la liga: esta semana va una rifa, un sponsor o pasar la gorra.`,
+      text: `La comisión ya avisó: la semana pasada cerró en rojo y así ésta cierra en rojo otra vez ($${state.club.money} en caja, $${caja.income} de ingresos contra $${caja.expenses} de gastos). Con dos seguidas el club se retira de la liga: esta semana va una rifa, un sponsor o pasar la gorra, sí o sí.`,
+      tile: 'lista',
+    });
+  } else if (avisada) {
+    items.push({
+      kind: 'plata',
+      cls: caja.close < BALANCE.economy.mishapMax ? 'bad' : 'warn',
+      text: `La semana pasada cerró en rojo y la comisión avisó: así ésta cierra con $${caja.close}${
+        caja.close < BALANCE.economy.mishapMax ? ', y un imprevisto la deja otra vez en rojo. Con dos seguidas el club se retira de la liga' : ' y el aviso queda en el olvido'
+      }. Una rifa o un sponsor la despejan.`,
+      tile: 'lista',
+    });
+  } else if (caja.close < 0) {
+    items.push({
+      kind: 'plata',
+      cls: 'bad',
+      text: `Así la semana cierra en rojo ($${state.club.money} en caja, $${caja.income} de ingresos contra $${caja.expenses} de gastos) y la comisión te cita: con dos semanas seguidas en rojo el club se retira de la liga. Esta semana va una rifa, un sponsor o pasar la gorra.`,
       tile: 'lista',
     });
   } else if (caja.close < BALANCE.economy.mishapMax) {
@@ -254,7 +274,8 @@ export function watchItems(state: GameState): WatchItem[] {
     }
   }
   // El roce del vestuario, ahora que juega: con el clima bajo, "Se fueron a
-  // las manos" cae sobre esos dos. El radar lo avisa antes de que estalle.
+  // las manos" cae sobre esos dos. El radar lo avisa antes de que estalle y
+  // lleva a La semana, donde está la acción que los sienta (sep 2026).
   // Sólo en temporada y con el clima flojo, para no encender el tile siempre.
   if (state.week <= state.seasonLength && state.club.socialClimate < 60) {
     const roce = buildSocialMap(state).pairs.find((p) => p.kind === 'roce');
@@ -262,8 +283,8 @@ export function watchItems(state: GameState): WatchItem[] {
       items.push({
         kind: 'social',
         cls: 'warn',
-        text: `${roce.a.name} y ${roce.b.name} no se bancan, y con el ambiente así de bajo la cosa puede pasar a mayores.`,
-        tile: 'vestuario',
+        text: `${roce.a.name} y ${roce.b.name} no se bancan, y con el ambiente así de bajo la cosa puede pasar a mayores. Sentarlos a los dos es una acción de la semana.`,
+        tile: 'lista',
       });
     }
   }
@@ -281,6 +302,25 @@ export function watchItems(state: GameState): WatchItem[] {
       kind: 'social',
       cls: desde.length > 0 && ganados * 2 < desde.length ? 'warn' : 'good',
       text: `El barrio anotó tu "peleamos arriba" y te lo cobra ${cuando}: ${cuenta}.`,
+      tile: 'noticias',
+    });
+  }
+  // La cena del club en marcha: el próximo eslabón y cuándo cae, con quién la
+  // lleva y lo que ya se vendió, así la cadena no se olvida entre fecha y fecha.
+  const cena = (state.scheduledEvents ?? []).find((e) => (e.defId === 'cena_tarjetas' || e.defId === 'cena_noche') && e.season === state.seasonNumber);
+  if (cena) {
+    const faltan = cena.week - state.week;
+    const cuando = faltan <= 0 ? 'esta semana' : faltan === 1 ? 'la fecha que viene' : `en ${faltan} fechas`;
+    const org = cena.playerId ? state.players.find((p) => p.id === cena.playerId) : undefined;
+    const quien = org ? `la lleva ${org.name}` : 'la llevás vos';
+    const vendidas = cena.payload?.vendidas;
+    items.push({
+      kind: 'social',
+      cls: 'good',
+      text:
+        cena.defId === 'cena_tarjetas'
+          ? `La cena show del club está en marcha (${quien}): ${cuando} se ve cómo viene la venta de tarjetas.`
+          : `La cena show del club es ${cuando} (${quien})${vendidas ? `: ${vendidas} tarjetas vendidas` : ''}.`,
       tile: 'noticias',
     });
   }

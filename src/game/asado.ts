@@ -140,12 +140,17 @@ function tierFor(ratio: number): AsadoTier {
   return 'papelon';
 }
 
-/** Suma vivencia compartida a un par (con techo, para que no explote). */
-export function addPairBonus(s: GameState, aId: string, bId: string, amount: number): void {
+/**
+ * Suma vivencia compartida a un par (con techo, para que no explote). El techo
+ * de ±12 es el de la vida del club (asados, sociedades, peleas); sentar a los
+ * dos que no se bancan (`actions.ts`) pide uno más alto, porque lo que se
+ * arregla mirándose a la cara pesa más que una noche de asado.
+ */
+export function addPairBonus(s: GameState, aId: string, bId: string, amount: number, cap = 12): void {
   if (!s.affinityBonus) s.affinityBonus = {};
   const key = pairKey(aId, bId);
   const current = s.affinityBonus[key] ?? 0;
-  s.affinityBonus[key] = Math.max(-12, Math.min(12, current + amount));
+  s.affinityBonus[key] = Math.max(-cap, Math.min(cap, current + amount));
 }
 
 /**

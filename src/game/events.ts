@@ -1,8 +1,9 @@
 import { addPairBonus, planAsado, weeksSinceAsado } from './asado';
 import { BALANCE, clamp } from './balance';
 import { contactoQueVuelve, LO_QUE_PIDE, shortName, vueltaDeLaLibreta } from './carrera';
-import { affinity, RIVALRY_THRESHOLD } from './relations';
-import { fechaLabel, logClubEvent } from './timeline';
+import { affinity } from './relations';
+import { worstPair } from './socialMap';
+import { fechaLabel, logClubEvent, logPlayerEvent } from './timeline';
 import { marketToPlayer } from '../data/market';
 import { createRecruit } from '../data/recruits';
 import { bumpGrievance, easeGrievance, sootheGrievance } from './mood';
@@ -36,24 +37,6 @@ function actives(s: GameState): Player[] {
 /** Las figuras de verdad: el top 3 de técnica del plantel. Si un evento habla de "tu figura", tiene que ser una de estas. */
 function figuras(s: GameState): Player[] {
   return [...actives(s)].sort((a, b) => b.technique - a.technique).slice(0, 3);
-}
-
-/**
- * La pareja que no se banca: la de peor afinidad del plantel, si llega al
- * umbral de roce (la misma que el vestuario muestra con "hay que manejarlo").
- * Las peleas caen sobre ella y no sobre dos nombres al azar: el mapa social
- * deja de ser un póster.
- */
-function worstPair(s: GameState): [Player, Player] | null {
-  const ps = actives(s);
-  let worst: { a: Player; b: Player; v: number } | null = null;
-  for (let i = 0; i < ps.length; i++) {
-    for (let j = i + 1; j < ps.length; j++) {
-      const v = affinity(ps[i], ps[j], s.affinityBonus);
-      if (!worst || v < worst.v) worst = { a: ps[i], b: ps[j], v };
-    }
-  }
-  return worst && worst.v <= RIVALRY_THRESHOLD ? [worst.a, worst.b] : null;
 }
 
 function byId(s: GameState, id: string | undefined): Player {
@@ -120,6 +103,49 @@ function promesaCumplida(s: GameState, ev: ActiveEvent): boolean {
  */
 function semanasHastaLaFactura(s: GameState): number {
   return Math.max(0, Math.min(3, s.seasonLength + 1 - s.week));
+}
+
+/** Los números de la cena del club (sep 2026): una cadena de tres eslabones que junta plata cuando la caja anda corta. */
+const CENA = {
+  cajaTope: 400, // el tesorero la propone con menos que esto en caja
+  precio: 8, // la tarjeta
+  gasto: 50, // lo que pone la caja al anunciarla (parrilla, sonido, tarjetas)
+  costoNoche: 40, // lo que se lleva la noche (carne, pan, el cantor)
+  salon: 80, // cuántos entran
+  ultimaRonda: 30, // lo que cuesta invitar la última
+  gorraPorCabeza: 1.5, // lo que deja la gorra por comensal
+};
+
+/** Cuántas tarjetas se venden solas: el barrio compra según el cartel del club. */
+function tarjetasVendidas(s: GameState): number {
+  return Math.min(CENA.salon, Math.round(18 + s.club.socialPrestige * 0.45));
+}
+
+/** La tarjeta rebajada del segundo eslabón. */
+function precioRebajado(): number {
+  return Math.round(CENA.precio * 0.7);
+}
+
+/** Cuántos de los que compraron van de verdad: con el club ordenado, casi todos. */
+function asistenciaCena(s: GameState, vendidas: number): number {
+  return Math.min(CENA.salon, Math.round(vendidas * (0.7 + s.club.organization / 250)));
+}
+
+/** Lo que dejaron decididos los eslabones anteriores de la cena. */
+function datosCena(ev: ActiveEvent): { vendidas: number; precio: number; manager: boolean } {
+  const p = ev.payload ?? {};
+  return { vendidas: p.vendidas ?? 20, precio: p.precio ?? CENA.precio, manager: (p.manager ?? 1) === 1 };
+}
+
+/** El organizador natural: el más social del plantel. */
+function organizadorNatural(s: GameState): Player {
+  const cands = actives(s).slice().sort((a, b) => b.social - a.social);
+  return cands.find((p) => p.personality === 'social') ?? cands[0];
+}
+
+/** El rival de la fecha, para nombrarlo; en playoffs o sin fecha, "el club de enfrente". */
+function rivalDeLaFecha(s: GameState): string {
+  return s.rivals.find((r) => r.id === s.schedule[s.week - 1])?.name ?? 'el club de enfrente';
 }
 
 function makeLeave(s: GameState, p: Player, reason: string): void {
@@ -1273,6 +1299,171 @@ export const EVENTS: EventDef[] = [
     },
   },
 
+  // --- La cena del club: tres eslabones, una decisión distinta en cada uno ---
+  {
+    /* La cadena larga (roadmap: "cadenas de 3+ eslabones con decisiones
+       distintas en cada uno"). El tesorero propone una cena show cuando la
+       caja anda corta; la decisión de hoy es quién la lleva; dos semanas
+       después, qué hacer con las tarjetas; y otras dos, cómo cerrar la noche.
+       Lo decidido viaja en `payload` (tarjetas, precio, quién organiza). Una
+       por temporada: la noche queda en la historia del club y `canFire` la
+       busca ahí. */
+    id: 'cena_propuesta',
+    title: 'El tesorero quiere hacer una cena',
+    weight: 7,
+    canFire: (s) =>
+      s.week >= 2 &&
+      s.week <= s.seasonLength - 4 &&
+      s.club.money < CENA.cajaTope &&
+      actives(s).length >= 6 &&
+      !(s.scheduledEvents ?? []).some((e) => e.defId.startsWith('cena_')) &&
+      !s.clubTimeline.some((e) => e.season === s.seasonNumber && /cena show/i.test(e.text)),
+    pickTargets: (s) => ({ playerId: organizadorNatural(s).id }),
+    text: (s) =>
+      `El tesorero trae la idea a la sede con el cuaderno abierto: una cena show en el club, la parrilla de la cantina, el hijo de Don Aldo cantando tangos y la tarjeta a $${CENA.precio}. "Se junta plata y se junta gente", dice, y mira la caja: $${s.club.money}. Alguien tiene que llevarla.`,
+    options: (s, ev) => [
+      { label: 'Llevarla vos: la parrilla, las tarjetas, el sonido', hint: `$${CENA.gasto} de la caja ahora; el club te ve en todo y se ordena` },
+      { label: `Que la organice ${byId(s, ev.playerId).name}`, hint: `$${CENA.gasto} de la caja ahora; el grupo se prende, y si la noche sale mal es su papelón` },
+      { label: 'Ahora no: el club no está para fiestas', hint: 'Sin gasto y sin cena; el tesorero guarda el cuaderno' },
+    ],
+    resolve: (s, ev, opt) => {
+      if (opt === 2) {
+        s.club.socialPrestige = clamp(s.club.socialPrestige - 1);
+        logClubEvent(s, 'hito', 'El tesorero propuso una cena show y el club la dejó pasar.');
+        return 'El tesorero cerró el cuaderno sin decir nada. "Cuando quieran", dijo, y en el barrio alguno comentó que el club anda con la persiana medio baja.';
+      }
+      s.club.money -= CENA.gasto;
+      s.ledger.push({ week: s.week, concept: 'Cena show: parrilla, sonido y tarjetas', amount: -CENA.gasto });
+      const org = byId(s, ev.playerId);
+      if (opt === 0) {
+        s.club.organization = clamp(s.club.organization + 3);
+        chain(s, 2, { defId: 'cena_tarjetas', fromWeek: s.week, payload: { manager: 1 } });
+        s.news.unshift({ week: s.week, text: `Se anunció la cena show del club para dentro de cuatro semanas. La lleva el manager, tarjeta a $${CENA.precio}.`, tone: 'neutral' });
+        logClubEvent(s, 'social', 'El club anunció una cena show, con el manager al frente de todo.');
+        return `Te quedaste con el cuaderno. Parrilla, sonido, tarjetas: en dos semanas se ve cómo viene la venta. El tesorero se fue contento; el vestuario, con la tarjeta en la mano.`;
+      }
+      org.motivation = clamp(org.motivation + 6);
+      s.club.socialClimate = clamp(s.club.socialClimate + 3);
+      chain(s, 2, { defId: 'cena_tarjetas', playerId: org.id, fromWeek: s.week, payload: { manager: 0 } });
+      s.news.unshift({ week: s.week, text: `Se anunció la cena show del club para dentro de cuatro semanas. La organiza ${org.name}, tarjeta a $${CENA.precio}.`, tone: 'good' });
+      logClubEvent(s, 'social', `El club anunció una cena show, con ${org.name} al frente.`);
+      logPlayerEvent(org, s.seasonNumber, Math.min(s.week, s.seasonLength), 'social', 'Le encargaron la cena show del club. Se lo tomó en serio: el grupo del club no habló de otra cosa esa semana.');
+      return `${org.name} agarró el cuaderno como si fuera la pelota en la última: al rato ya había armado un grupo aparte con tres más. En dos semanas se ve cómo viene la venta.`;
+    },
+  },
+  {
+    id: 'cena_tarjetas',
+    title: 'Las tarjetas de la cena',
+    weight: 0,
+    chained: true,
+    canFire: () => false,
+    text: (s, ev) => {
+      const v = tarjetasVendidas(s);
+      const org = ev.playerId ? s.players.find((p) => p.id === ev.playerId) : undefined;
+      const quien = org
+        ? `${org.name} dice que "faltan los de siempre: los que dicen que van y después vemos".`
+        : 'Las vendiste vos, una por una, en el almacén y en la puerta del gimnasio.';
+      return `A dos semanas de la cena, van ${v} tarjetas vendidas a $${CENA.precio}, con el salón para ${CENA.salon}. ${quien} ¿Qué hacemos con lo que falta?`;
+    },
+    options: (s) => [
+      { label: `Bajar la tarjeta a $${precioRebajado()} para llenar el salón`, hint: 'Más gente y menos plata por cabeza; el barrio lo agradece' },
+      { label: `Salir a vender a la hinchada de ${rivalDeLaFecha(s)}`, hint: 'Compran, pero al vestuario no le gusta ver esas camisetas en la cena' },
+      { label: 'Dejarla como está: lo que se vendió, se vendió', hint: 'Sin sorpresas; el club se ordena para la noche' },
+    ],
+    resolve: (s, ev, opt) => {
+      const base = tarjetasVendidas(s);
+      let vendidas = base;
+      let precio = CENA.precio;
+      let desenlace: string;
+      if (opt === 0) {
+        vendidas = Math.min(CENA.salon, Math.round(base * 1.4));
+        precio = precioRebajado();
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
+        desenlace = `Bajaste la tarjeta a $${precio} y en tres días se vendieron ${vendidas - base} más: el barrio entero preguntando si queda lugar.`;
+      } else if (opt === 1) {
+        vendidas = Math.min(CENA.salon, Math.round(base * 1.35));
+        s.club.socialClimate = clamp(s.club.socialClimate - 3);
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 1);
+        desenlace = `Fuiste a la cancha de ${rivalDeLaFecha(s)} con las tarjetas en el bolsillo y volviste con ${vendidas - base} vendidas. En el grupo del club, silencio: "¿vamos a cenar con esos?".`;
+      } else {
+        s.club.organization = clamp(s.club.organization + 2);
+        desenlace = `Lo que se vendió, se vendió: ${vendidas} tarjetas. Las dos semanas que quedan van para la parrilla, el sonido y las mesas, y el club se ordena.`;
+      }
+      chain(s, 2, { defId: 'cena_noche', playerId: ev.playerId, fromWeek: ev.fromWeek, payload: { ...(ev.payload ?? {}), vendidas, precio } });
+      return desenlace;
+    },
+  },
+  {
+    id: 'cena_noche',
+    title: 'La noche de la cena',
+    weight: 0,
+    chained: true,
+    canFire: () => false,
+    text: (s, ev) => {
+      const { vendidas, precio } = datosCena(ev);
+      const asistencia = asistenciaCena(s, vendidas);
+      const org = ev.playerId ? s.players.find((p) => p.id === ev.playerId) : undefined;
+      const lleno = asistencia >= CENA.salon * 0.75 ? 'El salón, lleno.' : asistencia >= CENA.salon * 0.45 ? 'El salón, a medias pero con ruido.' : 'Mesas vacías al fondo: los de siempre no vinieron.';
+      return `Sábado a la noche en el club: la parrilla humeando, el hijo de Don Aldo afinando y ${asistencia} de las ${vendidas} tarjetas sentadas a $${precio}. ${lleno} ${org ? `${org.name} corre de la cocina al sonido con la camiseta puesta.` : 'Vos, de la cocina al sonido, sin sentarte en toda la noche.'} Hay que cerrar la noche.`;
+    },
+    options: () => [
+      { label: 'Cerrar con el brindis y las cuentas sobre la mesa', hint: 'La plata a la caja, y el barrio sabe cuánto: ordena el club' },
+      { label: 'Invitar la última ronda para todos', hint: `$${CENA.ultimaRonda} menos a la caja; el ambiente y el barrio lo pagan con cariño` },
+      { label: 'Pasar la gorra al final, "para la ficha del año que viene"', hint: 'Se junta un poco más; a algunos les cae mal' },
+    ],
+    resolve: (s, ev, opt, rng) => {
+      const { vendidas, precio, manager } = datosCena(ev);
+      const asistencia = asistenciaCena(s, vendidas);
+      const org = ev.playerId ? s.players.find((p) => p.id === ev.playerId) : undefined;
+      let neto = asistencia * precio - CENA.costoNoche;
+      let papelon = '';
+      // El riesgo de la noche: el jugador que organiza con el grupo espeso, o
+      // el manager que lleva todo con el club desordenado.
+      if (org && !manager && s.club.socialClimate < 50 && rng.chance(0.35)) {
+        neto = Math.round(neto / 2);
+        org.motivation = clamp(org.motivation - 6);
+        bumpGrievance(s, org, 'grupo', { note: 'La cena que organizó terminó en discusión y se lo cargaron a él.' });
+        s.club.socialPrestige = clamp(s.club.socialPrestige - 2);
+        papelon = ` A la mitad se apagó la parrilla y en la mesa del fondo se armó una discusión que ${org.name} tuvo que ir a parar: la noche terminó antes, con la mitad de la plata.`;
+      } else if (manager && s.club.organization < 35 && rng.chance(0.3)) {
+        neto = Math.round(neto * 0.7);
+        s.club.organization = clamp(s.club.organization - 2);
+        papelon = ' Se cortó el sonido dos veces y la parrilla arrancó tarde: la gente se fue antes del postre y la cuenta cerró más corta.';
+      }
+      let desenlace: string;
+      if (opt === 0) {
+        s.club.organization = clamp(s.club.organization + 3);
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
+        desenlace = `Brindis, aplauso para la parrilla y el tesorero leyendo las cuentas con el micrófono: $${Math.max(0, neto)} para la caja.`;
+      } else if (opt === 1) {
+        neto -= CENA.ultimaRonda;
+        s.club.socialClimate = clamp(s.club.socialClimate + 6);
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 4);
+        for (const p of actives(s)) p.motivation = clamp(p.motivation + 2);
+        if (asistencia >= CENA.salon * 0.75 && !papelon) s.memorableMoments.push(`${fechaLabel(s)}: la cena show que llenó el salón del club, con la última ronda invitada.`);
+        desenlace = `"¡La última la paga el club!", gritaste desde el sonido, y el salón se vino abajo. Quedaron $${Math.max(0, neto)} para la caja y una noche que el barrio va a contar.`;
+      } else {
+        const gorra = Math.round(asistencia * CENA.gorraPorCabeza);
+        neto += gorra;
+        s.club.socialClimate = clamp(s.club.socialClimate - 3);
+        s.club.socialPrestige = clamp(s.club.socialPrestige - 1);
+        for (const p of actives(s).filter((x) => x.personality === 'social' || x.personality === 'leal')) p.motivation = clamp(p.motivation - 2);
+        desenlace = `La gorra pasó de mesa en mesa "para la ficha del año que viene" y juntó $${gorra} más: $${Math.max(0, neto)} para la caja. En la mesa de los jugadores alguno miró el plato: "ya pagamos la tarjeta".`;
+      }
+      neto = Math.max(0, neto);
+      s.club.money += neto;
+      s.ledger.push({ week: s.week, concept: `Cena show del club (${asistencia} personas)`, amount: neto });
+      if (org && !papelon) {
+        org.motivation = clamp(org.motivation + 4);
+        org.social = clamp(org.social + 2);
+        logPlayerEvent(org, s.seasonNumber, Math.min(s.week, s.seasonLength), 'social', `Organizó la cena show del club: ${asistencia} personas y $${neto} para la caja.`);
+      }
+      s.news.unshift({ week: s.week, text: `La cena show del club: ${asistencia} personas y $${neto} para la caja.${papelon ? ' Con papelón incluido.' : ''}`, tone: papelon ? 'bad' : 'good' });
+      logClubEvent(s, 'hito', `La cena show del club: ${asistencia} personas y $${neto} para la caja.`);
+      return `${desenlace}${papelon}`;
+    },
+  },
+
   // --- Eventos encadenados: una decisión de hoy trae otra decisión semanas después ---
   {
     id: 'prueba_jugador',
@@ -1599,7 +1790,7 @@ export function takeScheduledEvent(s: GameState): ActiveEvent | null {
   s.scheduledEvents = idx === -1 ? alive : alive.filter((_, i) => i !== idx);
   if (idx === -1) return null;
   const e = alive[idx];
-  return { defId: e.defId, playerId: e.playerId, playerId2: e.playerId2, fromWeek: e.fromWeek };
+  return { defId: e.defId, playerId: e.playerId, playerId2: e.playerId2, fromWeek: e.fromWeek, payload: e.payload };
 }
 
 /** Sortea un evento para la semana (o ninguno). Devuelve el ActiveEvent listo. */

@@ -1923,12 +1923,14 @@ img.retrato-img.v2 {
 
 .bar-row {
   display: grid;
-  /* 128 px: entran "Prestigio deportivo", "Lectura de juego" y "Manejo de
-     grupo" enteros (con 110 se leían "Prestigio depo…" y "Manejo de gru…" en
-     El club, la ficha del club y el cuerpo técnico, a cualquier ancho). Cada
-     fila es su propia grilla, así que el ancho es fijo y no `max-content`:
-     si no, las barras de un mismo panel quedarían desalineadas. */
-  grid-template-columns: 128px 1fr 34px;
+  /* 150 px: entran "Prestigio deportivo", "Lectura de juego", "Manejo de
+     grupo" y "Peso en el vestuario" enteros (con 110 se leían "Prestigio
+     depo…" y "Manejo de gru…" en El club, la ficha del club y el cuerpo
+     técnico; con 128, "Peso en el vestu…" en la pestaña Social de la ficha).
+     Cada fila es su propia grilla, así que el ancho es fijo y no
+     `max-content`: si no, las barras de un mismo panel quedarían
+     desalineadas. */
+  grid-template-columns: 150px 1fr 34px;
   align-items: center;
   gap: 0.6rem;
   margin: 0.3rem 0;

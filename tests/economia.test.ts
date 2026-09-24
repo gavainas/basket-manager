@@ -201,3 +201,107 @@ describe('la economía con arco (sep 2026)', () => {
     expect(facil.startingMoney).toBe(facil.club.money);
   });
 });
+
+describe('la quiebra en dos pasos (sep 2026, decidido por Gabi): el primer rojo es un aviso de la comisión', () => {
+  const gastos = BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly;
+  /** Una partida en la planificación con el plantel becado (sin cuotas), sin sponsor y con la caja dada: la semana cierra en caja − gastos. */
+  const conCaja = (s: GameState, money: number): GameState => ({
+    ...s,
+    club: { ...s.club, money },
+    players: s.players.map((p) => ({ ...p, feeStatus: 'beca_total' as const })),
+    sponsor: null,
+    sponsorWeeks: 0,
+    inscriptionDebt: null,
+    pendingEvent: null,
+  });
+
+  it('el primer cierre en rojo no termina la partida: la comisión avisa y la semana sigue', () => {
+    const s = conCaja(partidaNueva(21), 0);
+    expect(projectedWeekClose(s).close).toBe(-gastos);
+    const tras1 = jugarFecha(s);
+    expect(tras1.phase).toBe('planning');
+    expect(tras1.club.money).toBeLessThan(0);
+    expect(tras1.semanasEnRojo).toBe(1);
+    expect(tras1.gameOverReason).toBeNull();
+    expect(tras1.news.some((n) => n.tone === 'bad' && /la comisión te citó/.test(n.text))).toBe(true);
+    expect(tras1.clubTimeline.some((e) => /La comisión avisó/.test(e.text))).toBe(true);
+  });
+
+  it('el segundo rojo seguido sí es la quiebra, con el aviso en el motivo', () => {
+    const tras1 = jugarFecha(conCaja(partidaNueva(21), 0));
+    const tras2 = jugarFecha(conCaja(tras1, tras1.club.money));
+    expect(tras2.phase).toBe('gameOver');
+    expect(tras2.semanasEnRojo).toBe(2);
+    expect(tras2.gameOverReason).toMatch(/dos semanas seguidas en rojo/);
+    expect(tras2.gameOverReason).toMatch(/ya había avisado/);
+    expect(tras2.clubTimeline.some((e) => e.kind === 'salida' && /después del aviso/.test(e.text))).toBe(true);
+  });
+
+  it('una semana en positivo borra el aviso: hay que cerrar dos seguidas en rojo, no dos en total', () => {
+    const tras1 = jugarFecha(conCaja(partidaNueva(21), 0));
+    // Entró plata (una rifa, un sponsor): la semana cierra holgada.
+    const tras2 = jugarFecha(conCaja(tras1, 1000));
+    expect(tras2.phase).toBe('planning');
+    expect(tras2.semanasEnRojo).toBe(0);
+    expect(tras2.news.some((n) => n.tone === 'good' && /volvió al positivo/.test(n.text))).toBe(true);
+    // Y otro rojo después vuelve a ser el primero: aviso, no quiebra.
+    const tras3 = jugarFecha(conCaja(tras2, 0));
+    expect(tras3.phase).toBe('planning');
+    expect(tras3.semanasEnRojo).toBe(1);
+  });
+
+  it('las partidas guardadas antes de la regla arrancan sin aviso', () => {
+    const s = conCaja(partidaNueva(21), 0);
+    delete (s as Partial<GameState>).semanasEnRojo;
+    expect(jugarFecha(s).phase).toBe('planning');
+  });
+
+  it('el radar distingue el primer rojo (la comisión cita) del segundo (el club se retira)', () => {
+    const aviso = (s: GameState) => watchItems(s).find((i) => i.kind === 'plata' && i.tile === 'lista');
+    const primero = conCaja(partidaNueva(21), 0);
+    expect(aviso(primero)?.cls).toBe('bad');
+    expect(aviso(primero)?.text).toMatch(/la comisión te cita/);
+    expect(aviso(primero)?.text).not.toMatch(/ya avisó/);
+    const avisada: GameState = { ...primero, semanasEnRojo: 1 };
+    expect(aviso(avisada)?.cls).toBe('bad');
+    expect(aviso(avisada)?.text).toMatch(/La comisión ya avisó/);
+    expect(aviso(avisada)?.text).toMatch(/sí o sí/);
+    // Con el aviso dado pero la semana cerrando holgada: queda en amarillo y dice que el aviso se olvida.
+    const despejada: GameState = { ...conCaja(partidaNueva(21), gastos + 500), semanasEnRojo: 1 };
+    expect(aviso(despejada)?.cls).toBe('warn');
+    expect(aviso(despejada)?.text).toMatch(/queda en el olvido/);
+    // Justa después del aviso: un imprevisto la hunde, y ahí sí es la quiebra.
+    const justa: GameState = { ...conCaja(partidaNueva(21), gastos + 20), semanasEnRojo: 1 };
+    expect(aviso(justa)?.cls).toBe('bad');
+    expect(aviso(justa)?.text).toMatch(/otra vez en rojo/);
+  });
+});
+
+describe('la proyección de la caja sigue la regla del fiado (sep 2026, de jugar una Carrera por la interfaz)', () => {
+  it('la cuota del fiado entra en la cuenta sólo si la caja llega después de los gastos fijos, como en el cobro', () => {
+    const base = partidaNueva(21);
+    const fijos = BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly;
+    const conFiado = (money: number): GameState => ({
+      ...base,
+      club: { ...base.club, money },
+      players: base.players.map((p) => ({ ...p, feeStatus: 'beca_total' as const })),
+      sponsor: null,
+      sponsorWeeks: 0,
+      inscriptionDebt: { total: 300, remaining: 200, leagueName: 'Liga Universitaria', missedWeeks: 0 },
+    });
+    // Con $270 en caja y sin cuotas, quedan $25 después de la cancha: el fiado ($80) no se cobra.
+    const justa = conFiado(fijos + 25);
+    expect(projectedWeekClose(justa).close).toBe(25);
+    expect(projectedWeekClose(justa).expenses).toBe(fijos);
+    const real: GameState = structuredClone(justa);
+    real.seed = 1;
+    applyWeeklyEconomy(real, new Rng(1));
+    // El cobro real coincide (salvo un imprevisto, que con $25 se arregla con alambre).
+    expect(real.club.money).toBe(25);
+    expect(real.inscriptionDebt!.missedWeeks).toBe(1);
+    // Con caja para el fiado, se descuenta entero.
+    const holgada = conFiado(fijos + 100);
+    expect(projectedWeekClose(holgada).close).toBe(100 - BALANCE.economy.debtInstallment);
+    expect(projectedWeekClose(holgada).expenses).toBe(fijos + BALANCE.economy.debtInstallment);
+  });
+});

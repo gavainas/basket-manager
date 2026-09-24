@@ -21,7 +21,11 @@ export function FinancesView({ state }: { state: GameState }) {
           <div className={`value ${state.club.money < 100 ? 'bad' : state.club.money < 300 ? 'warn' : 'good'}`}>
             {formatMoney(state.club.money)}
           </div>
-          <div className="sub">Si baja de $0, el club quiebra</div>
+          <div className="sub">
+            {(state.semanasEnRojo ?? 0) > 0
+              ? 'Cerró en rojo y la comisión avisó: otra semana en rojo y el club quiebra'
+              : 'Dos semanas seguidas cerrando en rojo, y el club quiebra'}
+          </div>
         </div>
         <div className="stat-tile">
           <div className="label">Balance semanal estimado</div>

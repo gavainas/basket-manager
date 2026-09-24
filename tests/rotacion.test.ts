@@ -350,3 +350,39 @@ describe('el banco se vuelve a llenar cuando pierde a alguien (sep 2026)', () =>
     }
   });
 });
+
+describe('el quinteto avisa qué titular no tiene recambio en el banco (sep 2026)', () => {
+  it('es el titular de un puesto sin nadie del mismo puesto en el banco', async () => {
+    const { titularesSinRecambio } = await import('../src/game/match');
+    const s = partidaNueva(7);
+    const players = s.players.filter((p) => !p.leftClub);
+    const [t1, t2, t3, t4, t5, b1, b2, b3, b4, b5, afuera] = players;
+    [t1, t2, t3, t4, t5].forEach((p, i) => (p.position = POSICIONES[i]));
+    // El banco cubre todo menos el base: dos aleros.
+    [b1, b2, b3, b4, b5].forEach((p, i) => (p.position = (['Alero', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'] as Position[])[i]));
+    afuera.position = 'Base';
+    const starters = [t1, t2, t3, t4, t5].map((p) => p.id);
+    const banco = [b1, b2, b3, b4, b5].map((p) => p.id);
+    expect(titularesSinRecambio(players, starters, banco).map((p) => p.id)).toEqual([t1.id]);
+    // Con un base en el banco, nadie queda sin recambio.
+    b3.position = 'Base';
+    expect(titularesSinRecambio(players, starters, banco)).toEqual([]);
+    // Un titular en la lista del banco no cuenta como recambio de sí mismo.
+    expect(titularesSinRecambio(players, starters, [...banco, t1.id])).toEqual([]);
+    b3.position = 'Alero';
+    expect(titularesSinRecambio(players, starters, [...banco, t1.id]).map((p) => p.id)).toEqual([t1.id]);
+  });
+
+  it('con el banco sugerido, sólo queda sin recambio el puesto que no tiene a nadie más en la planilla', async () => {
+    const { suggestRotation, suggestStarters, titularesSinRecambio } = await import('../src/game/match');
+    for (const seed of [1, 5, 7, 21]) {
+      const s = partidaNueva(seed);
+      const players = s.players.filter((p) => !p.leftClub);
+      const starters = suggestStarters(players);
+      const banco = suggestRotation(players, starters);
+      for (const t of titularesSinRecambio(players, starters, banco)) {
+        expect(players.some((p) => !starters.includes(p.id) && p.position === t.position)).toBe(false);
+      }
+    }
+  });
+});

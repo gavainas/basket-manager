@@ -670,6 +670,8 @@ export interface ActiveEvent {
   contactId?: string;
   /** La semana en que se hizo la promesa que este eslabón cobra (mira el historial desde ahí). */
   fromWeek?: number;
+  /** Lo que los eslabones anteriores dejaron decidido (tarjetas vendidas, precio…): números chicos, sin estado aparte. */
+  payload?: Record<string, number>;
 }
 
 /** Evento encadenado: una decisión de hoy lo agenda para dispararse semanas
@@ -683,6 +685,8 @@ export interface ScheduledEvent {
   playerId2?: string;
   /** La semana del eslabón anterior, para los que juzgan lo que pasó desde entonces. */
   fromWeek?: number;
+  /** Lo decidido en los eslabones anteriores, que el siguiente necesita. */
+  payload?: Record<string, number>;
 }
 
 export type Phase =
@@ -1191,6 +1195,13 @@ export interface GameState {
   /** Semana de la última rifa: el barrio se cansa si le vendés otra enseguida. */
   ultimaRifa?: number;
   gameOverReason: string | null;
+  /**
+   * Semanas seguidas que la caja cerró en rojo (sep 2026, decidido por Gabi:
+   * la Carrera no quiebra en el primer aviso). La primera es un aviso de la
+   * comisión; a la segunda el club se retira de la liga. Vuelve a cero apenas
+   * una semana cierra en positivo. Opcional: los saves viejos arrancan en cero.
+   */
+  semanasEnRojo?: number;
   startingMoney: number;
   /** Promesas hechas a jugadores (condiciones aceptadas). */
   promises: ClubPromise[];
