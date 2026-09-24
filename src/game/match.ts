@@ -1347,7 +1347,9 @@ function fuerzas(
   }
   if (notes && flavor) notes.push(flavor);
   if (notes && missing > 0) {
-    const pos = ALL_POSITIONS.find((p) => !covered.has(p));
+    // En minúscula, como en el resto de la prosa ("sin base natural"): el
+    // relato decía "falta un Base natural" con el puesto en mayúscula.
+    const pos = ALL_POSITIONS.find((p) => !covered.has(p))!.toLowerCase();
     const n = note([`Con este quinteto falta un ${pos} natural y se nota.`, `Seguimos sin ${pos} de oficio en cancha, y el rival lo huele.`]);
     if (n) notes.push(n);
   }

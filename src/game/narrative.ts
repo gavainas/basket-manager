@@ -58,7 +58,11 @@ export function quarterFlavor(ctx: FlavorContext, rng: Rng): string[] {
   // en 20 minutos", el 4to no lo repite con "4 puntos en 30 minutos".
   const yaDicho = !!star && ctx.live.quarters.some((q) => q.notes.some((n) => n.startsWith(`A ${star.name} le cuesta sumar`)));
   if (star && !yaDicho && ctx.qIndex >= 2 && (ctx.live.minutes[star.id] ?? 0) >= 20 && starTotal <= 4) {
-    out.push(`A ${star.name} le cuesta sumar: ${starTotal} punto${starTotal === 1 ? '' : 's'} en ${ctx.live.minutes[star.id]} minutos.`);
+    out.push(
+      starTotal === 0
+        ? `A ${star.name} le cuesta sumar: ${ctx.live.minutes[star.id]} minutos y todavía no anotó.`
+        : `A ${star.name} le cuesta sumar: ${starTotal} punto${starTotal === 1 ? '' : 's'} en ${ctx.live.minutes[star.id]} minutos.`
+    );
   } else if (topGuard && !yaContado(topGuard) && (ctx.qPts[topGuard.id] ?? 0) >= 8 && rng.chance(0.6)) {
     out.push(`${topGuard.name} sumó ${ctx.qPts[topGuard.id]} puntos en este cuarto.`);
   } else if (topBig && !yaContado(topBig) && (ctx.qPts[topBig.id] ?? 0) >= 8 && rng.chance(0.6)) {

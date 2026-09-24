@@ -104,6 +104,18 @@ describe('regresiones de la partida observada', () => {
     expect(cuarto.join(' ')).not.toContain('le cuesta sumar');
   });
 
+  it('la planilla en cero no se cuenta como "0 puntos, 0 rebotes y 0 asistencias"', () => {
+    const base = { position: 'Alero' as const, perf: 40, effective: 60, won: false, margin: -10, mvp: false };
+    const nada = computeRating({ ...base, minutes: 2, points: 0, rebounds: 0, assists: 0 });
+    expect(nada.comment).not.toMatch(/0 puntos/);
+    expect(nada.comment).toMatch(/no tocó la pelota/);
+    const cumplio = computeRating({ ...base, minutes: 10, points: 0, rebounds: 4, assists: 2, perf: 70, effective: 65, won: true, margin: 8 });
+    expect(cumplio.comment).not.toMatch(/0 puntos/);
+    // Con algo en la planilla, la cuenta se sigue diciendo con sus cifras.
+    const algo = computeRating({ ...base, minutes: 20, points: 0, rebounds: 3, assists: 1 });
+    expect(algo.comment).toMatch(/0 puntos, 3 rebotes y 1 asistencia/);
+  });
+
   it('19 puntos con nota mediocre no se describen como imparable', () => {
     const result = computeRating({ position: 'Alero', minutes: 40, points: 19, rebounds: 0, assists: 0, perf: 40, effective: 60, won: false, margin: -10, mvp: false });
     expect(result.rating).toBeLessThan(7);
