@@ -2,9 +2,9 @@ import type { GameState, Player } from '../game/types';
 import { buildSocialMap, type SocialGroup } from '../game/socialMap';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
-import { Cabecera } from './Cabecera';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
+import vestuarioBg from '../assets/vestuario-bg.webp';
 
 function PlayerChip({ p }: { p: Player }) {
   return (
@@ -61,12 +61,11 @@ export function VestuarioCard({ state }: { state: GameState }) {
   return (
     /* Su color es el del vestuario en cualquier pantalla donde aparezca, no el
        del área que la contiene. */
-    <div className="card sec-vestuario" style={{ marginBottom: '1rem' }}>
+    <div className="card sec-vestuario vestuario-slice" style={{ marginBottom: '1rem' }}>
+      <div className="vestuario-slice-art" style={{ backgroundImage: `url(${vestuarioBg})` }} aria-hidden="true" />
       <h3>
         <Icon name="vestuario" size={17} /> El vestuario por dentro
       </h3>
-      <Cabecera art="cab-vestuario.webp" alt="El vestuario del club quince minutos antes del partido" />
-
       <div className="vest-cuerpo">
         <div className="vest-col">
           <div className="vest-sub">
