@@ -83,7 +83,9 @@ export function hireCoach(state: GameState, coachId: string): GameState {
   s.coachMarket = s.coachMarket.filter((c) => c.id !== coachId);
   s.club.sportPrestige = clamp(s.club.sportPrestige + (candidate.type === 'pago' ? 2 : 1));
   if (candidate.type === 'honorario') s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
-  logClubEvent(s, 'llegada', `${candidate.name} es el nuevo DT del club (${COACH_TYPE_LABELS[candidate.type].toLowerCase()}).`);
+  // La etiqueta en minúscula daba "(dt pago)"; la historia dice qué se acordó.
+  const condicion = candidate.weeklyWage > 0 ? `pago: $${candidate.weeklyWage} por semana` : 'honorario, sin sueldo';
+  logClubEvent(s, 'llegada', `${candidate.name} es el nuevo DT del club (${condicion}).`);
   s.news.unshift({ week: s.week, text: `${candidate.name} asume como DT. El plantel toma nota.`, tone: 'good' });
   return s;
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { computeRating } from '../src/game/rating';
 import { weeklyEstimate } from '../src/game/economy';
 import { moodFor, type EmotionContext } from '../src/game/emotions';
+import { hireCoach } from '../src/game/coach';
 import { midSeasonObjectiveCheck } from '../src/game/objectives';
 import { watchItems } from '../src/ui/watch';
 import type { GameState } from '../src/game/types';
@@ -170,5 +171,18 @@ describe('los que llegan para el segundo tiempo (sep 2026)', () => {
     const relato = JSON.stringify(s.live);
     expect(relato).toContain(`🕘 Llegaron ${nombres[0]} y ${nombres[1]} para el segundo tiempo: ya están para entrar.`);
     expect(relato).not.toContain('Llegó ');
+  });
+});
+
+describe('la llegada del DT en la historia (sep 2026)', () => {
+  it('dice la condición acordada, no la etiqueta en minúscula "(dt pago)"', () => {
+    const s = partidaNueva(21);
+    const pago = s.coachMarket.find((c) => c.weeklyWage > 0)!;
+    const honorario = s.coachMarket.find((c) => c.weeklyWage === 0)!;
+    const conPago = hireCoach({ ...s, club: { ...s.club, money: 500 } }, pago.id);
+    expect(conPago.clubTimeline.at(-1)?.text).toBe(`${pago.name} es el nuevo DT del club (pago: $${pago.weeklyWage} por semana).`);
+    const conHonorario = hireCoach(s, honorario.id);
+    expect(conHonorario.clubTimeline.at(-1)?.text).toBe(`${honorario.name} es el nuevo DT del club (honorario, sin sueldo).`);
+    expect(JSON.stringify(conPago.clubTimeline)).not.toMatch(/\(dt /);
   });
 });
