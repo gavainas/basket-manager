@@ -965,7 +965,10 @@ export function PartidoVivo({ state, dispatch }: Props) {
               {cambioEnPie ?? (
                 live.pendingIncident
                   ? <span className="hint">Resolvé la incidencia antes de seguir jugando.</span>
-                  : <span className="hint">Piernas nuestras en cancha: {Math.round(courtFreshness(live))}. Podés cambiar la táctica antes de cada cuarto; el rival también juega… <b>Espacio</b> juega el cuarto.</span>
+                  /* Una línea a 1280 y 1366: la versión larga ("Podés cambiar la
+                     táctica antes de cada cuarto; el rival también juega…") se
+                     partía en dos y el pie, que es fijo, tapaba una fila del banco. */
+                  : <span className="hint">Piernas en cancha: {Math.round(courtFreshness(live))}. La táctica se cambia entre cuartos; el rival también juega. <b>Espacio</b> juega el cuarto.</span>
               )}
             </>
           ) : (

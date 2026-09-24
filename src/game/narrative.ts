@@ -54,7 +54,10 @@ export function quarterFlavor(ctx: FlavorContext, rng: Rng): string[] {
   // La figura desaparecida: pasada la mitad, sigue sin aparecer.
   const star = ctx.onCourt.find((p) => p.id === ctx.starId);
   const starTotal = star ? ctx.live.stats[star.id]?.pts ?? 0 : 99;
-  if (star && ctx.qIndex >= 2 && (ctx.live.minutes[star.id] ?? 0) >= 20 && starTotal <= 4) {
+  // Una vez por partido: si el 3er cuarto ya dijo "le cuesta sumar: 2 puntos
+  // en 20 minutos", el 4to no lo repite con "4 puntos en 30 minutos".
+  const yaDicho = !!star && ctx.live.quarters.some((q) => q.notes.some((n) => n.startsWith(`A ${star.name} le cuesta sumar`)));
+  if (star && !yaDicho && ctx.qIndex >= 2 && (ctx.live.minutes[star.id] ?? 0) >= 20 && starTotal <= 4) {
     out.push(`A ${star.name} le cuesta sumar: ${starTotal} punto${starTotal === 1 ? '' : 's'} en ${ctx.live.minutes[star.id]} minutos.`);
   } else if (topGuard && !yaContado(topGuard) && (ctx.qPts[topGuard.id] ?? 0) >= 8 && rng.chance(0.6)) {
     out.push(`${topGuard.name} sumó ${ctx.qPts[topGuard.id]} puntos en este cuarto.`);

@@ -216,12 +216,17 @@ export function LineupPanel({ state, dispatch }: Props) {
         )}
         {count === 5 && sinRecambio.length > 0 && (
           <p className="muted" style={{ marginBottom: 0, color: 'var(--warn)' }}>
+            {/* Las dos salidas del plan, porque las dos pasan: "Piernas frescas"
+                tapa el puesto con el titular si lo alcanza entre los siguientes
+                del orden, y si no el cuarto va sin ese puesto (`conCobertura`).
+                Antes prometía "va a jugar casi los 40" y en la fecha 1 el único
+                base jugó 20' con el equipo sin base los otros 20. */}
             {sinRecambio.length === 1
-              ? `Sin ${sinRecambio[0].position.toLowerCase()} de recambio en el banco: el plan no tiene con quién descansar a ${shortName(sinRecambio[0].name)}, que va a jugar casi los 40.`
-              : `Sin recambio de su puesto en el banco: el plan no tiene con quién descansar a ${sinRecambio.map((p) => shortName(p.name)).join(', ')}, que van a jugar casi los 40.`}{' '}
+              ? `Sin ${sinRecambio[0].position.toLowerCase()} de recambio en el banco: el plan no tiene con quién descansar a ${shortName(sinRecambio[0].name)}. O juega casi los 40, o el equipo pasa cuartos sin ${sinRecambio[0].position.toLowerCase()} natural.`
+              : `Sin recambio de su puesto en el banco: el plan no tiene con quién descansar a ${sinRecambio.map((p) => shortName(p.name)).join(', ')}. O juegan casi los 40, o el equipo pasa cuartos sin su puesto.`}{' '}
             {conRecambioAfuera.length > 0
               ? `Tenés ${conRecambioAfuera.map((t) => t.position.toLowerCase()).join(' y ')} en la planilla sin lugar en el banco.`
-              : 'Si querés cuidarlo, poné a alguien fuera de puesto en el banco o hacé los cambios a mano.'}
+              : `Si querés ${sinRecambio.length === 1 ? 'cuidarlo' : 'cuidarlos'}, poné a alguien fuera de puesto en el banco o hacé los cambios a mano.`}
           </p>
         )}
       </div>

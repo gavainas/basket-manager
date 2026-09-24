@@ -85,6 +85,22 @@ describe('regresiones de la partida observada', () => {
     expect(notes.join(' ')).not.toMatch(/desaparec|apenas/);
   });
 
+  it('"le cuesta sumar" se dice una vez por partido, no en el 3er cuarto y otra vez en el 4to', () => {
+    const s = inicio();
+    const p = s.players.find(p => p.id === s.live!.starId)!;
+    s.live!.minutes[p.id] = 20;
+    s.live!.stats[p.id].pts = 2;
+    const ctx = { ourQ: 15, rivalQ: 15, onCourt: [p], qPts: { [p.id]: 1 }, qReb: {}, starId: p.id, live: s.live! };
+    const tercero = quarterFlavor({ ...ctx, qIndex: 2 }, new Rng(1));
+    expect(tercero.join(' ')).toContain(`A ${p.name} le cuesta sumar: 2 puntos en 20 minutos`);
+    // El 3er cuarto cerrado, con su nota; el 4to no la repite.
+    s.live!.quarters.push({ for: 15, against: 15, defense: s.live!.defense, attack: s.live!.attack, notes: tercero });
+    s.live!.minutes[p.id] = 30;
+    s.live!.stats[p.id].pts = 4;
+    const cuarto = quarterFlavor({ ...ctx, qIndex: 3 }, new Rng(1));
+    expect(cuarto.join(' ')).not.toContain('le cuesta sumar');
+  });
+
   it('19 puntos con nota mediocre no se describen como imparable', () => {
     const result = computeRating({ position: 'Alero', minutes: 40, points: 19, rebounds: 0, assists: 0, perf: 40, effective: 60, won: false, margin: -10, mvp: false });
     expect(result.rating).toBeLessThan(7);
