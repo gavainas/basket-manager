@@ -130,6 +130,10 @@ La voz manuscrita rompe la sensación de software. Debe usarse con moderación.
 
 La UI debe sentirse integrada al mundo, no apoyada sobre un fondo decorativo.
 
+La especificación operativa de este apartado vive en [`GAME_UI_SYSTEM.md`](GAME_UI_SYSTEM.md),
+que traduce estas reglas a patrones reutilizables de navegación, títulos, chips, paneles, stats,
+tablas, botones y HUD.
+
 Reglas:
 
 - paneles oscuros, legibles, con borde fino y profundidad contenida;
