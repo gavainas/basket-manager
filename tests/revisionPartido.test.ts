@@ -39,7 +39,10 @@ describe('regresiones de la partida observada', () => {
     s = paso(s, { type: 'PLAY_QUARTER' });
     const jugadas = jugadasDelCuarto(s, s.live!, 0).filter(j => !j.tipo);
     expect(jugadas.length).toBeGreaterThan(0);
-    expect(jugadas.map(j => `${j.texto} ${j.sub ?? ''}`).join(' ')).not.toMatch(/asistencia|rebote|triple|libre|bandeja|esquina|sin marca|de espaldas/i);
+    // "Un libre de X" sí se dice (20/9, relato.ts): un punto suelto no puede
+    // ser otra cosa. Lo que no se inventa son los intentos, las asistencias y
+    // los tipos de tiro que la planilla no registra.
+    expect(jugadas.map(j => `${j.texto} ${j.sub ?? ''}`).join(' ')).not.toMatch(/asistencia|rebote|triple|bandeja|esquina|sin marca|de espaldas/i);
   });
 
   it('el color del relato sale del marcador: lo que dice la segunda línea pasó de verdad', () => {
