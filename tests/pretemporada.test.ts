@@ -5,7 +5,7 @@ import { computeSeasonEvaluation } from '../src/game/evaluation';
 import { confirmedPlayers, createPreseasonNewGame, inscriptionOffer } from '../src/game/preseason';
 import { PRESEASON_EVENTS } from '../src/game/preseasonEvents';
 import type { GameState } from '../src/game/types';
-import { marketToPlayer } from '../src/data/market';
+import { marketToPlayer, worldToMarket } from '../src/data/market';
 import { Rng } from '../src/game/rng';
 import { jugarTemporada, partidaNueva, paso } from './jugar';
 
@@ -173,6 +173,27 @@ describe('de una temporada a la siguiente', () => {
     // El mundo tiene memoria: la mayoría de las personas del año pasado siguen ahí.
     const siguen = ps.world.players.filter((p) => personasAntes.has(p.id)).length;
     expect(siguen / personasAntes.size).toBeGreaterThan(0.6);
+  });
+
+  it('el dúo que viene junto desde el mundo se muda al club: el pool no los tiene dos veces', () => {
+    // El fuzz lo encontró: firmados por el evento, seguían en el pool como
+    // libres, y al verano siguiente "se acomodaban solos" en otro club con tu
+    // mismo jugador adentro (dos "Alejo Camejo", uno nuestro y uno rival).
+    const arranque = partidaNueva(9);
+    const fin = jugarTemporada({ ...arranque, club: { ...arranque.club, money: 3000 } });
+    let s = paso(fin, { type: 'NEW_SEASON' });
+    const rng = new Rng(3);
+    const [wa, wb] = s.world.players.slice(0, 2);
+    const a = { ...worldToMarket(wa, 'Otro Club', rng), demand: null };
+    const b = { ...worldToMarket(wb, 'Otro Club', rng), demand: null };
+    s = {
+      ...s,
+      club: { ...s.club, money: 5000 },
+      preseason: { ...s.preseason!, market: [...s.preseason!.market, a, b], pendingEvent: { defId: 'ps_duo_amigos', targetIds: [a.id, b.id] } },
+    };
+    s = paso(s, { type: 'PS_RESOLVE_EVENT', optionIndex: 0 });
+    expect(s.players.map((p) => p.name)).toEqual(expect.arrayContaining([a.name, b.name]));
+    expect(s.world.players.some((wp) => wp.id === wa.id || wp.id === wb.id)).toBe(false);
   });
 });
 

@@ -3,8 +3,9 @@ import type { Rng } from '../game/rng';
 import { appearanceFromSeed } from '../game/appearance';
 import { rollBackground } from './backgrounds';
 
-// Pool de nombres para reclutas y amigos invitados.
-const RECRUIT_NAMES = [
+// Pool de nombres para reclutas y amigos invitados. Exportado para que el
+// mundo no le ponga el mismo nombre a un rival (world.ts, nombresReservados).
+export const RECRUIT_NAMES = [
   'Lucas Camejo',
   'Emi Duarte',
   '"Colo" Ferreira',
