@@ -75,6 +75,19 @@ describe('el relato jugada a jugada', () => {
     expect(JSON.stringify(s)).toBe(antes);
   });
 
+  it('suena a básquet: la mayoría de las canastas son dobles o triples, y el libre es la excepción', () => {
+    // Antes el motor repartía los puntos del tramo de a uno y el relato cantaba
+    // "un punto de X" veintisiete veces en un cuarto de treinta puntos.
+    for (const seed of [11, 12, 13]) {
+      const s = partidoJugado(seed);
+      const canastas = s.live!.quarters.flatMap((_q, i) => jugadasDelCuarto(s, s.live!, i)).filter((j) => !j.tipo);
+      const puntos = canastas.reduce((t, j) => t + j.pts, 0);
+      const libres = canastas.filter((j) => j.pts === 1).length;
+      expect(puntos / canastas.length).toBeGreaterThan(1.7);
+      expect(libres / canastas.length).toBeLessThan(0.3);
+    }
+  });
+
   it('hay jugadas de las dos camisetas', () => {
     const s = partidoJugado(11);
     const lados = new Set(s.live!.quarters.flatMap((_q, i) => jugadasDelCuarto(s, s.live!, i)).map((j) => j.lado));

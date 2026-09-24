@@ -54,12 +54,32 @@ function shortName(name: string): string {
    atrás, los perimetrales en el medio, los grandes cerca del aro. La otra mitad
    se espeja. */
 const HALF_SLOTS: { x: number; y: number }[] = [
-  { x: 44, y: 50 }, // Base
-  { x: 32, y: 13 }, // Escolta
-  { x: 32, y: 87 }, // Alero
+  { x: 58, y: 50 }, // Base
+  { x: 46, y: 13 }, // Escolta
+  { x: 46, y: 87 }, // Alero
   { x: 11, y: 34 }, // Ala-Pívot
   { x: 11, y: 66 }, // Pívot
 ];
+/* Las fichas miden 84 × 45 px y la cancha, 415 × 151 en la notebook: con el
+   base en 44 y las alas en 32 la etiqueta del grande pasaba por debajo del
+   círculo del ala, y al acotar al grande adentro de la cancha (ver
+   `posicionFicha`) su círculo pisaba la etiqueta del escolta. Con estas
+   cotas no se toca nada a 1280 × 720, medido ficha por ficha. */
+
+/**
+ * Dónde va la ficha de un jugador (centro, en % de la cancha), sin que se
+ * salga: la ficha mide 84 × 45 px y la cancha recorta lo que desborda
+ * (`overflow: hidden`), así que los grandes pegados al aro perdían la primera
+ * letra ("ernández") y los de las puntas, media etiqueta abajo en la
+ * notebook. Con `clamp()` el centro nunca queda a menos de media ficha del
+ * borde; en una cancha ancha no cambia nada.
+ */
+function posicionFicha(xPct: number, yPct: number): React.CSSProperties {
+  return {
+    left: `clamp(42px, ${xPct}%, calc(100% - 42px))`,
+    top: `clamp(24px, ${yPct}%, calc(100% - 24px))`,
+  };
+}
 
 /** Media cancha por puesto: el orden de la pizarra, completado con los que sobren. */
 function bySlots<T extends { position: Position }>(five: T[]): (T | null)[] {
@@ -584,7 +604,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
                 <div
                   key={p.id}
                   className={`pv-ficha nuestro${live.starId === p.id ? ' ref' : ''}${freshOf(p.id) < 45 ? ' fundido' : ''}${acabaDeAnotar === p.id ? ' anoto' : ''}`}
-                  style={{ left: `${HALF_SLOTS[i].x / 2}%`, top: `${HALF_SLOTS[i].y}%` }}
+                  style={posicionFicha(HALF_SLOTS[i].x / 2, HALF_SLOTS[i].y)}
                   title={`${p.name} · ${p.position} · ${ptsOf(p.id)} pts · piernas ${freshOf(p.id)}`}
                 >
                   <span className="pv-ficha-num">{i + 1}</span>
@@ -597,7 +617,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
                 <div
                   key={p.id}
                   className={`pv-ficha rival${acabaDeAnotar === p.id ? ' anoto' : ''}`}
-                  style={{ left: `${100 - HALF_SLOTS[i].x / 2}%`, top: `${HALF_SLOTS[i].y}%` }}
+                  style={posicionFicha(100 - HALF_SLOTS[i].x / 2, HALF_SLOTS[i].y)}
                   title={`${p.firstName} ${p.lastName} · ${p.position} · nivel ≈${p.level}`}
                 >
                   <span className="pv-ficha-num">{i + 1}</span>
@@ -881,9 +901,20 @@ export function PartidoVivo({ state, dispatch }: Props) {
               <button className="primary" onClick={pausar}>
                 {reloj.pausa ? '▶ Seguir' : '❚❚ Pausar'}
               </button>
+              {/* El botón apagado dice por qué: en el último tramo el cuarto ya
+                  está cerrado en el motor (el reloj sólo lo cuenta) y no queda
+                  pelota muerta donde meter el minuto; antes se apagaba mudo. */}
               <button
                 disabled={!live.enCurso || !!live.minutoPedido || minutosQueQuedan <= 0}
-                title="Corta el juego en la próxima pelota muerta: el rival ataca peor ese tramo y los cinco respiran. Tenés dos por partido."
+                title={
+                  minutosQueQuedan <= 0
+                    ? 'Ya pediste los dos minutos del partido.'
+                    : live.minutoPedido
+                      ? 'Minuto pedido: corre en la próxima pelota muerta.'
+                      : !live.enCurso
+                        ? 'En este cuarto ya no queda pelota muerta: el minuto se pide en el próximo.'
+                        : 'Corta el juego en la próxima pelota muerta: el rival ataca peor ese tramo y los cinco respiran. Tenés dos por partido.'
+                }
                 onClick={pedirMinuto}
               >
                 ⏱ Minuto{minutosQueQuedan > 0 ? ` (${minutosQueQuedan})` : ''}

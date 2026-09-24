@@ -146,8 +146,9 @@ decidir qué sigue. Falta la página que diga las próximas cinco cosas.
 
 > **Corregido (sep 2026, T0).** `ROADMAP.md` es una página con las próximas cinco cosas y
 > `CHANGELOG.md` tiene las 39 entradas de lo hecho. El hallazgo 10 (28.000 líneas sin una
-> prueba) también: 28 tests en `tests/` y CI en cada push. Siguen abiertos de ese hallazgo
-> ESLint, el code-splitting y partir `WeekView.tsx`.
+> prueba) también: 28 tests en `tests/` y CI en cada push. El code-splitting salió en sep
+> 2026 y `WeekView.tsx` quedó partido en sus etapas el 20/9 (`src/ui/semana/`); de ese
+> hallazgo sigue abierto ESLint, que es decisión de Gabi.
 
 **13. La economía quiebra sola.**
 En 60 temporadas simuladas sin acciones del manager hay **5 a 9 GameOvers por caja** según
@@ -321,6 +322,7 @@ Con `prefers-reduced-motion: reduce` respetado desde el principio.
   red que hoy no existe.
 - **CI**: build + tests + `npm run sim` en cada push. Hoy el único guardián es acordarse.
 - **Partir `WeekView.tsx`** (1.873 líneas) en las cinco etapas que ya es conceptualmente.
+  ✅ (20/9: `src/ui/semana/`, ver el changelog).
 - **ESLint** con `react-hooks` — en un archivo de 1.900 líneas los efectos se escapan solos.
 - **Code-splitting**: 682 kB en un chunk. La pretemporada y el partido no necesitan cargarse
   juntos.

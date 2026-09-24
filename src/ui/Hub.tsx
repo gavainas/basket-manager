@@ -124,6 +124,27 @@ export function hubReadiness(state: GameState) {
   };
 }
 
+/**
+ * Lo que el tablero cuenta en la card del último partido cuando todavía no
+ * hay ninguno esta temporada. En la temporada 1 es la promesa ("la historia
+ * empieza en la cancha"); de la 2 en adelante el club ya tiene pasado, y
+ * decirle "después del primer partido vas a ver el resultado" a un campeón
+ * recién ascendido era contradecir el palmarés de al lado. Se cuenta la
+ * temporada pasada: en qué categoría, cómo terminó y si subió o bajó.
+ */
+export function temporadaPasada(state: GameState): { titulo: string; sub: string; record: string; detalle: string } | null {
+  const ps = state.pastSeasons[state.pastSeasons.length - 1];
+  if (!ps) return null;
+  const categoria = ps.division ? ps.division.replace(/^.* · /, '') : '';
+  const movida = ps.moved ? (ps.moved.kind === 'ascenso' ? ` Subimos a la ${ps.moved.to}.` : ` Bajamos a la ${ps.moved.to}.`) : '';
+  return {
+    titulo: ps.outcome,
+    sub: `Temporada ${ps.season}${categoria ? ` · ${categoria}` : ''}`,
+    record: ps.record,
+    detalle: `${ps.position}° de la tabla, récord ${ps.record}.${movida}`,
+  };
+}
+
 const ROUTES: Record<TileId, [AppTab, AppFocus?]> = {
   lista: ['semana'], quinteto: ['semana'], partido: ['semana'],
   tabla: ['liga'], calendario: ['agenda'], rankings: ['rankings'],
@@ -155,6 +176,7 @@ export function Hub({ state }: { state: GameState }) {
   const previous = state.phase === 'match'
     ? [...state.history].reverse().find(m => m.week < state.week)
     : state.lastMatch;
+  const pasada = temporadaPasada(state);
   const action = ACTIONS[state.phase] ?? ['Continuar la temporada', 'Seguí con el próximo paso del club.'];
   const warningButton = (item: typeof warnings[number], i: number) => (
     <button key={`${item.tile}-${i}`} className={`hub-a-alert ${item.cls}`} onClick={() => navigate(...ROUTES[item.tile])}>
@@ -210,9 +232,10 @@ export function Hub({ state }: { state: GameState }) {
             <button className="hub-a-link" onClick={() => navigate('plantilla', 'vestuario')}>Entrar al vestuario →</button>
           </section>
           <section className="hub-a-card hub-a-previous">
-            <h3 className="hub-a-band">Lo que dejó el último partido</h3>
+            <h3 className="hub-a-band">{!previous && pasada ? 'La temporada pasada' : 'Lo que dejó el último partido'}</h3>
             {previous ? <div className="hub-a-result"><span>{weekLabel(previous.week, state.seasonLength)} · vs {previous.rivalName}</span><strong className="hub-a-score">{previous.scoreFor} – {previous.scoreAgainst}</strong><p>{previous.summary}</p>{previous.mvpName && <p className="muted">Figura: {previous.mvpName}</p>}
               <details><summary>Leer informe del partido</summary><ul>{previous.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>{previous.effects.map((e, i) => <p key={i}>{e}</p>)}{previous.lockerRoom.map((e, i) => <p key={i}>{e}</p>)}</details>
+            </div> : pasada ? <div className="hub-a-result"><span>{pasada.sub}</span><strong className="hub-a-score">{pasada.record}</strong><p><strong>{pasada.titulo}</strong></p><p>{pasada.detalle}</p><button className="hub-a-link" onClick={() => navigate('historia')}>Ver la historia del club →</button>
             </div> : <div className="hub-a-result"><strong>La historia empieza en la cancha</strong><p>Después del primer partido vas a ver el resultado, la figura y lo que dejó en el equipo.</p></div>}
           </section>
         </aside>

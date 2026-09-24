@@ -48,12 +48,14 @@ club quiebra la mitad de las veces que antes. Lo que sigue:
    no cifras; la placa con tornillos le sumaría materia pero no columnas. Si se quiere
    igual, es una sesión corta.
 
-3. **Programación** (1 sesión). Partir `WeekView.tsx` (~1.400 líneas) en sus cinco etapas y
-   ESLint con `react-hooks` (suma una dependencia de desarrollo: decisión de Gabi, como el
-   Playwright de `check:pantallas`). *El code-splitting está* (sep 2026): el juego, React y
-   las galerías de desarrollo son tres archivos, así que un deploy nuevo no vuelve a bajar
-   React. Lo que queda ahí es partir el chunk del juego (627 kB), que pide separar el
-   reducer para que la pretemporada no viaje con el partido.
+3. **Programación** (1 sesión). ESLint con `react-hooks` (suma una dependencia de
+   desarrollo: decisión de Gabi, como el Playwright de `check:pantallas`). *`WeekView.tsx`
+   ya está partido* (20/9): cada etapa vive en `src/ui/semana/` (La semana, Convocatoria,
+   Quinteto, Informe; el partido en vivo ya tenía su archivo) y `WeekView.tsx` sólo elige
+   cuál mostrar. *El code-splitting está* (sep 2026): el juego, React y las galerías de
+   desarrollo son tres archivos, así que un deploy nuevo no vuelve a bajar React. Lo que
+   queda ahí es partir el chunk del juego (627 kB), que pide separar el reducer para que la
+   pretemporada no viaje con el partido.
 
 Lo que quedaba de T2 y T3 salió (sep 2026, ver el changelog): la charla y el compañero
 escriben en la ficha, el inicio avisa al que pasa a "aparece cuando quiere", la libreta
@@ -96,7 +98,7 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
   cayó a última hora: el nene con fiebre", y tres botones para resolverlo), no cifras
   comparables de arriba abajo. La placa le sumaría materia pero no columnas. Si igual la
   querés uniforme, es una sesión corta.
-- **ESLint con `react-hooks`** (lo que queda del punto 3 junto con partir `WeekView.tsx`):
+- **ESLint con `react-hooks`** (lo que queda del punto 3, ahora que `WeekView.tsx` está partido):
   suma una dependencia de desarrollo, igual que el Playwright de acá abajo. Hoy hay una
   red parcial —`npm run build` corre `tsc` y los 115 tests pasan por el reducer—, pero
   nadie chequea las dependencias de los efectos. *(De paso: el 15/9 apareció uno de esos

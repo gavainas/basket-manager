@@ -999,7 +999,7 @@ function rivalPuntosRepartidos(state: GameState, live: LiveMatchState, pts: numb
   const { court } = rivalLineup(state, live);
   if (court.length === 0) return {};
   const rng = new Rng(seedFromString(`${live.rivalId}:${state.week}:${clave}:${pts}`));
-  return distribute(
+  return distributeBaskets(
     pts,
     court.map((p) => ({ id: p.id, w: Math.max(1, p.level - 30) })),
     rng
@@ -1108,7 +1108,47 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
   }
 }
 
-/** Reparte un total entero entre ids según pesos (el resto se sortea). */
+/** Con cuántos puntos cae cada canasta cuando el tramo se reparte: casi siempre dobles, uno de cada cuatro o cinco un triple. */
+const TRIPLE_CHANCE = 0.22;
+
+/**
+ * Reparte los PUNTOS de un tramo en canastas (dobles, algún triple, y un
+ * libre sólo cuando la cuenta lo pide), y cada canasta a un jugador con
+ * probabilidad según su peso.
+ *
+ * Antes los puntos se repartían de a uno con `distribute`: con seis o siete
+ * puntos entre cinco jugadores cada uno se llevaba uno o dos, y el relato
+ * —que reconstruye canastas a partir de la planilla del tramo— los cantaba
+ * de a uno: veintisiete "un punto de X" en un cuarto de treinta puntos. No
+ * sonaba a básquet. El total del tramo es el mismo; lo que cambia es que la
+ * planilla por jugador queda en múltiplos de canasta, como en la cancha.
+ */
+function distributeBaskets(total: number, weights: { id: string; w: number }[], rng: Rng): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const x of weights) out[x.id] = 0;
+  if (weights.length === 0) return out;
+  const ws = weights.map((x) => Math.max(0.01, x.w));
+  const sum = ws.reduce((t, w) => t + w, 0);
+  const pickId = () => {
+    let r = rng.next() * sum;
+    for (let i = 0; i < ws.length; i++) {
+      r -= ws[i];
+      if (r < 0) return weights[i].id;
+    }
+    return weights[weights.length - 1].id;
+  };
+  let rest = total;
+  while (rest > 0) {
+    // Con tres para repartir, la mitad de las veces es un triple: así el
+    // libre suelto queda para el final del tramo, no para cada tramo impar.
+    const pts = rest <= 2 ? rest : rest === 3 ? (rng.chance(0.5) ? 3 : 2) : rng.chance(TRIPLE_CHANCE) ? 3 : 2;
+    out[pickId()] += pts;
+    rest -= pts;
+  }
+  return out;
+}
+
+/** Reparte un total entero entre ids según pesos (el resto se sortea). Para rebotes y asistencias; los puntos van por `distributeBaskets`. */
 function distribute(total: number, weights: { id: string; w: number }[], rng: Rng): Record<string, number> {
   const sum = weights.reduce((t, x) => t + Math.max(0.01, x.w), 0);
   const out: Record<string, number> = {};
@@ -1543,7 +1583,10 @@ function closeQuarter(s: GameState, live: LiveMatchState, rng: Rng): void {
   else if (qDiff <= -6) notes.push(`Nos pasaron por arriba: ${q.for}-${q.against} en el ${Q_NAMES[qIndex]}.`);
 
   const qTop = [...onCourt].sort((a, b) => (qPts[b.id] ?? 0) - (qPts[a.id] ?? 0))[0];
-  if (qTop && (qPts[qTop.id] ?? 0) >= 7) notes.push(`${qTop.name} metió ${qPts[qTop.id]} puntos en el ${Q_NAMES[qIndex]}.`);
+  // Desde 9, no desde 7: con el reparto en canastas (sep 2026) un jugador
+  // llega a 7 u 8 en casi todos los cuartos y la nota salía 1,7 veces por
+  // partido; con 9 sale una de cada dos y vuelve a ser un cuarto de racha.
+  if (qTop && (qPts[qTop.id] ?? 0) >= 9) notes.push(`${qTop.name} metió ${qPts[qTop.id]} puntos en el ${Q_NAMES[qIndex]}.`);
 
   // Incidencias deportivas y arbitrales del cuarto.
   const star = onCourt.find((p) => p.id === live.starId) ?? onCourt[0];
@@ -1590,7 +1633,7 @@ function closeQuarter(s: GameState, live: LiveMatchState, rng: Rng): void {
       }
       for (const id of live.onCourt) live.minutes[id] = (live.minutes[id] ?? 0) + M.otMinutes;
       const perfOf = (id: string) => live.perfs[id] ?? 50;
-      const otPts = distribute(
+      const otPts = distributeBaskets(
         ourOT,
         live.onCourt.map((id) => ({ id, w: perfOf(id) })),
         rng
@@ -1778,7 +1821,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
 
   // --- Planilla del tramo: puntos, y la parte de rebotes y asistencias ---
   const perfOf = (id: string) => live.perfs[id] ?? 50;
-  const tPts = distribute(
+  const tPts = distributeBaskets(
     ourT,
     onCourt.map((p) => ({ id: p.id, w: perfOf(p.id) * (live.attack === 'estrella' && p.id === star.id ? M.estrellaPtsBias : 1) })),
     rng

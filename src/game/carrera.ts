@@ -1,5 +1,6 @@
 import { BALANCE } from './balance';
 import { FIRST_NAMES, LAST_NAMES } from '../data/names';
+import { rollBackground } from '../data/backgrounds';
 import { genAvailability } from './world';
 import type { DemandType, GameState, MarketPlayer, Personality, Position } from './types';
 import type { Rng } from './rng';
@@ -40,6 +41,9 @@ interface ContactSeed {
   feeAttitude: MarketPlayer['feeAttitude'];
   previousTeam: string;
   intimo?: boolean;
+  /** Si el "por qué" afirma algo del cuerpo, la ficha tiene que cumplirlo: puestos posibles y altura. */
+  positions?: Position[];
+  height?: [number, number];
 }
 
 /** La libreta del arranque: el íntimo siempre está; el resto se sortea. */
@@ -95,6 +99,9 @@ const LIBRETA: ContactSeed[] = [
     personality: 'cumplidor',
     tech: [34, 50],
     age: [19, 22],
+    // La ficha decía "21 · 183 cm" debajo de "mide uno noventa y cinco".
+    positions: ['Ala-Pívot', 'Pívot'],
+    height: [194, 197],
     commitment: [60, 85],
     demand: null,
     feeAttitude: 'completa',
@@ -202,6 +209,8 @@ function contactFrom(
     knowledge: MarketPlayer['knowledge'];
     viaDe: string;
     abre: number;
+    positions?: Position[];
+    height?: [number, number];
   }
 ): MarketPlayer {
   const technique = rng.int(opts.tech[0], opts.tech[1]);
@@ -209,12 +218,16 @@ function contactFrom(
   const noise = opts.knowledge === 'muy_conocido' ? 3 : opts.knowledge === 'conocido' ? 6 : 11;
   const name = uniqueName(rng, taken);
   const id = `ct${rng.int(0, 0xffffff).toString(36)}`;
+  // La altura sale del puesto, como en el resto del mundo (un base de 1,72 y
+  // un pívot de 1,98, no un pívot de 1,72): antes era un sorteo aparte.
+  const position = rng.pick(opts.positions ?? POSITIONS);
+  const height = opts.height ? rng.int(opts.height[0], opts.height[1]) : rollBackground(position, rng).height;
   return {
     id,
     name,
     age: rng.int(opts.age[0], opts.age[1]),
-    height: rng.int(172, 198),
-    position: rng.pick(POSITIONS),
+    height,
+    position,
     previousTeam: opts.previousTeam,
     technique,
     physical: rng.int(55, 85),
