@@ -1451,8 +1451,13 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
     if (name) live.pendingSubNotes.push(`Entra ${name}: el equipo completa el quinteto.`);
   }
 
-  // Cambios hechos en el descanso: abren el relato del cuarto.
+  // Cambios hechos en el descanso: abren el relato del cuarto. Lo que pasa
+  // después (una lesión, una expulsión, tu pizarra) se inserta detrás de
+  // ellos: el informe decía "Pereyra se lesionó. Entra Batista" y recién
+  // después "el DT movió el banco: entra Pereyra", como si hubiera entrado
+  // lesionado.
   notes.push(...live.pendingSubNotes);
+  const notasDelDescanso = notes.length;
   live.pendingSubNotes = [];
 
   const { f: sumFor, a: sumAgainst } = marcador(live);
@@ -1559,6 +1564,7 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
     rivalTimeoutAt: -1,
     lastAtk: 0,
     notes,
+    descanso: notasDelDescanso,
   };
   live.rageBoost = false;
   live.atkModNext = undefined;
@@ -1794,7 +1800,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
         ? `🟥 Segunda técnica para ${p.name}: expulsado. ${sub ? `Entra ${sub.name}.` : 'No queda recambio: seguimos con cuatro.'}`
         : `🟥 ${p.name} hizo la quinta falta: afuera. ${sub ? `Entra ${sub.name}.` : 'No queda recambio: seguimos con cuatro.'}`;
     tramoNotes.push(n);
-    ctx.notes.unshift(n);
+    ctx.notes.splice(ctx.descanso ?? 0, 0, n);
   }
 
   // Tu pizarra: si cambiaste la defensa o el ataque desde el tramo anterior
@@ -1803,10 +1809,13 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
   // nada confirmaba que había entrado.
   const pizarra = notaDePizarra(s, live, qIndex, k);
   if (pizarra) {
-    // Al arrancar el cuarto va primera entre las notas del cuarto (que el
-    // informe recorta a cinco): es tu decisión, no color.
-    if (k === 0) ctx.notes.unshift(pizarra);
-    else tramoNotes.push(pizarra);
+    // Al arrancar el cuarto va con las decisiones del descanso, antes del
+    // color del cuarto: es tu decisión. Y cuenta como del descanso, así una
+    // lesión del cuarto queda detrás de ella.
+    if (k === 0) {
+      ctx.notes.splice(ctx.descanso ?? 0, 0, pizarra);
+      ctx.descanso = (ctx.descanso ?? 0) + 1;
+    } else tramoNotes.push(pizarra);
   }
 
   // El rival decide cómo defender este tramo (sin mirar lo nuestro).
@@ -1928,7 +1937,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
       // Sale y entra el recambio con más piernas; sin banco, quedan cuatro.
       const sub = reemplazar(s, live, p.id);
       const n = `🚑 ${p.name} ${how} ${sub ? `Entra ${sub.name} en su lugar.` : 'No queda recambio: seguimos con cuatro.'}`;
-      ctx.notes.unshift(n);
+      ctx.notes.splice(ctx.descanso ?? 0, 0, n);
       tramoNotes.push(n);
       ctx.injured = true;
       break;

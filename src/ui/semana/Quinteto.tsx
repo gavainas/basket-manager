@@ -116,6 +116,8 @@ export function LineupPanel({ state, dispatch }: Props) {
   // terminó fundido"); acá se puede arreglar, o aceptarlo sabiendo.
   const sinRecambio = rotationIds.length >= PLAN_MIN_BENCH ? titularesSinRecambio(state.players, state.starters, rotationIds) : [];
   const conRecambioAfuera = sinRecambio.filter((t) => leftOut.some((p) => p.position === t.position));
+  // Con DT contratado, los cambios del partido arrancan en sus manos.
+  const dt = state.coach;
 
   // Drag & drop: el id viaja en el dataTransfer; los guards viven en el reducer.
   const dragStart = (id: string) => (e: React.DragEvent) => {
@@ -209,12 +211,31 @@ export function LineupPanel({ state, dispatch }: Props) {
         )}
         {count === 5 && rotationIds.length > 0 && (
           <p className="muted" style={{ marginBottom: 0 }}>
-            {rotationIds.length >= PLAN_MIN_BENCH
-              ? 'Con banco, el partido rota solo: frescos en el 2° cuarto, titulares en el 3°, cerradores al final. En el partido lo podés pasar a mano.'
-              : 'Con un solo suplente los cambios son tuyos: el plan rota solo desde dos en el banco.'}
+            {/* Con DT contratado los cambios arrancan en sus manos (match.ts,
+                `autoRotation: !!s.coach`) y el plan "rota solo" no corre: la
+                pizarra lo decía igual y el informe contaba otra cosa ("Varela
+                movió el banco"). Se describe lo que va a pasar de verdad. */}
+            {dt
+              ? `Los cambios los hace ${dt.name} con su directiva, ${
+                  dt.directive === 'repartir'
+                    ? '"juegan todos": mete al banco para que todos sumen minutos'
+                    : '"a ganar": descansa a los fundidos y mete a los mejores para cerrar'
+                }. En el partido los podés tomar vos.`
+              : rotationIds.length >= PLAN_MIN_BENCH
+                ? 'Con banco, el partido rota solo: frescos en el 2° cuarto, titulares en el 3°, cerradores al final. En el partido lo podés pasar a mano.'
+                : 'Con un solo suplente los cambios son tuyos: el plan rota solo desde dos en el banco.'}
           </p>
         )}
-        {count === 5 && sinRecambio.length > 0 && (
+        {count === 5 && sinRecambio.length > 0 && dt && (
+          <p className="muted" style={{ marginBottom: 0, color: 'var(--warn)' }}>
+            {/* El DT sí lo descansa (mete al más fresco, o al del puesto si lo
+                hay): lo que queda es el hueco. */}
+            {sinRecambio.length === 1
+              ? `Sin ${sinRecambio[0].position.toLowerCase()} de recambio en el banco: cuando ${shortName(dt.name)} descanse a ${shortName(sinRecambio[0].name)}, el equipo queda sin ${sinRecambio[0].position.toLowerCase()} natural.`
+              : `Sin recambio de su puesto en el banco: cuando ${shortName(dt.name)} descanse a ${sinRecambio.map((p) => shortName(p.name)).join(', ')}, el equipo queda sin su puesto.`}
+          </p>
+        )}
+        {count === 5 && sinRecambio.length > 0 && !dt && (
           <p className="muted" style={{ marginBottom: 0, color: 'var(--warn)' }}>
             {/* Las dos salidas del plan, porque las dos pasan: "Piernas frescas"
                 tapa el puesto con el titular si lo alcanza entre los siguientes
