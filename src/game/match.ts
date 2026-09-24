@@ -1429,10 +1429,9 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
 
   // En el entretiempo caen los que venían del trabajo: ya pueden entrar.
   if (qIndex === 2 && (live.lateIds ?? []).length > 0) {
-    const lateNames = listaY(
-      (live.lateIds ?? []).map((id) => s.players.find((p) => p.id === id)?.name).filter((n): n is string => !!n)
-    );
-    if (lateNames) live.pendingSubNotes.unshift(`🕘 Llegó ${lateNames} para el segundo tiempo: ya está para entrar.`);
+    const tarde = (live.lateIds ?? []).map((id) => s.players.find((p) => p.id === id)?.name).filter((n): n is string => !!n);
+    if (tarde.length === 1) live.pendingSubNotes.unshift(`🕘 Llegó ${tarde[0]} para el segundo tiempo: ya está para entrar.`);
+    else if (tarde.length > 1) live.pendingSubNotes.unshift(`🕘 Llegaron ${listaY(tarde)} para el segundo tiempo: ya están para entrar.`);
   }
 
   // Si en cancha hay menos de 5 (arranque corto o lesión sin recambio), se

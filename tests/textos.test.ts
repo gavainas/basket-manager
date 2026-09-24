@@ -143,3 +143,32 @@ describe('las listas de tres con una sola "y" (sep 2026)', () => {
     expect(alta.text).toBe(`${tres[0].name}, ${tres[1].name} y ${tres[2].name} reciben el alta la próxima semana.`);
   });
 });
+
+describe('los que llegan para el segundo tiempo (sep 2026)', () => {
+  it('con dos que llegan, el relato dice "Llegaron A y B … ya están para entrar"', () => {
+    let s = resolverEventos(partidaNueva(11));
+    s = paso(s, { type: 'CONFIRM_ACTIONS', timing: 'temprana' });
+    s = paso(s, { type: 'PROCEED_TO_LINEUP' });
+    s = paso(s, { type: 'AUTO_LINEUP' });
+    s = paso(s, { type: 'START_MATCH' });
+    // Un cuarto entero, resolviendo las incidencias que lo frenan.
+    const cuarto = (st: GameState): GameState => {
+      const n = st.live!.quarters.length;
+      let guard = 0;
+      while (st.live!.quarters.length === n) {
+        if (++guard > 10) throw new Error('el cuarto no termina');
+        st = st.live!.pendingIncident ? paso(st, { type: 'INCIDENT_CHOICE', index: 0 }) : paso(st, { type: 'PLAY_QUARTER' });
+      }
+      return st;
+    };
+    s = cuarto(cuarto(s));
+    expect(s.live!.quarters.length).toBe(2);
+    const banco = s.live!.squad.filter((id) => !s.live!.onCourt.includes(id)).slice(0, 2);
+    expect(banco.length).toBe(2);
+    const nombres = banco.map((id) => s.players.find((p) => p.id === id)!.name);
+    s = cuarto({ ...s, live: { ...s.live!, lateIds: banco } });
+    const relato = JSON.stringify(s.live);
+    expect(relato).toContain(`🕘 Llegaron ${nombres[0]} y ${nombres[1]} para el segundo tiempo: ya están para entrar.`);
+    expect(relato).not.toContain('Llegó ');
+  });
+});
