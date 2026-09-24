@@ -2,7 +2,7 @@ import type { GameState } from '../game/types';
 import { QUE_LOS_ALIMENTA } from '../game/evaluation';
 import { activePlayers } from '../game/match';
 import { PlayerLink } from './PlayerLink';
-import { Timeline } from './Timeline';
+import { largoDeTemporada, Timeline } from './Timeline';
 import { formatMoney } from './helpers';
 import { Icon } from './Icon';
 
@@ -63,6 +63,7 @@ export function HistoryView({ state }: { state: GameState }) {
         <h3>La historia del club</h3>
         <Timeline
           events={state.clubTimeline}
+          seasonLength={largoDeTemporada(state)}
           emptyText="La historia del club se está escribiendo: jugá y van a llegar los momentos."
         />
       </div>

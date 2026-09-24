@@ -12,7 +12,7 @@ import { Bar } from './Bar';
 import { ConductaFicha } from './Conducta';
 import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
-import { Timeline } from './Timeline';
+import { largoDeTemporada, Timeline } from './Timeline';
 import { TIPS } from './Tip';
 import { feeChip, feeChipAlways, roleLabel, statusChipAlways } from './helpers';
 import { Icon } from './Icon';
@@ -429,7 +429,7 @@ export function PlayerProfile({ state, playerId, onClose }: Props) {
             {tab === 'deportiva' && <DeportivaTab p={p} />}
             {tab === 'relaciones' && <RelacionesTab state={state} p={p} />}
             {tab === 'historia' && (
-              <Timeline events={p.timeline} emptyText="Su historia en el club está por escribirse." />
+              <Timeline events={p.timeline} seasonLength={largoDeTemporada(state)} emptyText="Su historia en el club está por escribirse." />
             )}
             {tab === 'social' && <SocialTab state={state} p={p} />}
           </div>

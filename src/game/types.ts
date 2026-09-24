@@ -652,6 +652,8 @@ export interface PastSeason {
   division?: string;
   /** Si esa temporada terminó con ascenso o descenso, y a dónde. */
   moved?: { kind: 'ascenso' | 'descenso'; to: string };
+  /** Cuántas fechas tuvo (7 en el Comercio, 9 en el resto): etiqueta sus semanas en la historia. Saves viejos: sin dato. */
+  seasonLength?: number;
 }
 
 export type NewsTone = 'good' | 'bad' | 'neutral';

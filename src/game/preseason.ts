@@ -32,7 +32,7 @@ import { clubPosition, suggestRotation, suggestStarters } from './match';
 import { buildCoachMarket } from './coach';
 import { computeSeasonEvaluation } from './evaluation';
 import { rollPreseasonEvent } from './preseasonEvents';
-import { logClubEvent } from './timeline';
+import { logClubEvent, semanaDeCierre } from './timeline';
 import { buildWorld, dayLabel, emptyWorld, evolveWorldOffseason, mudarAlClub, worldPlayerName } from './world';
 import { SAVE_VERSION } from './week';
 import { Rng } from './rng';
@@ -684,6 +684,7 @@ export function startPreseason(state: GameState): GameState {
     moved: promo.userMoved
       ? { kind: promo.userMoved, to: divisionById(promo.nextDivisionId)?.name ?? 'otra divisional' }
       : undefined,
+    seasonLength: state.seasonLength,
   };
   const titulo: Titulo =
     champions.oro === 'club' || champions.plata === 'club' ? 'titulo' : promo.userMoved === 'ascenso' ? 'ascenso' : false;
@@ -799,7 +800,8 @@ export function startPreseason(state: GameState): GameState {
       ...state.clubTimeline,
       {
         season: state.seasonNumber,
-        week: state.seasonLength,
+        // Después de las finales ("Cierre"), no "Sem 9" debajo de la semifinal.
+        week: semanaDeCierre(state),
         kind: 'hito' as const,
         text: `Cierra la temporada ${state.seasonNumber}: ${finishedSeason.position}° con récord ${finishedSeason.record}.`,
       },

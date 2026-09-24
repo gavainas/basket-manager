@@ -6,7 +6,7 @@ import { Crest } from './Crest';
 import { StyleChip } from './StyleChip';
 import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
-import { Timeline } from './Timeline';
+import { largoDeTemporada, Timeline } from './Timeline';
 import { Tip, TIPS } from './Tip';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { NavigateTabContext } from './nav';
@@ -211,6 +211,7 @@ export function ClubProfile({ state, clubId, onClose }: Props) {
               <h4 className="profile-subtitle">La historia reciente</h4>
               <Timeline
                 events={state.clubTimeline.slice(-8)}
+                seasonLength={largoDeTemporada(state)}
                 emptyText="La historia del club se está escribiendo."
               />
             </>

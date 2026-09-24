@@ -7,6 +7,8 @@ import { PRESEASON_EVENTS } from '../src/game/preseasonEvents';
 import type { GameState } from '../src/game/types';
 import { marketToPlayer, worldToMarket } from '../src/data/market';
 import { Rng } from '../src/game/rng';
+import { fechaCorta, semanaDeCierre } from '../src/game/timeline';
+import { largoDeTemporada } from '../src/ui/Timeline';
 import { jugarTemporada, partidaNueva, paso } from './jugar';
 
 /** Avanza la pretemporada semana a semana sin contactar a nadie y la cierra. */
@@ -173,6 +175,28 @@ describe('de una temporada a la siguiente', () => {
     // El mundo tiene memoria: la mayoría de las personas del año pasado siguen ahí.
     const siguen = ps.world.players.filter((p) => personasAntes.has(p.id)).length;
     expect(siguen / personasAntes.size).toBeGreaterThan(0.6);
+  });
+
+  it('la historia del club anota el cierre después de los playoffs, con su etiqueta, y recuerda cuántas fechas tuvo cada temporada', () => {
+    // Antes: "T1 · Sem 9 · Cierra la temporada 1" encima de "T1 · Sem 10 ·
+    // Quedamos afuera en la semifinal", y la semifinal decía "Sem 10".
+    const arranque = partidaNueva(9);
+    const fin = jugarTemporada({ ...arranque, club: { ...arranque.club, money: 3000 } });
+    const ps = paso(fin, { type: 'NEW_SEASON' });
+    const cierre = ps.clubTimeline.find((e) => /^Cierra la temporada 1/.test(e.text))!;
+    expect(cierre.week).toBe(semanaDeCierre(fin));
+    expect(fechaCorta(cierre.week, fin.seasonLength)).toBe('Cierre');
+    expect(fechaCorta(fin.seasonLength + 1, fin.seasonLength)).toBe('Semis');
+    expect(fechaCorta(fin.seasonLength + 2, fin.seasonLength)).toBe('Final');
+    expect(fechaCorta(fin.seasonLength, fin.seasonLength)).toBe(`Sem ${fin.seasonLength}`);
+    expect(fechaCorta(0, fin.seasonLength)).toBe('Pretemp.');
+    // Ningún hito de la temporada 1 quedó anotado después del cierre.
+    const idx = ps.clubTimeline.indexOf(cierre);
+    for (const e of ps.clubTimeline.slice(0, idx)) if (e.season === 1) expect(e.week).toBeLessThanOrEqual(cierre.week);
+    // Y el palmarés recuerda las fechas de la temporada, para etiquetar sus semanas.
+    expect(ps.pastSeasons.at(-1)!.seasonLength).toBe(fin.seasonLength);
+    expect(largoDeTemporada({ ...ps, seasonLength: 7 })(1)).toBe(fin.seasonLength);
+    expect(largoDeTemporada({ ...ps, seasonLength: 7 })(2)).toBe(7);
   });
 
   it('el dúo que viene junto desde el mundo se muda al club: el pool no los tiene dos veces', () => {
