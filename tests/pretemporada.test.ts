@@ -9,6 +9,7 @@ import { marketToPlayer, worldToMarket } from '../src/data/market';
 import { Rng } from '../src/game/rng';
 import { fechaCorta, semanaDeCierre } from '../src/game/timeline';
 import { largoDeTemporada } from '../src/ui/Timeline';
+import { weekShort } from '../src/ui/helpers';
 import { jugarTemporada, partidaNueva, paso } from './jugar';
 
 /** Avanza la pretemporada semana a semana sin contactar a nadie y la cierra. */
@@ -190,6 +191,11 @@ describe('de una temporada a la siguiente', () => {
     expect(fechaCorta(fin.seasonLength + 2, fin.seasonLength)).toBe('Final');
     expect(fechaCorta(fin.seasonLength, fin.seasonLength)).toBe(`Sem ${fin.seasonLength}`);
     expect(fechaCorta(0, fin.seasonLength)).toBe('Pretemp.');
+    // La columna corta de la crónica, los movimientos y los últimos partidos.
+    expect(weekShort(4, 9)).toBe('S4');
+    expect(weekShort(10, 9)).toBe('Semis');
+    expect(weekShort(11, 9)).toBe('Final');
+    expect(weekShort(8, 7)).toBe('Semis');
     // Ningún hito de la temporada 1 quedó anotado después del cierre.
     const idx = ps.clubTimeline.indexOf(cierre);
     for (const e of ps.clubTimeline.slice(0, idx)) if (e.season === 1) expect(e.week).toBeLessThanOrEqual(cierre.week);

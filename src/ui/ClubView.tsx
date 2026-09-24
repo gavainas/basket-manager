@@ -9,7 +9,7 @@ import { Bar } from './Bar';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { TIPS } from './Tip';
-import { avgMotivation } from './helpers';
+import { avgMotivation, weekShort } from './helpers';
 
 const OBJECTIVE_BADGE: Record<ObjectiveStatus, { icon: string; cls: string; label: string }> = {
   cumplido: { icon: '✔', cls: 'good', label: 'cumplido' },
@@ -74,7 +74,7 @@ export function ClubView({ state }: { state: GameState }) {
             {state.news.slice(0, 12).map((n, i) => (
               <li key={i}>
                 <span className={`news-dot ${n.tone}`} />
-                <span className="news-week">S{n.week}</span>
+                <span className="news-week">{weekShort(n.week, state.seasonLength)}</span>
                 <span>{n.text}</span>
               </li>
             ))}
