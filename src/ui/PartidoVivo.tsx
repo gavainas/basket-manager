@@ -21,7 +21,9 @@ import {
   rivalBoxScore,
   rivalDefenseDe,
   rivalDefensePorEstilo,
+  rivalEnCancha,
   rivalLineup,
+  TRAMOS_POR_CUARTO,
 } from '../game/match';
 import { arranqueDelCuarto, jugadasDelCuarto, largoDelCuarto, largoDelTramo, type Jugada } from '../game/relato';
 import { clubByLegacyId, teamByLegacyRival, userTeam } from '../game/world';
@@ -344,7 +346,23 @@ export function PartidoVivo({ state, dispatch }: Props) {
   const ptsOf = (id: string) => (live.stats[id]?.pts ?? 0) - ptsOcultos(id);
   const legsCls = (v: number) => (v >= 65 ? 'good' : v >= 40 ? 'warn' : 'bad');
 
-  const rivalCinco = rivalLineup(state, live);
+  // Los cinco del rival en cancha AHORA (el rival también rota, sep 2026): el
+  // tramo que marca el reloj, o el próximo a jugarse en una pelota muerta.
+  const rivalCinco = (() => {
+    const { court, bench } = rivalLineup(state, live);
+    if (court.length === 0) return { court, bench };
+    let q = cuartosCerrados;
+    let k = live.enCurso?.tramos?.length ?? 0;
+    if (reloj) {
+      q = reloj.q;
+      k = Math.floor((reloj.t - arranqueDelCuarto(live, q)) / largoDelTramo(cuartos[q] ?? {}) + 1e-6);
+    } else if (live.finished) {
+      q = Math.max(0, cuartos.length - 1);
+      k = TRAMOS_POR_CUARTO - 1;
+    }
+    const ahora = rivalEnCancha(state, live, q, Math.min(Math.max(k, 0), TRAMOS_POR_CUARTO - 1));
+    return { court: ahora, bench: [...court, ...bench].filter((p) => !ahora.includes(p)) };
+  })();
   // La defensa del rival que VISTE: con el reloj corriendo, la del último
   // tramo que terminó (el cambio se anuncia al final del tramo, no antes).
   const defensaVista: DefenseTactic = (() => {
@@ -486,7 +504,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
           {p.firstName} {p.lastName}
         </WorldPlayerLink>
       </span>
-      <span className="pvj-pts">{enCancha ? (rivalPts[p.id] ?? 0) : '–'}</span>
+      <span className="pvj-pts">{enCancha || rivalPts[p.id] ? (rivalPts[p.id] ?? 0) : '–'}</span>
       <span className="pvj-nivel" title="Nivel estimado desde afuera">≈{p.level}</span>
     </div>
   );

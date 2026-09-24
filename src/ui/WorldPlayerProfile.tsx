@@ -45,7 +45,7 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
   const contra = state.history.reduce(
     (acc, m) => {
       const l = m.rivalBox?.find((x) => x.playerId === p.id);
-      return l ? { pts: acc.pts + l.points, partidos: acc.partidos + 1 } : acc;
+      return l && (l.played ?? l.starter) ? { pts: acc.pts + l.points, partidos: acc.partidos + 1 } : acc;
     },
     { pts: 0, partidos: 0 }
   );

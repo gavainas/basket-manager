@@ -988,29 +988,80 @@ export function rivalTramoBox(state: GameState, live: LiveMatchState, qIndex: nu
 
 /**
  * La planilla del rival para el informe: su quinteto con los puntos que le
- * repartió `rivalBoxScore` (ordenado por puntos), y detrás el banco que vino,
- * sin puntos (el motor no los hace anotar). Vacía si no conocemos a nadie del
- * rival (partidas viejas sin `presentIds`).
+ * repartió `rivalBoxScore` (ordenado por puntos), y detrás el banco que vino:
+ * primero los que entraron (`rivalEnCancha`), con sus puntos, y al final los
+ * que no jugaron. Vacía si no conocemos a nadie del rival (partidas viejas sin
+ * `presentIds`).
  */
 export function buildRivalBox(state: GameState, live: LiveMatchState): RivalBoxLine[] {
   const { court, bench } = rivalLineup(state, live);
   if (court.length === 0) return [];
   const pts = rivalBoxScore(state, live);
+  const jugaron = rivalJugaron(state, live);
   const linea = (p: WorldPlayer, starter: boolean): RivalBoxLine => ({
     playerId: p.id,
     name: `${p.firstName} ${p.lastName}`,
     position: p.position,
-    points: starter ? pts[p.id] ?? 0 : 0,
+    points: pts[p.id] ?? 0,
     starter,
+    played: jugaron.has(p.id),
   });
+  const porPuntos = (a: RivalBoxLine, b: RivalBoxLine) => Number(b.played) - Number(a.played) || b.points - a.points;
   return [
-    ...court.map((p) => linea(p, true)).sort((a, b) => b.points - a.points),
-    ...bench.map((p) => linea(p, false)),
+    ...court.map((p) => linea(p, true)).sort(porPuntos),
+    ...bench.map((p) => linea(p, false)).sort(porPuntos),
   ];
 }
 
+/**
+ * Cuándo entra cada suplente del rival (sep 2026, de jugar contra Unión
+ * Vecinal: "sólo hacen puntos los titulares"). Hasta tres de su banco, los
+ * mejores, entran por un titular en estos tramos de los tres primeros cuartos;
+ * el último cuarto y el suplementario los cierran los titulares. Cuarto → tramos.
+ */
+const RIVAL_ROTACION: Array<Record<number, number[]>> = [
+  { 0: [3, 4], 1: [0, 1], 2: [3, 4] },
+  { 0: [4], 1: [1, 2], 2: [4], 3: [0] },
+  { 1: [2, 3], 2: [0, 1] },
+];
+
+/**
+ * Los cinco del rival en cancha en un tramo. Como `rivalLineup`, es de
+ * lectura: el motor juega con la fuerza del equipo, esto dice quiénes eran.
+ * Cada suplente de la rotación entra por el titular de su puesto (o por el
+ * más flojo que quede), así el quinteto nunca queda con dos del mismo lado.
+ */
+export function rivalEnCancha(state: GameState, live: LiveMatchState, qIndex: number, k: number): WorldPlayer[] {
+  const { court, bench } = rivalLineup(state, live);
+  if (cuartoN(live, qIndex)?.overtime) return court;
+  const five = [...court];
+  const reemplazados = new Set<string>();
+  bench.slice(0, RIVAL_ROTACION.length).forEach((sub, j) => {
+    const porPuesto = court.find((p) => !reemplazados.has(p.id) && p.position === sub.position);
+    const porSecundario = court.find((p) => !reemplazados.has(p.id) && sub.secondaryPositions.includes(p.position));
+    const masFlojo = [...court].filter((p) => !reemplazados.has(p.id)).sort((a, b) => a.level - b.level)[0];
+    const sale = porPuesto ?? porSecundario ?? masFlojo;
+    if (!sale) return;
+    reemplazados.add(sale.id);
+    if (RIVAL_ROTACION[j][qIndex]?.includes(k)) five[five.indexOf(sale)] = sub;
+  });
+  return five;
+}
+
+/** Los que jugaron al menos un tramo del partido, titulares o no. */
+function rivalJugaron(state: GameState, live: LiveMatchState): Set<string> {
+  const ids = new Set(rivalLineup(state, live).court.map((p) => p.id));
+  cuartosDe(live).forEach((q, i) => {
+    (q.tramos ?? []).forEach((_t, k) => {
+      for (const p of rivalEnCancha(state, live, i, k)) ids.add(p.id);
+    });
+  });
+  return ids;
+}
+
 function rivalPuntosRepartidos(state: GameState, live: LiveMatchState, pts: number, clave: string): Record<string, number> {
-  const { court } = rivalLineup(state, live);
+  const [qStr, kStr] = clave.split(':');
+  const court = kStr === undefined ? rivalLineup(state, live).court : rivalEnCancha(state, live, Number(qStr), Number(kStr));
   if (court.length === 0) return {};
   const rng = new Rng(seedFromString(`${live.rivalId}:${state.week}:${clave}:${pts}`));
   return distributeBaskets(
@@ -2355,7 +2406,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   // (reparto de lectura, determinista); se guarda al cerrar para que el
   // informe y la historia tengan nombres del otro lado y no sólo un marcador.
   const rivalBox = buildRivalBox(s, live);
-  const goleadorRival = rivalBox[0];
+  const goleadorRival = rivalBox.reduce<RivalBoxLine | undefined>((top, l) => (!top || l.points > top.points ? l : top), undefined);
   if (goleadorRival && goleadorRival.points > 0) {
     highlights.push(
       `El que más nos lastimó fue ${goleadorRival.name}: ${goleadorRival.points} puntos para ${rival.name}.`

@@ -72,14 +72,37 @@ describe('el récord y la posición que ve el jugador (T1)', () => {
 
     const quinteto = rivalBox.filter((l) => l.starter);
     expect(quinteto.length).toBe(5);
-    expect(quinteto.reduce((t, l) => t + l.points, 0)).toBe(m.scoreAgainst);
-    // Ordenados por puntos, y los del banco al final sin puntos.
+    expect(rivalBox.reduce((t, l) => t + l.points, 0)).toBe(m.scoreAgainst);
+    // Los titulares ordenados por puntos; del banco, el que no entró no suma.
     for (let i = 1; i < quinteto.length; i++) expect(quinteto[i - 1].points).toBeGreaterThanOrEqual(quinteto[i].points);
-    for (const l of rivalBox.filter((x) => !x.starter)) expect(l.points).toBe(0);
+    for (const l of rivalBox.filter((x) => !x.played)) expect(l.points).toBe(0);
     // Son personas del mundo: cada renglón abre una ficha.
     for (const l of rivalBox) expect(s.world.players.some((p) => p.id === l.playerId)).toBe(true);
-    // Y el relato del informe nombra al goleador de ellos.
-    expect(m.highlights.some((h) => h.includes(quinteto[0].name) && h.includes(`${quinteto[0].points} puntos`))).toBe(true);
+    // Y el relato del informe nombra al goleador de ellos, sea titular o no.
+    const goleador = [...rivalBox].sort((a, b) => b.points - a.points)[0];
+    expect(m.highlights.some((h) => h.includes(goleador.name) && h.includes(`${goleador.points} puntos`))).toBe(true);
+  });
+
+  it('el rival también rota: con banco, sus suplentes entran y suman (sep 2026, "sólo hacen puntos los titulares")', () => {
+    let entraron = 0;
+    let anotaron = 0;
+    let conBanco = 0;
+    for (const seed of [11, 12, 13, 14, 15, 16]) {
+      let s = jugarPartidoEntero(hastaElPartido(seed));
+      s = paso(s, { type: 'FINISH_MATCH' });
+      const banco = (s.lastMatch!.rivalBox ?? []).filter((l) => !l.starter);
+      if (banco.length === 0) continue;
+      conBanco++;
+      // Entran hasta tres: el resto se queda mirando.
+      const jugaron = banco.filter((l) => l.played);
+      expect(jugaron.length).toBe(Math.min(3, banco.length));
+      entraron += jugaron.length;
+      anotaron += jugaron.filter((l) => l.points > 0).length;
+    }
+    expect(conBanco).toBeGreaterThan(0);
+    expect(entraron).toBeGreaterThan(0);
+    // Juegan unos seis tramos cada uno: casi siempre alguno la mete.
+    expect(anotaron).toBeGreaterThan(entraron / 2);
   });
 
   it('en playoffs el partido de hoy no suma al récord de la fase regular', () => {

@@ -80,8 +80,13 @@ export interface RivalBoxLine {
   name: string;
   position: Position;
   points: number;
-  /** Arrancó en el quinteto rival (los del banco figuran sin puntos). */
+  /** Arrancó en el quinteto rival. */
   starter: boolean;
+  /**
+   * Jugó al menos un tramo (sep 2026: el rival también rota). Los informes de
+   * antes no lo traen: ahí jugaban sólo los titulares.
+   */
+  played?: boolean;
 }
 
 // ---------- Estado emocional postpartido ----------

@@ -49,7 +49,7 @@ function verdugos(state: GameState): Row[] {
   const acum = new Map<string, { name: string; club: string; pts: number; partidos: number }>();
   for (const m of state.history) {
     for (const l of m.rivalBox ?? []) {
-      if (!l.starter || l.points <= 0) continue;
+      if (l.points <= 0) continue;
       const prev = acum.get(l.playerId);
       if (prev) {
         prev.pts += l.points;
