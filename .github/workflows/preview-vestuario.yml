@@ -1,0 +1,62 @@
+name: Preview Vestuario
+
+on:
+  push:
+    branches: [art/vestuario-vertical-slice]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-preview-vestuario
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}previews/vestuario/
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-site
+
+      - name: Checkout preview branch
+        uses: actions/checkout@v4
+        with:
+          ref: art/vestuario-vertical-slice
+          path: preview-site
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build main
+        working-directory: main-site
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build vestuario preview
+        working-directory: preview-site
+        run: |
+          npm ci
+          npm run build
+
+      - name: Add preview under main site
+        run: |
+          mkdir -p main-site/dist/previews/vestuario
+          cp -R preview-site/dist/. main-site/dist/previews/vestuario/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: main-site/dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
