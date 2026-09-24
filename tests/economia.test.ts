@@ -277,6 +277,31 @@ describe('la quiebra en dos pasos (sep 2026, decidido por Gabi): el primer rojo 
   });
 });
 
+describe('la proyección de la caja cuenta el segundo equipo (sep 2026, de inscribirlo por la interfaz)', () => {
+  it('Finanzas y el radar descuentan lo que el segundo equipo cuesta por semana, igual que el motor', () => {
+    // Antes Finanzas decía "+$100" con el equipo costando $40 por semana, y el
+    // radar calculaba el rojo con la misma cuenta corta.
+    const base = partidaNueva(21);
+    const sin: GameState = { ...base, club: { ...base.club, money: 1000 } };
+    const con = paso(sin, { type: 'REGISTER_SECOND_TEAM', leagueId: 'lg_montevideo', playerIds: sin.players.map((p) => p.id) });
+    expect(con.secondTeam).toBeTruthy();
+    const E = BALANCE.expansion;
+    const neto = E.weeklyUpkeep - E.canteenIncome;
+    expect(weeklyEstimate(con).expenses.some((e) => e.concept.startsWith('Segundo equipo'))).toBe(true);
+    expect(projectedWeekClose(con).close).toBe(projectedWeekClose(sin).close - E.inscriptionFee - neto);
+    // Y el cobro real de la semana coincide con la proyección (sin imprevistos: la caja sobra).
+    const proyectado = projectedWeekClose(con).close;
+    const real = jugarFecha(con);
+    const cobrado = real.ledger.filter((e) => e.week === con.week && /Segundo equipo: cancha/.test(e.concept));
+    expect(cobrado).toHaveLength(1);
+    expect(cobrado[0].amount).toBe(-neto);
+    // Con el torneo terminado no se cobra más, y la estimación tampoco lo cuenta.
+    const terminado: GameState = { ...con, secondTeam: { ...con.secondTeam!, finished: true } };
+    expect(weeklyEstimate(terminado).expenses.some((e) => e.concept.startsWith('Segundo equipo'))).toBe(false);
+    expect(proyectado).toBeLessThan(projectedWeekClose(terminado).close);
+  });
+});
+
 describe('la proyección de la caja sigue la regla del fiado (sep 2026, de jugar una Carrera por la interfaz)', () => {
   it('la cuota del fiado entra en la cuenta sólo si la caja llega después de los gastos fijos, como en el cobro', () => {
     const base = partidaNueva(21);

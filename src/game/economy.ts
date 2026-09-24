@@ -51,6 +51,14 @@ export function weeklyEstimate(state: GameState): { income: { concept: string; a
   if (state.coach && state.coach.weeklyWage > 0) {
     expenses.push({ concept: `Sueldo del DT (${state.coach.name})`, amount: -state.coach.weeklyWage });
   }
+  // El segundo equipo también es un gasto fijo mientras juega su torneo
+  // (secondTeamWeeklyTick lo cobra cada semana, antes que la economía):
+  // sin él, Finanzas decía "+$100" con el equipo costando $40, y el radar
+  // del tablero calculaba el rojo con la misma cuenta corta.
+  if (state.secondTeam && !state.secondTeam.finished) {
+    const E = BALANCE.expansion;
+    expenses.push({ concept: `Segundo equipo: cancha y árbitros (neto de cantina)`, amount: -(E.weeklyUpkeep - E.canteenIncome) });
+  }
   const debt = state.inscriptionDebt;
   if (debt && debt.remaining > 0) {
     expenses.push({
