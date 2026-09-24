@@ -6,6 +6,7 @@ import { refereeOfWeek } from '../game/leagueLife';
 import { activePlayers } from '../game/match';
 import type { NoteKind } from '../game/humanState';
 import { aggrieved, grievanceWarning } from '../game/mood';
+import { listaY } from '../game/nombres';
 import { objectiveStatus } from '../game/objectives';
 import { buildSocialMap } from '../game/socialMap';
 
@@ -164,7 +165,7 @@ export function watchItems(state: GameState): WatchItem[] {
       items.push({
         kind: 'fisico',
         cls: 'good',
-        text: `${backPhys.map((p) => p.name).join(' y ')} ${backPhys.length > 1 ? 'reciben' : 'recibe'} el alta la próxima semana.`,
+        text: `${listaY(backPhys.map((p) => p.name))} ${backPhys.length > 1 ? 'reciben' : 'recibe'} el alta la próxima semana.`,
         tile: 'plantilla',
       });
     }
@@ -172,7 +173,7 @@ export function watchItems(state: GameState): WatchItem[] {
       items.push({
         kind: 'fisico',
         cls: 'good',
-        text: `${backWork.map((p) => p.name).join(' y ')} ${backWork.length > 1 ? 'se sacan' : 'se saca'} el laburo de encima: la semana que viene ${backWork.length > 1 ? 'vuelven' : 'vuelve'}.`,
+        text: `${listaY(backWork.map((p) => p.name))} ${backWork.length > 1 ? 'se sacan' : 'se saca'} el laburo de encima: la semana que viene ${backWork.length > 1 ? 'vuelven' : 'vuelve'}.`,
         tile: 'plantilla',
       });
     }

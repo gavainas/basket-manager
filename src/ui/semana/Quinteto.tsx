@@ -247,7 +247,7 @@ export function LineupPanel({ state, dispatch }: Props) {
               ? `Sin ${sinRecambio[0].position.toLowerCase()} de recambio en el banco: el plan no tiene con quién descansar a ${shortName(sinRecambio[0].name)}. O juega casi los 40, o el equipo pasa cuartos sin ${sinRecambio[0].position.toLowerCase()} natural.`
               : `Sin recambio de su puesto en el banco: el plan no tiene con quién descansar a ${listaY(sinRecambio.map((p) => shortName(p.name)))}. O juegan casi los 40, o el equipo pasa cuartos sin su puesto.`}{' '}
             {conRecambioAfuera.length > 0
-              ? `Tenés ${conRecambioAfuera.map((t) => t.position.toLowerCase()).join(' y ')} en la planilla sin lugar en el banco.`
+              ? `Tenés ${listaY(conRecambioAfuera.map((t) => t.position.toLowerCase()))} en la planilla sin lugar en el banco.`
               : `Si querés ${sinRecambio.length === 1 ? 'cuidarlo' : 'cuidarlos'}, poné a alguien fuera de puesto en el banco o hacé los cambios a mano.`}
           </p>
         )}
@@ -285,10 +285,7 @@ export function LineupPanel({ state, dispatch }: Props) {
         <div className="card" style={{ borderColor: 'var(--warn)', marginBottom: '1rem' }}>
           <strong style={{ color: 'var(--warn)' }}>
             Solo {maxStarters} pueden arrancar:{' '}
-            {available
-              .filter((p) => lateIds.has(p.id))
-              .map((p) => p.name)
-              .join(' y ')}{' '}
+            {listaY(available.filter((p) => lateIds.has(p.id)).map((p) => p.name))}{' '}
             llega{available.filter((p) => lateIds.has(p.id)).length > 1 ? 'n' : ''} para el segundo tiempo. Se arranca
             corto y entra{available.filter((p) => lateIds.has(p.id)).length > 1 ? 'n' : ''} en el 3er cuarto.
           </strong>

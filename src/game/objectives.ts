@@ -1,5 +1,6 @@
 import { clamp } from './balance';
 import { activePlayers, clubPosition } from './match';
+import { listaY } from './nombres';
 import { logClubEvent, semanaDeCierre } from './timeline';
 import type { GameState, Objective } from './types';
 import type { Rng } from './rng';
@@ -184,7 +185,7 @@ export function midSeasonObjectiveCheck(s: GameState): void {
     });
     return;
   }
-  const labels = atRisk.map((o) => `"${o.label}"`).join(' y ');
+  const labels = listaY(atRisk.map((o) => `"${o.label}"`));
   s.news.unshift({
     week,
     text: `Visita de la comisión a mitad de temporada: ${labels} ${atRisk.length > 1 ? 'vienen flojos' : 'viene flojo'}. "Confiamos en vos, pero mirá el almanaque", dejaron dicho.`,

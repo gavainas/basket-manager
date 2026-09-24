@@ -633,10 +633,7 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     .filter((p) => s.callUp.some((c) => c.playerId === p.id && c.lateArrival && c.status === 'confirmado'))
     .map((p) => p.id);
   if (starters.length < 5) {
-    const lateNames = s.players
-      .filter((p) => lateIds.includes(p.id))
-      .map((p) => p.name)
-      .join(' y ');
+    const lateNames = listaY(s.players.filter((p) => lateIds.includes(p.id)).map((p) => p.name));
     prematchNotes.push(
       `Arrancamos con ${starters.length}: ${lateNames || 'el resto'} llega${lateIds.length > 1 ? 'n' : ''} para el segundo tiempo.`
     );
@@ -1432,10 +1429,9 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
 
   // En el entretiempo caen los que venían del trabajo: ya pueden entrar.
   if (qIndex === 2 && (live.lateIds ?? []).length > 0) {
-    const lateNames = (live.lateIds ?? [])
-      .map((id) => s.players.find((p) => p.id === id)?.name)
-      .filter(Boolean)
-      .join(' y ');
+    const lateNames = listaY(
+      (live.lateIds ?? []).map((id) => s.players.find((p) => p.id === id)?.name).filter((n): n is string => !!n)
+    );
     if (lateNames) live.pendingSubNotes.unshift(`🕘 Llegó ${lateNames} para el segundo tiempo: ya está para entrar.`);
   }
 
@@ -2232,7 +2228,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
           for (const x of played) addPairBonus(s, x.p.id, faltador.id, -1);
           logPlayerEvent(faltador, s.seasonNumber, Math.min(s.week, s.seasonLength), 'ausencia', `Faltó con excusa floja el día que el equipo jugó con ${n}. El grupo tomó nota.`);
         }
-        const names = weakAbsent.map((c) => c.playerName).join(' y ');
+        const names = listaY(weakAbsent.map((c) => c.playerName));
         s.news.unshift({ week: s.week, text: `Quedó picando en el grupo: ${names} ${weakAbsent.length === 1 ? 'faltó' : 'faltaron'} justo cuando el equipo fue con ${n}.`, tone: 'bad' });
       }
     }
