@@ -6,17 +6,28 @@ antes de confirmar que la dirección visual realmente funciona.
 
 ## Estado actual
 
-**Puertas 1 y 2: CERRADAS (ago 2026, Sprint 4 del plan de acción).** La dirección
-elegida es la que ya está en producción — club de barrio sobre papel claro
-(crema/grafito con el naranja reservado a la acción), Oswald como display, cards con
-banda de sección, la portada del asado y las cabeceras de escena, el set propio de
-34 iconos de línea, y **el retrato ilustrado como la foto del jugador en todo el
-juego** (decisión de Gabi: los SVG procedurales eran placeholders y quedan de
-respaldo). El detalle de la aprobación está en la Puerta 2.
+**2026-09-23 — Art Bible v0.1 creada.** La dirección visual futura queda consolidada en
+[`ART_BIBLE.md`](ART_BIBLE.md): las seis láminas de **“Revisión de arte”** son las
+referencias maestras aprobadas; las referencias de **vestuario** y **asado** son referencias
+secundarias aprobadas para mundo, tono social, variedad corporal e iluminación. La
+**Paleta A · Nocturna** (azul noche/grafito + naranja de acción + mundo cálido) es la
+dirección principal. La **Paleta B · Club cálido** queda como alternativa pendiente de
+prueba A/B en Tablero + Vestuario.
 
-Las puertas 3 a 6 (hoja maestra de personajes, vertical slice, prueba en juego y
-art bible) siguen **abiertas**: gobiernan la expansión que viene (set ilustrado de
-retratos, eventos ilustrados, más cabeceras).
+Esta decisión **supera la paleta clara/crema como dirección artística futura**. Lo ya
+implementado bajo `SISTEMA_VISUAL.md` no se rehace en masa automáticamente: se conserva
+hasta validar la nueva dirección dentro del juego. `SISTEMA_VISUAL.md` sigue siendo útil
+como especificación técnica de componentes existentes, pero ante una contradicción de
+dirección artística manda `ART_BIBLE.md`.
+
+Las Puertas 3, 4 y 5 siguen **abiertas**: hoja maestra de personajes, vertical slice y
+prueba dentro del juego. La Puerta 6 tiene ahora una **Art Bible v0.1 provisional**, pero
+no se considera cerrada ni congelada hasta validar el vertical slice y actualizarla con
+los resultados.
+
+**Puertas 1 y 2: historial cerrado (ago 2026).** Definieron la primera dirección llevada a
+producción. Se conservan como registro del proceso, pero la revisión visual de septiembre
+y `ART_BIBLE.md` pasan a gobernar la expansión artística que sigue.
 
 **Sep 2026 — el marco fijo no reabrió ninguna puerta.** Cinco tandas de layout
 (ver [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md)) sin generar un solo asset nuevo:
@@ -498,6 +509,20 @@ Formato sugerido:
   *(Hecho el mismo día: `src/game/relato.ts`, ver CHANGELOG.)* Siguen sin dibujarse
   presión en tres niveles, ritmo, marca especial y energía individual del rival.
 
+### 2026-09-23 — Art Bible v0.1 y nueva dirección visual
+
+- Alcance: consolidación de la dirección artística surgida de la charla **“Revisión de arte”**.
+- Aprobado: las seis láminas de revisión como referencias maestras de UI, composición,
+  producto y tono general.
+- Aprobado: las ilustraciones de **vestuario** y **asado** como referencias secundarias
+  para mundo social, variedad corporal, utilería e iluminación cálida.
+- Aprobado: **Paleta A · Nocturna** como dirección principal.
+- Pendiente: **Paleta B · Club cálido**, a comparar en Tablero + Vestuario.
+- Documento rector: [`ART_BIBLE.md`](ART_BIBLE.md), v0.1.
+- No implica: rehacer todo el juego ni producir assets en masa.
+- Próximo paso autorizado: vertical slice de cinco experiencias y prueba A/B de color
+  en dos pantallas antes de escalar.
+
 ### 2026-09-15 — Tablero A: el partido ordena la semana
 
 - **Elegida por Gabi: A · La próxima fecha**, de las [dos propuestas de tablero](propuestas/README.md). Confirmación explícita: «perfecto. tomemos A y documento la decision en el repo».
@@ -508,18 +533,14 @@ Formato sugerido:
 
 ## Estado de aprobación actual
 
-> **Corregido en sep 2026.** Este bloque contradecía al resto del documento y a lo que hay
-> en el repo: decía que la interfaz no estaba aprobada cuando arriba las Puertas 1 y 2
-> figuran cerradas, afirmaba que "el juego publicado sigue con el tema oscuro azul" (es
-> papel claro desde agosto) y que "el generador de escudos no existe" (existe:
-> `src/game/crest.ts`, 136 líneas, y `src/ui/Crest.tsx`, 240, con detalle por umbral de
-> tamaño). Un documento que gobierna el arte no puede tener dos verdades: era la causa
-> concreta de que el proceso se sintiera desordenado.
-
+- **Dirección visual vigente para expansión:** [`ART_BIBLE.md`](ART_BIBLE.md) v0.1
+  (2026-09-23). Seis láminas maestras + dos referencias sociales secundarias.
+- **Paleta A · Nocturna:** aprobada como dirección principal para el vertical slice.
+- **Paleta B · Club cálido:** pendiente de prueba; no es todavía un tema oficial.
 - **Tablero: A elegida** (2026-09-15), con el partido como eje de la semana. Implementación pendiente; ver [decisión y criterios](propuestas/README.md).
-- **UI: aprobada** (Puerta 2, ago 2026). Papel claro, Oswald, bandas de sección, iconos de
-  línea, naranja reservado a la acción. El **marco fijo** de sep 2026 no la reabre: es
-  layout dentro de esa dirección (ver [`PLAN_MARCO_FIJO.md`](PLAN_MARCO_FIJO.md)).
+- **UI en producción actual:** conserva todavía partes de la dirección clara documentada en
+  `SISTEMA_VISUAL.md`. No se rehace en masa: se migra sólo después de validar la Art Bible
+  dentro del producto.
 - **Personajes: el retrato ilustrado por arquetipo es la foto oficial** del jugador (Puerta
   2). Ocho caras para planteles enteros es una limitación **conocida y aceptada**; su
   solución es la Puerta 3, que sigue abierta.
