@@ -571,7 +571,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
       <div className="pv-cuerpo">
         {/* Nuestro equipo */}
         <div className="card pane pv-equipo">
-          <h3 className="card-band pv-banda" style={{ background: nuestrosColores[0] }}>
+          <h3 className="card-band pv-banda" style={{ '--club': nuestrosColores[0] } as React.CSSProperties}>
             <span>Nuestro equipo</span>
             <span className="pv-banda-sub">{state.club.name}</span>
           </h3>
@@ -768,7 +768,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
         {/* Rival y tablero táctico */}
         <div className="partido-col-scroll pv-derecha">
           <div className="card pv-equipo">
-            <h3 className="card-band pv-banda" style={{ background: rivalColores[0] }}>
+            <h3 className="card-band pv-banda" style={{ '--club': rivalColores[0] } as React.CSSProperties}>
               <span><RivalLink id={rival.id}>{rival.name}</RivalLink></span>
               <Crest seed={rivalClub?.id ?? rival.id} name={rival.name} colors={rivalColores} founded={rivalClub?.founded} size={22} />
             </h3>

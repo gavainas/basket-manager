@@ -1,37 +1,55 @@
-/* Sistema visual "club de barrio" — ver design/SISTEMA_VISUAL.md.
-   Los nombres de token viejos se conservan a propósito: así las ~2200 líneas de
-   abajo siguen funcionando sin tocarlas. Lo que cambió es a qué apuntan. */
+/* Sistema visual — Paleta A "Nocturna" (sep 2026). Fuente de verdad:
+   design/ART_BIBLE.md (dirección) y design/GAME_UI_SYSTEM.md (reglas de UI),
+   con design/arte/referencias/ui-final-partido-centro.png como referencia.
+   Los tokens `--bm-*` son los de GAME_UI_SYSTEM §3. Los nombres viejos
+   (--panel, --text, --accent…) se conservan a propósito y ahora APUNTAN a
+   ellos: así las ~6700 líneas de abajo cambian de paleta sin tocarlas. */
 :root {
-  /* Chrome — neutro. Nunca lleva los colores de un club: si los llevara, se
-     pelearía con la ficha de cada rival. */
-  --chrome: #32353a;
-  --chrome-alto: #3d4147;
-  --chrome-linea: #4a4e55;
+  /* GAME_UI_SYSTEM §3 — la paleta entera. No agregar colores de UI fuera de acá. */
+  --bm-bg-deep: #081d2d;
+  --bm-panel: #102c40;
+  --bm-panel-elevated: #17384b;
+  --bm-border: #456477;
+  --bm-text: #f3f0e8;
+  --bm-text-secondary: #aebcc4;
+  --bm-accent: #f47c27;
+  --bm-positive: #54d29a;
+  --bm-warning: #e4b94b;
+  --bm-danger: #e35b4f;
 
-  /* Superficies */
-  --bg: #d8d4cc;      /* el campo donde apoyan los paneles */
-  --bg-soft: #e6e3dd; /* pistas de barra, filas hundidas */
-  --panel: #f6f4f1;   /* cuerpo de card */
-  --panel-2: #eceae6; /* botones y superficies elevadas */
-  --border: #d2cec8;
+  /* Chrome (L1 / shell) — neutro. Nunca lleva los colores de un club: si los
+     llevara, se pelearía con la ficha de cada rival. */
+  --chrome: var(--bm-bg-deep);
+  --chrome-alto: var(--bm-panel);
+  --chrome-linea: color-mix(in srgb, var(--bm-border) 55%, var(--bm-bg-deep));
 
-  /* Tinta */
-  --text: #25282c;
-  --text-dim: #6a6f76;
-  --text-faint: #9a9fa6;
-  --text-light: #f6f4f1; /* sobre chrome y sobre la cancha */
+  /* Superficies (L2 panel / L3 elevated). --bg y --bg-soft son los pozos:
+     pistas de barra, filas hundidas, el campo detrás de los paneles. */
+  --bg: var(--bm-bg-deep);
+  --bg-soft: var(--bm-bg-deep);
+  --panel: var(--bm-panel);
+  --panel-2: var(--bm-panel-elevated);
+  --border: var(--bm-border);
 
-  /* Acción — RESERVADO: botón primario y dato clave. Máximo dos por pantalla. */
-  --accent: #e07a2a;
-  --accent-soft: rgba(224, 122, 42, 0.14);
-  --on-accent: #2a1a08; /* tinta sobre naranja: 5:1, pasa AA en texto chico */
+  /* Tinta. El sistema tiene dos niveles de texto; el tercero (--text-faint,
+     metadato mínimo) es el secundario apagado hacia el panel, no un color nuevo. */
+  --text: var(--bm-text);
+  --text-dim: var(--bm-text-secondary);
+  --text-faint: color-mix(in srgb, var(--bm-text-secondary) 72%, var(--bm-panel));
+  --text-light: var(--bm-text); /* sobre chrome y sobre la cancha */
 
-  /* Semáforo — vive dentro de los datos, nunca en un cabezal */
-  --good: #4a9160;
-  --warn: #c69320;
-  --bad: #b8443a;
+  /* Acción — RESERVADO (§3): CTA, foco, selección, dato clave. */
+  --accent: var(--bm-accent);
+  --accent-soft: color-mix(in srgb, var(--bm-accent) 16%, transparent);
+  --on-accent: #2a1a08; /* tinta sobre naranja: pasa AA en texto chico */
 
-  /* Colores de sección: señalización, no decoración */
+  /* Semáforo — estado semántico dentro de los datos */
+  --good: var(--bm-positive);
+  --warn: var(--bm-warning);
+  --bad: var(--bm-danger);
+
+  /* Colores de sección: señalización dentro del contenido (un ícono, un
+     filete). GAME_UI_SYSTEM §3: no gobiernan el chrome ni pintan cabezales. */
   --sec-tablero: #2f6b4f;
   --sec-partidos: #2d5c8a;
   --sec-vestuario: #9d3b3b;
@@ -84,9 +102,9 @@
      tabla de 10 filas no quede de punta a punta en un monitor de 2560). */
   --ancho-app: clamp(1200px, var(--u) * 96, 1760px);
 
-  --radius: 4px; /* esta dirección es cuadrada */
-  --sombra: 0 1px 2px rgba(37, 40, 44, 0.1);
-  --sombra-alta: 0 8px 28px rgba(37, 40, 44, 0.22);
+  --radius: 4px; /* esta dirección es cuadrada: radios contenidos (§3) */
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --sombra-alta: 0 10px 32px rgba(0, 0, 0, 0.5);
 
   /* Relieve (dirección D, aprobada sep 2026 — ver design/SISTEMA_VISUAL.md).
      El diagnóstico era que en 3300 líneas no había ni una textura ni un bisel:
@@ -97,13 +115,14 @@
      --grano: chapa esmaltada. Va con `background-blend-mode: multiply` sobre
        el color del panel, así que oscurece un pelo: la opacidad está elegida
        para que --panel siga leyéndose como --panel.
-     --relieve: luz arriba, línea de sombra abajo y sombra proyectada. Una
-       superficie apoyada, no un borde dibujado.
+     --relieve: filete de luz arriba (el "inner highlight opcional" de
+       GAME_UI_SYSTEM §3), línea de sombra abajo y sombra proyectada. Una
+       superficie apoyada, no un borde dibujado. Profundidad contenida.
      --hundido: lo contrario, para pistas y pozos donde va un dato. */
-  --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.3'/%3E%3C/svg%3E");
-  --relieve: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(120, 100, 70, 0.2),
-    0 6px 16px rgba(20, 14, 8, 0.2);
-  --hundido: inset 0 1px 2px rgba(120, 100, 70, 0.32);
+  --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.12'/%3E%3C/svg%3E");
+  --relieve: inset 0 1px 0 rgba(243, 240, 232, 0.07), inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 6px 18px rgba(0, 0, 0, 0.38);
+  --hundido: inset 0 1px 3px rgba(0, 0, 0, 0.5);
   /* Cinco bloques: la máscara que convierte cualquier barra en un medidor de
      tablero. Va como máscara y no como overlay de color para que los huecos
      dejen ver la superficie que haya atrás, sea la que sea. */
@@ -170,6 +189,13 @@ button:active:not(:disabled) {
 button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* BTN, estado focus (GAME_UI_SYSTEM §12): todos los botones lo tienen, y es
+   naranja porque el foco es uno de los usos permitidos del acento. */
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 button.primary {
@@ -253,7 +279,7 @@ button.danger {
   z-index: 5;
   margin: 0 calc(-1 * var(--sp-4));
   padding: 0.6rem var(--sp-4) calc(0.6rem + var(--sp-6));
-  background: linear-gradient(to top, rgb(28, 22, 18) 0%, rgb(28, 22, 18) 82%, transparent);
+  background: linear-gradient(to top, var(--bm-bg-deep) 0%, var(--bm-bg-deep) 82%, transparent);
 }
 
 .pie-fijo .confirm-bar { margin-top: 0; }
@@ -378,7 +404,7 @@ button.danger {
   gap: 0.45rem;
   margin-left: 1rem;
   padding-left: 0.7rem;
-  border-left: 3px solid var(--sec);
+  border-left: 3px solid var(--accent);
   color: var(--text-light);
   font-family: var(--display);
   font-weight: 500;
@@ -407,8 +433,8 @@ button.danger {
 }
 
 .topbar .salir:hover:not(:disabled) {
-  background: var(--sec-ajustes);
-  border-color: var(--sec-ajustes);
+  background: var(--chrome-alto);
+  border-color: var(--border);
   color: var(--text-light);
 }
 
@@ -453,7 +479,9 @@ button.danger {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--sec, var(--sec-ajustes));
+  /* NAV-01: el chrome no lleva colores de sección; el punto es neutro y se
+     vuelve naranja sólo en la sección activa. */
+  background: var(--text-dim);
   align-self: center;
   margin-right: 0.35rem;
   opacity: 0.55;
@@ -495,14 +523,24 @@ button.danger {
 .secciones .seccion:hover .ico,
 .secciones .seccion:hover .seccion-punto { opacity: 0.85; }
 
+/* NAV-01, estado activo: placa diferenciada + accent bar naranja + label con
+   más peso + icono reforzado (el sistema pide al menos dos; nunca sólo el
+   subrayado). El naranja acá es "tab activo", uno de sus usos permitidos. */
 .secciones .seccion.on {
-  background: var(--chrome-alto);
+  background: linear-gradient(180deg, var(--bm-panel-elevated), var(--bm-panel));
   color: var(--text-light);
-  border-bottom-color: var(--sec, var(--sec-ajustes));
+  font-weight: 700;
+  border-bottom-color: var(--accent);
+  box-shadow: inset 0 1px 0 rgba(243, 240, 232, 0.07);
 }
 
-.secciones .seccion.on .ico { opacity: 1; }
-.secciones .seccion.on .seccion-punto { opacity: 1; }
+.secciones .seccion.on .ico { opacity: 1; color: var(--accent); }
+.secciones .seccion.on .seccion-punto { opacity: 1; background: var(--accent); }
+
+.secciones .seccion:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
 
 .secciones .seccion:active:not(:disabled) {
   transform: none;
@@ -642,15 +680,19 @@ button.danger {
    solo, pero la clase explícita `card-band` es el gancho robusto: si la card
    arranca con otra cosa (una cabecera ilustrada, un aviso), el h3 la declara
    y la banda no se pierde en silencio. */
+/* HEADER-01 "dentro de una banda oscura": título display sobre panel elevado
+   con un filete fino abajo. Desde la Paleta A la banda ya no toma el color
+   de la sección (GAME_UI_SYSTEM §3: esos colores no gobiernan el chrome). */
 .vista .card > h3:first-child,
 .vista .card > h3.card-band {
-  background: var(--sec);
+  background: var(--bm-panel-elevated);
   color: var(--text-light);
   font-weight: 600;
   font-size: var(--fs-base);
   letter-spacing: 0.08em;
   margin: -1rem -1rem 0.9rem;
   padding: 0.5rem 0.9rem;
+  border-bottom: 1px solid var(--border);
   border-radius: var(--radius) var(--radius) 0 0;
   display: flex;
   align-items: center;
@@ -723,15 +765,18 @@ button.danger {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(32, 28, 24, 0.42), rgba(24, 21, 19, 0.62));
+  /* Velo frío (UI fría + mundo cálido): el fondo queda como atmósfera y los
+     paneles oscuros siguen despegando de él. */
+  background: linear-gradient(180deg, rgba(8, 29, 45, 0.5), rgba(8, 29, 45, 0.72));
 }
 
-/* Sobre un fondo oscuro los paneles necesitan despegarse un poco más. */
+/* Sobre el fondo, los paneles conservan su relieve (luz arriba, sombra abajo)
+   y suman un poco de proyección. */
 .vista .card,
 .hub-block,
 .hub-plantel,
 .hub-centro {
-  box-shadow: 0 2px 10px rgba(20, 18, 16, 0.28);
+  box-shadow: var(--relieve), 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 /* Banda ilustrada de card (ver ui/Cabecera.tsx). Va pegada abajo del cabezal de
@@ -743,7 +788,7 @@ button.danger {
      la banda cede hasta 96px, así el panel de abajo sigue mostrando juego. A
      1080p mide lo que siempre midió; a 720p, unos 45px menos. */
   height: clamp(96px, 17vh, var(--cab-alto, 175px));
-  background-color: var(--sec);
+  background-color: var(--bm-panel-elevated);
   background-size: cover;
   background-position: center 34%;
   border-bottom: 1px solid var(--border);
@@ -1414,9 +1459,11 @@ button.danger {
   overflow: hidden;
 }
 
+/* HEADER-01 en banda oscura, como los cabezales de card. */
 .hub-block-title {
   margin: 0;
-  background: var(--sec);
+  background: var(--bm-panel-elevated);
+  border-bottom: 1px solid var(--border);
   color: var(--text-light);
   font-family: var(--display);
   font-weight: 600;
@@ -2228,25 +2275,34 @@ td.num, th.num {
   margin-bottom: 1rem;
 }
 
+/* SUBNAV-01: placas integradas al shell, no pills de color. El paso en curso
+   se lee sin dudar (placa elevada + accent bar + peso); los hechos llevan su
+   tilde en verde (estado semántico) y el resto queda callado. */
 .step {
   padding: 0.35rem 0.9rem;
-  border-radius: 999px;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bm-panel) 85%, transparent);
   color: var(--text-dim);
   font-size: var(--fs-sm);
 }
 
-/* El paso en curso es señalización, no acción: lleva el azul de Partidos. */
 .step.active {
-  border-color: var(--sec-partidos);
-  color: var(--sec-partidos);
+  background: var(--bm-panel-elevated);
+  border-color: var(--border);
+  box-shadow: inset 0 -3px 0 var(--accent);
+  color: var(--text);
   font-weight: 700;
-  background: rgba(45, 92, 138, 0.1);
 }
 
 .step.done {
+  color: var(--text);
+}
+
+.step.done::before {
+  content: '✓ ';
   color: var(--good);
-  border-color: var(--good);
+  font-weight: 700;
 }
 
 .action-grid {
@@ -2416,8 +2472,9 @@ td.num, th.num {
   border-radius: 999px;
 }
 
-.result-badge.win { background: #e2efe5; color: #2f6b45; }
-.result-badge.lose { background: #f6e2df; color: #8f342c; }
+/* PANEL-04: el color semántico es acento (tinte y tinta), no pinta la superficie. */
+.result-badge.win { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--good); }
+.result-badge.lose { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); }
 
 .reason-list {
   margin: 0.4rem 0 0;
@@ -5135,11 +5192,14 @@ button.mini.blue.on {
 }
 
 /* Las bandas de equipo llevan el color del club (inline). El texto va claro. */
+/* El color del club es identidad secundaria (GAME_UI_SYSTEM §3/§15): una
+   barra en el borde de la banda oscura, no la banda entera. */
 .vista .card > h3.card-band.pv-banda {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
+  box-shadow: inset 4px 0 0 var(--club, var(--border));
 }
 
 .pv-banda-sub {
@@ -6648,22 +6708,12 @@ button.mini.blue.on {
    Variante C: el ~28 % de arriba es una franja libre donde el vestuario se ve
    sin panel ni velo (sólo el título); debajo, el panel social en Paleta A. */
 .vestuario-slice {
-  --panel: rgba(8, 29, 45, 0.88);
-  --panel-2: rgba(16, 44, 64, 0.88);
-  --border: rgba(174, 188, 196, 0.34);
-  --text: #f3f0e8;
-  --text-dim: #c1cbd1;
-  --text-faint: #9fadb5;
-  --accent: #f47c27;
-  --good: #54d29a;
-  --warn: #e4b94b;
-  --bad: #e35b4f;
   position: relative;
   isolation: isolate;
   overflow: hidden;
   color: var(--text);
-  background: #081d2d;
-  border-color: rgba(69, 100, 119, 0.9);
+  background: var(--bm-bg-deep);
+  border-color: var(--border);
 }
 
 /* La ilustración cubre la franja y un poco más, encuadrada en los lockers y
@@ -6688,15 +6738,15 @@ button.mini.blue.on {
   z-index: -1;
   background: linear-gradient(
     180deg,
-    rgba(6, 22, 34, 0) 0,
-    rgba(6, 22, 34, 0) 140px,
-    rgba(6, 22, 34, 0.6) 205px,
-    rgba(6, 22, 34, 0.78) 100%
+    transparent 0,
+    transparent 140px,
+    color-mix(in srgb, var(--bm-bg-deep) 60%, transparent) 205px,
+    color-mix(in srgb, var(--bm-bg-deep) 78%, transparent) 100%
   );
 }
 
-/* El título es la franja: sin fondo ni filete, con un degradado corto arriba
-   sólo para que se lea. */
+/* HEADER-01 sobre la franja de imagen (SCENE-A): sin fondo ni filete, con un
+   degradado corto arriba sólo para que se lea. */
 .vestuario-slice > h3 {
   margin: -1rem -1rem 1rem;
   padding: 0.85rem 1.1rem 0;
@@ -6704,40 +6754,24 @@ button.mini.blue.on {
   display: flex;
   align-items: flex-start;
   gap: 0.4rem;
-  background: linear-gradient(180deg, rgba(6, 22, 34, 0.78) 0, rgba(6, 22, 34, 0.3) 52px, rgba(6, 22, 34, 0) 104px);
-  color: #f3f0e8;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bm-bg-deep) 78%, transparent) 0,
+    color-mix(in srgb, var(--bm-bg-deep) 30%, transparent) 52px,
+    transparent 104px
+  );
+  color: var(--text);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 
+/* PANEL-01 translúcido: el blur acá sí integra arte y UI (§3). */
 .vestuario-slice .vest-cuerpo {
   margin: 0;
   padding: 1rem;
-  border: 1px solid rgba(174, 188, 196, 0.28);
-  background: rgba(8, 29, 45, 0.78);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bm-panel) 82%, transparent);
   box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.24);
   backdrop-filter: blur(7px);
-}
-
-.vestuario-slice .vest-sub {
-  color: #aebcc4;
-}
-
-.vestuario-slice .chip {
-  background: rgba(16, 44, 64, 0.86);
-  border-color: rgba(174, 188, 196, 0.25);
-  color: #f3f0e8;
-}
-
-.vestuario-slice a {
-  color: #f3f0e8;
-}
-
-.vestuario-slice .muted {
-  color: #aebcc4;
-}
-
-.vestuario-slice .bar-track {
-  background: rgba(243, 240, 232, 0.14);
 }
 
 @media (max-width: 900px) {
