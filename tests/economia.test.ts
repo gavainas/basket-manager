@@ -250,6 +250,33 @@ describe('la quiebra en dos pasos (sep 2026, decidido por Gabi): el primer rojo 
     expect(tras3.semanasEnRojo).toBe(1);
   });
 
+  it('el aviso y la quiebra se anotan en la semana que cerró, la misma que sus movimientos en Finanzas', () => {
+    // La semana 1 cierra en rojo: el aviso es de la semana 1 (antes decía 2:
+    // se anotaba con la semana ya avanzada), igual que la cancha de esa semana.
+    const tras1 = jugarFecha(conCaja(partidaNueva(21), 0));
+    const aviso = tras1.clubTimeline.find((e) => /La comisión avisó/.test(e.text));
+    expect(aviso?.week).toBe(1);
+    expect(tras1.news.find((n) => /la comisión te citó/.test(n.text))?.week).toBe(1);
+    expect(tras1.ledger.filter((e) => e.concept === 'Alquiler de cancha').at(-1)?.week).toBe(1);
+    const tras2 = jugarFecha(conCaja(tras1, tras1.club.money));
+    expect(tras2.phase).toBe('gameOver');
+    expect(tras2.clubTimeline.find((e) => e.kind === 'salida')?.week).toBe(2);
+  });
+
+  it('el rojo de las semifinales se anota en las semifinales, no en la última fecha de la liga', () => {
+    // Con la semilla 21 el club clasifica: la fase regular entera y a las semis.
+    let s = partidaNueva(21);
+    while (s.phase === 'planning' && s.week <= s.seasonLength) s = jugarFecha(s);
+    expect(s.phase).toBe('planning');
+    expect(s.week).toBe(s.seasonLength + 1);
+    const tras = jugarFecha(conCaja(s, 0));
+    const aviso = tras.clubTimeline.find((e) => /La comisión avisó/.test(e.text));
+    // Antes se clampeaba a la fase regular ("Sem 9") y quedaba delante del
+    // resultado de la semifinal en la historia.
+    expect(aviso?.week).toBe(s.seasonLength + 1);
+    expect(tras.news.find((n) => /la comisión te citó/.test(n.text))?.week).toBe(s.seasonLength + 1);
+  });
+
   it('las partidas guardadas antes de la regla arrancan sin aviso', () => {
     const s = conCaja(partidaNueva(21), 0);
     delete (s as Partial<GameState>).semanasEnRojo;
