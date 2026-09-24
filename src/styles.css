@@ -6644,7 +6644,9 @@ button.mini.blue.on {
 
 /* ---------- Vertical slice de arte · Vestuario (rama de prueba, sep 2026) ----------
    Prueba controlada de ART_BIBLE.md: fondo ilustrado real + UI viva encima.
-   Todo está scopeado a .vestuario-slice para no contaminar ninguna otra pantalla. */
+   Todo está scopeado a .vestuario-slice para no contaminar ninguna otra pantalla.
+   Variante C: el ~28 % de arriba es una franja libre donde el vestuario se ve
+   sin panel ni velo (sólo el título); debajo, el panel social en Paleta A. */
 .vestuario-slice {
   --panel: rgba(8, 29, 45, 0.88);
   --panel-2: rgba(16, 44, 64, 0.88);
@@ -6662,43 +6664,57 @@ button.mini.blue.on {
   color: var(--text);
   background: #081d2d;
   border-color: rgba(69, 100, 119, 0.9);
-  min-height: min(68vh, 680px);
 }
 
+/* La ilustración cubre la franja y un poco más, encuadrada en los lockers y
+   la pizarra (no en el techo), y se funde hacia abajo para que detrás del
+   panel no haya un corte duro. */
 .vestuario-slice-art {
   position: absolute;
-  inset: 0;
+  inset: 0 0 auto 0;
+  height: 470px;
   z-index: -2;
   background-size: cover;
-  background-position: center 48%;
-  transform: scale(1.01);
+  background-position: center 40%;
+  -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
 }
 
+/* Velo: nada sobre la franja; oscurece recién donde empieza el panel. */
 .vestuario-slice::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
-  background:
-    linear-gradient(90deg, rgba(6, 22, 34, 0.88) 0%, rgba(6, 22, 34, 0.73) 48%, rgba(6, 22, 34, 0.80) 100%),
-    linear-gradient(180deg, rgba(8, 29, 45, 0.26) 0%, rgba(8, 29, 45, 0.72) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(6, 22, 34, 0) 0,
+    rgba(6, 22, 34, 0) 140px,
+    rgba(6, 22, 34, 0.6) 205px,
+    rgba(6, 22, 34, 0.78) 100%
+  );
 }
 
+/* El título es la franja: sin fondo ni filete, con un degradado corto arriba
+   sólo para que se lea. */
 .vestuario-slice > h3 {
-  margin: -0.9rem -1rem 1rem;
-  padding: 0.72rem 1rem;
-  background: rgba(8, 29, 45, 0.88);
-  border-bottom: 1px solid rgba(174, 188, 196, 0.28);
+  margin: -1rem -1rem 1rem;
+  padding: 0.85rem 1.1rem 0;
+  height: clamp(160px, 20vh, 175px);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  background: linear-gradient(180deg, rgba(6, 22, 34, 0.78) 0, rgba(6, 22, 34, 0.3) 52px, rgba(6, 22, 34, 0) 104px);
   color: #f3f0e8;
-  backdrop-filter: blur(7px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 
 .vestuario-slice .vest-cuerpo {
   margin: 0;
   padding: 1rem;
   border: 1px solid rgba(174, 188, 196, 0.28);
-  background: rgba(8, 29, 45, 0.73);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+  background: rgba(8, 29, 45, 0.78);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.24);
   backdrop-filter: blur(7px);
 }
 
@@ -6725,10 +6741,6 @@ button.mini.blue.on {
 }
 
 @media (max-width: 900px) {
-  .vestuario-slice {
-    min-height: 0;
-  }
-
   .vestuario-slice-art {
     background-position: 58% center;
   }
