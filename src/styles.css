@@ -6640,3 +6640,96 @@ button.mini.blue.on {
 @media (max-width: 900px) {
   .vest-cuerpo { grid-template-columns: 1fr; }
 }
+
+
+/* ---------- Vertical slice de arte · Vestuario (rama de prueba, sep 2026) ----------
+   Prueba controlada de ART_BIBLE.md: fondo ilustrado real + UI viva encima.
+   Todo está scopeado a .vestuario-slice para no contaminar ninguna otra pantalla. */
+.vestuario-slice {
+  --panel: rgba(8, 29, 45, 0.88);
+  --panel-2: rgba(16, 44, 64, 0.88);
+  --border: rgba(174, 188, 196, 0.34);
+  --text: #f3f0e8;
+  --text-dim: #c1cbd1;
+  --text-faint: #9fadb5;
+  --accent: #f47c27;
+  --good: #54d29a;
+  --warn: #e4b94b;
+  --bad: #e35b4f;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: var(--text);
+  background: #081d2d;
+  border-color: rgba(69, 100, 119, 0.9);
+  min-height: min(68vh, 680px);
+}
+
+.vestuario-slice-art {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center 48%;
+  transform: scale(1.01);
+}
+
+.vestuario-slice::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(6, 22, 34, 0.88) 0%, rgba(6, 22, 34, 0.73) 48%, rgba(6, 22, 34, 0.80) 100%),
+    linear-gradient(180deg, rgba(8, 29, 45, 0.26) 0%, rgba(8, 29, 45, 0.72) 100%);
+}
+
+.vestuario-slice > h3 {
+  margin: -0.9rem -1rem 1rem;
+  padding: 0.72rem 1rem;
+  background: rgba(8, 29, 45, 0.88);
+  border-bottom: 1px solid rgba(174, 188, 196, 0.28);
+  color: #f3f0e8;
+  backdrop-filter: blur(7px);
+}
+
+.vestuario-slice .vest-cuerpo {
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid rgba(174, 188, 196, 0.28);
+  background: rgba(8, 29, 45, 0.73);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(7px);
+}
+
+.vestuario-slice .vest-sub {
+  color: #aebcc4;
+}
+
+.vestuario-slice .chip {
+  background: rgba(16, 44, 64, 0.86);
+  border-color: rgba(174, 188, 196, 0.25);
+  color: #f3f0e8;
+}
+
+.vestuario-slice a {
+  color: #f3f0e8;
+}
+
+.vestuario-slice .muted {
+  color: #aebcc4;
+}
+
+.vestuario-slice .bar-track {
+  background: rgba(243, 240, 232, 0.14);
+}
+
+@media (max-width: 900px) {
+  .vestuario-slice {
+    min-height: 0;
+  }
+
+  .vestuario-slice-art {
+    background-position: 58% center;
+  }
+}
