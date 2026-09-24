@@ -6,6 +6,7 @@ import { clamp } from './balance';
 import { fragilityOf } from './injuries';
 import { refIncidentFactor } from './leagueLife';
 import { fueraDelPartido, reemplazar, rivalLineup } from './match';
+import { apellido } from './nombres';
 import type { GameState, LiveMatchState, PendingRefIncident, Player, RiesgoPendiente } from './types';
 import type { Rng } from './rng';
 
@@ -168,10 +169,6 @@ function deRef(nombre: string): string {
   return nombre.startsWith('el ') ? `del ${nombre.slice(3)}` : `de ${nombre}`;
 }
 
-function apellido(nombre: string): string {
-  const parts = nombre.replace(/"[^"]*"\s*/g, '').trim().split(/\s+/);
-  return parts[parts.length - 1];
-}
 
 /**
  * Sortea una incidencia tras el cuarto. Puede dejar una decisión pendiente

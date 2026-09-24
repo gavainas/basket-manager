@@ -5,6 +5,7 @@ import type { Player } from '../../game/types';
 import { BALANCE } from '../../game/balance';
 import { lineupPromiseWarnings } from '../../game/promises';
 import { evaluateTeam, isSelectable, PLAN_MIN_BENCH, titularesSinRecambio } from '../../game/match';
+import { listaY } from '../../game/nombres';
 import { Icon } from '../Icon';
 import { PlayerLink } from '../PlayerLink';
 import { RivalLink } from '../RivalLink';
@@ -187,7 +188,7 @@ export function LineupPanel({ state, dispatch }: Props) {
               Banco: {rotationIds.length}/{maxRotation}
             </span>
           </Tip>
-          {missing.length > 0 && count === 5 && <span className="chip warn">Sin {missing.join(', ')} natural</span>}
+          {missing.length > 0 && count === 5 && <span className="chip warn">Sin {listaY(missing.map((m) => m.toLowerCase()))} natural</span>}
           {count === 5 && missing.length === 0 && <span className="chip good">Todas las posiciones cubiertas</span>}
         </div>
         {vibe && (
@@ -205,8 +206,8 @@ export function LineupPanel({ state, dispatch }: Props) {
           <p className="muted" style={{ marginBottom: 0, color: 'var(--warn)' }}>
             Vas con {count + rotationIds.length} y tenés {available.length} en la planilla:{' '}
             {leftOutHot.length > 0
-              ? `${leftOutHot.map((p) => shortName(p.name)).join(', ')} ${leftOutHot.length > 1 ? 'se van' : 'se va'} a calentar mirando desde afuera.`
-              : `${leftOut.map((p) => shortName(p.name)).join(', ')} ${leftOut.length > 1 ? 'miran' : 'mira'} desde afuera.`}
+              ? `${listaY(leftOutHot.map((p) => shortName(p.name)))} ${leftOutHot.length > 1 ? 'se van' : 'se va'} a calentar mirando desde afuera.`
+              : `${listaY(leftOut.map((p) => shortName(p.name)))} ${leftOut.length > 1 ? 'miran' : 'mira'} desde afuera.`}
           </p>
         )}
         {count === 5 && rotationIds.length > 0 && (
@@ -232,7 +233,7 @@ export function LineupPanel({ state, dispatch }: Props) {
                 hay): lo que queda es el hueco. */}
             {sinRecambio.length === 1
               ? `Sin ${sinRecambio[0].position.toLowerCase()} de recambio en el banco: cuando ${shortName(dt.name)} descanse a ${shortName(sinRecambio[0].name)}, el equipo queda sin ${sinRecambio[0].position.toLowerCase()} natural.`
-              : `Sin recambio de su puesto en el banco: cuando ${shortName(dt.name)} descanse a ${sinRecambio.map((p) => shortName(p.name)).join(', ')}, el equipo queda sin su puesto.`}
+              : `Sin recambio de su puesto en el banco: cuando ${shortName(dt.name)} descanse a ${listaY(sinRecambio.map((p) => shortName(p.name)))}, el equipo queda sin su puesto.`}
           </p>
         )}
         {count === 5 && sinRecambio.length > 0 && !dt && (
@@ -244,7 +245,7 @@ export function LineupPanel({ state, dispatch }: Props) {
                 base jugó 20' con el equipo sin base los otros 20. */}
             {sinRecambio.length === 1
               ? `Sin ${sinRecambio[0].position.toLowerCase()} de recambio en el banco: el plan no tiene con quién descansar a ${shortName(sinRecambio[0].name)}. O juega casi los 40, o el equipo pasa cuartos sin ${sinRecambio[0].position.toLowerCase()} natural.`
-              : `Sin recambio de su puesto en el banco: el plan no tiene con quién descansar a ${sinRecambio.map((p) => shortName(p.name)).join(', ')}. O juegan casi los 40, o el equipo pasa cuartos sin su puesto.`}{' '}
+              : `Sin recambio de su puesto en el banco: el plan no tiene con quién descansar a ${listaY(sinRecambio.map((p) => shortName(p.name)))}. O juegan casi los 40, o el equipo pasa cuartos sin su puesto.`}{' '}
             {conRecambioAfuera.length > 0
               ? `Tenés ${conRecambioAfuera.map((t) => t.position.toLowerCase()).join(' y ')} en la planilla sin lugar en el banco.`
               : `Si querés ${sinRecambio.length === 1 ? 'cuidarlo' : 'cuidarlos'}, poné a alguien fuera de puesto en el banco o hacé los cambios a mano.`}

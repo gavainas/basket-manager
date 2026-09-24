@@ -25,6 +25,7 @@ import {
 } from '../game/match';
 import { arranqueDelCuarto, jugadasDelCuarto, largoDelCuarto, largoDelTramo, type Jugada } from '../game/relato';
 import { clubByLegacyId, teamByLegacyRival, userTeam } from '../game/world';
+import { apellido } from '../game/nombres';
 import type { DefenseTactic, GameState, Player, Position, WorldPlayer } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { MatchClockContext, visibleScore, visibleVitals } from './matchPresentation';
@@ -45,10 +46,7 @@ const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'P
 const POS_ABBR: Record<Position, string> = { Base: 'B', Escolta: 'E', Alero: 'A', 'Ala-Pívot': 'AP', Pívot: 'P' };
 const Q_LABELS = ['1er', '2do', '3er', '4to'];
 
-function shortName(name: string): string {
-  const parts = name.replace(/"[^"]*"\s*/g, '').trim().split(/\s+/);
-  return parts[parts.length - 1];
-}
+const shortName = apellido;
 
 /* Los cinco puestos sobre media cancha horizontal (en % de la mitad): el base
    atrás, los perimetrales en el medio, los grandes cerca del aro. La otra mitad

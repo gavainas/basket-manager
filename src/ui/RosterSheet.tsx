@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { GameState, Player, Position } from '../game/types';
 import { conductScore } from '../game/conduct';
 import { activePlayers } from '../game/match';
+import { apodoOApellido } from '../game/nombres';
 import { Avatar } from './Avatar';
 import { ConductaCorta } from './Conducta';
 import { Icon } from './Icon';
@@ -53,13 +54,8 @@ function lastCls(v: number | null): string {
   return v >= 7 ? 'stat-good' : v <= 3 ? 'stat-bad' : '';
 }
 
-/** Apodo entre comillas si tiene; si no, el apellido. */
-function shortName(name: string): string {
-  const nick = name.match(/"([^"]+)"/);
-  if (nick) return nick[1];
-  const parts = name.trim().split(/\s+/);
-  return parts[parts.length - 1];
-}
+/** Apodo entre comillas si tiene; si no, el apellido (nombres.ts). */
+const shortName = apodoOApellido;
 
 function avgRating(players: Player[]): number {
   if (players.length === 0) return 0;

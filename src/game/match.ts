@@ -9,6 +9,7 @@ import { bumpGrievance, sootheGrievance } from './mood';
 import { fallbackNote, quarterFlavor, rollRefIncident } from './narrative';
 import { computeRating, type PlayerRating } from './rating';
 import { fechaLabel, logClubEvent, logPlayerEvent } from './timeline';
+import { listaY } from './nombres';
 import { rollRivalMatchday, USER_TEAM_ID } from './world';
 import type {
   AttackTactic,
@@ -2255,8 +2256,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   effects.push(`Motivación del plantel ${baseMorale >= 0 ? '+' : ''}${baseMorale}${moraleTag}`);
   effects.push(`Prestigio deportivo ${prestigeDelta >= 0 ? '+' : ''}${prestigeDelta}${shortHanded && won ? ' (la liga habla de la gesta)' : ''}`);
   const mostUsed = [...played].sort((a, b) => b.mins - a.mins);
-  // "Silva, Fernández y Viera", no "Silva, Fernández, Viera".
-  const listaY = (nombres: string[]) => (nombres.length > 1 ? `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}` : nombres[0]);
+  // "Silva, Fernández y Viera", no "Silva, Fernández, Viera" (listaY, nombres.ts).
   if (mostUsed.length > 0) {
     // Los que vinieron y se quedaron en el banco los 40: el informe los nombra,
     // así la bronca por minutos de abajo tiene su porqué arriba.

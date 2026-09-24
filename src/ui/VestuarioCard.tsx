@@ -1,5 +1,6 @@
 import type { GameState, Player } from '../game/types';
 import { buildSocialMap, type SocialGroup } from '../game/socialMap';
+import { apellido } from '../game/nombres';
 import { Avatar } from './Avatar';
 import { Bar } from './Bar';
 import { Cabecera } from './Cabecera';
@@ -10,7 +11,7 @@ function PlayerChip({ p }: { p: Player }) {
   return (
     <span className="chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
       <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={22} title={p.name} personality={p.personality} />
-      <PlayerLink id={p.id}>{p.name.replace(/"[^"]*"\s*/g, '').split(/\s+/).pop()}</PlayerLink>
+      <PlayerLink id={p.id}>{apellido(p.name)}</PlayerLink>
     </span>
   );
 }
