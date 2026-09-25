@@ -63,7 +63,7 @@
 .hub-a summary { cursor: pointer; text-decoration: underline; color: #1d4f73; }
 .hub-a-shortcuts { display: flex; flex-wrap: wrap; gap: .5rem; padding-bottom: .5rem; }
 .hub-a-shortcuts button { background: var(--panel); padding: .35rem .75rem; }
-.hub-a button:focus-visible, .hub-a summary:focus-visible { outline: 3px solid #1d4f73; outline-offset: 3px; }
+.hub-a summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (max-width: 1000px) { .hub-a-layout { grid-template-columns: 1fr; } .hub-a-side { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 650px) { .hub-a-side { grid-template-columns: 1fr; } .hub-a-heading { align-items: flex-start; flex-direction: column; } .hub-a-match-body { grid-template-columns: 1fr; } .hub-a-scene { min-height: 140px; } .hub-a-prepare { flex-wrap: wrap; } }
 

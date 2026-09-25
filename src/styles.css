@@ -53,8 +53,11 @@
      Nueve pasos, la razón se abre hacia arriba: los tres últimos son display
      (cifra destacada, marcador en vivo, marcador final) y necesitan aire
      entre sí para leerse como escalones y no como un mismo tamaño. */
-  --fs-2xs: 0.62rem;  /* etiqueta mayúscula mínima */
-  --fs-xs: 0.72rem;   /* chip, sub-etiqueta */
+  /* Los dos pasos más chicos subieron en sep 2026 con Barlow: su ojo medio es
+     más bajo que el de Segoe UI y a 0.62/0.72rem los metadatos del HUD y las
+     etiquetas se leían más chicos que antes. */
+  --fs-2xs: 0.68rem;  /* etiqueta mayúscula mínima */
+  --fs-xs: 0.76rem;   /* chip, sub-etiqueta */
   --fs-sm: 0.82rem;   /* texto secundario, tabla densa */
   --fs-base: 0.95rem; /* cuerpo */
   --fs-md: 1.15rem;   /* subtítulo, dato de ficha */
@@ -203,9 +206,39 @@ button.primary:hover:not(:disabled) {
   filter: brightness(1.1);
 }
 
+/* BTN-04 danger: sólo para acciones destructivas. Hover propio en rojo (el
+   hover genérico lo pintaba de naranja, como si fuera una acción más). */
 button.danger {
   border-color: var(--bad);
   color: var(--bad);
+}
+
+button.danger:hover:not(:disabled) {
+  border-color: var(--bad);
+  background: color-mix(in srgb, var(--bad) 12%, var(--panel-2));
+}
+
+/* BTN-03 ghost: acciones de baja prioridad (cancelar, volver, ver más). Sin
+   placa; al pasar el mouse aparece la superficie. */
+button.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-dim);
+}
+
+button.ghost:hover:not(:disabled) {
+  background: var(--panel-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+/* Foco con teclado (BTN, estados): todos los botones y los links que actúan
+   como botón (nombres de jugador, club, rival, liga) muestran dónde está el
+   foco. Naranja porque el foco es uno de los usos permitidos del acento. */
+button:focus-visible,
+[role='button']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ---------- Layout: el marco fijo ---------- */
@@ -664,9 +697,12 @@ button.danger {
    arranca con otra cosa (una cabecera ilustrada, un aviso), el h3 la declara
    y la banda no se pierde en silencio. */
 /* Desde la paleta gris perla la banda es azul noche en todas las áreas: el
-   color de sección dejó de pintar cabezales (queda en íconos y filetes). */
+   color de sección dejó de pintar cabezales (queda en íconos y filetes).
+   HEADER-01: la clase explícita funciona en cualquier card, también fuera de
+   una vista (Carrera, fines de temporada); el :first-child implícito sigue
+   limitado a las vistas del juego. */
 .vista .card > h3:first-child,
-.vista .card > h3.card-band {
+.card > h3.card-band {
   background: var(--chrome-alto);
   color: var(--text-light);
   font-weight: 600;
@@ -695,14 +731,14 @@ button.danger {
    o pizarra— sobre el azul de la sección y no se leía. Sobre el color de
    sección la tinta es clara, como el `.band-right`. */
 .vista .card > h3:first-child > .chip,
-.vista .card > h3.card-band > .chip {
+.card > h3.card-band > .chip {
   color: var(--text-light);
   border-color: rgba(246, 244, 241, 0.55);
   font-weight: 500;
   letter-spacing: 0.04em;
 }
 .vista .card > h3:first-child > .chip.warn,
-.vista .card > h3.card-band > .chip.warn {
+.card > h3.card-band > .chip.warn {
   background: rgba(246, 244, 241, 0.16);
 }
 
@@ -1974,33 +2010,49 @@ img.retrato-img.v2 {
    un tablero. La segmentación la pinta un overlay de huecos, así que el relleno
    sigue siendo continuo: un 82 muestra cuatro bloques y un pedacito del quinto,
    que es más honesto que redondear al bloque. */
-.bar-track {
+/* ---------- STAT-01 (GAME_UI_SYSTEM §10) ----------
+   Una sola barra para energía, físico, moral, unión, forma y afinidad: cinco
+   bloques, pozo hundido, relleno con el color del estado. Antes había cuatro
+   (la de Bar.tsx, .mini-medidor en listas, .legs-mini redondeada en la ficha y
+   una muerta), y Físico se dibujaba distinto en la ficha y en el Plantel.
+   Dos tamaños del mismo componente:
+   - normal: .bar-track > .bar-fill (Bar.tsx) y .legs-mini > .fill (afinidad)
+   - compacta: .mini-medidor > i (filas de tablas y del partido) */
+.bar-track,
+.legs-mini,
+.mini-medidor {
   position: relative;
+  display: block;
   height: 8px;
   background: var(--bg-soft);
   border-radius: 2px;
   overflow: hidden;
   box-shadow: var(--hundido);
-}
-
-/* Los huecos se recortan con máscara y no se pintan con el color del panel:
-   la barra vive sobre --panel, sobre --panel-2 (la hover-card del partido) y
-   sobre la cancha, y con un color fijo los huecos cantaban en dos de los tres. */
-.bar-track {
+  /* Los huecos se recortan con máscara y no se pintan con el color del panel:
+     la barra vive sobre --panel, sobre --panel-2 y sobre la cancha, y con un
+     color fijo los huecos cantaban en dos de los tres. */
   -webkit-mask-image: var(--segmentos);
   mask-image: var(--segmentos);
 }
 
-.bar-fill {
+.mini-medidor {
+  height: 5px;
+  margin-top: 0.35rem;
+}
+
+.bar-fill,
+.legs-mini .fill,
+.mini-medidor i {
+  display: block;
   height: 100%;
   border-radius: 1px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
   transition: width 0.3s;
 }
 
-.bar-fill.good { background: var(--good); }
-.bar-fill.warn { background: var(--warn); }
-.bar-fill.bad { background: var(--bad); }
+.bar-fill.good, .legs-mini .fill.good, .mini-medidor i.good { background: var(--good); }
+.bar-fill.warn, .legs-mini .fill.warn, .mini-medidor i.warn { background: var(--warn); }
+.bar-fill.bad, .legs-mini .fill.bad, .mini-medidor i.bad { background: var(--bad); }
 
 .bar-row .bar-value {
   text-align: right;
@@ -2159,12 +2211,9 @@ img.retrato-img.v2 {
   flex-wrap: wrap;
   gap: 0.35rem;
 }
+/* La nuestra se marca como pestaña activa (SUBNAV-01). */
 .division-tabs button:disabled {
-  opacity: 1;
   cursor: default;
-  border-color: var(--text);
-  color: var(--text);
-  font-weight: 700;
 }
 
 /* ---------- Tables ---------- */
@@ -2262,17 +2311,10 @@ td.num, th.num {
   font-size: var(--fs-sm);
 }
 
-/* El paso en curso: placa con filete naranja abajo, como la sección activa. */
-.step.active {
-  border-color: var(--accent);
-  color: var(--text);
-  font-weight: 700;
-  box-shadow: inset 0 -3px 0 var(--accent);
-}
-
+/* El paso en curso se marca como pestaña activa (SUBNAV-01); los hechos llevan
+   la tinta verde de "resuelto" sobre la placa neutra. */
 .step.done {
   color: var(--good);
-  border-color: var(--good);
 }
 
 .action-grid {
@@ -2472,9 +2514,9 @@ td.num, th.num {
   height: 50px;
   min-width: 50px;
   border-radius: 50%;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent);
-  color: var(--accent);
+  background: var(--chrome-alto);
+  border: 1px solid var(--chrome-alto);
+  color: var(--text-light);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2765,26 +2807,15 @@ table.planilla-rival tr.banco td { opacity: 0.7; }
   font-size: var(--fs-xs);
 }
 
+/* Pestañas de sección (Plantel, Liga). Estados en el bloque SUBNAV-01. */
 .view-toggle {
   display: inline-flex;
   flex: none;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  overflow: hidden;
 }
 
 .view-toggle button {
-  background: none;
-  border: none;
-  border-radius: 0;
-  color: var(--text-dim);
   padding: 0.3rem 0.9rem;
   font-size: var(--fs-sm);
-}
-
-.view-toggle button.active {
-  background: var(--accent-soft);
-  color: var(--accent);
 }
 
 .sheet-layout {
@@ -2935,10 +2966,13 @@ tr.sheet-group td {
 
 /* ---------- Modal ---------- */
 
+/* PANEL-02 elevated (GAME_UI_SYSTEM §8): diálogos, eventos y fichas. Se
+   despegan con el velo azul noche y la sombra alta, no con un borde naranja
+   (el naranja es acción, no decoración). */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(37, 40, 44, 0.55);
+  background: rgba(8, 29, 45, 0.62);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2948,7 +2982,8 @@ tr.sheet-group td {
 
 .modal {
   background: var(--panel);
-  border: 1px solid var(--accent);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--chrome-alto);
   border-radius: var(--radius);
   max-width: 520px;
   width: 100%;
@@ -2957,12 +2992,17 @@ tr.sheet-group td {
 }
 
 /* El diálogo recibe el foco al abrirse (para que Enter y Escape le lleguen a
-   él y no al botón que lo abrió); el borde naranja ya dice dónde está. */
+   él y no al botón que lo abrió): es el contenedor, no un control, así que no
+   lleva contorno; los botones de adentro sí muestran el foco. */
 .modal:focus { outline: none; }
 
 .modal h2 {
-  color: var(--accent);
-  font-size: var(--fs-md);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--fs-lg);
 }
 
 .modal .event-text {
@@ -3757,29 +3797,92 @@ button.mini.blue.on {
 
 .segmented {
   display: flex;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
   width: fit-content;
   max-width: 100%;
 }
 
 .segmented button {
-  border: none;
-  border-radius: 0;
-  background: transparent;
   padding: 0.5rem 0.9rem;
   font-size: var(--fs-sm);
 }
 
+/* ---------- SUBNAV-01 (GAME_UI_SYSTEM §6) ----------
+   Un solo lenguaje para todas las pestañas, segmentos y filtros del juego; antes
+   había nueve, con cuatro maneras distintas de marcar el activo. Dos formatos,
+   mismos estados:
+   - Segmentos unidos (.view-toggle, .segmented): una placa con divisiones.
+   - Placas sueltas (.profile-tabs, .ps-tabs, .ps-filtros, .division-tabs,
+     .steps): cada opción es su propia placa.
+   Activo: azul noche + barra naranja abajo + peso (el naranja marca "tab
+   activo", no rellena el botón: el relleno naranja es sólo del CTA).
+   Hover: panel elevado. Foco: contorno naranja. */
+.view-toggle,
+.segmented {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.view-toggle button,
+.segmented button {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.view-toggle button + button,
 .segmented button + button {
   border-left: 1px solid var(--border);
 }
 
-.segmented button.on {
-  background: var(--accent);
-  color: var(--on-accent);
+.profile-tabs button,
+.ps-tabs button,
+.ps-filtros button,
+.division-tabs button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text-dim);
+}
+
+.view-toggle button:hover:not(:disabled):not(.active),
+.segmented button:hover:not(:disabled):not(.on),
+.profile-tabs button:hover:not(:disabled):not(.active),
+.ps-tabs button:hover:not(:disabled):not(.on),
+.ps-filtros button:hover:not(:disabled):not(.on),
+.division-tabs button:hover:not(:disabled) {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.view-toggle button.active,
+.segmented button.on,
+.profile-tabs button.active,
+.ps-tabs button.on,
+.ps-filtros button.on,
+.division-tabs button:disabled,
+.step.active {
+  background: var(--chrome-alto);
+  color: var(--text-light);
   font-weight: 700;
+  box-shadow: inset 0 -3px 0 var(--accent);
+  opacity: 1;
+}
+
+.profile-tabs button.active,
+.ps-tabs button.on,
+.ps-filtros button.on,
+.division-tabs button:disabled,
+.step.active {
+  border-color: var(--chrome-alto);
+}
+
+.view-toggle button:focus-visible,
+.segmented button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .tactic-hint {
@@ -3851,23 +3954,6 @@ button.mini.blue.on {
   font-size: var(--fs-sm);
 }
 
-.legs-mini {
-  height: 7px;
-  background: var(--bg-soft);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.legs-mini .fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.3s;
-}
-
-.legs-mini .fill.good { background: var(--good); }
-.legs-mini .fill.warn { background: var(--warn); }
-.legs-mini .fill.bad { background: var(--bad); }
-
 /* Resumen del jugador al pasar el mouse (partido en vivo) */
 
 .sub-row {
@@ -3881,7 +3967,8 @@ button.mini.blue.on {
   top: -8px;
   width: 280px;
   background: var(--panel-2);
-  border: 1px solid var(--accent);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--chrome-alto);
   border-radius: var(--radius);
   padding: 0.7rem 0.85rem;
   z-index: 70;
@@ -4004,7 +4091,8 @@ button.mini.blue.on {
 
 .profile {
   background: var(--panel);
-  border: 1px solid var(--accent);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--chrome-alto);
   border-radius: var(--radius);
   width: 100%;
   max-width: 760px;
@@ -4060,17 +4148,8 @@ button.mini.blue.on {
 }
 
 .profile-tabs button {
-  border-radius: 999px;
   padding: 0.35rem 0.9rem;
   font-size: var(--fs-sm);
-  background: transparent;
-}
-
-.profile-tabs button.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
-  font-weight: 700;
 }
 
 .profile-body {
@@ -4346,19 +4425,6 @@ button.mini.blue.on {
   letter-spacing: 0.08em;
   font-size: var(--fs-base);
   padding: 0.45rem 1rem;
-  background: var(--panel);
-  border-bottom: 3px solid transparent;
-}
-
-.ps-tabs button:hover:not(:disabled) {
-  border-color: var(--border);
-  border-bottom-color: var(--sec);
-}
-
-.ps-tabs button.on {
-  background: var(--sec);
-  border-color: var(--sec);
-  color: var(--text-light);
 }
 
 .ps-tabs button.on .chip {
@@ -4427,12 +4493,6 @@ button.mini.blue.on {
   margin-right: 0.2rem;
 }
 
-.ps-filtros button.on {
-  background: var(--sec);
-  border-color: var(--sec);
-  color: var(--text-light);
-}
-
 .ps-filtros button small {
   opacity: 0.7;
 }
@@ -4492,8 +4552,11 @@ button.mini.blue.on {
 /* Una sola hoja con renglones, no una card por jugador. Las cifras quedan en
    columna y se comparan de arriba abajo — que es lo que hace un manager — y el
    "por qué" de cada uno tiene su propia columna, así la parte humana no se
-   pierde al ganar densidad. Ver design/SISTEMA_VISUAL.md. */
-.planilla {
+   pierde al ganar densidad. Ver design/SISTEMA_VISUAL.md.
+   Sólo el panel: las <table class="planilla"> (Liga, Informe, Estadísticas)
+   comparten el nombre pero son TABLE-01 dentro de una card, y heredaban este
+   fondo con relieve como una card dentro de otra. */
+.planilla:not(table) {
   position: relative;
   background-color: var(--panel);
   background-image: var(--grano);
@@ -4660,32 +4723,6 @@ button.mini.blue.on {
 
 .planilla-cifra b.ojo { color: var(--warn); }
 .planilla-cifra b.mal { color: var(--bad); }
-
-.mini-medidor {
-  position: relative;
-  display: block;
-  height: 5px;
-  margin-top: 0.35rem;
-  background: var(--bg-soft);
-  border-radius: 2px;
-  overflow: hidden;
-  box-shadow: var(--hundido);
-}
-
-.mini-medidor i {
-  display: block;
-  height: 100%;
-  border-radius: 1px;
-}
-
-.mini-medidor i.good { background: var(--good); }
-.mini-medidor i.warn { background: var(--warn); }
-.mini-medidor i.bad { background: var(--bad); }
-
-.mini-medidor {
-  -webkit-mask-image: var(--segmentos);
-  mask-image: var(--segmentos);
-}
 
 /* La nota humana ya trae su ícono y su color; acá sólo se le da la caja. */
 .planilla-nota .human-note { margin: 0; }
@@ -5491,6 +5528,8 @@ button.mini.blue.on {
 
 .pv-relato-cab > span:first-child { display: inline-flex; align-items: center; gap: 0.35rem; }
 
+/* SUBNAV-01 sobre una banda azul noche: el segmento activo invierte (placa
+   clara, tinta oscura) para no desaparecer contra la banda; mismo filete naranja. */
 .pv-filtro {
   border-color: rgba(246, 244, 241, 0.35);
   background: rgba(0, 0, 0, 0.12);
@@ -5505,7 +5544,8 @@ button.mini.blue.on {
 }
 
 .pv-filtro button + button { border-left-color: rgba(246, 244, 241, 0.35); }
-.pv-filtro button.on { background: var(--panel); color: var(--sec); }
+.pv-filtro button:hover:not(:disabled):not(.on) { background: rgba(246, 244, 241, 0.12); color: var(--text-light); }
+.pv-filtro button.on { background: var(--panel); color: var(--text); }
 
 /* El relato jugada a jugada: minuto · marcador · quién · qué pasó. */
 .rj-lista {
@@ -6009,8 +6049,11 @@ button.mini.blue.on {
   gap: 0.4rem;
 }
 
+/* La portada conserva su sistema propio (fuera del lote SUBNAV-01): fondo
+   transparente sobre la ilustración y el activo relleno de naranja. */
 .portada-dificultad .segmented {
   border-color: rgba(243, 233, 214, 0.3);
+  background: transparent;
 }
 
 .portada-dificultad .segmented button {
@@ -6022,7 +6065,9 @@ button.mini.blue.on {
 }
 
 .portada-dificultad .segmented button.on {
+  background: var(--accent);
   color: var(--on-accent);
+  box-shadow: none;
 }
 
 .portada-dif-k {
