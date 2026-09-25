@@ -13,7 +13,7 @@
 }
 .hub-a-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .hub-a-heading h2 { margin: .1rem 0 0; font-size: 1.65rem; }
-.hub-a-eyebrow { font-family: var(--font-display, 'Oswald', sans-serif); text-transform: uppercase; letter-spacing: .13em; font-size: .8rem; }
+.hub-a-eyebrow { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .13em; font-size: .8rem; }
 .hub-a-layout { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(340px, 1fr); gap: 1rem; align-items: stretch; min-height: 0; }
 .hub-a-match, .hub-a-card { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; min-height: 0; }
 .hub-a-match { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
@@ -33,7 +33,7 @@
    y la franja medía 130 px: eso era lo que le faltaba a la columna del rival. */
 .hub-a-prepare { border-top: 1px solid var(--border); background: var(--panel-2); padding: 1rem 1.3rem; display: flex; align-items: center; gap: 1rem; justify-content: space-between; }
 .hub-a-prepare > div { min-width: 0; flex: 1 1 auto; }
-.hub-a-prepare strong { font-family: 'Oswald', sans-serif; font-size: 1.2rem; }
+.hub-a-prepare strong { font-family: var(--font-display); font-size: 1.2rem; }
 .hub-a-prepare p { margin: .25rem 0 0; max-width: 40ch; }
 .hub-a-prepare .primary { padding: .85rem 1rem; font-size: 1.1rem; flex-shrink: 0; white-space: nowrap; }
 .hub-a-side { display: grid; gap: 1rem; min-width: 0; min-height: 0; align-content: start; }
@@ -48,7 +48,7 @@
 /* El último partido lleva la misma banda azul noche que las demás. */
 .hub-a-readiness { display: grid; grid-template-columns: 1.6fr 1fr 1fr; padding: .75rem .65rem; gap: .4rem; }
 .hub-a-readiness button { display: flex; flex-direction: column; align-items: center; border: 1px solid var(--border); padding: .5rem .25rem; background: var(--panel-2); }
-.hub-a-readiness strong { font-family: 'Oswald', sans-serif; font-size: 1.65rem; }
+.hub-a-readiness strong { font-family: var(--font-display); font-size: 1.65rem; }
 .hub-a-readiness span { font-size: .85rem; }
 .hub-a-alert { width: 100%; display: flex; justify-content: space-between; gap: .75rem; padding: .6rem .9rem; text-align: left; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: transparent; }
 .hub-a-alert.bad { border-left: 3px solid var(--bad); }
@@ -57,7 +57,7 @@
 .hub-a-link { background: none; border: 0; text-decoration: underline; color: #1d4f73; padding: .5rem 0; }
 .hub-a-card > .hub-a-link { margin: .2rem .9rem .5rem; }
 .hub-a-result { padding: .85rem .9rem; }
-.hub-a-score { display: block; font: 2.1rem 'Oswald', sans-serif; }
+.hub-a-score { display: block; font: 2.1rem var(--font-display); }
 .hub-a-result p { margin: .45rem 0; }
 .hub-a details { padding: .5rem .7rem; border-top: 1px solid var(--border); }
 .hub-a summary { cursor: pointer; text-decoration: underline; color: #1d4f73; }

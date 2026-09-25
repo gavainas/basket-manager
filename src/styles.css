@@ -118,8 +118,14 @@
     #000 0 calc(20% - 3px),
     transparent calc(20% - 3px) 20%
   );
-  /* Empaquetada en el build (ver main.tsx): no depende de la fuente del sistema. */
-  --display: 'Oswald', 'Bahnschrift SemiBold Condensed', 'Arial Narrow', sans-serif;
+  /* Tipografía (sep 2026, ver design/AI_HANDOFF.md): dos voces de la misma
+     familia, empaquetadas en el build (ver main.tsx), sin depender de fuentes
+     del sistema. Barlow Condensed para la voz display (títulos, marcador,
+     cifras, nav); Barlow para leer (tablas, textos, botones).
+     `--display` queda como alias de `--font-display`: lo usan ~90 reglas. */
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-ui: 'Barlow', sans-serif;
+  --display: var(--font-display);
 
   /* Alto de las dos barras del chrome. Desde la tanda A son FILAS de la grilla
      del marco, así que ya no hacen falta para reservar hueco; quedan porque
@@ -138,7 +144,7 @@
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-ui);
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -151,6 +157,14 @@ body {
 h1, h2, h3, h4 {
   margin: 0 0 0.5rem;
   line-height: 1.2;
+}
+
+/* Los campos de formulario no heredan la fuente por defecto: sin esto, el
+   select de la referencia o el del DT salían con la del sistema. */
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 button {
@@ -1704,7 +1718,7 @@ button.danger {
 
 .hub-plantel-leyenda {
   margin-left: auto;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: var(--fs-xs);
   letter-spacing: 0.04em;
   text-transform: none;
@@ -5771,8 +5785,8 @@ button.mini.blue.on {
   text-align: center;
 }
 
-/* El título: texto, no logo (todavía no hay asset). Oswald 700 en crema y
-   naranja con una sombra dura debajo es la aproximación a la collegiate. */
+/* El título: texto, no logo (todavía no hay asset). La display en 700, crema y
+   naranja con una sombra dura debajo, es la aproximación a la collegiate. */
 .portada-titulo {
   display: grid;
   justify-items: center;
