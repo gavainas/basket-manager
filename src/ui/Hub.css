@@ -13,9 +13,9 @@
 }
 .hub-a-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .hub-a-heading h2 { margin: .1rem 0 0; font-size: 1.65rem; }
-.hub-a-eyebrow { font-family: var(--display); text-transform: uppercase; letter-spacing: .13em; font-size: .8rem; }
+.hub-a-eyebrow { font-family: var(--font-display, 'Oswald', sans-serif); text-transform: uppercase; letter-spacing: .13em; font-size: .8rem; }
 .hub-a-layout { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(340px, 1fr); gap: 1rem; align-items: stretch; min-height: 0; }
-.hub-a-match, .hub-a-card { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; min-height: 0; }
+.hub-a-match, .hub-a-card { background: var(--panel, #f7f5f1); color: var(--text, #292d32); border: 1px solid #cec9c1; border-radius: 4px; overflow: hidden; min-height: 0; }
 .hub-a-match { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
 .hub-a-match-body { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); min-height: 0; }
 .hub-a-match-info { padding: 1.35rem; display: flex; flex-direction: column; align-items: flex-start; gap: .65rem; }
@@ -31,9 +31,9 @@
 /* La franja de preparación es una sola fila: el texto a la izquierda y el botón
    a la derecha, sin envolver. Con `flex-wrap` el botón caía a una segunda línea
    y la franja medía 130 px: eso era lo que le faltaba a la columna del rival. */
-.hub-a-prepare { border-top: 1px solid var(--border); background: var(--bm-panel-elevated); padding: 1rem 1.3rem; display: flex; align-items: center; gap: 1rem; justify-content: space-between; }
+.hub-a-prepare { border-top: 1px solid #d4cec5; background: #eae5db; padding: 1rem 1.3rem; display: flex; align-items: center; gap: 1rem; justify-content: space-between; }
 .hub-a-prepare > div { min-width: 0; flex: 1 1 auto; }
-.hub-a-prepare strong { font-family: var(--display); font-size: 1.2rem; }
+.hub-a-prepare strong { font-family: 'Oswald', sans-serif; font-size: 1.2rem; }
 .hub-a-prepare p { margin: .25rem 0 0; max-width: 40ch; }
 .hub-a-prepare .primary { padding: .85rem 1rem; font-size: 1.1rem; flex-shrink: 0; white-space: nowrap; }
 .hub-a-side { display: grid; gap: 1rem; min-width: 0; min-height: 0; align-content: start; }
@@ -44,34 +44,30 @@
    largos, "Ver otro aviso" y el link al vestuario— que medía 16 px más que la
    card y, con `overflow: hidden`, cortaba el link sin dar forma de llegar. */
 .hub-a-card { display: grid; grid-template-rows: auto; align-content: start; overflow-y: auto; overscroll-behavior: contain; }
-.hub-a-band { background: var(--bm-panel-elevated); color: var(--text); border-bottom: 1px solid var(--border); margin: 0; padding: .55rem .9rem; font-size: 1rem; letter-spacing: .04em; }
-/* El último partido usa la misma banda: el color ya no distingue módulos (HEADER-01). */
+.hub-a-band { background: #315c7d; color: #fff; margin: 0; padding: .55rem .9rem; font-size: 1rem; letter-spacing: .04em; }
+.hub-a-previous .hub-a-band { background: #555952; }
 .hub-a-readiness { display: grid; grid-template-columns: 1.6fr 1fr 1fr; padding: .75rem .65rem; gap: .4rem; }
-.hub-a-readiness button { display: flex; flex-direction: column; align-items: center; border: 1px solid var(--border); padding: .5rem .25rem; background: var(--bm-panel-elevated); }
-.hub-a-readiness strong { font-family: var(--display); font-size: 1.65rem; }
+.hub-a-readiness button { display: flex; flex-direction: column; align-items: center; border: 1px solid #d6d0c7; padding: .5rem .25rem; background: #ede9e2; }
+.hub-a-readiness strong { font-family: 'Oswald', sans-serif; font-size: 1.65rem; }
 .hub-a-readiness span { font-size: .85rem; }
-.hub-a-alert { width: 100%; display: flex; justify-content: space-between; gap: .75rem; padding: .6rem .9rem; text-align: left; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: transparent; }
-.hub-a-alert.bad { border-left: 3px solid var(--bad); }
-.hub-a-alert.warn { border-left: 3px solid var(--warn); }
+.hub-a-alert { width: 100%; display: flex; justify-content: space-between; gap: .75rem; padding: .6rem .9rem; text-align: left; border: 0; border-top: 1px solid #ded9d1; border-radius: 0; background: transparent; }
+.hub-a-alert.bad { border-left: 3px solid #a7483e; }
+.hub-a-alert.warn { border-left: 3px solid #b48c36; }
 .hub-a-note { margin: .4rem .9rem .7rem; font-size: .9rem; }
-.hub-a-link { background: none; border: 0; text-decoration: underline; color: var(--text); padding: .5rem 0; }
+.hub-a-link { background: none; border: 0; text-decoration: underline; color: #315c7d; padding: .5rem 0; }
 .hub-a-card > .hub-a-link { margin: .2rem .9rem .5rem; }
 .hub-a-result { padding: .85rem .9rem; }
-.hub-a-score { display: block; font: 2.1rem var(--display); }
+.hub-a-score { display: block; font: 2.1rem 'Oswald', sans-serif; }
 .hub-a-result p { margin: .45rem 0; }
-.hub-a details { padding: .5rem .7rem; border-top: 1px solid var(--border); }
-.hub-a summary { cursor: pointer; text-decoration: underline; color: var(--text); }
+.hub-a details { padding: .5rem .7rem; border-top: 1px solid #d8d1c8; }
+.hub-a summary { cursor: pointer; text-decoration: underline; color: #315c7d; }
 .hub-a-shortcuts { display: flex; flex-wrap: wrap; gap: .5rem; padding-bottom: .5rem; }
-.hub-a-shortcuts button { background: var(--panel-2); padding: .35rem .75rem; }
-.hub-a button:focus-visible, .hub-a summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.hub-a-shortcuts button { background: #e9e5de; padding: .35rem .75rem; }
+.hub-a button:focus-visible, .hub-a summary:focus-visible { outline: 3px solid #315c7d; outline-offset: 3px; }
 @media (max-width: 1000px) { .hub-a-layout { grid-template-columns: 1fr; } .hub-a-side { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 650px) { .hub-a-side { grid-template-columns: 1fr; } .hub-a-heading { align-items: flex-start; flex-direction: column; } .hub-a-match-body { grid-template-columns: 1fr; } .hub-a-scene { min-height: 140px; } .hub-a-prepare { flex-wrap: wrap; } }
 
 .hub-a-heading { color: var(--text-light); }
-/* HEADER-01 y PANEL-05: el título de pantalla y el rival son voz display
-   (condensada, mayúsculas), como en la lámina 05. */
-.hub-a-heading h2,
-.hub-a-match-info h3 { font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
 .hub-a-match, .hub-a-card { box-shadow: var(--relieve); }
 
 /* En PC las tres piezas van una al lado de la otra. Apiladas, la columna
