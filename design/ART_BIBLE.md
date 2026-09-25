@@ -367,6 +367,14 @@ Una vez validado ese vertical slice, esta v0.1 pasa a una versión congelada de 
 
 ## Registro
 
+### 2026-09-25 — UI: shell nocturno + paneles gris perla
+
+- La Paleta A entera en la UI quedó demasiado oscura; el crema cansaba. Gabi aprobó una
+  híbrida: **shell y títulos en azul noche (Paleta A), paneles de datos gris perla claro
+  y frío**. Detalle y valores en `GAME_UI_SYSTEM.md` §22.
+- La regla "UI fría + mundo cálido" se mantiene: el gris perla es frío; lo cálido sigue en
+  la ilustración.
+
 ### 2026-09-23 — Art Bible v0.1
 
 - **Aprobado:** las seis láminas de “Revisión de arte” como referencias maestras.

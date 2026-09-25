@@ -826,6 +826,23 @@ No hacer una mega-pasada ciega sobre todas las pantallas.
 
 ## 22. Registro
 
+### 2026-09-25 — Paneles "gris perla" (decisión de Gabi)
+
+- Se probó la Paleta A completa (paneles `--bm-panel` azul noche, commit `c1adbf9`) en
+  Tablero, Vestuario y Partido: Gabi la encontró "todo muy oscuro" (brillo medio ~50/255,
+  por debajo de la lámina 05). Se revirtió (`5e4b5a9`).
+- El crema anterior cansa la vista en sesiones largas (brillo ~140, 52 % de la pantalla
+  casi blanca).
+- **Aprobado: híbrida "gris perla".** Shell en azul noche de la Paleta A (top nav, HUD,
+  marcador, bandas de título de módulo) + **paneles de datos claros y fríos**:
+  panel `#DFE5E9`, elevado `#D2D9DF`, pozo `#CCD5DC`, borde `#B6C2CB`, tinta `#13232F`,
+  secundaria `#4D6170`. Brillo medio ~125. Implementado en `src/styles.css` (`:root`).
+- **Esto modifica PANEL-01/02 (§8):** el fondo de panel de datos es el gris perla, no
+  `--bm-panel`. `--bm-panel` queda para bandas de título, marcador y superficies del shell.
+  Las escenas SCENE-A (Vestuario) conservan su panel oscuro translúcido sobre la ilustración.
+- Colores de sección fuera de las bandas y del nav; el naranja marca sección activa y paso
+  activo.
+
 ### 2026-09-24 — UI System v0.1
 
 - Variante C de Vestuario aprobada como patrón SCENE-A.
