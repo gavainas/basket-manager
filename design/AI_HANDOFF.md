@@ -68,9 +68,49 @@ Así evitamos copiar prompts largos entre chats.
 
 # TASK ACTUAL
 
-## Typography migration + full UI coverage audit
+## Lote de componentes globales (pedido directo de Gabi, 2026-09-25)
 
-### Contexto
+> Gabi se lo pidió a Claude en el chat ("arrancá con los componentes"), siguiendo la
+> recomendación del resultado anterior. ChatGPT: revisar el resultado y definir el lote que sigue.
+
+### Alcance
+Unificar los componentes globales que la auditoría (`design/UI_COVERAGE_AUDIT.md`) encontró
+dispersos, **por CSS y sin cambiar lógica, datos ni layout de pantallas**:
+
+1. **Foco global** (BTN estados): `:focus-visible` en botones, links de jugador/club y pestañas;
+   quitar los `outline: none` que lo apagan.
+2. **BTN-03 ghost** + hover propio de **BTN-04 danger**.
+3. **SUBNAV-01 único** para los 9 estilos de pestañas/segmentos.
+4. **STAT-01 único**: una sola barra (segmentada) para energía, físico, moral, unión, forma.
+5. **HEADER-01 sin depender de `.vista`** (la banda de card aparece en Carrera, fines de
+   temporada, modales).
+6. **PANEL-02 elevated** para modales y fichas: sin naranja decorativo, velo azul noche.
+7. **TABLE-01**: arreglar la colisión `.planilla` (tablas que heredan el panel con relieve).
+8. **Legibilidad Barlow**: subir un paso los metadatos más chicos.
+
+Fuera de alcance en este lote: CHIP-01 (la fila de persona está hecha ~10 veces con markup
+distinto: necesita tocar TSX), composición SCENE-C de Tablero/Partido (necesita arte) y Portada.
+
+### Además
+Lista de assets para ChatGPT: `design/arte/ASSET_REGISTRY.md` (lo que hay, lo que falta,
+fichas §16 y prioridades).
+
+### Verificación
+1440×900 y 1366×768, recorrido de todas las superficies, sin desbordes nuevos; capturas en
+`design/capturas/`.
+
+---
+
+## Tareas cerradas
+
+### 2026-09-25 — Typography migration + full UI coverage audit (dejada por ChatGPT)
+
+<details>
+<summary>Enunciado original</summary>
+
+#### Typography migration + full UI coverage audit
+
+##### Contexto
 Gabi quiere cambiar la tipografía del juego y, antes de seguir migrando pantallas, verificar si el sistema de UI nuevo está realmente implementado en TODO el juego.
 
 Estado observado en repo:
@@ -79,7 +119,7 @@ Estado observado en repo:
 - hay usos hardcodeados de `'Oswald'` en CSS (por ejemplo `Hub.css`);
 - Foundation/Global Shell y la paleta gris perla sí afectan gran parte de la app, pero eso NO implica que NAV/PANEL/CHIP/STAT/TABLE/BUTTON/HUD estén migrados por completo en cada pantalla.
 
-### Nueva dirección tipográfica a probar
+##### Nueva dirección tipográfica a probar
 Probar como primera opción:
 
 - **Display / deportiva:** `Barlow Condensed` (600/700)
@@ -93,7 +133,7 @@ Razón:
 
 Usar paquetes Fontsource y empaquetar las fuentes con el build. No depender de fuentes del sistema.
 
-### Antes de tocar todo: auditoría
+##### Antes de tocar todo: auditoría
 
 Recorrer TODAS las superficies visibles del juego y clasificarlas:
 
@@ -136,7 +176,7 @@ Para cada superficie registrar:
 Guardar la auditoría en:
 `design/UI_COVERAGE_AUDIT.md`
 
-### Migración tipográfica
+##### Migración tipográfica
 
 Después de auditar:
 
@@ -164,7 +204,7 @@ Después de auditar:
    - no overflow nuevo;
    - navegación, tablas y marcador siguen entrando.
 
-### Prueba visual
+##### Prueba visual
 
 Sacar screenshots con la nueva tipografía de:
 - Tablero
@@ -178,7 +218,7 @@ Sacar screenshots con la nueva tipografía de:
 Comparar con la referencia:
 `design/arte/referencias/ui-final-partido-centro.png`
 
-### Resultado esperado
+##### Resultado esperado
 
 Al terminar, actualizar **RESULTADO CLAUDE** con:
 - commit;
@@ -188,9 +228,13 @@ Al terminar, actualizar **RESULTADO CLAUDE** con:
 - screenshots;
 - recomendaciones del próximo lote.
 
-### Importante
+##### Importante
 No hacer todavía una refactorización masiva de las pantallas Legacy sin mostrar primero la auditoría y las screenshots con la nueva tipografía.
 No cambiar lógica ni datos.
+
+---
+
+</details>
 
 ---
 
