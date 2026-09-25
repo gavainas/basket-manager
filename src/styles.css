@@ -1,29 +1,35 @@
 /* Sistema visual "club de barrio" — ver design/SISTEMA_VISUAL.md.
    Los nombres de token viejos se conservan a propósito: así las ~2200 líneas de
-   abajo siguen funcionando sin tocarlas. Lo que cambió es a qué apuntan. */
+   abajo siguen funcionando sin tocarlas. Lo que cambió es a qué apuntan.
+
+   Paleta "gris perla" (sep 2026, elegida por Gabi): shell en azul noche de la
+   Paleta A (barra de arriba, HUD, marcador, títulos de módulo) y paneles de
+   datos claros y fríos. El crema anterior cansaba la vista (brillo medio 140
+   sobre 255); la Paleta A entera quedaba "todo muy oscuro" (~50). Ésta mide
+   ~125 y conserva texto oscuro sobre claro, que es lo más legible. */
 :root {
-  /* Chrome — neutro. Nunca lleva los colores de un club: si los llevara, se
-     pelearía con la ficha de cada rival. */
-  --chrome: #32353a;
-  --chrome-alto: #3d4147;
-  --chrome-linea: #4a4e55;
+  /* Chrome — azul noche (Paleta A). Nunca lleva los colores de un club: si
+     los llevara, se pelearía con la ficha de cada rival. */
+  --chrome: #081d2d;
+  --chrome-alto: #102c40;
+  --chrome-linea: #23445a;
 
-  /* Superficies */
-  --bg: #d8d4cc;      /* el campo donde apoyan los paneles */
-  --bg-soft: #e6e3dd; /* pistas de barra, filas hundidas */
-  --panel: #f6f4f1;   /* cuerpo de card */
-  --panel-2: #eceae6; /* botones y superficies elevadas */
-  --border: #d2cec8;
+  /* Superficies — gris perla frío */
+  --bg: #bcc7cf;      /* el campo donde apoyan los paneles */
+  --bg-soft: #ccd5dc; /* pistas de barra, filas hundidas */
+  --panel: #dfe5e9;   /* cuerpo de card */
+  --panel-2: #d2d9df; /* botones y superficies elevadas */
+  --border: #b6c2cb;
 
-  /* Tinta */
-  --text: #25282c;
-  --text-dim: #6a6f76;
-  --text-faint: #9a9fa6;
-  --text-light: #f6f4f1; /* sobre chrome y sobre la cancha */
+  /* Tinta — azul muy oscuro en vez de gris cálido */
+  --text: #13232f;
+  --text-dim: #4d6170;
+  --text-faint: #7d8e99;
+  --text-light: #f3f0e8; /* sobre chrome y sobre la cancha */
 
   /* Acción — RESERVADO: botón primario y dato clave. Máximo dos por pantalla. */
-  --accent: #e07a2a;
-  --accent-soft: rgba(224, 122, 42, 0.14);
+  --accent: #e8792a;
+  --accent-soft: rgba(232, 121, 42, 0.14);
   --on-accent: #2a1a08; /* tinta sobre naranja: 5:1, pasa AA en texto chico */
 
   /* Semáforo — vive dentro de los datos, nunca en un cabezal */
@@ -101,9 +107,9 @@
        superficie apoyada, no un borde dibujado.
      --hundido: lo contrario, para pistas y pozos donde va un dato. */
   --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.3'/%3E%3C/svg%3E");
-  --relieve: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(120, 100, 70, 0.2),
-    0 6px 16px rgba(20, 14, 8, 0.2);
-  --hundido: inset 0 1px 2px rgba(120, 100, 70, 0.32);
+  --relieve: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -1px 0 rgba(16, 44, 64, 0.14),
+    0 6px 16px rgba(4, 14, 22, 0.28);
+  --hundido: inset 0 1px 2px rgba(16, 44, 64, 0.28);
   /* Cinco bloques: la máscara que convierte cualquier barra en un medidor de
      tablero. Va como máscara y no como overlay de color para que los huecos
      dejen ver la superficie que haya atrás, sea la que sea. */
@@ -253,7 +259,7 @@ button.danger {
   z-index: 5;
   margin: 0 calc(-1 * var(--sp-4));
   padding: 0.6rem var(--sp-4) calc(0.6rem + var(--sp-6));
-  background: linear-gradient(to top, rgb(28, 22, 18) 0%, rgb(28, 22, 18) 82%, transparent);
+  background: linear-gradient(to top, var(--chrome) 0%, var(--chrome) 82%, transparent);
 }
 
 .pie-fijo .confirm-bar { margin-top: 0; }
@@ -453,7 +459,8 @@ button.danger {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--sec, var(--sec-ajustes));
+  /* Neutro: el naranja lo toma sólo la sección activa (ver .seccion.on). */
+  background: #aebcc4;
   align-self: center;
   margin-right: 0.35rem;
   opacity: 0.55;
@@ -498,11 +505,11 @@ button.danger {
 .secciones .seccion.on {
   background: var(--chrome-alto);
   color: var(--text-light);
-  border-bottom-color: var(--sec, var(--sec-ajustes));
+  border-bottom-color: var(--accent);
 }
 
 .secciones .seccion.on .ico { opacity: 1; }
-.secciones .seccion.on .seccion-punto { opacity: 1; }
+.secciones .seccion.on .seccion-punto { opacity: 1; background: var(--accent); }
 
 .secciones .seccion:active:not(:disabled) {
   transform: none;
@@ -642,9 +649,11 @@ button.danger {
    solo, pero la clase explícita `card-band` es el gancho robusto: si la card
    arranca con otra cosa (una cabecera ilustrada, un aviso), el h3 la declara
    y la banda no se pierde en silencio. */
+/* Desde la paleta gris perla la banda es azul noche en todas las áreas: el
+   color de sección dejó de pintar cabezales (queda en íconos y filetes). */
 .vista .card > h3:first-child,
 .vista .card > h3.card-band {
-  background: var(--sec);
+  background: var(--chrome-alto);
   color: var(--text-light);
   font-weight: 600;
   font-size: var(--fs-base);
@@ -723,7 +732,9 @@ button.danger {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(32, 28, 24, 0.42), rgba(24, 21, 19, 0.62));
+  /* Velo frío en azul noche: el fondo queda como atmósfera detrás de los
+     paneles claros. */
+  background: linear-gradient(180deg, rgba(8, 29, 45, 0.55), rgba(8, 29, 45, 0.75));
 }
 
 /* Sobre un fondo oscuro los paneles necesitan despegarse un poco más. */
@@ -1416,7 +1427,7 @@ button.danger {
 
 .hub-block-title {
   margin: 0;
-  background: var(--sec);
+  background: var(--chrome-alto);
   color: var(--text-light);
   font-family: var(--display);
   font-weight: 600;
@@ -2230,18 +2241,19 @@ td.num, th.num {
 
 .step {
   padding: 0.35rem 0.9rem;
-  border-radius: 999px;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
+  background: var(--panel);
   color: var(--text-dim);
   font-size: var(--fs-sm);
 }
 
-/* El paso en curso es señalización, no acción: lleva el azul de Partidos. */
+/* El paso en curso: placa con filete naranja abajo, como la sección activa. */
 .step.active {
-  border-color: var(--sec-partidos);
-  color: var(--sec-partidos);
+  border-color: var(--accent);
+  color: var(--text);
   font-weight: 700;
-  background: rgba(45, 92, 138, 0.1);
+  box-shadow: inset 0 -3px 0 var(--accent);
 }
 
 .step.done {
@@ -6639,4 +6651,109 @@ button.mini.blue.on {
 
 @media (max-width: 900px) {
   .vest-cuerpo { grid-template-columns: 1fr; }
+}
+
+
+/* ---------- Vertical slice de arte · Vestuario (rama de prueba, sep 2026) ----------
+   Prueba controlada de ART_BIBLE.md: fondo ilustrado real + UI viva encima.
+   Todo está scopeado a .vestuario-slice para no contaminar ninguna otra pantalla.
+   Variante C: el ~28 % de arriba es una franja libre donde el vestuario se ve
+   sin panel ni velo (sólo el título); debajo, el panel social en Paleta A. */
+.vestuario-slice {
+  --panel: rgba(8, 29, 45, 0.88);
+  --panel-2: rgba(16, 44, 64, 0.88);
+  --border: rgba(174, 188, 196, 0.34);
+  --text: #f3f0e8;
+  --text-dim: #c1cbd1;
+  --text-faint: #9fadb5;
+  --accent: #f47c27;
+  --good: #54d29a;
+  --warn: #e4b94b;
+  --bad: #e35b4f;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: var(--text);
+  background: #081d2d;
+  border-color: rgba(69, 100, 119, 0.9);
+}
+
+/* La ilustración cubre la franja y un poco más, encuadrada en los lockers y
+   la pizarra (no en el techo), y se funde hacia abajo para que detrás del
+   panel no haya un corte duro. */
+.vestuario-slice-art {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 470px;
+  z-index: -2;
+  background-size: cover;
+  background-position: center 40%;
+  -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+}
+
+/* Velo: nada sobre la franja; oscurece recién donde empieza el panel. */
+.vestuario-slice::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 22, 34, 0) 0,
+    rgba(6, 22, 34, 0) 140px,
+    rgba(6, 22, 34, 0.6) 205px,
+    rgba(6, 22, 34, 0.78) 100%
+  );
+}
+
+/* El título es la franja: sin fondo ni filete, con un degradado corto arriba
+   sólo para que se lea. */
+.vestuario-slice > h3 {
+  margin: -1rem -1rem 1rem;
+  padding: 0.85rem 1.1rem 0;
+  height: clamp(160px, 20vh, 175px);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  background: linear-gradient(180deg, rgba(6, 22, 34, 0.78) 0, rgba(6, 22, 34, 0.3) 52px, rgba(6, 22, 34, 0) 104px);
+  color: #f3f0e8;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+.vestuario-slice .vest-cuerpo {
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid rgba(174, 188, 196, 0.28);
+  background: rgba(8, 29, 45, 0.78);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(7px);
+}
+
+.vestuario-slice .vest-sub {
+  color: #aebcc4;
+}
+
+.vestuario-slice .chip {
+  background: rgba(16, 44, 64, 0.86);
+  border-color: rgba(174, 188, 196, 0.25);
+  color: #f3f0e8;
+}
+
+.vestuario-slice a {
+  color: #f3f0e8;
+}
+
+.vestuario-slice .muted {
+  color: #aebcc4;
+}
+
+.vestuario-slice .bar-track {
+  background: rgba(243, 240, 232, 0.14);
+}
+
+@media (max-width: 900px) {
+  .vestuario-slice-art {
+    background-position: 58% center;
+  }
 }
