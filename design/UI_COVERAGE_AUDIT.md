@@ -51,6 +51,12 @@ ninguna familia hardcodeada en producción.
 
 ## Componentes globales que faltan (GAME_UI_SYSTEM)
 
+> **Actualización 2026-09-25 (commit `80f6ce9`, lote de componentes):** resueltos 1 (SUBNAV-01),
+> 2 (STAT-01), 3 (ghost + hover de danger), 4 (foco global, salvo `.tip` y la portada),
+> 6 (banda explícita fuera de `.vista`), PANEL-02 del punto 7 y 9 (colisión `.planilla`).
+> Siguen abiertos: 5 (clases `ui-*`), PANEL-03/04, 8 (CHIP-01), 10 (shell de la pretemporada)
+> y 11 (CSS sin uso). La tabla de arriba describe el estado **previo** al lote.
+
 1. **SUBNAV-01 unificado.** 9 estilos: `.view-toggle`, `.segmented`, `.profile-tabs`, `.ps-tabs`,
    `.ps-filtros`, `.pv-filtro`, `.division-tabs`, `.steps/.step` (+ el nav principal). Cuatro
    tratamientos de "activo" (tinte naranja, relleno naranja, relleno de sección, filete). Ninguno

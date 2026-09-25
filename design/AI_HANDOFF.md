@@ -240,6 +240,58 @@ No cambiar lógica ni datos.
 
 # RESULTADO CLAUDE
 
+## 2026-09-25 — Lote de componentes globales
+
+**Commit:** `80f6ce9` (rama `art/vestuario-vertical-slice`). Todavía **no** está en `main`:
+Gabi pidió ver capturas antes.
+
+### Qué cambió (todo por CSS; en TSX sólo el "Cancelar" de la confirmación pasa a `.ghost`)
+- **SUBNAV-01:** los 9 estilos comparten estados. Segmentos unidos (`.view-toggle`,
+  `.segmented`) y placas sueltas (`.profile-tabs`, `.ps-tabs`, `.ps-filtros`, `.division-tabs`,
+  `.steps`). Activo = azul noche + barra naranja abajo + peso; hover = panel elevado; foco
+  naranja. En el partido el tablero táctico ya no rellena de naranja cada opción: el único
+  relleno naranja de la pantalla es el CTA "Jugar el cuarto".
+- **STAT-01:** una sola barra de cinco bloques en dos tamaños (normal / compacta) para
+  `.bar-track`, `.mini-medidor` y `.legs-mini`.
+- **PANEL-02:** modales, perfiles y hover-card: sin borde naranja, velo azul noche, filete
+  azul noche arriba, título display, ícono de evento en azul noche.
+- **BTN:** foco visible global (botones y links `role=button`), `.ghost`, hover rojo de `.danger`.
+- **HEADER-01:** `h3.card-band` funciona fuera de `.vista`.
+- **TABLE-01:** las `<table class="planilla">` dejan de heredar el panel con relieve.
+- **Legibilidad Barlow:** `--fs-2xs` 0.62→0.68rem, `--fs-xs` 0.72→0.76rem.
+
+### Qué no cambió
+- **CHIP-01** (la fila de persona hecha ~10 veces con markup distinto: requiere TSX por pantalla).
+- **Composición de escenas** (Tablero, Previa, Partido, Postpartido): esperan arte.
+- **Portada** (sistema propio; se preservó su selector de dificultad).
+- **Escala `ui-*` como clases** (sólo se subieron los dos tamaños chicos).
+- `.qs-*` y demás CSS muerto de la auditoría: sin borrar todavía.
+
+### Verificación
+Recorrido de las 24 superficies a 1440×900 y 1366×768: 0 textos desbordados, 0 errores; nav,
+HUD y página sin desborde horizontal; el Tablero sigue entrando sin scroll a 1366. Build y
+196 tests OK.
+
+### Screenshots (`design/capturas/2026-09-25-componentes/`)
+- `comparacion-antes-despues-1440.webp`: partido, ficha, semana, plantel, liga, confirmación.
+- `todas-las-superficies-1440.webp`: las 24 superficies después del lote.
+- `1440-*` / `1366-*`: partido, ficha, tablero, plantel.
+
+### Assets
+Lista completa en **`design/arte/ASSET_REGISTRY.md`**: lo que hay (17 archivos verificados,
+2 cabeceras sin uso), lo que falta por prioridad con fichas §16 (P1: `bg-tablero`,
+`bg-previa`, `bg-partido`, `bg-postpartido-victoria/derrota`), reglas técnicas de entrada.
+**Pedido a ChatGPT:** revisar las fichas P1, aprobar o ajustar, y decidir qué hacer con el arte
+previo a la Art Bible (`cab-*`, retratos).
+
+### Recomendación del próximo lote
+1. **CHIP-01** (componente `PersonaChip` + reemplazo en Vestuario, Tablero, Convocatoria,
+   Quinteto, Partido): es lo que más falta para que las listas se lean como juego.
+2. **Integrar los fondos P1** a medida que lleguen (SCENE-C del Tablero primero).
+3. Limpiar CSS muerto.
+
+---
+
 ## 2026-09-25 — Typography migration + full UI coverage audit
 
 **Commit de implementación:** `221b103` (rama `art/vestuario-vertical-slice`). Antes se trajo
