@@ -68,71 +68,129 @@ Así evitamos copiar prompts largos entre chats.
 
 # TASK ACTUAL
 
-## UI calibration — Foundation + Global Shell
+## Typography migration + full UI coverage audit
 
 ### Contexto
-Foundation + Global Shell ya mejoraron coherencia y estructura, pero la primera pasada quedó demasiado oscura y uniforme.
+Gabi quiere cambiar la tipografía del juego y, antes de seguir migrando pantallas, verificar si el sistema de UI nuevo está realmente implementado en TODO el juego.
 
-### Objetivo
-Mantener el sistema nuevo y Paleta A, pero hacer una pasada de **balance de luz, contraste y profundidad**.
+Estado observado en repo:
+- `body` todavía usa `'Segoe UI', system-ui...`;
+- la voz display usa `Oswald` mediante `--display`;
+- hay usos hardcodeados de `'Oswald'` en CSS (por ejemplo `Hub.css`);
+- Foundation/Global Shell y la paleta gris perla sí afectan gran parte de la app, pero eso NO implica que NAV/PANEL/CHIP/STAT/TABLE/BUTTON/HUD estén migrados por completo en cada pantalla.
 
-No volver al tema claro anterior.
-No rehacer lógica.
-No cambiar datos.
-No rehacer layouts salvo ajustes mínimos necesarios para jerarquía visual.
+### Nueva dirección tipográfica a probar
+Probar como primera opción:
 
-### Ajustes buscados
+- **Display / deportiva:** `Barlow Condensed` (600/700)
+- **UI / lectura:** `Barlow` (400/500/600)
 
-#### 1. Shell
-- Puede seguir siendo la capa más oscura.
-- Mantener top nav y HUD nuevos.
-- Evitar que todo el viewport se sienta bañado por el mismo azul.
+Razón:
+- sigue teniendo identidad deportiva/editorial;
+- es menos rígida/estrecha que Oswald;
+- funciona mejor para textos de manager, tablas y navegación;
+- permite que display y body pertenezcan a la misma familia sin verse iguales.
 
-#### 2. Panel principal
-- Aclararlo respecto al shell.
-- Debe separarse visualmente del fondo.
-- Mantener Paleta A.
+Usar paquetes Fontsource y empaquetar las fuentes con el build. No depender de fuentes del sistema.
 
-#### 3. Módulos internos
-- Crear un tercer nivel claro de profundidad.
-- No usar el mismo azul/opacidad para todas las cards.
-- El usuario debe distinguir jerarquía antes de leer.
+### Antes de tocar todo: auditoría
 
-#### 4. Escenas / backgrounds
-- Recuperar presencia del mundo ilustrado.
-- Reducir overlays donde la legibilidad lo permita.
-- Evitar que la ilustración quede como una textura irreconocible.
+Recorrer TODAS las superficies visibles del juego y clasificarlas:
 
-#### 5. Texto
-- Mejorar contraste de texto secundario.
-- Mantener display/títulos fuertes.
-- No usar blanco pleno para absolutamente todo.
+1. Portada / menú principal
+2. Nueva partida / carrera / dificultad
+3. Pretemporada
+4. Tablero
+5. Plantel — todas sus pestañas
+6. Ficha de jugador
+7. Vestuario
+8. Cuerpo técnico
+9. Finanzas
+10. Liga
+11. Calendario
+12. Rankings
+13. Club
+14. Historia
+15. La semana / convocatoria
+16. Quinteto y táctica
+17. Partido en vivo
+18. Postpartido / informe
+19. Perfiles de rival / club / liga / jugador del mundo
+20. Modales / confirmaciones / eventos
+21. Fin de pretemporada
+22. Fin de temporada / game over
+23. Pantallas de galería/dev sólo si comparten componentes de producción
 
-#### 6. Naranja
-- Sigue reservado a CTA, selección y foco.
-- No usar como decoración general.
+Para cada superficie registrar:
+- ¿usa Global Shell?
+- ¿usa tipografía por tokens o hardcodeada?
+- ¿usa PANEL system?
+- ¿usa CHIP-01?
+- ¿usa STAT-01?
+- ¿usa TABLE-01?
+- ¿usa BUTTON system?
+- ¿usa HEADER-01?
+- ¿tiene estilos legacy/hardcodeados?
+- estado: **Migrada / Parcial / Legacy**.
 
-### Pantallas de validación
+Guardar la auditoría en:
+`design/UI_COVERAGE_AUDIT.md`
 
-Probar y mostrar BEFORE / AFTER en:
+### Migración tipográfica
 
-1. Tablero
-2. Vestuario
-3. Partido
+Después de auditar:
 
-### Criterio visual deseado
+1. Agregar Fontsource:
+   - `@fontsource/barlow`
+   - `@fontsource/barlow-condensed`
 
-Debe sentirse:
+2. Definir tokens únicos:
+   - `--font-display: 'Barlow Condensed', sans-serif;`
+   - `--font-ui: 'Barlow', sans-serif;`
+   - mantener `--display` temporalmente como alias si hace falta para no romper CSS.
 
-- más claro, pero todavía dark;
-- con más aire;
-- más legible;
-- con más vida;
-- con mejor separación entre shell / panel / módulo / escena;
-- más videojuego y menos “tema oscuro uniforme”.
+3. Reemplazar dependencias directas de:
+   - Oswald
+   - Segoe UI
+   - Arial Narrow / Bahnschrift
+   - otros font-family hardcodeados de producción
+   por los tokens nuevos.
+
+4. No cambiar tamaños todavía salvo donde la nueva métrica rompa layout.
+
+5. Verificar:
+   - 1440x900
+   - 1366x768
+   - no overflow nuevo;
+   - navegación, tablas y marcador siguen entrando.
+
+### Prueba visual
+
+Sacar screenshots con la nueva tipografía de:
+- Tablero
+- Vestuario
+- Plantel
+- Partido
+- Postpartido
+- Finanzas
+- Portada
+
+Comparar con la referencia:
+`design/arte/referencias/ui-final-partido-centro.png`
+
+### Resultado esperado
+
+Al terminar, actualizar **RESULTADO CLAUDE** con:
+- commit;
+- fuente implementada;
+- lista de pantallas Migrada / Parcial / Legacy;
+- qué componentes globales todavía faltan;
+- screenshots;
+- recomendaciones del próximo lote.
 
 ### Importante
-No hacer todavía una migración masiva del resto de pantallas hasta validar esta calibración.
+No hacer todavía una refactorización masiva de las pantallas Legacy sin mostrar primero la auditoría y las screenshots con la nueva tipografía.
+No cambiar lógica ni datos.
 
 ---
 
