@@ -52,7 +52,7 @@ export function ConfirmDialog({ req, onClose }: Props) {
           <button className={req.danger ? 'danger' : 'primary'} onClick={confirmar}>
             {req.confirmLabel}
           </button>
-          <button onClick={onClose}>Cancelar</button>
+          <button className="ghost" onClick={onClose}>Cancelar</button>
         </div>
       </div>
     </div>
