@@ -2,13 +2,19 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// Tipografía condensada empaquetada, no del sistema: Bahnschrift solo existe en
-// Windows y el juego va a Steam. Oswald es SIL OFL y viaja con el build.
-// Solo el subconjunto latino, solo los pesos que usamos.
-import '@fontsource/oswald/latin-400.css';
-import '@fontsource/oswald/latin-500.css';
-import '@fontsource/oswald/latin-600.css';
-import '@fontsource/oswald/latin-700.css';
+// Tipografía empaquetada, no del sistema: el juego va a Steam y no puede
+// depender de lo que tenga instalada cada PC. Barlow y Barlow Condensed son SIL
+// OFL y viajan con el build (ver --font-ui y --font-display en styles.css).
+// Solo el subconjunto latino, solo los pesos que usa el CSS: 700 existe en
+// las dos porque botones, chips y <strong> piden negrita y sin el archivo el
+// navegador la inventa engrosando la 600.
+import '@fontsource/barlow/latin-400.css';
+import '@fontsource/barlow/latin-500.css';
+import '@fontsource/barlow/latin-600.css';
+import '@fontsource/barlow/latin-700.css';
+import '@fontsource/barlow-condensed/latin-500.css';
+import '@fontsource/barlow-condensed/latin-600.css';
+import '@fontsource/barlow-condensed/latin-700.css';
 
 import './styles.css';
 

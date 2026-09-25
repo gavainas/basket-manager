@@ -96,7 +96,7 @@ export function Portada({ portada, onNew, onNewPreseason, onNewCareer, onContinu
 
       <div className="portada-contenido">
         {/* El título es texto: todavía no hay logo (ver el README del lote).
-            Oswald 700 es la aproximación a la collegiate del boceto. */}
+            La display en 700 es la aproximación a la collegiate del boceto. */}
         <h1 className="portada-titulo">
           <span className="portada-t1">Básquet</span>
           <span className="portada-t2">Manager</span>
