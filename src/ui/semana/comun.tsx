@@ -4,12 +4,14 @@
 // su archivo (LaSemana, Convocatoria, Quinteto, Informe) y el partido en vivo
 // en `PartidoVivo.tsx`. `WeekView.tsx` sólo elige cuál mostrar.
 
-import type { GameState, Position, WeekDay } from '../../game/types';
+import type { GameState, Player, Position, WeekDay } from '../../game/types';
 import type { GameAction } from '../../state/gameReducer';
 import { weekTimeline } from '../../game/weekTimeline';
 import { userGameDay } from '../../game/moments';
 import { userFixtureOfWeek } from '../../game/world';
 import { Icon, type IconName } from '../Icon';
+import { Busto } from '../Busto';
+import './semana.css';
 
 export const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 export const POS_ABBR: Record<Position, string> = {
@@ -59,24 +61,50 @@ export function absentIds(state: GameState): Set<string> {
   return new Set(state.callUp.filter((c) => c.status === 'ausente').map((c) => c.playerId));
 }
 
+/**
+ * Los cinco pasos de la semana (UI V1): un recorrido, no cinco botones. Un
+ * número en un círculo por etapa, unidos por una línea fina; la etapa en curso
+ * se lee en blanco con la barra naranja de la pestaña activa (la misma de la
+ * barra de arriba), las hechas llevan la tilde y las que vienen quedan tenues.
+ * Es sólo orientación: no se clickea, el camino lo marca el CTA de cada etapa.
+ */
 export function Steps({ phase }: { phase: GameState['phase'] }) {
   const steps = [
-    { key: 'planning', label: '1 · La semana' },
-    { key: 'callUp', label: '2 · Convocatoria' },
-    { key: 'lineup', label: '3 · Quinteto' },
-    { key: 'match', label: '4 · Partido' },
-    { key: 'matchResult', label: '5 · Informe' },
+    { key: 'planning', label: 'La semana' },
+    { key: 'callUp', label: 'Convocatoria' },
+    { key: 'lineup', label: 'Quinteto' },
+    { key: 'match', label: 'Partido' },
+    { key: 'matchResult', label: 'Informe' },
   ];
   const order = steps.map((s) => s.key);
   const current = order.indexOf(phase);
   return (
-    <div className="steps">
+    <ol className="sem-pasos" aria-label="La semana, paso a paso">
       {steps.map((s, i) => (
-        <span key={s.key} className={`step ${i === current ? 'active' : i < current ? 'done' : ''}`}>
-          {s.label}
-        </span>
+        <li
+          key={s.key}
+          className={`sem-paso ${i === current ? 'active' : i < current ? 'done' : ''}`}
+          aria-current={i === current ? 'step' : undefined}
+        >
+          <i aria-hidden="true">{i < current ? '✓' : i + 1}</i>
+          <span>{s.label}</span>
+        </li>
       ))}
-    </div>
+    </ol>
+  );
+}
+
+/**
+ * La cara de una persona en un círculo (UI V1): el mismo busto del Tablero,
+ * recortado a la altura de la cara. Para renglones de planilla, la pizarra y
+ * el banco: donde la fila de pie no entra pero la persona tiene que seguir
+ * siendo una persona. El borde toma el color del estado si lo hay.
+ */
+export function Cara({ p, size = 44, cls, gris }: { p: Pick<Player, 'id' | 'personality'>; size?: number; cls?: 'good' | 'warn' | 'bad' | ''; gris?: boolean }) {
+  return (
+    <span className={`sem-cara${cls ? ` ${cls}` : ''}`} style={{ width: size, height: size }} aria-hidden="true">
+      <Busto seed={p.id} personality={p.personality} gris={gris} />
+    </span>
   );
 }
 
@@ -105,6 +133,10 @@ function shortDate(iso: string | undefined): string | null {
  * días, la lista se larga a 2, y el día de la fecha se arma el quinteto y se
  * juega. Los momentos del mundo y el asado caen en su día: verlos venir es
  * poder planificar.
+ *
+ * UI V1: un almanaque apoyado sobre la escena, no siete cajas. Cada día es una
+ * columna con su nombre y una línea arriba; hoy lleva la marca de tiza, el día
+ * del partido la línea gruesa y la pelota.
  */
 export function SemanaStrip({ state }: { state: GameState }) {
   const gameDay = userGameDay(state);
@@ -121,26 +153,27 @@ export function SemanaStrip({ state }: { state: GameState }) {
   const date = shortDate(fx?.date);
 
   return (
-    <div className="semana-strip">
+    <div className="sem-almanaque" role="list" aria-label="Los días hasta el partido">
       {offsets.map((off) => {
         const day = WEEK_DAYS[(gi + off + 14) % 7];
         const isToday = off === todayOffset;
         const isMatch = off === 0;
+        const past = off < todayOffset;
         const marks: { icon: IconName; text: string }[] = [];
         if (isMatch && rival) marks.push({ icon: 'pelota', text: `vs ${rival.name}${fx?.time ? ` · ${fx.time}` : ''}` });
         if (momentOffset === off && state.weekMoment) marks.push({ icon: 'destacado', text: state.weekMoment.title });
         if (asadoOffset === off) marks.push({ icon: 'asado' as IconName, text: asadoLabel });
         if (off === callUpOffset) marks.push({ icon: 'plantel', text: callUpLabel });
         return (
-          <div key={off} className={`dia-cell${isToday ? ' dia-hoy' : ''}${isMatch ? ' dia-partido' : ''}`}>
-            <div className="dia-nombre">
+          <div key={off} role="listitem" className={`sem-dia${isToday ? ' hoy' : ''}${isMatch ? ' partido' : ''}${past ? ' pasado' : ''}`}>
+            <div className="sem-dia-nombre">
               {DAY_ABBR[day]}
-              {isMatch && date ? <span className="dia-fecha"> {date}</span> : null}
+              {isMatch && date ? <span> {date}</span> : null}
+              {isToday && <b className="sem-dia-hoy">Hoy</b>}
             </div>
-            {isToday && <div className="dia-tag">HOY</div>}
             {marks.map((m, i) => (
-              <div key={i} className="dia-marca" title={m.text}>
-                <Icon name={m.icon} size={12} /> <span>{m.text}</span>
+              <div key={i} className="sem-dia-marca" title={m.text}>
+                <Icon name={m.icon} size={13} /> <span>{m.text}</span>
               </div>
             ))}
           </div>

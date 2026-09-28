@@ -1,0 +1,648 @@
+/* El ciclo de la semana en la UI V1 (sep 2026): La semana, Convocatoria y
+   Quinteto, más los pasos de arriba que comparten las cinco etapas. Nació
+   junto al Tablero aprobado (Hub.css) y habla su idioma: héroe sin caja sobre
+   la escena, UNA planilla con cinta por pantalla, lo secundario escrito como
+   frase, las personas como personas y un solo naranja.
+
+   Todo cuelga de `.semana-v1` (la raíz que pone WeekView.tsx). Se carga
+   después de styles.css y lo pisa con igual especificidad. */
+
+/* ================= Los pasos (las cinco etapas) ================= */
+.semana-v1 .sem-pasos {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  padding: clamp(0.5rem, 1.6vh, 0.9rem) 1.5rem clamp(0.5rem, 1.4vh, 0.8rem);
+  counter-reset: none;
+}
+.semana-v1 .sem-paso {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font: 600 0.8rem var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+/* La línea que une un paso con el siguiente. */
+.semana-v1 .sem-paso + .sem-paso::before {
+  content: '';
+  display: block;
+  width: clamp(1.4rem, 3vw, 3rem);
+  height: 1px;
+  margin: 0 0.8rem 0 0.3rem;
+  background: rgba(174, 188, 196, 0.35);
+}
+.semana-v1 .sem-paso > i {
+  font: 700 0.78rem / 1 var(--font-display);
+  font-style: normal;
+  letter-spacing: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(174, 188, 196, 0.4);
+  color: var(--text-faint);
+  text-shadow: none;
+}
+.semana-v1 .sem-paso.done { color: var(--text-dim); }
+.semana-v1 .sem-paso.done > i { border-color: rgba(84, 210, 154, 0.55); color: var(--good); }
+.semana-v1 .sem-paso.active { color: var(--text); }
+.semana-v1 .sem-paso.active > i { background: var(--tiza); border-color: var(--tiza); color: #10212e; }
+.semana-v1 .sem-paso.active > span { box-shadow: inset 0 -2px 0 var(--accent); padding-bottom: 3px; margin-bottom: -5px; }
+
+/* ================= Piezas comunes ================= */
+
+/* La cara en un círculo: el busto del Tablero recortado a la cara. */
+.semana-v1 .sem-cara {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2a4a60;
+  border: 2px solid #3a5a70;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+.semana-v1 .sem-cara .busto {
+  position: absolute;
+  inset: 0;
+  --busto-ancho: 100%;
+  --busto-alto: 100%;
+  background-size: 118%;
+  background-position: center 12%;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.semana-v1 .sem-cara.bad { border-color: var(--bad); }
+.semana-v1 .sem-cara.warn { border-color: var(--warn); }
+.semana-v1 .sem-cara.good { border-color: var(--good); }
+
+.semana-v1 .sem-botones { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+.semana-v1 .sem-botones button.small {
+  background: rgba(8, 29, 45, 0.55);
+  border-color: rgba(174, 188, 196, 0.4);
+  font-weight: 600;
+}
+.semana-v1 .sem-botones button.small:hover:not(:disabled) { border-color: var(--tiza); background: rgba(239, 230, 210, 0.08); }
+.semana-v1 .sem-botones button.ghost { border-color: transparent; background: transparent; }
+
+.semana-v1 .sem-tecla {
+  font: 700 0.72rem var(--font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid rgba(174, 188, 196, 0.45);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 0 0.35rem;
+  color: var(--text);
+}
+
+.semana-v1 .v1-frase b.good, .semana-v1 .v1-eyebrow b.good { color: var(--good); }
+.semana-v1 .v1-frase b.warn, .semana-v1 .v1-eyebrow b.warn { color: var(--warn); }
+.semana-v1 .v1-frase b.bad, .semana-v1 .v1-eyebrow b.bad { color: #ff8a7e; }
+.semana-v1 .v1-hero .plink { color: inherit; }
+
+/* Caras chicas en fila, con el nombre al lado (asado). */
+.semana-v1 .sem-caras-fila { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; margin: 0.45rem 0 0.2rem; }
+.semana-v1 .sem-cara-nom { display: inline-flex; align-items: center; gap: 0.4rem; font: 600 0.92rem var(--font-display); letter-spacing: 0.03em; text-transform: uppercase; }
+.semana-v1 .sem-cara-nom .plink { color: var(--text); }
+
+/* ---- El almanaque (la tira de días, sin cajas) ---- */
+.semana-v1 .sem-almanaque {
+  display: grid;
+  /* El día del partido (siempre el sexto) es más ancho: lleva el rival. */
+  grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.9fr) minmax(0, 0.8fr);
+  margin: 1.1rem 0 0.2rem;
+}
+.semana-v1 .sem-dia {
+  min-width: 0;
+  padding: 0.45rem 0.5rem 0.4rem;
+  border-top: 2px solid rgba(174, 188, 196, 0.3);
+  min-height: 3.4rem;
+}
+.semana-v1 .sem-dia + .sem-dia { border-left: 1px dashed rgba(174, 188, 196, 0.16); }
+.semana-v1 .sem-dia.pasado { opacity: 0.55; }
+.semana-v1 .sem-dia.hoy { border-top-color: var(--tiza); background: linear-gradient(180deg, rgba(239, 230, 210, 0.1), transparent); }
+.semana-v1 .sem-dia.partido { border-top: 4px solid var(--tiza); background: linear-gradient(180deg, rgba(8, 29, 45, 0.55), rgba(8, 29, 45, 0.15)); }
+.semana-v1 .sem-dia-nombre {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font: 700 0.95rem var(--font-display);
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+.semana-v1 .sem-dia-nombre span { font-weight: 500; letter-spacing: 0.02em; color: var(--text-dim); }
+.semana-v1 .sem-dia.partido .sem-dia-nombre,
+.semana-v1 .sem-dia.hoy .sem-dia-nombre { color: var(--text); }
+.semana-v1 .sem-dia-hoy {
+  margin-left: auto;
+  font: 700 0.64rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--tiza);
+  color: #10212e;
+  padding: 1px 5px;
+  border-radius: 2px;
+  text-shadow: none;
+}
+.semana-v1 .sem-dia-marca {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  color: var(--text);
+}
+.semana-v1 .sem-dia-marca .ico { flex: none; margin-top: 1px; color: var(--text-dim); }
+.semana-v1 .sem-dia-marca span {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.semana-v1 .sem-dia.partido .sem-dia-marca:first-of-type { font-weight: 600; }
+
+/* ---- El pie fijo de la semana: la frase a la izquierda, el CTA donde
+   termina la lectura (abajo a la derecha, como en la lámina 05). ---- */
+.semana-v1 .sem-flujo { display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
+.semana-v1 .sem-flujo > .pie-fijo {
+  margin-top: auto;
+  margin-bottom: calc(-1 * var(--sp-6));
+}
+.semana-v1 .sem-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-top: 0.8rem;
+  padding-left: calc(var(--sp-4) + 1.5rem);
+}
+.semana-v1 .sem-pie > .v1-frase,
+.semana-v1 .sem-pie-txt { min-width: 0; flex: 1; }
+.semana-v1 .sem-pie .v1-cta { flex: none; }
+.semana-v1 .sem-pie .v1-cta:disabled { box-shadow: none; }
+.semana-v1 .sem-promesa { margin: 0 0 0.3rem; font-weight: 600; font-size: 0.92rem; }
+.semana-v1 .sem-promesa.bad { color: #ff8a7e; }
+.semana-v1 .sem-promesa.warn { color: var(--warn); }
+
+/* ================= 1 · La semana ================= */
+.semana-v1 .sem-semana {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(440px, 43vw, 640px);
+  gap: 1rem 2.5rem;
+  align-items: start;
+  padding-bottom: 1.2rem;
+}
+.semana-v1 .sem-semana-hero { min-width: 0; padding-left: 1.5rem; padding-top: 0.4rem; }
+.semana-v1 .sem-versus { display: flex; align-items: center; gap: 1rem; margin-top: 0.7rem; }
+.semana-v1 .sem-versus .crest { flex: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); }
+.semana-v1 .sem-versus .v1-titulo { margin: 0; font-size: clamp(1.9rem, 2.9vw, 2.7rem); }
+.semana-v1 .sem-versus .v1-titulo small { font-size: 0.55em; color: var(--text-dim); margin-right: 0.2rem; }
+.semana-v1 .sem-versus .plink { text-decoration: none; }
+.semana-v1 .sem-versus .plink:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.semana-v1 .sem-clave { margin-top: 0.7rem; font-size: 1.02rem; color: #dfe5e8; max-width: 60ch; }
+.semana-v1 .sem-clave b:first-child { text-transform: uppercase; letter-spacing: 0.06em; }
+.semana-v1 .sem-clave .v1-est { margin-right: 0.4rem; vertical-align: 2px; }
+.semana-v1 .sem-momento { margin-top: 0.6rem; max-width: 64ch; }
+
+.semana-v1 .sem-decision {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.2rem 1.8rem;
+  align-items: start;
+  margin-top: 1.4rem;
+}
+.semana-v1 .sem-op { display: grid; gap: 0.55rem; justify-items: start; max-width: 30ch; }
+.semana-v1 .sem-op p { margin: 0; font-size: 0.88rem; line-height: 1.4; color: var(--text-dim); }
+.semana-v1 .sem-op p b { color: var(--text); font-weight: 600; }
+.semana-v1 button.sem-btn-2 {
+  font: 700 1.05rem var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 1rem 1.3rem;
+  border-radius: 4px;
+  background: rgba(8, 29, 45, 0.6);
+  border: 1px solid rgba(239, 230, 210, 0.45);
+  color: var(--text);
+}
+.semana-v1 button.sem-btn-2:hover:not(:disabled) { border-color: var(--tiza); background: rgba(239, 230, 210, 0.1); }
+.semana-v1 .sem-elegidas { margin-top: 1rem; }
+
+.semana-v1 .sem-previa,
+.semana-v1 .sem-asado { margin-top: 1.5rem; max-width: 68ch; }
+.semana-v1 .sem-voz {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.6rem 0;
+  border-top: 1px dashed var(--linea-suave);
+}
+.semana-v1 .sem-previa .v1-eyebrow + .sem-voz { margin-top: 0.4rem; }
+.semana-v1 .sem-voz-sin { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(8, 29, 45, 0.6); border: 2px solid rgba(227, 91, 79, 0.45); color: var(--text-dim); }
+.semana-v1 .sem-voz-txt b { font: 700 0.95rem var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; }
+.semana-v1 .sem-voz-txt b small { font: 500 0.78rem var(--font-ui); letter-spacing: 0; text-transform: none; color: var(--text-dim); }
+.semana-v1 .sem-voz-txt p { margin: 0.1rem 0 0; font-size: 0.95rem; line-height: 1.4; color: #dfe5e8; }
+.semana-v1 .sem-voz.rival .sem-cara { border-color: rgba(227, 91, 79, 0.55); }
+.semana-v1 .sem-voz-txt .v1-est { margin-top: 0.4rem; }
+.semana-v1 .sem-asado .v1-frase { margin-top: 0.35rem; }
+
+/* La planilla de las acciones: el protagonista de la derecha. */
+.semana-v1 .sem-acciones { margin-top: 0.9rem; padding: 1rem 0 0.2rem; }
+.semana-v1 .sem-acciones > h3 { padding: 0 1.4rem 0.55rem; }
+.semana-v1 .sem-acciones-lista { display: grid; }
+.semana-v1 button.sem-accion {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 22px auto minmax(0, 1fr);
+  gap: 1px 0.8rem;
+  align-items: baseline;
+  width: 100%;
+  padding: 0.45rem 1.4rem 0.45rem 1.1rem;
+  border-top: 1px dashed var(--linea-suave);
+}
+.semana-v1 button.sem-accion:hover:not(:disabled) { background: rgba(243, 240, 232, 0.05); }
+.semana-v1 button.sem-accion:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.semana-v1 button.sem-accion:disabled { cursor: not-allowed; }
+.semana-v1 .sem-accion-tilde {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border: 1.5px solid rgba(174, 188, 196, 0.55);
+  border-radius: 3px;
+  font: 700 0.9rem / 1 var(--font-display);
+  color: var(--on-accent);
+}
+.semana-v1 .sem-accion.on { background: rgba(244, 124, 39, 0.1); box-shadow: inset 3px 0 0 var(--accent); }
+.semana-v1 .sem-accion.on .sem-accion-tilde { background: var(--accent); border-color: var(--accent); }
+.semana-v1 .sem-accion-nombre {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font: 700 1.02rem / 1.2 var(--font-display);
+  letter-spacing: 0.03em;
+  color: var(--text);
+}
+.semana-v1 .sem-accion-nombre .ico { color: var(--text-dim); flex: none; }
+.semana-v1 .sem-accion-desc { grid-column: 2 / -1; font-size: 0.8rem; line-height: 1.3; color: var(--text-dim); }
+.semana-v1 .sem-accion-costo { font: 600 0.78rem / 1.3 var(--font-ui); color: var(--warn); text-align: right; }
+.semana-v1 .sem-accion-tilde { grid-row: 1 / span 2; align-self: start; }
+.semana-v1 .sem-accion-costo.bad { color: #ff8a7e; }
+.semana-v1 .sem-accion.off .sem-accion-nombre,
+.semana-v1 .sem-accion.off .sem-accion-desc { opacity: 0.5; }
+.semana-v1 .sem-accion.off .sem-accion-tilde { opacity: 0.35; }
+
+/* ================= 2 · Convocatoria ================= */
+.semana-v1 .sem-convoca-arriba {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(400px, 500px);
+  gap: 1rem 3rem;
+  align-items: start;
+}
+.semana-v1 .sem-convoca-hero { min-width: 0; padding-left: 1.5rem; padding-top: 0.4rem; }
+.semana-v1 .sem-convoca-hero .v1-eyebrow .plink { color: var(--text); font-weight: 700; text-decoration: none; }
+.semana-v1 .sem-convoca-cifra { display: flex; align-items: flex-end; gap: 1.6rem; margin-top: 0.9rem; }
+.semana-v1 .sem-convoca-cifra .v1-cifra { flex: none; white-space: nowrap; }
+.semana-v1 .sem-convoca-cifra .v1-cifra.bad { color: #ff8a7e; }
+.semana-v1 .sem-convoca-cifra .v1-frase {
+  padding-left: 1.5rem;
+  border-left: 1px solid rgba(174, 188, 196, 0.35);
+  max-width: 52ch;
+  color: #dfe5e8;
+}
+.semana-v1 .sem-alerta { margin-top: 0.7rem; }
+.semana-v1 .sem-cronica { margin-top: 1.1rem; max-width: 70ch; }
+.semana-v1 .sem-cronica ul { margin: 0.35rem 0 0; padding: 0; list-style: none; }
+.semana-v1 .sem-cronica li {
+  position: relative;
+  padding: 0.15rem 0 0.15rem 1rem;
+  font-size: 0.93rem;
+  line-height: 1.4;
+  color: #dfe5e8;
+}
+.semana-v1 .sem-cronica li::before { content: '—'; position: absolute; left: 0; color: var(--text-dim); }
+.semana-v1 .sem-cronica .v1-frase { margin-top: 0.25rem; }
+.semana-v1 .sem-cita { font-style: italic; color: #dfe5e8; }
+
+/* La planilla de las bajas. */
+.semana-v1 .sem-bajas { margin-top: 1rem; padding: 1.1rem 0 0.3rem; }
+.semana-v1 .sem-bajas > h3 { padding: 0 1.4rem 0.5rem; }
+.semana-v1 .sem-tranquila { margin: 0; padding: 0.9rem 1.4rem 1.1rem; border-top: 1px dashed var(--linea-suave); color: var(--text-dim); }
+.semana-v1 .sem-baja {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+  padding: 0.8rem 1.4rem 0.85rem 1.1rem;
+  border-top: 1px dashed var(--linea-suave);
+}
+.semana-v1 .sem-baja.apagada { opacity: 0.75; }
+.semana-v1 .sem-baja-txt { min-width: 0; }
+.semana-v1 .sem-baja-nom { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.6rem; }
+.semana-v1 .sem-baja-nom .plink { font: 700 1.1rem var(--font-display); letter-spacing: 0.03em; text-transform: uppercase; color: var(--text); text-decoration: none; }
+.semana-v1 .sem-baja-nom .plink:hover { text-decoration: underline; }
+.semana-v1 .sem-baja-nota { margin: 0.25rem 0 0; font-size: 0.9rem; line-height: 1.4; color: var(--text-dim); font-style: italic; }
+.semana-v1 .sem-baja-res { margin: 0.25rem 0 0; font-size: 0.9rem; line-height: 1.4; color: var(--text); }
+.semana-v1 .sem-baja .tarjeta-roja { display: inline-block; vertical-align: -1px; }
+
+/* El plantel de pie: quién viene, literalmente. */
+.semana-v1 .sem-convoca-fila { padding: 0 0.5rem; margin-top: auto; }
+/* Todos entran a lo ancho, sean 10 o 15: el busto se achica con la cantidad
+   (--n la pone Convocatoria.tsx) y nunca pasa del tamaño del Tablero. */
+.semana-v1 .sem-convoca-fila .fila-depie {
+  --busto-ancho: min(100px, calc((min(100vw, var(--ancho-app)) - 8rem) / var(--n, 12)));
+  --busto-alto: min(122px, 13.5vh, calc(var(--busto-ancho) * 1.22));
+}
+/* La fila se apoya sobre el pie, como el plantel del Tablero sobre la barra. */
+.semana-v1 .sem-convoca > .sem-convoca-fila + .pie-fijo { margin-top: 0; }
+
+/* ================= 3 · Quinteto ================= */
+.semana-v1 .sem-q-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(330px, 380px) minmax(0, 1fr) minmax(270px, 320px);
+  gap: 1.6rem;
+  align-items: start;
+}
+
+/* El plantel: una planilla con renglones, agrupada por lo que hace cada uno. */
+.semana-v1 .sem-q-plantel { padding: 0.8rem 0 0.4rem; }
+.semana-v1 .sem-q-plantel-cab {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.9rem 0.55rem 1.1rem;
+  border-bottom: 1px dashed var(--linea-suave);
+}
+.semana-v1 .sem-q-plantel-cab h3 {
+  margin: 0 auto 0 0;
+  font: 700 1.15rem var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.semana-v1 .sem-q-plantel-cab button.small { padding: 0.25rem 0.6rem; font-weight: 600; color: var(--text-dim); }
+.semana-v1 .sem-q-plantel-cab button.small:hover:not(:disabled) { color: var(--text); }
+.semana-v1 .sem-q-grupo-tit {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.45rem 1rem 0.15rem 1.1rem;
+  font: 600 0.7rem var(--font-display);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.semana-v1 .sem-q-grupo-tit span { color: var(--text); letter-spacing: 0.08em; }
+.semana-v1 .sem-q-vacio { margin: 0; padding: 0.3rem 1.1rem 0.5rem; font-size: 0.84rem; color: var(--text-faint); }
+.semana-v1 .sem-jug {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.2rem 0.8rem 0.2rem 1.1rem;
+  border-top: 1px dashed rgba(174, 188, 196, 0.12);
+  cursor: grab;
+}
+.semana-v1 .sem-q-grupo-tit + .sem-jug { border-top: none; }
+.semana-v1 .sem-jug:hover { background: rgba(243, 240, 232, 0.04); }
+.semana-v1 .sem-jug.off { cursor: default; opacity: 0.6; }
+.semana-v1 .sem-jug.titular { box-shadow: inset 3px 0 0 var(--tiza); }
+.semana-v1 .sem-jug.banco { box-shadow: inset 3px 0 0 #5f95c4; }
+.semana-v1 .sem-jug-quien { min-width: 0; }
+.semana-v1 .sem-jug-nom {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.15;
+}
+.semana-v1 .sem-jug-nom .plink { color: var(--text); }
+.semana-v1 .sem-jug-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.semana-v1 .sem-jug-meta > span { display: inline-flex; align-items: center; gap: 0.2rem; }
+.semana-v1 .sem-jug-meta .warn { color: var(--warn); }
+.semana-v1 .sem-jug-meta .v1-est { font-size: 0.6rem; padding: 0 4px; }
+.semana-v1 .sem-jug-pos { font: 700 0.72rem var(--font-display); letter-spacing: 0.12em; color: var(--text); }
+.semana-v1 .sem-jug-media { font: 700 1.1rem var(--font-display); color: var(--text); }
+.semana-v1 .sem-jug-btns { display: flex; gap: 0.25rem; }
+.semana-v1 button.sem-tr {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font: 700 0.85rem var(--font-display);
+  border-radius: 3px;
+  background: rgba(8, 29, 45, 0.5);
+  border: 1px solid rgba(174, 188, 196, 0.35);
+  color: var(--text-dim);
+}
+.semana-v1 button.sem-tr:hover:not(:disabled) { border-color: var(--tiza); color: var(--text); }
+.semana-v1 button.sem-tr.t.on { background: var(--tiza); border-color: var(--tiza); color: #10212e; }
+.semana-v1 button.sem-tr.r.on { background: #2d5c8a; border-color: #5f95c4; color: var(--text); }
+.semana-v1 button.sem-tr:disabled { opacity: 0.3; }
+
+/* La cancha: un medio campo de parquet pintado, grande, en el centro. */
+.semana-v1 .sem-q-cancha { min-width: 0; position: sticky; top: 0.4rem; }
+.semana-v1 .sem-q-cancha-cab {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.1rem 0.2rem 0.5rem;
+}
+.semana-v1 .sem-q-cuenta { font: 700 1rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.semana-v1 .sem-q-cuenta.good { color: var(--good); }
+.semana-v1 .sem-q-cuenta.warn { color: var(--warn); }
+.semana-v1 .sem-court {
+  position: relative;
+  width: 100%;
+  height: clamp(300px, calc(100vh - 440px), 540px);
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 46px),
+    linear-gradient(180deg, #b57c46 0%, #9d6536 55%, #87542b 100%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(0, 0, 0, 0.3), inset 0 0 80px rgba(40, 16, 0, 0.45);
+}
+.semana-v1 .sem-court .court-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+.semana-v1 .sem-court .court-lines rect,
+.semana-v1 .sem-court .court-lines circle,
+.semana-v1 .sem-court .court-lines line,
+.semana-v1 .sem-court .court-lines path {
+  fill: none;
+  stroke: rgba(246, 240, 226, 0.8);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.semana-v1 .sem-court .court-lines rect:nth-of-type(2) { fill: rgba(70, 25, 5, 0.28); }
+.semana-v1 .sem-slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 124px;
+  cursor: pointer;
+}
+.semana-v1 .sem-slot.libre { cursor: default; }
+.semana-v1 .sem-slot .sem-cara { border: 3px solid var(--tiza); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5); }
+.semana-v1 .sem-slot.oop .sem-cara { border-color: var(--warn); }
+.semana-v1 .sem-slot:hover .sem-cara { filter: brightness(1.1); }
+.semana-v1 .sem-slot-vacio {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px dashed rgba(246, 240, 226, 0.75);
+  background: rgba(8, 29, 45, 0.25);
+  font: 700 1.6rem var(--font-display);
+  color: rgba(246, 240, 226, 0.85);
+}
+.semana-v1 .sem-slot-vacio.chico { width: 42px; height: 42px; font-size: 1rem; border-color: rgba(174, 188, 196, 0.45); }
+.semana-v1 .sem-slot-placa {
+  margin-top: -6px;
+  position: relative;
+  max-width: 100%;
+  padding: 3px 8px 3px;
+  background: rgba(8, 24, 36, 0.9);
+  border: 1px solid rgba(239, 230, 210, 0.25);
+  border-radius: 3px;
+  text-align: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+.semana-v1 .sem-slot-placa b {
+  display: block;
+  font: 700 0.95rem / 1.1 var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+.semana-v1 .sem-slot-placa span { display: block; font-size: 0.68rem; line-height: 1.25; color: var(--text-dim); white-space: nowrap; }
+.semana-v1 .sem-slot-placa em { font-style: normal; color: var(--warn); font-weight: 600; }
+.semana-v1 .sem-slot.libre .sem-slot-placa { background: rgba(8, 24, 36, 0.55); }
+
+/* El banco: los suplentes sentados abajo de la cancha, sobre una tabla. */
+.semana-v1 .sem-q-banco {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.7rem;
+  padding: 0.55rem 0.9rem;
+  background: linear-gradient(180deg, rgba(8, 24, 36, 0.78), rgba(8, 24, 36, 0.6));
+  border-top: 3px solid rgba(239, 230, 210, 0.45);
+  border-radius: 0 0 4px 4px;
+}
+.semana-v1 .sem-q-banco-tit { font: 600 0.75rem var(--font-display); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); white-space: nowrap; }
+.semana-v1 .sem-q-banco-tit b { display: block; font-size: 1.3rem; letter-spacing: 0.04em; color: var(--text); }
+.semana-v1 .sem-q-banco-gente { display: flex; flex: 1; justify-content: space-around; gap: 0.3rem; min-width: 0; }
+.semana-v1 button.sem-suplente,
+.semana-v1 .sem-suplente.vacio {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 64px;
+  cursor: pointer;
+}
+.semana-v1 .sem-suplente.vacio { cursor: default; opacity: 0.8; }
+.semana-v1 button.sem-suplente:hover .sem-cara { filter: brightness(1.12); }
+.semana-v1 button.sem-suplente:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.semana-v1 .sem-suplente b {
+  margin-top: 3px;
+  max-width: 100%;
+  font: 700 0.78rem var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+.semana-v1 .sem-suplente > span:not(.sem-cara):not(.sem-slot-vacio) { font: 500 0.64rem var(--font-display); letter-spacing: 0.14em; color: var(--text-dim); }
+
+/* La lectura del partido: sin caja, sobre la escena. */
+.semana-v1 .sem-q-lectura { min-width: 0; padding-top: 0.2rem; }
+.semana-v1 .sem-q-rival { display: flex; align-items: center; gap: 0.8rem; margin: 0.6rem 0 0.7rem; }
+.semana-v1 .sem-q-rival .crest { flex: none; filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.5)); }
+.semana-v1 .sem-q-rival small { display: block; font: 600 0.8rem var(--font-display); letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; }
+.semana-v1 .sem-q-rival .plink {
+  font: 700 1.6rem / 1 var(--font-display);
+  text-transform: uppercase;
+  color: var(--text);
+  text-decoration: none;
+}
+.semana-v1 .sem-q-lectura > .v1-frase { font-size: 0.92rem; color: #dfe5e8; }
+.semana-v1 .sem-q-lectura > .v1-frase b:first-child { text-transform: uppercase; letter-spacing: 0.05em; }
+.semana-v1 .sem-q-vibe { margin-top: 0.5rem; }
+.semana-v1 .sem-q-vibe b { text-transform: none !important; letter-spacing: 0.02em !important; font-size: 1.1rem; }
+.semana-v1 .sem-q-notas { margin-top: 0.8rem; border-top: 1px dashed var(--linea-suave); }
+.semana-v1 .sem-q-notas .v1-frase {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--linea-suave);
+  color: #d4dde2;
+}
+.semana-v1 .sem-q-scouting { margin-top: 0.9rem; }
+.semana-v1 .sem-q-scouting .card { margin: 0 !important; padding: 0.7rem 0.9rem; }
+.semana-v1 .sem-q-scouting .card > h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+}
+.semana-v1 .sem-q-scouting .card:not(.plegada) > h3 { padding-bottom: 0.5rem; margin-bottom: 0.5rem; border-bottom: 1px dashed var(--linea-suave); }
+.semana-v1 .sem-q-scouting .card > h3 .band-btn { margin-left: auto; }
+.semana-v1 .sem-q-scouting .grid.cols-3 { grid-template-columns: 1fr; gap: 0.5rem; }
+
+/* ================= La notebook (1366×768, 1280×720) ================= */
+@media (max-height: 820px) {
+  .semana-v1 .sem-versus .crest { width: 52px; height: 52px; }
+  .semana-v1 .sem-versus .v1-titulo { font-size: clamp(1.6rem, 2.4vw, 2.1rem); }
+  .semana-v1 .sem-clave { margin-top: 0.5rem; font-size: 0.95rem; }
+  .semana-v1 .sem-almanaque { margin-top: 0.8rem; }
+  .semana-v1 .sem-decision { margin-top: 1rem; }
+  .semana-v1 .sem-decision .v1-cta { padding: 0.8rem 1.4rem; font-size: 1.15rem; }
+  .semana-v1 button.sem-btn-2 { padding: 0.8rem 1.1rem; font-size: 0.98rem; }
+  .semana-v1 .v1-mano { font-size: 1.75rem; }
+  .semana-v1 button.sem-accion { padding-top: 0.42rem; padding-bottom: 0.42rem; }
+  .semana-v1 .sem-accion-desc { font-size: 0.78rem; }
+
+  .semana-v1 .v1-cifra { font-size: 2.7rem; }
+  .semana-v1 .sem-convoca-cifra { margin-top: 0.6rem; }
+  .semana-v1 .sem-baja { padding-top: 0.6rem; padding-bottom: 0.65rem; }
+  .semana-v1 .sem-pie .v1-cta { padding: 0.75rem 1.4rem; font-size: 1.1rem; }
+
+  .semana-v1 .sem-jug { padding-top: 0.12rem; padding-bottom: 0.12rem; }
+  .semana-v1 .sem-q-grupo-tit { padding-top: 0.3rem; }
+  .semana-v1 .sem-slot .sem-cara { width: 52px !important; height: 52px !important; }
+  .semana-v1 .sem-slot-vacio { width: 52px; height: 52px; }
+}
