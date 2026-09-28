@@ -873,14 +873,6 @@ button:focus-visible,
    el partido de la semana en el medio y el plantel entero abajo. No lleva
    cards: los bloques son su propia superficie, para que se lea como un tablero
    de madera y no como un informe. */
-.hub {
-  /* El único que mide la ventana: es un menú, entra a 720 y queda mejor
-     repartido que amontonado arriba. El cuerpo se estira y la tira del plantel
-     toma lo suyo. */
-  height: 100%;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 1rem;
-}
 
 /* Héroe · panel del club · los cuatro bloques. La columna del héroe es la que
    llena el tercio de pantalla que antes quedaba vacío en un monitor de 1080p. */
@@ -888,36 +880,12 @@ button:focus-visible,
    referente; se sacó (sep 2026, pedido de Gabi) y los cuatro bloques pasaron a
    repartirse dos y dos alrededor del club: a la izquierda lo que se toca todas
    las semanas, a la derecha lo que se consulta. */
-.hub-grid {
-  display: grid;
-  grid-template-columns: minmax(300px, 1.15fr) minmax(280px, 0.9fr) minmax(300px, 1.15fr);
-  gap: 1rem;
-  min-height: 0;
-}
 
 /* Una columna de dos bloques; hay dos de estas, una a cada lado del club. Entre
    las dos entran los doce accesos sin scrollear, y las filas se reparten el alto
    para que no quede un hueco muerto abajo en un monitor grande. */
-.hub-bloques {
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  gap: 1rem;
-  min-width: 0;
-  min-height: 0;
-}
-
-.hub-bloques .hub-block {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  min-height: 0;
-}
 
 /* Los tiles se reparten el alto del bloque en vez de amontonarse arriba. */
-.hub-bloques .hub-tiles {
-  display: grid;
-  grid-auto-rows: 1fr;
-  min-height: 0;
-}
 
 /* ---------- La semana (tanda B) ---------- */
 
@@ -1488,369 +1456,31 @@ button:focus-visible,
    menos y la pantalla tiene que ENCOGER, no recortarse: por eso los tamaños del
    Tablero se expresan en `--u` en vez de píxeles fijos. Sin esto, a 720p el
    escudo se corta arriba y el tercer tile de cada bloque queda por la mitad. */
-.hub-block-title {
-  padding: calc(var(--u) * 0.24) calc(var(--u) * 0.55);
-  font-size: calc(var(--u) * 0.82);
-}
-
-.hub-tile {
-  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.45);
-  gap: calc(var(--u) * 0.42);
-}
-
-.hub-tile-label { font-size: calc(var(--u) * 0.82); }
 
 /* Un renglón y elipsis: el aviso completo vive en el `title` del botón. Dos
    renglones por tile son 12 renglones de más en la pantalla. */
-.hub-tile-note {
-  font-size: calc(var(--u) * 0.72);
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* El escudo del panel del club: grande donde hay alto, chico donde no. */
-.hub-escudo .crest {
-  height: clamp(56px, 12.5vh, 132px);
-  width: auto;
-}
 
 /* La tira del plantel: catorce caras que tienen que entrar sin comerse la
    pantalla. El retrato manda el alto de la tira entera. */
-.hub-jugador .retrato-img {
-  width: clamp(34px, 5.6vh, 62px);
-  height: clamp(34px, 5.6vh, 62px);
-}
-
-.hub-block,
-.hub-plantel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--sombra);
-  overflow: hidden;
-}
-
-.hub-block-title {
-  margin: 0;
-  background: var(--chrome-alto);
-  color: var(--text-light);
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: var(--fs-base);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.5rem 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.hub-tiles {
-  display: flex;
-  flex-direction: column;
-}
 
 /* Cada tile es un botón de pantalla completa: ícono, nombre y una línea que
    dice qué vas a encontrar — o qué se está prendiendo fuego ahí adentro. */
-.hub-tile {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  width: 100%;
-  /* Como ítem de la grilla de tiles, sin esto el botón no puede encoger por
-     debajo de su contenido y el aviso largo se cortaba contra el borde del
-     panel en vez de terminar en puntos suspensivos. */
-  min-width: 0;
-  text-align: left;
-  font: inherit;
-  color: var(--text);
-  background: none;
-  border: 0;
-  border-top: 1px solid var(--border);
-  padding: 0.55rem 0.75rem;
-  cursor: pointer;
-}
-
-.hub-tiles > .hub-tile:first-child {
-  border-top: 0;
-}
-
-.hub-tile:hover {
-  background: var(--bg-soft);
-}
-
-.hub-tile:focus-visible {
-  outline: 2px solid var(--sec);
-  outline-offset: -2px;
-}
-
-.hub-tile-ico {
-  width: 40px;
-  height: 40px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius);
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  color: var(--sec);
-}
-
-.hub-tile-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.hub-tile-label {
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: var(--fs-base);
-  line-height: 1.1;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
 
 /* Un renglón con elipsis (la regla de "El Tablero encoge con la ventana", más
    arriba). Acá antes había un clamp de dos renglones que quedó pisando a
    aquella: con `white-space: nowrap` adentro de un `-webkit-box` el aviso se
    cortaba en seco, sin puntos suspensivos. El texto completo vive en el
    `title` del tile. */
-.hub-tile-note {
-  font-size: var(--fs-sm);
-  line-height: 1.3;
-  color: var(--text-dim);
-}
-
-.hub-tile.bad .hub-tile-note { color: var(--bad); }
-.hub-tile.warn .hub-tile-note { color: var(--warn); }
-.hub-tile.good .hub-tile-note { color: var(--good); }
-
-.hub-tile-dot {
-  width: 8px;
-  height: 8px;
-  flex: none;
-  border-radius: 50%;
-}
-
-.hub-tile-dot.bad { background: var(--bad); }
-.hub-tile-dot.warn { background: var(--warn); }
-.hub-tile-dot.good { background: var(--good); }
 
 /* El centro: el escudo, la fecha que viene y la caja. Es lo único naranja de
    la pantalla junto al botón — la regla del naranja se cumple acá. */
-.hub-centro {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--sombra);
-  padding: 1.1rem 1rem 0.9rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  /* Centrado vertical: el panel ocupa todo el alto de la columna y su contenido
-     se queda en el medio, en vez de amontonarse arriba con un hueco abajo. */
-  justify-content: center;
-  gap: 0.55rem;
-  text-align: center;
-  /* Ya no es sticky: desde la tanda B el Tablero entra entero en la ventana, y
-     un sticky en una pantalla que no scrollea es un sticky que no hace nada. */
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.hub-escudo {
-  display: grid;
-  place-items: center;
-}
-
-.hub-club {
-  margin: 0;
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: var(--fs-lg);
-  line-height: 1.05;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.hub-semana {
-  font-family: var(--display);
-  font-size: var(--fs-base);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.hub-rival {
-  width: 100%;
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.55rem 0.5rem;
-}
-
-.hub-rival-linea {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-}
-
-.hub-rival-nombre {
-  font-family: var(--display);
-  font-size: var(--fs-md);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.hub-rival-cuando {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-}
-
-.hub-rival-chips {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 0.35rem;
-}
-
-.hub-caja-k {
-  display: block;
-  font-size: var(--fs-xs);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.hub-caja-v {
-  font-family: var(--display);
-  font-size: var(--fs-xl);
-  line-height: 1.05;
-  color: var(--accent);
-}
-
-.hub-caja-v.bad {
-  color: var(--bad);
-}
-
-.hub-cifras {
-  display: flex;
-  gap: 1.3rem;
-}
-
-.hub-cifras .k {
-  display: block;
-  font-size: var(--fs-2xs);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.hub-cifras .v {
-  font-family: var(--display);
-  font-size: var(--fs-md);
-}
-
-.hub-avanzar {
-  width: 100%;
-  margin-top: 0.15rem;
-  padding: 0.65rem 0.5rem;
-  background: var(--accent);
-  color: var(--on-accent);
-  border: 0;
-  border-radius: var(--radius);
-  font-family: var(--display);
-  font-size: var(--fs-md);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.hub-avanzar:hover {
-  filter: brightness(1.06);
-}
-
-.hub-secundarios {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.hub-secundarios button {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.2rem 0.35rem;
-  font: inherit;
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.hub-secundarios button:hover {
-  color: var(--text);
-  text-decoration: underline;
-}
 
 /* La tira del plantel: catorce caras con tres puntos cada una. Es el termómetro
    del club — si hay rojo, hay algo que atender esta semana. */
-.hub-plantel {
-  --sec: var(--sec-plantel);
-}
-
-.hub-plantel-leyenda {
-  margin-left: auto;
-  font-family: var(--font-ui);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.04em;
-  text-transform: none;
-  opacity: 0.85;
-}
-
-.hub-plantel-row {
-  display: flex;
-  gap: 0.45rem;
-  padding: 0.6rem;
-  overflow-x: auto;
-}
-
-.hub-jugador {
-  flex: 1 1 0;
-  min-width: 76px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.4rem 0.25rem 0.35rem;
-  font: inherit;
-  color: var(--text);
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-
-.hub-jugador:hover {
-  background: var(--bg-soft);
-  border-color: var(--sec-plantel);
-}
 
 /* El foco del teclado no se lleva el naranja: está reservado para la acción. */
-.hub-jugador:focus-visible {
-  outline: 2px solid var(--sec-plantel);
-  outline-offset: 1px;
-}
 
 /* La foto del jugador: el retrato ilustrado (ver ui/Avatar.tsx). El arte
    viene recortado con alfa; el azul de foto carnet lo pone la propia imagen —
@@ -1886,40 +1516,6 @@ img.retrato-img.v2 {
   background: linear-gradient(180deg, #3a5d92 0%, #27406b 100%);
 }
 
-.hub-jug-pos {
-  font-size: var(--fs-2xs);
-  letter-spacing: 0.1em;
-  color: var(--text-faint);
-}
-
-.hub-jug-nombre {
-  max-width: 100%;
-  font-family: var(--display);
-  font-size: var(--fs-base);
-  line-height: 1.1;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.hub-jug-estado {
-  display: flex;
-  gap: 3px;
-  margin-top: 0.15rem;
-}
-
-.hub-punto {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--text-faint);
-}
-
-.hub-punto.good { background: var(--good); }
-.hub-punto.warn { background: var(--warn); }
-.hub-punto.bad { background: var(--bad); }
-
 /* `.sin-recursos` ya no necesita corregir nada: con el marco en grilla, si la
    barra de recursos no está, su fila mide 0 y el contenido usa ese alto. La
    clase queda en el JSX porque nombra un estado real de la pantalla. */
@@ -1939,14 +1535,6 @@ img.retrato-img.v2 {
 /* Por debajo del piso de diseño (1280x720) el Tablero deja de ser tres columnas:
    se va el héroe —es lo primero que sobra cuando falta ancho— y quedan el panel
    del club y los bloques. */
-@media (max-width: 1100px) {
-  .hub-grid { grid-template-columns: minmax(280px, 0.95fr) minmax(320px, 1.5fr); }
-}
-
-@media (max-width: 820px) {
-  .hub-grid { grid-template-columns: 1fr; }
-  .hub-bloques { grid-template-columns: 1fr; }
-}
 
 /* ---------- Escudos ---------- */
 
@@ -6340,16 +5928,12 @@ button.mini.blue.on {
 
   /* El Tablero deja de medir el alto de la ventana (las demás pantallas ya
      miden lo suyo en escritorio también). */
-  .hub {
-    height: auto;
-    grid-template-rows: none;
-  }
+  
 
   /* Lo que todavía scrollea por dentro en escritorio (el relato del partido,
      el centro del Tablero) deja de hacerlo. */
   .pane,
-  .pv-relato > .pane-body,
-  .hub-centro {
+.pv-relato > .pane-body {
     overflow: visible;
     max-height: none;
   }
@@ -6369,21 +5953,19 @@ button.mini.blue.on {
      hijo más ancho: sin esto la grilla implícita mide por min-content y una
      fila de chips que no corta estira toda la pantalla hacia la derecha. */
   .pantalla,
-  .semana-vista,
-  .plantel-pantalla,
-  .partido-franja,
-  .semana-planning,
-  .partido-cuerpo,
-  .pv-cuerpo,
-  .pv-cabecera,
-  .pv-centro,
-  .informe-cuerpo,
-  .hub-grid,
-  .hub-bloques,
-  .lineup-layout,
-  .grid.cols-2,
-  .grid.cols-3,
-  .grid.cols-4 {
+.semana-vista,
+.plantel-pantalla,
+.partido-franja,
+.semana-planning,
+.partido-cuerpo,
+.pv-cuerpo,
+.pv-cabecera,
+.pv-centro,
+.informe-cuerpo,
+.lineup-layout,
+.grid.cols-2,
+.grid.cols-3,
+.grid.cols-4 {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;
   }
@@ -6406,7 +5988,7 @@ button.mini.blue.on {
 
   .partido-col-scroll { grid-row: auto; }
   .informe-moods { grid-column: auto; }
-  .hub-bloques .hub-block { grid-template-rows: auto auto; }
+  
 
   /* Lo que no encogía y estiraba la página a lo ancho: el marcador (dos
      equipos de 140px mínimo más el "vs"), la tira de siete días, los cabezales
@@ -6768,7 +6350,6 @@ button.mini.blue.on {
 @media (max-width: 900px) {
   .vest-cuerpo { grid-template-columns: 1fr; }
 }
-
 
 /* ---------- Vertical slice de arte · Vestuario (rama de prueba, sep 2026) ----------
    Prueba controlada de ART_BIBLE.md: fondo ilustrado real + UI viva encima.
