@@ -68,7 +68,13 @@ Así evitamos copiar prompts largos entre chats.
 
 # TASK ACTUAL
 
-## UI V1 completa en la dirección del Tablero aprobado (Gabi, 2026-09-28) — EN CURSO (Claude)
+## UI V1 completa en la dirección del Tablero aprobado (Gabi, 2026-09-28) — HECHA, espera la revisión global
+
+> **Para ChatGPT:** la V1 está hecha (ver RESULTADO CLAUDE). Pedido: revisar el conjunto
+> con Gabi (capturas en `design/capturas/2026-09-28-ui-v1/`, hojas `todas-1440.webp` y
+> `todas-1366.webp`) y priorizar `design/UI_V2_PENDIENTES.md` para la V2, empezando por las
+> fichas de arte de las escenas.
+
 
 > Pedido directo de Gabi a Claude. ChatGPT: al terminar, revisar el resultado global antes de
 > empezar la V2 (polish, arte y personalidad).
@@ -295,6 +301,40 @@ No cambiar lógica ni datos.
 ---
 
 # RESULTADO CLAUDE
+
+## 2026-09-28 — UI V1 completa
+
+**Rama:** `claude/game-ui-status-cqi387` (todavía no está en `main`: Gabi revisa primero).
+Seis tandas en paralelo sobre una base común, integradas y revisadas en conjunto.
+
+### Qué cambió
+- **Base:** Paleta A con planillas azul noche translúcidas, cabezales sin bandas de color,
+  **una escena por pantalla** con el arte existente (`ESCENA`/`escenaDe` en `App.tsx`),
+  piezas compartidas en `src/ui/v1.css` y `src/ui/Busto.tsx` (héroe, planilla con cinta y
+  título a mano en Caveat, frase, CTA, estado escrito, fila de personas de pie).
+- **Pantallas:** las 22 de producción rediseñadas en el idioma del Tablero (tabla completa en
+  `UI_COVERAGE_AUDIT.md`). Calendario y Rankings pasan a ser pestañas de la Liga.
+- **Limpieza:** ~4.700 líneas de CSS sin uso fuera de `styles.css`.
+- **Guía y pendientes:** `design/UI_V1_GUIA.md` (las siete reglas) y
+  `design/UI_V2_PENDIENTES.md` (arte, polish, personalidad, deuda técnica).
+
+### Qué no cambió
+- Lógica de juego (`src/game`, `src/state`): nada. Única adición fuera de la presentación:
+  `WatchItem.who` en `src/ui/watch.ts` (de quién habla el aviso, para mostrar la cara).
+- No se generó arte nuevo: todas las escenas son provisionales.
+
+### Verificación
+Recorrido de 32 superficies a 1440×900 y 1366×768: 0 errores, 0 scroll horizontal. Build,
+196 tests, fuzz y las tres simulaciones del CI en verde.
+
+### Capturas
+`design/capturas/2026-09-28-ui-v1/1440/`, `/1366/` y las hojas `todas-1440.webp`,
+`todas-1366.webp`.
+
+### Dudas / para decidir
+- Si la V1 se pasa a `main` (se publica en GitHub Pages) antes o después de la revisión.
+- El orden de la V2: arte de escenas primero (P1 del registro) o retratos por capas (T5).
+
 
 ## 2026-09-28 — Propuesta de rediseño del Tablero (sin implementar)
 

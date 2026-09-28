@@ -46,6 +46,30 @@ son SVG lineales (`Icon.tsx`), como pide la Art Bible §11 y §14.
 
 ---
 
+### Uso provisional en la UI V1 (28/9/2026)
+
+La UI V1 reusa el arte existente como **escena de fondo de cada pantalla** (`ESCENA` en
+`src/App.tsx`), sin generar nada nuevo. Es provisional: la tabla completa de qué escena usa
+cada pantalla y qué pide la V2 está en `design/UI_V2_PENDIENTES.md` §1.
+
+| Archivo | Nuevo uso en la V1 |
+|---|---|
+| `fondo-gimnasio.webp` (espejado) | Tablero (velo `abierta`) y La semana |
+| `vestuario-bg.webp` | Plantel, Vestuario, CT, Convocatoria, Informe tras ganar |
+| `fondo-cancha.webp` | Quinteto (deja de ser el fondo global) |
+| `cab-partido.webp` | Partido en vivo (**deja de estar sin uso**) |
+| `cab-derrota.webp` | Informe tras perder |
+| `cab-comision.webp` | Finanzas, El club, Historia, fin de temporada |
+| `cab-arbitros.webp` | Liga, Calendario, Rankings (**deja de estar sin uso**) |
+| `cab-bar.webp` | Pretemporada, fin de pretemporada |
+
+**Ajuste a la ficha `bg-tablero-v01`** según el Tablero aprobado (v4): el héroe va a la
+izquierda sin caja, «Esta semana» arriba a la derecha y el plantel de pie abajo a todo el
+ancho, sobre la línea del parquet. La escena necesita: izquierda y franja inferior tranquilas,
+**el piso en plano bajo con una línea lateral pintada** donde apoyan los bustos, luz cálida
+entrando por ventanas en el centro-derecha. Con esa composición el gimnasio propio a la tarde
+encaja mejor que la sede/comisión.
+
 ## 2. Lo que falta — por prioridad
 
 Prioridad según `GAME_UI_SYSTEM.md` §18 fase 3 (Tablero → Plantel → Vestuario → Previa →

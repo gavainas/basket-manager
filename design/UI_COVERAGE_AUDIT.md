@@ -1,5 +1,53 @@
 # UI coverage audit — ¿el sistema de UI está en todo el juego?
 
+## Estado al 28/9/2026 — UI V1 completa
+
+La UI V1 llevó el idioma del **Tablero aprobado** (`design/propuestas/tablero-rediseno/`, v4)
+a todas las pantallas (guía: `UI_V1_GUIA.md`; lo pendiente: `UI_V2_PENDIENTES.md`). Criterio
+nuevo: **V1** = rediseñada en el lenguaje del Tablero (escena visible, héroe sin caja, una
+planilla por zona sin bandas de color, secundario en frases, un solo CTA naranja, personas
+como personas), no sólo con la paleta. Verificado con un recorrido automático de 32
+superficies a 1440×900 y 1366×768: 0 errores, 0 scroll horizontal (capturas en
+`design/capturas/2026-09-28-ui-v1/`).
+
+| # | Superficie | Escena (provisional) | Archivos | Estado | Notas |
+|---|---|---|---|---|---|
+| 1 | Portada | su ilustración (asado) | `Portada.tsx`, `portada.css` | **V1** | composición aprobada conservada; azul noche + tiza; un naranja según haya guardado |
+| 2 | Nueva partida / Carrera | escenas de la intro, gimnasio | `CareerSetup.tsx`, `carrera.css` | **V1** | escenas a sangre, acta de fundación en planilla |
+| 3 | Pretemporada | bar | `PreseasonView.tsx`, `pretemporada.css` | **V1** | misma barra que la temporada; plantel de pie; modales por portal |
+| 4 | Tablero | gimnasio (abierta) | `Hub.tsx`, `Hub.css` | **V1** | la maqueta aprobada en el juego |
+| 5 | Plantel / Estadísticas | vestuario | `RosterView/List/Sheet.tsx`, `plantel.css` | **V1** | una planilla, estado sólo si es excepción |
+| 6 | Ficha de jugador | modal | `PlayerProfile.tsx`, `Ficha.tsx`, `modales.css` | **V1** | busto escala L |
+| 7 | Vestuario | vestuario | `VestuarioCard.tsx`, `plantel.css` | **V1** | sin franja interna: la escena es el fondo |
+| 8 | Cuerpo técnico | vestuario | `CoachCard.tsx`, `plantel.css` | **V1** | DT sin retrato ilustrado (V2) |
+| 9 | Finanzas | comisión | `FinancesView.tsx`, `club.css` | **V1** | caja de hoy → cierre de la semana |
+| 10 | Liga (+ Calendario, Rankings, Pirámide, Ligas) | árbitros | `LeagueView.tsx`, `CalendarView.tsx`, `RankingsView.tsx`, `liga.css` | **V1** | Calendario y Rankings son pestañas de la Liga |
+| 11 | Calendario | árbitros | ídem | **V1** | |
+| 12 | Rankings | árbitros | ídem | **V1** | scrollea ~280 px a 1366 |
+| 13 | Club | comisión | `ClubView.tsx`, `club.css` | **V1** | |
+| 14 | Historia | comisión | `HistoryView.tsx`, `club.css` | **V1** | vitrina por temporada |
+| 15 | La semana / Convocatoria | gimnasio / vestuario | `LaSemana.tsx`, `Convocatoria.tsx`, `comun.tsx`, `semana.css` | **V1** | pasos como recorrido; convocatoria de pie |
+| 16 | Quinteto | cancha | `Quinteto.tsx`, `semana.css` | **V1** | lámina 05 cuadro 18 |
+| 17 | Partido en vivo | partido | `PartidoVivo.tsx`, `partido.css` | **V1** | lámina 05 cuadro 19 |
+| 18 | Postpartido / informe | vestuario / derrota | `Informe.tsx`, `informe.css` | **V1** | lámina 05 cuadro 20 |
+| 19 | Perfiles (rival/club/liga/mundo) | modal | `*Profile.tsx`, `Ficha.tsx`, `modales.css` | **V1** | |
+| 20 | Modales / eventos / tips | overlay | `EventModal.tsx`, `ConfirmDialog.tsx`, `Tip.tsx`, `modales.css` | **V1** | evento como planilla con cinta |
+| 21 | Fin de pretemporada | bar | `PreseasonEndScreen.tsx`, `cierre.css` | **V1** | lista de buena fe de pie |
+| 22 | Fin de temporada | comisión | `SeasonEndScreen.tsx`, `cierre.css` | **V1** | |
+| 23 | Galerías dev | — | `AvatarGallery`, `CrestGallery` | fuera de producción | sin tocar |
+
+**Conteo:** V1 22 de 22 superficies de producción · Legacy 0.
+
+Lo que la tabla de abajo llamaba «componentes globales que faltan» quedó resuelto por
+composición y no por un componente único: las pestañas pasaron a texto display con subrayado
+naranja en cada pantalla; la fila de persona es `Busto`/`FilaDePie` (y la cara redonda, todavía
+repetida en tres lugares: ver deuda técnica en `UI_V2_PENDIENTES.md`); los paneles son la
+planilla. Se borraron ~4.700 líneas de CSS sin uso de `styles.css`.
+
+---
+
+## Historia: la auditoría del 25/9 (antes de la UI V1)
+
 > Pedido en `design/AI_HANDOFF.md` (TASK ACTUAL, 2026-09-25). Auditoría hecha sobre el código
 > **antes** de la migración tipográfica (commit `1422a21`, rama `art/vestuario-vertical-slice`),
 > recorriendo el juego con Playwright a 1440×900 y leyendo componente por componente.
