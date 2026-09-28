@@ -345,32 +345,16 @@ button:focus-visible,
 
 /* Todo hijo de una grilla que tenga que encoger necesita esto; olvidarlo es el
    bug de "la fila no achica" y aparece una vez por pantalla. */
-.pantalla > *,
-.pantalla-col > * {
+.pantalla > * {
   min-height: 0;
 }
 
 /* Columna de paneles apilados dentro de una pantalla. */
-.pantalla-col {
-  display: grid;
-  gap: var(--sp-4);
-  min-height: 0;
-}
 
 /* Panel con cabezal (`h3.card-band`) y cuerpo. Desde sep 2026 el cuerpo NO
    scrollea: mide lo que su contenido pide y el que scrollea es el contenido de
    la ventana. La única excepción es el relato del partido en vivo, que crece
    jugada a jugada y se desplaza solo (ver `.pv-relato`). */
-.pane {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  min-height: 0;
-  overflow: hidden;
-}
-
-.pane > .pane-body {
-  min-height: 0;
-}
 
 /* ---------- Chrome: barra superior ---------- */
 
@@ -447,20 +431,6 @@ button:focus-visible,
 
 /* Sin pestañas, la barra dice dos cosas: en qué pantalla estás (con el color de
    su área) y cómo volver al inicio. */
-.pantalla-actual {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-left: 1rem;
-  padding-left: 0.7rem;
-  border-left: 3px solid var(--sec);
-  color: var(--text-light);
-  font-family: var(--display);
-  font-weight: 500;
-  font-size: var(--fs-md);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
 
 /* Salir: gris de "ajustes", el más callado a propósito. */
 .topbar .salir {
@@ -711,11 +681,9 @@ button:focus-visible,
 .vista { --sec: var(--sec-ajustes); }
 .sec-tablero { --sec: var(--sec-tablero); }
 .sec-partidos { --sec: var(--sec-partidos); }
-.sec-vestuario { --sec: var(--sec-vestuario); }
+
 .sec-plantel { --sec: var(--sec-plantel); }
 .sec-finanzas { --sec: var(--sec-finanzas); }
-.sec-scouting { --sec: var(--sec-scouting); }
-.sec-ajustes { --sec: var(--sec-ajustes); }
 
 /* La banda sangra hasta el borde con márgenes negativos: así ninguna card
    necesita un div nuevo envolviendo su cuerpo. El :first-child sigue andando
@@ -731,8 +699,7 @@ button:focus-visible,
    clara sobre el panel, con una línea punteada abajo como las de la planilla
    del Tablero. Nada de relleno de color: los cabezales llenos eran lo que más
    leía como dashboard. */
-.vista .card > h3:first-child,
-.card > h3.card-band {
+.vista .card > h3:first-child {
   background: transparent;
   color: var(--text);
   font-family: var(--display);
@@ -748,37 +715,24 @@ button:focus-visible,
   align-items: center;
   gap: 0.5rem;
 }
-.vista .card > h3:first-child > .ico,
-.card > h3.card-band > .ico { color: var(--text-dim); }
+.vista .card > h3:first-child > .ico { color: var(--text-dim); }
 
 /* Lo que va del lado derecho de un cabezal de card: el contador y el botón de
    plegar. Sobre el color de sección la tinta es clara, así que el borde y el
    texto se apagan en vez de dibujar una caja blanca encima. */
-.vista .card > h3 > .band-right {
-  margin-left: auto;
-  border-color: rgba(246, 244, 241, 0.45);
-  color: var(--text-light);
-  font-weight: 400;
-}
 
 /* Un chip dentro de la banda (la convocatoria lleva "Faltas: medio" y "Lista
    2 días antes" al lado del título) se pintaba con su tinta de siempre —gris
    o pizarra— sobre el azul de la sección y no se leía. Sobre el color de
    sección la tinta es clara, como el `.band-right`. */
-.vista .card > h3:first-child > .chip,
-.card > h3.card-band > .chip {
+.vista .card > h3:first-child > .chip {
   color: var(--text-light);
   border-color: rgba(246, 244, 241, 0.55);
   font-weight: 500;
   letter-spacing: 0.04em;
 }
-.vista .card > h3:first-child > .chip.warn,
-.card > h3.card-band > .chip.warn {
+.vista .card > h3:first-child > .chip.warn {
   background: rgba(246, 244, 241, 0.16);
-}
-
-.vista .card > h3 > .band-right ~ .band-btn {
-  margin-left: 0.4rem;
 }
 
 .vista .card > h3 > .band-btn {
@@ -912,122 +866,41 @@ button:focus-visible,
 
 /* Las cuatro etapas con pie son una columna que empuja el pie al fondo (el
    quinteto, el partido y el informe lo declaran en su propia regla, abajo). */
-.semana-scroll {
-  display: flex;
-  flex-direction: column;
-}
 
 /* El pie termina en el borde real del scroll: su padding de abajo ya cubre el
    aire de `.app-shell` cuando está pegado, y el margen negativo evita que ese
    mismo aire lo separe de la barra de recursos cuando está en flujo. */
-.semana-scroll > .pie-fijo,
-.quinteto-pantalla > .pie-fijo,
 .partido-pantalla > .pie-fijo,
 .informe-pantalla > .pie-fijo {
   margin-top: auto;
   margin-bottom: calc(-1 * var(--sp-6));
 }
 
-.semana-scroll {
-  min-height: 0;
-}
-
 /* Planning: la decisión de la semana a la izquierda, las acciones a la derecha. */
-.semana-planning {
-  display: grid;
-  grid-template-columns: minmax(420px, 1.15fr) minmax(380px, 1fr);
-  gap: 1rem;
-  min-height: 0;
-}
-
-.semana-izq {
-  min-height: 0;
-}
-
-.semana-acciones {
-  min-height: 0;
-  margin-bottom: 0;
-}
 
 /* Las diez acciones en dos columnas dentro del panel: con una sola columna la
    lista quedaba larguísima y con cinco (como estaba) no entraban a 1280. */
-.semana-acciones .action-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-@media (max-width: 1180px) {
-  .semana-planning { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
-}
 
 /* ---------- El quinteto (tanda C) ---------- */
 
 /* Cómo llega el partido arriba · la pizarra en el medio · confirmar abajo. */
-.quinteto-pantalla {
-  /* Columna, no grilla: el pie se va al fondo con `margin-top: auto` (ver
-     `.semana-vista`). Una grilla de una columna no puede empujarlo. */
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  min-height: 0;
-}
 
 /* La cabecera mide lo que sus avisos piden: una baja de último momento se lee
    entera, no en una tira de 30 px con scroll. */
-.quinteto-cabecera { min-height: 0; }
-
-.quinteto-cabecera > .card { margin-bottom: 0.6rem; }
-.quinteto-cabecera > .card:last-child { margin-bottom: 0; }
 
 /* Los avisos de la cabecera, en letra chica y sin aire entre uno y otro: a
    660 de alto la cabecera scrolleaba por adentro con dos párrafos. */
-.quinteto-cabecera > .card > p.muted {
-  font-size: var(--fs-sm);
-  margin-top: 0.35rem;
-  line-height: 1.35;
-}
-.quinteto-cabecera > .card > h3 { margin-bottom: 0.45rem; }
-
-.quinteto-pie { min-height: 0; }
-.quinteto-pie .confirm-bar { margin-top: 0; }
-.callup-pie { min-height: 0; }
-.callup-pie .confirm-bar { margin-top: 0; }
 
 /* El cuerpo: el plantel a la izquierda, la pizarra a la derecha, los dos a
    tamaño natural. Antes scrolleaban tres cosas a la vez (el plantel, la pizarra
    y la cabecera) y no se podía ver a quién elegías y dónde lo ponías al mismo
    tiempo; ahora scrollea la ventana y la pizarra se queda pegada arriba
    mientras recorrés la lista. */
-.quinteto-pantalla .lineup-layout {
-  min-height: 0;
-  align-items: start;
-}
-
-.quinteto-pantalla .lineup-court {
-  position: sticky;
-  top: 0;
-}
-
-.lineup-izq {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  min-height: 0;
-}
 
 /* El scouting arranca plegado (ver ui/ScoutingCard.tsx): ocupa su cabezal y
    nada más hasta que lo abrís. */
-.lineup-izq > * { flex: none; }
 
 /* Ni la lista ni la pizarra scrollean por su cuenta: la ventana ya lo hace. */
-.quinteto-pantalla .lineup-list {
-  max-height: none;
-  overflow: visible;
-}
-
-.quinteto-pantalla .lineup-court {
-  overflow: visible;
-  margin-bottom: 0;
-}
 
 /* ---------- El partido (tanda C) ---------- */
 
@@ -1046,310 +919,34 @@ button:focus-visible,
    de cuartos con los mismos números— que medían 213 px; en una ventana de 815
    le dejaban 320 a la acción y las tres columnas scrolleaban por adentro con
    los botones de táctica escondidos. Mide ~80 y no scrollea nunca. */
-.partido-franja {
-  display: grid;
-  grid-template-columns: minmax(200px, 1fr) auto minmax(160px, 1fr);
-  gap: var(--sp-4);
-  align-items: center;
-  margin-bottom: 0;
-  padding: 0.55rem 1rem;
-}
-
-.franja-quien {
-  display: grid;
-  gap: 0.3rem;
-  min-width: 0;
-}
-
-.franja-quien h3 {
-  font-size: var(--fs-md);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.franja-chips {
-  display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-
-.franja-marcador {
-  display: grid;
-  grid-template-columns: auto auto auto auto auto;
-  grid-template-rows: auto auto;
-  align-items: center;
-  justify-items: center;
-  column-gap: 0.7rem;
-  text-align: center;
-}
-
-.fm-team {
-  font-weight: 700;
-  font-size: var(--fs-sm);
-  max-width: 150px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.fm-score {
-  font-family: var(--display);
-  font-size: var(--fs-xl);
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  min-width: 2ch;
-}
-
-.fm-score.win { color: var(--good); }
-.fm-score.lose { color: var(--bad); }
-
-.fm-sep {
-  font-family: var(--display);
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-dim);
-}
-
-.fm-cuartos {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 0.6rem;
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-  margin-top: 0.2rem;
-}
-
-.fm-cuarto b {
-  font-weight: 600;
-  color: var(--text-faint);
-  margin-right: 0.15rem;
-}
-
-.fm-cuarto.vacio { opacity: 0.55; }
-
-.franja-estado {
-  display: grid;
-  gap: 0.3rem;
-  justify-items: end;
-  text-align: right;
-  min-width: 0;
-}
-
-.franja-linea {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-}
-
-.franja-estado .drama-row {
-  margin: 0;
-  justify-content: flex-end;
-}
-
-.franja-estado .match-alert {
-  margin: 0;
-  padding: 0.3rem 0.6rem;
-  font-size: var(--fs-sm);
-  max-width: none;
-}
-
-@media (max-width: 1240px) {
-  .partido-franja { grid-template-columns: minmax(0, 1fr) auto; }
-  .franja-estado { grid-column: 1 / -1; justify-items: start; text-align: left; }
-}
 
 /* La pizarra compacta: fila de botones con su etiqueta a la izquierda, una
    línea de pista, y las piernas de los dos adentro de la misma card. */
-.pizarra-viva h3 { margin-bottom: 0.5rem; }
-
-.pv-fila {
-  display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.pv-fila .tactic-label { margin: 0; }
-
-.pv-fila .segmented { width: 100%; }
-.pv-fila .segmented button {
-  flex: 1 1 0;
-  padding: 0.38rem 0.4rem;
-  font-size: var(--fs-sm);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pv-pista {
-  margin: 0.25rem 0 0.7rem 58px;
-  padding-left: 0.5rem;
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-  line-height: 1.35;
-}
-
-.pv-piernas {
-  display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
-  gap: 0.3rem 0.5rem;
-  align-items: center;
-  border-top: 1px solid var(--border);
-  padding-top: 0.55rem;
-}
-
-.pv-piernas .tactic-label { margin: 0; grid-row: span 2; align-self: start; padding-top: 0.1rem; }
-
-.pv-pierna {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) 2.2ch;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-
-.pv-pierna > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pv-pierna b { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* Los cambios, apretados: presets y mandos en dos filas cortas, una línea de
    pista, y filas de 27 px para que los diez citados entren a 815 de alto. */
-.cambios-presets {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.35rem;
-}
-
-.cambios-presets button.small { padding: 0.25rem 0.55rem; }
-
-.cambios-mandos {
-  display: flex;
-  gap: 0.4rem;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 0.3rem;
-}
-
-.cambios-mandos .segmented button { padding: 0.3rem 0.6rem; font-size: var(--fs-xs); }
-
-.cambios-pista {
-  margin: 0 0 0.35rem;
-  font-size: var(--fs-xs);
-  line-height: 1.3;
-}
 
 /* En una notebook (1366×660) la pista de tres líneas y los presets en dos
    filas dejaban dos jugadores a la vista: la pista se corta en una línea con
    puntos suspensivos (entera en el tooltip) y los presets se achican. */
-@media (max-width: 1500px) {
-  .cambios-pista { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cambios-presets button.small { padding: 0.2rem 0.45rem; font-size: var(--fs-2xs); }
-}
-
-.partido-cambios .sub-row {
-  padding: 0.12rem 0.4rem;
-  font-size: var(--fs-sm);
-  gap: 0.4rem;
-}
-
-.partido-cambios .sub-group-label { margin-bottom: 0.15rem; }
-.partido-cambios .sub-group-banco { margin-top: 0.4rem; }
-
-.previa-consigna {
-  margin: 0 0 0.5rem;
-  line-height: 1.45;
-}
-
-.partido-incidencia { border-color: var(--warn); }
-.vista .partido-incidencia > h3.card-band { background: var(--warn); }
 
 /* Con una incidencia que decidir, la cancha cede alto: las tres opciones
    tienen que entrar sin scroll a 815 (antes la tercera quedaba escondida). */
-.pv-centro.con-incidencia .pv-cancha { height: clamp(90px, 12vh, 140px); }
+
 /* En ventanas bajas la cancha se guarda mientras se decide: la decisión es lo que se mira. */
-@media (max-height: 800px) {
-  .pv-centro.con-incidencia .pv-cancha { display: none; }
-}
+
 /* Las opciones van en columnas (tres a lo ancho del panel), no apiladas:
    ocupan la mitad de alto y se comparan de un vistazo. */
-.pv-incidencia-opciones {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
-  gap: 0.35rem;
-  align-items: stretch;
-}
-.pv-incidencia-opciones button {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  padding: 0.4rem 0.6rem;
-  line-height: 1.25;
-  height: 100%;
-}
-.pv-incidencia-opciones .opt-hint {
-  display: block;
-  margin-top: 0.1rem;
-  font-size: var(--fs-xs);
-  font-weight: 400;
-  color: var(--text-dim);
-}
 
 /* Ya no es sticky: es una fila de la grilla. Por eso dejó de cortar las filas de
    "En cancha" y "Banco" cuando el contenido pasaba por debajo. */
-.partido-pantalla .partido-cabezal {
-  position: static;
-  margin-bottom: 0.6rem;
-}
-
-.partido-cuerpo {
-  display: grid;
-  grid-template-columns: minmax(240px, 0.85fr) minmax(280px, 1fr) minmax(300px, 1.25fr);
-  gap: var(--sp-4);
-  min-height: 0;
-}
 
 /* Columna de la táctica y las piernas: cards apiladas a su alto natural. */
-.partido-col-scroll {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  min-height: 0;
-}
-
-.partido-col-scroll > .card {
-  flex: none;
-  margin-bottom: 0;
-}
-
-.partido-cambios,
-.partido-relato {
-  min-height: 0;
-  margin-bottom: 0;
-}
 
 /* El relato crece jugada a jugada y se desplaza solo hasta la última canasta
    (PartidoVivo.tsx): es el único panel que scrollea por dentro, con un techo
    proporcional a la ventana para que la columna no se estire hasta el infinito
    en el 4to cuarto. */
-.partido-relato .pane-body { padding-top: 0.5rem; }
-.pv-relato > .pane-body {
-  max-height: clamp(240px, 46vh, 620px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-}
-
-.partido-relato-vacio {
-  display: grid;
-  place-items: center;
-  text-align: center;
-  margin-bottom: 0;
-}
 
 .partido-pie { min-height: 0; }
 .partido-pie .confirm-bar { margin-top: 0; }
@@ -1357,21 +954,11 @@ button:focus-visible,
 
 @media (max-width: 1240px) {
   /* Sin ancho para tres, la táctica y los cambios comparten columna. */
-  .partido-cuerpo { grid-template-columns: minmax(280px, 1fr) minmax(300px, 1.15fr); }
-  .partido-col-scroll { grid-row: span 2; }
+  
+  
 }
 
 /* ---------- La pretemporada (tanda E) ---------- */
-
-.pretemporada-pantalla {
-  display: grid;
-  gap: var(--sp-3);
-  min-height: 0;
-}
-
-.pretemporada-cabecera { min-height: 0; }
-
-.pretemporada-cuerpo { min-height: 0; }
 
 /* ---------- La liga (tanda E) ---------- */
 
@@ -1380,10 +967,6 @@ button:focus-visible,
   gap: var(--sp-3);
   min-height: 0;
 }
-
-.liga-tabs { align-self: start; }
-
-.liga-cuerpo { min-height: 0; }
 
 /* ---------- El informe (tanda D) ---------- */
 
@@ -1397,62 +980,20 @@ button:focus-visible,
 
 /* La franja del informe: el resumen a la derecha puede ser largo, se corta en
    dos líneas con puntos suspensivos y se lee entero en el tooltip. */
-.informe-franja .franja-quien { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.6rem; }
+
 /* El título del informe se parte en dos renglones antes que recortarse: a 1280
    y 1366 de ancho la columna mide 365 px, el chip del resultado se lleva 90 y
    "Semana 6 · vs Los Cardales" (277 px) leía "SEMANA 6 · VS LOS CARDA…" en la
    pantalla que más se mira. A 1920 entra en uno. */
-.informe-franja .franja-quien h3 { white-space: normal; line-height: 1.15; }
-.informe-franja .result-badge { font-size: var(--fs-sm); padding: 0.2rem 0.8rem; }
-.informe-franja .franja-linea {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
 
 /* La planilla · el relato y las claves · el vestuario. Tres preguntas distintas
    del mismo partido, lado a lado y cada una a su alto. */
-.informe-cuerpo {
-  display: grid;
-  grid-template-columns: minmax(360px, 1.3fr) minmax(280px, 1fr) minmax(280px, 1fr);
-  gap: var(--sp-4);
-  min-height: 0;
-  align-items: start;
-}
-
-.informe-planilla,
-.informe-moods {
-  min-height: 0;
-  margin-bottom: 0;
-}
-
-.informe-col {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  min-height: 0;
-}
-
-.informe-col > .card {
-  flex: none;
-  margin-bottom: 0;
-}
 
 .informe-pantalla .confirm-bar { margin-top: 0; }
 
 /* Con menos de ~1480 de ancho (la notebook) no hay lugar para tres columnas
    sin cortar la planilla ni el vestuario a lo ancho: la planilla y el relato
    quedan lado a lado, y el vestuario pasa abajo en dos columnas de jugadores. */
-@media (max-width: 1480px) {
-  .informe-cuerpo { grid-template-columns: minmax(300px, 1.1fr) minmax(280px, 1fr); }
-  .informe-moods { grid-column: span 2; }
-  .informe-moods .data-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: var(--sp-5);
-  }
-}
 
 /* ---------- El Tablero encoge con la ventana ---------- */
 
@@ -1500,8 +1041,7 @@ img.retrato-img {
   background: linear-gradient(180deg, #3c6e9e 0%, #2a5075 100%);
 }
 
-.avatar img.retrato-img,
-.qs-avatar img.retrato-img {
+.avatar img.retrato-img {
   width: 100%;
   height: 100%;
   border: none;
@@ -1548,12 +1088,6 @@ img.retrato-img.v2 {
 }
 
 /* Nombre de club precedido por su escudo, alineados por la base del texto. */
-.con-escudo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  vertical-align: middle;
-}
 
 /* Chip con ícono adelante: el ícono toma el color del chip por currentColor. */
 .chip.con-ico {
@@ -1576,53 +1110,15 @@ img.retrato-img.v2 {
 
 .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
 .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-.grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
 
 @media (max-width: 900px) {
-  .grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+  
   .grid.cols-3 { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 560px) {
-  .grid.cols-4, .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr; }
-}
-
-.stat-tile {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.8rem 1rem;
-  box-shadow: var(--sombra);
-}
-
-.stat-tile.clickable {
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.stat-tile.clickable:hover {
-  border-color: var(--accent);
-}
-
-.stat-tile .label {
-  font-family: var(--display);
-  color: var(--text-faint);
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-}
-
-.stat-tile .value {
-  font-family: var(--display);
-  font-size: var(--fs-lg);
-  line-height: 1.15;
-  font-variant-numeric: tabular-nums;
-  margin-top: 0.1rem;
-}
-
-.stat-tile .sub {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
+  .grid.cols-3,
+.grid.cols-2 { grid-template-columns: 1fr; }
 }
 
 .value.good { color: var(--good); }
@@ -1732,54 +1228,6 @@ img.retrato-img.v2 {
 
 /* ---------- Player cards ---------- */
 
-.player-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 1rem;
-}
-
-.player-card {
-  background-color: var(--panel);
-  background-image: var(--grano);
-  background-blend-mode: multiply;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.9rem;
-  box-shadow: var(--relieve);
-}
-
-.player-card.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
-}
-
-.player-card.rotation {
-  border-color: var(--sec-partidos);
-  border-style: dashed;
-  box-shadow: 0 0 0 2px rgba(45, 92, 138, 0.15);
-}
-
-.chip.rotation-chip {
-  border-color: var(--sec-partidos);
-  color: var(--sec-partidos);
-}
-
-.player-card.unavailable {
-  opacity: 0.55;
-}
-
-.player-card.dimmed {
-  opacity: 0.45;
-  filter: saturate(0.6);
-}
-
-.player-head {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 0.5rem;
-}
-
 /* El aro del retrato es cromo, no acción: doce caras con borde naranja se
    comen el único color que dice "acá se toca". */
 .avatar {
@@ -1804,72 +1252,13 @@ img.retrato-img.v2 {
   display: block;
 }
 
-.player-head .who {
-  flex: 1;
-  min-width: 0;
-}
-
-.player-head .name {
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.player-head .pos {
-  color: var(--text-dim);
-  font-size: var(--fs-sm);
-}
-
-.player-head .rating {
-  text-align: right;
-}
-
-.player-head .rating .num {
-  font-size: var(--fs-md);
-  font-weight: 800;
-  /* Tinta, no naranja: el acento es de la acción, no de cada fila. */
-  color: var(--text);
-}
-
-.player-head .rating .approx {
-  font-size: var(--fs-2xs);
-  color: var(--text-dim);
-}
-
-.player-desc {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  font-style: italic;
-  margin: 0.4rem 0 0.6rem;
-  min-height: 2.2em;
-}
-
-.player-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-top: 0.55rem;
-}
-
 /* La escalera de divisionales: un botón por categoría, de la más alta a la más
    baja. La nuestra va deshabilitada pero marcada — no es un botón muerto, es
    dónde estamos parados. */
-.division-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
+
 /* La nuestra se marca como pestaña activa (SUBNAV-01). */
-.division-tabs button:disabled {
-  cursor: default;
-}
 
 /* ---------- Tables ---------- */
-
-.table-wrap {
-  overflow-x: auto;
-}
 
 table {
   width: 100%;
@@ -1891,10 +1280,6 @@ th {
   letter-spacing: 0.05em;
 }
 
-tr.highlight {
-  background: var(--accent-soft);
-}
-
 td.num, th.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -1902,45 +1287,8 @@ td.num, th.num {
 
 /* ---------- News ---------- */
 
-.news-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.news-list li {
-  padding: 0.45rem 0;
-  border-bottom: 1px solid var(--border);
-  font-size: var(--fs-base);
-  display: flex;
-  gap: 0.6rem;
-}
-
-.news-list li:last-child {
-  border-bottom: none;
-}
-
 /* "Qué mirar hoy" ya no es una card: cada aviso vive en el tile del inicio que
    lo resuelve (ver ui/watch.ts y .hub-tile-note). */
-
-.news-week {
-  color: var(--text-dim);
-  font-size: var(--fs-xs);
-  min-width: 42px;
-  padding-top: 0.1rem;
-}
-
-.news-dot {
-  width: 8px;
-  height: 8px;
-  min-width: 8px;
-  border-radius: 50%;
-  margin-top: 0.45rem;
-}
-
-.news-dot.good { background: var(--good); }
-.news-dot.bad { background: var(--bad); }
-.news-dot.neutral { background: var(--text-dim); }
 
 /* ---------- Week flow ---------- */
 
@@ -1966,84 +1314,12 @@ td.num, th.num {
   color: var(--good);
 }
 
-.action-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 0.8rem;
-}
-
 /* Es un <button> (sep 2026): se le quita la ropa de botón chico y se le deja
    la de card, con el foco visible para el que elige con el teclado. */
-.action-card {
-  display: block;
-  width: 100%;
-  text-align: left;
-  font-size: inherit;
-  color: inherit;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.8rem;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.action-card:hover:not(.disabled) {
-  border-color: var(--accent);
-}
-
-.action-card:active:not(:disabled) { transform: none; }
-
-.action-card:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.action-card.selected {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.action-card.disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
 
 /* La elegida con el cupo lleno sigue destildable: no se apaga. */
-.action-card.selected.disabled {
-  opacity: 1;
-  cursor: pointer;
-}
-
-.action-card .action-title {
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
 
 /* El ícono no compite con el nombre: hereda el color pero no el peso. */
-.action-card .action-title .ico {
-  flex-shrink: 0;
-  color: var(--sec);
-}
-
-.action-card .action-desc {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  margin-bottom: 0.4rem;
-}
-
-.action-card .action-cost {
-  font-size: var(--fs-xs);
-  color: var(--warn);
-}
-
-.action-card .action-blocked {
-  font-size: var(--fs-xs);
-  color: var(--bad);
-}
 
 .confirm-bar {
   display: flex;
@@ -2070,71 +1346,10 @@ td.num, th.num {
    la ventana y la barra superior le pasaba por encima; el resultado era que el
    cabezal CORTABA a la mitad las filas de "En cancha" y "Banco". Ahora el
    scroller es `.app-shell`, que arranca justo debajo de la barra: `top: 0`. */
-.partido-cabezal {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  margin-bottom: 1rem;
-}
 
 /* En vivo el marcador respira menos: el cabezal es una franja, no una pantalla. */
-.partido-cabezal .scoreboard.live {
-  padding: 0.7rem 1rem 0.4rem;
-}
-
-.partido-cabezal-fila {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.partido-cabezal .drama-row {
-  margin-bottom: 0;
-}
 
 /* ---------- Scoreboard ---------- */
-
-.scoreboard {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  padding: 1.4rem 1rem;
-  flex-wrap: wrap;
-  text-align: center;
-}
-
-.scoreboard .team {
-  min-width: 140px;
-}
-
-.scoreboard .team .tname {
-  font-weight: 700;
-  font-size: var(--fs-base);
-  margin-bottom: 0.3rem;
-}
-
-.scoreboard .score {
-  font-size: var(--fs-3xl);
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-}
-
-.scoreboard .score.win { color: var(--good); }
-.scoreboard .score.lose { color: var(--bad); }
-
-.result-badge {
-  display: inline-block;
-  font-size: var(--fs-base);
-  font-weight: 800;
-  padding: 0.3rem 1.2rem;
-  border-radius: 999px;
-}
-
-.result-badge.win { background: #e2efe5; color: #2f6b45; }
-.result-badge.lose { background: #f6e2df; color: #8f342c; }
 
 .reason-list {
   margin: 0.4rem 0 0;
@@ -2147,62 +1362,6 @@ td.num, th.num {
 }
 
 /* ---------- Eventos sociales ---------- */
-
-.event-head {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-}
-
-.event-head h2 {
-  margin: 0;
-}
-
-.event-icon {
-  width: 50px;
-  height: 50px;
-  min-width: 50px;
-  border-radius: 50%;
-  background: var(--chrome-alto);
-  border: 1px solid var(--chrome-alto);
-  color: var(--text-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--fs-lg);
-}
-
-.event-people {
-  display: flex;
-  gap: 1rem;
-  margin-top: 0.9rem;
-}
-
-.event-person {
-  text-align: center;
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-  max-width: 76px;
-}
-
-.event-person .avatar {
-  width: 52px;
-  height: 52px;
-  margin: 0 auto 0.3rem;
-}
-
-.event-person span {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.callup-avatar {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-}
 
 /* ---------- Estados humanos: la frase al lado del número ---------- */
 
@@ -2239,124 +1398,9 @@ td.num, th.num {
 
 /* ---------- El grupo del club (chat del vestuario) ---------- */
 
-.chat-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
 /* ---- El calendario de la semana (tira de días hacia el partido) ---- */
 
-.semana-strip {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.3rem;
-  margin: 0.6rem 0 0.2rem;
-}
-
-.dia-cell {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--panel-2);
-  padding: 0.3rem 0.35rem 0.35rem;
-  min-height: 3rem;
-  font-size: var(--fs-xs);
-}
-
-.dia-cell.dia-hoy {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
-}
-
-.dia-cell.dia-partido {
-  background: var(--panel);
-  border-color: var(--sec);
-}
-
-.dia-nombre {
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--text-dim);
-  font-size: var(--fs-xs);
-}
-
-.dia-fecha {
-  font-weight: 400;
-  color: var(--text-faint);
-}
-
-.dia-tag {
-  display: inline-block;
-  font-size: var(--fs-2xs);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--accent);
-}
-
-.dia-marca {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-top: 0.2rem;
-  color: var(--text);
-  line-height: 1.2;
-}
-
-.dia-marca span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.chat-row {
-  display: flex;
-  gap: 0.55rem;
-  align-items: flex-start;
-}
-
-.chat-avatar {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  border-width: 1.5px;
-}
-
-.chat-bubble {
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
-  border-radius: 4px 12px 12px 12px;
-  padding: 0.4rem 0.65rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.chat-name {
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  color: var(--accent);
-  margin-bottom: 0.1rem;
-}
-
-.chat-text {
-  font-size: var(--fs-sm);
-  line-height: 1.35;
-}
-
 /* Retrato junto al nombre en "cómo quedó cada uno". */
-.mood-label {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.mood-avatar {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  border-width: 1.5px;
-}
 
 /* ---------- Planilla (guiño de papel de mesa de control) ---------- */
 
@@ -2366,10 +1410,6 @@ table.planilla th {
 }
 
 /* El glifo grande de las pantallas de cierre (temporada, pretemporada). */
-.outcome-glyph {
-  color: var(--accent);
-  margin-bottom: 0.4rem;
-}
 
 /* La tarjeta roja de la suspensión: el objeto de verdad, no un emoji. */
 .tarjeta-roja {
@@ -2406,26 +1446,6 @@ table.planilla tr:last-child td {
 
 /* La planilla del rival, debajo de la nuestra en el informe: el rótulo con su
    nombre separa las dos hojas, y los del banco van apagados (no anotan). */
-.informe-lado {
-  font-family: var(--display);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: var(--fs-xs);
-  color: var(--sec);
-  margin: 1rem 0 0.35rem;
-}
-
-table.planilla-rival th.pos,
-table.planilla-rival td.pos {
-  width: 34px;
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-
-table.planilla-rival tr.banco td { opacity: 0.7; }
 
 /* ---------- Plantel: vista planilla (tabla densa estilo mesa de control) ---------- */
 
@@ -2439,46 +1459,10 @@ table.planilla-rival tr.banco td { opacity: 0.7; }
 
 .plantel-cuerpo { min-height: 0; }
 
-.roster-head {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.9rem;
-  flex-wrap: wrap;
-}
-
 /* La nota de la pantalla es contexto, no titular: se lleva el espacio que sobra
    al lado de las pestañas en vez de una línea propia. */
-.roster-nota {
-  margin: 0;
-  flex: 1 1 320px;
-  min-width: 0;
-  font-size: var(--fs-xs);
-}
 
 /* Pestañas de sección (Plantel, Liga). Estados en el bloque SUBNAV-01. */
-.view-toggle {
-  display: inline-flex;
-  flex: none;
-}
-
-.view-toggle button {
-  padding: 0.3rem 0.9rem;
-  font-size: var(--fs-sm);
-}
-
-.sheet-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 230px;
-  gap: 1rem;
-  align-items: start;
-}
-
-@media (max-width: 900px) {
-  .sheet-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
 
 table.sheet td {
   padding: 0.3rem 0.5rem;
@@ -2490,10 +1474,7 @@ table.sheet td {
    quedaban cortadas contra el borde, con el scroll de costado escondido. La
    pizarra lateral cede 40 px y las celdas medio paso de aire cada una. */
 @media (max-width: 1500px) {
-  .sheet-layout {
-    grid-template-columns: minmax(0, 1fr) 190px;
-    gap: 0.75rem;
-  }
+  
   table.sheet td,
   table.sheet th {
     padding-left: 0.32rem;
@@ -2550,33 +1531,6 @@ tr.sheet-group td {
 /* Sin novedad. Ocupa la celda para no romper la grilla, sin llamar la atención. */
 .sheet-nada { font-size: var(--fs-xs); color: var(--text-faint); }
 
-.sheet-side {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--panel);
-  padding: 0.9rem;
-}
-
-.sheet-media {
-  text-align: center;
-  margin-bottom: 0.7rem;
-}
-
-.sheet-media-num {
-  font-size: var(--fs-xl);
-  font-weight: 800;
-  color: var(--accent);
-  line-height: 1;
-}
-
-.sheet-media-label {
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 0.25rem;
-}
-
 .sheet-court {
   position: relative;
 }
@@ -2606,11 +1560,6 @@ tr.sheet-group td {
   font-weight: 700;
   color: #ffc078; /* el naranja no llega sobre la cancha; se aclara para leerse */
   text-shadow: 0 1px 3px rgba(20, 32, 44, 0.85);
-}
-
-.sheet-court-note {
-  font-size: var(--fs-xs);
-  margin: 0.6rem 0 0;
 }
 
 /* ---------- Modal ---------- */
@@ -2687,157 +1636,24 @@ tr.sheet-group td {
    colgadas arriba y la pelota con los bolsos abajo. Partida se ve entera, el
    texto tiene una superficie limpia donde vivir, y de paso repite el esquema del
    Resumen (arte a un lado, datos al otro): el juego se siente uno desde el menú. */
-.menu-screen {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
-  background: var(--bg);
-}
 
 /* La imagen se pone por style inline desde App.tsx con import.meta.env.BASE_URL:
    el proyecto usa base relativa ('./') y un url() absoluto en CSS apuntaría a la
    raíz del dominio, no a /basket-manager/. Si el archivo falta, queda el grafito
    y el menú sigue perfectamente usable. */
-.menu-portada {
-  position: relative;
-  background: var(--chrome) center / cover no-repeat;
-  min-height: 100vh;
-}
 
 /* Degradado hacia el panel: el corte duro entre foto y menú se ve barato. */
-.menu-portada::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 88%, color-mix(in srgb, var(--bg) 80%, transparent));
-}
-
-.menu-panel {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.9rem;
-  padding: 2.5rem 2.2rem;
-  background: var(--bg);
-  overflow-y: auto;
-}
-
-.menu-screen h1 {
-  font-family: var(--display);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  font-size: clamp(2.2rem, 4vw, 3.1rem);
-  line-height: 0.95;
-  margin: 0;
-  text-wrap: balance;
-}
-
-.menu-screen h1 span {
-  color: var(--accent);
-}
-
-.menu-screen p {
-  color: var(--text-dim);
-  line-height: 1.5;
-  margin: 0;
-}
-
-@media (max-width: 880px) {
-  .menu-screen {
-    grid-template-columns: 1fr;
-  }
-  .menu-portada {
-    min-height: 38vh;
-  }
-  .menu-portada::after {
-    background: linear-gradient(180deg, transparent 60%, color-mix(in srgb, var(--bg) 90%, transparent));
-  }
-}
 
 /* Versión del build (hash + fecha del commit): para saber qué se está jugando. */
-.menu-screen .menu-version {
-  font-size: var(--fs-xs);
-  opacity: 0.65;
-  margin-top: 0.4rem;
-}
 
 /* Selector de dificultad de faltas para partidas nuevas. */
-.menu-difficulty {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.menu-diff-label {
-  font-family: var(--display);
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  color: var(--text-faint);
-}
-
-.menu-diff-desc {
-  margin: 0;
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  min-height: 2.2em;
-}
-
-.menu-screen .menu-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.menu-screen .menu-buttons button {
-  padding: 0.8rem;
-  font-size: var(--fs-md);
-}
-
-.season-end {
-  max-width: 760px;
-  margin: 2rem auto;
-  padding: 0 1rem 3rem;
-}
-
-.season-end .outcome {
-  text-align: center;
-  padding: 2rem 1rem;
-}
-
-.season-end .outcome h1 {
-  color: var(--accent);
-  font-size: var(--fs-xl);
-}
-
-.season-end .outcome p {
-  color: var(--text-dim);
-  max-width: 540px;
-  margin: 0.5rem auto 0;
-  line-height: 1.5;
-}
-
-.dim-row {
-  display: grid;
-  grid-template-columns: 180px 1fr 90px;
-  gap: 0.8rem;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border);
-  font-size: var(--fs-base);
-}
-
-.dim-row:last-child { border-bottom: none; }
-
-.dim-row .dim-grade { text-align: right; font-weight: 700; }
 
 @media (max-width: 560px) {
-  .dim-row { grid-template-columns: 1fr 80px; }
-  .dim-row .bar-track { display: none; }
+  
+  
   .bar-row { grid-template-columns: 90px 1fr 34px; }
-  .scoreboard { gap: 1rem; }
-  .scoreboard .score { font-size: var(--fs-xl); }
+  
+  
 }
 
 .section-title {
@@ -2854,15 +1670,9 @@ tr.sheet-group td {
    normal desaparece. Le pasaba a los dos títulos de Rankings, que eran
    invisibles. Va acotado a `.vista` a propósito: las galerías de validación
    (/#retratos, /#escudos) no tienen fondo y ahí la tinta oscura es la correcta. */
-.vista .section-title,
-.vista .sobre-lienzo {
+.vista .section-title {
   color: var(--text-light);
   text-shadow: 0 1px 3px rgba(20, 18, 16, 0.55);
-}
-
-.vista .sobre-lienzo .plink {
-  color: inherit;
-  border-bottom-color: rgba(246, 244, 241, 0.45);
 }
 
 .muted {
@@ -2870,59 +1680,7 @@ tr.sheet-group td {
   font-size: var(--fs-sm);
 }
 
-.log-list {
-  margin: 0;
-  padding-left: 1.1rem;
-}
-
-.log-list li {
-  margin-bottom: 0.4rem;
-  font-size: var(--fs-base);
-  line-height: 1.4;
-}
-
 /* ---------- Convocatoria ---------- */
-
-.callup-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin: 0.6rem 0;
-}
-
-.callup-row {
-  display: flex;
-  gap: 0.6rem;
-  align-items: flex-start;
-  padding: 0.55rem 0.7rem;
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.callup-row.out {
-  border-color: rgba(184, 68, 58, 0.45);
-}
-
-.callup-row.dim {
-  opacity: 0.7;
-}
-
-.callup-icon {
-  font-size: var(--fs-md);
-  padding-top: 0.05rem;
-}
-
-.callup-name {
-  font-weight: 700;
-}
-
-.callup-note {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  font-style: italic;
-  margin-top: 0.15rem;
-}
 
 /* ---------- Galería de retratos (dev: /#retratos) ---------- */
 
@@ -2966,249 +1724,20 @@ tr.sheet-group td {
   margin: 0.6rem 0 1rem;
 }
 
-.callup-confirmed {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.7rem;
-}
-
 /* ---------- Pizarra del quinteto ---------- */
 
 /* Quinteto inicial: tira de 5 cartas estilo manager, encabezado visual del titular elegido. */
-.quinteto-strip {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-.qs-card {
-  position: relative;
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.7rem 0.4rem 0.6rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-.qs-card.empty {
-  border-style: dashed;
-  border-color: var(--text-dim);
-  background: transparent;
-}
-.qs-pos {
-  position: absolute;
-  top: 0;
-  left: 0;
-  background: var(--bg-soft);
-  color: var(--text-dim);
-  font-size: var(--fs-2xs);
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  padding: 0.15rem 0.45rem;
-  border-radius: 11px 0 9px 0;
-  text-transform: uppercase;
-}
-.qs-avatar {
-  width: 52px;
-  height: 52px;
-  margin-top: 0.9rem;
-  border-radius: 50%;
-  background: var(--panel);
-  border: 2px solid var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  color: var(--text-dim);
-  font-size: var(--fs-md);
-}
-.qs-avatar svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.qs-avatar.oop {
-  border-color: var(--warn);
-}
-.qs-avatar.empty {
-  border-style: dashed;
-  border-color: var(--text-dim);
-}
-.qs-name {
-  margin-top: 0.35rem;
-  font-size: var(--fs-sm);
-  font-weight: 700;
-  line-height: 1.15;
-  min-height: 2.1em;
-  display: flex;
-  align-items: center;
-}
-.qs-name.dim {
-  color: var(--text-dim);
-  font-weight: 500;
-}
-.qs-ht {
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-  margin-bottom: 0.4rem;
-}
-.qs-ht .oop-tag {
-  color: var(--warn);
-}
-.qs-bar {
-  width: 100%;
-  height: 5px;
-  background: var(--bg);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 0.35rem;
-}
-.qs-bar > i {
-  display: block;
-  height: 100%;
-  background: var(--good);
-}
-.qs-media {
-  margin-top: 0.25rem;
-  font-size: var(--fs-md);
-  font-weight: 800;
-  color: var(--text);
-}
-.qs-media small {
-  font-size: var(--fs-2xs);
-  color: var(--text-dim);
-  font-weight: 500;
-  margin-left: 0.15rem;
-}
-@media (max-width: 620px) {
-  .qs-avatar {
-    width: 44px;
-    height: 44px;
-  }
-  .qs-name {
-    font-size: var(--fs-xs);
-  }
-}
 
 /* La lista y la pizarra son las dos mitades de un mismo drag & drop: tienen que
    verse juntas o estás arrastrando a ciegas. La pizarra se queda pegada arriba
    (sticky) mientras la lista corre con la ventana. */
-.lineup-layout {
-  display: grid;
-  grid-template-columns: minmax(340px, 1fr) minmax(300px, 420px);
-  gap: var(--sp-4);
-  align-items: start;
-}
 
 /* La barra de la lista queda fija arriba mientras se scrollea adentro: los
    botones de Sugerir y Limpiar no se van de vista. */
-.lineup-list .lineup-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--panel);
-  padding-top: 0.15rem;
-}
-
-@media (max-width: 900px) {
-  .lineup-layout {
-    grid-template-columns: 1fr;
-  }
-  .lineup-court {
-    order: -1;
-  }
-}
-
-.lineup-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.6rem;
-  gap: 0.5rem;
-}
 
 button.small {
   padding: 0.3rem 0.7rem;
   font-size: var(--fs-sm);
-}
-
-.lp-row {
-  display: grid;
-  grid-template-columns: 34px 1fr auto auto;
-  gap: 0.6rem;
-  align-items: center;
-  padding: 0.45rem 0.5rem;
-  border-radius: var(--radius);
-  border: 1px solid transparent;
-  border-bottom: 1px solid var(--border);
-}
-
-.lp-row.starter {
-  border: 1px solid var(--accent);
-  background: var(--accent-soft);
-}
-
-.lp-row.rot {
-  border: 1px dashed var(--sec-partidos);
-  background: rgba(45, 92, 138, 0.08);
-}
-
-.lp-row.off {
-  opacity: 0.5;
-  filter: saturate(0.6);
-}
-
-.lp-pos {
-  font-size: var(--fs-xs);
-  font-weight: 800;
-  color: var(--text-dim);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  text-align: center;
-  padding: 0.2rem 0;
-}
-
-.lp-who {
-  min-width: 0;
-}
-
-.lp-name {
-  font-weight: 600;
-  font-size: var(--fs-base);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.lp-meta {
-  display: flex;
-  gap: 0.7rem;
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-  margin-top: 0.1rem;
-}
-
-.lp-rating {
-  text-align: right;
-}
-
-.lp-rating .num {
-  font-weight: 800;
-  color: var(--text);
-  font-size: var(--fs-base);
-}
-
-.lp-rating .stars {
-  font-size: var(--fs-2xs);
-  color: var(--text-dim);
-}
-
-.lp-btns {
-  display: flex;
-  gap: 0.3rem;
 }
 
 button.mini {
@@ -3226,12 +1755,6 @@ button.mini.on {
   color: var(--on-accent);
 }
 
-button.mini.blue.on {
-  background: var(--sec-partidos);
-  border-color: var(--sec-partidos);
-  color: var(--text-light);
-}
-
 /* La pizarra es la única superficie oscura del sistema: es una cancha pintada,
    como la del gimnasio. Todo lo que va encima lleva tinta clara explícita. */
 .court {
@@ -3243,9 +1766,6 @@ button.mini.blue.on {
   overflow: hidden;
 }
 
-.court .slot-name,
-.court .slot-sub,
-.court .slot-pos-label,
 .court .court-name {
   color: var(--text-light);
 }
@@ -3274,74 +1794,8 @@ button.mini.blue.on {
   width: 92px;
 }
 
-.slot:not(.filled) {
-  cursor: default;
-}
-
 /* Sobre la cancha azul el aro va claro: se recorta mejor que el naranja y no
    gasta el color de acción cinco veces por pizarra. */
-.slot-avatar {
-  width: 46px;
-  height: 46px;
-  margin: 0 auto;
-  border-radius: 50%;
-  background: var(--panel-2);
-  border: 2px solid var(--text-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  color: var(--text-dim);
-  font-size: var(--fs-base);
-  box-shadow: 0 3px 10px rgba(20, 32, 44, 0.45);
-  overflow: hidden;
-}
-
-.slot-avatar svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.slot-avatar.oop {
-  border-color: var(--warn);
-  color: var(--warn);
-}
-
-.slot-avatar.empty {
-  border-style: dashed;
-  border-color: var(--text-dim);
-  color: var(--text-dim);
-  background: transparent;
-  box-shadow: none;
-}
-
-.slot-avatar.small {
-  width: 34px;
-  height: 34px;
-  font-size: var(--fs-xs);
-}
-
-.slot-name {
-  margin-top: 0.25rem;
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-shadow: 0 1px 3px rgba(20, 32, 44, 0.8);
-}
-
-.slot-name.dim {
-  color: var(--text-dim);
-  font-weight: 500;
-}
-
-.slot-sub {
-  font-size: var(--fs-2xs);
-  color: var(--text-dim);
-  text-shadow: 0 1px 3px rgba(20, 32, 44, 0.8);
-}
 
 .bench {
   display: flex;
@@ -3351,97 +1805,20 @@ button.mini.blue.on {
   flex-wrap: wrap;
 }
 
-.bench-label {
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding-top: 0.6rem;
-}
-
-.bench-slot {
-  text-align: center;
-  cursor: pointer;
-  width: 58px;
-}
-
-.bench-slot.dim {
-  cursor: default;
-  opacity: 0.5;
-}
-
-.bench-slot .slot-name {
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  text-shadow: none;
-}
-
 /* ---------- Partido en vivo ---------- */
-
-.scoreboard.live {
-  padding: 0.8rem 1rem;
-}
-
-.scoreboard.live .score {
-  font-size: var(--fs-2xl);
-}
 
 /* Drama del partido: el marcador late al actualizarse (desde T5 lo dispara
    `CountUp` con la clase `contando` mientras sube número a número) y las
    alertas entran. */
-.scoreboard .score-pop {
-  animation: score-pop 0.55s ease;
-}
 
 @keyframes score-pop {
   0% { transform: scale(1.35); color: var(--accent); }
   100% { transform: scale(1); }
 }
 
-.drama-row {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin: 0.15rem 0 0.55rem;
-}
-
-.match-alert {
-  border: 1px solid var(--bad);
-  background: color-mix(in srgb, var(--bad) 14%, var(--panel));
-  border-radius: var(--radius);
-  padding: 0.5rem 0.75rem;
-  margin: 0.4rem auto 0.6rem;
-  max-width: 560px;
-  text-align: center;
-  font-weight: 700;
-  animation: alert-in 0.4s ease;
-}
-
 @keyframes alert-in {
   from { transform: translateY(-6px); opacity: 0; }
   to { transform: none; opacity: 1; }
-}
-
-.reason-list .note-injury {
-  color: var(--bad);
-  font-weight: 700;
-}
-
-.reason-list .note-hot {
-  color: var(--accent);
-}
-
-.tactic-block {
-  margin-bottom: 0.9rem;
-}
-
-.tactic-label {
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-dim);
-  margin-bottom: 0.35rem;
 }
 
 .segmented {
@@ -3465,7 +1842,6 @@ button.mini.blue.on {
    Activo: azul noche + barra naranja abajo + peso (el naranja marca "tab
    activo", no rellena el botón: el relleno naranja es sólo del CTA).
    Hover: panel elevado. Foco: contorno naranja. */
-.view-toggle,
 .segmented {
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -3473,7 +1849,6 @@ button.mini.blue.on {
   overflow: hidden;
 }
 
-.view-toggle button,
 .segmented button {
   border: none;
   border-radius: 0;
@@ -3481,37 +1856,25 @@ button.mini.blue.on {
   color: var(--text-dim);
 }
 
-.view-toggle button + button,
 .segmented button + button {
   border-left: 1px solid var(--border);
 }
 
-.profile-tabs button,
-.ps-tabs button,
-.ps-filtros button,
-.division-tabs button {
+.ps-filtros button {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--panel);
   color: var(--text-dim);
 }
 
-.view-toggle button:hover:not(:disabled):not(.active),
 .segmented button:hover:not(:disabled):not(.on),
-.profile-tabs button:hover:not(:disabled):not(.active),
-.ps-tabs button:hover:not(:disabled):not(.on),
-.ps-filtros button:hover:not(:disabled):not(.on),
-.division-tabs button:hover:not(:disabled) {
+.ps-filtros button:hover:not(:disabled):not(.on) {
   background: var(--panel-2);
   color: var(--text);
 }
 
-.view-toggle button.active,
 .segmented button.on,
-.profile-tabs button.active,
-.ps-tabs button.on,
 .ps-filtros button.on,
-.division-tabs button:disabled,
 .step.active {
   background: var(--chrome-alto);
   color: var(--text-light);
@@ -3520,179 +1883,24 @@ button.mini.blue.on {
   opacity: 1;
 }
 
-.profile-tabs button.active,
-.ps-tabs button.on,
 .ps-filtros button.on,
-.division-tabs button:disabled,
 .step.active {
   border-color: var(--chrome-alto);
 }
 
-.view-toggle button:focus-visible,
 .segmented button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
-.tactic-hint {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  margin: 0.4rem 0 0;
-  line-height: 1.4;
-}
-
 /* Cambios entre cuartos */
 
-.sub-group-label {
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-dim);
-  margin-bottom: 0.3rem;
-}
-
-.sub-row {
-  display: grid;
-  grid-template-columns: 30px 1fr 48px 30px 64px;
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.32rem 0.45rem;
-  border-radius: var(--radius);
-  border: 1px solid transparent;
-  cursor: pointer;
-  font-size: var(--fs-base);
-}
-
-.sub-pts {
-  text-align: right;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--fs-sm);
-  white-space: nowrap;
-}
-
-.sub-row:hover:not(.off) {
-  border-color: var(--accent);
-}
-
-.sub-row.sel {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.sub-row.off {
-  cursor: default;
-  opacity: 0.6;
-}
-
-.sub-row .lp-pos {
-  padding: 0.12rem 0;
-}
-
-.sub-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 600;
-}
-
-.sub-mins {
-  text-align: right;
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--fs-sm);
-}
-
 /* Resumen del jugador al pasar el mouse (partido en vivo) */
-
-.sub-row {
-  position: relative;
-}
-
-.hover-card {
-  display: none;
-  position: absolute;
-  right: calc(100% + 10px);
-  top: -8px;
-  width: 280px;
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--chrome-alto);
-  border-radius: var(--radius);
-  padding: 0.7rem 0.85rem;
-  z-index: 70;
-  box-shadow: var(--sombra-alta);
-  pointer-events: none;
-  cursor: default;
-}
-
-.sub-row:hover .hover-card {
-  display: block;
-}
-
-.hc-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.hc-rating {
-  color: var(--text);
-  font-weight: 800;
-}
-
-.hc-meta {
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-
-.hc-desc {
-  font-size: var(--fs-sm);
-  font-style: italic;
-  color: var(--text-dim);
-  margin: 0.35rem 0 0.5rem;
-}
-
-@media (max-width: 900px) {
-  .hover-card {
-    display: none !important;
-  }
-}
 
 /* Arrastre en la pizarra */
 
 [draggable='true'] {
   cursor: grab;
-}
-
-.slot-pos-label {
-  font-size: var(--fs-2xs);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
-  font-weight: 700;
-  margin-bottom: 0.15rem;
-  text-shadow: 0 1px 3px rgba(20, 32, 44, 0.8);
-}
-
-.slot-sub.oop-text {
-  color: var(--warn);
-}
-
-.quarter-log {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.quarter-log:last-child {
-  border-bottom: none;
-}
-
-.quarter-head {
-  font-weight: 700;
-  font-size: var(--fs-base);
-  margin-bottom: 0.2rem;
 }
 
 /* ---------- Ficha del jugador ---------- */
@@ -3789,27 +1997,9 @@ button.mini.blue.on {
   line-height: 1;
 }
 
-.profile-tabs {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-  padding: 0.6rem 1.2rem 0;
-}
-
-.profile-tabs button {
-  padding: 0.35rem 0.9rem;
-  font-size: var(--fs-sm);
-}
-
 .profile-body {
   padding: 1rem 1.2rem 1.2rem;
   overflow-y: auto;
-}
-
-.profile-quote {
-  font-style: italic;
-  color: var(--text-dim);
-  margin: 0 0 0.8rem;
 }
 
 .profile-subtitle {
@@ -3942,58 +2132,11 @@ button.mini.blue.on {
 
 /* ---------- Rankings ---------- */
 
-.ranking-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.ranking-list li {
-  display: grid;
-  grid-template-columns: 24px 1fr auto;
-  gap: 0.6rem;
-  align-items: baseline;
-  padding: 0.35rem 0;
-  border-bottom: 1px solid var(--border);
-  font-size: var(--fs-base);
-}
-
-.ranking-list li:last-child {
-  border-bottom: none;
-}
-
-.ranking-list li:first-child .rk-pos {
-  color: var(--accent);
-}
-
-.rk-pos {
-  font-weight: 800;
-  color: var(--text-dim);
-  text-align: center;
-}
-
-.rk-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.rk-value {
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--fs-sm);
-  white-space: nowrap;
-}
-
 /* ---------- Pretemporada ---------- */
 
 /* El plantel de la pretemporada es la misma planilla del Plantel y del
    mercado (dirección D), con menos columnas: quién, la valoración, cómo viene
    (chips) y la acción. Las filas `.ps-row` de antes se fueron con esto. */
-.planilla-plantel-ps .planilla-cab,
-.planilla-plantel-ps .planilla-fila {
-  grid-template-columns: 52px minmax(190px, 1.4fr) 62px minmax(220px, 1.6fr) 170px;
-}
 
 /* La pretemporada usa el mismo cromo que la temporada (barra arriba, barra de
    recursos abajo). Lo de acá abajo es solo lo suyo: el estado del club, las
@@ -4013,38 +2156,6 @@ button.mini.blue.on {
 
 /* La liga en la que quedaste anotado, en una línea que se lee de un saque:
    es el dato del que dependen todos los fichajes (día de partido). */
-.ps-estado-liga {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: var(--fs-md);
-}
-
-.ps-estado-liga .ico {
-  align-self: center;
-  color: var(--sec);
-}
-
-.ps-estado-liga .muted {
-  font-size: var(--fs-sm);
-}
-
-.ps-estado-veredicto {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.ps-estado-k {
-  font-family: var(--display);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
-  font-size: var(--fs-2xs);
-  color: var(--text-faint);
-}
 
 .ps-veredicto {
   margin: 0;
@@ -4057,68 +2168,12 @@ button.mini.blue.on {
 
 /* Pestañas de la pretemporada. La pantalla eran tres metros de scroll con
    inscripción, plantel y mercado apilados: ahora es una cosa por vez. */
-.ps-tabs {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  margin-bottom: var(--sp-4);
-}
-
-.ps-tabs button {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-family: var(--display);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: var(--fs-base);
-  padding: 0.45rem 1rem;
-}
-
-.ps-tabs button.on .chip {
-  border-color: rgba(246, 244, 241, 0.5);
-  color: var(--text-light);
-}
 
 /* Subtítulo dentro de una card de pretemporada: separa "a resolver" de
    "confirmados" sin gastar otra card. */
-.ps-subtitulo {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-family: var(--display);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  margin: var(--sp-4) 0 var(--sp-2);
-}
 
 /* Los confirmados no necesitan una fila cada uno: ya está resuelto. Son una
    tira de fichas, como la lista de convocados de la semana. */
-.ps-fichas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.ps-ficha {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.25rem 0.6rem 0.25rem 0.25rem;
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: var(--fs-sm);
-}
-
-.ps-ficha small {
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-}
 
 /* Filtros del mercado: dieciséis fichables en una grilla sin orden eran una
    pared. Puesto y criterio de orden, en la misma línea. */
@@ -4149,25 +2204,10 @@ button.mini.blue.on {
 /* Las cards de liga y de fichable tienen textos de largo distinto: sin esto el
    botón de cada una queda a una altura diferente y la grilla se lee como un
    serrucho. */
-.ps-grid .player-card {
-  display: flex;
-  flex-direction: column;
-}
-
-.ps-grid .player-card > button:last-child {
-  margin-top: auto;
-  width: 100%;
-}
 
 /* El nombre de una liga no es el de un jugador: "Liga Universitaria ·
    Divisional B" no se puede cortar con puntos suspensivos, es justo el dato que
    se está eligiendo. */
-.ps-liga .player-head .name {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-  line-height: 1.2;
-}
 
 /* Anotarse en una liga es la decisión de su pestaña, pero no es EL botón de la
    pantalla: ese es "avanzar semana", abajo. Cuatro naranjas en fila hacían que
@@ -4217,115 +2257,11 @@ button.mini.blue.on {
 
 /* Los tornillos: lo que hace que la placa pese. Cuatro detalles hechos a mano
    valen más que cualquier sombra genérica. */
-.planilla .tornillo {
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, #c3b69c, #6b5f4b 72%);
-  box-shadow: 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 0 0 1px rgba(60, 50, 34, 0.45);
-}
-
-.planilla .tornillo-si { top: 9px; left: 9px; }
-.planilla .tornillo-sd { top: 9px; right: 9px; }
-.planilla .tornillo-ii { bottom: 9px; left: 9px; }
-.planilla .tornillo-id { bottom: 9px; right: 9px; }
-
-.planilla-cab,
-.planilla-fila {
-  display: grid;
-  /* La quinta columna era la cifra de compromiso; ahora es la conducta en
-     palabras ("Está siempre", "Cuando quiere"), que necesita más ancho. */
-  /* El "quién" no baja de 150px: a 1280 de ancho la nota se lo comía y el
-     nombre se partía en dos renglones (la planilla mostraba dos jugadores y
-     medio a 720p). */
-  grid-template-columns: 52px minmax(150px, 1fr) 74px 74px minmax(108px, 132px) 74px minmax(180px, 280px) 152px 62px;
-  gap: var(--sp-3);
-  align-items: center;
-  padding: 0.55rem 1.4rem;
-}
-
-.planilla-cab {
-  font-family: var(--display);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  font-size: var(--fs-2xs);
-  color: var(--text-faint);
-  padding-top: 0.85rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
-  /* Queda arriba mientras se scrollea el plantel: catorce renglones de cifras
-     sin títulos a la vista son catorce renglones que hay que adivinar. */
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: var(--panel);
-}
 
 /* El `.tip` es el hijo de la grilla, así que la alineación va en él: si no, el
    punteado del tooltip cruza toda la columna en vez de subrayar la palabra. */
-.planilla-cab > * { justify-self: start; }
-.planilla-cab > .tip:has(.num),
-.planilla-cab > .num { justify-self: end; }
-
-.planilla-fila + .planilla-fila,
-.planilla-cab + .planilla-fila {
-  border-top: 1px solid var(--border);
-}
 
 /* Se tiñe sólo la fila que tiene algo que resolver. */
-.planilla-fila.alerta { background: rgba(184, 68, 58, 0.06); }
-
-.planilla-foto .avatar,
-.planilla-foto {
-  width: 52px;
-  height: 52px;
-  min-width: 52px;
-  border-radius: 2px;
-  overflow: hidden;
-  display: block;
-}
-
-.planilla-quien { min-width: 0; }
-
-.planilla-nombre {
-  display: block;
-  font-family: var(--display);
-  font-weight: 500;
-  font-size: var(--fs-md);
-  line-height: 1.15;
-}
-
-.planilla-pos {
-  font-family: var(--display);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  font-size: var(--fs-2xs);
-  color: var(--text-faint);
-  margin-left: 0.5rem;
-  /* "BASE · 22" baja de renglón entero o no baja: partido en "BASE ·" y "22"
-     no se lee. */
-  display: inline-block;
-  white-space: nowrap;
-}
-
-.planilla-dicho {
-  font-size: var(--fs-sm);
-  font-style: italic;
-  color: var(--text-dim);
-  line-height: 1.3;
-  /* Aire suficiente para que el punteado del nombre no toque la frase. */
-  margin-top: 0.3rem;
-  /* Dos renglones y punto: la frase entera vive en el title y en la ficha. Con
-     la bio completa cada renglón medía cinco líneas y a 720p entraban dos
-     jugadores y medio en la pantalla. */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
 
 /* La conducta en palabras (T2): el veredicto lleva el color del semáforo y los
    hechos van en el tooltip. Sin veredicto (recién llega) va en tinta apagada. */
@@ -4358,137 +2294,30 @@ button.mini.blue.on {
 
 /* Cifra grande y tabular con su medidor debajo: se comparan las columnas de un
    vistazo, sin cuatro barras gordas por ficha. */
-.planilla-cifra { display: block; }
-
-.planilla-cifra b {
-  display: block;
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: var(--fs-base);
-  line-height: 1;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.planilla-cifra b.ojo { color: var(--warn); }
-.planilla-cifra b.mal { color: var(--bad); }
 
 /* La nota humana ya trae su ícono y su color; acá sólo se le da la caja. */
-.planilla-nota .human-note { margin: 0; }
-.planilla-nada { color: var(--text-faint); }
-
-.planilla-rol {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.3rem;
-  font-family: var(--display);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
 
 /* El dato que la pantalla existe para mostrar: el único naranja de acá. */
-.planilla-valor {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: var(--fs-lg);
-  line-height: 1;
-  text-align: right;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-}
 
 /* El ≈ es la promesa que hace el juego: la valoración es una estimación. Va
    chico para no competir con la cifra, pero va. */
-.planilla-valor small {
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  opacity: 0.75;
-  margin-right: 0.05em;
-}
 
 /* Debajo del ancho de escritorio la columna de la nota es lo primero que sobra:
    sin ella la fila sigue contestando "quién es y cómo está". */
-@media (max-width: 1180px) {
-  .planilla-cab,
-  .planilla-fila {
-    grid-template-columns: 52px minmax(0, 1fr) 64px 64px 64px 64px 132px 62px;
-  }
-
-  .planilla-cab > :nth-child(7),
-  .planilla-nota {
-    display: none;
-  }
-}
 
 /* ---------- La planilla del mercado (dirección D, punto 2 del roadmap) ---------- */
 
 /* La misma placa que el plantel, con sus columnas: quién, nivel, físico, lo que
    se sabe (chips) y la acción. Los que ya no están (fichados, perdidos, los
    que dijeron que no) van apagados en su propia placa. */
-.planilla-mercado .planilla-cab,
-.planilla-mercado .planilla-fila {
-  grid-template-columns: 52px minmax(190px, 1.1fr) 76px 76px minmax(260px, 2fr) 176px;
-}
-
-.planilla-fila.dimmed {
-  opacity: 0.55;
-  filter: saturate(0.6);
-}
 
 /* La cifra estimada del mercado no lleva medidor: "71–85" o "★★★☆☆" ya dicen
    cuánto se sabe. Tinta, no naranja: el acento es de la acción, no de cada fila. */
-.planilla-mercado .planilla-cifra b {
-  font-size: var(--fs-md);
-  white-space: nowrap;
-}
-
-.planilla-sabe {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.3rem;
-  min-width: 0;
-}
-
-.planilla-sabe .human-note {
-  flex-basis: 100%;
-  margin: 0.1rem 0 0;
-}
 
 /* La relación de la libreta ("Ex compañero de club de Julián") y el chip de
    quién lo trae van como texto corrido, no como dos cajas flex: en flex el
    chip le comía el ancho y la relación larga se partía en cuatro renglones
    de una palabra, empujando el nombre. Así fluye y el chip envuelve al final. */
-.planilla-relacion {
-  display: block;
-  margin-top: 0.2rem;
-}
-
-.planilla-relacion .ps-relacion { display: inline; }
-
-.planilla-accion {
-  justify-self: end;
-  text-align: right;
-}
-
-.planilla-accion button {
-  white-space: nowrap;
-}
-
-.planilla-accion button small {
-  color: var(--text-dim);
-  font-weight: 400;
-}
-
-@media (max-width: 1180px) {
-  .planilla-mercado .planilla-cab,
-  .planilla-mercado .planilla-fila {
-    grid-template-columns: 52px minmax(150px, 1fr) 64px 64px minmax(200px, 1.6fr) 150px;
-  }
-}
 
 /* Una card plegada no deja un cuerpo vacío: el cabezal sangra hasta los bordes,
    así que sin contenido el padding de abajo se ve como un hueco blanco. */
@@ -4503,165 +2332,33 @@ button.mini.blue.on {
    ícono de fila. El hueco está pensado para la ilustración de cuerpo entero de
    la maqueta; hasta que exista y se apruebe (Puerta 3) lo llena el retrato de
    arquetipo. Cambia el contenido de `.profile-retrato`, no la grilla. */
-.profile-ficha {
-  position: relative;
-  max-width: 1000px;
-  display: grid;
-  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
-  /* La única fila tiene que poder encoger hasta el techo de la ficha (90vh):
-     sin el minmax(0, 1fr) la fila medía lo que pedía la pestaña más larga y
-     el `overflow: hidden` de abajo la recortaba sin scroll. A 1366×768 la
-     pestaña Deportiva terminaba en "Últimos partidos" a medias, y la Historia
-     se iba acortando con la temporada. */
-  grid-template-rows: minmax(0, 1fr);
-  align-items: stretch;
-  overflow: hidden;
-}
-
-.profile-ficha .profile-close {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.6rem;
-  z-index: 2;
-}
 
 /* La columna de la persona: el retrato manda y el pie lo apoya. Fondo hundido
    para que el retrato se lea como una foto puesta en la ficha. */
-.profile-cara {
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-soft);
-  border-right: 1px solid var(--border);
-  min-width: 0;
-}
 
 /* Crece con la ficha en vez de tener un alto fijo: si no, en las pestañas
    largas quedaba un palmo de fondo vacío entre la foto y el nombre. */
-.profile-retrato {
-  position: relative;
-  width: 100%;
-  flex: 1 1 auto;
-  min-height: 240px;
-  overflow: hidden;
-  background: linear-gradient(180deg, #3c6e9e 0%, #2a5075 100%);
-}
 
 /* El retrato llena la columna en vez de quedar chico y centrado. El encuadre
    sube el foco: la cara está en el tercio de arriba del archivo. */
-.profile-retrato img.retrato-img {
-  width: 100%;
-  height: 100%;
-  border: none;
-  border-radius: 0;
-  object-fit: cover;
-  object-position: center 22%;
-}
 
 /* Sin retrato ilustrado (el SVG de respaldo) el svg se estira igual. */
-.profile-retrato svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.profile-cara-pie {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: var(--sp-4);
-  flex: none;
-}
-
-.profile-cara-pos {
-  font-family: var(--display);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  font-size: var(--fs-2xs);
-  color: var(--text-faint);
-}
-
-.profile-ficha .profile-name {
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: var(--fs-lg);
-  line-height: 1.1;
-}
 
 /* La valoración: el dato que la ficha existe para mostrar, y el único naranja
    de la pantalla (ver la regla del naranja en design/SISTEMA_VISUAL.md). */
-.profile-cara-valor {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  margin: 0.15rem 0 0.35rem;
-}
-
-.profile-cara-valor .v {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: var(--fs-xl);
-  line-height: 1;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-}
-
-.profile-cara-valor .v small {
-  font-size: var(--fs-md);
-  font-weight: 500;
-  opacity: 0.75;
-}
-
-.profile-cara-valor .k {
-  font-family: var(--display);
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  font-size: var(--fs-2xs);
-  color: var(--text-faint);
-}
-
-.profile-ficha .profile-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-top: 0.15rem;
-}
 
 /* La columna de datos: pestañas quietas arriba, cuerpo que scrollea. */
-.profile-datos {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-
-.profile-datos .profile-body {
-  flex: 1;
-  min-height: 0;
-}
 
 /* En una ventana angosta la ficha vuelve a ser una columna: el retrato arriba,
    con menos alto para que los datos no queden abajo del pliegue. */
 @media (max-width: 820px) {
-  .profile-ficha {
-    grid-template-columns: minmax(0, 1fr);
-    /* Dos filas: la foto mide lo suyo y los datos se quedan con el resto. */
-    grid-template-rows: auto minmax(0, 1fr);
-  }
+  
 
-  .profile-cara {
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
+  
 
   /* Apaisada y con techo: en una ventana angosta la foto no puede empujar los
      datos abajo del pliegue. */
-  .profile-retrato {
-    flex: none;
-    aspect-ratio: 16 / 7;
-    max-height: 32vh;
-    min-height: 0;
-  }
+  
 }
 
 /* ---------- El partido en vivo: la anatomía de la referencia (sep 2026) ---------- */
@@ -4672,429 +2369,22 @@ button.mini.blue.on {
    y el relato, el rival y el tablero táctico—; el botón del cuarto abajo.
    Entra sin scrollear a 1920×815; a 1366×660 scrollean las columnas laterales
    por adentro. */
-.pv-cabecera {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) auto;
-  gap: var(--sp-4);
-  align-items: center;
-  margin-bottom: 0;
-  padding: 0.55rem 1rem;
-}
-
-.pvc-contexto {
-  display: grid;
-  gap: 0.15rem;
-  padding-right: var(--sp-4);
-  border-right: 1px solid var(--border);
-  min-width: 120px;
-}
-
-.pvc-semana {
-  font-family: var(--display);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: var(--fs-md);
-}
-
-.pvc-fase {
-  font-family: var(--display);
-  font-size: var(--fs-2xs);
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  color: var(--text-faint);
-}
-
-.pvc-chips {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-  margin-top: 0.2rem;
-}
-
-.pvc-equipo {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  min-width: 0;
-}
-
-.pvc-equipo.rival {
-  flex-direction: row-reverse;
-  text-align: right;
-}
-
-.pvc-equipo > div { min-width: 0; }
-
-.pvc-nombre {
-  font-family: var(--display);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: var(--fs-lg);
-  line-height: 1.05;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.pvc-sub {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pvc-marcador {
-  display: grid;
-  justify-items: center;
-  gap: 0.3rem;
-}
 
 /* El marcador oscuro de la referencia: es chrome, no panel. */
-.pvc-tablero {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  background: var(--chrome);
-  color: var(--text-light);
-  border-radius: var(--radius);
-  padding: 0.35rem 1.4rem;
-  min-width: 250px;
-  justify-content: center;
-  box-shadow: var(--hundido);
-}
-
-.pvc-score {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: var(--fs-2xl);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  min-width: 2ch;
-  text-align: center;
-}
-
-.pvc-score.win { color: #8fd3a3; }
-.pvc-score.lose { color: #f2a196; }
-
-.pvc-vs {
-  font-family: var(--display);
-  font-size: var(--fs-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: rgba(246, 244, 241, 0.6);
-}
-
-.pvc-momento {
-  font-family: var(--display);
-  font-weight: 500;
-  font-size: var(--fs-sm);
-  padding: 0.15rem 0.9rem;
-  border-radius: var(--radius);
-  background: var(--accent-soft);
-  color: var(--text);
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-}
-
-.pvc-drama {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.pvc-cuartos {
-  border-collapse: collapse;
-  font-size: var(--fs-xs);
-  font-variant-numeric: tabular-nums;
-  padding-left: var(--sp-4);
-  border-left: 1px solid var(--border);
-  white-space: nowrap;
-}
-
-.pvc-cuartos th,
-.pvc-cuartos td {
-  padding: 0.12rem 0.45rem;
-  text-align: right;
-}
-
-.pvc-cuartos th:first-child,
-.pvc-cuartos td:first-child {
-  text-align: left;
-  max-width: 130px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pvc-cuartos th {
-  font-family: var(--display);
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  color: var(--text-faint);
-}
-
-.pvc-cuartos tbody tr { border-top: 1px solid var(--border); }
-.pvc-cuartos td.total { font-weight: 700; }
-
-.pv-cuerpo {
-  display: grid;
-  grid-template-columns: minmax(300px, 0.95fr) minmax(360px, 1.2fr) minmax(300px, 0.95fr);
-  gap: var(--sp-4);
-  min-height: 0;
-}
 
 /* Las bandas de equipo llevan el color del club (inline). El texto va claro. */
-.vista .card > h3.card-band.pv-banda {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.pv-banda-sub {
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  text-transform: none;
-  font-size: var(--fs-sm);
-  opacity: 0.85;
-}
-
-.pv-banda .plink { color: inherit; }
-
-.pv-equipo { margin-bottom: 0; }
-.pv-equipo.pane { min-height: 0; }
-
-.pv-grupo {
-  font-family: var(--display);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: var(--fs-xs);
-  color: var(--sec);
-  margin: 0.1rem 0 0.15rem;
-}
-
-.pv-grupo.banco { margin-top: 0.55rem; }
-
-.pv-cab-j,
-.pv-fila-j {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) 34px 110px 30px;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.14rem 0.3rem;
-  font-size: var(--fs-sm);
-}
-
-.pv-cab-j.rival,
-.pv-fila-j.rival {
-  grid-template-columns: 28px minmax(0, 1fr) 34px 44px;
-}
-
-.pv-cab-j {
-  font-family: var(--display);
-  font-size: var(--fs-2xs);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-faint);
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.2rem;
-}
-
-.pv-fila-j {
-  border-radius: var(--radius);
-  border: 1px solid transparent;
-}
-
-.pv-fila-j + .pv-fila-j { border-top-color: transparent; }
-.pv-fila-j:hover { background: var(--panel-2); }
-.pv-fila-j.sale { background: color-mix(in srgb, var(--warn) 18%, var(--panel)); border-color: var(--warn); }
-.pv-fila-j.entra { background: color-mix(in srgb, var(--sec-partidos) 14%, var(--panel)); border-color: var(--sec-partidos); }
-.pv-fila-j.banco { opacity: 0.8; }
-
-.pvj-pos {
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-
-.pvj-nombre {
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
 
 /* La nota al lado del nombre ("· reservado", "· afuera") no se recorta: en la
    fila del banco, con "Gonzalo Viera · reservado" el flex le comía la nota y
    quedaba "· reser". Lo que cede es el nombre, con sus puntos suspensivos. */
-.pvj-nombre > .plink { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.pvj-nombre > .pvj-nota { flex-shrink: 0; color: var(--text-dim); font-weight: 500; }
-
-.pvj-pts {
-  text-align: right;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.pvj-energia {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 3.4ch;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.pvj-energia .mini-medidor { margin: 0; }
-.pvj-energia b { font-size: var(--fs-xs); text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
-
-.pvj-nivel {
-  text-align: right;
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-}
-
-.pvj-swap {
-  padding: 0.1rem 0.25rem;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--panel);
-}
-
-.pvj-swap.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
 /* El cambio preparado: sale → entra, y un solo botón para confirmarlo. */
-.pv-cambio {
-  margin-top: 0.6rem;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--panel-2);
-  display: grid;
-  gap: 0.5rem;
-}
-
-.pv-cambio-t {
-  font-family: var(--display);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: var(--fs-xs);
-  color: var(--sec);
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.pv-cambio-par {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.pv-cambio-caja {
-  display: grid;
-  gap: 0.1rem;
-  padding: 0.4rem 0.55rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  min-width: 0;
-}
-
-.pv-cambio-caja > span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pv-cambio-caja.sale { background: color-mix(in srgb, var(--warn) 18%, var(--panel)); border-color: var(--warn); }
-.pv-cambio-caja.entra { background: color-mix(in srgb, var(--sec-partidos) 14%, var(--panel)); border-color: var(--sec-partidos); }
-.pv-cambio-caja.vacia { background: transparent; font-weight: 400; color: var(--text-dim); border-style: dashed; }
-
-.pv-cambio-k {
-  font-family: var(--display);
-  font-size: var(--fs-2xs);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-faint);
-}
-
-.pv-cambio-flecha { font-size: var(--fs-md); color: var(--text-dim); }
-
-.pv-cambio-nota { margin: 0; font-size: var(--fs-xs); color: var(--text-dim); }
 
 /* La tira del cambio en el pie del partido: el "Sale → Entra" con Confirmar y
    Cancelar, en el único lugar que nunca se va de la vista. Reemplaza la letra
    chica mientras hay un cambio a medio armar. */
-.pv-pie-cambio {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.pv-pie-caja {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  padding: 0.3rem 0.55rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--panel);
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  white-space: nowrap;
-  max-width: 24ch;
-  min-width: 0;
-}
-
-.pv-pie-caja > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-
-.pv-pie-caja.sale { background: color-mix(in srgb, var(--warn) 18%, var(--panel)); border-color: var(--warn); }
-.pv-pie-caja.entra { background: color-mix(in srgb, var(--sec-partidos) 14%, var(--panel)); border-color: var(--sec-partidos); }
-.pv-pie-caja.vacia { background: transparent; font-weight: 400; color: var(--text-dim); border-style: dashed; }
-.pv-pie-cambio .pv-cambio-flecha { color: var(--text-faint); }
-.pv-pie-cambio button + button { margin-left: 0; }
-
-.pv-link {
-  background: transparent;
-  border-color: transparent;
-  color: var(--sec-partidos);
-  padding: 0.3rem 0.4rem;
-  font-size: var(--fs-sm);
-}
-
-.pv-link:hover { text-decoration: underline; }
 
 /* La columna del medio: la cancha arriba (alto fijo), el relato scrollea. */
-.pv-centro {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: var(--sp-3);
-  min-height: 0;
-}
-
-.pv-cancha {
-  position: relative;
-  /* Con el alto de la ventana: 227 a 1080p, 171 a 815, 139 a 660. Lo que se
-     achica es la cancha, no el relato ni el tablero. */
-  height: clamp(120px, 21vh, 250px);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.08), transparent 12%, transparent 88%, rgba(0, 0, 0, 0.08)),
-    repeating-linear-gradient(90deg, #b8834a 0 22px, #b07b44 22px 44px);
-  border: 3px solid #7a5230;
-  box-shadow: var(--relieve);
-  overflow: hidden;
-}
 
 .cancha-lineas {
   position: absolute;
@@ -5112,181 +2402,21 @@ button.mini.blue.on {
   stroke-width: 2;
 }
 
-.pv-cancha-escudo {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  background: rgba(246, 244, 241, 0.85);
-  display: grid;
-  place-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-}
-
-.pv-ficha {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: grid;
-  justify-items: center;
-  gap: 0.15rem;
-  width: 84px;
-  pointer-events: auto;
-}
-
-.pv-ficha-num {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: var(--fs-sm);
-  color: #fff;
-  background: var(--nuestro, var(--sec-partidos));
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-
-.pv-ficha.rival .pv-ficha-num { background: var(--rival, #9d3b3b); }
-.pv-ficha.ref .pv-ficha-num { border-color: #ffc078; box-shadow: 0 0 0 2px rgba(255, 192, 120, 0.5), 0 2px 6px rgba(0, 0, 0, 0.4); }
-.pv-ficha.fundido .pv-ficha-num { filter: saturate(0.5); border-style: dashed; }
-
-.pv-ficha-nombre {
-  font-size: var(--fs-2xs);
-  font-weight: 700;
-  color: #fff;
-  background: rgba(20, 24, 28, 0.62);
-  padding: 0.05rem 0.4rem;
-  border-radius: 999px;
-  white-space: nowrap;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.vista .card > h3.card-band.pv-relato-cab {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.pv-relato-cab > span:first-child { display: inline-flex; align-items: center; gap: 0.35rem; }
-
 /* SUBNAV-01 sobre una banda azul noche: el segmento activo invierte (placa
    clara, tinta oscura) para no desaparecer contra la banda; mismo filete naranja. */
-.pv-filtro {
-  border-color: rgba(246, 244, 241, 0.35);
-  background: rgba(0, 0, 0, 0.12);
-}
-
-.pv-filtro button {
-  color: var(--text-light);
-  padding: 0.15rem 0.6rem;
-  font-size: var(--fs-2xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.pv-filtro button + button { border-left-color: rgba(246, 244, 241, 0.35); }
-.pv-filtro button:hover:not(:disabled):not(.on) { background: rgba(246, 244, 241, 0.12); color: var(--text-light); }
-.pv-filtro button.on { background: var(--panel); color: var(--text); }
 
 /* El relato jugada a jugada: minuto · marcador · quién · qué pasó. */
-.rj-lista {
-  display: grid;
-  gap: 0.1rem;
-  margin: 0.2rem 0 0.4rem;
-}
-
-.rj {
-  display: grid;
-  grid-template-columns: 2.6ch 5ch 12px minmax(0, 1fr);
-  align-items: baseline;
-  gap: 0.55rem;
-  padding: 0.28rem 0.35rem;
-  border-radius: var(--radius);
-  font-size: var(--fs-sm);
-}
-
-.rj:nth-child(even) { background: var(--panel-2); }
-
-.rj-min {
-  font-variant-numeric: tabular-nums;
-  color: var(--text-faint);
-  text-align: right;
-}
-
-.rj-marcador {
-  font-family: var(--display);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-.rj-punto {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  align-self: center;
-  background: var(--nuestro, var(--sec-partidos));
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
-}
-
-.rj.rival .rj-punto { background: var(--rival, #9d3b3b); }
-
-.rj-texto {
-  display: grid;
-  gap: 0.05rem;
-  line-height: 1.3;
-}
-
-.rj-texto b { font-weight: 600; }
-.rj-sub { font-size: var(--fs-xs); color: var(--text-dim); }
 
 /* El reloj en vivo: la canasta que acaba de caer entra con un fundido, el
    cuarto en juego lleva su punto rojo, y la ficha del que anotó late. */
-.rj.nueva { animation: fila-in 260ms ease-out both; }
-
-.rj-vivo {
-  margin-left: 0.5rem;
-  font-family: var(--display);
-  font-size: var(--fs-2xs);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--bad);
-  animation: rj-late 1.2s ease-in-out infinite;
-}
 
 @keyframes rj-late {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
 }
 
-.rj-espera { margin: 0.3rem 0 0.4rem; font-style: italic; }
-
 /* La pelota muerta en el relato: los cambios y las notas (minuto pedido, la
    lesión, la presión) son filas más tenues, sin el punto de color. */
-.rj.cambio,
-.rj.nota { color: var(--text-dim); }
-.rj.cambio .rj-texto b,
-.rj.nota .rj-texto b { font-weight: 500; font-style: italic; }
-.rj-icono {
-  width: 10px;
-  align-self: center;
-  justify-self: center;
-  color: var(--text-faint);
-  line-height: 1;
-}
-
-.pv-ficha.anoto .pv-ficha-num {
-  animation: ficha-anoto 0.9s ease-out;
-  box-shadow: 0 0 0 4px rgba(255, 192, 120, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
-}
 
 @keyframes ficha-anoto {
   0% { transform: scale(1); }
@@ -5294,135 +2424,22 @@ button.mini.blue.on {
   100% { transform: scale(1); }
 }
 
-.pv-pie button + button { margin-left: 0.4rem; }
-
-.rj-notas { margin-top: 0.15rem; }
-.rj-notas li { font-size: var(--fs-sm); margin-bottom: 0.15rem; }
-
-.pv-aviso {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  /* Mide lo que dice, no la fila de la grilla: con una incidencia en una
-     ventana baja la cancha se esconde y el aviso caía en la fila `1fr` del
-     relato, estirado a 348 px con el texto centrado debajo del pie. Un cajón
-     amarillo vacío al lado de la decisión. */
-  align-self: start;
-  padding: 0.45rem 0.7rem;
-  border-radius: var(--radius);
-  border: 1px solid color-mix(in srgb, var(--warn) 50%, transparent);
-  background: color-mix(in srgb, var(--warn) 14%, var(--panel));
-  font-size: var(--fs-sm);
-  line-height: 1.35;
-}
-
-.pv-derecha > .card { margin-bottom: 0; }
-
 /* El tablero táctico va primero: es la acción de la columna. La card del rival
    es lectura y puede quedar abajo del pliegue en una ventana baja. */
-.pv-derecha > .pv-tablero { order: -1; }
-
-.pv-piernas-rival {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 2.4ch;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.45rem;
-  padding-top: 0.45rem;
-  border-top: 1px solid var(--border);
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-
-.pv-piernas-rival .mini-medidor { margin: 0; }
-.pv-piernas-rival b { text-align: right; color: var(--text); }
 
 /* Afuera por hoy (expulsado, cinco faltas, sacado resentido): la fila se apaga. */
-.pv-fila-j.fuera { opacity: 0.45; }
-.pv-fila-j.fuera .pvj-nombre { text-decoration: line-through; }
 
 /* La defensa del rival que le viste, con la pista de qué hacer contra ella. */
-.pv-defensa-rival {
-  display: grid;
-  grid-template-columns: auto auto;
-  align-items: baseline;
-  gap: 0.15rem 0.5rem;
-  margin: 0.45rem 0 0.2rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid var(--border);
-  font-size: var(--fs-xs);
-  color: var(--text-dim);
-}
-.pv-defensa-rival b { color: var(--text); font-family: var(--display); font-size: var(--fs-sm); letter-spacing: 0.04em; text-transform: uppercase; }
-.pv-defensa-pista { grid-column: 1 / -1; font-style: italic; line-height: 1.3; }
-
-.pv-tablero .pvt-fila {
-  display: grid;
-  grid-template-columns: 74px minmax(0, 1fr);
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.32rem;
-}
-
-.pv-tablero .card-band { margin-bottom: 0.6rem; }
-
-.pvt-k {
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-}
-
-.pvt-fila .segmented { width: 100%; }
-.pvt-fila .segmented button {
-  flex: 1 1 0;
-  padding: 0.33rem 0.3rem;
-  font-size: var(--fs-xs);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pvt-select {
-  width: 100%;
-  padding: 0.33rem 0.5rem;
-  font-family: inherit;
-  font-size: var(--fs-sm);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--panel-2);
-  color: var(--text);
-}
-
-.pvt-presets {
-  display: flex;
-  gap: 0.25rem;
-  flex-wrap: wrap;
-}
-
-.pvt-presets button.small { padding: 0.2rem 0.45rem; font-size: var(--fs-2xs); }
-
-.pvt-nota {
-  margin: 0.2rem 0 0;
-  font-size: var(--fs-xs);
-  font-style: italic;
-  color: var(--text-faint);
-}
 
 @media (max-width: 1500px) {
-  .pv-cabecera { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); }
-  .pvc-cuartos { display: none; }
-  .pv-cuerpo { grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.15fr) minmax(280px, 1fr); }
-  .pvc-nombre { font-size: var(--fs-md); }
+  
+  
+  
+  
   /* Sin ancho para la barra y el número: queda la barra. */
-  .pv-cab-j, .pv-fila-j { grid-template-columns: 26px minmax(0, 1fr) 30px 64px 28px; gap: 0.35rem; }
-  .pvj-energia { grid-template-columns: minmax(0, 1fr); }
-  .pvj-energia b { display: none; }
-}
-
-@media (max-width: 1240px) {
-  .pv-cabecera { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
-  .pvc-contexto { display: none; }
-  .pv-cuerpo { grid-template-columns: minmax(280px, 1fr) minmax(300px, 1.15fr); }
-  .pv-derecha { grid-column: 1 / -1; }
+  
+  
+  
 }
 
 /* ---------- La portada: menú central (sep 2026) ---------- */
@@ -5446,357 +2463,23 @@ button.mini.blue.on {
 
 /* La ilustración es cuadrada y el monitor es ancho: se recorta arriba y abajo.
    Se ancla un poco por encima del centro para que queden las caras y la mesa. */
-.portada-fondo {
-  position: absolute;
-  inset: 0;
-  background: var(--chrome) center 42% / cover no-repeat;
-  z-index: -2;
-}
-
-.portada-velo {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(20, 16, 12, 0.55) 0%, rgba(20, 16, 12, 0.2) 35%, rgba(20, 16, 12, 0.25) 70%, rgba(20, 16, 12, 0.7) 100%),
-    var(--portada-velo);
-  z-index: -1;
-}
-
-.portada-contenido {
-  min-height: 100vh;
-  min-height: 100dvh;
-  display: grid;
-  grid-template-rows: auto 1fr auto auto;
-  justify-items: center;
-  align-content: start;
-  gap: var(--sp-3);
-  padding: clamp(1rem, 3vh, 2.2rem) var(--sp-5) var(--sp-3);
-  text-align: center;
-}
 
 /* El título: texto, no logo (todavía no hay asset). La display en 700, crema y
    naranja con una sombra dura debajo, es la aproximación a la collegiate. */
-.portada-titulo {
-  display: grid;
-  justify-items: center;
-  margin: 0;
-  font-family: var(--display);
-  font-weight: 700;
-  text-transform: uppercase;
-  line-height: 0.92;
-  letter-spacing: 0.03em;
-  text-shadow:
-    0 2px 0 #3a1d08,
-    0 3px 0 #3a1d08,
-    0 6px 18px rgba(0, 0, 0, 0.55);
-}
-
-.portada-t1,
-.portada-t3 {
-  color: var(--portada-crema);
-  font-size: clamp(2.4rem, 6vh, 4.6rem);
-}
-
-.portada-t2 {
-  color: var(--accent);
-  font-size: clamp(3.2rem, 8.6vh, 6.6rem);
-  letter-spacing: 0.04em;
-}
-
-.portada-t3 {
-  font-size: clamp(1.8rem, 4.3vh, 3.3rem);
-  letter-spacing: 0.12em;
-}
-
-.portada-accesos {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: clamp(1.5rem, 6vw, 6rem);
-  align-self: center;
-}
 
 /* El acceso es la imagen y su etiqueta, sin caja: el fondo se ve entre medio. */
-.portada-acceso {
-  display: grid;
-  justify-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.8rem 0.6rem;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius);
-  color: var(--portada-crema);
-  cursor: pointer;
-  transition: transform 0.15s, filter 0.15s;
-}
-
-.portada-acceso img {
-  display: block;
-  height: clamp(150px, 34vh, 340px);
-  width: auto;
-  max-width: 42vw;
-  object-fit: contain;
-  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.55));
-  transition: transform 0.15s, filter 0.15s;
-}
-
-.portada-acceso-chico {
-  gap: 0.25rem;
-}
-
-.portada-acceso-chico img {
-  height: clamp(64px, 12vh, 120px);
-}
-
-.portada-etiqueta {
-  position: relative;
-  font-family: var(--display);
-  font-weight: 600;
-  text-transform: none;
-  font-size: clamp(1.4rem, 3vh, 2rem);
-  line-height: 1.05;
-  letter-spacing: 0.01em;
-  text-shadow: 0 2px 0 #2a1a08, 0 4px 12px rgba(0, 0, 0, 0.6);
-  padding-bottom: 0.35rem;
-}
-
-.portada-acceso-chico .portada-etiqueta {
-  font-size: clamp(1rem, 2vh, 1.25rem);
-  font-weight: 500;
-}
 
 /* El subrayado naranja del boceto, a pincel: aparece con el foco y el hover. */
-.portada-etiqueta::after {
-  content: '';
-  position: absolute;
-  left: -4%;
-  right: -4%;
-  bottom: 0;
-  height: 0.28em;
-  border-radius: 999px;
-  background: var(--accent);
-  transform: scaleX(0) rotate(-1.5deg);
-  transform-origin: left center;
-  opacity: 0.95;
-  transition: transform 0.18s ease-out;
-}
-
-.portada-acceso:hover:not(:disabled) .portada-etiqueta::after,
-.portada-acceso:focus-visible .portada-etiqueta::after {
-  transform: scaleX(1) rotate(-1.5deg);
-}
-
-.portada-acceso:hover:not(:disabled) img {
-  transform: translateY(-6px) scale(1.03);
-  filter: drop-shadow(0 20px 24px rgba(0, 0, 0, 0.6));
-}
-
-.portada-acceso:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 4px;
-}
-
-.portada-acceso:active:not(:disabled) {
-  transform: translateY(1px);
-}
 
 /* Sin partida guardada, la carpeta queda apagada pero reconocible. */
-.portada-acceso:disabled {
-  cursor: default;
-  opacity: 0.8;
-  filter: grayscale(0.55) brightness(0.8);
-}
-
-.portada-nota {
-  font-size: var(--fs-sm);
-  color: rgba(243, 233, 214, 0.75);
-  text-shadow: 0 1px 0 #2a1a08, 0 2px 8px rgba(0, 0, 0, 0.6);
-}
-
-.portada-version {
-  margin: 0;
-  font-size: var(--fs-xs);
-  color: rgba(243, 233, 214, 0.6);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
-}
 
 /* El segundo paso (nueva partida, gestionar): un panel oscuro translúcido en
    el mismo lugar que los accesos, con las tres modalidades y la dificultad. */
-.portada-panel {
-  align-self: center;
-  width: min(100%, 720px);
-  display: grid;
-  gap: var(--sp-4);
-  padding: var(--sp-5) var(--sp-6);
-  border-radius: var(--radius);
-  background: rgba(24, 20, 16, 0.82);
-  border: 1px solid rgba(243, 233, 214, 0.18);
-  box-shadow: var(--sombra-alta);
-  text-align: left;
-}
-
-.portada-panel h2 {
-  margin: 0;
-  font-family: var(--display);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: var(--fs-lg);
-  color: var(--accent);
-}
-
-.portada-panel-p {
-  margin: 0;
-  line-height: 1.5;
-  color: rgba(243, 233, 214, 0.9);
-}
-
-.portada-modos {
-  display: grid;
-  gap: var(--sp-3);
-}
-
-.portada-modo {
-  display: grid;
-  gap: 0.15rem;
-  text-align: left;
-  padding: 0.7rem 0.9rem;
-  background: rgba(243, 233, 214, 0.06);
-  border: 1px solid rgba(243, 233, 214, 0.2);
-  color: var(--portada-crema);
-}
-
-.portada-modo:hover,
-.portada-modo:focus-visible {
-  background: rgba(224, 122, 42, 0.16);
-  border-color: var(--accent);
-  outline: none;
-}
-
-.portada-modo-k {
-  font-family: var(--display);
-  font-size: var(--fs-2xs);
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  color: rgba(243, 233, 214, 0.6);
-}
-
-.portada-modo-t {
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: var(--fs-md);
-}
-
-.portada-modo-d {
-  font-size: var(--fs-sm);
-  color: rgba(243, 233, 214, 0.75);
-  line-height: 1.4;
-}
-
-.portada-dificultad {
-  display: grid;
-  gap: 0.4rem;
-}
 
 /* La portada conserva su sistema propio (fuera del lote SUBNAV-01): fondo
    transparente sobre la ilustración y el activo relleno de naranja. */
-.portada-dificultad .segmented {
-  border-color: rgba(243, 233, 214, 0.3);
-  background: transparent;
-}
-
-.portada-dificultad .segmented button {
-  color: var(--portada-crema);
-}
-
-.portada-dificultad .segmented button + button {
-  border-left-color: rgba(243, 233, 214, 0.3);
-}
-
-.portada-dificultad .segmented button.on {
-  background: var(--accent);
-  color: var(--on-accent);
-  box-shadow: none;
-}
-
-.portada-dif-k {
-  font-family: var(--display);
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  color: rgba(243, 233, 214, 0.6);
-}
-
-.portada-dif-d {
-  margin: 0;
-  font-size: var(--fs-sm);
-  color: rgba(243, 233, 214, 0.75);
-  min-height: 2.2em;
-}
-
-.portada-aviso {
-  margin: 0;
-  font-size: var(--fs-sm);
-  color: #f2b8a4;
-}
-
-.portada-panel button.danger {
-  background: transparent;
-  border-color: #e0705f;
-  color: #f2b8a4;
-  justify-self: start;
-}
-
-.portada-volver {
-  justify-self: start;
-  background: transparent;
-  border-color: rgba(243, 233, 214, 0.35);
-  color: var(--portada-crema);
-}
-
-.portada-volver:hover,
-.portada-volver:focus-visible {
-  border-color: var(--accent);
-}
 
 /* A 720p el panel de nueva partida sobraba 21 px: se aprieta sin sacar nada. */
-@media (max-height: 800px) {
-  .portada-panel {
-    gap: var(--sp-3);
-    padding: var(--sp-4) var(--sp-5);
-  }
-
-  .portada-modo {
-    padding: 0.5rem 0.8rem;
-  }
-
-  .portada-dif-d {
-    min-height: 0;
-  }
-}
-
-@media (max-width: 900px) {
-  .portada-contenido {
-    align-content: start;
-    gap: var(--sp-4);
-    padding: 1.2rem 1rem 1.5rem;
-  }
-
-  .portada-accesos {
-    flex-direction: column;
-    align-items: center;
-    gap: 1.2rem;
-  }
-
-  .portada-acceso img {
-    height: clamp(140px, 26vh, 220px);
-    max-width: 70vw;
-  }
-
-  .portada-panel {
-    padding: var(--sp-4);
-  }
-}
 
 /* ---------- Movimiento (T5, sep 2026): cinco animaciones, y ninguna más ---------- */
 
@@ -5817,10 +2500,6 @@ button.mini.blue.on {
 }
 
 /* 2. Las filas de la planilla, una detrás de otra. `--fila` la pone la lista. */
-.planilla-fila {
-  animation: fila-in 220ms ease-out both;
-  animation-delay: calc(var(--fila, 0) * 28ms);
-}
 
 @keyframes fila-in {
   from { opacity: 0; transform: translateY(4px); }
@@ -5844,10 +2523,6 @@ button.mini.blue.on {
 .mini-medidor i {
   transform-origin: left center;
   animation: barra-llena 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
-.planilla-fila .mini-medidor i {
-  animation-delay: calc(var(--fila, 0) * 28ms + 120ms);
 }
 
 @keyframes barra-llena {
@@ -5936,20 +2611,14 @@ button.mini.blue.on {
 
   /* Lo que todavía scrollea por dentro en escritorio (el relato del partido,
      el centro del Tablero) deja de hacerlo. */
-  .pane,
-.pv-relato > .pane-body {
-    overflow: visible;
-    max-height: none;
-  }
+  
 
   /* El pie pegado abajo y la pizarra pegada arriba: en una columna no hay
      dónde pegarse. */
   .pie-fijo,
-  .semana-scroll > .pie-fijo,
-  .quinteto-pantalla > .pie-fijo,
-  .partido-pantalla > .pie-fijo,
-  .informe-pantalla > .pie-fijo { position: static; margin: 0; padding: 0; background: none; }
-  .quinteto-pantalla .lineup-court { position: static; }
+.partido-pantalla > .pie-fijo,
+.informe-pantalla > .pie-fijo { position: static; margin: 0; padding: 0; background: none; }
+  
 
   /* --- 2. Una columna, y del ancho de la ventana --- */
 
@@ -5959,68 +2628,47 @@ button.mini.blue.on {
   .pantalla,
 .semana-vista,
 .plantel-pantalla,
-.partido-franja,
-.semana-planning,
-.partido-cuerpo,
-.pv-cuerpo,
-.pv-cabecera,
-.pv-centro,
-.informe-cuerpo,
-.lineup-layout,
 .grid.cols-2,
-.grid.cols-3,
-.grid.cols-4 {
+.grid.cols-3 {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;
   }
 
   .pantalla > *,
-  .semana-vista > *,
-  .plantel-pantalla > *,
-  .partido-pantalla > *,
-  .partido-franja > *,
-  .partido-cuerpo > *,
-  .quinteto-pantalla > *,
-  .informe-pantalla > *,
-  .informe-cuerpo > *,
-  .grid > *,
-  .sheet-layout > *,
-  .card {
+.semana-vista > *,
+.plantel-pantalla > *,
+.partido-pantalla > *,
+.informe-pantalla > *,
+.grid > *,
+.card {
     min-width: 0;
     max-width: 100%;
   }
 
-  .partido-col-scroll { grid-row: auto; }
-  .informe-moods { grid-column: auto; }
+  
+  
   
 
   /* Lo que no encogía y estiraba la página a lo ancho: el marcador (dos
      equipos de 140px mínimo más el "vs"), la tira de siete días, los cabezales
      con chips y la píldora de pestañas (era `inline-flex` con `overflow:
      hidden`: si no entraban, la última quedaba cortada sin aviso). */
-  .scoreboard { gap: 0.8rem; padding: 1rem 0.6rem; }
-  .scoreboard .team { min-width: 0; flex: 1 1 0; }
-  .scoreboard .score { font-size: var(--fs-2xl); }
-  .franja-estado { justify-items: start; text-align: left; }
-  .franja-marcador { justify-self: start; }
-  .semana-strip { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.2rem; }
-  .dia-cell { padding: 0.25rem 0.15rem; overflow: hidden; }
+  
+  
+  
+  
+  
+  
+  
   .vista .card > h3 { flex-wrap: wrap; }
 
-  .view-toggle {
-    display: flex;
-    flex-wrap: wrap;
-    max-width: 100%;
-    border-radius: var(--radius);
-  }
+  
 
   /* --- 3. Lo que SÍ desliza de costado, adentro de su panel --- */
 
   /* Las tablas anchas (posiciones, planilla del partido, movimientos) y la
      planilla del plantel (una placa con renglones de ancho fijo). Va después
      de la lista que apaga el scroll interno porque la pisa a propósito. */
-  .table-wrap,
-  .pane > .table-wrap.pane-body,
   .plantel-cuerpo {
     overflow-x: auto;
     overflow-y: visible;
@@ -6088,137 +2736,14 @@ button.mini.blue.on {
 /* Los dos modos del menú: el título chico dice cuál es cuál, los botones
    hacen. El de Carrera va primero porque es la partida que empieza por el
    principio. */
-.menu-modo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  padding: 0.7rem 0.8rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--panel);
-}
-
-.menu-modo-k {
-  font-family: var(--display);
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  color: var(--text-faint);
-}
 
 /* La fundación: la historia a la izquierda del panel y el formulario debajo,
    con el escudo que cambia mientras escribís. */
-.carrera-setup {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.carrera-intro h1 {
-  font-family: var(--display);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  font-size: var(--fs-2xl);
-  margin: 0 0 0.6rem;
-}
-
-.carrera-intro h1 span {
-  color: var(--accent);
-  font-weight: 500;
-}
-
-.carrera-intro p {
-  margin: 0 0 0.6rem;
-  font-size: var(--fs-base);
-  line-height: 1.5;
-  color: var(--text-dim);
-}
-
-.carrera-form { margin-bottom: 0; }
-
-.carrera-escudo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.6rem 0 0.9rem;
-}
-
-.carrera-escudo-nombre {
-  font-family: var(--display);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: var(--fs-lg);
-  text-align: center;
-}
-
-.carrera-campo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 0.8rem;
-}
-
-.carrera-k {
-  font-family: var(--display);
-  font-size: var(--fs-2xs);
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  color: var(--text-faint);
-}
-
-.carrera-campo input {
-  font: inherit;
-  font-size: var(--fs-md);
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--panel-2);
-  color: var(--text);
-}
-
-.carrera-campo input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.carrera-colores {
-  display: flex;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-}
-
-.carrera-color {
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-
-.carrera-color.on {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
-}
 
 /* La fundación en la notebook: a 768 de alto el formulario medía 950 px y el
    botón "Fundar el club" —el que empieza la partida— quedaba abajo del
    pliegue, detrás de un scroll que nada invitaba a hacer. Todo baja un
    escalón (escudo, títulos, aires) para que entre entero. */
-@media (max-height: 820px) {
-  .menu-panel-carrera { padding: 1.1rem 2rem; justify-content: flex-start; }
-  .menu-panel-carrera .carrera-setup { gap: 0.6rem; }
-  .menu-panel-carrera .carrera-intro h1 { font-size: var(--fs-xl); margin-bottom: 0.3rem; }
-  .menu-panel-carrera .carrera-intro p { font-size: var(--fs-sm); margin-bottom: 0; }
-  .menu-panel-carrera .carrera-escudo { padding: 0.3rem 0 0.5rem; gap: 0.25rem; }
-  .menu-panel-carrera .carrera-escudo .crest { width: 72px; height: 84px; }
-  .menu-panel-carrera .carrera-escudo-nombre { font-size: var(--fs-md); }
-  .menu-panel-carrera .carrera-campo { margin-bottom: 0.5rem; gap: 0.25rem; }
-  .menu-panel-carrera .carrera-color { width: 32px; height: 32px; }
-}
 
 /* La libreta: quién es para vos, en versalita; el "lo trae X" como chip. */
 .ps-relacion {
@@ -6236,68 +2761,6 @@ button.mini.blue.on {
 /* Las tres escenas de la intro de Carrera: una imagen ya aprobada a pantalla
    completa, un velo que sube desde abajo y el texto encima. Sin animación
    todavía (las cinco animaciones son otra tanda). */
-.carrera-escena {
-  min-height: 100vh;
-  min-height: 100dvh;
-  background: var(--chrome) center / cover no-repeat;
-  display: flex;
-  align-items: flex-end;
-  position: relative;
-}
-
-.carrera-escena::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(20, 22, 26, 0.15) 30%, rgba(20, 22, 26, 0.88) 75%, rgba(20, 22, 26, 0.96));
-}
-
-.carrera-escena-texto {
-  position: relative;
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 2rem 1.6rem 2.6rem;
-  color: var(--text-light);
-}
-
-.carrera-escena-paso {
-  font-family: var(--display);
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--text-faint);
-  margin-bottom: 0.4rem;
-}
-
-.carrera-escena h1 {
-  font-family: var(--display);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  font-size: var(--fs-2xl);
-  margin: 0 0 0.7rem;
-  color: #fff;
-}
-
-.carrera-escena p {
-  margin: 0 0 0.7rem;
-  font-size: var(--fs-md);
-  line-height: 1.55;
-  color: rgba(246, 244, 241, 0.92);
-}
-
-.carrera-escena-botones {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-top: 1.2rem;
-}
-
-.carrera-escena-botones button:not(.primary) {
-  background: transparent;
-  border-color: rgba(246, 244, 241, 0.35);
-  color: rgba(246, 244, 241, 0.85);
-}
 
 /* ---------- El vestuario por dentro (mapa social) ---------- */
 
@@ -6305,156 +2768,25 @@ button.mini.blue.on {
    derecha la unión del grupo, los puentes y las parejas. Antes era una sola
    columna que nombraba a la mitad del plantel y dejaba dos tercios del panel
    vacíos a 768 de alto. */
-.vest-cuerpo {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 0.5rem 1.6rem;
-  margin-top: 0.7rem;
-}
-
-.vest-sub {
-  font-family: var(--display);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  font-size: var(--fs-2xs);
-  color: var(--text-faint);
-  margin: 0.9rem 0 0.4rem;
-}
-
-.vest-col > .vest-sub:first-child { margin-top: 0; }
-.vest-sub .muted { text-transform: none; letter-spacing: 0.02em; }
-
-.vest-grupo { margin: 0.25rem 0 0.6rem; }
-
-.vest-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.25rem;
-}
 
 /* Un renglón por persona: la cara con el nombre a la izquierda y la lectura
    a la derecha, alineadas arriba para que el texto largo no descuelgue el chip. */
-.vest-fila {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  margin: 0.3rem 0;
-  line-height: 1.4;
-}
 
 /* Las caras alineadas en columna: el texto arranca en el mismo x en todos
    los renglones aunque "Viera" y "Fernández" midan distinto. */
-.vest-fila > .chip { flex: 0 0 auto; min-width: 7rem; justify-content: flex-start; }
-.vest-fila > span:last-child { padding-top: 0.15rem; }
-
-.vest-pareja { margin: 0.35rem 0; }
-
-@media (max-width: 900px) {
-  .vest-cuerpo { grid-template-columns: 1fr; }
-}
 
 /* ---------- Vertical slice de arte · Vestuario (rama de prueba, sep 2026) ----------
    Prueba controlada de ART_BIBLE.md: fondo ilustrado real + UI viva encima.
    Todo está scopeado a .vestuario-slice para no contaminar ninguna otra pantalla.
    Variante C: el ~28 % de arriba es una franja libre donde el vestuario se ve
    sin panel ni velo (sólo el título); debajo, el panel social en Paleta A. */
-.vestuario-slice {
-  --panel: rgba(8, 29, 45, 0.88);
-  --panel-2: rgba(16, 44, 64, 0.88);
-  --border: rgba(174, 188, 196, 0.34);
-  --text: #f3f0e8;
-  --text-dim: #c1cbd1;
-  --text-faint: #9fadb5;
-  --accent: #f47c27;
-  --good: #54d29a;
-  --warn: #e4b94b;
-  --bad: #e35b4f;
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  color: var(--text);
-  background: #081d2d;
-  border-color: rgba(69, 100, 119, 0.9);
-}
 
 /* La ilustración cubre la franja y un poco más, encuadrada en los lockers y
    la pizarra (no en el techo), y se funde hacia abajo para que detrás del
    panel no haya un corte duro. */
-.vestuario-slice-art {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 470px;
-  z-index: -2;
-  background-size: cover;
-  background-position: center 40%;
-  -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
-}
 
 /* Velo: nada sobre la franja; oscurece recién donde empieza el panel. */
-.vestuario-slice::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(
-    180deg,
-    rgba(6, 22, 34, 0) 0,
-    rgba(6, 22, 34, 0) 140px,
-    rgba(6, 22, 34, 0.6) 205px,
-    rgba(6, 22, 34, 0.78) 100%
-  );
-}
 
 /* El título es la franja: sin fondo ni filete, con un degradado corto arriba
    sólo para que se lea. */
-.vestuario-slice > h3 {
-  margin: -1rem -1rem 1rem;
-  padding: 0.85rem 1.1rem 0;
-  height: clamp(160px, 20vh, 175px);
-  display: flex;
-  align-items: flex-start;
-  gap: 0.4rem;
-  background: linear-gradient(180deg, rgba(6, 22, 34, 0.78) 0, rgba(6, 22, 34, 0.3) 52px, rgba(6, 22, 34, 0) 104px);
-  color: #f3f0e8;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
-}
 
-.vestuario-slice .vest-cuerpo {
-  margin: 0;
-  padding: 1rem;
-  border: 1px solid rgba(174, 188, 196, 0.28);
-  background: rgba(8, 29, 45, 0.78);
-  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.24);
-  backdrop-filter: blur(7px);
-}
-
-.vestuario-slice .vest-sub {
-  color: #aebcc4;
-}
-
-.vestuario-slice .chip {
-  background: rgba(16, 44, 64, 0.86);
-  border-color: rgba(174, 188, 196, 0.25);
-  color: #f3f0e8;
-}
-
-.vestuario-slice a {
-  color: #f3f0e8;
-}
-
-.vestuario-slice .muted {
-  color: #aebcc4;
-}
-
-.vestuario-slice .bar-track {
-  background: rgba(243, 240, 232, 0.14);
-}
-
-@media (max-width: 900px) {
-  .vestuario-slice-art {
-    background-position: 58% center;
-  }
-}
