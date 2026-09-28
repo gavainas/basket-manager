@@ -1,0 +1,164 @@
+/* UI V1 — bloque «club y competición» (Liga, Calendario, Rankings, Finanzas,
+   El club, Historia). Las piezas que comparten esas pantallas y no están en
+   v1.css. Todo va bajo las raíces de esas pantallas: .liga, .finanzas,
+   .elclub, .historia. Ver design/UI_V1_GUIA.md. */
+
+:is(.liga, .finanzas, .elclub, .historia) {
+  --bd-pad: 1.2rem;
+}
+
+/* ---------- La planilla ---------- */
+:is(.liga, .finanzas, .elclub, .historia) .bd-plan {
+  padding: 0.95rem 0 0.35rem;
+  min-width: 0;
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-plan-mano { padding-top: 1.1rem; }
+:is(.liga, .finanzas, .elclub, .historia) .bd-tit {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0 var(--bd-pad) 0.6rem;
+  border-bottom: 1px dashed var(--linea-suave);
+  font: 700 1.12rem / 1.1 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-tit > span { flex: 1; min-width: 0; }
+:is(.liga, .finanzas, .elclub, .historia) .bd-tit small {
+  font: 600 0.78rem var(--font-display);
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-mano {
+  padding: 0 var(--bd-pad) 0.5rem;
+  border-bottom: 1px dashed var(--linea-suave);
+}
+
+/* Sub-título dentro de una planilla: una zona de la misma hoja. */
+:is(.liga, .finanzas, .elclub, .historia) .bd-sub {
+  margin: 0;
+  padding: 0.75rem var(--bd-pad) 0.3rem;
+  border-top: 1px dashed var(--linea-suave);
+  font: 700 0.74rem var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-sub:first-of-type { border-top: 0; }
+
+/* Nota al pie de la planilla: la regla dicha en una frase. */
+:is(.liga, .finanzas, .elclub, .historia) .bd-nota {
+  margin: 0;
+  padding: 0.65rem var(--bd-pad) 0.6rem;
+  border-top: 1px dashed var(--linea-suave);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-nota b { color: var(--text); font-weight: 600; }
+:is(.liga, .finanzas, .elclub, .historia) .bd-vacio {
+  margin: 0;
+  padding: 0.8rem var(--bd-pad) 0.9rem;
+  color: var(--text-dim);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+/* ---------- La tabla de planilla ---------- */
+:is(.liga, .finanzas, .elclub, .historia) table.bd-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla th {
+  padding: 0.55rem 0.6rem 0.4rem;
+  border-bottom: 1px solid rgba(174, 188, 196, 0.35);
+  font: 600 0.7rem var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: left;
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla td {
+  padding: 0.42rem 0.6rem;
+  border-bottom: 1px dashed var(--linea-suave);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla tr:last-child td { border-bottom: 0; }
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla :is(th, td):first-child { padding-left: var(--bd-pad); }
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla :is(th, td):last-child { padding-right: var(--bd-pad); }
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla .num {
+  text-align: right;
+  font: 600 1rem var(--font-display);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  width: 1%;
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla th.num { font: 600 0.7rem var(--font-display); letter-spacing: 0.16em; }
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla .dim { color: var(--text-dim); }
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla .good { color: var(--good); }
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla .bad { color: var(--bad); }
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla .warn { color: var(--warn); }
+/* Nuestro renglón: la marca naranja al costado, como un resaltador. */
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla tr.bd-nos td {
+  background: rgba(244, 124, 39, 0.1);
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla tr.bd-nos td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla .bd-equipo {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-tabla .bd-equipo .crest { flex: none; }
+
+/* ---------- La cara redonda ---------- */
+:is(.liga, .finanzas, .elclub, .historia) .bd-cara {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2a4a60;
+  border: 2px solid #3a5a70;
+  vertical-align: middle;
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-cara .busto {
+  --busto-ancho: 100%;
+  --busto-alto: 100%;
+  background-size: 118%;
+  background-position: center 12%;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+:is(.liga, .finanzas, .elclub, .historia) .bd-escudo-vacio { display: inline-block; flex: none; }
+
+/* Botón secundario de la casa, sin naranja (el naranja es de «Ir a la semana»). */
+:is(.liga, .finanzas, .elclub, .historia) button.bd-boton {
+  font: 700 0.78rem var(--font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.8rem;
+  border-radius: 3px;
+  background: rgba(243, 240, 232, 0.06);
+  border: 1px solid rgba(174, 188, 196, 0.45);
+  color: var(--text);
+}
+:is(.liga, .finanzas, .elclub, .historia) button.bd-boton:hover:not(:disabled) {
+  background: rgba(243, 240, 232, 0.12);
+  border-color: var(--text-dim);
+}
+:is(.liga, .finanzas, .elclub, .historia) button.bd-boton:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Legibilidad antes que decoración: sobre las zonas claras de la escena (la
+   lámpara de la comisión, las ventanas del gimnasio) el gris de la frase se
+   perdía. En los héroes del bloque va un poco más claro y con doble sombra. */
+:is(.liga, .finanzas, .elclub, .historia) .v1-hero .v1-frase,
+:is(.liga, .finanzas, .elclub, .historia) .v1-hero .v1-eyebrow {
+  color: #d3dbe0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 2px 14px rgba(0, 0, 0, 0.6);
+}
