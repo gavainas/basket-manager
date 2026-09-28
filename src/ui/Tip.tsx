@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import './modales.css';
 
 /** Envuelve un valor con una explicación al pasar el mouse (y title como respaldo táctil). */
 export function Tip({ text, children }: { text: string; children: ReactNode }) {
