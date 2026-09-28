@@ -1,14 +1,28 @@
 # UI coverage audit — ¿el sistema de UI está en todo el juego?
 
-## Estado al 28/9/2026 — UI V1 completa
+## Estado al 28/9/2026 — UI V1 completa, aprobada e integrada a `main`
 
 La UI V1 llevó el idioma del **Tablero aprobado** (`design/propuestas/tablero-rediseno/`, v4)
 a todas las pantallas (guía: `UI_V1_GUIA.md`; lo pendiente: `UI_V2_PENDIENTES.md`). Criterio
 nuevo: **V1** = rediseñada en el lenguaje del Tablero (escena visible, héroe sin caja, una
 planilla por zona sin bandas de color, secundario en frases, un solo CTA naranja, personas
-como personas), no sólo con la paleta. Verificado con un recorrido automático de 32
-superficies a 1440×900 y 1366×768: 0 errores, 0 scroll horizontal (capturas en
-`design/capturas/2026-09-28-ui-v1/`).
+como personas), no sólo con la paleta. Gabi la aprobó para `main` el 28/9.
+
+**Verificación previa al merge** (recorrido automático con partidas sembradas por el reducer):
+40 estados a 1440×900 y 1366×768 —las 32 superficies más el Tablero durante la convocatoria y
+con el partido en vivo, los playoffs (Tablero, La semana y Liga), el informe tras una derrota,
+la quiebra y el menú de nueva partida—: 0 errores de consola y 0 scroll horizontal. Capturas
+en `design/capturas/2026-09-28-ui-v1/` (hojas `todas-1440.webp` y `todas-1366.webp`). Ese
+recorrido encontró un error grave, corregido antes del merge: con 14 jugadores (playoffs) la
+fila de pie del Tablero se desbordaba y los dos últimos quedaban fuera de la pantalla; ahora
+cada persona se angosta y la cara se recorta por los hombros (`v1.css`). También se borró
+código que quedó sin uso (`Cabecera.tsx`, `PlayoffsCard`) y los últimos selectores muertos.
+
+**Barrido de legacy:** todos los componentes de pantalla de `src/ui/` fueron rediseñados en
+la V1. Los que no se tocaron son piezas chicas que viven adentro de pantallas ya migradas y
+toman su estilo de ellas (`Timeline`, `ScoutingCard`, `Bar`, `Conducta`, `HumanNoteRow`,
+`StyleChip`, `Crest`, `Icon`, los links), más las dos galerías de desarrollo
+(`#retratos`, `#escudos`), fuera de producción.
 
 | # | Superficie | Escena (provisional) | Archivos | Estado | Notas |
 |---|---|---|---|---|---|
@@ -36,7 +50,7 @@ superficies a 1440×900 y 1366×768: 0 errores, 0 scroll horizontal (capturas en
 | 22 | Fin de temporada | comisión | `SeasonEndScreen.tsx`, `cierre.css` | **V1** | |
 | 23 | Galerías dev | — | `AvatarGallery`, `CrestGallery` | fuera de producción | sin tocar |
 
-**Conteo:** V1 22 de 22 superficies de producción · Legacy 0.
+**Conteo:** V1 22 de 22 superficies de producción · Parcial 0 · Legacy 0.
 
 Lo que la tabla de abajo llamaba «componentes globales que faltan» quedó resuelto por
 composición y no por un componente único: las pestañas pasaron a texto display con subrayado

@@ -31,8 +31,7 @@
   max-height: calc(100vh - 2rem);
   overflow-y: auto;
 }
-.modal > h2,
-.modal .event-head h2 {
+.modal > h2 {
   font: 700 1.7rem / 1.05 var(--font-display);
   text-transform: uppercase;
   letter-spacing: 0.02em;

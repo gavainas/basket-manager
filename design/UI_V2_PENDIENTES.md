@@ -1,6 +1,7 @@
 # UI V2 — pendientes de arte, polish y personalidad
 
-> Registro abierto el 28/9/2026 al cerrar la UI V1 (ver `UI_V1_GUIA.md` y el changelog).
+> Registro abierto el 28/9/2026 al cerrar la UI V1 (ver `UI_V1_GUIA.md` y el changelog). La V1
+> quedó aprobada e integrada a `main` ese día; nada de esta lista está implementado.
 > La V1 es **completa y coherente, no pulida**: todo lo de acá se dejó a propósito para la
 > segunda pasada. Ordenado por lo que más cambia la sensación.
 
@@ -39,7 +40,8 @@ Las escenas de la V1 son **arte que ya existía, reusado provisionalmente** (`ES
   ~620 px, Rankings ~280, Plantel ~220, Pretemporada ~360 (mercado ~1070), Partido ~140,
   La semana ~140, Club y Historia ~90. Rankings e Informe podrían partirse o compactarse.
 - Cuerpo técnico con DT y la pestaña General de la ficha dejan aire vacío abajo con pocos datos.
-- La fila de pie con un solo MVP (Historia) se ve rala.
+- La fila de pie con un solo MVP (Historia) se ve rala; con 14+ jugadores (playoffs, lista de
+  buena fe) los bustos se angostan y se recortan por los hombros: entra, pero apretado.
 - El anillo del color rival en la cancha del partido casi no se ve con colores claros.
 - Los nombres dentro de las frases del Vestuario podrían llevar su cara.
 - La barra de secciones de arriba sigue siendo la de antes (con íconos y teclas): la maqueta

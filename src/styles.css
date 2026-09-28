@@ -813,17 +813,6 @@ button:focus-visible,
 /* Banda ilustrada de card (ver ui/Cabecera.tsx). Va pegada abajo del cabezal de
    color y sangra hasta los bordes: la ilustración es la card, no un adorno
    dentro de ella. El encuadre baja el centro para no cortar cabezas. */
-.cabecera-arte {
-  margin: -0.9rem -1rem 0.9rem;
-  /* El alto que pide la vista (`--cab-alto`) es el techo: en una ventana baja
-     la banda cede hasta 96px, así el panel de abajo sigue mostrando juego. A
-     1080p mide lo que siempre midió; a 720p, unos 45px menos. */
-  height: clamp(96px, 17vh, var(--cab-alto, 175px));
-  background-color: var(--sec);
-  background-size: cover;
-  background-position: center 34%;
-  border-bottom: 1px solid var(--border);
-}
 
 /* ---------- Inicio (hub) ---------- */
 
@@ -1108,7 +1097,6 @@ img.retrato-img.v2 {
   gap: 1rem;
 }
 
-.grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
 .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
 
 @media (max-width: 900px) {
@@ -1117,8 +1105,7 @@ img.retrato-img.v2 {
 }
 
 @media (max-width: 560px) {
-  .grid.cols-3,
-.grid.cols-2 { grid-template-columns: 1fr; }
+  .grid.cols-3 { grid-template-columns: 1fr; }
 }
 
 .value.good { color: var(--good); }
@@ -2628,7 +2615,6 @@ button.mini.on {
   .pantalla,
 .semana-vista,
 .plantel-pantalla,
-.grid.cols-2,
 .grid.cols-3 {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;

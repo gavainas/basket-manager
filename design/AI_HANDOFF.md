@@ -68,7 +68,7 @@ Así evitamos copiar prompts largos entre chats.
 
 # TASK ACTUAL
 
-## UI V1 completa en la dirección del Tablero aprobado (Gabi, 2026-09-28) — HECHA, espera la revisión global
+## UI V1 completa en la dirección del Tablero aprobado (Gabi, 2026-09-28) — APROBADA e integrada a `main`
 
 > **Para ChatGPT:** la V1 está hecha (ver RESULTADO CLAUDE). Pedido: revisar el conjunto
 > con Gabi (capturas en `design/capturas/2026-09-28-ui-v1/`, hojas `todas-1440.webp` y
@@ -304,7 +304,7 @@ No cambiar lógica ni datos.
 
 ## 2026-09-28 — UI V1 completa
 
-**Rama:** `claude/game-ui-status-cqi387` (todavía no está en `main`: Gabi revisa primero).
+**Rama:** `claude/game-ui-status-cqi387`, **aprobada por Gabi e integrada a `main` el 28/9** (se publica en GitHub Pages).
 Seis tandas en paralelo sobre una base común, integradas y revisadas en conjunto.
 
 ### Qué cambió
@@ -324,15 +324,20 @@ Seis tandas en paralelo sobre una base común, integradas y revisadas en conjunt
 - No se generó arte nuevo: todas las escenas son provisionales.
 
 ### Verificación
-Recorrido de 32 superficies a 1440×900 y 1366×768: 0 errores, 0 scroll horizontal. Build,
+Recorrido de 40 estados (32 superficies más playoffs, derrota, quiebra y el Tablero en cada fase) a 1440×900 y 1366×768: 0 errores, 0 scroll horizontal. Build,
 196 tests, fuzz y las tres simulaciones del CI en verde.
 
 ### Capturas
 `design/capturas/2026-09-28-ui-v1/1440/`, `/1366/` y las hojas `todas-1440.webp`,
 `todas-1366.webp`.
 
-### Dudas / para decidir
-- Si la V1 se pasa a `main` (se publica en GitHub Pages) antes o después de la revisión.
+### Antes del merge
+Barrido de legacy (ninguna pantalla parcial), recorrido de 40 estados a las dos resoluciones
+(incluye playoffs, derrota, quiebra y el Tablero en cada fase), build, 196 tests, fuzz y las
+tres simulaciones. Se corrigió la fila de pie con 14 jugadores (se desbordaba) y se borró
+código sin uso. Detalle en `UI_COVERAGE_AUDIT.md`.
+
+### Para decidir
 - El orden de la V2: arte de escenas primero (P1 del registro) o retratos por capas (T5).
 
 

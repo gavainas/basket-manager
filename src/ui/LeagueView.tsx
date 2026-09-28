@@ -40,56 +40,6 @@ function LegacyTeamName({ state, id }: { state: GameState; id: string }) {
   return rival ? <RivalLink id={id}>{rival.name}</RivalLink> : <span>{id}</span>;
 }
 
-/**
- * La llave de los playoffs como card suelta. La usa el cierre de temporada
- * (SeasonEndScreen); dentro de la Liga va `LlavePlayoffs`, que es una planilla.
- */
-export function PlayoffsCard({ state }: { state: GameState }) {
-  const P = state.playoffs;
-  if (!P) return null;
-  return (
-    <div className="card" style={{ marginBottom: '1rem' }}>
-      <h3>Playoffs de la divisional</h3>
-      <div className="grid cols-2">
-        {(['oro', 'plata'] as CupTier[]).map((cup) => {
-          const ties = P.ties.filter((t) => t.cup === cup);
-          const champ = P.champions[cup];
-          return (
-            <div key={cup}>
-              <h4 className="profile-subtitle">
-                {cup === 'oro' ? 'Copa de Oro' : 'Copa de Plata'}
-                {champ && (
-                  <span className="chip accent" style={{ marginLeft: '0.5rem' }}>
-                    Campeón: <LegacyTeamName state={state} id={champ} />
-                  </span>
-                )}
-              </h4>
-              <div className="data-grid">
-                {ties.map((t) => (
-                  <div className="data-row" key={t.id}>
-                    <span className="data-label">{t.round === 'semifinal' ? 'Semifinal' : 'Final'}</span>
-                    <span className="data-value">
-                      <LegacyTeamName state={state} id={t.homeId} />{' '}
-                      {t.scoreHome !== undefined ? (
-                        <strong>
-                          {t.scoreHome}-{t.scoreAway}
-                        </strong>
-                      ) : (
-                        'vs'
-                      )}{' '}
-                      <LegacyTeamName state={state} id={t.awayId} />
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 /** Las dos copas de la divisional, dentro de la Liga: una planilla, dos columnas. */
 function LlavePlayoffs({ state }: { state: GameState }) {
   const P = state.playoffs;
