@@ -1,0 +1,400 @@
+/* El plantel (UI V1 — design/UI_V1_GUIA.md). Pasa en el vestuario: la escena
+   de fondo ya es el vestuario del club (ESCENA.vestuario en App.tsx), así que
+   nada de acá dibuja otra escena ni pone cajas donde no hace falta. Cada
+   pestaña es una planilla (el único panel) y el margen con frases sobre la
+   escena, como el Tablero.
+
+   Todo va bajo .plantel-pantalla: la planilla del plantel se puede reusar en
+   la pretemporada y ahí manda su propia hoja. */
+
+/* ---------- Las pestañas: texto display, no placas ---------- */
+.plantel-pantalla {
+  gap: clamp(0.7rem, 2vh, 1.2rem);
+  padding-top: clamp(0.3rem, 1.4vh, 1rem);
+}
+.plantel-pantalla .plantel-pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 2.2rem;
+  padding-left: 0.2rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+.plantel-pantalla button.plantel-pestana {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  font: 600 1.18rem / 1 var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 0.35rem 0 0.45rem;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.plantel-pantalla button.plantel-pestana:hover { color: var(--text); }
+.plantel-pantalla button.plantel-pestana.on { color: var(--text); font-weight: 700; border-bottom-color: var(--accent); }
+.plantel-pantalla button.plantel-pestana:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* La hoja de cada pestaña: la planilla y, a la derecha, el margen escrito
+   sobre la escena. El margen acompaña al scroll: la planilla es lo largo. */
+.plantel-pantalla .pl-hoja {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(250px, 21vw, 330px);
+  gap: 1.4rem clamp(1.6rem, 3vw, 3rem);
+  align-items: start;
+}
+.plantel-pantalla .pl-margen {
+  position: sticky;
+  top: 0.4rem;
+  display: grid;
+  gap: 0.9rem;
+  padding-top: 0.3rem;
+}
+.plantel-pantalla .pl-margen .v1-cifra { margin-bottom: 0.2rem; }
+.plantel-pantalla .pl-margen .v1-frase { color: #d6dde1; }
+.plantel-pantalla .pl-descargo { font-size: var(--fs-sm); color: var(--text-dim); }
+
+/* ---------- La cara redonda (el retrato del Tablero, chico) ---------- */
+.plantel-pantalla .pl-cara {
+  position: relative;
+  display: block;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2a4a60;
+  border: 2px solid #3a5a70;
+}
+.plantel-pantalla .pl-cara.chica { width: 34px; height: 34px; border-width: 1.5px; }
+.plantel-pantalla .pl-cara .busto {
+  --busto-ancho: 100%;
+  --busto-alto: 100%;
+  background-size: 118%;
+  background-position: center 12%;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.plantel-pantalla .pl-cara img.retrato-img,
+.plantel-pantalla .pl-cara svg { width: 100%; height: 100%; border: 0; border-radius: 0; }
+
+/* ---------- Plantel: la planilla ---------- */
+.plantel-pantalla .pl-lista {
+  --pl-cols: 46px minmax(0, 1fr) 64px 74px 74px 124px;
+  padding: 0.2rem 0 0.3rem;
+}
+.plantel-pantalla .pl-lista-cab,
+.plantel-pantalla .pl-renglon {
+  display: grid;
+  grid-template-columns: var(--pl-cols);
+  gap: 0 1.1rem;
+  align-items: center;
+  padding: 0 1.3rem;
+}
+.plantel-pantalla .pl-lista-cab {
+  padding-top: 0.7rem;
+  padding-bottom: 0.55rem;
+  font: 600 0.72rem var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.plantel-pantalla .pl-renglon {
+  position: relative;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  border-top: 1px dashed var(--linea-suave);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.plantel-pantalla .pl-renglon:hover { background: rgba(243, 240, 232, 0.05); }
+.plantel-pantalla .pl-renglon.alerta { box-shadow: inset 3px 0 0 var(--bad); }
+
+.plantel-pantalla .pl-quien { min-width: 0; }
+.plantel-pantalla .pl-nombre { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.1rem 0.65rem; }
+.plantel-pantalla .pl-nombre .plink {
+  font: 600 1.2rem / 1.1 var(--font-display);
+  letter-spacing: 0.02em;
+  color: var(--text);
+  border-bottom: 0;
+}
+.plantel-pantalla .pl-nombre .plink:hover { color: var(--accent); }
+.plantel-pantalla .pl-pos {
+  font: 500 0.74rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.plantel-pantalla .pl-nombre .v1-est { align-self: center; }
+.plantel-pantalla .pl-nota { display: block; margin-top: 0.2rem; }
+.plantel-pantalla .pl-nota .human-note { margin: 0; font-size: 0.86rem; line-height: 1.3; color: var(--text-dim); }
+.plantel-pantalla .pl-nota .human-note.good .hn-icon { color: var(--good); }
+.plantel-pantalla .pl-nota .human-note.warn .hn-icon { color: var(--warn); }
+.plantel-pantalla .pl-nota .human-note.bad { color: #ff9a8f; }
+.plantel-pantalla .pl-nota .plink { color: var(--text); }
+
+.plantel-pantalla .pl-valor {
+  font: 700 1.75rem / 1 var(--font-display);
+  color: var(--accent);
+}
+.plantel-pantalla .pl-valor small { font-size: 0.55em; margin-right: 1px; opacity: 0.8; }
+
+.plantel-pantalla .pl-cifra { display: grid; gap: 4px; width: 100%; max-width: 70px; }
+.plantel-pantalla .pl-cifra b { font: 600 1.2rem / 1 var(--font-display); color: var(--text); }
+.plantel-pantalla .pl-cifra.warn b { color: var(--warn); }
+.plantel-pantalla .pl-cifra.bad b { color: #ff8a7e; }
+.plantel-pantalla .pl-cifra > i { display: block; height: 3px; background: rgba(174, 188, 196, 0.16); border-radius: 2px; }
+.plantel-pantalla .pl-cifra > i > i { display: block; height: 100%; border-radius: 2px; background: rgba(174, 188, 196, 0.55); }
+.plantel-pantalla .pl-cifra.warn > i > i { background: var(--warn); }
+.plantel-pantalla .pl-cifra.bad > i > i { background: var(--bad); }
+
+.plantel-pantalla .pl-rol { display: grid; line-height: 1.2; }
+.plantel-pantalla .pl-rol b { font: 600 0.95rem var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); }
+.plantel-pantalla .pl-rol span { font-size: 0.8rem; color: var(--text-dim); }
+
+/* ---------- Estadísticas: la planilla para comparar ---------- */
+.plantel-pantalla .pl-stats { padding: 0.3rem 0 0.4rem; overflow-x: auto; }
+.plantel-pantalla table.sheet { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.plantel-pantalla table.sheet th,
+.plantel-pantalla table.sheet td {
+  padding: 0.5rem 0.5rem;
+  border-bottom: 0;
+  border-top: 1px dashed var(--linea-suave);
+  white-space: nowrap;
+}
+.plantel-pantalla table.sheet th:first-child,
+.plantel-pantalla table.sheet td:first-child { padding-left: 1.2rem; }
+.plantel-pantalla table.sheet th:last-child,
+.plantel-pantalla table.sheet td:last-child { padding-right: 1.2rem; }
+.plantel-pantalla table.sheet thead th {
+  border-top: 0;
+  padding-top: 0.75rem;
+  padding-bottom: 0.55rem;
+  font: 600 0.72rem var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.plantel-pantalla table.sheet th.sortable { cursor: pointer; user-select: none; transition: color 0.12s; }
+.plantel-pantalla table.sheet th.sortable:hover { color: var(--text); }
+.plantel-pantalla table.sheet th.sorted { color: var(--accent); }
+.plantel-pantalla table.sheet .sort-arrow { margin-left: 0.25rem; font-size: 0.62rem; }
+.plantel-pantalla table.sheet tbody tr:not(.sheet-group):hover td { background: rgba(243, 240, 232, 0.04); }
+.plantel-pantalla table.sheet td.sheet-avatar { width: 34px; padding-right: 0; line-height: 0; }
+
+/* El renglón de grupo: un subtítulo display, no una banda de color. */
+.plantel-pantalla table.sheet tr.sheet-group td {
+  background: none;
+  padding-top: 0.9rem;
+  padding-bottom: 0.35rem;
+  font: 600 0.85rem var(--font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tiza);
+  border-top: 1px solid rgba(239, 230, 210, 0.22);
+}
+.plantel-pantalla table.sheet tbody:first-of-type tr.sheet-group td { border-top: 1px solid rgba(239, 230, 210, 0.22); }
+.plantel-pantalla .sheet-tension { color: var(--warn); font-weight: 600; letter-spacing: 0.06em; }
+
+.plantel-pantalla .sheet-name .plink {
+  font: 600 1.05rem var(--font-display);
+  letter-spacing: 0.02em;
+  color: var(--text);
+  border-bottom: 0;
+}
+.plantel-pantalla .sheet-name .plink:hover { color: var(--accent); }
+.plantel-pantalla .sheet-name .sheet-mvp { color: var(--warn); margin-left: 0.35rem; }
+.plantel-pantalla table.sheet td.num { font: 600 1rem var(--font-display); font-variant-numeric: tabular-nums; }
+.plantel-pantalla table.sheet td.sheet-rating { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.plantel-pantalla table.sheet td.stat-good { color: var(--text); }
+.plantel-pantalla table.sheet td.stat-warn { color: var(--warn); }
+.plantel-pantalla table.sheet td.stat-bad { color: #ff8a7e; }
+.plantel-pantalla .sheet-tag { font: 600 0.78rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.plantel-pantalla .sheet-tag.bad { color: #ff8a7e; }
+.plantel-pantalla .sheet-tag.beca { color: var(--text-dim); }
+.plantel-pantalla .sheet-nada { color: rgba(174, 188, 196, 0.4); }
+
+/* El margen: la media y el quinteto probable dibujado, sobre la escena. */
+.plantel-pantalla .pl-media { display: grid; }
+.plantel-pantalla .pl-media-num small { display: inline; font: inherit; font-size: 0.55em; letter-spacing: 0; margin: 0 2px 0 0; color: var(--text-dim); text-transform: none; }
+.plantel-pantalla .pl-cancha { position: relative; margin-top: 0.3rem; }
+.plantel-pantalla .pl-cancha svg { display: block; width: 100%; height: auto; }
+.plantel-pantalla .pl-cancha .court-slot { display: grid; justify-items: center; gap: 1px; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9); }
+.plantel-pantalla .pl-cancha .pl-cara { width: 38px; height: 38px; }
+.plantel-pantalla .pl-cancha .court-name { font: 700 0.78rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+.plantel-pantalla .pl-cancha .court-name .plink { border-bottom: 0; color: var(--text); }
+.plantel-pantalla .pl-cancha .court-rating { font: 600 0.72rem var(--font-display); color: var(--text-dim); }
+
+/* ---------- Vestuario ---------- */
+.plantel-pantalla .vs-hoja {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 1.5rem clamp(2rem, 4vw, 3.5rem);
+  align-items: start;
+}
+.plantel-pantalla .vs-principal { display: grid; gap: clamp(1rem, 3vh, 1.8rem); min-width: 0; }
+.plantel-pantalla .vs-hero { padding-left: 0.2rem; }
+.plantel-pantalla .vs-hero-fila { display: flex; align-items: flex-end; gap: 1.6rem; margin-top: 0.6rem; }
+.plantel-pantalla .vs-union { flex: none; }
+.plantel-pantalla .vs-union.good { color: var(--text); }
+.plantel-pantalla .vs-union.warn { color: var(--warn); }
+.plantel-pantalla .vs-union.bad { color: #ff8a7e; }
+.plantel-pantalla .vs-hero-fila .v1-frase {
+  padding-left: 1.5rem;
+  border-left: 1px solid rgba(174, 188, 196, 0.35);
+  color: #d6dde1;
+  max-width: 44ch;
+}
+
+.plantel-pantalla .vs-mesas { padding: 1.1rem 0 0.3rem; }
+.plantel-pantalla .vs-mesas > h3 { padding: 0 1.4rem 0.6rem; }
+.plantel-pantalla .vs-mesa {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(0, 2fr);
+  gap: 0.6rem 1.2rem;
+  align-items: center;
+  padding: 0.8rem 1.4rem;
+}
+.plantel-pantalla .vs-mesa-nom b { display: block; font: 700 1.2rem / 1.1 var(--font-display); letter-spacing: 0.02em; }
+.plantel-pantalla .vs-mesa-nom span {
+  display: block;
+  margin-top: 0.2rem;
+  font: 500 0.74rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.plantel-pantalla .vs-mesa-gente { display: flex; flex-wrap: wrap; gap: 0.5rem 1.1rem; }
+.plantel-pantalla .vs-sentado { display: inline-flex; align-items: center; gap: 0.45rem; }
+.plantel-pantalla .vs-sentado .plink {
+  font: 600 1rem var(--font-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+  border-bottom: 0;
+}
+.plantel-pantalla .vs-sentado .plink:hover { color: var(--accent); }
+.plantel-pantalla .vs-vacio { margin: 0; padding: 0.9rem 1.4rem 1.1rem; color: var(--text-dim); }
+
+.plantel-pantalla .vs-margen { display: grid; gap: 1.3rem; padding-top: 0.2rem; }
+.plantel-pantalla .vs-bloque { display: grid; gap: 0.45rem; }
+.plantel-pantalla .vs-bloque .v1-eyebrow { margin-bottom: 0.1rem; color: var(--tiza); }
+.plantel-pantalla .vs-margen .v1-frase { color: #d6dde1; line-height: 1.45; }
+.plantel-pantalla .vs-margen .v1-frase .plink { border-bottom: 0; color: inherit; }
+.plantel-pantalla .vs-margen .v1-frase .plink:hover { color: var(--accent); }
+.plantel-pantalla .vs-margen .v1-frase > .plink,
+.plantel-pantalla .vs-margen .v1-frase span > .plink { border-bottom: 1px dotted rgba(174, 188, 196, 0.6); }
+.plantel-pantalla .vs-pareja .ico { vertical-align: -2px; }
+.plantel-pantalla .vs-pareja.intimos .ico { color: var(--good); }
+.plantel-pantalla .vs-pareja.chocan .ico,
+.plantel-pantalla .vs-pareja.roce .ico { color: var(--warn); }
+
+/* ---------- Cuerpo técnico ---------- */
+.plantel-pantalla .ct-hoja { display: grid; gap: clamp(1.2rem, 3.5vh, 2.2rem); max-width: 1180px; padding-left: 0.2rem; }
+
+/* La cara del DT: de pie si es del plantel, en medallón si viene de afuera. */
+.plantel-pantalla .ct-cara { display: block; flex: none; }
+.plantel-pantalla .ct-cara.medalla {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2a4a60;
+  border: 2px solid #3a5a70;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+.plantel-pantalla .ct-cara.medalla.grande { width: 132px; height: 132px; border-width: 3px; }
+.plantel-pantalla .ct-cara.medalla svg,
+.plantel-pantalla .ct-cara.medalla img { display: block; width: 100%; height: 100%; }
+.plantel-pantalla .ct-cara.depie { --busto-ancho: 84px; --busto-alto: 100px; }
+.plantel-pantalla .ct-cara.depie.grande { --busto-ancho: 150px; --busto-alto: 180px; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5)); }
+
+/* Con DT: la persona, sin caja. */
+.plantel-pantalla .ct-dt { display: flex; align-items: center; gap: 2rem; padding-top: 0.6rem; }
+.plantel-pantalla .ct-dt-datos { min-width: 0; display: grid; gap: 0.7rem; max-width: 62ch; }
+.plantel-pantalla .ct-dt .v1-titulo { margin: 0; font-size: clamp(2rem, 3.2vw, 2.9rem); }
+.plantel-pantalla .ct-dt .v1-titulo .plink { border-bottom: 0; color: inherit; }
+.plantel-pantalla .ct-dt .v1-titulo .plink:hover { color: var(--accent); }
+.plantel-pantalla .ct-perfil { margin: 0; font-size: 1.02rem; color: #dfe5e8; line-height: 1.45; }
+.plantel-pantalla .ct-perfil > b { font: 700 1.02rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); margin-right: 0.2rem; }
+.plantel-pantalla .ct-perfil .v1-est { vertical-align: 2px; margin-left: 0.3rem; }
+.plantel-pantalla .ct-lineas { display: grid; gap: 0.45rem; max-width: 460px; }
+.plantel-pantalla .ct-linea { display: grid; grid-template-columns: 150px minmax(0, 1fr) 2.4rem; align-items: center; gap: 0.9rem; }
+.plantel-pantalla .ct-linea-nom { font: 600 0.8rem var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+.plantel-pantalla .ct-linea > i { display: block; height: 4px; border-radius: 2px; background: rgba(174, 188, 196, 0.2); }
+.plantel-pantalla .ct-linea > i > i { display: block; height: 100%; border-radius: 2px; background: var(--tiza); }
+.plantel-pantalla .ct-linea.warn > i > i { background: var(--warn); }
+.plantel-pantalla .ct-linea.bad > i > i { background: var(--bad); }
+.plantel-pantalla .ct-linea > b { font: 700 1.35rem / 1 var(--font-display); text-align: right; }
+
+.plantel-pantalla .ct-directiva { display: grid; gap: 0.6rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55); }
+.plantel-pantalla .ct-directiva-fila { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.plantel-pantalla .ct-directiva-fila .v1-frase { flex: 1 1 320px; max-width: 58ch; color: #d6dde1; }
+.plantel-pantalla .ct-directiva .segmented button { font: 600 0.95rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; padding: 0.55rem 1.1rem; text-shadow: none; }
+.plantel-pantalla .ct-despedir { text-shadow: none; }
+
+/* Sin DT: el título sin caja, los candidatos en una planilla. */
+.plantel-pantalla .ct-sin { padding-top: 0.6rem; display: grid; gap: 0.6rem; }
+.plantel-pantalla .ct-sin .v1-titulo { margin: 0; }
+.plantel-pantalla .ct-sin .v1-frase { color: #d6dde1; }
+.plantel-pantalla .ct-candidatos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.plantel-pantalla .ct-cand {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+  gap: 0.6rem 1rem;
+  padding: 1.2rem 1.4rem 1.1rem;
+  border-left: 1px dashed var(--linea-suave);
+}
+.plantel-pantalla .ct-cand:first-child { border-left: 0; }
+.plantel-pantalla .ct-cand .ct-cara { grid-row: 1; align-self: center; }
+.plantel-pantalla .ct-cand-quien { align-self: center; min-width: 0; }
+.plantel-pantalla .ct-cand-quien b { display: block; font: 700 1.35rem / 1.05 var(--font-display); letter-spacing: 0.02em; text-transform: uppercase; }
+.plantel-pantalla .ct-cand-quien span { display: block; margin-top: 0.25rem; font: 500 0.76rem var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+.plantel-pantalla .ct-cand-desc { grid-column: 1 / -1; margin: 0; font-size: 0.92rem; line-height: 1.4; color: #d0d8dc; }
+.plantel-pantalla .ct-cand-pie { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 0.7rem; border-top: 1px dashed var(--linea-suave); }
+.plantel-pantalla .ct-cand-sueldo { font-size: 0.9rem; color: var(--text-dim); }
+.plantel-pantalla .ct-cand-sueldo b { font: 700 1.25rem var(--font-display); color: var(--text); margin-right: 0.15rem; }
+.plantel-pantalla .ct-cand-pie button { font: 600 0.95rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; padding: 0.5rem 1.2rem; }
+
+.plantel-pantalla .ct-jugador {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.7rem 1.4rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+}
+.plantel-pantalla .ct-jugador-txt { flex: 1 1 360px; max-width: 64ch; font-size: 0.92rem; color: var(--text-dim); }
+.plantel-pantalla .ct-jugador-txt b { font: 700 1rem var(--font-display); letter-spacing: 0.04em; color: var(--text); margin-right: 0.2rem; }
+.plantel-pantalla .ct-jugador-accion { display: inline-flex; align-items: center; gap: 0.5rem; text-shadow: none; }
+.plantel-pantalla .ct-jugador select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+/* Los nombres dentro de las frases del margen: links discretos. */
+.plantel-pantalla .pl-margen .v1-frase .plink { color: var(--text); border-bottom: 1px dotted rgba(174, 188, 196, 0.6); }
+.plantel-pantalla .pl-margen .v1-frase .plink:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.plantel-pantalla .pl-problema { white-space: nowrap; }
+.plantel-pantalla .pl-problema.bad { color: #ff8a7e; }
+.plantel-pantalla .pl-problema.warn { color: var(--warn); }
+
+/* ---------- La notebook (1366×768, 1280×720) ---------- */
+@media (max-height: 820px) {
+  .plantel-pantalla button.plantel-pestana { font-size: 1.05rem; }
+  .plantel-pantalla .pl-renglon { padding-top: 0.45rem; padding-bottom: 0.45rem; }
+  .plantel-pantalla .pl-lista-cab { padding-top: 0.55rem; padding-bottom: 0.45rem; }
+  .plantel-pantalla table.sheet td { padding-top: 0.38rem; padding-bottom: 0.38rem; }
+  .plantel-pantalla .v1-cifra { font-size: 2.7rem; }
+  .plantel-pantalla .ct-cara.medalla.grande { width: 108px; height: 108px; }
+  .plantel-pantalla .ct-cara.depie.grande { --busto-ancho: 124px; --busto-alto: 150px; }
+  .plantel-pantalla .ct-cand { padding: 1rem 1.2rem 0.9rem; }
+}
