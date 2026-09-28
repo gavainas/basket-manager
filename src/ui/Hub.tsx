@@ -1,18 +1,17 @@
-import { useContext } from 'react';
-import type { GameState, Player } from '../game/types';
+import { useContext, useState } from 'react';
+import type { GameState, Player, Position } from '../game/types';
 import { BALANCE } from '../game/balance';
 import { activePlayers } from '../game/match';
 import { CAUSE_SHORT } from '../game/mood';
-import { clubByLegacyId, userFixtureOfWeek } from '../game/world';
+import { clubByLegacyId, USER_CLUB_ID, USER_TEAM_ID, userFixtureOfWeek } from '../game/world';
+import { weekTimeline } from '../game/weekTimeline';
 import { Crest } from './Crest';
-import { Icon } from './Icon';
-import { Avatar } from './Avatar';
+import { Busto, FilaDePie, type PersonaDePie } from './Busto';
 import { OpenProfileContext } from './PlayerLink';
 import { RivalLink } from './RivalLink';
-import { StyleChip } from './StyleChip';
 import { NavigateTabContext, type AppFocus, type AppTab } from './nav';
-import { watchItems, type TileId } from './watch';
-import { formatDateLong, rivalDifficulty, weekLabel } from './helpers';
+import { watchItems, type TileId, type WatchItem } from './watch';
+import { formatDateLong, rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
 import { MatchClockContext, visibleScore } from './matchPresentation';
 import './Hub.css';
 
@@ -61,45 +60,6 @@ function shortName(name: string): string {
   if (nick) return nick[1];
   const parts = name.split(' ');
   return parts[parts.length - 1];
-}
-
-function PlantelStrip({ state }: { state: GameState }) {
-  const open = useContext(OpenProfileContext);
-  const active = activePlayers(state.players);
-
-  return (
-    <section className="hub-plantel">
-      <h3 className="hub-block-title">
-        <Icon name="plantel" size={17} />
-        El plantel
-        <span className="hub-plantel-leyenda">ánimo · cuota · físico</span>
-      </h3>
-      <div className="hub-plantel-row">
-        {active.map((p) => {
-          const signals = playerSignals(p);
-          return (
-            <button
-              key={p.id}
-              className="hub-jugador"
-              onClick={() => open(p.id)}
-              title={`${p.name} — ${signals.map((s) => s.label).join(' · ')}`}
-            >
-              {/* La foto oficial: el retrato ilustrado por arquetipo, la misma
-                  en la tira, la ficha, la pizarra y los eventos. */}
-              <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={62} title={p.name} personality={p.personality} />
-              <span className="hub-jug-pos">{POS_ABBR[p.position] ?? p.position.slice(0, 3).toUpperCase()}</span>
-              <span className="hub-jug-nombre">{shortName(p.name)}</span>
-              <span className="hub-jug-estado">
-                {signals.map((s, i) => (
-                  <span key={i} className={`hub-punto ${s.cls}`} />
-                ))}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
 }
 
 /** La próxima fecha organiza el tablero; consultar nunca avanza la simulación. */
@@ -153,6 +113,13 @@ const ROUTES: Record<TileId, [AppTab, AppFocus?]> = {
   gastos: ['finanzas', 'gastos'], objetivos: ['club', 'objetivos'],
   noticias: ['club', 'noticias'], historia: ['historia'],
 };
+/** Cómo se llama el lugar al que lleva cada aviso, dicho al final de la frase. */
+const DESTINO: Record<TileId, string> = {
+  lista: 'La semana', quinteto: 'Quinteto', partido: 'El partido', tabla: 'La liga',
+  calendario: 'Calendario', rankings: 'Rankings', plantilla: 'Plantel', vestuario: 'Vestuario',
+  cuerpo: 'Cuerpo técnico', cuotas: 'Cuotas', gastos: 'Gastos', objetivos: 'La comisión',
+  noticias: 'Noticias', historia: 'Historia',
+};
 const ACTIONS: Record<string, [string, string]> = {
   planning: ['Preparar el partido', 'Decidí la semana y después confirmá quién viene.'],
   callUp: ['Resolver la convocatoria', 'Revisá las ausencias antes de armar el quinteto.'],
@@ -160,15 +127,71 @@ const ACTIONS: Record<string, [string, string]> = {
   match: ['Volver al partido', 'Los cambios y las decisiones se hacen desde la cancha.'],
   matchResult: ['Ver el informe y seguir', 'Revisá lo que dejó el partido antes de avanzar.'],
 };
+const POS_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 
+/**
+ * Un aviso del radar partido en título y bajada: lo que pasa, en negrita, y el
+ * porqué o el qué hacer abajo. Los textos de `watch.ts` son una sola frase con
+ * dos puntos o un punto en el medio; se corta ahí. Si no hay corte, va entero.
+ */
+function partirAviso(text: string): [string, string] {
+  const dos = text.indexOf(': ');
+  if (dos > 12 && dos < 90) return [text.slice(0, dos), text.slice(dos + 2)];
+  const punto = text.indexOf('. ');
+  if (punto > 12 && punto < 90) return [text.slice(0, punto), text.slice(punto + 2)];
+  return [text, ''];
+}
+
+/** Días que faltan para el partido, contados desde el día en que va la semana. */
+function diasParaElPartido(state: GameState): number {
+  return Math.max(0, -weekTimeline(state).todayOffset);
+}
+
+/** El nombre de la categoría del club: «Liga Universitaria · Divisional B». */
+function categoria(state: GameState): string {
+  const entry = state.world.entries.find((e) => e.teamId === USER_TEAM_ID && e.status === 'activa');
+  const division = state.world.divisions.find((d) => d.id === entry?.divisionId);
+  const league = state.world.leagues.find((l) => l.id === entry?.leagueId);
+  return [league?.name, division?.name].filter(Boolean).join(' · ');
+}
+
+/** Puesto en la tabla y récord de un equipo (la tabla de la liga, no la del mundo). */
+function enLaTabla(state: GameState, teamId: string): { pos: number; record: string } | null {
+  const sorted = [...state.standings].sort(
+    (a, b) => b.wins - a.wins || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
+  );
+  const i = sorted.findIndex((r) => r.teamId === teamId);
+  if (i < 0) return null;
+  return { pos: i + 1, record: `${sorted[i].wins}-${sorted[i].losses}` };
+}
+
+/**
+ * El Tablero (UI V1, aprobado por Gabi el 28/9 — design/propuestas/
+ * tablero-rediseno/, v4). Lunes en el club: faltan unos días para el partido,
+ * ¿llegamos bien? Tres capas de lectura, en este orden:
+ *
+ * 1. El partido, sin caja, grande, sobre el gimnasio: los dos escudos, cuántos
+ *    días faltan, dónde, la clave del rival y el único botón naranja.
+ * 2. «Esta semana»: la planilla pegada con cinta, con hasta tres problemas,
+ *    cada uno con la cara de quien lo tiene y a dónde ir a resolverlo.
+ * 3. El plantel de pie sobre el parquet, ordenado por puesto, con el problema
+ *    escrito debajo del que lo tiene. Los que no están, al final y en gris.
+ *
+ * Lo demás (el último partido, la tabla, la comisión) es una frase. No hay
+ * atajos: repetían la barra de arriba. Tampoco se muestran los grupos del
+ * vestuario: se descubren entrando al Vestuario y cambian durante el juego.
+ */
 export function Hub({ state }: { state: GameState }) {
   const navigate = useContext(NavigateTabContext);
+  const open = useContext(OpenProfileContext);
   const { reloj } = useContext(MatchClockContext);
+  const [todos, setTodos] = useState(false);
   const readiness = hubReadiness(state);
   const warnings = watchItems(state);
   const upcomingWeek = state.phase === 'matchResult' ? state.week + 1 : state.week;
   const rival = state.rivals.find(r => r.id === state.schedule[upcomingWeek - 1]);
   const rivalClub = rival ? clubByLegacyId(state.world, rival.id) : undefined;
+  const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
   const fixture = userFixtureOfWeek(state.world, upcomingWeek);
   const venue = state.world.venues.find(v => v.id === fixture?.venueId);
   const score = state.phase === 'match' && state.live ? visibleScore(state, state.live, reloj) : null;
@@ -178,72 +201,185 @@ export function Hub({ state }: { state: GameState }) {
     : state.lastMatch;
   const pasada = temporadaPasada(state);
   const action = ACTIONS[state.phase] ?? ['Continuar la temporada', 'Seguí con el próximo paso del club.'];
-  const warningButton = (item: typeof warnings[number], i: number) => (
-    <button key={`${item.tile}-${i}`} className={`hub-a-alert ${item.cls}`} onClick={() => navigate(...ROUTES[item.tile])}>
-      <span>{item.text}</span><span aria-hidden="true">→</span>
-    </button>
-  );
+  const nuestro = enLaTabla(state, 'club');
+  const suyo = rival ? enLaTabla(state, rival.id) : null;
+  const liga = categoria(state);
+  const dias = diasParaElPartido(state);
+  const jugado = state.phase === 'matchResult' ? state.lastMatch : null;
+  const byId = new Map(state.players.map((p) => [p.id, p]));
+
+  // «Esta semana»: los avisos malos y los de alerta primero (ya vienen
+  // ordenados), tres a la vista y el resto a un click.
+  const visibles = todos ? warnings : warnings.slice(0, 3);
+  const aviso = (item: WatchItem, i: number) => {
+    const [titulo, bajada] = partirAviso(item.text);
+    const caras = (item.who ?? []).map((id) => byId.get(id)).filter((p): p is Player => !!p).slice(0, 2);
+    return (
+      <button key={`${item.tile}-${i}`} className={`tablero-aviso ${item.cls}`} onClick={() => navigate(...ROUTES[item.tile])}>
+        <span className="tablero-aviso-nro">{i + 1}</span>
+        <span className={`tablero-aviso-cara n${caras.length}`} aria-hidden="true">
+          {caras.length === 0 ? <span className="tablero-aviso-ico">{item.kind === 'plata' ? '$' : '!'}</span>
+            : caras.map((p) => <span key={p.id} className="tablero-cara"><Busto seed={p.id} personality={p.personality} /></span>)}
+        </span>
+        <span className="tablero-aviso-txt">
+          <b>{titulo}</b>
+          <span>{bajada} <em>{DESTINO[item.tile]} →</em></span>
+        </span>
+      </button>
+    );
+  };
+
+  // El plantel de pie: por puesto, los que no están al final.
+  const personas: PersonaDePie[] = [...activePlayers(state.players)]
+    .sort((a, b) => POS_ORDER.indexOf(a.position) - POS_ORDER.indexOf(b.position))
+    .map((p) => {
+      const est = estadoDe(p, state);
+      return {
+        id: p.id,
+        nombre: shortName(p.name),
+        personality: p.personality,
+        sub: POS_ABBR[p.position] ?? p.position.slice(0, 3).toUpperCase(),
+        estado: est.label ? { cls: est.cls, label: est.label } : null,
+        fuera: est.fuera,
+        title: `${p.name} — ${playerSignals(p).map((s) => s.label).join(' · ')}`,
+        onClick: () => open(p.id),
+      };
+    });
+  const figura = (jugado ?? previous)?.mvpName;
+  if (figura) {
+    const f = personas.find((p) => byId.get(p.id)?.name === figura);
+    if (f && !f.estado && !f.fuera) f.estado = { cls: 'good', label: 'Figura' };
+  }
+
+  const escudo = (club: typeof userClub, size: number) =>
+    club ? <Crest seed={club.id} name={club.name} colors={club.colors} founded={club.founded} size={size} /> : null;
 
   return (
-    <div className="hub-a pantalla">
-      <header className="hub-a-heading">
-        <div><span className="hub-a-eyebrow">El tablero del club</span><h2>{state.club.name}</h2></div>
-        <span>{weekLabel(state.week, state.seasonLength)} · Temporada {state.seasonNumber}</span>
-      </header>
-      <div className="hub-a-layout">
-        {/* Con el partido en curso la card suma el marcador grande: la clase deja
-            que el CSS guarde la cancha y los chips en ventanas bajas (Hub.css). */}
-        <section className={`hub-a-match${score ? ' en-juego' : ''}`} aria-label="El partido">
-          <div className="hub-a-match-body">
-            <div className="hub-a-match-info">
-              <span className="hub-a-eyebrow">{score ? 'Partido en curso' : 'La próxima fecha'}</span>
-              {rival ? <>
-                {/* El escudo va al lado del nombre, no arriba: apilados, con un
-                    rival de nombre largo la columna no entraba a 768 y los chips
-                    y el link al calendario quedaban recortados (Hub.css). */}
-                <div className="hub-a-match-head">
-                  {rivalClub && <Crest seed={rivalClub.id} name={rivalClub.name} colors={rivalClub.colors} founded={rivalClub.founded} size={64} />}
-                  <h3><span className="hub-a-versus">vs</span> <RivalLink id={rival.id}>{rival.name}</RivalLink></h3>
-                </div>
-                {score && <strong className="hub-a-score">{score.f} – {score.a}</strong>}
-                <p>{fixture ? `${formatDateLong(fixture.date)} · ${fixture.time} h` : 'Fecha y horario por confirmar'}</p>
-                <p className="muted">{venue ? `${venue.name} · ${venue.neighborhood}` : 'Cancha por confirmar'}</p>
-                <div className="hub-a-chips"><span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span><StyleChip style={rival.style} /></div>
-              </> : <><h3>{state.phase === 'matchResult' ? 'Esperando el próximo cruce' : 'Sin partido programado'}</h3><p>{state.phase === 'matchResult' ? 'Cerrá el informe para conocer el siguiente paso de la temporada.' : 'Consultá el calendario y continuá la temporada.'}</p></>}
-              <button className="hub-a-link" onClick={() => navigate('agenda')}>Ver calendario →</button>
-            </div>
-            <div className="hub-a-scene" aria-hidden="true" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}arte/cab-vestuario.webp)` }} />
+    <div className="tablero pantalla">
+      <section className="tablero-hero v1-hero" aria-label="El partido">
+        <div className="v1-eyebrow">
+          {score ? 'Partido en curso' : jugado ? 'El partido de hoy' : 'La próxima fecha'}
+          {' · '}<b>{weekLabel(jugado ? state.week : upcomingWeek, state.seasonLength).replace('Semana', 'Fecha')}</b>
+          {liga && <> · {liga}</>}
+        </div>
+        {jugado ? (
+          <div className="tablero-versus">
+            <div className="tablero-equipo">{escudo(userClub, 84)}<div><div className="tablero-nombre">{state.club.name}</div></div></div>
+            <div className={`tablero-marcador ${jugado.scoreFor > jugado.scoreAgainst ? 'good' : 'bad'}`}>{jugado.scoreFor} – {jugado.scoreAgainst}</div>
+            <div className="tablero-equipo">{escudo(clubByLegacyId(state.world, jugado.rivalId), 84)}<div><div className="tablero-nombre">{jugado.rivalName}</div></div></div>
           </div>
-          <div className="hub-a-prepare"><div><strong>{score ? 'El equipo te espera en la cancha' : 'Llegar bien también se juega'}</strong><p>{action[1]}</p></div><button className="primary" onClick={() => navigate('semana')}>{action[0]} →</button></div>
-        </section>
-        <aside className="hub-a-side">
-          <section className="hub-a-card">
-            <h3 className="hub-a-band">¿Cómo llegamos?</h3>
-            <div className="hub-a-readiness">
-              <button onClick={() => navigate(readiness.confirmed === null ? 'plantilla' : 'semana')}><strong>{readiness.confirmed ?? readiness.available}</strong><span>{readiness.confirmed === null ? 'disponibles · sin confirmar' : 'confirmados'}</span></button>
-              <button onClick={() => navigate('plantilla')}><strong>{readiness.unavailable}</strong><span>de baja</span></button>
-              <button onClick={() => navigate('plantilla')}><strong>{readiness.tired}</strong><span>{readiness.tired === 1 ? 'fundido' : 'fundidos'}</span></button>
+        ) : rival ? (
+          <div className="tablero-versus">
+            <div className="tablero-equipo">
+              {escudo(userClub, 84)}
+              <div>
+                <div className="tablero-nombre">{state.club.name}</div>
+                {nuestro && <div className="tablero-sub"><b>{nuestro.pos}°</b> · {nuestro.record}</div>}
+              </div>
             </div>
-            {readiness.late > 0 && <p className="hub-a-note">{readiness.late === 1 ? 'Uno de los confirmados llega' : `${readiness.late} de los confirmados llegan`} para el segundo tiempo.</p>}
-            {state.phase === 'matchResult' && <p className="hub-a-note">Estado al cierre del partido; la próxima convocatoria todavía no está hecha.</p>}
-            <div className="hub-a-alerts">{warnings.length ? warnings.slice(0, 2).map(warningButton) : <p className="hub-a-note">Sin avisos pendientes. Revisá el plantel y prepará el encuentro.</p>}
-              {warnings.length > 2 && <details><summary>{warnings.length === 3 ? 'Ver otro aviso' : `Ver otros ${warnings.length - 2} avisos`}</summary>{warnings.slice(2).map(warningButton)}</details>}
+            {score ? <div className="tablero-marcador">{score.f} – {score.a}</div> : <div className="tablero-vs">VS</div>}
+            <div className="tablero-equipo">
+              {escudo(rivalClub, 84)}
+              <div>
+                <div className="tablero-nombre"><RivalLink id={rival.id}>{rival.name}</RivalLink></div>
+                {suyo && <div className="tablero-sub"><b>{suyo.pos}°</b> · {suyo.record}</div>}
+              </div>
             </div>
-            <button className="hub-a-link" onClick={() => navigate('plantilla', 'vestuario')}>Entrar al vestuario →</button>
-          </section>
-          <section className="hub-a-card hub-a-previous">
-            <h3 className="hub-a-band">{!previous && pasada ? 'La temporada pasada' : 'Lo que dejó el último partido'}</h3>
-            {previous ? <div className="hub-a-result"><span>{weekLabel(previous.week, state.seasonLength)} · vs {previous.rivalName}</span><strong className="hub-a-score">{previous.scoreFor} – {previous.scoreAgainst}</strong><p>{previous.summary}</p>{previous.mvpName && <p className="muted">Figura: {previous.mvpName}</p>}
-              <details><summary>Leer informe del partido</summary><ul>{previous.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>{previous.effects.map((e, i) => <p key={i}>{e}</p>)}{previous.lockerRoom.map((e, i) => <p key={i}>{e}</p>)}</details>
-            </div> : pasada ? <div className="hub-a-result"><span>{pasada.sub}</span><strong className="hub-a-score">{pasada.record}</strong><p><strong>{pasada.titulo}</strong></p><p>{pasada.detalle}</p><button className="hub-a-link" onClick={() => navigate('historia')}>Ver la historia del club →</button>
-            </div> : <div className="hub-a-result"><strong>La historia empieza en la cancha</strong><p>Después del primer partido vas a ver el resultado, la figura y lo que dejó en el equipo.</p></div>}
-          </section>
-        </aside>
-      </div>
-      <PlantelStrip state={state} />
-      <nav className="hub-a-shortcuts" aria-label="Consultas del club">
-        <button onClick={() => navigate('plantilla', 'cuerpo-tecnico')}>Cuerpo técnico</button><button onClick={() => navigate('liga')}>Tabla</button><button onClick={() => navigate('rankings')}>Rankings</button><button onClick={() => navigate('finanzas', 'cuotas')}>Cuotas</button><button onClick={() => navigate('finanzas', 'gastos')}>Gastos</button><button onClick={() => navigate('club', 'objetivos')}>La comisión</button><button onClick={() => navigate('club', 'noticias')}>Noticias</button>
-      </nav>
+          </div>
+        ) : (
+          <h2 className="v1-titulo">{state.phase === 'matchResult' ? 'Esperando el próximo cruce' : 'Sin partido programado'}</h2>
+        )}
+
+        {rival && !jugado && !score && (
+          <>
+            <div className="tablero-meta">
+              <div className="v1-cifra">{dias === 0 ? 'HOY' : dias === 1 ? '1 DÍA' : `${dias} DÍAS`}<small>{dias === 0 ? 'se juega' : 'para el partido'}</small></div>
+              <div className="tablero-cuando">
+                {fixture ? `${cap(formatDateLong(fixture.date))} · ${fixture.time}` : 'Fecha y horario por confirmar'}
+                <span>
+                  {venue ? `${venue.name} · ${venue.neighborhood}` : 'Cancha por confirmar'}
+                  {' · '}
+                  <b>{readiness.confirmed ?? readiness.available}</b> {readiness.confirmed === null ? 'disponibles · sin confirmar' : readiness.confirmed === 1 ? 'confirmado' : 'confirmados'}
+                </span>
+              </div>
+            </div>
+            <p className="tablero-clave">
+              <b>{rivalDifficulty(rival).label}.</b> {rivalStyleInfo(rival.style).label}: {rivalStyleInfo(rival.style).desc.split(':')[0].toLowerCase()}.
+            </p>
+          </>
+        )}
+        {jugado && (
+          <p className="tablero-clave">
+            {jugado.summary}
+            {jugado.mvpName && <> Figura: <strong>{jugado.mvpName}</strong>.</>}
+          </p>
+        )}
+
+        <div className="tablero-cta">
+          <button className="primary v1-cta" onClick={() => navigate('semana')}>{action[0]} →</button>
+        </div>
+
+        <p className="v1-frase tablero-contexto">
+          {jugado ? (
+            rival ? <>Lo que sigue: <b>{rival.name}</b>{fixture ? `, ${formatDateLong(fixture.date)}` : ''}.</> : <>Cerrá el informe para conocer el siguiente paso de la temporada.</>
+          ) : previous ? (
+            <>Venimos de {previous.scoreFor > previous.scoreAgainst ? 'ganarle' : 'perder'} <b className={previous.scoreFor > previous.scoreAgainst ? 'good' : 'bad'}>{previous.scoreFor}–{previous.scoreAgainst}</b> {previous.scoreFor > previous.scoreAgainst ? 'a' : 'con'} {previous.rivalName}{nuestro && <> · <b>{nuestro.pos}°</b> en la tabla</>}{objetivoFrase(state)}</>
+          ) : pasada ? (
+            <>La temporada pasada (<span>{pasada.sub}</span>): <b>{pasada.titulo}</b> {pasada.detalle}</>
+          ) : (
+            <><b>La historia empieza en la cancha</b>: después del primer partido acá vas a ver cómo venimos.{objetivoFrase(state)}</>
+          )}
+        </p>
+      </section>
+
+      <aside className="tablero-semana v1-planilla" aria-label="Esta semana">
+        <i className="v1-cinta a" /><i className="v1-cinta b" />
+        <h3 className="v1-mano">Esta semana <span>{state.phase === 'matchResult' ? 'lo que dejó el partido' : dias === 0 ? 'hoy se juega' : 'antes del partido'}</span></h3>
+        {warnings.length === 0 ? (
+          <p className="tablero-tranquila">Semana tranquila: nadie con problemas a la vista. Buen momento para entrenar o hacer un asado.</p>
+        ) : (
+          <div className="tablero-avisos">{visibles.map(aviso)}</div>
+        )}
+        {warnings.length > 3 && (
+          <button className="tablero-mas" onClick={() => setTodos(!todos)}>
+            {todos ? 'Ver menos' : warnings.length === 4 ? '+ 1 aviso más' : `+ ${warnings.length - 3} avisos más`}
+          </button>
+        )}
+      </aside>
+
+      <section className="tablero-plantel" aria-label="El plantel">
+        <FilaDePie personas={personas} />
+      </section>
     </div>
   );
+}
+
+function cap(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** El encargo de la comisión que más importa, dicho como frase. */
+function objetivoFrase(state: GameState) {
+  const o = state.objectives[0];
+  if (!o) return null;
+  return <> · la comisión pide <b>{o.label.charAt(0).toLowerCase() + o.label.slice(1)}</b></>;
+}
+
+/** Lo que se escribe debajo de cada jugador en la fila: una sola cosa, la peor. */
+function estadoDe(p: Player, state: GameState): { cls: 'good' | 'warn' | 'bad'; label: string | null; fuera: boolean } {
+  if (p.status === 'lesionado') {
+    return { cls: 'bad', label: p.injuryReason === 'laboral' ? 'Laburo' : `Lesión · ${p.injuryWeeks} sem`, fuera: true };
+  }
+  if ((p.suspendedWeeks ?? 0) > 0) return { cls: 'bad', label: 'Suspendido', fuera: true };
+  const called = ['callUp', 'lineup', 'match'].includes(state.phase);
+  if (called) {
+    const c = state.callUp.find((x) => x.playerId === p.id);
+    if (c && c.status !== 'confirmado') return { cls: 'bad', label: 'No viene', fuera: true };
+  }
+  const g = p.grievance;
+  if (p.status === 'al_borde' || (g && g.level >= 3)) return { cls: 'bad', label: 'Al borde', fuera: false };
+  if (p.physical <= BALANCE.callUp.exhaustedThreshold) return { cls: 'warn', label: 'Fundido', fuera: false };
+  if (p.status === 'molesto' || (g && g.level >= 2)) return { cls: 'warn', label: g ? 'Con bronca' : 'Molesto', fuera: false };
+  if (p.weeksUnpaid >= 2) return { cls: 'warn', label: 'Debe cuota', fuera: false };
+  return { cls: 'good', label: null, fuera: false };
 }

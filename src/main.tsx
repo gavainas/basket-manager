@@ -15,8 +15,11 @@ import '@fontsource/barlow/latin-700.css';
 import '@fontsource/barlow-condensed/latin-500.css';
 import '@fontsource/barlow-condensed/latin-600.css';
 import '@fontsource/barlow-condensed/latin-700.css';
+// La voz manuscrita (Art Bible §6), sólo 700: títulos de planilla y notas.
+import '@fontsource/caveat/latin-700.css';
 
 import './styles.css';
+import './ui/v1.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 

@@ -1,41 +1,61 @@
-/* Sistema visual "club de barrio" — ver design/SISTEMA_VISUAL.md.
-   Los nombres de token viejos se conservan a propósito: así las ~2200 líneas de
-   abajo siguen funcionando sin tocarlas. Lo que cambió es a qué apuntan.
+/* Sistema visual — UI V1 (sep 2026). Fuente de verdad: design/ART_BIBLE.md y el
+   Tablero aprobado (design/propuestas/tablero-rediseno/, v4). Los nombres de
+   token viejos se conservan a propósito: así las ~6800 líneas de abajo cambian
+   de lenguaje sin tocarlas. Lo que cambió es a qué apuntan.
 
-   Paleta "gris perla" (sep 2026, elegida por Gabi): shell en azul noche de la
-   Paleta A (barra de arriba, HUD, marcador, títulos de módulo) y paneles de
-   datos claros y fríos. El crema anterior cansaba la vista (brillo medio 140
-   sobre 255); la Paleta A entera quedaba "todo muy oscuro" (~50). Ésta mide
-   ~125 y conserva texto oscuro sobre claro, que es lo más legible. */
+   Historia corta: el crema cansaba (brillo 140); la Paleta A opaca quedaba
+   "todo muy oscuro" (~50, sobre un fondo velado casi negro); el gris perla
+   (~125) era legible pero se leía como panel de administración. La V1 vuelve
+   a la Paleta A con la diferencia que aprobó Gabi en el Tablero: el MUNDO se
+   ve. Cada pantalla tiene su escena (ver `.fondo-app` y ESCENAS en App.tsx),
+   los paneles son planillas azul noche translúcidas apoyadas sobre ella y la
+   luz la pone la ilustración, no el panel. UI fría + mundo cálido. */
 :root {
-  /* Chrome — azul noche (Paleta A). Nunca lleva los colores de un club: si
-     los llevara, se pelearía con la ficha de cada rival. */
-  --chrome: #081d2d;
-  --chrome-alto: #102c40;
-  --chrome-linea: #23445a;
+  /* Paleta A (Art Bible §4). No agregar colores de UI fuera de acá. */
+  --bm-bg-deep: #081d2d;
+  --bm-panel: #102c40;
+  --bm-panel-elevated: #17384b;
+  --bm-border: #456477;
+  --bm-text: #f3f0e8;
+  --bm-text-secondary: #aebcc4;
+  --bm-accent: #f47c27;
+  --bm-positive: #54d29a;
+  --bm-warning: #e4b94b;
+  --bm-danger: #e35b4f;
+  /* Tiza: la tinta del mundo (cinta, planilla, notas a mano). */
+  --tiza: #efe6d2;
 
-  /* Superficies — gris perla frío */
-  --bg: #bcc7cf;      /* el campo donde apoyan los paneles */
-  --bg-soft: #ccd5dc; /* pistas de barra, filas hundidas */
-  --panel: #dfe5e9;   /* cuerpo de card */
-  --panel-2: #d2d9df; /* botones y superficies elevadas */
-  --border: #b6c2cb;
+  /* Chrome — azul noche. Nunca lleva los colores de un club. */
+  --chrome: #0a2233;
+  --chrome-alto: var(--bm-panel);
+  --chrome-linea: #1f3d52;
 
-  /* Tinta — azul muy oscuro en vez de gris cálido */
-  --text: #13232f;
-  --text-dim: #4d6170;
-  --text-faint: #7d8e99;
-  --text-light: #f3f0e8; /* sobre chrome y sobre la cancha */
+  /* Superficies. La planilla (--panel) es translúcida: deja pasar un poco
+     de la escena de atrás sin perder lectura. --bg-soft son los pozos
+     (pistas de barra, filas hundidas). */
+  --bg: var(--bm-bg-deep);
+  --bg-soft: rgba(4, 16, 26, 0.5);
+  --panel: rgba(10, 30, 45, 0.9);
+  --panel-2: rgba(23, 56, 75, 0.92);
+  --panel-solido: #0c2436;
+  --border: rgba(69, 100, 119, 0.6);
+  --linea-suave: rgba(174, 188, 196, 0.2);
 
-  /* Acción — RESERVADO: botón primario y dato clave. Máximo dos por pantalla. */
-  --accent: #e8792a;
-  --accent-soft: rgba(232, 121, 42, 0.14);
-  --on-accent: #2a1a08; /* tinta sobre naranja: 5:1, pasa AA en texto chico */
+  /* Tinta */
+  --text: var(--bm-text);
+  --text-dim: var(--bm-text-secondary);
+  --text-faint: #7f95a2;
+  --text-light: var(--bm-text);
+
+  /* Acción — RESERVADO: CTA, foco, selección y dato clave. Uno por pantalla. */
+  --accent: var(--bm-accent);
+  --accent-soft: rgba(244, 124, 39, 0.16);
+  --on-accent: #1b0f06;
 
   /* Semáforo — vive dentro de los datos, nunca en un cabezal */
-  --good: #4a9160;
-  --warn: #c69320;
-  --bad: #b8443a;
+  --good: var(--bm-positive);
+  --warn: var(--bm-warning);
+  --bad: var(--bm-danger);
 
   /* Colores de sección: señalización, no decoración */
   --sec-tablero: #2f6b4f;
@@ -94,8 +114,8 @@
   --ancho-app: clamp(1200px, var(--u) * 96, 1760px);
 
   --radius: 4px; /* esta dirección es cuadrada */
-  --sombra: 0 1px 2px rgba(37, 40, 44, 0.1);
-  --sombra-alta: 0 8px 28px rgba(37, 40, 44, 0.22);
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --sombra-alta: 0 18px 40px rgba(0, 0, 0, 0.45);
 
   /* Relieve (dirección D, aprobada sep 2026 — ver design/SISTEMA_VISUAL.md).
      El diagnóstico era que en 3300 líneas no había ni una textura ni un bisel:
@@ -109,10 +129,9 @@
      --relieve: luz arriba, línea de sombra abajo y sombra proyectada. Una
        superficie apoyada, no un borde dibujado.
      --hundido: lo contrario, para pistas y pozos donde va un dato. */
-  --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.3'/%3E%3C/svg%3E");
-  --relieve: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -1px 0 rgba(16, 44, 64, 0.14),
-    0 6px 16px rgba(4, 14, 22, 0.28);
-  --hundido: inset 0 1px 2px rgba(16, 44, 64, 0.28);
+  --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.1'/%3E%3C/svg%3E");
+  --relieve: inset 0 1px 0 rgba(243, 240, 232, 0.06), 0 18px 40px rgba(0, 0, 0, 0.42);
+  --hundido: inset 0 1px 3px rgba(0, 0, 0, 0.5);
   /* Cinco bloques: la máscara que convierte cualquier barra en un medidor de
      tablero. Va como máscara y no como overlay de color para que los huecos
      dejen ver la superficie que haya atrás, sea la que sea. */
@@ -128,6 +147,9 @@
      `--display` queda como alias de `--font-display`: lo usan ~90 reglas. */
   --font-display: 'Barlow Condensed', sans-serif;
   --font-ui: 'Barlow', sans-serif;
+  /* La tercera voz (Art Bible §6): manuscrita, para lo que escribe una mano
+     del club. Con moderación: un título de planilla por pantalla, no más. */
+  --font-mano: 'Caveat', cursive;
   --display: var(--font-display);
 
   /* Alto de las dos barras del chrome. Desde la tanda A son FILAS de la grilla
@@ -653,14 +675,18 @@ button:focus-visible,
 
 /* ---------- Cards & grids ---------- */
 
+/* La planilla (UI V1): el único tipo de panel del juego. Azul noche
+   translúcido apoyado sobre la escena, filete fino y sombra larga, sin
+   bandas de color. Es la superficie de «Esta semana» en el Tablero aprobado. */
 .card {
   background-color: var(--panel);
   background-image: var(--grano);
-  background-blend-mode: multiply;
+  background-blend-mode: overlay;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: var(--sp-4);
   box-shadow: var(--relieve);
+  color: var(--text);
 }
 
 .card + .card {
@@ -701,20 +727,29 @@ button:focus-visible,
    HEADER-01: la clase explícita funciona en cualquier card, también fuera de
    una vista (Carrera, fines de temporada); el :first-child implícito sigue
    limitado a las vistas del juego. */
+/* HEADER-01 en la V1: el título de la planilla, no una banda. Voz display
+   clara sobre el panel, con una línea punteada abajo como las de la planilla
+   del Tablero. Nada de relleno de color: los cabezales llenos eran lo que más
+   leía como dashboard. */
 .vista .card > h3:first-child,
 .card > h3.card-band {
-  background: var(--chrome-alto);
-  color: var(--text-light);
-  font-weight: 600;
-  font-size: var(--fs-base);
-  letter-spacing: 0.08em;
-  margin: -1rem -1rem 0.9rem;
-  padding: 0.5rem 0.9rem;
-  border-radius: var(--radius) var(--radius) 0 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--fs-md);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: -0.35rem -0.1rem 0.85rem;
+  padding: 0 0 0.55rem;
+  border-bottom: 1px dashed var(--linea-suave);
+  border-radius: 0;
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
 }
+.vista .card > h3:first-child > .ico,
+.card > h3.card-band > .ico { color: var(--text-dim); }
 
 /* Lo que va del lado derecho de un cabezal de card: el contador y el botón de
    plegar. Sobre el color de sección la tinta es clara, así que el borde y el
@@ -771,28 +806,50 @@ button:focus-visible,
   inset: 0;
   z-index: -1;
   background-color: var(--bg);
-  background-size: cover;
-  background-position: center;
 }
+.fondo-app > .fondo-img {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 34%;
+  filter: saturate(1.1) brightness(1.12);
+}
+.fondo-app.espejo > .fondo-img { transform: scaleX(-1); }
 
-/* El velo. Sin él los paneles claros flotan sobre un piso del mismo valor y se
-   pierde el borde; con él, el fondo es atmósfera y la lectura sigue siendo la
-   de un manager. */
+/* El velo. Desde la V1 el mundo se ve: la escena es parte de la pantalla y
+   no un papel tapiz tapado al 75 %. Dos medidas:
+   - `abierta` (Tablero, previa, informe): oscurece sólo donde va texto, a la
+     izquierda, y abajo donde se paran los jugadores.
+   - `velada` (pantallas de datos): un velo parejo, más liviano que antes,
+     para que las planillas se lean sin que la escena desaparezca. */
 .fondo-app::after {
   content: '';
   position: absolute;
+  z-index: 1;
   inset: 0;
-  /* Velo frío en azul noche: el fondo queda como atmósfera detrás de los
-     paneles claros. */
-  background: linear-gradient(180deg, rgba(8, 29, 45, 0.55), rgba(8, 29, 45, 0.75));
+  background:
+    linear-gradient(180deg, rgba(8, 29, 45, 0.45) 0%, rgba(8, 29, 45, 0.25) 30%, rgba(8, 29, 45, 0.45) 75%, rgba(8, 29, 45, 0.8) 100%),
+    linear-gradient(90deg, rgba(8, 29, 45, 0.5), rgba(8, 29, 45, 0.2) 50%, rgba(8, 29, 45, 0.5));
+}
+.fondo-app.abierta::after {
+  background:
+    radial-gradient(ellipse 46% 60% at 20% 34%, rgba(8, 29, 45, 0.86) 0%, rgba(8, 29, 45, 0.55) 60%, rgba(8, 29, 45, 0) 100%),
+    linear-gradient(90deg, rgba(8, 29, 45, 0.55) 0%, rgba(8, 29, 45, 0.15) 45%, rgba(8, 29, 45, 0) 60%, rgba(8, 29, 45, 0.25) 100%),
+    linear-gradient(180deg, rgba(8, 29, 45, 0.35) 0%, rgba(8, 29, 45, 0) 18%, rgba(8, 29, 45, 0) 62%, rgba(20, 12, 6, 0.35) 100%);
+}
+/* La luz de las ventanas: un haz cálido que cruza la pantalla (Art Bible §5). */
+.fondo-app.abierta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(118deg, rgba(255, 170, 90, 0) 38%, rgba(255, 170, 90, 0.1) 50%, rgba(255, 170, 90, 0) 62%);
+  mix-blend-mode: screen;
 }
 
-/* Sobre un fondo oscuro los paneles necesitan despegarse un poco más. */
-.vista .card,
-.hub-block,
-.hub-plantel,
-.hub-centro {
-  box-shadow: 0 2px 10px rgba(20, 18, 16, 0.28);
+/* Sobre la escena, los paneles se despegan con una sombra larga. */
+.vista .card {
+  box-shadow: var(--relieve);
 }
 
 /* Banda ilustrada de card (ver ui/Cabecera.tsx). Va pegada abajo del cabezal de

@@ -40,6 +40,8 @@ export interface WatchItem {
   cls: 'bad' | 'warn' | 'good';
   text: string;
   tile: TileId;
+  /** De quién habla el aviso, si es de alguien: el Tablero muestra su cara. */
+  who?: string[];
 }
 
 /** Lo urgente de la semana: lo que un manager miraría primero, sin recortar. */
@@ -53,6 +55,7 @@ export function watchItems(state: GameState): WatchItem[] {
       cls: 'bad',
       text: `${p.name} está al borde de dejar el club: una charla o minutos pueden salvarlo.`,
       tile: 'vestuario',
+      who: [p.id],
     });
   }
   // La caja: lo que importa no es si hoy cubre los gastos fijos, sino cómo
@@ -139,6 +142,7 @@ export function watchItems(state: GameState): WatchItem[] {
       cls: p.grievance!.level >= 3 ? 'bad' : 'warn',
       text: grievanceWarning(p, week),
       tile: 'vestuario',
+      who: [p.id],
     });
   }
   const upset = active.filter((x) => x.status === 'molesto' && !hot.includes(x));
@@ -151,6 +155,7 @@ export function watchItems(state: GameState): WatchItem[] {
           ? `${upset[0].name} está molesto con cómo vienen las cosas.`
           : `${upset.length} jugadores están molestos: el vestuario pide atención.`,
       tile: 'vestuario',
+      who: upset.map((p) => p.id),
     });
   }
   // "Lesionado" junta dos historias distintas: el que está roto de verdad y el
@@ -166,6 +171,7 @@ export function watchItems(state: GameState): WatchItem[] {
         cls: 'good',
         text: `${backPhys.map((p) => p.name).join(' y ')} ${backPhys.length > 1 ? 'reciben' : 'recibe'} el alta la próxima semana.`,
         tile: 'plantilla',
+        who: backPhys.map((p) => p.id),
       });
     }
     if (backWork.length > 0) {
@@ -174,6 +180,7 @@ export function watchItems(state: GameState): WatchItem[] {
         cls: 'good',
         text: `${backWork.map((p) => p.name).join(' y ')} ${backWork.length > 1 ? 'se sacan' : 'se saca'} el laburo de encima: la semana que viene ${backWork.length > 1 ? 'vuelven' : 'vuelve'}.`,
         tile: 'plantilla',
+        who: backWork.map((p) => p.id),
       });
     }
   } else if (injured.length > 0) {
@@ -185,6 +192,7 @@ export function watchItems(state: GameState): WatchItem[] {
         cls: 'warn',
         text: `${phys.length === 1 ? `${phys[0].name} sigue` : `${phys.length} jugadores siguen`} en la enfermería.`,
         tile: 'plantilla',
+        who: phys.map((p) => p.id),
       });
     }
     if (work.length > 0) {
@@ -193,6 +201,7 @@ export function watchItems(state: GameState): WatchItem[] {
         cls: 'warn',
         text: `${work.length === 1 ? `${work[0].name} sigue enredado` : `${work.length} jugadores siguen enredados`} con el laburo: básquet, por ahora, nada.`,
         tile: 'plantilla',
+        who: work.map((p) => p.id),
       });
     }
   }
@@ -203,6 +212,7 @@ export function watchItems(state: GameState): WatchItem[] {
       cls: 'bad',
       text: `${p.name} está suspendido: esta fecha la mira desde la tribuna.`,
       tile: 'quinteto',
+      who: [p.id],
     });
   }
   const hotheads = active.filter((x) => (x.seasonTechs ?? 0) === 2 && (x.suspendedWeeks ?? 0) === 0);
@@ -216,6 +226,7 @@ export function watchItems(state: GameState): WatchItem[] {
         ? `${p.name} acumula 2 técnicas y esta fecha dirige ${weekRef.name} (${weekRef.blurb}). Una protesta y se va.`
         : `${p.name} acumula 2 técnicas en el año: una más y se pierde una fecha.`,
       tile: 'partido',
+      who: [p.id],
     });
   }
   const exhausted = active.filter((x) => x.status !== 'lesionado' && x.physical <= BALANCE.callUp.exhaustedThreshold);
@@ -228,6 +239,7 @@ export function watchItems(state: GameState): WatchItem[] {
           ? `${exhausted[0].name} viene fundido: al pasar lista vas a tener que decidir si lo cuidás.`
           : `${exhausted.length} jugadores vienen fundidos: al pasar lista habrá que decidir quién descansa.`,
       tile: 'lista',
+      who: exhausted.map((p) => p.id),
     });
   }
   // La ficha de conducta cambió de mano: el que pasó a "aparece cuando quiere"
@@ -244,6 +256,7 @@ export function watchItems(state: GameState): WatchItem[] {
       cls: 'warn',
       text: `${p.name} pasó a "aparece cuando quiere": ${r.faltoSinAvisar} faltas sin avisar en ${r.convocado} fechas.`,
       tile: 'plantilla',
+      who: [p.id],
     });
   }
   const debtors = active.filter((x) => x.feeStatus === 'pendiente' && x.weeksUnpaid >= 2);
@@ -253,6 +266,7 @@ export function watchItems(state: GameState): WatchItem[] {
       cls: 'warn',
       text: `${debtors.length === 1 ? `${debtors[0].name} debe` : `${debtors.length} jugadores deben`} la cuota hace ${debtors.length === 1 ? `${debtors[0].weeksUnpaid} semanas` : 'rato'}: pasar la gorra cuesta caro después.`,
       tile: 'cuotas',
+      who: debtors.map((p) => p.id),
     });
   }
   // Los encargos de la comisión ahora se cobran al cierre: si alguno viene
@@ -285,6 +299,7 @@ export function watchItems(state: GameState): WatchItem[] {
         cls: 'warn',
         text: `${roce.a.name} y ${roce.b.name} no se bancan, y con el ambiente así de bajo la cosa puede pasar a mayores. Sentarlos a los dos es una acción de la semana.`,
         tile: 'lista',
+        who: [roce.a.id, roce.b.id],
       });
     }
   }

@@ -1,137 +1,139 @@
-/* A · La próxima fecha.
-   El Tablero es la única pantalla que mide la ventana en vez de scrollear: es
-   un menú y tiene que entrar entero (ver la nota de `.app-shell` en
-   styles.css). Por eso es una grilla de alto completo con UNA fila elástica —
-   la del partido y las dos cards—: lo que sobra o falta lo absorbe esa fila, y
-   el plantel y los accesos quedan siempre a la vista. */
-.hub-a.pantalla {
+/* El Tablero (UI V1, aprobado por Gabi el 28/9 — design/propuestas/
+   tablero-rediseno/, v4). Es la única pantalla que mide la ventana en vez de
+   scrollear: es un menú y entra entero. Grilla de dos columnas —el partido a
+   la izquierda, «Esta semana» a la derecha— y la fila del plantel abajo, a
+   todo el ancho. Sin cajas salvo la planilla: el gimnasio es el fondo
+   (ESCENA.gimnasio en App.tsx, velo `abierta`). */
+.tablero.pantalla {
   height: 100%;
   min-height: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
-  gap: .85rem;
-}
-.hub-a-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-.hub-a-heading h2 { margin: .1rem 0 0; font-size: 1.65rem; }
-.hub-a-eyebrow { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .13em; font-size: .8rem; }
-.hub-a-layout { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(340px, 1fr); gap: 1rem; align-items: stretch; min-height: 0; }
-.hub-a-match, .hub-a-card { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; min-height: 0; }
-.hub-a-match { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
-.hub-a-match-body { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); min-height: 0; }
-.hub-a-match-info { padding: 1.35rem; display: flex; flex-direction: column; align-items: flex-start; gap: .65rem; }
-.hub-a-match-info h3 { font-size: clamp(1.75rem, 2.3vw, 2.6rem); line-height: 1.18; margin: 0; overflow-wrap: anywhere; }
-/* En pantalla alta el escudo va arriba del nombre, como en la lámina aprobada;
-   en la notebook (abajo, ≤ 820 de alto) pasa al lado para no comerle alto. */
-.hub-a-match-head { display: contents; }
-.hub-a-match-head .crest { flex-shrink: 0; }
-.hub-a-versus { font-size: 1rem; font-weight: normal; }
-.hub-a-match-info p { margin: 0; }
-.hub-a-scene { background-position: center; background-size: cover; }
-.hub-a-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
-/* La franja de preparación es una sola fila: el texto a la izquierda y el botón
-   a la derecha, sin envolver. Con `flex-wrap` el botón caía a una segunda línea
-   y la franja medía 130 px: eso era lo que le faltaba a la columna del rival. */
-.hub-a-prepare { border-top: 1px solid var(--border); background: var(--panel-2); padding: 1rem 1.3rem; display: flex; align-items: center; gap: 1rem; justify-content: space-between; }
-.hub-a-prepare > div { min-width: 0; flex: 1 1 auto; }
-.hub-a-prepare strong { font-family: var(--font-display); font-size: 1.2rem; }
-.hub-a-prepare p { margin: .25rem 0 0; max-width: 40ch; }
-.hub-a-prepare .primary { padding: .85rem 1rem; font-size: 1.1rem; flex-shrink: 0; white-space: nowrap; }
-.hub-a-side { display: grid; gap: 1rem; min-width: 0; min-height: 0; align-content: start; }
-/* Las cards empiezan arriba. El Tablero es la única pantalla que mide la
-   ventana en vez de scrollear, así que lo que no entra en una card se desplaza
-   por dentro de ella: el informe del último partido si lo abrís, y en la
-   notebook (1280×720) una semana brava de "¿Cómo llegamos?" —dos avisos
-   largos, "Ver otro aviso" y el link al vestuario— que medía 16 px más que la
-   card y, con `overflow: hidden`, cortaba el link sin dar forma de llegar. */
-.hub-a-card { display: grid; grid-template-rows: auto; align-content: start; overflow-y: auto; overscroll-behavior: contain; }
-.hub-a-band { background: var(--chrome-alto); color: var(--text-light); margin: 0; padding: .55rem .9rem; font-size: 1rem; letter-spacing: .04em; }
-/* El último partido lleva la misma banda azul noche que las demás. */
-.hub-a-readiness { display: grid; grid-template-columns: 1.6fr 1fr 1fr; padding: .75rem .65rem; gap: .4rem; }
-.hub-a-readiness button { display: flex; flex-direction: column; align-items: center; border: 1px solid var(--border); padding: .5rem .25rem; background: var(--panel-2); }
-.hub-a-readiness strong { font-family: var(--font-display); font-size: 1.65rem; }
-.hub-a-readiness span { font-size: .85rem; }
-.hub-a-alert { width: 100%; display: flex; justify-content: space-between; gap: .75rem; padding: .6rem .9rem; text-align: left; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: transparent; }
-.hub-a-alert.bad { border-left: 3px solid var(--bad); }
-.hub-a-alert.warn { border-left: 3px solid var(--warn); }
-.hub-a-note { margin: .4rem .9rem .7rem; font-size: .9rem; }
-.hub-a-link { background: none; border: 0; text-decoration: underline; color: #1d4f73; padding: .5rem 0; }
-.hub-a-card > .hub-a-link { margin: .2rem .9rem .5rem; }
-.hub-a-result { padding: .85rem .9rem; }
-.hub-a-score { display: block; font: 2.1rem var(--font-display); }
-.hub-a-result p { margin: .45rem 0; }
-.hub-a details { padding: .5rem .7rem; border-top: 1px solid var(--border); }
-.hub-a summary { cursor: pointer; text-decoration: underline; color: #1d4f73; }
-.hub-a-shortcuts { display: flex; flex-wrap: wrap; gap: .5rem; padding-bottom: .5rem; }
-.hub-a-shortcuts button { background: var(--panel); padding: .35rem .75rem; }
-.hub-a summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-@media (max-width: 1000px) { .hub-a-layout { grid-template-columns: 1fr; } .hub-a-side { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 650px) { .hub-a-side { grid-template-columns: 1fr; } .hub-a-heading { align-items: flex-start; flex-direction: column; } .hub-a-match-body { grid-template-columns: 1fr; } .hub-a-scene { min-height: 140px; } .hub-a-prepare { flex-wrap: wrap; } }
-
-.hub-a-heading { color: var(--text-light); }
-.hub-a-match, .hub-a-card { box-shadow: var(--relieve); }
-
-/* En PC las tres piezas van una al lado de la otra. Apiladas, la columna
-   derecha medía 589 px: el plantel y los accesos quedaban abajo del pliegue en
-   la notebook (1366×768, 635 px útiles) y al lado del partido sobraba media
-   pantalla de madera. Al lado, la fila mide lo que mide la más alta. */
-@media (min-width: 1180px) {
-  .hub-a-layout { grid-template-columns: minmax(0, 1.5fr) minmax(258px, 1fr) minmax(240px, .9fr); }
-  .hub-a-side { display: contents; }
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 1rem 3rem;
+  padding-top: clamp(0.8rem, 3vh, 2.2rem);
 }
 
-/* La notebook de Gabi (768 y 720 de alto): todo baja un escalón —retratos,
-   paddings, titulares y el marcador del último partido— para que el tablero
-   entre entero sin recortar nada. Medido a 1366×768 y 1280×720. */
+/* ---------- 1. El partido ---------- */
+.tablero-hero { grid-column: 1; grid-row: 1; min-width: 0; padding-left: 1.5rem; }
+.tablero-versus { display: flex; align-items: center; gap: 1.4rem; margin-top: 1.1rem; flex-wrap: wrap; }
+.tablero-equipo { display: flex; align-items: center; gap: 0.9rem; min-width: 0; }
+.tablero-equipo .crest { flex: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); }
+.tablero-nombre {
+  font: 700 clamp(1.7rem, 2.8vw, 2.5rem) / 0.95 var(--font-display);
+  text-transform: uppercase;
+  max-width: 11ch;
+}
+.tablero-nombre .plink { color: inherit; text-decoration: none; }
+.tablero-nombre .plink:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.tablero-sub { font-size: 0.95rem; color: var(--text-dim); margin-top: 0.35rem; }
+.tablero-sub b { color: var(--text); font-weight: 600; }
+.tablero-vs { font: 700 1.6rem var(--font-display); color: var(--text-dim); }
+.tablero-marcador { font: 700 clamp(2.6rem, 4.6vw, 4rem) / 1 var(--font-display); letter-spacing: 0.02em; }
+.tablero-marcador.good { color: var(--good); }
+.tablero-marcador.bad { color: var(--bad); }
+
+.tablero-meta { display: flex; align-items: flex-end; gap: 1.6rem; margin-top: 1.4rem; }
+.tablero-cuando {
+  font: 600 1.25rem / 1.3 var(--font-display);
+  padding-left: 1.5rem;
+  border-left: 1px solid rgba(174, 188, 196, 0.35);
+}
+.tablero-cuando span { display: block; font: 400 0.95rem var(--font-ui); color: var(--text-dim); }
+.tablero-cuando span b { color: var(--text); font-weight: 600; }
+.tablero-clave { margin: 1.1rem 0 0; font-size: 1.05rem; color: #dfe5e8; max-width: 48ch; }
+.tablero-clave b { font: 700 1.05rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); margin-right: 0.3rem; }
+.tablero-cta { margin-top: 1.5rem; }
+.tablero-contexto { margin-top: 1.2rem; max-width: 62ch; }
+
+/* ---------- 2. Esta semana ---------- */
+.tablero-semana { grid-column: 2; grid-row: 1; align-self: start; margin-top: 0.6rem; padding: 1.1rem 0 0; max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+.tablero-semana > h3 { padding: 0 1.4rem 0.5rem; }
+.tablero-avisos { display: grid; }
+button.tablero-aviso {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1.6rem 50px minmax(0, 1fr);
+  gap: 0 0.8rem;
+  align-items: center;
+  padding: 0.75rem 1.4rem 0.75rem 1rem;
+  border-top: 1px dashed var(--linea-suave);
+  width: 100%;
+}
+button.tablero-aviso:hover { background: rgba(243, 240, 232, 0.05); }
+button.tablero-aviso:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tablero-aviso-nro { font: 700 1.75rem var(--font-mano); color: var(--text-dim); text-align: center; }
+.tablero-aviso.bad .tablero-aviso-nro { color: #ff8a7e; }
+.tablero-aviso.warn .tablero-aviso-nro { color: var(--warn); }
+.tablero-aviso.good .tablero-aviso-nro { color: var(--good); }
+.tablero-aviso-cara { position: relative; width: 50px; height: 50px; }
+.tablero-cara {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2a4a60;
+  border: 2px solid #3a5a70;
+}
+.tablero-cara .busto { --busto-ancho: 100%; --busto-alto: 100%; background-size: 118%; background-position: center 12%; -webkit-mask-image: none; mask-image: none; }
+.tablero-aviso.bad .tablero-cara { border-color: var(--bad); }
+.tablero-aviso.warn .tablero-cara { border-color: var(--warn); }
+.tablero-aviso-cara.n2 .tablero-cara { width: 37px; height: 37px; }
+.tablero-aviso-cara.n2 .tablero-cara:first-child { left: -3px; top: 0; }
+.tablero-aviso-cara.n2 .tablero-cara:last-child { left: 15px; top: 13px; }
+.tablero-aviso-ico {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #1c3a4e;
+  border: 2px solid rgba(174, 188, 196, 0.35);
+  font: 700 1.35rem var(--font-display);
+  color: var(--text-dim);
+}
+.tablero-aviso.bad .tablero-aviso-ico { color: #ff8a7e; border-color: rgba(227, 91, 79, 0.6); }
+.tablero-aviso.warn .tablero-aviso-ico { color: var(--warn); border-color: rgba(228, 185, 75, 0.6); }
+.tablero-aviso-txt { min-width: 0; }
+.tablero-aviso-txt b { display: block; font-weight: 600; font-size: 1rem; line-height: 1.25; color: var(--text); }
+.tablero-aviso-txt > span { display: block; font-size: 0.88rem; line-height: 1.3; color: var(--text-dim); margin-top: 2px; }
+.tablero-aviso-txt em { font-style: normal; font-weight: 600; color: var(--text); white-space: nowrap; }
+.tablero-tranquila { margin: 0; padding: 0.9rem 1.4rem 1.2rem; border-top: 1px dashed var(--linea-suave); color: var(--text-dim); }
+button.tablero-mas {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  border-top: 1px dashed var(--linea-suave);
+  padding: 0.65rem 1.4rem 0.8rem;
+  font: 600 0.78rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+button.tablero-mas:hover { color: var(--text); }
+
+/* ---------- 3. El plantel ---------- */
+.tablero-plantel { grid-column: 1 / -1; grid-row: 2; padding: 0 0.5rem; }
+
+/* ---------- La notebook (1366×768, 1280×720) ---------- */
 @media (max-height: 820px) {
-  .hub-a.pantalla { gap: .5rem; }
-  .hub-a-layout { gap: .6rem; }
-  .hub-a-heading h2 { font-size: 1.25rem; }
-  .hub-a-eyebrow { font-size: .72rem; }
-  .hub-a-match-info { padding: .55rem .85rem; gap: .25rem; }
-  .hub-a-match-info h3 { font-size: clamp(1.15rem, 1.5vw, 1.6rem); }
-  .hub-a-match-info .crest { width: 44px; height: 44px; }
-  .hub-a-match-head { display: flex; align-items: center; gap: .5rem; min-width: 0; }
-  .hub-a-match-body { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
-  /* La frase de color de la franja ("Llegar bien también se juega") se guarda
-     desde acá, no sólo a 720: con ella y un botón largo ("Resolver la
-     convocatoria") la franja medía 129 px en la notebook. */
-  .hub-a-prepare strong { display: none; }
-  .hub-a-link { padding: .2rem 0; }
-  .hub-a-prepare { padding: .6rem .9rem; gap: .6rem; }
-  .hub-a-prepare strong { font-size: 1.05rem; }
-  .hub-a-prepare p { margin: .1rem 0 0; }
-  .hub-a-prepare .primary { padding: .6rem .9rem; font-size: 1rem; }
-  .hub-a-band { padding: .4rem .8rem; font-size: .92rem; }
-  .hub-a-readiness { padding: .5rem .5rem .35rem; }
-  .hub-a-readiness button { padding: .3rem .2rem; }
-  .hub-a-readiness strong { font-size: 1.3rem; }
-  .hub-a-readiness span { font-size: .78rem; }
-  .hub-a-alert { padding: .4rem .8rem; }
-  .hub-a-note { margin: .3rem .8rem .5rem; }
-  .hub-a-result { padding: .5rem .8rem; }
-  .hub-a-score { font-size: 1.55rem; }
-  .hub-a-result p { margin: .3rem 0; }
-  .hub-a details { padding: .35rem .7rem; }
-  .hub-a-shortcuts { gap: .4rem; padding-bottom: 0; }
-  .hub-a-shortcuts button { padding: .25rem .6rem; }
-  /* La tira del plantel: catorce caras más chicas siguen siendo el termómetro. */
-  .hub-plantel-row { gap: .35rem; padding: .4rem; }
-  .hub-plantel .hub-jugador { padding: .3rem .2rem .25rem; }
-  .hub-plantel .retrato-img { width: 44px; height: 44px; }
-  /* Mirando el tablero con el partido en curso, el marcador grande es lo que
-     importa: la cancha y los chips del rival se guardan (siguen en la pantalla
-     del partido y en el calendario). */
-  .hub-a-match.en-juego .hub-a-match-info > p.muted,
-  .hub-a-match.en-juego .hub-a-chips { display: none; }
-}
-
-/* 720 de alto (la otra notebook): un escalón más. La frase de color del
-   bloque de preparación se guarda —la instrucción, que es la que sirve, se
-   queda— y las caras bajan a 38. */
-@media (max-height: 760px) {
-  .hub-a-match-info { padding: .45rem .8rem; gap: .2rem; }
-  .hub-a-match-info .crest { width: 40px; height: 40px; }
-  .hub-a-prepare { padding: .5rem .85rem; }
-  .hub-plantel .retrato-img { width: 38px; height: 38px; }
-  .hub-plantel .hub-jugador { padding: .25rem .2rem .2rem; }
+  .tablero.pantalla { gap: 0.6rem 2rem; padding-top: 0.6rem; }
+  .tablero-versus { margin-top: 0.6rem; gap: 1rem; }
+  .tablero-equipo .crest { width: 60px; height: 60px; }
+  .tablero-nombre { font-size: clamp(1.4rem, 2.2vw, 1.9rem); }
+  .tablero-meta { margin-top: 0.8rem; }
+  .v1-cifra { font-size: 2.7rem; }
+  .tablero-cuando { font-size: 1.1rem; }
+  .tablero-clave { margin-top: 0.6rem; font-size: 0.95rem; }
+  .tablero-cta { margin-top: 0.8rem; }
+  .tablero-cta .v1-cta { padding: 0.75rem 1.4rem; font-size: 1.1rem; }
+  .tablero-contexto { margin-top: 0.6rem; font-size: 0.9rem; }
+  .tablero-semana { padding-top: 0.8rem; }
+  .v1-mano { font-size: 1.75rem; }
+  button.tablero-aviso { padding: 0.5rem 1.1rem 0.5rem 0.8rem; }
+  .tablero-aviso-txt > span { font-size: 0.82rem; }
 }
