@@ -10,7 +10,7 @@ import type { Personality } from '../game/types';
 // repetidos: la variante (espejo + tono del fondo), estable por seed, los
 // separa hasta que exista el set grande por seed (Puerta 3 de ART_PIPELINE).
 
-const ARCHIVO: Record<Personality, string> = {
+export const ARCHIVO: Record<Personality, string> = {
   veterano: 'p-veterano.webp',
   talentoso_informal: 'p-talentoso.webp',
   social: 'p-social.webp',
@@ -22,7 +22,7 @@ const ARCHIVO: Record<Personality, string> = {
 };
 
 /** Variante estable por persona: la misma seed muestra siempre la misma cara. */
-function varianteFor(seed: string): number {
+export function varianteFor(seed: string): number {
   let h = 2166136261;
   for (let i = 0; i < seed.length; i++) {
     h ^= seed.charCodeAt(i);

@@ -1,132 +1,136 @@
 import type { CSSProperties } from 'react';
+import { useContext } from 'react';
 import type { GameState, Player } from '../game/types';
 import { playerNotes } from '../game/humanState';
 import { Avatar } from './Avatar';
-import { ConductaCorta } from './Conducta';
+import { Busto } from './Busto';
 import { HumanNoteRow } from './HumanNoteRow';
-import { PlayerLink } from './PlayerLink';
+import { OpenProfileContext, PlayerLink } from './PlayerLink';
 import { Tip, TIPS } from './Tip';
-import { feeChip, roleLabel, statusChip } from './helpers';
 
 /**
- * El plantel como una sola planilla con renglones (dirección D, aprobada sep
- * 2026 — ver design/SISTEMA_VISUAL.md).
+ * El plantel como una sola planilla (UI V1 — design/UI_V1_GUIA.md, regla 3).
  *
- * Antes era una card por jugador: doce rectángulos idénticos con cuatro barras
- * cada uno, donde nada era más importante que nada y para comparar el físico de
- * dos jugadores había que mirar dos cajas distintas. Acá las cifras quedan en
- * columna y se leen de arriba abajo, que es lo que hace un manager; el "por qué"
- * de cada uno tiene su propia columna, así que la parte humana no se pierde; y
- * entran ocho jugadores donde antes entraban cuatro.
+ * Antes eran nueve columnas (físico, motivación, conducta, social, la nota,
+ * el rol, la valoración…) y cada renglón pesaba igual que el de al lado. La
+ * pregunta de esta pestaña es «¿quién es cada uno y cómo está?», así que
+ * quedan cinco cosas: la cara, quién es, cuánto vale (el único naranja), cómo
+ * llega (físico y motivación) y qué espera. Lo que le pasa a cada uno va como
+ * una línea debajo del nombre, con la voz del club; la palabra de estado
+ * aparece sólo cuando algo anda mal. Conducta y social siguen en
+ * «Estadísticas», que es la planilla para comparar.
  *
- * La planilla densa y ordenable de `RosterSheet` sigue existiendo, con más
- * columnas (minutos, faltas, último partido): son dos preguntas distintas.
+ * Cada renglón abre la ficha del jugador.
  */
 export function RosterList({ state, players }: { state: GameState; players: Player[] }) {
   return (
-    <div className="planilla">
-      {/* Los tornillos: lo que hace que la placa pese. Van en el DOM y no en un
-          gradiente para no pelearse con el grano de `.card`. */}
-      <span className="tornillo tornillo-si" />
-      <span className="tornillo tornillo-sd" />
-      <span className="tornillo tornillo-ii" />
-      <span className="tornillo tornillo-id" />
-
-      <div className="planilla-cab">
+    <div className="pl-lista v1-planilla" aria-label="El plantel">
+      <div className="pl-lista-cab">
         <span />
         <span>Jugador</span>
+        <Tip text={TIPS.valoracion}><span className="num">Valor.</span></Tip>
         <Tip text={TIPS.fisico}><span className="num">Físico</span></Tip>
         <Tip text={TIPS.motivacion}><span className="num">Motiv.</span></Tip>
-        <Tip text={TIPS.conducta}><span>Conducta</span></Tip>
-        <Tip text={TIPS.afinidadSocial}><span className="num">Social</span></Tip>
-        <span>En el vestuario</span>
-        <span>Rol previsto</span>
-        <Tip text={TIPS.valoracion}><span className="num">Valor.</span></Tip>
+        <span>Espera</span>
       </div>
-
       {players.map((p, i) => (
-        <Fila key={p.id} state={state} p={p} indice={i} />
+        <Renglon key={p.id} state={state} p={p} indice={i} />
       ))}
     </div>
   );
 }
 
-/** Semáforo de una cifra: el mismo umbral que usaban las barras. */
-function cifraCls(v: number): string {
-  return v >= 65 ? '' : v >= 40 ? 'ojo' : 'mal';
+/**
+ * La palabra que se escribe al lado del nombre: una sola, la peor, y sólo si
+ * hay algo que resolver (misma idea que la fila de pie del Tablero).
+ */
+export function estadoPlantel(p: Player): { cls: 'bad' | 'warn'; label: string } | null {
+  if (p.status === 'lesionado') {
+    const sem = `${p.injuryWeeks} sem`;
+    return { cls: 'bad', label: p.injuryReason === 'laboral' ? `Laburo · ${sem}` : `Lesión · ${sem}` };
+  }
+  if ((p.suspendedWeeks ?? 0) > 0) return { cls: 'bad', label: 'Suspendido' };
+  if (p.status === 'al_borde') return { cls: 'bad', label: 'Al borde' };
+  if (p.feeStatus === 'pendiente') return { cls: p.weeksUnpaid >= 2 ? 'bad' : 'warn', label: `Debe ${Math.max(p.weeksUnpaid, 1)} sem` };
+  if (p.status === 'molesto') return { cls: 'warn', label: 'Molesto' };
+  return null;
 }
 
-/** Cinco bloques, como el medidor segmentado de las barras. */
-function Medidor({ value }: { value: number }) {
-  const v = Math.max(0, Math.min(100, value));
-  const cls = v >= 65 ? 'good' : v >= 40 ? 'warn' : 'bad';
-  return (
-    <span className="mini-medidor">
-      <i className={cls} style={{ width: `${v}%` }} />
-    </span>
-  );
+/** Semáforo de una cifra: los mismos umbrales de siempre (65 / 40). */
+function tono(v: number): 'good' | 'warn' | 'bad' {
+  return v >= 65 ? 'good' : v >= 40 ? 'warn' : 'bad';
 }
 
 function Cifra({ value }: { value: number }) {
+  const v = Math.max(0, Math.min(100, Math.round(value)));
+  const t = tono(v);
   return (
-    <span className="planilla-cifra">
-      <b className={cifraCls(value)}>{Math.round(value)}</b>
-      <Medidor value={value} />
+    <span className={`pl-cifra ${t}`}>
+      <b>{v}</b>
+      <i aria-hidden="true"><i style={{ width: `${v}%` }} /></i>
     </span>
   );
 }
 
-function Fila({ state, p, indice }: { state: GameState; p: Player; indice: number }) {
+const ROL: Record<Player['expectedRole'], [string, string]> = {
+  titular: ['Se ve titular', '~30 min'],
+  rotación: ['Rotación', '~18 min'],
+  suplente: ['Suplente', '~8 min'],
+};
+
+/** La cara redonda de la planilla: el mismo retrato que la fila de pie. */
+export function CaraPlantel({ p, size }: { p: Player; size?: 'chica' }) {
+  return (
+    <span className={`pl-cara${size ? ` ${size}` : ''}`} aria-hidden="true">
+      {p.personality ? (
+        <Busto seed={p.id} personality={p.personality} gris={p.status === 'lesionado'} />
+      ) : (
+        <Avatar seed={p.id} age={p.age} size={44} appearance={p.appearance} title={p.name} />
+      )}
+    </span>
+  );
+}
+
+function Renglon({ state, p, indice }: { state: GameState; p: Player; indice: number }) {
+  const open = useContext(OpenProfileContext);
   const nota = playerNotes(state, p)[0];
-  const status = statusChip(p);
-  const fee = feeChip(p);
-  // La fila se tiñe sólo cuando hay algo que resolver: si se tiñen todas, no se
-  // tiñe ninguna.
-  const alerta = status?.cls === 'bad' || fee?.cls === 'bad';
+  const est = estadoPlantel(p);
+  const [rol, minutos] = ROL[p.expectedRole];
+  const beca = p.feeStatus === 'beca_total' ? 'Beca total' : p.feeStatus === 'beca_parcial' ? 'Beca parcial' : null;
 
   return (
-    // `--fila` escalona la entrada de los renglones (T5, animación 2).
-    <div className={`planilla-fila${alerta ? ' alerta' : ''}`} style={{ '--fila': indice } as CSSProperties}>
-      <span className="planilla-foto">
-        <Avatar
-          seed={p.id}
-          age={p.age}
-          appearance={p.appearance}
-          expressionOverride={
-            p.status === 'molesto' || p.status === 'al_borde' ? 2 : p.status === 'lesionado' ? 3 : undefined
-          }
-          title={p.name}
-          personality={p.personality}
-        />
-      </span>
+    <div
+      className={`pl-renglon${est?.cls === 'bad' ? ' alerta' : ''}`}
+     
+      style={{ '--fila': indice } as CSSProperties}
+      onClick={() => open(p.id)}
+      title={`Abrir la ficha de ${p.name}`}
+    >
+      <CaraPlantel p={p} />
 
-      <span className="planilla-quien">
-        <span className="planilla-nombre">
+      <span className="pl-quien">
+        <span className="pl-nombre">
           <PlayerLink id={p.id}>{p.name}</PlayerLink>
-          <span className="planilla-pos">
-            {p.position} · {p.age}
-          </span>
+          <span className="pl-pos">{p.position} · {p.age}</span>
+          {est && <span className={`v1-est ${est.cls}`}>{est.label}</span>}
         </span>
-        <span className="planilla-dicho" title={p.description}>{p.description}</span>
+        {nota && (
+          <span className="pl-nota">
+            <HumanNoteRow note={nota} />
+          </span>
+        )}
       </span>
 
-      <Cifra value={p.physical} />
-      <Cifra value={p.motivation} />
-      {/* El compromiso ya no es un número: es lo que el club vio (T2). */}
-      <ConductaCorta p={p} />
-      <Cifra value={p.social} />
+      {/* El único naranja de la pantalla: el dato que la planilla existe para
+          mostrar. El ≈ recuerda que es una estimación. */}
+      <span className="pl-valor"><small>≈</small>{p.visibleRating}</span>
+      <span><Cifra value={p.physical} /></span>
+      <span><Cifra value={p.motivation} /></span>
 
-      <span className="planilla-nota">{nota ? <HumanNoteRow note={nota} /> : <span className="planilla-nada">—</span>}</span>
-
-      <span className="planilla-rol">
-        {roleLabel(p)}
-        {status && <span className={`chip ${status.cls}`}>{status.label}</span>}
-        {fee && <span className={`chip ${fee.cls}`}>{fee.label}</span>}
+      <span className="pl-rol">
+        <b>{rol}</b>
+        <span>{minutos}{beca && <> · {beca}</>}</span>
       </span>
-
-      {/* El único naranja de la pantalla: el dato que la pantalla existe para
-          mostrar (ver la regla del naranja en design/SISTEMA_VISUAL.md). */}
-      <span className="planilla-valor"><small>≈</small>{p.visibleRating}</span>
     </div>
   );
 }

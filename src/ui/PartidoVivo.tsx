@@ -1,8 +1,19 @@
-// El partido en vivo, según la referencia aprobada por Gabi el 2026-09-09
-// (design/arte/referencias/2026-09-09-partido.png): la cabecera con los dos
-// escudos y el marcador oscuro, nuestro equipo a la izquierda con el cambio
-// preparado, la cancha con los diez en el medio y el relato debajo, el rival y
-// el tablero táctico a la derecha.
+// El partido en vivo (UI V1, sep 2026 — design/UI_V1_GUIA.md y la lámina 05,
+// cuadro 19 «Partido en vivo», de design/arte/referencias/). Nació junto al
+// Tablero aprobado, así que habla su idioma:
+//
+// - el MARCADOR es el héroe, sin caja: los dos escudos y los tantos en voz
+//   display sobre la tribuna (escena cab-partido), el cuarto y el reloj en el
+//   medio, los parciales en una línea y las rachas escritas como frase;
+// - la CANCHA en el centro con las caras de los diez, y abajo el relato (el
+//   único panel que scrollea por dentro: crece jugada a jugada);
+// - un equipo a cada lado, cada uno en UNA planilla: el nuestro con cómo se
+//   cambia (quién decide, el plan, las unidades, la referencia) y el rival con
+//   cómo defiende y sus piernas;
+// - el PIE es la consola del DT: la pizarra (defensa y ataque) siempre a mano
+//   a la izquierda, y a la derecha el minuto y el único naranja (jugar,
+//   pausar o ir al informe), como en las otras etapas de la semana. El cambio
+//   preparado aparece ahí arriba, en una tira.
 //
 // Lo que la referencia promete y el motor todavía no tiene (presión en tres
 // niveles, ritmo, marca especial, energía individual del rival, relato jugada
@@ -28,6 +39,7 @@ import { clubByLegacyId, teamByLegacyRival, userTeam } from '../game/world';
 import type { DefenseTactic, GameState, Player, Position, WorldPlayer } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { MatchClockContext, visibleScore, visibleVitals } from './matchPresentation';
+import { Busto } from './Busto';
 import { Crest } from './Crest';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
@@ -35,6 +47,7 @@ import { RivalLink } from './RivalLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
 import { useEscape, useEspacio } from './teclas';
+import './partido.css';
 
 interface Props {
   state: GameState;
@@ -60,15 +73,12 @@ const HALF_SLOTS: { x: number; y: number }[] = [
   { x: 11, y: 34 }, // Ala-Pívot
   { x: 11, y: 66 }, // Pívot
 ];
-/* Las fichas miden 84 × 45 px y la cancha, 415 × 151 en la notebook: con el
-   base en 44 y las alas en 32 la etiqueta del grande pasaba por debajo del
-   círculo del ala, y al acotar al grande adentro de la cancha (ver
-   `posicionFicha`) su círculo pisaba la etiqueta del escolta. Con estas
-   cotas no se toca nada a 1280 × 720, medido ficha por ficha. */
+/* Las fichas (la cara y el apellido) miden 84 × 60 px; la cancha, unos
+   700 × 200 en la notebook. Con estas cotas no se tocan entre sí. */
 
 /**
  * Dónde va la ficha de un jugador (centro, en % de la cancha), sin que se
- * salga: la ficha mide 84 × 45 px y la cancha recorta lo que desborda
+ * salga: la ficha mide 84 × 60 px y la cancha recorta lo que desborda
  * (`overflow: hidden`), así que los grandes pegados al aro perdían la primera
  * letra ("ernández") y los de las puntas, media etiqueta abajo en la
  * notebook. Con `clamp()` el centro nunca queda a menos de media ficha del
@@ -77,7 +87,7 @@ const HALF_SLOTS: { x: number; y: number }[] = [
 function posicionFicha(xPct: number, yPct: number): React.CSSProperties {
   return {
     left: `clamp(42px, ${xPct}%, calc(100% - 42px))`,
-    top: `clamp(24px, ${yPct}%, calc(100% - 24px))`,
+    top: `clamp(31px, ${yPct}%, calc(100% - 31px))`,
   };
 }
 
@@ -214,7 +224,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
   // página es la que scrollea y no tiene que saltar con cada canasta.
   useEffect(() => {
     const fila = ultimaFilaRef.current;
-    const panel = fila?.closest('.pane-body');
+    const panel = fila?.closest('.vivo-relato-cuerpo');
     if (!reloj || !fila || !(panel instanceof HTMLElement) || panel.scrollHeight <= panel.clientHeight) return;
     const r = fila.getBoundingClientRect();
     const c = panel.getBoundingClientRect();
@@ -390,27 +400,28 @@ export function PartidoVivo({ state, dispatch }: Props) {
     cancelar();
     return true;
   });
-  /* El botón de confirmar vive en el pie, no debajo del banco: con el scroll
-     único, a 1366×768 (y a 1280×720, el piso de diseño) el panel del cambio
-     caía debajo del pie y tocar ⇄ dos veces no mostraba ningún botón. El pie
-     es lo único que nunca se mueve (design/PLAN_MARCO_FIJO.md), así que el
-     "Sale → Entra" se repite ahí en una tira, con Confirmar y Cancelar. */
+  /* El cambio preparado vive en el pie, que es lo único que nunca se mueve
+     (design/PLAN_MARCO_FIJO.md): con el scroll único, a 1366×768 un panel de
+     cambio debajo del banco caía detrás del pie y tocar ⇄ dos veces no
+     mostraba ningún botón. La tira "Sale → Entra" aparece arriba de los
+     mandos, con Confirmar y Cancelar. */
   const nombreCorto = (id: string) => `${POS_ABBR[byId(id).position]} · ${shortName(byId(id).name)}`;
   const cambioEnPie = cambioEnCurso ? (
-    <div className="pv-pie-cambio" role="group" aria-label="Cambio preparado">
-      <span className={`pv-pie-caja sale${saleSel ? '' : ' vacia'}`}>
-        <span className="pv-cambio-k">Sale</span>
-        <span>{saleSel ? nombreCorto(saleSel) : 'tocá ⇄ en la cancha'}</span>
+    <div className="vivo-cambio" role="group" aria-label="Cambio preparado">
+      <span className="vivo-cambio-t"><Icon name="cambio" size={14} /> Cambio</span>
+      <span className={`vivo-cambio-caja sale${saleSel ? '' : ' vacia'}`}>
+        <small>Sale</small>
+        <span>{saleSel ? nombreCorto(saleSel) : 'tocá ⇄ en uno de la cancha'}</span>
       </span>
-      <span className="pv-cambio-flecha">→</span>
-      <span className={`pv-pie-caja entra${entraSel ? '' : ' vacia'}`}>
-        <span className="pv-cambio-k">Entra</span>
-        <span>{entraSel ? nombreCorto(entraSel) : 'tocá ⇄ en el banco'}</span>
+      <span className="vivo-cambio-flecha">→</span>
+      <span className={`vivo-cambio-caja entra${entraSel ? '' : ' vacia'}`}>
+        <small>Entra</small>
+        <span>{entraSel ? nombreCorto(entraSel) : 'tocá ⇄ en uno del banco'}</span>
       </span>
-      <button className="primary" disabled={!preparado} onClick={confirmar}>
+      <button className="vivo-confirmar" disabled={!preparado} onClick={confirmar}>
         Confirmar cambio
       </button>
-      <button className="pv-link" onClick={cancelar}>Cancelar</button>
+      <button className="ghost" onClick={cancelar}>Cancelar</button>
     </div>
   ) : null;
   const onDropFila = (lado: 'court' | 'bench', target: Player) => (e: React.DragEvent) => {
@@ -433,7 +444,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
     return (
       <div
         key={p.id}
-        className={`pv-fila-j${sel ? (lado === 'court' ? ' sale' : ' entra') : ''}${fuera ? ' fuera' : ''}`}
+        className={`vivo-j${sel ? (lado === 'court' ? ' sale' : ' entra') : ''}${fuera ? ' fuera' : ''}`}
         draggable={!live.finished && !fuera}
         onDragStart={(e) => {
           e.dataTransfer.setData('text/plain', p.id);
@@ -443,10 +454,10 @@ export function PartidoVivo({ state, dispatch }: Props) {
         onDrop={onDropFila(lado, p)}
         title={fuera ? `${p.name} · afuera por hoy: no vuelve a entrar` : `${p.name} · ${p.position} · piernas ${fresh} · ${minsOf(p.id)}' jugados`}
       >
-        <span className="pvj-pos">{POS_ABBR[p.position]}</span>
-        <span className="pvj-nombre">
+        <span className="vivo-j-pos">{POS_ABBR[p.position]}</span>
+        <span className="vivo-j-nom">
           <PlayerLink id={p.id}>{p.name}</PlayerLink>
-          {esRef && <Icon name="estrella" size={10} />}
+          {esRef && <span className="vivo-j-ref" title="La referencia del ataque"><Icon name="estrella" size={11} /></span>}
           {/* El que salió por tu decisión y puede volver (el que guardaste con
               cuatro faltas, el que sacaste hasta que se enfríe) lleva
               "reservado". El que no vuelve hoy (resentido, expulsado, cinco
@@ -454,19 +465,19 @@ export function PartidoVivo({ state, dispatch }: Props) {
               "reservado · vuelve cuando lo pongas vos" era contradecir la
               incidencia que acababa de prometer "se queda afuera lo que resta". */}
           {lado === 'bench' && !fuera && live.heldOut?.includes(p.id) && (
-            <small className="pvj-nota" title="Reservado por tu decisión. Vuelve cuando lo pongas vos.">
-              · reservado
+            <small className="vivo-j-nota" title="Reservado por tu decisión. Vuelve cuando lo pongas vos.">
+              reservado
             </small>
           )}
-          {fuera && <small className="pvj-nota">· afuera</small>}
+          {fuera && <small className="vivo-j-nota">afuera</small>}
         </span>
-        <span className="pvj-pts">{ptsOf(p.id)}</span>
-        <span className="pvj-energia">
+        <span className="vivo-j-pts">{ptsOf(p.id)}</span>
+        <span className="vivo-j-piernas" title={`Piernas ${fresh}`}>
           <span className="mini-medidor"><i className={legsCls(fresh)} style={{ width: `${fresh}%` }} /></span>
-          <b>{fresh}%</b>
+          <b className={legsCls(fresh)}>{fresh}</b>
         </span>
         <button
-          className={`pvj-swap${sel ? ' on' : ''}`}
+          className={`vivo-j-swap${sel ? ' on' : ''}`}
           disabled={live.finished || fuera}
           title={fuera ? 'Afuera por hoy' : lado === 'court' ? 'Sale' : 'Entra'}
           aria-label={lado === 'court' ? `Sacar a ${p.name}` : `Meter a ${p.name}`}
@@ -479,153 +490,222 @@ export function PartidoVivo({ state, dispatch }: Props) {
   };
 
   const filaRival = (p: WorldPlayer, enCancha: boolean) => (
-    <div key={p.id} className={`pv-fila-j rival${enCancha ? '' : ' banco'}`}>
-      <span className="pvj-pos">{POS_ABBR[p.position]}</span>
-      <span className="pvj-nombre">
+    <div key={p.id} className={`vivo-j rival${enCancha ? '' : ' banco'}`}>
+      <span className="vivo-j-pos">{POS_ABBR[p.position]}</span>
+      <span className="vivo-j-nom">
         <WorldPlayerLink id={p.id}>
           {p.firstName} {p.lastName}
         </WorldPlayerLink>
       </span>
-      <span className="pvj-pts">{enCancha ? (rivalPts[p.id] ?? 0) : '–'}</span>
-      <span className="pvj-nivel" title="Nivel estimado desde afuera">≈{p.level}</span>
+      <span className="vivo-j-pts">{enCancha ? (rivalPts[p.id] ?? 0) : '–'}</span>
+      <span className="vivo-j-nivel" title="Nivel estimado desde afuera">≈{p.level}</span>
     </div>
   );
 
   const nuestrosSlots = bySlots(onCourt);
   const rivalSlots = bySlots(rivalCinco.court);
+  const dificultad = rivalDifficulty(rival);
+  // El cuarto que se está jugando (o el que quedó en una pelota muerta), para marcarlo en los parciales.
+  const cuartoActual = reloj ? reloj.q : live.enCurso ? cuartosCerrados : -1;
+  const parcial = (i: number) => {
+    const f = parcialDe(i, 'for');
+    const a = parcialDe(i, 'against');
+    return f === '–' && a === '–' ? '–' : `${f}-${a}`;
+  };
+  const colores = { '--nuestro': nuestrosColores[0], '--rival': rivalColores[0] } as React.CSSProperties;
+  const hayDrama = hotStreak || coldStreak || comebackMode || holdMode || !!injuryNote;
+
+  // La letra chica del partido, dicha una vez, debajo de la cancha.
+  const leyenda = live.finished ? (
+    <>Terminó el partido. <b>Espacio</b> abre el informe.</>
+  ) : reloj ? (
+    <>
+      {live.minutoPedido
+        ? 'Pediste minuto: corre en la próxima pelota muerta.'
+        : reloj.pausa
+          ? 'Reloj parado: armá el cambio y seguí cuando quieras.'
+          : 'En vivo: los cambios y la táctica entran en la próxima pelota muerta.'}{' '}
+      <b>Espacio</b> {reloj.pausa ? 'sigue' : 'pausa'}.
+    </>
+  ) : live.pendingIncident ? (
+    <>Resolvé la incidencia antes de seguir jugando.</>
+  ) : (
+    <>
+      {cansado && (
+        <>
+          <b className="warn">{shortName(cansado.name)} está cansado</b> ({freshOf(cansado.id)} de piernas).{' '}
+          {recambio ? <>Tenés recambio en el banco: <b>{shortName(recambio.name)}</b> ({freshOf(recambio.id)}). </> : 'No queda nadie con más piernas en el banco. '}
+        </>
+      )}
+      Piernas nuestras en cancha: <b>{Math.round(courtFreshness(live))}</b>.{' '}
+      {live.enCurso ? 'La táctica entra en la próxima pelota muerta.' : 'La táctica se aplica desde el próximo cuarto; el rival también juega.'}{' '}
+      <b>Espacio</b> juega.
+    </>
+  );
 
   return (
-    <div className="partido-pantalla pv">
-      {/* ---------- Cabecera ---------- */}
-      <div className="card pv-cabecera">
-        <div className="pvc-contexto">
-          <div className="pvc-semana">{weekLabel(state.week, state.seasonLength)}</div>
-          <div className="pvc-fase">{state.week <= state.seasonLength ? 'Fase regular' : 'Playoffs'}</div>
-          <div className="pvc-chips">
-            <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
-            <span className="chip accent" title={`${style.desc} ${style.advice}`}>{style.label}</span>
-          </div>
+    <div className="partido-pantalla vivo">
+      {/* ---------- El marcador: el héroe, sin caja ---------- */}
+      <header className="vivo-marcador v1-hero" aria-label="Marcador">
+        <div className="v1-eyebrow vivo-contexto">
+          <b>{weekLabel(state.week, state.seasonLength).replace('Semana', 'Fecha')}</b>
+          {' · '}{state.week <= state.seasonLength ? 'Fase regular' : 'Playoffs'}
+          {' · '}<b className={`vivo-dif ${dificultad.cls}`}>{dificultad.label}</b>
+          {' · '}<span title={`${style.desc} ${style.advice}`}>{style.label}</span>
         </div>
-
-        <div className="pvc-equipo">
-          <Crest seed={nuestroClub?.id ?? 'club'} name={state.club.name} colors={nuestrosColores} founded={nuestroClub?.founded} size={56} />
-          <div>
-            <div className="pvc-nombre">{state.club.name}</div>
-            <div className="pvc-sub">{barrioDe(nuestroEquipo?.venueId) || 'Local'}</div>
-          </div>
-        </div>
-
-        <div className="pvc-marcador">
-          <div className="pvc-tablero">
-            <span className={`pvc-score ${diff > 0 ? 'win' : diff < 0 ? 'lose' : ''}`}>{totalFor}</span>
-            <span className="pvc-vs">vs</span>
-            <span className={`pvc-score ${diff < 0 ? 'win' : diff > 0 ? 'lose' : ''}`}>{totalAgainst}</span>
-          </div>
-          <div className="pvc-momento">{momento}</div>
-          {(hotStreak || coldStreak || comebackMode || holdMode || injuryNote) && (
-            <div className="pvc-drama">
-              {hotStreak && lastQ && <span className="chip good">Parcial {lastQ.for}-{lastQ.against}: en racha</span>}
-              {coldStreak && lastQ && <span className="chip bad">Nos metieron {lastQ.against}-{lastQ.for}</span>}
-              {comebackMode && <span className="chip warn">{-diff} abajo: a morder cada pelota</span>}
-              {holdMode && <span className="chip warn">Ojo: {rival.name} sale a descontar</span>}
-              {injuryNote && <span className="chip bad">{injuryNote}</span>}
+        <div className="vivo-versus">
+          <div className="vivo-equipo">
+            <Crest seed={nuestroClub?.id ?? 'club'} name={state.club.name} colors={nuestrosColores} founded={nuestroClub?.founded} size={64} />
+            <div>
+              <div className="vivo-nombre">{state.club.name}</div>
+              <div className="vivo-sub">{barrioDe(nuestroEquipo?.venueId) || 'Local'}</div>
             </div>
-          )}
-        </div>
-
-        <div className="pvc-equipo rival">
-          <Crest seed={rivalClub?.id ?? rival.id} name={rival.name} colors={rivalColores} founded={rivalClub?.founded} size={56} />
-          <div>
-            <div className="pvc-nombre"><RivalLink id={rival.id}>{rival.name}</RivalLink></div>
-            <div className="pvc-sub">{barrioDe(rivalEquipo?.venueId) || 'Visitante'}</div>
+          </div>
+          <div className="vivo-tanto" data-lado="nuestro">
+            <span className={diff < 0 ? 'abajo' : ''}>{totalFor}</span>
+          </div>
+          <div className="vivo-reloj">
+            <span className="vivo-momento">
+              {reloj && !reloj.pausa && <i className="vivo-punto" aria-hidden="true" />}
+              {momento}
+            </span>
+            <span className="vivo-cuartos" title="Parciales por cuarto (nosotros-ellos)">
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i} className={i === cuartoActual ? 'on' : i < cuartosCerrados ? 'jugado' : ''}>
+                  <b>Q{i + 1}</b> {parcial(i)}
+                </span>
+              ))}
+              {hasOT && (
+                <span className="jugado">
+                  <b>PR</b> {reloj ? '–' : `${played.find((q) => q.overtime)!.for}-${played.find((q) => q.overtime)!.against}`}
+                </span>
+              )}
+            </span>
+          </div>
+          <div className="vivo-tanto" data-lado="rival">
+            <span className={diff > 0 ? 'abajo' : ''}>{totalAgainst}</span>
+          </div>
+          <div className="vivo-equipo rival">
+            <div>
+              <div className="vivo-nombre"><RivalLink id={rival.id}>{rival.name}</RivalLink></div>
+              <div className="vivo-sub">{barrioDe(rivalEquipo?.venueId) || 'Visitante'}</div>
+            </div>
+            <Crest seed={rivalClub?.id ?? rival.id} name={rival.name} colors={rivalColores} founded={rivalClub?.founded} size={64} />
           </div>
         </div>
+        {hayDrama && (
+          <p className="v1-frase vivo-drama">
+            {hotStreak && lastQ && <span>Parcial <b className="good">{lastQ.for}-{lastQ.against}</b>: estamos en racha.</span>}
+            {coldStreak && lastQ && <span>Nos metieron un <b className="bad">{lastQ.against}-{lastQ.for}</b>.</span>}
+            {comebackMode && <span><b className="warn">{-diff} abajo</b>: a morder cada pelota.</span>}
+            {holdMode && <span><b className="warn">Ojo</b>: {rival.name} sale a descontar.</span>}
+            {injuryNote && <span className="vivo-drama-lesion">{injuryNote}</span>}
+          </p>
+        )}
+      </header>
 
-        <table className="pvc-cuartos" title="Parciales por cuarto">
-          <thead>
-            <tr>
-              <th></th>
-              {[0, 1, 2, 3].map((i) => <th key={i}>Q{i + 1}</th>)}
-              {hasOT && <th>PR</th>}
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{shortName(state.club.name) === state.club.name ? state.club.name : state.club.name}</td>
-              {[0, 1, 2, 3].map((i) => <td key={i}>{parcialDe(i, 'for')}</td>)}
-              {hasOT && <td>{reloj ? '–' : played.find((q) => q.overtime)!.for}</td>}
-              <td className="total">{totalFor}</td>
-            </tr>
-            <tr>
-              <td>{rival.name}</td>
-              {[0, 1, 2, 3].map((i) => <td key={i}>{parcialDe(i, 'against')}</td>)}
-              {hasOT && <td>{reloj ? '–' : played.find((q) => q.overtime)!.against}</td>}
-              <td className="total">{totalAgainst}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* ---------- Cuerpo ---------- */}
-      <div className="pv-cuerpo">
-        {/* Nuestro equipo */}
-        <div className="card pane pv-equipo">
-          <h3 className="card-band pv-banda">
-            <span>Nuestro equipo</span>
-            <span className="pv-banda-sub">{state.club.name}</span>
+      {/* ---------- La cancha, con un equipo a cada lado ---------- */}
+      <div className="vivo-cuerpo">
+        <aside className="vivo-lado v1-planilla" aria-label="Nuestro equipo">
+          <h3 className="vivo-lado-tit">
+            <Crest seed={nuestroClub?.id ?? 'club'} name={state.club.name} colors={nuestrosColores} founded={nuestroClub?.founded} size={24} />
+            <span>{state.club.name}</span>
           </h3>
-          <div className="pane-body">
-            <div className="pv-grupo">En cancha</div>
-            <div className="pv-cab-j"><span>Pos</span><span>Jugador</span><span>Pts</span><span>Energía</span><span /></div>
-            {onCourt.map((p) => filaNuestra(p, 'court'))}
-            <div className="pv-grupo banco">Banco</div>
-            {bench.length > 0 ? (
-              <>
-                <div className="pv-cab-j"><span>Pos</span><span>Jugador</span><span>Pts</span><span>Energía</span><span /></div>
-                {bench.map((p) => filaNuestra(p, 'bench'))}
-              </>
-            ) : (
-              <p className="tactic-hint">No citaste suplentes: no hay cambios posibles.</p>
-            )}
+          <div className="vivo-grupo"><span>En cancha</span><span>Pts</span><span>Piernas</span></div>
+          {onCourt.map((p) => filaNuestra(p, 'court'))}
+          <div className="vivo-grupo banco"><span>Banco</span></div>
+          {bench.length > 0 ? bench.map((p) => filaNuestra(p, 'bench')) : <p className="vivo-vacio">No citaste suplentes: no hay cambios posibles.</p>}
 
-            {cambioEnCurso && (
-              <div className="pv-cambio">
-                <div className="pv-cambio-t"><Icon name="cambio" size={14} /> Cambio preparado</div>
-                <div className="pv-cambio-par">
-                  <div className={`pv-cambio-caja sale${saleSel ? '' : ' vacia'}`}>
-                    <span className="pv-cambio-k">Sale</span>
-                    <span>{saleSel ? `${POS_ABBR[byId(saleSel).position]} · ${byId(saleSel).name}` : 'Tocá ⇄ en uno de la cancha'}</span>
-                  </div>
-                  <span className="pv-cambio-flecha">→</span>
-                  <div className={`pv-cambio-caja entra${entraSel ? '' : ' vacia'}`}>
-                    <span className="pv-cambio-k">Entra</span>
-                    <span>{entraSel ? `${POS_ABBR[byId(entraSel).position]} · ${byId(entraSel).name}` : 'Tocá ⇄ en uno del banco'}</span>
-                  </div>
+          <div className="vivo-mandos v1-renglon">
+            <div className="vivo-mando-fila">
+              <span className="vivo-k">Cambios</span>
+              <div className="segmented">
+                <button className={!live.autoRotation ? 'on' : ''} disabled={live.finished} title="Los cambios son tuyos" onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: false })}>
+                  Vos
+                </button>
+                <button className={live.autoRotation ? 'on' : ''} disabled={live.finished} title={state.coach ? `${state.coach.name} hace los cambios entre cuartos` : 'El DT hace los cambios entre cuartos'} onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true })}>
+                  {state.coach ? `DT ${shortName(state.coach.name)}` : 'DT'}
+                </button>
+              </div>
+            </div>
+            {!live.autoRotation && bench.length > 0 && (
+              <div className="vivo-mando-fila">
+                <span className="vivo-k">Plan</span>
+                <div className="segmented">
+                  <button className={(live.plan ?? 'manual') === 'rotar' ? 'on' : ''} disabled={live.finished} title="Frescos en el 2° cuarto, titulares en el 3°, cerradores al final. Un cambio a mano manda por ese cuarto." onClick={() => dispatch({ type: 'SET_MATCH_PLAN', plan: 'rotar' })}>
+                    Rota solo
+                  </button>
+                  <button className={(live.plan ?? 'manual') === 'manual' ? 'on' : ''} disabled={live.finished} title="Los cinco se quedan hasta que vos los muevas" onClick={() => dispatch({ type: 'SET_MATCH_PLAN', plan: 'manual' })}>
+                    A mano
+                  </button>
                 </div>
-                <p className="pv-cambio-nota">Se confirma abajo, en la barra del partido.</p>
               </div>
             )}
+            {live.autoRotation && (
+              <div className="vivo-mando-fila">
+                <span className="vivo-k">Directiva</span>
+                <div className="segmented">
+                  <button className={(live.directive ?? 'ganar') === 'ganar' ? 'on' : ''} disabled={live.finished} title="Descansa fundidos y mete a los mejores para cerrar" onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true, directive: 'ganar' })}>
+                    A ganar
+                  </button>
+                  <button className={live.directive === 'repartir' ? 'on' : ''} disabled={live.finished} title="Rota el banco: todos suman minutos" onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true, directive: 'repartir' })}>
+                    Juegan todos
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="vivo-mando-fila">
+              <span className="vivo-k">Unidad</span>
+              <div className="vivo-unidades">
+                {(
+                  [
+                    ['titulares', 'Titulares', 'Vuelven los cinco del arranque'],
+                    ['segunda', '2da', 'Entra el banco: descansan los titulares'],
+                    ['frescos', 'Frescos', 'Los cinco con más piernas ahora'],
+                    ['cerradores', 'Cerradores', 'Los mejores acá y ahora, para cerrar'],
+                  ] as const
+                ).map(([id, label, tip]) => (
+                  <button key={id} disabled={live.finished} title={tip} onClick={() => dispatch({ type: 'APPLY_PRESET', preset: id })}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="vivo-mando-fila">
+              <span className="vivo-k">Referencia</span>
+              <select
+                className="vivo-select"
+                value={live.starId}
+                disabled={live.finished}
+                title="A quién se la dan cuando el ataque es a la referencia. Si no elegís, es el mejor de los que están en cancha."
+                onChange={(e) => dispatch({ type: 'SET_STAR', playerId: e.target.value })}
+              >
+                {onCourt.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}{live.starLocked && p.id === live.starId ? ' (elegido)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
+        </aside>
 
-        {/* La cancha y el relato */}
-        <div className={`pv-centro${live.pendingIncident && !reloj ? ' con-incidencia' : ''}`}>
-          <div className="pv-cancha" style={{ '--nuestro': nuestrosColores[0], '--rival': rivalColores[0] } as React.CSSProperties}>
+        <section className={`vivo-centro${live.pendingIncident && !reloj ? ' con-incidencia' : ''}`} aria-label="La cancha">
+          <div className="vivo-cancha" style={colores}>
             <CanchaLineas />
-            <div className="pv-cancha-escudo">
-              <Crest seed={nuestroClub?.id ?? 'club'} name={state.club.name} colors={nuestrosColores} founded={nuestroClub?.founded} size={44} />
+            <div className="vivo-cancha-escudo">
+              <Crest seed={nuestroClub?.id ?? 'club'} name={state.club.name} colors={nuestrosColores} founded={nuestroClub?.founded} size={40} />
             </div>
             {nuestrosSlots.map((p, i) =>
               p ? (
                 <div
                   key={p.id}
-                  className={`pv-ficha nuestro${live.starId === p.id ? ' ref' : ''}${freshOf(p.id) < 45 ? ' fundido' : ''}${acabaDeAnotar === p.id ? ' anoto' : ''}`}
+                  className={`vivo-ficha nuestro${live.starId === p.id ? ' ref' : ''}${freshOf(p.id) < 45 ? ' fundido' : ''}${acabaDeAnotar === p.id ? ' anoto' : ''}`}
                   style={posicionFicha(HALF_SLOTS[i].x / 2, HALF_SLOTS[i].y)}
                   title={`${p.name} · ${p.position} · ${ptsOf(p.id)} pts · piernas ${freshOf(p.id)}`}
                 >
-                  <span className="pv-ficha-num">{i + 1}</span>
-                  <span className="pv-ficha-nombre">{shortName(p.name)}</span>
+                  <span className="vivo-ficha-cara"><Busto seed={p.id} personality={p.personality} /></span>
+                  <span className="vivo-ficha-nom">{shortName(p.name)}</span>
                 </div>
               ) : null
             )}
@@ -633,47 +713,45 @@ export function PartidoVivo({ state, dispatch }: Props) {
               p ? (
                 <div
                   key={p.id}
-                  className={`pv-ficha rival${acabaDeAnotar === p.id ? ' anoto' : ''}`}
+                  className={`vivo-ficha rival${acabaDeAnotar === p.id ? ' anoto' : ''}`}
                   style={posicionFicha(100 - HALF_SLOTS[i].x / 2, HALF_SLOTS[i].y)}
                   title={`${p.firstName} ${p.lastName} · ${p.position} · nivel ≈${p.level}`}
                 >
-                  <span className="pv-ficha-num">{i + 1}</span>
-                  <span className="pv-ficha-nombre">{p.lastName}</span>
+                  <span className="vivo-ficha-cara"><Busto seed={p.id} personality={p.personality} /></span>
+                  <span className="vivo-ficha-nom">{p.lastName}</span>
                 </div>
               ) : null
             )}
           </div>
 
+          <p className="v1-frase vivo-leyenda">{leyenda}</p>
+
           {live.pendingIncident && !reloj ? (
-            <div className="card pane partido-relato partido-incidencia">
-              <h3 className="card-band">
-                <Icon name="alerta" size={17} /> Incidencia en la cancha
-              </h3>
-              <div className="pane-body">
-                <p className="previa-consigna">{live.pendingIncident.text}</p>
-                <div className="options pv-incidencia-opciones">
-                  {live.pendingIncident.options.map((opt, i) => (
-                    <button key={i} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })}>
-                      {opt.label}
-                      <span className="opt-hint">{opt.hint}</span>
-                    </button>
-                  ))}
-                </div>
+            <div className="vivo-incidencia v1-planilla" role="alert">
+              <div className="v1-eyebrow vivo-incidencia-k"><Icon name="alerta" size={15} /> Incidencia en la cancha</div>
+              <p className="vivo-incidencia-txt">{live.pendingIncident.text}</p>
+              <div className="vivo-opciones">
+                {live.pendingIncident.options.map((opt, i) => (
+                  <button key={i} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })}>
+                    <b>{opt.label}</b>
+                    <span>{opt.hint}</span>
+                  </button>
+                ))}
               </div>
             </div>
           ) : played.length > 0 ? (
-            <div className="card pane partido-relato pv-relato" style={{ '--nuestro': nuestrosColores[0], '--rival': rivalColores[0] } as React.CSSProperties}>
-              <h3 className="card-band pv-relato-cab">
-                <span><Icon name="chat" size={15} /> Relato del partido</span>
-                <span className="segmented pv-filtro">
+            <div className="vivo-relato v1-planilla" style={colores}>
+              <div className="vivo-relato-cab">
+                <h3 className="v1-mano">El relato</h3>
+                <span className="segmented vivo-filtro">
                   {(['todo', 'puntos', 'cambios'] as const).map((f) => (
                     <button key={f} className={filtro === f ? 'on' : ''} onClick={() => setFiltro(f)}>
                       {f === 'todo' ? 'Todo' : f === 'puntos' ? 'Puntos' : 'Cambios'}
                     </button>
                   ))}
                 </span>
-              </h3>
-              <div className="pane-body">
+              </div>
+              <div className="vivo-relato-cuerpo">
                 {[...played].reverse().map((q, k) => {
                   const i = played.length - 1 - k;
                   // Con el reloj corriendo, los cuartos que todavía no empezaron no existen.
@@ -689,62 +767,65 @@ export function PartidoVivo({ state, dispatch }: Props) {
                   const notasDelCuarto = q.notes.filter((n) => !enTramos.has(n));
                   const notas = enVivo || filtro === 'puntos' ? [] : filtro === 'cambios' ? notasDelCuarto.filter(esDeCambios) : notasDelCuarto;
                   if (jugadas.length === 0 && notas.length === 0 && filtro !== 'todo' && !enVivo) return null;
-                  const parcial = reloj && i === reloj.q ? `${totalFor - antesDelReloj!.f}-${totalAgainst - antesDelReloj!.a}` : `${q.for}-${q.against}`;
+                  const parcialQ = reloj && i === reloj.q ? `${totalFor - antesDelReloj!.f}-${totalAgainst - antesDelReloj!.a}` : `${q.for}-${q.against}`;
                   return (
-                    <div key={i} className={`quarter-log${enVivo ? ' en-vivo' : ''}`}>
-                      <div className="quarter-head">
-                        {q.overtime ? 'Suplementario' : `${Q_LABELS[i]} cuarto`} · {parcial}
-                        {enVivo && <span className="rj-vivo">● en juego</span>}
-                        <span className="chip" style={{ marginLeft: '0.5rem' }}>
+                    <div key={i} className={`vivo-q${enVivo ? ' en-vivo' : ''}`}>
+                      <div className="vivo-q-cab">
+                        <b>{q.overtime ? 'Suplementario' : `${Q_LABELS[i]} cuarto`}</b>
+                        <span className="vivo-q-parcial">{parcialQ}</span>
+                        {enVivo && <span className="vivo-q-vivo">● en juego</span>}
+                        <span className="vivo-q-tactica">
                           {q.defense === 'presion' ? 'Presión' : q.defense === 'hombre' ? 'Hombre' : 'Zona'} ·{' '}
-                          {q.attack === 'estrella' ? 'Estrella' : q.attack === 'correr' ? 'Correr' : 'Colectivo'}
+                          {q.attack === 'estrella' ? 'A la referencia' : q.attack === 'correr' ? 'Correr' : 'Colectivo'}
                         </span>
                       </div>
-                      {enVivo && jugadas.length === 0 && <p className="tactic-hint rj-espera">Salta la pelota…</p>}
+                      {enVivo && jugadas.length === 0 && <p className="vivo-vacio vivo-espera">Salta la pelota…</p>}
                       {jugadas.length > 0 && (
-                        <div className="rj-lista">
+                        <div className="vivo-rj-lista">
                           {jugadas.map((j, n) => (
-                            <div key={n} className={`rj ${j.lado}${j.tipo ? ` ${j.tipo}` : ''}${enVivo && n === jugadas.length - 1 ? ' nueva' : ''}`} ref={enVivo && n === jugadas.length - 1 ? ultimaFilaRef : undefined}>
-                              <span className="rj-min">{j.minuto}</span>
-                              <span className="rj-marcador">{j.marcador}</span>
+                            <div key={n} className={`vivo-rj ${j.lado}${j.tipo ? ` ${j.tipo}` : ''}${enVivo && n === jugadas.length - 1 ? ' nueva' : ''}`} ref={enVivo && n === jugadas.length - 1 ? ultimaFilaRef : undefined}>
+                              <span className="vivo-rj-min">{j.minuto}</span>
+                              <span className="vivo-rj-marcador">{j.marcador}</span>
                               {j.tipo ? (
-                                <span className="rj-icono">{j.tipo === 'cambio' ? <Icon name="cambio" size={11} /> : '·'}</span>
+                                <span className="vivo-rj-icono">{j.tipo === 'cambio' ? <Icon name="cambio" size={11} /> : '·'}</span>
                               ) : (
-                                <span className="rj-punto" title={j.lado === 'nosotros' ? state.club.name : rival.name} />
+                                <span className="vivo-rj-punto" title={j.lado === 'nosotros' ? state.club.name : rival.name} />
                               )}
-                              <span className="rj-texto">
+                              <span className="vivo-rj-texto">
                                 <b>{j.texto}</b>
-                                {j.sub && <span className="rj-sub">{j.sub}</span>}
+                                {j.sub && <span>{j.sub}</span>}
                               </span>
                             </div>
                           ))}
                         </div>
                       )}
                       {notas.length > 0 && (
-                        <ul className="reason-list rj-notas">
+                        <ul className="vivo-notas">
                           {notas.map((n, j) => (
-                            <li key={j} className={n.startsWith('🚑') ? 'note-injury' : /racha|prendió el aro/.test(n) ? 'note-hot' : ''}>
+                            <li key={j} className={n.startsWith('🚑') ? 'lesion' : /racha|prendió el aro/.test(n) ? 'racha' : ''}>
                               {n}
                             </li>
                           ))}
                         </ul>
                       )}
-                      {jugadas.length === 0 && notas.length === 0 && <p className="tactic-hint">Cuarto parejo, sin sobresaltos.</p>}
+                      {jugadas.length === 0 && notas.length === 0 && <p className="vivo-vacio">Cuarto parejo, sin sobresaltos.</p>}
                     </div>
                   );
                 })}
               </div>
             </div>
           ) : (
-            <div className="card pane partido-relato pv-relato">
-              <h3 className="card-band">La previa</h3>
-              <div className="pane-body">
-                <p className="previa-consigna">
-                  Elegí la defensa y el ataque en el tablero, mirá quién sale y quién queda en el banco, y tocá{' '}
+            <div className="vivo-relato vivo-previa v1-planilla">
+              <div className="vivo-relato-cab">
+                <h3 className="v1-mano">La previa</h3>
+              </div>
+              <div className="vivo-relato-cuerpo">
+                <p className="vivo-previa-txt">
+                  Elegí la defensa y el ataque abajo, mirá quién sale y quién queda en el banco, y tocá{' '}
                   <b>Jugar el 1er cuarto</b>. Entre cuarto y cuarto podés cambiar todo.
                 </p>
                 {live.pendingSubNotes.length > 0 && (
-                  <ul className="reason-list">
+                  <ul className="vivo-notas">
                     {live.pendingSubNotes.map((n, i) => (
                       <li key={i}>{n}</li>
                     ))}
@@ -753,226 +834,130 @@ export function PartidoVivo({ state, dispatch }: Props) {
               </div>
             </div>
           )}
+        </section>
 
-          {cansado && !live.finished && !reloj && (
-            <div className="pv-aviso">
-              <Icon name="descanso" size={16} />
-              <span>
-                <b>{shortName(cansado.name)} está cansado</b> ({freshOf(cansado.id)} de piernas).{' '}
-                {recambio ? `Tenés recambio en el banco: ${shortName(recambio.name)} (${freshOf(recambio.id)}).` : 'No queda nadie con más piernas en el banco.'}
-              </span>
-            </div>
+        <aside className="vivo-lado rival v1-planilla" aria-label={rival.name}>
+          <h3 className="vivo-lado-tit">
+            <Crest seed={rivalClub?.id ?? rival.id} name={rival.name} colors={rivalColores} founded={rivalClub?.founded} size={24} />
+            <span><RivalLink id={rival.id}>{rival.name}</RivalLink></span>
+          </h3>
+          <p className="v1-frase vivo-defensa" title="Cómo están defendiendo. Cambian durante el partido, sin mirar tu pizarra: te enterás por el relato.">
+            Defienden en <b>{RIVAL_DEFENSE_LABELS[defensaVista]}</b>. {PISTA_DEFENSA_RIVAL[defensaVista]}
+          </p>
+          <div className="vivo-grupo"><span>En cancha</span><span>Pts</span><span>Nivel</span></div>
+          {rivalCinco.court.length > 0 ? (
+            rivalCinco.court.map((p) => filaRival(p, true))
+          ) : (
+            <p className="vivo-vacio">Sin plantel conocido para este rival.</p>
           )}
-        </div>
-
-        {/* Rival y tablero táctico */}
-        <div className="partido-col-scroll pv-derecha">
-          <div className="card pv-equipo">
-            <h3 className="card-band pv-banda">
-              <span><RivalLink id={rival.id}>{rival.name}</RivalLink></span>
-              <Crest seed={rivalClub?.id ?? rival.id} name={rival.name} colors={rivalColores} founded={rivalClub?.founded} size={22} />
-            </h3>
-            <div className="pv-defensa-rival" title="Cómo están defendiendo. Cambian durante el partido, sin mirar tu pizarra: te enterás por el relato.">
-              <span>Defienden</span>
-              <b>{RIVAL_DEFENSE_LABELS[defensaVista]}</b>
-              <span className="pv-defensa-pista">{PISTA_DEFENSA_RIVAL[defensaVista]}</span>
-            </div>
-            <div className="pv-grupo">En cancha</div>
-            {rivalCinco.court.length > 0 ? (
-              <>
-                <div className="pv-cab-j rival"><span>Pos</span><span>Jugador</span><span>Pts</span><span>Nivel</span></div>
-                {rivalCinco.court.map((p) => filaRival(p, true))}
-              </>
-            ) : (
-              <p className="tactic-hint">Sin plantel conocido para este rival.</p>
-            )}
-            <div className="pv-piernas-rival" title="Estado físico del equipo rival">
-              <span>Piernas</span>
-              <span className="mini-medidor"><i className={legsCls(vitals.rivalFreshness)} style={{ width: `${vitals.rivalFreshness}%` }} /></span>
-              <b>{Math.round(vitals.rivalFreshness)}</b>
-            </div>
-            {rivalCinco.bench.length > 0 && (
-              <>
-                <button className="pv-link" onClick={() => setVerSuplentesRival((v) => !v)}>
-                  {verSuplentesRival ? 'Ocultar suplentes' : `Ver suplentes (${rivalCinco.bench.length})`} {verSuplentesRival ? '▴' : '▾'}
-                </button>
-                {verSuplentesRival && rivalCinco.bench.map((p) => filaRival(p, false))}
-              </>
-            )}
+          <div className="vivo-piernas-rival" title="Estado físico del equipo rival">
+            <span className="vivo-k">Piernas</span>
+            <span className="mini-medidor"><i className={legsCls(vitals.rivalFreshness)} style={{ width: `${vitals.rivalFreshness}%` }} /></span>
+            <b className={legsCls(vitals.rivalFreshness)}>{Math.round(vitals.rivalFreshness)}</b>
           </div>
-
-          <div className="card pv-tablero">
-            <h3 className="card-band"><Icon name="pizarra" size={15} /> Tablero táctico</h3>
-            <div className="pvt-fila">
-              <span className="pvt-k">Defensa</span>
-              <div className="segmented">
-                {(
-                  [
-                    ['zona', 'Zona', 'Ordenada y económica: cuida el físico. Ojo con los tiradores.'],
-                    ['hombre', 'Hombre', 'Asfixia al rival, pero quema piernas. Fundidos, quedan pasillos.'],
-                    ['presion', 'Presión', 'A toda cancha: el máximo castigo y el máximo desgaste. Sólo con piernas frescas.'],
-                  ] as const
-                ).map(([id, label, tip]) => (
-                  <button key={id} className={live.defense === id ? 'on' : ''} disabled={live.finished} title={tip} onClick={() => dispatch({ type: 'SET_TACTIC', defense: id })}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="pvt-fila">
-              <span className="pvt-k">Ataque</span>
-              <div className="segmented">
-                {(
-                  [
-                    ['equipo', 'Colectivo', 'La mueven todos: menos brillo, más pases. Aprovecha la química del grupo.'],
-                    ['estrella', 'A la referencia', 'Todo pasa por la referencia. Si está caliente es fiesta; si no, la esperan entre dos.'],
-                    ['correr', 'Correr', 'Ida y vuelta: más puntos para los dos. Gana el que tiene piernas.'],
-                  ] as const
-                ).map(([id, label, tip]) => (
-                  <button key={id} className={live.attack === id ? 'on' : ''} disabled={live.finished} title={tip} onClick={() => dispatch({ type: 'SET_TACTIC', attack: id })}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="pvt-fila">
-              <span className="pvt-k">Referencia</span>
-              <select
-                className="pvt-select"
-                value={live.starId}
-                disabled={live.finished}
-                title="A quién se la dan cuando el ataque es a la referencia. Si no elegís, es el mejor de los que están en cancha."
-                onChange={(e) => dispatch({ type: 'SET_STAR', playerId: e.target.value })}
-              >
-                {onCourt.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}{live.starLocked && p.id === live.starId ? ' (elegido)' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="pvt-fila">
-              <span className="pvt-k">Cambios</span>
-              <div className="segmented">
-                <button className={!live.autoRotation ? 'on' : ''} disabled={live.finished} title="Los cambios son tuyos" onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: false })}>
-                  Vos
-                </button>
-                <button className={live.autoRotation ? 'on' : ''} disabled={live.finished} title={state.coach ? `${state.coach.name} hace los cambios entre cuartos` : 'El DT hace los cambios entre cuartos'} onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true })}>
-                  {state.coach ? `DT ${shortName(state.coach.name)}` : 'DT'}
-                </button>
-              </div>
-            </div>
-            {!live.autoRotation && bench.length > 0 && (
-              <div className="pvt-fila">
-                <span className="pvt-k">Plan</span>
-                <div className="segmented">
-                  <button className={(live.plan ?? 'manual') === 'rotar' ? 'on' : ''} disabled={live.finished} title="Frescos en el 2° cuarto, titulares en el 3°, cerradores al final. Un cambio a mano manda por ese cuarto." onClick={() => dispatch({ type: 'SET_MATCH_PLAN', plan: 'rotar' })}>
-                    Rota solo
-                  </button>
-                  <button className={(live.plan ?? 'manual') === 'manual' ? 'on' : ''} disabled={live.finished} title="Los cinco se quedan hasta que vos los muevas" onClick={() => dispatch({ type: 'SET_MATCH_PLAN', plan: 'manual' })}>
-                    A mano
-                  </button>
-                </div>
-              </div>
-            )}
-            {live.autoRotation && (
-              <div className="pvt-fila">
-                <span className="pvt-k">Directiva</span>
-                <div className="segmented">
-                  <button className={(live.directive ?? 'ganar') === 'ganar' ? 'on' : ''} disabled={live.finished} title="Descansa fundidos y mete a los mejores para cerrar" onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true, directive: 'ganar' })}>
-                    A ganar
-                  </button>
-                  <button className={live.directive === 'repartir' ? 'on' : ''} disabled={live.finished} title="Rota el banco: todos suman minutos" onClick={() => dispatch({ type: 'SET_AUTO_ROTATION', on: true, directive: 'repartir' })}>
-                    Juegan todos
-                  </button>
-                </div>
-              </div>
-            )}
-            <div className="pvt-fila">
-              <span className="pvt-k">Unidad</span>
-              <div className="pvt-presets">
-                {(
-                  [
-                    ['titulares', 'Titulares', 'Vuelven los cinco del arranque'],
-                    ['segunda', '2da', 'Entra el banco: descansan los titulares'],
-                    ['frescos', 'Frescos', 'Los cinco con más piernas ahora'],
-                    ['cerradores', 'Cerradores', 'Los mejores acá y ahora, para cerrar'],
-                  ] as const
-                ).map(([id, label, tip]) => (
-                  <button key={id} className="small" disabled={live.finished} title={tip} onClick={() => dispatch({ type: 'APPLY_PRESET', preset: id })}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className="pvt-nota">{reloj || live.enCurso ? 'Entra en la próxima pelota muerta.' : 'Se aplica desde el próximo cuarto.'}</p>
-          </div>
-        </div>
+          {rivalCinco.bench.length > 0 && (
+            <>
+              <button className="vivo-mas" onClick={() => setVerSuplentesRival((v) => !v)}>
+                {verSuplentesRival ? 'Ocultar suplentes ▴' : `Ver suplentes (${rivalCinco.bench.length}) ▾`}
+              </button>
+              {verSuplentesRival && rivalCinco.bench.map((p) => filaRival(p, false))}
+            </>
+          )}
+        </aside>
       </div>
 
-      {/* ---------- Pie ---------- */}
-      <div className="partido-pie pie-fijo">
-        <div className="confirm-bar pv-pie">
-          {reloj ? (
-            <>
-              <button className="primary" onClick={pausar}>
-                {reloj.pausa ? '▶ Seguir' : '❚❚ Pausar'}
-              </button>
-              {/* El botón apagado dice por qué: en el último tramo el cuarto ya
-                  está cerrado en el motor (el reloj sólo lo cuenta) y no queda
-                  pelota muerta donde meter el minuto; antes se apagaba mudo. */}
-              <button
-                disabled={!live.enCurso || !!live.minutoPedido || minutosQueQuedan <= 0}
-                title={
-                  minutosQueQuedan <= 0
-                    ? 'Ya pediste los dos minutos del partido.'
-                    : live.minutoPedido
-                      ? 'Minuto pedido: corre en la próxima pelota muerta.'
-                      : !live.enCurso
-                        ? 'En este cuarto ya no queda pelota muerta: el minuto se pide en el próximo.'
-                        : 'Corta el juego en la próxima pelota muerta: el rival ataca peor ese tramo y los cinco respiran. Tenés dos por partido.'
-                }
-                onClick={pedirMinuto}
-              >
-                ⏱ Minuto{minutosQueQuedan > 0 ? ` (${minutosQueQuedan})` : ''}
-              </button>
-              <button onClick={saltar}>Saltar el cuarto ⏭</button>
-              {cambioEnPie ?? (
-                <span className="hint">
-                  {live.minutoPedido
-                    ? 'Pediste minuto: corre en la próxima pelota muerta.'
-                    : reloj.pausa
-                      ? 'Reloj parado: armá el cambio y seguí cuando quieras.'
-                      : 'En vivo: los cambios y la táctica entran en la próxima pelota muerta.'}{' '}
-                  <b>Espacio</b> {reloj.pausa ? 'sigue' : 'pausa'}.
-                </span>
-              )}
-            </>
-          ) : !live.finished ? (
-            <>
-              {/* Con una incidencia sin resolver, el motivo va en el botón
-                  mismo, no en letra chica al lado (sep 2026). */}
-              <button className="primary" disabled={!!live.pendingIncident || simulando} onClick={jugarCuarto}>
-                {live.pendingIncident
-                  ? 'Resolvé la incidencia primero'
-                  : live.enCurso
-                    ? `▶ Seguir el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto`
-                    : `▶ Jugar el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto`}
-              </button>
-              <button disabled={!!live.pendingIncident || simulando} title="Juega lo que falta de corrido, con tu plan de cambios (o el DT). Se frena sola si hay una incidencia." onClick={() => setSimulando(true)}>
-                {simulando ? 'Simulando…' : 'Simular el partido ⏩'}
-              </button>
-              {cambioEnPie ?? (
-                live.pendingIncident
-                  ? <span className="hint">Resolvé la incidencia antes de seguir jugando.</span>
-                  : <span className="hint">Piernas nuestras en cancha: {Math.round(courtFreshness(live))}. Podés cambiar la táctica antes de cada cuarto; el rival también juega… <b>Espacio</b> juega el cuarto.</span>
-              )}
-            </>
+      {/* ---------- El pie: el botón del partido y la pizarra, siempre a mano ---------- */}
+      <div className="partido-pie pie-fijo vivo-pie">
+        {cambioEnPie}
+        <div className="vivo-pie-fila">
+          {live.finished ? (
+            <p className="v1-frase vivo-final">
+              Final: <b className={diff > 0 ? 'good' : diff < 0 ? 'bad' : ''}>{totalFor}-{totalAgainst}</b> contra {rival.name}.
+            </p>
           ) : (
-            <button className="primary" onClick={() => dispatch({ type: 'FINISH_MATCH' })}>
-              Ver el informe del partido →
-            </button>
+            <div className="vivo-pizarra" aria-label="La pizarra" title={reloj || live.enCurso ? 'Entra en la próxima pelota muerta.' : 'Se aplica desde el próximo cuarto.'}>
+              <div className="vivo-pz">
+                <span className="vivo-k">Defensa</span>
+                <div className="segmented">
+                  {(
+                    [
+                      ['zona', 'Zona', 'Ordenada y económica: cuida el físico. Ojo con los tiradores.'],
+                      ['hombre', 'Hombre', 'Asfixia al rival, pero quema piernas. Fundidos, quedan pasillos.'],
+                      ['presion', 'Presión', 'A toda cancha: el máximo castigo y el máximo desgaste. Sólo con piernas frescas.'],
+                    ] as const
+                  ).map(([id, label, tip]) => (
+                    <button key={id} className={live.defense === id ? 'on' : ''} title={tip} onClick={() => dispatch({ type: 'SET_TACTIC', defense: id })}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="vivo-pz">
+                <span className="vivo-k">Ataque</span>
+                <div className="segmented">
+                  {(
+                    [
+                      ['equipo', 'Colectivo', 'La mueven todos: menos brillo, más pases. Aprovecha la química del grupo.'],
+                      ['estrella', 'A la referencia', 'Todo pasa por la referencia. Si está caliente es fiesta; si no, la esperan entre dos.'],
+                      ['correr', 'Correr', 'Ida y vuelta: más puntos para los dos. Gana el que tiene piernas.'],
+                    ] as const
+                  ).map(([id, label, tip]) => (
+                    <button key={id} className={live.attack === id ? 'on' : ''} title={tip} onClick={() => dispatch({ type: 'SET_TACTIC', attack: id })}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
+
+          <div className="vivo-botones">
+            {reloj ? (
+              <>
+                {/* El botón apagado dice por qué: en el último tramo el cuarto ya
+                    está cerrado en el motor (el reloj sólo lo cuenta) y no queda
+                    pelota muerta donde meter el minuto; antes se apagaba mudo. */}
+                <button
+                  disabled={!live.enCurso || !!live.minutoPedido || minutosQueQuedan <= 0}
+                  title={
+                    minutosQueQuedan <= 0
+                      ? 'Ya pediste los dos minutos del partido.'
+                      : live.minutoPedido
+                        ? 'Minuto pedido: corre en la próxima pelota muerta.'
+                        : !live.enCurso
+                          ? 'En este cuarto ya no queda pelota muerta: el minuto se pide en el próximo.'
+                          : 'Corta el juego en la próxima pelota muerta: el rival ataca peor ese tramo y los cinco respiran. Tenés dos por partido.'
+                  }
+                  onClick={pedirMinuto}
+                >
+                  ⏱ Pedir minuto{minutosQueQuedan > 0 ? ` · ${minutosQueQuedan}` : ''}
+                </button>
+                <button onClick={saltar}>Saltar el cuarto ⏭</button>
+                <button className="primary v1-cta" onClick={pausar}>
+                  {reloj.pausa ? '▶ Seguir' : '❚❚ Pausar'}
+                </button>
+              </>
+            ) : !live.finished ? (
+              <>
+                <button disabled={!!live.pendingIncident || simulando} title="Juega lo que falta de corrido, con tu plan de cambios (o el DT). Se frena sola si hay una incidencia." onClick={() => setSimulando(true)}>
+                  {simulando ? 'Simulando…' : 'Simular el partido ⏩'}
+                </button>
+                {/* Con una incidencia sin resolver, el motivo va en el botón
+                    mismo, no en letra chica al lado (sep 2026). */}
+                <button className="primary v1-cta" disabled={!!live.pendingIncident || simulando} onClick={jugarCuarto}>
+                  {live.pendingIncident
+                    ? 'Resolvé la incidencia primero'
+                    : live.enCurso
+                      ? `▶ Seguir el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto`
+                      : `▶ Jugar el ${Q_LABELS[Math.min(regularPlayed, 3)]} cuarto`}
+                </button>
+              </>
+            ) : (
+              <button className="primary v1-cta" onClick={() => dispatch({ type: 'FINISH_MATCH' })}>
+                Ver el informe del partido →
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

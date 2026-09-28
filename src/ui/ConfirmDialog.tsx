@@ -5,6 +5,7 @@
 import { useEffect, useRef } from 'react';
 import { Icon, type IconName } from './Icon';
 import { useTeclasModal } from './teclas';
+import './modales.css';
 
 export interface ConfirmRequest {
   title: string;
@@ -38,17 +39,26 @@ export function ConfirmDialog({ req, onClose }: Props) {
     if (req) caja.current?.focus();
   }, [req]);
   if (!req) return null;
+  // Sobria: sin cinta ni letra a mano. La pregunta, lo que pasa si decís que
+  // sí, un solo botón claro (naranja, o rojo si destruye algo) y cancelar
+  // como ghost, al lado.
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" ref={caja} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
-        <div className="event-head">
-          <div className="event-icon">
-            <Icon name={req.icon ?? 'alerta'} size={30} />
-          </div>
+      <div
+        className="modal confirmar"
+        ref={caja}
+        tabIndex={-1}
+        role="alertdialog"
+        aria-modal="true"
+        aria-label={req.title}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={`confirmar-cabeza${req.danger ? ' danger' : ''}`}>
+          <Icon name={req.icon ?? 'alerta'} size={24} />
           <h2>{req.title}</h2>
         </div>
         <p className="event-text">{req.message}</p>
-        <div className="options">
+        <div className="confirmar-botones">
           <button className={req.danger ? 'danger' : 'primary'} onClick={confirmar}>
             {req.confirmLabel}
           </button>

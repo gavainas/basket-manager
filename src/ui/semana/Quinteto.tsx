@@ -1,5 +1,6 @@
 // Etapa 3 · Quinteto: el plantel a la izquierda, la pizarra con los cinco
-// puestos y el banco a la derecha, el pie fijo con "Ir al partido".
+// puestos y el banco al centro, la lectura del partido a la derecha y el pie
+// fijo con "Salir a la cancha" (UI V1, lámina 05 cuadro 18).
 
 import type { Player } from '../../game/types';
 import { BALANCE } from '../../game/balance';
@@ -12,8 +13,9 @@ import { ScoutingCard } from '../ScoutingCard';
 import { Tip, TIPS } from '../Tip';
 import { rivalDifficulty, rivalStyleInfo, weekLabel } from '../helpers';
 import { useEspacio } from '../teclas';
-import { Avatar } from '../Avatar';
-import { absentIds, POS_ABBR, POSITION_ORDER, shortName, type Props } from './comun';
+import { Crest } from '../Crest';
+import { clubByLegacyId, userFixtureOfWeek } from '../../game/world';
+import { absentIds, Cara, POS_ABBR, POSITION_ORDER, shortName, type Props } from './comun';
 
 /** Asigna los titulares a los 5 puestos de la pizarra (primero por posición natural). */
 function assignSlots(starters: Player[]): (Player | null)[] {
@@ -158,218 +160,144 @@ export function LineupPanel({ state, dispatch }: Props) {
           ? 'Se viene un partido parejo.'
           : 'El rival parece más fuerte: habrá que correr el doble.';
   const style = rivalStyleInfo(rival.style);
+  const diff = rivalDifficulty(rival);
+  const rivalClub = clubByLegacyId(state.world, rival.id);
+  const fx = userFixtureOfWeek(state.world, state.week);
+  const lastMinute = state.callUp.filter((e) => e.lastMinute);
+  const titularesOk = count === 5 || (shortStart && count === maxStarters);
+
+  // El plantel agrupado por lo que va a hacer el sábado, como la planilla del
+  // DT: los cinco, el banco, los que vinieron y no tienen lugar, los que no están.
+  const grupos: { key: string; titulo: string; cuenta?: string; players: Player[] }[] = [
+    { key: 'cancha', titulo: 'En cancha', cuenta: `${count}/${shortStart ? maxStarters : 5}`, players: sorted.filter((p) => state.starters.includes(p.id)) },
+    { key: 'banco', titulo: 'Banco', cuenta: `${rotationIds.length}/${maxRotation}`, players: sorted.filter((p) => rotationIds.includes(p.id)) },
+    { key: 'libres', titulo: 'Sin lugar', players: sorted.filter((p) => isSelectable(p) && !absent.has(p.id) && !state.starters.includes(p.id) && !rotationIds.includes(p.id)) },
+    { key: 'fuera', titulo: 'No están', players: sorted.filter((p) => !(isSelectable(p) && !absent.has(p.id))) },
+  ];
+
+  const renglon = (p: Player) => {
+    const avail = isSelectable(p) && !absent.has(p.id);
+    const isStarter = state.starters.includes(p.id);
+    const inRotation = rotationIds.includes(p.id);
+    const starterFull = count >= 5 && !isStarter;
+    const rotationFull = rotationIds.length >= maxRotation && !inRotation;
+    const est: { cls: 'good' | 'warn' | 'bad'; label: string } | null = !avail
+      ? {
+          cls: 'bad',
+          label: absent.has(p.id)
+            ? 'No vino'
+            : p.status === 'lesionado'
+              ? p.injuryReason === 'laboral'
+                ? `Laburo ${p.injuryWeeks} sem`
+                : `Lesión ${p.injuryWeeks} sem`
+              : 'No disponible',
+        }
+      : lateIds.has(p.id)
+        ? { cls: 'warn', label: '2° tiempo' }
+        : p.status === 'al_borde'
+          ? { cls: 'bad', label: 'Al borde' }
+          : p.status === 'molesto'
+            ? { cls: 'warn', label: 'Molesto' }
+            : null;
+    return (
+      <div
+        key={p.id}
+        className={`sem-jug${isStarter ? ' titular' : ''}${inRotation ? ' banco' : ''}${!avail ? ' off' : ''}`}
+        draggable={avail}
+        onDragStart={avail ? dragStart(p.id) : undefined}
+      >
+        <Cara p={p} size={30} gris={!avail} />
+        <div className="sem-jug-quien">
+          <div className="sem-jug-nom">
+            <PlayerLink id={p.id}>{p.name}</PlayerLink>
+          </div>
+          <div className="sem-jug-meta">
+            <span className="sem-jug-pos">{POS_ABBR[p.position]}</span>
+            {est ? (
+              <span className={`v1-est ${est.cls}`} title={lateIds.has(p.id) ? 'Sólo puede entrar desde el banco, en el segundo tiempo' : undefined}>
+                {est.label}
+              </span>
+            ) : null}
+            <span title="Físico" className={p.physical <= BALANCE.callUp.exhaustedThreshold ? 'warn' : undefined}>
+              <Icon name="fisico" size={12} /> {Math.round(p.physical)}
+            </span>
+            <span title="Motivación">
+              <Icon name="animo" size={12} /> {Math.round(p.motivation)}
+            </span>
+            {p.lastRating !== null && <span title="Nota del último partido">últ. {p.lastRating}</span>}
+          </div>
+        </div>
+        <div className="sem-jug-media" title="Nivel estimado">≈{p.visibleRating}</div>
+        <div className="sem-jug-btns">
+          <button
+            className={`sem-tr t${isStarter ? ' on' : ''}`}
+            title={lateIds.has(p.id) ? 'Llega al segundo tiempo: no puede ser titular' : isStarter ? 'Titular · click para sacarlo' : 'Titular'}
+            aria-pressed={isStarter}
+            disabled={!avail || lateIds.has(p.id) || (starterFull && !isStarter)}
+            onClick={() => dispatch({ type: 'TOGGLE_STARTER', id: p.id })}
+          >
+            T
+          </button>
+          <button
+            className={`sem-tr r${inRotation ? ' on' : ''}`}
+            title={inRotation ? 'En el banco · click para sacarlo' : 'Rotación (banco)'}
+            aria-pressed={inRotation}
+            disabled={!avail || isStarter || rotationFull}
+            onClick={() => dispatch({ type: 'TOGGLE_ROTATION', id: p.id })}
+          >
+            R
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    /* Tres franjas de alto fijo (tanda C): arriba cómo llega el partido y el
-       quinteto de un vistazo, en el medio la pizarra —que es LA acción de esta
-       pantalla y antes quedaba medio escondida abajo del pliegue—, abajo la
-       confirmación siempre en el mismo lugar. */
-    <div className="quinteto-pantalla">
-      <div className="quinteto-cabecera">
-      <div className="card">
-        <h3>
-          {weekLabel(state.week, state.seasonLength)} · vs <RivalLink id={rival.id}>{rival.name}</RivalLink>
-        </h3>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span className={`chip ${rivalDifficulty(rival).cls}`}>{rivalDifficulty(rival).label}</span>
-          <span className="chip accent" title={style.desc}>
-            {style.label}
-          </span>
-          <Tip text={TIPS.titulares}>
-            <span className={`chip ${count === 5 || (shortStart && count === maxStarters) ? 'good' : 'warn'}`}>
-              Titulares: {count}/{shortStart ? maxStarters : 5}
-            </span>
-          </Tip>
-          <Tip text={TIPS.banco}>
-            <span className={`chip ${rotationIds.length > 0 ? 'good' : 'warn'}`}>
-              Banco: {rotationIds.length}/{maxRotation}
-            </span>
-          </Tip>
-          {missing.length > 0 && count === 5 && <span className="chip warn">Sin {missing.join(', ')} natural</span>}
-          {count === 5 && missing.length === 0 && <span className="chip good">Todas las posiciones cubiertas</span>}
-        </div>
-        {vibe && (
-          <p className="muted" style={{ marginBottom: 0 }}>
-            {vibe} <span title={style.desc}>({style.label.replace(/^\S+\s/, '')}: {style.desc.toLowerCase()})</span>
-          </p>
-        )}
-        {count === 5 && rotationIds.length === 0 && (
-          <p className="muted" style={{ marginBottom: 0, color: 'var(--warn)' }}>
-            Sin banco no hay cambios: los cinco juegan los 40 minutos, llegan fundidos al final y se desgastan mucho más.
-            {available.length > 5 && ` Tenés ${available.length} en la planilla.`}
-          </p>
-        )}
-        {count === 5 && rotationIds.length > 0 && leftOut.length > 0 && (
-          <p className="muted" style={{ marginBottom: 0, color: 'var(--warn)' }}>
-            Vas con {count + rotationIds.length} y tenés {available.length} en la planilla:{' '}
-            {leftOutHot.length > 0
-              ? `${leftOutHot.map((p) => shortName(p.name)).join(', ')} ${leftOutHot.length > 1 ? 'se van' : 'se va'} a calentar mirando desde afuera.`
-              : `${leftOut.map((p) => shortName(p.name)).join(', ')} ${leftOut.length > 1 ? 'miran' : 'mira'} desde afuera.`}
-          </p>
-        )}
-        {count === 5 && rotationIds.length > 0 && (
-          <p className="muted" style={{ marginBottom: 0 }}>
-            {rotationIds.length >= PLAN_MIN_BENCH
-              ? 'Con banco, el partido rota solo: frescos en el 2° cuarto, titulares en el 3°, cerradores al final. En el partido lo podés pasar a mano.'
-              : 'Con un solo suplente los cambios son tuyos: el plan rota solo desde dos en el banco.'}
-          </p>
-        )}
-        {count === 5 && sinRecambio.length > 0 && (
-          <p className="muted" style={{ marginBottom: 0, color: 'var(--warn)' }}>
-            {sinRecambio.length === 1
-              ? `Sin ${sinRecambio[0].position.toLowerCase()} de recambio en el banco: el plan no tiene con quién descansar a ${shortName(sinRecambio[0].name)}, que va a jugar casi los 40.`
-              : `Sin recambio de su puesto en el banco: el plan no tiene con quién descansar a ${sinRecambio.map((p) => shortName(p.name)).join(', ')}, que van a jugar casi los 40.`}{' '}
-            {conRecambioAfuera.length > 0
-              ? `Tenés ${conRecambioAfuera.map((t) => t.position.toLowerCase()).join(' y ')} en la planilla sin lugar en el banco.`
-              : 'Si querés cuidarlo, poné a alguien fuera de puesto en el banco o hacé los cambios a mano.'}
-          </p>
-        )}
-      </div>
-
-      {state.callUp.some((e) => e.lastMinute) && (
-        <div className="card" style={{ borderColor: 'var(--bad)', marginBottom: '1rem' }}>
-          <h3 style={{ color: 'var(--bad)' }}>
-            <Icon name="alerta" size={16} /> Baja{state.callUp.filter((e) => e.lastMinute).length > 1 ? 's' : ''} de
-            último momento
-          </h3>
-          {state.callUp
-            .filter((e) => e.lastMinute)
-            .map((e) => (
-              <p key={e.playerId} style={{ margin: '0.25rem 0' }}>
-                <PlayerLink id={e.playerId}>{e.playerName}</PlayerLink>: {e.note}
-              </p>
-            ))}
-          <p className="muted" style={{ margin: '0.3rem 0 0' }}>
-            La lista se largó hace dos días y la vida siguió pasando. No hay margen para gestiones: se arma con los que
-            están.
-          </p>
-        </div>
-      )}
-
-
-      {forfeitRisk && (
-        <div className="card" style={{ borderColor: 'var(--bad)', marginBottom: '1rem' }}>
-          <strong style={{ color: 'var(--bad)' }}>
-            Solo hay {available.length} jugadores disponibles: no llega a 5. Si jugás así, se pierde por forfeit.
-          </strong>
-        </div>
-      )}
-      {shortStart && (
-        <div className="card" style={{ borderColor: 'var(--warn)', marginBottom: '1rem' }}>
-          <strong style={{ color: 'var(--warn)' }}>
-            Solo {maxStarters} pueden arrancar:{' '}
-            {available
-              .filter((p) => lateIds.has(p.id))
-              .map((p) => p.name)
-              .join(' y ')}{' '}
-            llega{available.filter((p) => lateIds.has(p.id)).length > 1 ? 'n' : ''} para el segundo tiempo. Se arranca
-            corto y entra{available.filter((p) => lateIds.has(p.id)).length > 1 ? 'n' : ''} en el 3er cuarto.
-          </strong>
-        </div>
-      )}
-      </div>
-
-      <div className="lineup-layout">
-        <div className="lineup-izq">
-        <div className="lineup-list card" onDragOver={allowDrop} onDrop={dropOnList}>
-          <div className="lineup-toolbar">
-            <h3 style={{ margin: 0 }}>Plantel</h3>
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <button className="small" onClick={() => dispatch({ type: 'AUTO_LINEUP' })}>
-                Sugerir
-              </button>
-              <button className="small" onClick={() => dispatch({ type: 'CLEAR_LINEUP' })}>
-                Limpiar
-              </button>
-            </div>
+    /* Lámina 05, cuadro 18: el plantel a la izquierda, la cancha al centro y
+       la lectura del partido a la derecha; abajo, el pie fijo con «Salir a la
+       cancha». La pizarra es LA acción de la pantalla: va en el medio y grande,
+       sobre el parquet de la escena. */
+    <div className="sem-quinteto sem-flujo">
+      <div className="sem-q-cuerpo">
+        <aside className="sem-q-plantel v1-planilla" onDragOver={allowDrop} onDrop={dropOnList} aria-label="El plantel">
+          <div className="sem-q-plantel-cab">
+            <h3>El plantel</h3>
+            <button className="small ghost" onClick={() => dispatch({ type: 'AUTO_LINEUP' })} title="El DT arma el quinteto y el banco">
+              Sugerir
+            </button>
+            <button className="small ghost" onClick={() => dispatch({ type: 'CLEAR_LINEUP' })} title="Vaciar quinteto y banco">
+              Limpiar
+            </button>
           </div>
-          {sorted.map((p) => {
-            const avail = isSelectable(p) && !absent.has(p.id);
-            const isStarter = state.starters.includes(p.id);
-            const inRotation = rotationIds.includes(p.id);
-            const starterFull = count >= 5 && !isStarter;
-            const rotationFull = rotationIds.length >= maxRotation && !inRotation;
-            return (
-              <div
-                key={p.id}
-                className={`lp-row${isStarter ? ' starter' : ''}${inRotation ? ' rot' : ''}${!avail ? ' off' : ''}`}
-                draggable={avail}
-                onDragStart={avail ? dragStart(p.id) : undefined}
-              >
-                <span className="lp-pos">{POS_ABBR[p.position]}</span>
-                <div className="lp-who">
-                  <div className="lp-name">
-                    <PlayerLink id={p.id}>{p.name}</PlayerLink>
-                    {!avail && (
-                      <span className="chip bad" style={{ marginLeft: '0.4rem' }}>
-                        {absent.has(p.id)
-                          ? 'No vino'
-                          : p.status === 'lesionado'
-                            ? p.injuryReason === 'laboral'
-                              ? `Laburo ${p.injuryWeeks} sem.`
-                              : `Lesión ${p.injuryWeeks} sem.`
-                            : 'No disponible'}
-                      </span>
-                    )}
-                    {avail && p.status === 'molesto' && (
-                      <span className="chip warn" style={{ marginLeft: '0.4rem' }}>
-                        Molesto
-                      </span>
-                    )}
-                    {avail && p.status === 'al_borde' && (
-                      <span className="chip bad" style={{ marginLeft: '0.4rem' }}>
-                        Al borde
-                      </span>
-                    )}
-                    {avail && lateIds.has(p.id) && (
-                      <span className="chip warn" style={{ marginLeft: '0.4rem' }} title="Solo puede entrar desde el banco, en el segundo tiempo">
-                        <Icon name="reloj" size={11} /> 2do tiempo
-                      </span>
-                    )}
-                  </div>
-                  <div className="lp-meta">
-                    <span title="Físico">
-                      <Icon name="fisico" size={12} /> {Math.round(p.physical)}
-                    </span>
-                    <span title="Motivación">
-                      <Icon name="animo" size={12} /> {Math.round(p.motivation)}
-                    </span>
-                    {p.lastRating !== null && <span title="Último partido">Últ. {p.lastRating}/10</span>}
-                  </div>
+          {grupos
+            .filter((g) => g.players.length > 0 || g.key === 'cancha' || g.key === 'banco')
+            .map((g) => (
+              <div key={g.key} className={`sem-q-grupo ${g.key}`}>
+                <div className="sem-q-grupo-tit">
+                  {g.titulo}
+                  {g.cuenta && <span>{g.cuenta}</span>}
                 </div>
-                <div className="lp-rating">
-                  <div className="num">≈{p.visibleRating}</div>
-                </div>
-                <div className="lp-btns">
-                  <button
-                    className={`mini${isStarter ? ' on' : ''}`}
-                    title={lateIds.has(p.id) ? 'Llega al segundo tiempo: no puede ser titular' : 'Titular'}
-                    disabled={!avail || lateIds.has(p.id) || (starterFull && !isStarter)}
-                    onClick={() => dispatch({ type: 'TOGGLE_STARTER', id: p.id })}
-                  >
-                    T
-                  </button>
-                  <button
-                    className={`mini blue${inRotation ? ' on' : ''}`}
-                    title="Rotación (banco)"
-                    disabled={!avail || isStarter || rotationFull}
-                    onClick={() => dispatch({ type: 'TOGGLE_ROTATION', id: p.id })}
-                  >
-                    R
-                  </button>
-                </div>
+                {g.players.length === 0 ? (
+                  <p className="sem-q-vacio">{g.key === 'cancha' ? 'Tocá T para poner titulares.' : 'Tocá R para citar suplentes.'}</p>
+                ) : (
+                  g.players.map(renglon)
+                )}
               </div>
-            );
-          })}
-        </div>
-        {/* El scouting del rival, debajo de la lista: primero armás el quinteto,
-            después leés al rival. Scrollea junto con el plantel. */}
-        <ScoutingCard state={state} />
-        </div>
+            ))}
+        </aside>
 
-        <div className="lineup-court card">
-          <h3>La pizarra</h3>
-          <div className="court">
+        <section className="sem-q-cancha" aria-label="La pizarra">
+          <div className="sem-q-cancha-cab v1-hero">
+            <span className="v1-eyebrow">Nuestro quinteto</span>
+            <span className={`sem-q-cuenta ${titularesOk ? 'good' : 'warn'}`}>
+              <Tip text={TIPS.titulares}>
+                <span>
+                  {count}/{shortStart ? maxStarters : 5} titulares
+                </span>
+              </Tip>
+            </span>
+          </div>
+          <div className="sem-court">
             <CourtLines />
             {POSITION_ORDER.map((pos, i) => {
               const pl = slots[i];
@@ -377,7 +305,7 @@ export function LineupPanel({ state, dispatch }: Props) {
               return (
                 <div
                   key={pos}
-                  className={`slot${pl ? ' filled' : ''}`}
+                  className={`sem-slot${pl ? ' lleno' : ' libre'}${oop ? ' oop' : ''}`}
                   style={{ left: SLOT_POS[i].x, top: SLOT_POS[i].y }}
                   onClick={pl ? () => dispatch({ type: 'TOGGLE_STARTER', id: pl.id }) : undefined}
                   onDragOver={allowDrop}
@@ -390,87 +318,200 @@ export function LineupPanel({ state, dispatch }: Props) {
                       : `Arrastrá un jugador para el puesto de ${pos}`
                   }
                 >
-                  <div className="slot-pos-label">{pos}</div>
-                  <div className={`slot-avatar${oop ? ' oop' : ''}${pl ? '' : ' empty'}`}>
-                    {pl ? <Avatar seed={pl.id} age={pl.age} appearance={pl.appearance} title={pl.name} personality={pl.personality} /> : '+'}
+                  {pl ? <Cara p={pl} size={64} cls={oop ? 'warn' : ''} /> : <span className="sem-slot-vacio">+</span>}
+                  <div className="sem-slot-placa">
+                    <b>{pl ? shortName(pl.name) : pos}</b>
+                    <span>
+                      {pl ? (
+                        <>
+                          {oop ? <em>es {pl.position}</em> : pos} · ≈{pl.visibleRating} · {(pl.height / 100).toFixed(2)} m
+                        </>
+                      ) : (
+                        'libre'
+                      )}
+                    </span>
                   </div>
-                  <div className={`slot-name${pl ? '' : ' dim'}`}>{pl ? shortName(pl.name) : 'Libre'}</div>
-                  {pl && (
-                    <>
-                      <div className="slot-sub">
-                        ≈{pl.visibleRating} · {(pl.height / 100).toFixed(2)} m
-                      </div>
-                      {/* El puesto de verdad va en su renglón: pegado a la altura
-                          ("≈62 · 1.87 m · es Alero") partía en "… · es" y "Alero"
-                          al ancho de la ficha. */}
-                      {oop && <div className="slot-sub oop-text">es {pl.position}</div>}
-                    </>
-                  )}
                 </div>
               );
             })}
           </div>
-          <div className="bench" onDragOver={allowDrop} onDrop={dropOnBench}>
-            <span className="bench-label">Banco ({rotPlayers.length}/{maxRotation}):</span>
-            {rotPlayers.map((p) => (
-              <div
-                key={p.id}
-                className="bench-slot"
-                title={`${p.name} (${p.position}) · click para sacarlo`}
-                onClick={() => dispatch({ type: 'TOGGLE_ROTATION', id: p.id })}
-                draggable
-                onDragStart={dragStart(p.id)}
-              >
-                <div className="slot-avatar small">
-                  <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} personality={p.personality} />
-                </div>
-                <div className="slot-name">{shortName(p.name)}</div>
-                <div className="slot-sub">{POS_ABBR[p.position]}</div>
-              </div>
-            ))}
-            {Array.from({ length: Math.max(0, maxRotation - rotPlayers.length) }).map((_, i) => (
-              <div key={`empty-${i}`} className="bench-slot dim">
-                <div className="slot-avatar small empty">·</div>
-              </div>
-            ))}
+          <div className="sem-q-banco" onDragOver={allowDrop} onDrop={dropOnBench}>
+            <Tip text={TIPS.banco}>
+              <span className="sem-q-banco-tit">
+                Banco <b>{rotPlayers.length}/{maxRotation}</b>
+              </span>
+            </Tip>
+            <div className="sem-q-banco-gente">
+              {rotPlayers.map((p) => (
+                <button
+                  key={p.id}
+                  className="sem-suplente"
+                  title={`${p.name} (${p.position}) · click para sacarlo`}
+                  onClick={() => dispatch({ type: 'TOGGLE_ROTATION', id: p.id })}
+                  draggable
+                  onDragStart={dragStart(p.id)}
+                >
+                  <Cara p={p} size={42} />
+                  <b>{shortName(p.name)}</b>
+                  <span>{POS_ABBR[p.position]}</span>
+                </button>
+              ))}
+              {Array.from({ length: Math.max(0, maxRotation - rotPlayers.length) }).map((_, i) => (
+                <span key={`empty-${i}`} className="sem-suplente vacio" aria-hidden="true">
+                  <span className="sem-slot-vacio chico">·</span>
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
+
+        <section className="sem-q-lectura v1-hero" aria-label="El partido">
+          <div className="v1-eyebrow">
+            <b>{weekLabel(state.week, state.seasonLength).replace('Semana', 'Fecha')}</b>
+            {fx?.time ? ` · hoy ${fx.time}` : ' · hoy se juega'}
+          </div>
+          <div className="sem-q-rival">
+            {rivalClub && <Crest seed={rivalClub.id} name={rivalClub.name} colors={rivalClub.colors} founded={rivalClub.founded} size={48} />}
+            <div>
+              <small>vs</small>
+              <RivalLink id={rival.id}>{rival.name}</RivalLink>
+            </div>
+          </div>
+          <p className="v1-frase">
+            <b className={diff.cls}>{diff.label}.</b> <span title={style.desc}>{style.label}: {style.desc.toLowerCase()}</span>
+          </p>
+          {vibe && (
+            <p className="v1-frase sem-q-vibe">
+              <b>{vibe}</b>
+            </p>
+          )}
+
+          <div className="sem-q-notas">
+            {lastMinute.length > 0 && (
+              <p className="v1-frase">
+                <b className="bad">
+                  <Icon name="alerta" size={14} /> Baja{lastMinute.length > 1 ? 's' : ''} de último momento.
+                </b>{' '}
+                {lastMinute.map((e, i) => (
+                  <span key={e.playerId}>
+                    {i > 0 && ' '}
+                    <PlayerLink id={e.playerId}>{e.playerName}</PlayerLink>: {e.note}
+                  </span>
+                ))}{' '}
+                La lista se largó hace dos días y la vida siguió: se arma con los que están.
+              </p>
+            )}
+            {forfeitRisk && (
+              <p className="v1-frase">
+                <b className="bad">Sólo hay {available.length} disponibles: no llega a 5.</b> Si jugás así, se pierde por forfeit.
+              </p>
+            )}
+            {shortStart && (
+              <p className="v1-frase">
+                <b className="warn">Sólo {maxStarters} pueden arrancar.</b>{' '}
+                {available
+                  .filter((p) => lateIds.has(p.id))
+                  .map((p) => p.name)
+                  .join(' y ')}{' '}
+                llega{available.filter((p) => lateIds.has(p.id)).length > 1 ? 'n' : ''} para el segundo tiempo: se arranca
+                corto y entra{available.filter((p) => lateIds.has(p.id)).length > 1 ? 'n' : ''} en el 3er cuarto.
+              </p>
+            )}
+            {count === 5 && missing.length > 0 && (
+              <p className="v1-frase">
+                <b className="warn">Sin {missing.join(', ').toLowerCase()} natural</b> en el quinteto: alguien juega fuera de puesto.
+              </p>
+            )}
+            {count === 5 && missing.length === 0 && (
+              <p className="v1-frase">
+                <b className="good">Las cinco posiciones cubiertas.</b>
+              </p>
+            )}
+            {count === 5 && rotationIds.length === 0 && (
+              <p className="v1-frase">
+                <b className="warn">Sin banco no hay cambios:</b> los cinco juegan los 40 minutos, llegan fundidos al final y
+                se desgastan mucho más.
+                {available.length > 5 && ` Tenés ${available.length} en la planilla.`}
+              </p>
+            )}
+            {count === 5 && rotationIds.length > 0 && (
+              <p className="v1-frase">
+                {rotationIds.length >= PLAN_MIN_BENCH ? (
+                  <>
+                    <b>Con banco, el partido rota solo:</b> frescos en el 2° cuarto, titulares en el 3°, cerradores al final. En
+                    el partido lo podés pasar a mano.
+                  </>
+                ) : (
+                  <>
+                    <b>Con un solo suplente los cambios son tuyos:</b> el plan rota solo desde dos en el banco.
+                  </>
+                )}
+              </p>
+            )}
+            {count === 5 && rotationIds.length > 0 && leftOut.length > 0 && (
+              <p className="v1-frase">
+                <b className="warn">
+                  Vas con {count + rotationIds.length} de {available.length}:
+                </b>{' '}
+                {leftOutHot.length > 0
+                  ? `${leftOutHot.map((p) => shortName(p.name)).join(', ')} ${leftOutHot.length > 1 ? 'se van' : 'se va'} a calentar mirando desde afuera.`
+                  : `${leftOut.map((p) => shortName(p.name)).join(', ')} ${leftOut.length > 1 ? 'miran' : 'mira'} desde afuera.`}
+              </p>
+            )}
+            {count === 5 && sinRecambio.length > 0 && (
+              <p className="v1-frase">
+                <b className="warn">
+                  {sinRecambio.length === 1
+                    ? `Sin ${sinRecambio[0].position.toLowerCase()} de recambio en el banco:`
+                    : 'Sin recambio de su puesto en el banco:'}
+                </b>{' '}
+                {sinRecambio.length === 1
+                  ? `el plan no tiene con quién descansar a ${shortName(sinRecambio[0].name)}, que va a jugar casi los 40.`
+                  : `el plan no tiene con quién descansar a ${sinRecambio.map((p) => shortName(p.name)).join(', ')}, que van a jugar casi los 40.`}{' '}
+                {conRecambioAfuera.length > 0
+                  ? `Tenés ${conRecambioAfuera.map((t) => t.position.toLowerCase()).join(' y ')} en la planilla sin lugar en el banco.`
+                  : 'Si querés cuidarlo, poné a alguien fuera de puesto en el banco o hacé los cambios a mano.'}
+              </p>
+            )}
+          </div>
+
+          {/* El scouting del rival: primero armás el quinteto, después leés al
+              rival. Arranca plegado. */}
+          <div className="sem-q-scouting">
+            <ScoutingCard state={state} />
+          </div>
+        </section>
       </div>
 
-      <div className="quinteto-pie pie-fijo">
-      {lineupPromiseWarnings(state).map((w) => (
-        <p key={w.playerId} style={{ color: w.breaksToday ? 'var(--bad)' : 'var(--warn, #c90)', fontWeight: 600, margin: '0 0 0.35rem' }}>
-          {w.text}
-        </p>
-      ))}
-
-      <div className="confirm-bar">
+      <div className="sem-pie pie-fijo">
+        <div className="sem-pie-txt">
+          {lineupPromiseWarnings(state).map((w) => (
+            <p key={w.playerId} className={`sem-promesa ${w.breaksToday ? 'bad' : 'warn'}`}>
+              {w.text}
+            </p>
+          ))}
+          <p className="v1-frase">
+            {canPlay ? (
+              <>
+                Arrastrá jugadores a los puestos o al banco (o usá <b>T</b> y <b>R</b>); click en la pizarra para sacar.{' '}
+                <span className="sem-tecla">Espacio</span> también sale.
+              </>
+            ) : forfeitRisk ? (
+              <>No llegan a cinco: presentarse igual es perder por forfeit.</>
+            ) : shortStart ? (
+              <>Marcá como titulares a los {maxStarters} que pueden arrancar (botón <b>T</b>).</>
+            ) : (
+              <>Elegí exactamente 5 titulares (botón <b>T</b>) o arrastralos a la pizarra.</>
+            )}
+          </p>
+        </div>
         <button
-          className="primary"
+          className="primary v1-cta"
           disabled={!canPlay && !forfeitRisk}
           onClick={() => dispatch({ type: 'START_MATCH' })}
         >
-          {forfeitRisk && !canPlay ? 'Presentarse igual (forfeit) →' : 'Ir al partido →'}
+          {forfeitRisk && !canPlay ? 'Presentarse igual (forfeit) →' : 'Salir a la cancha →'}
         </button>
-        {canPlay && (
-          <span className="hint">
-            <b>Espacio</b> también.
-          </span>
-        )}
-        {!canPlay && !forfeitRisk && (
-          <span className="hint">
-            {shortStart
-              ? `Marcá como titulares a los ${maxStarters} que pueden arrancar (botón T).`
-              : 'Elegí exactamente 5 titulares (botón T).'}
-          </span>
-        )}
-        {canPlay && (
-          <span className="hint">
-            Arrastrá jugadores a los puestos de la cancha o al banco (también sirven los botones T/R). Click en la
-            pizarra para sacar.
-          </span>
-        )}
-      </div>
       </div>
     </div>
   );

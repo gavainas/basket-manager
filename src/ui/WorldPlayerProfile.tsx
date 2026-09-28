@@ -8,8 +8,8 @@ import {
   worldPlayerName,
   worldPlayerTeam,
 } from '../game/world';
-import { Avatar } from './Avatar';
 import { Bar } from './Bar';
+import { Ficha, FichaDePie, Renglon, Seccion } from './Ficha';
 import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
 import { useTeclasModal } from './teclas';
@@ -50,148 +50,141 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
     { pts: 0, partidos: 0 }
   );
 
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="profile" onClick={(e) => e.stopPropagation()}>
-        <div className="profile-head">
-          <div className="avatar profile-avatar">
-            <Avatar seed={p.id} age={p.age} jersey={club?.colors[0]} title={worldPlayerName(p)} personality={p.personality} />
-          </div>
-          <div className="profile-who">
-            <div className="profile-name">{worldPlayerName(p)}</div>
-            <div className="profile-chips">
-              <span className="chip">{p.position}</span>
-              {p.secondaryPositions.map((sp) => (
-                <span key={sp} className="chip" style={{ opacity: 0.7 }}>
-                  también {sp}
-                </span>
-              ))}
-              <span className="chip">{p.age} años</span>
-              {faced > 0 && (
-                <span className="chip accent">Lo enfrentaste {faced === 1 ? 'una vez' : `${faced} veces`}</span>
-              )}
-              {p.exUserClub && <span className="chip">Ex jugador de tu club</span>}
-              {p.injuryWeeks > 0 && <span className="chip bad">Lesionado ({p.injuryWeeks} sem.)</span>}
-              {interior && <span className="chip warn">Vive en {p.availability.residence}</span>}
-            </div>
-          </div>
-          <div className="rating">
-            <div className="num" style={knowsWell ? undefined : { fontSize: '0.85rem' }}>
-              {perceivedLevel(state, p, knowledge)}
-            </div>
-          </div>
-          <button className="profile-close" onClick={onClose} title="Cerrar">
-            ✕
-          </button>
+  const nivel = perceivedLevel(state, p, knowledge);
+  const estados = [
+    p.injuryWeeks > 0 ? { cls: 'bad', label: `Lesionado (${p.injuryWeeks} sem.)` } : null,
+    interior ? { cls: 'warn', label: `Vive en ${p.availability.residence}` } : null,
+  ].filter((e): e is { cls: string; label: string } => !!e);
+
+  /* Un jugador de otro equipo, con el mismo idioma que la ficha de los
+     nuestros: de pie y grande a la izquierda, con lo que sabemos de él en
+     frases; la ficha de esta temporada en la planilla. */
+  const heroe = (
+    <>
+      <div className="ficha-heroe-texto">
+        <div className="v1-eyebrow">
+          {p.position}
+          {p.secondaryPositions.length > 0 && <> (también {p.secondaryPositions.join(', ')})</>} · <b>{p.age} años</b>
         </div>
-
-        <div className="profile-body">
-          <h4 className="profile-subtitle">Ficha esta temporada</h4>
-          <div className="data-grid">
-            <div className="data-row">
-              <span className="data-label">Equipo</span>
-              <span className="data-value">
-                {team && club ? (
-                  team.legacyRivalId ? (
-                    <RivalLink id={team.legacyRivalId}>{team.name}</RivalLink>
-                  ) : (
-                    team.name
-                  )
-                ) : (
-                  'Libre'
-                )}
-              </span>
-            </div>
-            {contra.partidos > 0 && (
-              <div className="data-row">
-                <span className="data-label">Contra nosotros</span>
-                <span className="data-value">
-                  {contra.pts === 0
-                    ? `Jugó ${contra.partidos === 1 ? 'un partido' : `${contra.partidos} partidos`} y no nos anotó.`
-                    : `${contra.pts} puntos en ${contra.partidos === 1 ? 'un partido' : `${contra.partidos} partidos`}${
-                        contra.partidos > 1 ? ` (${(contra.pts / contra.partidos).toFixed(1)} por partido)` : ''
-                      } esta temporada.`}
-                </span>
-              </div>
-            )}
-            <div className="data-row">
-              <span className="data-label">Liga</span>
-              <span className="data-value">
-                {league ? (
-                  <>
-                    <LeagueLink id={league.id}>{league.name}</LeagueLink> · {division?.name ?? ''}
-                  </>
-                ) : (
-                  '—'
-                )}
-              </span>
-            </div>
-            <div className="data-row">
-              <span className="data-label">Libre en</span>
-              <span className="data-value">
-                {freeLeagues.length > 0
-                  ? freeLeagues.map((l, i) => (
-                      <span key={l.id}>
-                        {i > 0 && ' · '}
-                        <LeagueLink id={l.id}>{l.name}</LeagueLink>
-                      </span>
-                    ))
-                  : 'Ninguna liga'}
-              </span>
-            </div>
-            {team && p.joinedSeason !== undefined && (
-              <div className="data-row">
-                <span className="data-label">En el equipo</span>
-                <span className="data-value">
-                  {p.joinedSeason >= world.season.number
-                    ? 'Llegó este año'
-                    : `Desde la temporada ${p.joinedSeason}`}
-                </span>
-              </div>
-            )}
-            <div className="data-row">
-              <span className="data-label">Residencia</span>
-              <span className="data-value">
-                {p.availability.residence}
-                {interior ? ` (${p.availability.distanceKm} km)` : ''}
-              </span>
-            </div>
-          </div>
-
-          <h4 className="profile-subtitle">Cómo es</h4>
-          {knowsWell ? (
+        <h2 className="ficha-nombre">{worldPlayerName(p)}</h2>
+        <p className="ficha-linea">
+          {team && club ? (
             <>
-              {/* De uno de otro club sólo hay fama, no ficha de conducta. */}
-              <p className="muted" style={{ margin: '0 0 0.4rem' }}>
-                {famaDeCumplidor(p.commitment)}
-              </p>
-              <Bar label="Confiabilidad" value={p.reliability} />
-              <Bar label="Prestigio" value={p.prestige} />
-              <p className="muted" style={{ margin: '0.4rem 0 0' }}>
-                Personalidad: {p.personality.replace('_', ' ')}. Lo que se comenta en la liga; la verdad se ve en
-                la cancha.
-              </p>
+              Juega en{' '}
+              {team.legacyRivalId ? <RivalLink id={team.legacyRivalId}>{team.name}</RivalLink> : team.name}
+              {league ? <> · {league.name}</> : null}.
             </>
           ) : (
-            <p className="muted" style={{ margin: 0 }}>
-              Se lo conoce poco: habría que enfrentarlo o preguntar en la liga para saber cómo es.
-            </p>
+            'Está libre: no juega en ningún equipo.'
           )}
-
-          <h4 className="profile-subtitle">Disponibilidad habitual</h4>
-          {!knowsWell ? (
-            <p className="muted">Poco y nada se sabe de su disponibilidad: en esta liga, eso se aprende jugándole.</p>
-          ) : p.availability.notes.length > 0 ? (
-            <ul className="reason-list">
-              {p.availability.notes.map((n, i) => (
-                <li key={i}>{n}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted">Sin restricciones conocidas: suele estar para jugar.</p>
-          )}
+          {faced > 0 && <> Lo enfrentaste {faced === 1 ? 'una vez' : `${faced} veces`}.</>}
+          {p.exUserClub && <> Jugó en tu club.</>}
+        </p>
+        <div className="ficha-valor">
+          <span className={`ficha-cifra${nivel.startsWith('≈') ? '' : nivel.startsWith('estimación') ? ' palabra dudosa' : ' palabra'}`}>{nivel}</span>
+          <span className="ficha-cifra-k">
+            Nivel estimado
+            <span>{knowsWell ? 'Lo conocemos bien' : 'Lo que se comenta'}</span>
+          </span>
         </div>
+        {estados.length > 0 && (
+          <div className="ficha-estados">
+            {estados.map((e) => (
+              <span key={e.label} className={`v1-est ${e.cls}`}>
+                {e.label}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
+      <FichaDePie seed={p.id} personality={p.personality} />
+    </>
+  );
+
+  return (
+    <Ficha onClose={onClose} label={worldPlayerName(p)} heroe={heroe} clase="ficha-mundo">
+      <Seccion titulo="Ficha esta temporada">
+        <div className="data-grid">
+          <Renglon label="Equipo">
+            {team && club ? (
+              team.legacyRivalId ? (
+                <RivalLink id={team.legacyRivalId}>{team.name}</RivalLink>
+              ) : (
+                team.name
+              )
+            ) : (
+              'Libre'
+            )}
+          </Renglon>
+          {contra.partidos > 0 && (
+            <Renglon label="Contra nosotros">
+              {contra.pts === 0
+                ? `Jugó ${contra.partidos === 1 ? 'un partido' : `${contra.partidos} partidos`} y no nos anotó.`
+                : `${contra.pts} puntos en ${contra.partidos === 1 ? 'un partido' : `${contra.partidos} partidos`}${
+                    contra.partidos > 1 ? ` (${(contra.pts / contra.partidos).toFixed(1)} por partido)` : ''
+                  } esta temporada.`}
+            </Renglon>
+          )}
+          <Renglon label="Liga">
+            {league ? (
+              <>
+                <LeagueLink id={league.id}>{league.name}</LeagueLink> · {division?.name ?? ''}
+              </>
+            ) : (
+              '—'
+            )}
+          </Renglon>
+          <Renglon label="Libre en">
+            {freeLeagues.length > 0
+              ? freeLeagues.map((l, i) => (
+                  <span key={l.id}>
+                    {i > 0 && ' · '}
+                    <LeagueLink id={l.id}>{l.name}</LeagueLink>
+                  </span>
+                ))
+              : 'Ninguna liga'}
+          </Renglon>
+          {team && p.joinedSeason !== undefined && (
+            <Renglon label="En el equipo">
+              {p.joinedSeason >= world.season.number ? 'Llegó este año' : `Desde la temporada ${p.joinedSeason}`}
+            </Renglon>
+          )}
+          <Renglon label="Residencia">
+            {p.availability.residence}
+            {interior ? ` (${p.availability.distanceKm} km)` : ''}
+          </Renglon>
+        </div>
+      </Seccion>
+
+      <Seccion titulo="Cómo es">
+        {knowsWell ? (
+          <>
+            {/* De uno de otro club sólo hay fama, no ficha de conducta. */}
+            <p className="ficha-frase">{famaDeCumplidor(p.commitment)}</p>
+            <Bar label="Confiabilidad" value={p.reliability} />
+            <Bar label="Prestigio" value={p.prestige} />
+            <p className="ficha-nota">
+              Personalidad: {p.personality.replace('_', ' ')}. Lo que se comenta en la liga; la verdad se ve en la cancha.
+            </p>
+          </>
+        ) : (
+          <p className="ficha-nada">Se lo conoce poco: habría que enfrentarlo o preguntar en la liga para saber cómo es.</p>
+        )}
+      </Seccion>
+
+      <Seccion titulo="Disponibilidad habitual">
+        {!knowsWell ? (
+          <p className="ficha-nada">Poco y nada se sabe de su disponibilidad: en esta liga, eso se aprende jugándole.</p>
+        ) : p.availability.notes.length > 0 ? (
+          <ul className="ficha-lista">
+            {p.availability.notes.map((n, i) => (
+              <li key={i}>{n}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="ficha-nada">Sin restricciones conocidas: suele estar para jugar.</p>
+        )}
+      </Seccion>
+    </Ficha>
   );
 }

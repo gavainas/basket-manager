@@ -1,0 +1,231 @@
+/* Los cierres (UI V1): fin de pretemporada (en el bar) y fin de temporada
+   (en la comisión). Momentos narrativos, no informes: el resultado grande y
+   sin caja arriba a la izquierda, una sola planilla con cinta a la derecha
+   —como «Esta semana» en el Tablero— y abajo lo que dejó, contado. El único
+   naranja está en el pie fijo. Todo cuelga de `.cierre`. Reemplaza a
+   `.season-end` y `.outcome` de styles.css para estas dos pantallas. */
+.cierre {
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
+  color: var(--text);
+}
+/* El velo del héroe, como el `abierta` del Tablero: oscurece donde va el
+   texto y deja ver la escena a la derecha y abajo. */
+.cierre::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 55% at 24% 26%, rgba(8, 29, 45, 0.9) 0%, rgba(8, 29, 45, 0.66) 55%, rgba(8, 29, 45, 0) 100%),
+    linear-gradient(90deg, rgba(8, 29, 45, 0.55) 0%, rgba(8, 29, 45, 0.1) 55%, rgba(8, 29, 45, 0) 70%),
+    linear-gradient(180deg, rgba(8, 29, 45, 0) 55%, rgba(8, 29, 45, 0.6) 100%);
+}
+.cierre-scroll { min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.cierre-grid {
+  max-width: var(--ancho-app);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+  grid-template-rows: auto auto;
+  gap: 1.6rem 3rem;
+  padding: clamp(1.2rem, 5vh, 3.4rem) var(--sp-4) 2rem;
+}
+
+/* ---------- El resultado ---------- */
+.cierre .cierre-hero { grid-column: 1; grid-row: 1; min-width: 0; padding-left: 1.5rem; }
+.cierre .cierre-titulo {
+  margin: 0.5rem 0 0;
+  font: 700 clamp(3rem, 6vw, 5.6rem) / 0.92 var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  color: var(--tiza);
+  max-width: 14ch;
+}
+.cierre .cierre-titulo.bad { color: #ff8a7e; }
+.cierre .cierre-titulo.campeon { color: #e8c98c; }
+.cierre-temporada .cierre-titulo { font-size: clamp(2.6rem, 4.4vw, 4.2rem); max-width: 20ch; }
+.cierre .cierre-bajada { margin: 1rem 0 0; max-width: 56ch; font-size: 1.12rem; line-height: 1.5; color: #e4e8ea; }
+.cierre .cierre-destino {
+  display: inline-block;
+  margin: 1.1rem 0 0;
+  font: 700 1.5rem var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.8rem;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  transform: rotate(-1.5deg);
+}
+.cierre .cierre-destino.good { color: var(--good); }
+.cierre .cierre-destino.bad { color: #ff8a7e; }
+.cierre .cierre-cifras { display: flex; flex-wrap: wrap; gap: 1.2rem 0; margin-top: 1.6rem; }
+.cierre .cierre-cifras .v1-cifra { padding: 0 2rem; border-left: 1px solid rgba(174, 188, 196, 0.35); }
+.cierre .cierre-cifras .v1-cifra:first-child { padding-left: 0; border-left: 0; }
+.cierre .cierre-cifras .v1-cifra.bad { color: var(--bad); }
+.cierre .cierre-frase { margin-top: 1.5rem; max-width: 66ch; font-size: 1rem; }
+.cierre .cierre-costo { margin-top: 1.1rem; max-width: 66ch; padding-left: 1rem; border-left: 3px solid var(--bad); }
+.cierre .cierre-costo-k {
+  font: 600 var(--fs-2xs) var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ff8a7e;
+}
+.cierre .cierre-costo p { margin: 0.25rem 0 0; font-size: 0.95rem; line-height: 1.45; color: #e4e8ea; }
+
+/* ---------- La planilla con cinta ---------- */
+.cierre .cierre-planilla { grid-column: 2; grid-row: 1 / span 2; align-self: start; margin-top: 0.6rem; padding: 1.1rem 0 0.8rem; }
+.cierre .cierre-planilla > h2 { padding: 0 1.4rem 0.5rem; }
+.cierre .cierre-sub {
+  margin: 0;
+  padding: 0.8rem 1.4rem 0.3rem;
+  font: 600 var(--fs-2xs) var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-top: 1px dashed var(--linea-suave);
+}
+.cierre .cierre-renglones { list-style: none; margin: 0; padding: 0; }
+.cierre .cierre-renglones li {
+  position: relative;
+  padding: 0.45rem 1.4rem 0.45rem 2.4rem;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  border-top: 1px dashed var(--linea-suave);
+}
+.cierre .cierre-sub + .cierre-renglones li:first-child { border-top: 0; }
+.cierre .cierre-renglones li::before {
+  position: absolute;
+  left: 1.2rem;
+  top: 0.4rem;
+  font: 700 1rem var(--font-display);
+}
+.cierre .cierre-renglones li.good::before { content: '✓'; color: var(--good); }
+.cierre .cierre-renglones li.warn::before { content: '!'; color: var(--warn); left: 1.35rem; }
+.cierre .cierre-renglones li.bad::before { content: '✕'; color: #ff8a7e; }
+.cierre .cierre-renglones li.promesa::before { content: '→'; color: #e8c98c; }
+.cierre .cierre-nada { margin: 0; padding: 0.3rem 1.4rem 0.6rem; font-size: 0.88rem; color: var(--text-dim); }
+.cierre .cierre-objetivos li { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
+
+/* La nota de cada dimensión: el nombre, el porqué, la nota y una barra fina. */
+.cierre .cierre-notas { display: grid; }
+.cierre .cierre-nota {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.15rem 1rem;
+  align-items: center;
+  padding: 0.6rem 1.4rem 0.65rem;
+  border-top: 1px dashed var(--linea-suave);
+}
+.cierre .cierre-nota-txt { display: grid; gap: 1px; min-width: 0; }
+.cierre .cierre-nota-txt b { font-weight: 600; font-size: 0.98rem; }
+.cierre .cierre-nota-txt span { font-size: 0.82rem; line-height: 1.35; color: var(--text-dim); }
+.cierre .cierre-nota-grado { font: 700 1.3rem var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; }
+.cierre .cierre-nota-grado.good { color: var(--good); }
+.cierre .cierre-nota-grado.warn { color: var(--warn); }
+.cierre .cierre-nota-grado.bad { color: #ff8a7e; }
+.cierre .cierre-nota-barra { grid-column: 1 / -1; height: 3px; margin-top: 0.3rem; background: rgba(174, 188, 196, 0.15); }
+.cierre .cierre-nota-barra i { display: block; height: 100%; transform-origin: left center; animation: barra-llena 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.cierre .cierre-nota-barra i.good { background: var(--good); }
+.cierre .cierre-nota-barra i.warn { background: var(--warn); }
+.cierre .cierre-nota-barra i.bad { background: var(--bad); }
+
+/* ---------- Abajo: la gente, lo que queda, las copas ---------- */
+.cierre .cierre-gente { grid-column: 1; grid-row: 2; min-width: 0; padding: 0 0.5rem; align-self: end; }
+.cierre-pretemporada .cierre-planilla { grid-row: 1; }
+.cierre-temporada .cierre-grid { grid-template-rows: auto 1fr; }
+.cierre-pretemporada .cierre-gente { grid-column: 1 / -1; grid-row: 2; }
+.cierre .cierre-gente-t {
+  margin: 0 0 0.8rem 1rem;
+  font: 700 1.3rem var(--font-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+.cierre .cierre-gente > .v1-frase { padding-left: 1rem; }
+
+.cierre .cierre-abajo { grid-column: 1; grid-row: 2; min-width: 0; display: grid; gap: 1.6rem; align-content: start; }
+.cierre .cierre-momentos { padding-left: 0.5rem; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
+.cierre .cierre-momentos ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.cierre .cierre-momentos li {
+  position: relative;
+  padding-left: 1.6rem;
+  font: 500 1.2rem / 1.35 var(--font-display);
+  letter-spacing: 0.02em;
+  color: var(--tiza);
+  max-width: 60ch;
+}
+.cierre .cierre-momentos li::before {
+  content: '“';
+  position: absolute;
+  left: 0;
+  top: -0.35rem;
+  font: 700 2rem var(--font-display);
+  color: #e8c98c;
+}
+
+.cierre .cierre-copas { padding: 0.9rem 0 0.6rem; }
+.cierre .cierre-copas-t {
+  margin: 0;
+  padding: 0 1.4rem 0.6rem;
+  font: 700 1.2rem var(--font-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-bottom: 1px dashed var(--linea-suave);
+}
+.cierre .cierre-copas-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.cierre .cierre-copa { padding: 0.6rem 1.4rem 0.2rem; min-width: 0; }
+.cierre .cierre-copa + .cierre-copa { border-left: 1px dashed var(--linea-suave); }
+.cierre .cierre-copa-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.8rem; margin-bottom: 0.3rem; }
+.cierre .cierre-copa-n { font: 700 1rem var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+.cierre .cierre-copa.nuestra .cierre-copa-n { color: var(--text); }
+.cierre .cierre-copa-camp { font-size: 0.85rem; color: var(--text-dim); }
+.cierre .cierre-cruce { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 0.6rem; padding: 0.4rem 0; border-top: 1px dashed var(--linea-suave); font-size: 0.9rem; line-height: 1.35; }
+.cierre .cierre-cruce-r { font: 600 var(--fs-2xs) var(--font-display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-faint); padding-top: 0.15rem; }
+.cierre .cierre-cruce-s { font: 700 1.05rem var(--font-display); letter-spacing: 0.03em; }
+.cierre .cierre-cruce.nuestro { color: var(--text); }
+.cierre .cierre-nuestro { font-weight: 700; color: var(--text); }
+
+/* ---------- El pie fijo: el único naranja ---------- */
+.cierre .cierre-pie { background: var(--chrome); border-top: 1px solid var(--chrome-linea); }
+.cierre .cierre-pie-in {
+  max-width: var(--ancho-app);
+  margin: 0 auto;
+  padding: 0.7rem var(--sp-4) 0.7rem calc(var(--sp-4) + 1.5rem);
+  display: flex;
+  align-items: center;
+  gap: 1rem 1.4rem;
+}
+.cierre .cierre-pie-frase { margin: 0 auto 0 0; font-size: 0.92rem; color: var(--text-dim); }
+.cierre .cierre-pie-frase.warn { color: var(--warn); }
+.cierre .cierre-pie-otros { display: flex; gap: 0.5rem; }
+.cierre .cierre-pie .v1-cta { font-size: 1.15rem; padding: 0.8rem 1.6rem; }
+.cierre button.cierre-ghost {
+  background: transparent;
+  border-color: rgba(174, 188, 196, 0.35);
+  color: var(--text-dim);
+  font: 600 0.9rem var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.6rem 1rem;
+}
+.cierre button.cierre-ghost:hover:not(:disabled) { color: var(--text); background: rgba(243, 240, 232, 0.06); }
+
+/* ---------- La notebook (1366×768, 1280×720) ---------- */
+@media (max-height: 820px) {
+  .cierre-grid { gap: 1.1rem 2.2rem; padding-top: 1.2rem; }
+  .cierre .cierre-titulo { font-size: clamp(2.6rem, 5vw, 4.4rem); }
+  .cierre-temporada .cierre-titulo { font-size: clamp(2.2rem, 3.8vw, 3.4rem); }
+  .cierre .cierre-bajada { margin-top: 0.7rem; font-size: 1rem; }
+  .cierre .cierre-cifras { margin-top: 1rem; }
+  .cierre .v1-cifra { font-size: 2.6rem; }
+  .cierre .cierre-frase { margin-top: 1rem; font-size: 0.92rem; }
+  .cierre .v1-mano { font-size: 1.75rem; }
+  .cierre .cierre-nota { padding-top: 0.45rem; padding-bottom: 0.5rem; }
+  .cierre .cierre-renglones li { padding-top: 0.35rem; padding-bottom: 0.35rem; font-size: 0.88rem; }
+  .cierre .cierre-pie .v1-cta { font-size: 1.05rem; padding: 0.65rem 1.3rem; }
+}

@@ -1,0 +1,385 @@
+/* La Liga (UI V1): Tabla y fixture, Calendario, Rankings, La pirámide, Las
+   ligas. Escena: los árbitros (ESCENA.arbitros en App.tsx). Todo bajo .liga.
+   Ver design/UI_V1_GUIA.md: un héroe sin caja arriba a la izquierda, una sola
+   planilla por zona, la tabla como planilla protagonista. */
+
+.liga {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-height: 0;
+  padding: 0.2rem 0 0.5rem;
+}
+
+/* ---------- Pestañas: como la barra de arriba, sin placas ---------- */
+.liga .lg-tabs {
+  display: flex;
+  gap: 0.2rem;
+  border-bottom: 1px solid rgba(174, 188, 196, 0.22);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+.liga .lg-tabs button {
+  all: unset;
+  cursor: pointer;
+  padding: 0.7rem 1rem 0.6rem;
+  font: 600 0.86rem var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  box-shadow: inset 0 -3px 0 transparent;
+  transition: color 0.15s, box-shadow 0.15s;
+}
+.liga .lg-tabs button:hover { color: var(--text); }
+.liga .lg-tabs button.on { color: var(--text); font-weight: 700; box-shadow: inset 0 -3px 0 var(--accent); }
+.liga .lg-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* ---------- El héroe de cada pestaña ---------- */
+.liga .lg-hero { min-width: 0; padding: 0.4rem 0 0 1.5rem; }
+.liga .lg-hero .v1-titulo { max-width: 18ch; }
+
+/* ---------- Tabla y fixture ---------- */
+.liga .lg-tabla-pantalla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  grid-template-areas:
+    'hero tabla'
+    'fix  tabla';
+  grid-template-rows: auto 1fr;
+  gap: 1.1rem 2.6rem;
+  align-items: start;
+}
+.liga .lg-tabla-pantalla > .lg-hero { grid-area: hero; }
+.liga .lg-tabla-pantalla > .lg-tabla { grid-area: tabla; margin-top: 0.7rem; }
+.liga .lg-col-fixture { grid-area: fix; display: grid; gap: 1.1rem; min-width: 0; }
+
+.liga .lg-puesto { display: flex; align-items: flex-end; gap: 1.6rem; margin-top: 0.9rem; }
+.liga .lg-puesto-num { font-size: clamp(3.4rem, 5.6vw, 5rem); }
+.liga .lg-puesto-num small { white-space: nowrap; }
+.liga .lg-puesto-num.oro { color: var(--text); }
+.liga .lg-puesto-num.descenso { color: #ff8a7e; }
+.liga .lg-puesto-txt { padding-left: 1.5rem; border-left: 1px solid rgba(174, 188, 196, 0.35); padding-bottom: 0.3rem; }
+.liga .lg-record { font: 700 1.9rem / 1 var(--font-display); letter-spacing: 0.02em; }
+.liga .lg-record span { font: 600 1.05rem var(--font-display); color: var(--text-dim); letter-spacing: 0.04em; }
+.liga .lg-zona { margin: 0.45rem 0 0; font-size: 1rem; color: #dfe5e8; max-width: 40ch; }
+.liga .lg-zona b { font: 700 1.02rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.25rem; }
+.liga .lg-zona b.good { color: var(--good); }
+.liga .lg-zona b.warn { color: var(--warn); }
+.liga .lg-zona b.bad { color: #ff8a7e; }
+
+.liga .lg-sigue { margin-top: 1.3rem; }
+.liga .lg-sigue-lab {
+  font: 600 var(--fs-sm) var(--font-display);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.liga .lg-sigue-eq { display: flex; align-items: center; gap: 0.9rem; margin-top: 0.45rem; }
+.liga .lg-sigue-eq .crest { flex: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); }
+.liga .lg-sigue-nom { font: 700 clamp(1.5rem, 2.2vw, 2rem) / 0.95 var(--font-display); text-transform: uppercase; }
+.liga .lg-sigue-nom .plink { color: inherit; text-decoration: none; }
+.liga .lg-sigue-nom .plink:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.liga .lg-sigue-sub { margin-top: 0.3rem; font-size: 0.95rem; color: var(--text-dim); }
+.liga .lg-sigue-sub b { color: var(--text); font-weight: 600; }
+.liga .lg-sigue-cuando { margin: 0.6rem 0 0; font: 600 1.1rem var(--font-display); letter-spacing: 0.02em; }
+.liga .lg-sigue-cuando span { font: 400 0.95rem var(--font-ui); color: var(--text-dim); letter-spacing: 0; }
+
+/* La tabla: la marca de zona es una rayita al costado del puesto. */
+.liga .lg-tabla .bd-tabla td { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.liga .lg-pos { font-weight: 700; }
+.liga .lg-z-oro .lg-pos { color: var(--warn); }
+.liga .lg-z-plata .lg-pos { color: var(--text-dim); }
+.liga .lg-z-fuera .lg-pos,
+.liga .lg-z-baja .lg-pos { color: #ff8a7e; }
+.liga .lg-tabla tr.lg-z-oro td:first-child { box-shadow: inset 3px 0 0 rgba(228, 185, 75, 0.7); }
+.liga .lg-tabla tr.lg-z-plata td:first-child { box-shadow: inset 3px 0 0 rgba(174, 188, 196, 0.45); }
+.liga .lg-tabla tr.lg-z-fuera td:first-child,
+.liga .lg-tabla tr.lg-z-baja td:first-child { box-shadow: inset 3px 0 0 rgba(227, 91, 79, 0.7); }
+.liga .lg-tabla tr.bd-nos td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.liga .lg-tabla tr.lg-z-plata + tr.lg-z-fuera td,
+.liga .lg-tabla tr.lg-z-oro + tr.lg-z-plata td { border-top: 1px solid rgba(174, 188, 196, 0.35); }
+.liga .lg-estilo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+.liga .lg-reglas { display: block; }
+.liga .lg-ley {
+  display: inline-block;
+  margin-right: 0.8rem;
+  padding-left: 0.55rem;
+  border-left: 3px solid;
+  font: 600 0.78rem var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.liga .lg-ley.oro { border-color: rgba(228, 185, 75, 0.7); }
+.liga .lg-ley.plata { border-color: rgba(174, 188, 196, 0.45); }
+.liga .lg-ley.fuera { border-color: rgba(227, 91, 79, 0.7); }
+
+/* El fixture: la hoja de al lado, más apretada. */
+.liga .lg-fixture .bd-tabla td { padding-top: 0.34rem; padding-bottom: 0.34rem; }
+.liga .lg-fx-fecha { width: 3.2rem; text-align: left !important; }
+.liga .lg-lv {
+  font: 600 0.7rem var(--font-display);
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  border: 1px solid rgba(174, 188, 196, 0.35);
+  border-radius: 2px;
+  padding: 0 4px;
+}
+.liga .lg-hoy { font: 700 0.78rem var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+
+/* Los playoffs: dos copas lado a lado en la misma hoja. */
+.liga .lg-copas { display: grid; grid-template-columns: 1fr 1fr; }
+.liga .lg-playoffs { margin-top: 0.4rem; }
+.liga .lg-copa { padding: 0.5rem var(--bd-pad) 0.7rem; min-width: 0; }
+.liga .lg-copa + .lg-copa { border-left: 1px dashed var(--linea-suave); }
+.liga .lg-copa-tit { margin: 0 0 0.3rem; font: 700 0.9rem var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; }
+.liga .lg-copa.oro .lg-copa-tit { color: var(--warn); }
+.liga .lg-campeon { margin-left: 0.8rem; font: 500 0.9rem var(--font-ui); letter-spacing: 0; text-transform: none; color: var(--text); }
+.liga .lg-cruce {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) 4.2rem minmax(0, 1fr);
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.3rem 0;
+  border-top: 1px dashed var(--linea-suave);
+  font-size: 0.86rem;
+}
+.liga .lg-cruce-ronda { font: 600 0.7rem var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+.liga .lg-cruce-eq { display: flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.liga .lg-cruce-eq .crest { flex: none; }
+.liga .lg-cruce > .lg-cruce-eq:nth-child(2) { justify-content: flex-end; }
+.liga .lg-cruce-res { font: 700 1rem var(--font-display); text-align: center; }
+
+/* ---------- La pirámide ---------- */
+.liga .lg-piramide {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1.1rem 2.6rem;
+  align-items: start;
+}
+.liga .lg-piramide-frase { margin-top: 0.7rem; max-width: 46ch; }
+.liga .lg-escalera { display: flex; flex-direction: column; align-items: center; gap: 0.45rem; margin: 1.4rem 0 0.4rem; max-width: 460px; }
+.liga button.lg-escalon {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--relieve);
+  text-shadow: none;
+  transition: background 0.15s, transform 0.15s;
+}
+.liga button.lg-escalon:hover:not(:disabled) { background: #163a52; transform: translateY(-2px); }
+.liga button.lg-escalon.on { box-shadow: inset 0 -3px 0 var(--accent), var(--relieve); background: #163a52; }
+.liga button.lg-escalon.nuestra { opacity: 1; cursor: default; border-color: rgba(244, 124, 39, 0.8); background: linear-gradient(rgba(244, 124, 39, 0.16), rgba(244, 124, 39, 0.16)), #0c2233; }
+.liga button.lg-escalon:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.liga .lg-escalon-nom { font: 700 1.1rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text); white-space: nowrap; }
+.liga .lg-escalon-sub { font: 600 0.7rem var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); white-space: nowrap; }
+.liga .lg-escalon.nuestra .lg-escalon-sub { color: var(--accent); }
+.liga .lg-piramide-tabla { margin-top: 0.7rem; }
+
+/* ---------- Las ligas ---------- */
+.liga .lg-ligas {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 1.1rem 2.6rem;
+  align-items: start;
+}
+.liga .lg-ligas > :is(.lg-inscribir, .lg-segundo) { grid-column: 1 / -1; }
+.liga .lg-ligas-frase { margin-top: 0.8rem; max-width: 44ch; }
+.liga .lg-ligas-lista { margin-top: 0.7rem; }
+.liga .lg-liga {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.6rem var(--bd-pad);
+  min-height: 2.9rem;
+}
+.liga .lg-liga:first-of-type { border-top: 0; }
+.liga .lg-liga.nuestra { background: rgba(244, 124, 39, 0.1); box-shadow: inset 3px 0 0 var(--accent); }
+.liga .lg-liga-nom { font: 700 0.98rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.liga .lg-liga-txt { font-size: 0.9rem; color: var(--text-dim); line-height: 1.35; }
+.liga .lg-liga-txt b { color: var(--text); font-weight: 600; }
+
+.liga .lg-inscribir-txt { margin: 0; padding: 0.7rem var(--bd-pad) 0.2rem; font-size: 0.93rem; line-height: 1.5; color: var(--text-dim); max-width: 100ch; }
+.liga .lg-inscribir-txt b { color: var(--text); font: 700 1.02em var(--font-display); letter-spacing: 0.03em; }
+.liga .lg-inscribir-txt.lg-no { color: #ff8a7e; }
+.liga .lg-inscribir .bd-sub { margin-top: 0.6rem; }
+.liga .lg-fichas { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); column-gap: 2rem; padding: 0 var(--bd-pad); }
+.liga .lg-ficha {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px dashed var(--linea-suave);
+  cursor: pointer;
+  opacity: 0.6;
+}
+.liga .lg-ficha.on { opacity: 1; }
+.liga .lg-ficha input { accent-color: var(--accent); }
+.liga .lg-ficha-sub { font-size: 0.8rem; color: var(--text-dim); margin-left: auto; }
+.liga .lg-inscribir-acciones { display: flex; gap: 0.6rem; align-items: center; padding: 0.8rem var(--bd-pad) 0.7rem; }
+
+.liga .lg-segundo-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.liga .lg-segundo-txt { display: grid; gap: 0.55rem; align-content: start; padding: 0.7rem var(--bd-pad); border-left: 1px dashed var(--linea-suave); }
+
+/* ---------- La notebook (1366×768, 1280×720) ---------- */
+@media (max-height: 820px) {
+  .liga { gap: 0.7rem; }
+  .liga .lg-tabs button { padding: 0.55rem 0.9rem 0.5rem; }
+  .liga .lg-tabla-pantalla,
+  .liga .lg-piramide,
+  .liga .lg-ligas { gap: 0.8rem 2rem; }
+  .liga .lg-puesto { margin-top: 0.5rem; }
+  .liga .lg-puesto-num { font-size: 3.6rem; }
+  .liga .lg-record { font-size: 1.6rem; }
+  .liga .lg-sigue { margin-top: 0.8rem; }
+  .liga .lg-sigue-eq .crest { width: 48px; height: 48px; }
+  .liga .lg-tabla .bd-tabla td { padding-top: 0.36rem; padding-bottom: 0.36rem; }
+  .liga .lg-fixture .bd-tabla td { padding-top: 0.26rem; padding-bottom: 0.26rem; }
+  .liga .v1-mano { font-size: 1.75rem; }
+  .liga .lg-escalera { margin-top: 1rem; }
+}
+
+/* ---------- Calendario ---------- */
+.liga .lg-cal {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1.1rem 2.6rem;
+  align-items: start;
+}
+.liga .lg-cal-fixture { grid-column: 1 / -1; }
+.liga .lg-cal-otros { margin-top: 0.7rem; }
+.liga .lg-cal-versus { display: flex; align-items: center; gap: 1.3rem; margin-top: 1rem; flex-wrap: wrap; }
+.liga .lg-cal-eq { display: flex; align-items: center; gap: 0.8rem; min-width: 0; }
+.liga .lg-cal-eq .crest { flex: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); }
+.liga .lg-cal-nom { font: 700 clamp(1.4rem, 2.2vw, 2rem) / 0.95 var(--font-display); text-transform: uppercase; max-width: 11ch; }
+.liga .lg-cal-nom :is(.plink, strong) { color: inherit; text-decoration: none; font-weight: inherit; }
+.liga .lg-cal-nom .plink:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.liga .lg-cal-vs { font: 700 1.5rem var(--font-display); color: var(--text-dim); }
+.liga .lg-cal-marcador { font: 700 clamp(2.2rem, 3.6vw, 3.2rem) / 1 var(--font-display); }
+.liga .lg-cal-cuando {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.7rem;
+  margin-top: 1.1rem;
+  font: 600 1.25rem / 1.3 var(--font-display);
+}
+.liga .lg-cal-donde { flex-basis: 100%; font: 400 0.95rem var(--font-ui); color: var(--text-dim); }
+.liga .lg-cal-etiqueta {
+  font: 700 0.74rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--warn);
+  border: 1px solid rgba(228, 185, 75, 0.5);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+.liga .lg-cal-etiqueta.chica { font-size: 0.66rem; }
+.liga .lg-cal-conflictos { margin-top: 0.9rem; max-width: 60ch; }
+.liga .lg-cal-hora { width: 6.5rem; font-variant-numeric: tabular-nums; }
+.liga .lg-cal-cruce { display: grid; gap: 0.2rem; }
+.liga .lg-cal-otros .bd-tabla td { padding-top: 0.45rem; padding-bottom: 0.45rem; }
+.liga .lg-cal-res { display: inline-block; line-height: 1.25; }
+.liga .lg-cal-meses { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+.liga .lg-cal-mes { min-width: 0; padding-bottom: 0.3rem; }
+.liga .lg-cal-mes + .lg-cal-mes { border-left: 1px dashed var(--linea-suave); }
+.liga .lg-cal-mes-tit {
+  margin: 0;
+  padding: 0.7rem var(--bd-pad) 0.2rem;
+  font: 700 0.76rem var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.liga .lg-cal-fixture .bd-tabla td { padding-top: 0.32rem; padding-bottom: 0.32rem; }
+@media (max-height: 820px) {
+  .liga .lg-cal { gap: 0.8rem 2rem; }
+  .liga .lg-cal-versus { margin-top: 0.6rem; }
+  .liga .lg-cal-eq .crest { width: 52px; height: 52px; }
+  .liga .lg-cal-cuando { margin-top: 0.7rem; font-size: 1.1rem; }
+  .liga .lg-cal-conflictos { margin-top: 0.5rem; font-size: 0.9rem; }
+  .liga .lg-cal-otros .bd-tabla td { padding-top: 0.3rem; padding-bottom: 0.3rem; }
+}
+
+/* ---------- Rankings ---------- */
+.liga .lg-rankings { display: grid; gap: 1.1rem; align-content: start; }
+.liga .lg-rk-hero { display: flex; align-items: flex-end; gap: 1.6rem; padding-top: 0.2rem; }
+.liga .lg-rk-busto { position: relative; flex: none; --busto-ancho: 132px; --busto-alto: 160px; }
+.liga .lg-rk-busto .busto { filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5)); }
+.liga .lg-rk-piso {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -6px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent);
+}
+.liga .lg-rk-hero-txt { min-width: 0; padding-bottom: 0.3rem; }
+.liga .lg-rk-hero .v1-titulo { max-width: none; }
+.liga .lg-rk-hero .v1-titulo .plink { color: inherit; text-decoration: none; }
+.liga .lg-rk-hero .v1-titulo .plink:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.liga .lg-rk-hero-fila { display: flex; align-items: flex-end; gap: 2rem; margin-top: 0.7rem; }
+.liga .lg-rk-hero-cifras { display: flex; align-items: flex-end; gap: 1.6rem; flex: none; }
+.liga .lg-rk-chica { font-size: 2.2rem; color: var(--text-dim); }
+.liga .lg-rk-frase { max-width: 64ch; padding: 0 0 0.2rem 1.5rem; border-left: 1px solid rgba(174, 188, 196, 0.35); }
+.liga .lg-rk-hero-txt > .lg-rk-frase { border-left: 0; padding-left: 0; margin-top: 0.8rem; }
+
+.liga .lg-rk-grilla { display: grid; }
+.liga .lg-rk-grilla.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.liga .lg-rk-grilla.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.liga .lg-rk { min-width: 0; padding: 0.7rem var(--bd-pad) 0.8rem; border-left: 1px dashed var(--linea-suave); border-top: 1px dashed var(--linea-suave); }
+.liga .lg-rk-grilla.c4 .lg-rk:nth-child(4n + 1),
+.liga .lg-rk-grilla.c3 .lg-rk:nth-child(3n + 1) { border-left: 0; }
+.liga .lg-rk-grilla.c4 .lg-rk:nth-child(-n + 4),
+.liga .lg-rk-grilla.c3 .lg-rk:nth-child(-n + 3) { border-top: 0; }
+.liga .lg-rk-tit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.35rem;
+  font: 700 0.8rem var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.liga .lg-rk-lista { list-style: none; margin: 0; padding: 0; }
+.liga .lg-rk-lista li {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.2rem 0;
+  font-size: 0.9rem;
+}
+.liga .lg-rk-pos { font: 700 0.85rem var(--font-display); color: var(--text-dim); }
+.liga .lg-rk-nom { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.liga .lg-rk-nom small { color: var(--text-dim); font-size: 0.8rem; }
+.liga .lg-rk-val { font: 600 0.9rem var(--font-display); letter-spacing: 0.02em; color: var(--text-dim); white-space: nowrap; }
+.liga .lg-rk-lista li.primero { font-size: 1rem; padding: 0.15rem 0 0.3rem; }
+.liga .lg-rk-lista li.primero .lg-rk-pos { color: var(--warn); font-size: 1rem; }
+.liga .lg-rk-lista li.primero .lg-rk-nom { font-weight: 600; }
+.liga .lg-rk-lista li.primero .lg-rk-val { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+.liga .lg-rk-vacio { margin: 0.2rem 0 0; font-size: 0.86rem; color: var(--text-dim); line-height: 1.4; }
+@media (max-height: 820px) {
+  .liga .lg-rankings { gap: 0.8rem; }
+  .liga .lg-rk-busto { --busto-ancho: 104px; --busto-alto: 126px; }
+  .liga .lg-rk-hero-cifras .v1-cifra { font-size: 2.6rem; }
+  .liga .lg-rk-hero-cifras .lg-rk-chica { font-size: 1.9rem; }
+  .liga .lg-rk { padding: 0.55rem var(--bd-pad) 0.6rem; }
+  .liga .lg-rk-lista li { padding: 0.12rem 0; }
+}

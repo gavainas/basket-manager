@@ -31,7 +31,10 @@ export function WeekView({ state, dispatch }: Props) {
     state.phase === 'matchResult';
 
   return (
-    <div className={fija ? 'semana-vista pantalla' : undefined}>
+    /* `semana-v1` es la raíz de los estilos de la UI V1 del ciclo de la semana
+       (semana/semana.css): los pasos de arriba valen para las cinco etapas, y
+       `fase-*` deja a cada etapa ajustar el marco sin pisar a las otras. */
+    <div className={`${fija ? 'semana-vista pantalla ' : ''}semana-v1 fase-${state.phase}`}>
       <Steps phase={state.phase} />
       {state.phase === 'planning' && <PlanningPanel state={state} dispatch={dispatch} />}
       {state.phase === 'callUp' && <CallUpPanel state={state} dispatch={dispatch} />}

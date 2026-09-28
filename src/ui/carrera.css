@@ -1,0 +1,136 @@
+/* El modo Carrera antes de la partida (UI V1): las tres escenas de la
+   historia y la fundación del club. Todo cuelga de `.carrera-v1`. Reemplaza a
+   `.carrera-escena*`, `.carrera-setup`, `.carrera-form`, `.menu-screen` y
+   `.menu-panel` de styles.css, que quedan sin uso. */
+.carrera-v1 {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  isolation: isolate;
+  overflow: hidden;
+  color: var(--text);
+}
+.carrera-v1 .cv1-img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: var(--chrome) center / cover no-repeat;
+  filter: saturate(1.08);
+}
+
+/* ---------- Las escenas ---------- */
+/* El velo abre la imagen arriba y a la derecha y cierra abajo a la izquierda,
+   donde va el texto: se lee como un corte de videojuego, no como una card. */
+.carrera-v1.cv1-escena .cv1-velo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(0deg, rgba(8, 29, 45, 0.96) 0%, rgba(8, 29, 45, 0.82) 30%, rgba(8, 29, 45, 0.2) 62%, rgba(8, 29, 45, 0.1) 100%),
+    linear-gradient(90deg, rgba(8, 29, 45, 0.6) 0%, rgba(8, 29, 45, 0) 60%);
+}
+.carrera-v1.cv1-escena {
+  display: flex;
+  align-items: flex-end;
+  padding: clamp(1.5rem, 6vh, 4.5rem) clamp(1.5rem, 6vw, 6rem);
+}
+.carrera-v1 .cv1-texto { max-width: 64ch; }
+.carrera-v1 .cv1-texto .v1-titulo { font-size: clamp(2.4rem, 4.2vw, 3.8rem); margin: 0.6rem 0 1rem; }
+.carrera-v1 .cv1-texto p { margin: 0 0 0.8rem; font-size: clamp(1.02rem, 1.25vw, 1.2rem); line-height: 1.55; color: #e4e8ea; }
+.carrera-v1 .cv1-puntos { display: flex; gap: 6px; margin-top: 0.7rem; }
+.carrera-v1 .cv1-puntos i { display: block; width: 34px; height: 3px; background: rgba(239, 230, 210, 0.25); }
+.carrera-v1 .cv1-puntos i.hecho { background: rgba(239, 230, 210, 0.7); }
+.carrera-v1 .cv1-puntos i.on { background: var(--accent); }
+.carrera-v1 .cv1-botones { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-top: 1.4rem; }
+
+.carrera-v1 button.cv1-ghost {
+  background: transparent;
+  border-color: rgba(174, 188, 196, 0.35);
+  color: var(--text-dim);
+  font: 600 0.95rem var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.6rem 1rem;
+  text-shadow: none;
+}
+.carrera-v1 button.cv1-ghost:hover:not(:disabled) { color: var(--text); background: rgba(243, 240, 232, 0.06); }
+
+/* ---------- La fundación ---------- */
+.carrera-v1.cv1-fundacion .cv1-velo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 50% 65% at 24% 45%, rgba(8, 29, 45, 0.88) 0%, rgba(8, 29, 45, 0.6) 60%, rgba(8, 29, 45, 0.2) 100%),
+    linear-gradient(180deg, rgba(8, 29, 45, 0.4) 0%, rgba(8, 29, 45, 0.1) 30%, rgba(8, 29, 45, 0.55) 100%);
+}
+.carrera-v1 .cv1-fund-grid {
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 1360px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 460px);
+  align-items: center;
+  gap: 2rem 4rem;
+  padding: 2rem clamp(1.5rem, 4vw, 3.5rem);
+}
+.carrera-v1 .cv1-fund-hero .v1-titulo { font-size: clamp(2.6rem, 4.4vw, 4rem); }
+.carrera-v1 .cv1-club { display: flex; align-items: center; gap: 1.4rem; margin-top: 1.6rem; }
+.carrera-v1 .cv1-club .crest { flex: none; filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.55)); }
+.carrera-v1 .cv1-club-nombre {
+  font: 700 clamp(2rem, 3.4vw, 3rem) / 0.95 var(--font-display);
+  text-transform: uppercase;
+  max-width: 13ch;
+  overflow-wrap: anywhere;
+}
+.carrera-v1 .cv1-club-sub { margin-top: 0.5rem; font-size: 0.98rem; color: var(--text-dim); }
+.carrera-v1 .cv1-frase { margin-top: 1.6rem; max-width: 56ch; font-size: 1.02rem; color: #dfe5e8; }
+
+.carrera-v1 .cv1-acta { padding: 1.3rem 0 1.3rem; }
+.carrera-v1 .cv1-acta > h2 { padding: 0 1.5rem 0.6rem; border-bottom: 1px dashed var(--linea-suave); }
+.carrera-v1 .cv1-campo { display: grid; gap: 0.4rem; margin: 0; padding: 1rem 1.5rem 0; }
+.carrera-v1 .cv1-k {
+  font: 600 var(--fs-2xs) var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.carrera-v1 .cv1-campo input {
+  font: 600 1.15rem var(--font-ui);
+  padding: 0.6rem 0.75rem;
+  color: var(--text);
+  background: rgba(4, 16, 26, 0.55);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--hundido);
+}
+.carrera-v1 .cv1-campo input:focus { outline: none; border-color: var(--accent); }
+.carrera-v1 .cv1-campo input::placeholder { color: var(--text-faint); }
+.carrera-v1 .cv1-ayuda { font-size: var(--fs-sm); color: var(--text-dim); line-height: 1.4; }
+.carrera-v1 .cv1-dificultad { margin: 0; padding: 1rem 1.5rem 0; }
+.carrera-v1 .cv1-ayuda b { color: var(--text); }
+.carrera-v1 .cv1-colores { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.carrera-v1 button.cv1-color {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(239, 230, 210, 0.35);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+.carrera-v1 button.cv1-color.on { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(244, 124, 39, 0.35), 0 3px 8px rgba(0, 0, 0, 0.4); }
+.carrera-v1 .cv1-acta-pie { display: grid; gap: 0.7rem; padding: 1.3rem 1.5rem 0; margin-top: 1.1rem; border-top: 1px dashed var(--linea-suave); }
+.carrera-v1 .cv1-acta-pie .v1-cta { width: 100%; font-size: 1.15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.carrera-v1 .cv1-acta-otros { display: flex; gap: 0.6rem; }
+
+@media (max-height: 800px) {
+  .carrera-v1 .cv1-texto .v1-titulo { margin: 0.4rem 0 0.7rem; }
+  .carrera-v1 .cv1-texto p { font-size: 1rem; margin-bottom: 0.6rem; }
+  .carrera-v1 .cv1-club .crest { width: 120px; height: 120px; }
+  .carrera-v1 .cv1-campo { padding-top: 0.75rem; }
+  .carrera-v1 .cv1-acta-pie { padding-top: 1rem; margin-top: 0.8rem; }
+}
+@media (max-width: 900px) {
+  .carrera-v1 .cv1-fund-grid { grid-template-columns: 1fr; }
+}

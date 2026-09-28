@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Tablero — propuesta</title>
+<!-- Maqueta estática, no es código del juego. Datos inventados. Caveat no está en el repo: sin ella la voz manuscrita cae a cursive. -->
+<style>
+@font-face{font-family:'Barlow';font-weight:400;src:url(../../../node_modules/@fontsource/barlow/files/barlow-latin-400-normal.woff2)}
+@font-face{font-family:'Barlow';font-weight:500;src:url(../../../node_modules/@fontsource/barlow/files/barlow-latin-500-normal.woff2)}
+@font-face{font-family:'Barlow';font-weight:600;src:url(../../../node_modules/@fontsource/barlow/files/barlow-latin-600-normal.woff2)}
+@font-face{font-family:'Barlow';font-weight:700;src:url(../../../node_modules/@fontsource/barlow/files/barlow-latin-700-normal.woff2)}
+@font-face{font-family:'BC';font-weight:500;src:url(../../../node_modules/@fontsource/barlow-condensed/files/barlow-condensed-latin-500-normal.woff2)}
+@font-face{font-family:'BC';font-weight:600;src:url(../../../node_modules/@fontsource/barlow-condensed/files/barlow-condensed-latin-600-normal.woff2)}
+@font-face{font-family:'BC';font-weight:700;src:url(../../../node_modules/@fontsource/barlow-condensed/files/barlow-condensed-latin-700-normal.woff2)}
+@font-face{font-family:'BC';font-weight:800;src:url(../../../node_modules/@fontsource/barlow-condensed/files/barlow-condensed-latin-800-normal.woff2)}
+@font-face{font-family:'Mano';font-weight:600;src:url(../../../node_modules/@fontsource/caveat/files/caveat-latin-600-normal.woff2)}
+:root{
+  --deep:#081D2D; --ui:#102C40; --elev:#17384B; --line:#456477;
+  --t1:#F3F0E8; --t2:#AEBCC4; --acc:#F47C27; --good:#54D29A; --warn:#E4B94B; --bad:#E35B4F;
+  --d:'BC',sans-serif; --u:'Barlow',sans-serif; --m:'Mano',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:100vw;height:100vh;position:relative;overflow:hidden;background:var(--deep);color:var(--t1);font-family:var(--u)}
+/* ---------- NAV (sin cambios: es el shell global) ---------- */
+.nav{position:absolute;inset:0 0 auto 0;height:56px;background:#0a2233;border-bottom:1px solid #1f3d52;display:flex;align-items:center;padding:0 24px;z-index:5}
+.club{display:flex;gap:10px;align-items:center;width:250px}
+.club b{font:700 17px var(--d);letter-spacing:.04em;display:block}
+.club small{font:500 10px var(--d);letter-spacing:.12em;color:var(--t2)}
+.tabs{display:flex;gap:4px;margin-left:16px}
+.tabs span{font:600 12px var(--d);letter-spacing:.14em;color:var(--t2);padding:19px 14px 17px;border-bottom:3px solid transparent}
+.tabs span.on{color:var(--t1);border-bottom-color:var(--acc)}
+.salir{margin-left:auto;font:600 11px var(--d);letter-spacing:.14em;color:var(--t2);border:1px solid #2c4a5e;padding:8px 14px;border-radius:3px}
+/* ---------- ESCENA ---------- */
+.scene{position:absolute;top:56px;left:0;right:0;bottom:72px;overflow:hidden}
+.scene .img{position:absolute;inset:0;background:url(../../../public/arte/fondo-gimnasio.webp) center 30%/cover;transform:scaleX(-1);filter:saturate(1.08) brightness(1.08)}
+.scene .veil{position:absolute;inset:0;background:
+  linear-gradient(90deg,rgba(8,29,45,.94) 0%,rgba(8,29,45,.80) 30%,rgba(8,29,45,.25) 55%,rgba(8,29,45,.10) 64%,rgba(8,29,45,.55) 100%),
+  linear-gradient(180deg,rgba(8,29,45,0) 50%,rgba(8,29,45,.88) 70%,rgba(8,29,45,.98) 100%)}
+/* ---------- HERO: el próximo partido, sin card ---------- */
+.hero{position:absolute;left:64px;top:92px;width:760px}
+.eyebrow{font:600 13px var(--d);letter-spacing:.2em;color:var(--t2)}
+.eyebrow b{color:var(--acc);font-weight:700}
+.mano{font:600 30px var(--m);color:#f0d9a8;transform:rotate(-2deg);display:inline-block}
+.versus{display:flex;align-items:center;gap:26px;margin-top:22px}
+.team{display:flex;align-items:center;gap:16px}
+.team .n{font:800 40px/0.95 var(--d);letter-spacing:.01em;text-transform:uppercase}
+.team .s{font:500 15px var(--u);color:var(--t2);margin-top:6px}
+.team .s b{color:var(--t1);font-weight:600}
+.vs{font:700 26px var(--d);color:var(--t2);letter-spacing:.06em}
+.meta{display:flex;gap:28px;margin-top:26px;align-items:flex-end}
+.cuenta{font:800 64px/.8 var(--d);color:var(--t1)}
+.cuenta small{display:block;font:600 13px var(--d);letter-spacing:.2em;color:var(--t2);margin-top:10px}
+.cuando{font:600 20px var(--d);letter-spacing:.03em;line-height:1.25;padding-left:24px;border-left:1px solid #3b5a6e}
+.cuando span{display:block;font:400 15px var(--u);color:var(--t2);letter-spacing:0}
+.clave{margin-top:22px;display:flex;gap:12px;align-items:center;font:400 16px var(--u);color:#d6dde1}
+.clave .tag{font:700 12px var(--d);letter-spacing:.14em;padding:4px 9px;border:1px solid var(--warn);color:var(--warn);border-radius:2px}
+.cta{margin-top:30px;display:flex;align-items:center;gap:22px}
+.cta button{font:700 21px var(--d);letter-spacing:.08em;text-transform:uppercase;background:var(--acc);color:#1b0f06;border:0;padding:17px 30px;border-radius:4px;box-shadow:0 8px 24px rgba(244,124,39,.28),inset 0 -3px 0 rgba(0,0,0,.18)}
+.cta p{font:400 15px/1.35 var(--u);color:var(--t2);max-width:250px}
+/* ---------- LA LIBRETA: lo que hay que resolver ---------- */
+.libreta{position:absolute;right:64px;top:84px;width:440px;background:rgba(10,32,48,.90);border:1px solid #2b4a5e;border-top:3px solid var(--acc);box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.libreta header{padding:16px 20px 10px;display:flex;justify-content:space-between;align-items:baseline}
+.libreta h3{font:700 19px var(--d);letter-spacing:.12em;text-transform:uppercase}
+.libreta header .mano{font-size:22px;color:#e8c98c}
+.item{display:grid;grid-template-columns:4px 52px 1fr auto;gap:0 14px;align-items:center;padding:13px 20px 13px 0;border-top:1px solid #203f53}
+.item .m{align-self:stretch}
+.item.bad .m{background:var(--bad)} .item.warn .m{background:var(--warn)}
+.face{width:52px;height:52px;border-radius:50%;background:#2a4a60 center 18%/118% no-repeat;border:2px solid #3a5a70;position:relative}
+.face.bad{border-color:var(--bad)} .face.warn{border-color:var(--warn)}
+.face.duo{width:52px;background:none;border:0}
+.face.duo i{position:absolute;width:38px;height:38px;border-radius:50%;background:#2a4a60 center 18%/118% no-repeat;border:2px solid var(--warn)}
+.face.duo i:first-child{left:-4px;top:0}.face.duo i:last-child{left:16px;top:14px}
+.face.icon{display:grid;place-items:center;background:#1c3a4e;font:700 22px var(--d);color:var(--warn)}
+.item b{font:600 16px var(--u);display:block}
+.item p{font:400 14px/1.3 var(--u);color:var(--t2);margin-top:2px}
+.item .ir{font:600 12px var(--d);letter-spacing:.12em;color:var(--t2);text-transform:uppercase;white-space:nowrap}
+.libreta footer{border-top:1px solid #203f53;padding:11px 20px;font:600 12px var(--d);letter-spacing:.14em;color:var(--t2);text-transform:uppercase;display:flex;justify-content:space-between}
+/* ---------- LA TIRA DEL CLUB: tres datos, sin cajas ---------- */
+.tira{position:absolute;left:64px;top:500px;display:flex;gap:0}
+.tira div{padding:0 26px;border-left:1px solid #3b5a6e}
+.tira div:first-child{padding-left:0;border-left:0}
+.tira small{display:block;font:600 11px var(--d);letter-spacing:.2em;color:var(--t2)}
+.tira strong{font:700 22px var(--d);letter-spacing:.02em}
+.tira span{font:400 14px var(--u);color:var(--t2)}
+.g{color:var(--good)}
+/* ---------- EL PLANTEL: las personas, de pie ---------- */
+.plantel{position:absolute;left:0;right:0;bottom:72px;height:236px;padding:0 64px}
+.plantel h3{display:flex;align-items:baseline;gap:14px;font:700 17px var(--d);letter-spacing:.14em;text-transform:uppercase}
+.plantel h3 span{font:500 15px var(--u);letter-spacing:0;text-transform:none;color:var(--t2)}
+.plantel h3 span b{color:var(--t1)}
+.fila{display:flex;align-items:flex-start;gap:10px;margin-top:14px}
+.j{width:92px;text-align:center;position:relative}
+.j .busto{width:92px;height:104px;background:center top/112% no-repeat;border-bottom:1px solid #3b5a6e;-webkit-mask-image:linear-gradient(180deg,#000 72%,transparent 100%);mask-image:linear-gradient(180deg,#000 72%,transparent 100%)}
+.j .num{position:absolute;left:4px;top:66px;font:800 15px var(--d);background:var(--deep);border:1px solid #3b5a6e;padding:0 5px;color:var(--t1)}
+.j .nom{font:700 15px var(--d);letter-spacing:.04em;text-transform:uppercase;margin-top:6px}
+.j .pos{font:500 11px var(--d);letter-spacing:.16em;color:var(--t2)}
+.j .est{display:inline-block;margin-top:5px;font:700 10.5px var(--d);letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:2px}
+.est.bad{background:rgba(227,91,79,.18);color:#ff8a7e;border:1px solid rgba(227,91,79,.6)}
+.est.warn{background:rgba(228,185,75,.14);color:var(--warn);border:1px solid rgba(228,185,75,.5)}
+.j.out .busto{filter:grayscale(1) brightness(.6)}
+.sep{align-self:stretch;width:1px;background:#3b5a6e;margin:0 14px 30px}
+.fuera{font:600 11px var(--d);letter-spacing:.18em;color:var(--t2);position:absolute;top:-2px}
+@media (max-height:800px){
+  .hero{top:74px}.versus{margin-top:14px}.team svg{width:68px;height:76px}.team .n{font-size:32px}
+  .meta{margin-top:16px}.cuenta{font-size:50px}.clave{margin-top:14px}.cta{margin-top:18px}.cta button{padding:13px 24px;font-size:19px}
+  .libreta{top:70px}.item{padding:10px 20px 10px 0}.item p{font-size:13px}
+  .tira{top:420px}.plantel{height:200px}.j .busto{height:84px;background-size:100%}.j .num{top:52px}.fila{margin-top:8px}
+}
+/* ---------- HUD (sin cambios) ---------- */
+.hud{position:absolute;left:0;right:0;bottom:0;height:72px;background:#0a2233;border-top:1px solid #1f3d52;display:flex}
+.hud div{padding:12px 24px;border-right:1px solid #1f3d52;width:240px}
+.hud small{display:block;font:600 10px var(--d);letter-spacing:.18em;color:var(--t2)}
+.hud strong{font:700 26px var(--d)}
+.hud span{font:400 12px var(--u);color:var(--t2);margin-left:6px}
+.hud .firma{margin-left:auto;border:0;width:auto;font:600 24px var(--m);color:#9fb3bf;padding-top:20px;transform:rotate(-3deg)}
+</style></head>
+<body>
+<div class="nav">
+  <div class="club"><svg width="34" height="38" viewBox="0 0 34 38"><path d="M17 1 L32 6 V18 C32 28 25 34 17 37 C9 34 2 28 2 18 V6 Z" fill="#e8eef3" stroke="#1e5f9c" stroke-width="2"/><path d="M10 6 V33 M17 3 V37 M24 6 V33" stroke="#1e5f9c" stroke-width="4"/></svg>
+    <div><b>ATLÉTICO EL PARQUE</b><small>TEMPORADA 1 · FUNDADO EN 2025</small></div></div>
+  <div class="tabs"><span class="on">TABLERO</span><span>PARTIDOS</span><span>LIGA</span><span>PLANTEL</span><span>FINANZAS</span><span>EL CLUB</span><span>HISTORIA</span></div>
+  <div class="salir">SALIR</div>
+</div>
+
+<div class="scene"><div class="img"></div><div class="veil"></div></div>
+
+<section class="hero">
+  <div class="eyebrow">LA PRÓXIMA FECHA · <b>FECHA 3</b> · LIGA AMATEUR · C</div>
+  <div class="versus">
+    <div class="team">
+      <svg width="88" height="98" viewBox="0 0 34 38"><path d="M17 1 L32 6 V18 C32 28 25 34 17 37 C9 34 2 28 2 18 V6 Z" fill="#e8eef3" stroke="#1e5f9c" stroke-width="1.6"/><path d="M10 6 V33 M17 3 V37 M24 6 V33" stroke="#1e5f9c" stroke-width="3.6"/></svg>
+      <div><div class="n">Atlético<br>El Parque</div><div class="s"><b>3°</b> · 2-0</div></div>
+    </div>
+    <div class="vs">VS</div>
+    <div class="team">
+      <svg width="88" height="98" viewBox="0 0 34 38"><path d="M17 1 L32 6 V18 C32 28 25 34 17 37 C9 34 2 28 2 18 V6 Z" fill="#2f6b45" stroke="#f1f1e8" stroke-width="1.6"/><path d="M2 15 H32 V21 H2 Z" fill="#f1f1e8"/><text x="17" y="20.6" font-family="BC" font-weight="800" font-size="7" text-anchor="middle" fill="#2f6b45">UV</text></svg>
+      <div><div class="n">Unión<br>Vecinal</div><div class="s"><b>5°</b> · 1-1</div></div>
+    </div>
+  </div>
+  <div class="meta">
+    <div class="cuenta">5 DÍAS<small>PARA EL PARTIDO</small></div>
+    <div class="cuando">Sábado 11 de abril · 22:00<span>Gimnasio del Parque · jugamos de local</span></div>
+  </div>
+  <div class="clave"><span class="tag">RIVAL PAREJO</span> Juego interior: lastiman cerca del aro y pelean el rebote.</div>
+  <div class="cta"><button>Preparar el partido →</button><p>Decidí la semana y después confirmá quién viene.</p></div>
+</section>
+
+<aside class="libreta">
+  <header><h3>Esta semana</h3><span class="mano">antes del sábado</span></header>
+  <div class="item bad"><i class="m"></i><div class="face bad" style="background-image:url(../../../public/arte/p-mercenario.webp)"></div>
+    <div><b>Núñez está al borde de irse</b><p>Lleva tres fechas con pocos minutos. Una charla o minutos pueden salvarlo.</p></div><span class="ir">Vestuario →</span></div>
+  <div class="item warn"><i class="m"></i><div class="face icon">$</div>
+    <div><b>La caja cierra justa</b><p>$250 en caja. Con un imprevisto, la semana cierra en rojo.</p></div><span class="ir">La semana →</span></div>
+  <div class="item warn"><i class="m"></i><div class="face duo"><i style="background-image:url(../../../public/arte/p-competitivo.webp)"></i><i style="background-image:url(../../../public/arte/p-protagonista.webp)"></i></div>
+    <div><b>Acosta y Cardozo no se bancan</b><p>El vestuario lo sabe. Sentarlos a los dos es una acción de la semana.</p></div><span class="ir">La semana →</span></div>
+  <footer><span>+ 1 aviso más</span><span>Ver todo</span></footer>
+</aside>
+
+<div class="tira">
+  <div><small>EL ÚLTIMO</small><strong class="g">G 68–65</strong> <span>vs Deportivo Cerro · figura Silva</span></div>
+  <div><small>LA TABLA</small><strong>3° de 10</strong> <span>a 1 del líder</span></div>
+  <div><small>LA COMISIÓN</small><strong>Entre los 4</strong> <span class="g">en camino</span></div>
+</div>
+
+<section class="plantel">
+  <h3>El plantel <span><b>10 de 12</b> en condiciones para el sábado</span></h3>
+  <div class="fila" id="fila"></div>
+</section>
+
+<div class="hud">
+  <div><small>SEMANA</small><strong>3</strong><span>de 9</span></div>
+  <div><small>CAJA DEL CLUB</small><strong>$250</strong><span>disponible</span></div>
+  <div><small>CUOTAS AL DÍA</small><strong style="color:var(--warn)">11 / 12</strong><span>en el plantel</span></div>
+  <div><small>RÉCORD</small><strong>2-0</strong><span>en la liga</span></div>
+  <div class="firma">El barrio también juega</div>
+</div>
+
+<script>
+const A='../../../public/arte/';
+const J=[
+ ['veterano','Chino',4,'BAS'],['talentoso','Silva',7,'BAS'],['social','Techera',8,'ESC'],
+ ['mercenario','Núñez',10,'ESC','bad','Al borde'],['leal','Pereyra',11,'ALE'],['cumplidor','Tato',12,'ALE','warn','Fundido'],
+ ['competitivo','Acosta',13,'ALA'],['protagonista','Cardozo',14,'ALA'],['social','Viera',15,'PIV','warn','Debe cuota'],
+ ['veterano','Flaco',5,'PIV'],
+ ['talentoso','Batista',6,'ESC','bad','Lesión · 2 sem','out'],['leal','Lemos',9,'ALE','bad','Laburo','out'],
+];
+const f=document.getElementById('fila');
+J.forEach((p,i)=>{
+  if(i===10){const s=document.createElement('div');s.className='sep';f.appendChild(s);}
+  const d=document.createElement('div');d.className='j'+(p[6]?' out':'');
+  d.innerHTML=`<div class="busto" style="background-image:url(${A}p-${p[0]}.webp)"></div><span class="num">${p[2]}</span><div class="nom">${p[1]}</div><div class="pos">${p[3]}</div>${p[4]?`<span class="est ${p[4]}">${p[5]}</span>`:''}`;
+  f.appendChild(d);
+});
+</script>
+</body></html>

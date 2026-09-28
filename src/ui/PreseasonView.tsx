@@ -21,17 +21,27 @@ import type { DemandType, GameState, KnowledgeLevel, MarketPlayer, Player, Posit
 import type { GameAction } from '../state/gameReducer';
 import { formatMoney, starsFor } from './helpers';
 import { Avatar } from './Avatar';
-import { Cabecera } from './Cabecera';
+import { FilaDePie, type PersonaDePie } from './Busto';
 import { Crest } from './Crest';
-import { Icon } from './Icon';
-import { PlayerLink } from './PlayerLink';
+import { Icon, type IconName } from './Icon';
+import { OpenProfileContext, PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
-import { Tip, TIPS } from './Tip';
 import { USER_CLUB_ID } from '../game/world';
 import { dayLabel } from '../game/world';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
-import { useState, type CSSProperties } from 'react';
+import { useContext, useState, type CSSProperties, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useTeclasModal } from './teclas';
+import './pretemporada.css';
+
+/**
+ * Los diálogos de la pretemporada se montan en el body, fuera del marco: la
+ * barra de arriba y la de abajo tienen z-index propio y el contenido anima su
+ * opacidad (queda en su propio contexto de apilado). Montados adentro, el velo
+ * del diálogo quedaba debajo del chrome y la barra se veía encendida encima.
+ * Así el velo cubre toda la ventana, como en la temporada (App.tsx).
+ */
+const enElCuerpo = (n: ReactNode) => createPortal(n, document.body);
 
 interface Props {
   state: GameState;
@@ -229,15 +239,33 @@ function chosenLeague(state: GameState): LeagueOption | null {
   return offer.find((o) => o.divisionId === ps.chosenDivisionId) ?? null;
 }
 
-// ---------- Chrome: la barra de arriba y la de abajo ----------
+
+// ---------- Chrome: la misma barra de arriba y de abajo que la temporada ----------
+
+type PsTab = 'inscripcion' | 'plantel' | 'mercado';
+
+interface PsNavItem {
+  id: PsTab;
+  label: string;
+  icon: IconName;
+  /** Lo que hay que mirar en esa parte, en una marca chica al lado del nombre. */
+  badge?: { text: string; cls: string; title: string };
+}
 
 /**
- * La pretemporada es el mismo juego que la temporada, así que lleva el mismo
- * cromo: escudo, nombre del club y el área en la que estás. Antes era una
- * pantalla suelta sin barra ni color de sección — se leía como otra aplicación
- * pegada adelante del juego.
+ * La pretemporada es el mismo juego que la temporada (UI V1): la misma barra
+ * de arriba, con el escudo a la izquierda y las secciones al lado. Acá las
+ * secciones son las tres partes de la pretemporada —dónde jugamos, quiénes
+ * siguen, a quién traemos— con el mismo punto, el mismo ícono y el mismo
+ * subrayado naranja de la sección activa que la barra de la temporada.
  */
-function PreseasonTopbar({ state, dispatch }: Props) {
+function PreseasonTopbar({
+  state,
+  dispatch,
+  items,
+  tab,
+  onTab,
+}: Props & { items: PsNavItem[]; tab: PsTab; onTab: (t: PsTab) => void }) {
   const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
   const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
 
@@ -257,13 +285,32 @@ function PreseasonTopbar({ state, dispatch }: Props) {
           />
           <div>
             <div className="club-name">{state.club.name}</div>
-            <div className="temporada">Temporada {state.seasonNumber} · antes de la primera fecha</div>
+            <div className="temporada">Temporada {state.seasonNumber} · pretemporada</div>
           </div>
         </div>
-        <div className="pantalla-actual sec-plantel">
-          <Icon name="inscripcion" size={19} />
-          Pretemporada
-        </div>
+
+        <nav className="secciones ps-secciones" aria-label="La pretemporada">
+          {items.map((it) => {
+            const on = tab === it.id;
+            return (
+              <button
+                key={it.id}
+                className={`seccion${on ? ' on' : ''}`}
+                aria-current={on ? 'page' : undefined}
+                onClick={() => onTab(it.id)}
+                title={it.badge?.title ?? it.label}
+              >
+                <span className="seccion-punto" />
+                <span className="seccion-label">
+                  {it.label}
+                  {it.badge && <span className={`ps-marca ${it.badge.cls}`}>{it.badge.text}</span>}
+                </span>
+                <Icon name={it.icon} size={22} />
+              </button>
+            );
+          })}
+        </nav>
+
         <div className="spacer" />
         <button
           className="salir"
@@ -282,15 +329,17 @@ function PreseasonTopbar({ state, dispatch }: Props) {
           Salir
         </button>
       </div>
-      <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
+      {enElCuerpo(<ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />)}
     </header>
   );
 }
 
 /**
- * Los números que mirás todo el tiempo, en la misma barra fija que en
- * temporada. Antes eran siete chips en fila arriba de todo: todos del mismo
- * tamaño, así que ninguno se leía primero.
+ * La barra de abajo, la misma de la temporada: los números que corren semana a
+ * semana y, a la derecha, el único botón naranja de la pantalla —pasar de
+ * semana o, en la última, cerrar la lista—. Queda fijo: el mercado scrollea y
+ * la acción está siempre en el mismo pixel. Confirmados y caja no se repiten
+ * acá: son la cabecera de la pantalla.
  */
 function PreseasonRecursos({ state, dispatch }: Props) {
   const ps = state.preseason!;
@@ -299,16 +348,14 @@ function PreseasonRecursos({ state, dispatch }: Props) {
   const weeksLeft = ps.totalWeeks - ps.week;
   const fees = projectedWeeklyFees(state);
   const costs = BALANCE.economy.courtRentWeekly + BALANCE.economy.refereeWeekly;
-  const opt = chosenLeague(state);
-  const fee = opt ? opt.fee : BALANCE.economy.inscriptionFee;
   const isLastWeek = ps.week >= ps.totalWeeks;
   const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
 
   /* Cerrar la lista es irreversible y con un click se llevaba puesto lo que
-     los chips de la cabecera venían avisando: sin liga elegida (recargo y
-     mala imagen), menos del mínimo (en la Carrera, no hay temporada), la caja
-     que no cubre la ficha. Con riesgos abiertos, se pregunta con los mismos
-     porqués de los chips; sin riesgos, cierra directo. */
+     la cabecera venía avisando: sin liga elegida (recargo y mala imagen),
+     menos del mínimo (en la Carrera, no hay temporada), la caja que no cubre
+     la ficha. Con riesgos abiertos, se pregunta con los mismos porqués; sin
+     riesgos, cierra directo. */
   const cerrar = () => {
     const risks = closingRisks(state);
     if (risks.length === 0) {
@@ -335,34 +382,7 @@ function PreseasonRecursos({ state, dispatch }: Props) {
             <Icon name="agenda" size={14} /> Semana
           </span>
           <div className={`v ${weeksLeft === 0 ? 'bad' : ''}`}>{ps.week}</div>
-          <div className="s">de {ps.totalWeeks} · {weeksLeft === 0 ? 'última' : `quedan ${weeksLeft + 1}`}</div>
-        </div>
-        <div className="recurso">
-          <span className="k">
-            <Icon name="plantel" size={14} /> Confirmados
-          </span>
-          <div className={`v ${confirmed.length >= min ? 'good' : 'bad'}`}>{confirmed.length}</div>
-          <div className="s">
-            {confirmed.length >= min
-              ? `mínimo ${min}: cubierto`
-              : min - confirmed.length === 1
-                ? 'falta 1 para el mínimo'
-                : `faltan ${min - confirmed.length} para el mínimo`}
-          </div>
-        </div>
-        <div className="recurso">
-          <span className="k">
-            <Icon name="caja" size={14} /> Caja del club
-          </span>
-          <div className={`v ${state.club.money >= fee ? '' : 'bad'}`}>{formatMoney(state.club.money)}</div>
-          <div className="s">{opt ? (fee > 0 ? `inscripción $${fee}` : 'inscripción gratis') : 'liga sin elegir'}</div>
-        </div>
-        <div className="recurso">
-          <span className="k">
-            <Icon name="finanzas" size={14} /> Cuotas
-          </span>
-          <div className={`v ${fees >= costs ? 'good' : 'warn'}`}>${fees}</div>
-          <div className="s">por semana · gastos ${costs}</div>
+          <div className="s">de {ps.totalWeeks} · {weeksLeft === 0 ? 'la última' : `quedan ${weeksLeft + 1}`}</div>
         </div>
         <div className="recurso">
           <span className="k">
@@ -373,80 +393,188 @@ function PreseasonRecursos({ state, dispatch }: Props) {
           </div>
           <div className="s">charlas de esta semana</div>
         </div>
+        <div className="recurso">
+          <span className="k">
+            <Icon name="finanzas" size={14} /> Cuotas
+          </span>
+          <div className={`v ${fees >= costs ? 'good' : 'warn'}`}>${fees}</div>
+          <div className="s">por semana · gastos ${costs}</div>
+        </div>
         <div className="recurso accion">
           <span className="s">
-            {isLastWeek
-              ? 'Se cierra la lista y se paga la inscripción'
-              : 'Las gestiones se renuevan cada semana'}
+            {isLastWeek ? 'Se cierra la lista y se paga la inscripción' : 'Las gestiones se renuevan cada semana'}
           </span>
           <button
-            className="avanzar primary"
+            className="avanzar primary v1-cta"
             onClick={() => (isLastWeek ? cerrar() : dispatch({ type: 'PS_ADVANCE' }))}
           >
-            {isLastWeek ? '» Cerrar e inscribir' : `» Semana ${ps.week + 1}`}
+            {isLastWeek ? 'Cerrar la lista e inscribir →' : `Pasar a la semana ${ps.week + 1} →`}
           </button>
         </div>
       </div>
-      <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
+      {enElCuerpo(<ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />)}
     </footer>
   );
 }
 
-// ---------- El estado del club, arriba de todo ----------
+// ---------- El héroe: dónde jugamos, cuántos somos, cuánta plata hay ----------
 
 /**
- * Una línea, no una card: en qué liga quedaste anotado (con su día de partido,
- * que es lo que decide cada fichaje) y, a la derecha, qué está mal para cerrar.
- * Es cabecera, está siempre a la vista arriba de las pestañas, así que no
- * puede medir 160 px: los riesgos son chips y el porqué va en el tooltip.
+ * Lo primero que se lee, sin caja y sobre el bar: la pregunta de la semana y
+ * las tres respuestas que deciden si hay temporada. Lo que hoy impediría
+ * inscribirse va debajo, escrito como frase (el porqué largo, al pasar el
+ * mouse). Reemplaza a la línea de estado con chips de antes.
  */
-function EstadoPanel({ state, onFixLeague }: Props & { onFixLeague: () => void }) {
-  const risks = closingRisks(state);
+function PsHero({ state, onTab, tab }: Props & { onTab: (t: PsTab) => void; tab: PsTab }) {
+  const ps = state.preseason!;
   const opt = chosenLeague(state);
+  const hasInscription = ps.chosenDivisionId !== undefined;
+  const confirmed = confirmedPlayers(state).length;
+  const min = BALANCE.preseason.minPlayers;
+  const fee = opt ? opt.fee : BALANCE.economy.inscriptionFee;
+  const risks = closingRisks(state);
+  const weeksLeft = ps.totalWeeks - ps.week;
+  const faltan = min - confirmed;
+  const carrera = state.mode === 'carrera' && !!ps.libreta;
+
+  const titulo =
+    hasInscription && !opt
+      ? '¿Dónde jugamos este año?'
+      : faltan > 0
+        ? carrera
+          ? `Faltan ${faltan} para tener equipo`
+          : faltan === 1
+            ? 'Falta 1 para el mínimo'
+            : `Faltan ${faltan} para el mínimo`
+        : weeksLeft === 0
+          ? 'Última semana: se cierra la lista'
+          : 'El plantel se está armando';
 
   return (
-    <div className="card ps-estado">
-      <div className="ps-estado-liga">
-        <Icon name="inscripcion" size={16} />
-        {opt ? (
-          <>
-            <span className="ps-estado-k">Anotado en</span>
-            <strong>
-              {opt.leagueName} · {opt.divisionName}
-            </strong>
-            <span className="muted">
-              se juega los {dayLabel(opt.gameDay)} ({opt.gameTimes.join(' / ')})
-            </span>
-          </>
-        ) : (
-          <>
-            <span className="ps-estado-k">Sin liga</span>
-            <strong style={{ color: 'var(--warn)' }}>Todavía no elegiste dónde jugar</strong>
-            <button className="small" onClick={onFixLeague}>
-              Elegir liga
-            </button>
-          </>
-        )}
+    <section className="ps-hero v1-hero" aria-label="La pretemporada">
+      <div className="v1-eyebrow">
+        Pretemporada · <b>Semana {ps.week} de {ps.totalWeeks}</b> ·{' '}
+        {weeksLeft === 0 ? 'la última antes del cierre' : `${weeksLeft + 1} semanas para el cierre`}
       </div>
-      <div className="ps-estado-veredicto">
-        {risks.length === 0 ? (
-          <span className="chip good" title="Con lo que hay hoy, el club llega a inscribirse sin problemas.">
-            ✓ Llegás a inscribirte
+      <h1 className="v1-titulo">{titulo}</h1>
+
+      <div className="ps-datos">
+        <div className="ps-dato ps-dato-liga">
+          <span className="ps-dato-k">Dónde jugamos</span>
+          <span className={`ps-dato-v${opt ? '' : ' warn'}`}>{opt ? opt.leagueName : 'Sin liga'}</span>
+          <span className="ps-dato-s">
+            {opt
+              ? `${opt.divisionName} · los ${dayLabel(opt.gameDay)} (${opt.gameTimes.join(' / ')})`
+              : 'Todavía no elegiste dónde jugar'}
+            {hasInscription && tab !== 'inscripcion' && (
+              <button className="ps-link" onClick={() => onTab('inscripcion')}>
+                {opt ? 'Cambiar' : 'Elegir liga'} →
+              </button>
+            )}
           </span>
-        ) : (
-          risks.map((r) => (
-            <span key={r.short} className="chip warn" title={r.long}>
-              {r.short}
-            </span>
-          ))
-        )}
+        </div>
+        <div className="ps-dato">
+          <span className="ps-dato-k">Cuántos somos</span>
+          <span className={`ps-dato-v ${faltan > 0 ? 'bad' : 'good'}`}>{confirmed}</span>
+          <span className="ps-dato-s">
+            {confirmed === 1 ? 'confirmado' : 'confirmados'} ·{' '}
+            {faltan > 0 ? `${faltan === 1 ? 'falta 1' : `faltan ${faltan}`} para los ${min}` : `el mínimo es ${min}`}
+          </span>
+        </div>
+        <div className="ps-dato">
+          <span className="ps-dato-k">Cuánta plata hay</span>
+          <span className={`ps-dato-v${state.club.money < 0 || state.club.money < fee ? ' bad' : ''}`}>
+            {formatMoney(state.club.money)}
+          </span>
+          <span className="ps-dato-s">
+            en caja ·{' '}
+            {opt ? (fee > 0 ? `la inscripción sale $${fee}` : 'la inscripción es gratis') : 'la inscripción depende de la liga'}
+          </span>
+        </div>
       </div>
-    </div>
+
+      <p className="v1-frase ps-veredicto">
+        {risks.length === 0 ? (
+          <>
+            <b className="good">Llegamos a inscribirnos</b> con lo que hay hoy.
+            {weeksLeft > 0 && <> Quedan semanas para reforzar el plantel.</>}
+          </>
+        ) : (
+          <>
+            Si cerramos hoy:{' '}
+            {risks.map((r, i) => (
+              <span key={r.short}>
+                {i > 0 && ' · '}
+                <b className="warn" title={r.long}>
+                  {r.short}
+                </b>
+              </span>
+            ))}
+            .
+          </>
+        )}
+      </p>
+    </section>
+  );
+}
+
+/**
+ * La planilla pegada con cinta, como «Esta semana» en el Tablero: lo que fue
+ * pasando en la pretemporada, lo último arriba. Es la única con letra a mano.
+ */
+function PsDiario({ state }: { state: GameState }) {
+  const ps = state.preseason!;
+  const [todo, setTodo] = useState(false);
+  const log = ps.log.slice(0, 10);
+  const visibles = todo ? log : log.slice(0, 4);
+  return (
+    <aside className="ps-diario v1-planilla" aria-label="Lo que pasó en la pretemporada">
+      <i className="v1-cinta a" />
+      <i className="v1-cinta b" />
+      <h3 className="v1-mano">
+        Lo que pasó <span>en la pretemporada</span>
+      </h3>
+      {log.length === 0 ? (
+        <p className="ps-diario-vacio">
+          Todavía no pasó nada. Cada semana hay {BALANCE.preseason.gestionesPerWeek} gestiones: una charla, una negociación
+          o un contacto cuesta una.
+        </p>
+      ) : (
+        <ol className="ps-diario-lista">
+          {visibles.map((l, i) => (
+            <li key={i}>{l}</li>
+          ))}
+        </ol>
+      )}
+      {log.length > 4 && (
+        <button className="ps-diario-mas" onClick={() => setTodo(!todo)}>
+          {todo ? 'Ver menos' : log.length === 5 ? '+ 1 más' : `+ ${log.length - 4} más`}
+        </button>
+      )}
+    </aside>
+  );
+}
+
+/** El título de una planilla: voz display y una línea punteada abajo. */
+function PlanCab({ titulo, derecha, children }: { titulo: ReactNode; derecha?: ReactNode; children?: ReactNode }) {
+  return (
+    <header className="ps-plan-cab">
+      <div className="ps-plan-cab-fila">
+        <h2 className="ps-plan-t">{titulo}</h2>
+        {derecha && <span className="ps-plan-der">{derecha}</span>}
+      </div>
+      {children}
+    </header>
   );
 }
 
 // ---------- Inscripción: la oferta de ligas ----------
 
+/**
+ * Las ligas como renglones de una sola planilla, no como cuatro cards: se
+ * comparan de arriba abajo —cuánto sale, qué nivel, qué día— y el cruce con la
+ * agenda del plantel queda en su propia columna, que es el dato que decide.
+ */
 function InscriptionSection({ state, dispatch }: Props) {
   const ps = state.preseason!;
   const offer = inscriptionOffer(state);
@@ -454,8 +582,7 @@ function InscriptionSection({ state, dispatch }: Props) {
 
   const renderOption = (opt: LeagueOption) => {
     const chosen = ps.chosenDivisionId === opt.divisionId;
-    // La agenda del plantel confirmado, cruzada con el día y horarios de ESA liga:
-    // el dato que decide la inscripción.
+    // La agenda del plantel confirmado, cruzada con el día y horarios de ESA liga.
     const blocked = confirmed.filter((p) => p.agenda?.blockedDays.includes(opt.gameDay));
     const late = confirmed.filter(
       (p) =>
@@ -465,93 +592,123 @@ function InscriptionSection({ state, dispatch }: Props) {
         opt.gameTimes.some((t) => !p.agenda!.onlyTimes.includes(t))
     );
     return (
-      <div key={opt.divisionId} className={`player-card ps-liga${chosen ? ' selected' : ''}`}>
-        <div className="player-head">
-          <div className="who">
-            <div className="name">
-              {opt.leagueName} · {opt.divisionName}
-            </div>
-            <div className="pos">
-              Se juega los {dayLabel(opt.gameDay)} ({opt.gameTimes.join(' / ')})
-            </div>
+      <div key={opt.divisionId} className={`ps-liga${chosen ? ' elegida' : ''}${opt.locked ? ' cerrada' : ''}`}>
+        <div className="ps-liga-quien">
+          <div className="ps-liga-nombre">{opt.leagueName}</div>
+          <div className="ps-liga-div">
+            {opt.divisionName} · los {dayLabel(opt.gameDay)} · {opt.gameTimes.join(' / ')}
           </div>
         </div>
-        <div className="player-chips">
-          <span className={`chip ${opt.fee > 0 ? '' : 'good'}`}>
-            {opt.fee > 0 ? `Inscripción: $${opt.fee}` : 'Inscripción gratis'}
-          </span>
-          <span className="chip accent">{opt.levelLabel}</span>
-          <span className="chip">{opt.weeks} fechas</span>
-          {opt.promotes ? (
-            <span className="chip good">Con ascensos y descensos</span>
-          ) : (
-            <span className={`chip ${opt.isPlaza ? 'warn' : ''}`}>Sin ascensos</span>
+        <div className="ps-liga-que">
+          <p className="v1-frase">
+            {opt.fee > 0 ? (
+              <>
+                Inscripción <b>${opt.fee}</b>
+              </>
+            ) : (
+              <b className="good">Inscripción gratis</b>
+            )}{' '}
+            · {opt.levelLabel.toLowerCase()} · <b>{opt.weeks}</b> fechas ·{' '}
+            {opt.promotes ? 'con ascensos y descensos' : 'sin ascensos'}
+            {opt.prize && (
+              <>
+                {' '}
+                · premio al campeón <b className="good">${opt.prize.champion}</b>
+              </>
+            )}
+            .
+          </p>
+          <p className="ps-liga-nota">{opt.note}</p>
+          {((opt.fee > 0 && !opt.trusts) || opt.isPlaza || opt.isHeld) && (
+            <div className="ps-liga-marcas">
+              {opt.fee > 0 && !opt.trusts && <span className="v1-est warn">Se paga contado: no fían</span>}
+              {opt.isPlaza && (
+                <span className="v1-est warn">Prestigio deportivo −{BALANCE.preseason.plazaPrestigeHit}</span>
+              )}
+              {opt.isHeld && <span className="v1-est good">Te guardan el lugar</span>}
+            </div>
           )}
-          {opt.prize && <span className="chip good">Premio al campeón: ${opt.prize.champion}</span>}
-          {opt.fee > 0 && !opt.trusts && <span className="chip warn">Se paga contado: no fían</span>}
-          {opt.isPlaza && <span className="chip warn">Prestigio deportivo -{BALANCE.preseason.plazaPrestigeHit}</span>}
-          {opt.isHeld && <span className="chip good">Te guardan el lugar</span>}
         </div>
-        <p className="muted" style={{ margin: '0.5rem 0' }}>
-          {opt.note}
-        </p>
-        {blocked.length > 0 && (
-          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--bad)' }}>
-            ✕ No podrían los {dayLabel(opt.gameDay)}: {blocked.map((p) => p.name).join(', ')}
-          </p>
-        )}
-        {late.length > 0 && (
-          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--warn)' }}>
-            Llegarían tarde a los de{' '}
-            {opt.gameTimes.filter((t) => late.some((p) => !p.agenda!.onlyTimes.includes(t))).join(' y ')}:{' '}
-            {late.map((p) => p.name).join(', ')}
-          </p>
-        )}
-        {blocked.length === 0 && late.length === 0 && (
-          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--good)' }}>
-            ✓ Todos los confirmados pueden los {dayLabel(opt.gameDay)}
-          </p>
-        )}
-        {opt.locked && (
-          <p className="muted" style={{ margin: '0.3rem 0', color: 'var(--warn)' }}>
-            ✕ {opt.locked}
-          </p>
-        )}
-        <button
-          className={`ps-elegir${chosen ? ' on' : ''}`}
-          disabled={chosen || !!opt.locked}
-          onClick={() => dispatch({ type: 'PS_CHOOSE_LEAGUE', divisionId: opt.divisionId })}
-        >
-          {opt.locked ? 'No nos aceptan todavía' : chosen ? '✓ Inscripto acá (se paga al cierre)' : 'Anotarse acá'}
-        </button>
+        <div className="ps-liga-gente">
+          {blocked.length > 0 && (
+            <p className="bad">
+              No podrían los {dayLabel(opt.gameDay)}: {blocked.map((p) => p.name).join(', ')}
+            </p>
+          )}
+          {late.length > 0 && (
+            <p className="warn">
+              Llegarían tarde a los de{' '}
+              {opt.gameTimes.filter((t) => late.some((p) => !p.agenda!.onlyTimes.includes(t))).join(' y ')}:{' '}
+              {late.map((p) => p.name).join(', ')}
+            </p>
+          )}
+          {blocked.length === 0 && late.length === 0 && (
+            <p className={confirmed.length > 0 ? 'good' : 'dim'}>
+              {confirmed.length > 0
+                ? `Todos los confirmados pueden los ${dayLabel(opt.gameDay)}`
+                : `Nadie confirmado todavía: el día se cruza con cada uno que diga que sí`}
+            </p>
+          )}
+          {opt.locked && <p className="warn">{opt.locked}</p>}
+        </div>
+        <div className="ps-liga-accion">
+          <button
+            className={`ps-elegir-liga${chosen ? ' on' : ''}`}
+            disabled={chosen || !!opt.locked}
+            onClick={() => dispatch({ type: 'PS_CHOOSE_LEAGUE', divisionId: opt.divisionId })}
+          >
+            {opt.locked ? 'No nos aceptan todavía' : chosen ? '✓ Anotados acá' : 'Anotarse acá'}
+          </button>
+          {chosen && <span className="ps-liga-pago">se paga al cierre</span>}
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="card" style={{ marginBottom: '1rem' }}>
-      <h3 className="card-band">
-        <Icon name="inscripcion" size={17} /> ¿Dónde jugamos este año?
-      </h3>
-      <Cabecera art="cab-comision.webp" alt="La comisión del club reunida alrededor de una mesa" alto={150} />
-      <p className="hint" style={{ marginTop: 0 }}>
-        Elegir liga es elegir tu día de partido: mirá qué día puede tu gente antes de firmar. Podés cambiar hasta el
-        cierre. Si no elegís, la comisión te anota a último momento en la de siempre (recargo $
-        {BALANCE.preseason.lateInscriptionFee} y mala imagen).
-      </p>
-      <div className="player-grid ps-grid">{offer.map(renderOption)}</div>
-    </div>
+    <section className="ps-seccion v1-planilla" aria-label="La oferta de ligas">
+      <PlanCab titulo="La oferta de ligas" derecha={`${offer.length} ${offer.length === 1 ? 'opción' : 'opciones'}`}>
+        <p className="v1-frase">
+          Elegir liga es elegir el día de partido: mirá qué día puede tu gente antes de firmar. Se puede cambiar hasta el
+          cierre; si no elegís, la comisión te anota a último momento en la de siempre (recargo{' '}
+          <b>${BALANCE.preseason.lateInscriptionFee}</b> y mala imagen).
+        </p>
+      </PlanCab>
+      {offer.map(renderOption)}
+    </section>
   );
 }
 
 // ---------- Plantel: continuidad ----------
 
+const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
+
+const POS_ABBR: Record<string, string> = {
+  Base: 'BAS',
+  Escolta: 'ESC',
+  Alero: 'ALE',
+  'Ala-Pívot': 'ALA',
+  Pívot: 'PIV',
+};
+
+/** En la fila de pie entra el apodo si lo tiene, y si no el apellido. */
+function shortName(name: string): string {
+  const nick = name.match(/"([^"]+)"/);
+  if (nick) return nick[1];
+  const parts = name.split(' ');
+  return parts[parts.length - 1];
+}
+
+/** El estado de continuidad dicho con las clases del semáforo (sin el acento). */
+function contCls(cls: string): 'good' | 'warn' | 'bad' {
+  return cls === 'good' ? 'good' : cls === 'bad' ? 'bad' : 'warn';
+}
+
 /**
- * Un renglón del plantel en la pretemporada: la misma planilla que el Plantel
- * de la temporada y el mercado (dirección D), con lo que acá importa: cómo
- * viene cada uno (dudando, pide una condición, se retiró) y qué podés hacer.
+ * Un renglón de los que esperan una respuesta: la cara chica (es una tabla
+ * densa), quién es, qué dijo, cómo viene y el botón de lo que se puede hacer.
  */
-function RosterRow({ state, dispatch, p, indice }: Props & { p: Player; indice: number }) {
+function PendienteRow({ state, dispatch, p, indice }: Props & { p: Player; indice: number }) {
   const ps = state.preseason!;
   const st = ps.continuity[p.id];
   const cont = CONTINUITY_LABELS[st];
@@ -562,33 +719,37 @@ function RosterRow({ state, dispatch, p, indice }: Props & { p: Player; indice: 
   const dicho = st === 'pide_condicion' && demand ? `Pide: ${DEMAND_LABELS[demand].toLowerCase()}.` : p.description;
 
   return (
-    <div className={`planilla-fila${st === 'retirado' ? ' dimmed' : ''}`} style={{ '--fila': indice } as CSSProperties}>
-      <span className="planilla-foto">
-        <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} personality={p.personality} />
+    <div className="ps-fila ps-fila-plantel" style={{ '--fila': indice } as CSSProperties}>
+      <span className="ps-foto">
+        <Avatar seed={p.id} age={p.age} appearance={p.appearance} title={p.name} personality={p.personality} size={46} />
       </span>
-      <span className="planilla-quien">
-        <span className="planilla-nombre">
+      <span className="ps-quien">
+        <span className="ps-nombre">
           <PlayerLink id={p.id}>{p.name}</PlayerLink>
-          <span className="planilla-pos">
-            {p.position} · {p.age}
+          <span className="ps-pos">
+            {p.position} · {p.age} años · ≈{p.visibleRating}
           </span>
         </span>
-        <span className="planilla-dicho" title={dicho}>{dicho}</span>
+        <span className="ps-dicho" title={dicho}>
+          {dicho}
+        </span>
       </span>
-      <span className="planilla-valor"><small>≈</small>{p.visibleRating}</span>
-      <span className="planilla-sabe">
-        <span className={`chip ${cont.cls}`}>{cont.label}</span>
-        {feeInfo && <span className={`chip ${feeInfo.cls}`}>{feeInfo.label}</span>}
+      <span className="ps-estado">
+        <span className={`v1-est ${contCls(cont.cls)}`}>{cont.label}</span>
+        {feeInfo && <span className="ps-estado-nota">{feeInfo.label}</span>}
       </span>
-      <span className="planilla-accion">
+      <span className="ps-accion">
         {needsTalk && (
-          <button className="small" disabled={noGestiones} title={noGestiones ? 'No te quedan gestiones esta semana' : 'Cuesta 1 gestión'} onClick={() => dispatch({ type: 'PS_TALK', id: p.id })}>
+          <button
+            disabled={noGestiones}
+            title={noGestiones ? 'No te quedan gestiones esta semana' : 'Cuesta 1 gestión'}
+            onClick={() => dispatch({ type: 'PS_TALK', id: p.id })}
+          >
             Hablar<small> · 1 gestión</small>
           </button>
         )}
         {st === 'pide_condicion' && (
           <button
-            className="small"
             disabled={noGestiones}
             title={noGestiones ? 'No te quedan gestiones esta semana' : 'Cuesta 1 gestión'}
             onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: p.id, isMarket: false })}
@@ -601,35 +762,15 @@ function RosterRow({ state, dispatch, p, indice }: Props & { p: Player; indice: 
   );
 }
 
-/** La placa del plantel en la pretemporada: cabecera de columnas y un renglón por jugador. */
-function PlanillaPlantelPs({ state, dispatch, lista }: Props & { lista: Player[] }) {
-  return (
-    <div className="planilla planilla-plantel-ps">
-      <span className="tornillo tornillo-si" />
-      <span className="tornillo tornillo-sd" />
-      <span className="tornillo tornillo-ii" />
-      <span className="tornillo tornillo-id" />
-      <div className="planilla-cab">
-        <span />
-        <span>Jugador</span>
-        <Tip text={TIPS.valoracion}><span className="num">Valor.</span></Tip>
-        <span>Cómo viene</span>
-        <span />
-      </div>
-      {lista.map((p, i) => (
-        <RosterRow key={p.id} state={state} dispatch={dispatch} p={p} indice={i} />
-      ))}
-    </div>
-  );
-}
-
 /**
- * El plantel en dos tiempos: arriba los que necesitan una decisión tuya, abajo
- * los confirmados como una tira de fichas. Antes eran doce filas idénticas de
- * alto completo y los dos que sí había que resolver se perdían en el medio.
+ * El plantel como personas: todos de pie sobre el parquet, ordenados por
+ * puesto, con lo que pasa con cada uno escrito debajo (el que duda, el que
+ * pide algo, el que se retiró, en gris al final). Abajo, la planilla sólo con
+ * los que esperan una respuesta tuya y el botón para dársela.
  */
 function RosterSection({ state, dispatch }: Props) {
   const ps = state.preseason!;
+  const open = useContext(OpenProfileContext);
   const roster = state.players.filter((p) => !p.leftClub);
   const pending = roster.filter((p) => {
     const st = ps.continuity[p.id];
@@ -638,61 +779,83 @@ function RosterSection({ state, dispatch }: Props) {
   const confirmed = roster.filter((p) => ps.continuity[p.id] === 'confirmado');
   const retired = roster.filter((p) => ps.continuity[p.id] === 'retirado');
 
+  const personas: PersonaDePie[] = [...roster]
+    .sort((a, b) => POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position))
+    .map((p) => {
+      const st = ps.continuity[p.id];
+      const cont = CONTINUITY_LABELS[st];
+      const fee = playerFeeLabel(p);
+      return {
+        id: p.id,
+        nombre: shortName(p.name),
+        personality: p.personality,
+        sub: POS_ABBR[p.position] ?? p.position.slice(0, 3).toUpperCase(),
+        estado:
+          st === 'confirmado'
+            ? fee
+              ? { cls: 'good', label: p.feeStatus === 'beca_total' ? 'Becado' : 'Media beca' }
+              : null
+            : { cls: contCls(cont.cls), label: st === 'pide_condicion' ? 'Pide algo' : cont.label },
+        fuera: st === 'retirado',
+        title: `${p.name} — ${p.position}, ${p.age} años · ${cont.label}`,
+        onClick: () => open(p.id),
+      };
+    });
+
+  const frase =
+    roster.length === 0 ? (
+      <>Todavía no hay nadie. El plantel se arma en la libreta: empezá por el que seguro te dice que sí.</>
+    ) : (
+      <>
+        <b className="good">{confirmed.length}</b> {confirmed.length === 1 ? 'confirmado' : 'confirmados'} para la
+        temporada
+        {pending.length > 0 ? (
+          <>
+            {' '}
+            y <b className="warn">{pending.length}</b> {pending.length === 1 ? 'espera' : 'esperan'} una respuesta tuya
+          </>
+        ) : (
+          <>: no queda nadie por convencer</>
+        )}
+        {retired.length > 0 && (
+          <>
+            . {retired.length === 1 ? 'Uno colgó' : `${retired.length} colgaron`} las zapatillas
+          </>
+        )}
+        . Los que no estén confirmados al cierre, no juegan.
+      </>
+    );
+
   return (
-    <div className="card" style={{ marginBottom: '1rem' }}>
-      <h3 className="card-band">
-        <Icon name="vestuario" size={17} /> El plantel: ¿quiénes siguen?
-      </h3>
-      <Cabecera art="cab-vestuario.webp" alt="El vestuario del club antes del partido" alto={150} />
-
-      {roster.length === 0 ? (
-        <p className="ps-veredicto">
-          Todavía no hay nadie. El plantel se arma en la libreta: empezá por el que seguro te dice que sí.
-        </p>
-      ) : pending.length > 0 ? (
-        <>
-          <h4 className="ps-subtitulo">
-            <span className="chip warn">{pending.length}</span> esperan una respuesta tuya
-          </h4>
-          <PlanillaPlantelPs state={state} dispatch={dispatch} lista={pending} />
-          <p className="hint">Cada charla o negociación consume 1 gestión. Los que no estén confirmados al cierre, no juegan la temporada.</p>
-        </>
-      ) : (
-        <p className="ps-veredicto good">✓ Todo el plantel que sigue ya está confirmado. No queda nadie por convencer.</p>
+    <section className="ps-plantel" aria-label="El plantel">
+      <div className="ps-sobre">
+        <h2 className="ps-plan-t">El plantel · ¿quiénes siguen?</h2>
+        <p className="v1-frase">{frase}</p>
+      </div>
+      {roster.length > 0 && (
+        <div className="ps-fila-depie">
+          <FilaDePie personas={personas} />
+        </div>
       )}
 
-      {confirmed.length > 0 && (
-        <>
-          <h4 className="ps-subtitulo">
-            <span className="chip good">{confirmed.length}</span> confirmados para la temporada
-          </h4>
-          <div className="ps-fichas">
-            {confirmed.map((p) => (
-              <span key={p.id} className="ps-ficha" title={`${p.position} · ${p.age} años · ≈${p.visibleRating}`}>
-                <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={26} title={p.name} personality={p.personality} />
-                <PlayerLink id={p.id}>{p.name}</PlayerLink>
-                <small>≈{p.visibleRating}</small>
-              </span>
-            ))}
-          </div>
-        </>
+      {pending.length > 0 && (
+        <div className="ps-seccion v1-planilla">
+          <PlanCab
+            titulo="Esperan una respuesta tuya"
+            derecha={`${ps.gestionesLeft} de ${BALANCE.preseason.gestionesPerWeek} gestiones esta semana`}
+          >
+            <p className="v1-frase">Cada charla o negociación consume una gestión.</p>
+          </PlanCab>
+          {pending.map((p, i) => (
+            <PendienteRow key={p.id} state={state} dispatch={dispatch} p={p} indice={i} />
+          ))}
+        </div>
       )}
-
-      {retired.length > 0 && (
-        <>
-          <h4 className="ps-subtitulo">
-            <span className="chip bad">{retired.length}</span> colgaron las zapatillas
-          </h4>
-          <PlanillaPlantelPs state={state} dispatch={dispatch} lista={retired} />
-        </>
-      )}
-    </div>
+    </section>
   );
 }
 
 // ---------- Mercado de fichajes ----------
-
-const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
 
 /** Cómo ordenar la vidriera del mercado ('libreta': como está anotada, el íntimo primero). */
 type MarketSort = 'nivel' | 'conocido' | 'posicion' | 'libreta';
@@ -705,13 +868,19 @@ const KNOWLEDGE_RANK: Record<KnowledgeLevel, number> = {
   desconocido: 4,
 };
 
+/**
+ * El mercado (o la libreta de la Carrera) como una sola planilla con
+ * renglones: la cara, quién es y de dónde viene, el nivel y el físico en
+ * columna, lo que se sabe escrito como se diría —«Conocido, pase libre;
+ * pagaría la cuota completa»— y la acción a la derecha. Lo excepcional (escucha
+ * otras ofertas, la figura que no atiende) va como estado escrito. La ficha
+ * completa sigue a un click del nombre o de la cara.
+ */
 function MarketSection({ state, dispatch }: Props) {
   const ps = state.preseason!;
   const noGestiones = ps.gestionesLeft <= 0;
   const [profileId, setProfileId] = useState<string | null>(null);
   const [posFilter, setPosFilter] = useState<Position | null>(null);
-  // La libreta se lee como está anotada: el íntimo primero, y los que abrió
-  // cada firmado al final, que es el orden en que fueron llegando.
   const [sort, setSort] = useState<MarketSort>(ps.libreta ? 'libreta' : 'nivel');
   const profileMp = ps.market.find((m) => m.id === profileId) ?? null;
 
@@ -723,9 +892,7 @@ function MarketSection({ state, dispatch }: Props) {
       if (sort === 'libreta') return 0;
       if (sort === 'conocido') return KNOWLEDGE_RANK[a.knowledge] - KNOWLEDGE_RANK[b.knowledge];
       if (sort === 'posicion') return POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position);
-      // Del que no sabés nada no se puede decir que sea mejor ni peor: va al
-      // final en vez de encabezar la lista con un "?" que no ordena nada (y
-      // que además delataría el número que el juego todavía te esconde).
+      // Del que no sabés nada no se puede decir que sea mejor ni peor: va al final.
       const blindA = a.knowledge === 'desconocido' ? 1 : 0;
       const blindB = b.knowledge === 'desconocido' ? 1 : 0;
       return blindA - blindB || b.estTechnique - a.estTechnique;
@@ -733,13 +900,6 @@ function MarketSection({ state, dispatch }: Props) {
 
   const libreta = !!ps.libreta;
 
-  /* El mercado como una sola planilla con renglones (dirección D, punto 2 del
-     roadmap: "que no convivan dos anatomías de lista en el mismo juego"). Antes
-     eran dieciséis cards en una grilla de tres: a 768 de alto entraban tres
-     fichables y para comparar el nivel de dos había que scrollear entre cajas.
-     Acá el nivel y el físico quedan en columna, lo que se sabe de cada uno va
-     en chips en su propia columna, y la acción a la derecha; entran ocho o
-     nueve donde entraban tres. La ficha completa sigue a un click del nombre. */
   const renderFila = (mp: MarketPlayer, indice: number) => {
     const know = KNOWLEDGE_LABELS[mp.knowledge];
     const active = mp.status === 'disponible';
@@ -751,18 +911,36 @@ function MarketSection({ state, dispatch }: Props) {
     const contacto = libreta && mp.relacion;
     const abrirFicha = () => setProfileId(mp.id);
     const dicho = contacto ? mp.porQue : `${ORIGIN_SITUATIONS[mp.previousTeam] ?? `Viene de ${mp.previousTeam}.`} ${mp.knowledgeSource}`;
+    const feeKnown = mp.contacted || mp.knowledge === 'muy_conocido' || mp.knowledge === 'conocido';
+
+    // Lo que se sabe, en una frase: cuánto lo conocés, el pase, la cuota, lo que exige.
+    const partes: { txt: string; cls?: string }[] = [];
+    if (!contacto) {
+      partes.push({ txt: know.label, cls: know.cls });
+      partes.push({ txt: mp.signingCost > 0 ? `pase $${mp.signingCost}` : 'pase libre' });
+    }
+    if (feeKnown) partes.push({ txt: feeAttitudeLabel(mp).replace(/^./, (c) => (partes.length ? c.toLowerCase() : c)) });
+    if (mp.contacted) {
+      partes.push(
+        mp.demand
+          ? { txt: `exige ${DEMAND_LABELS[mp.demand].toLowerCase()}`, cls: 'warn' }
+          : { txt: 'sin exigencias', cls: 'good' }
+      );
+    } else if (active) {
+      partes.push({ txt: 'lo que exige se sabe al contactarlo', cls: 'faint' });
+    }
+    if (partes.length > 0) partes[0] = { ...partes[0], txt: partes[0].txt.replace(/^./, (c) => c.toUpperCase()) };
+
+    const notas = (mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 ? mp.agenda!.notes.join(' ') : null;
+
     return (
-      <div
-        key={mp.id}
-        className={`planilla-fila${active ? '' : ' dimmed'}`}
-        style={{ '--fila': indice } as CSSProperties}
-      >
-        <span className="planilla-foto" style={{ cursor: 'pointer' }} title={`Ver ficha de ${mp.name}`} onClick={abrirFicha}>
-          <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} personality={mp.personality} />
+      <div key={mp.id} className={`ps-fila ps-fila-mercado${active ? '' : ' apagada'}`} style={{ '--fila': indice } as CSSProperties}>
+        <span className="ps-foto" role="button" tabIndex={-1} title={`Ver ficha de ${mp.name}`} onClick={abrirFicha}>
+          <Avatar seed={`${mp.id}:${mp.name}`} age={mp.age} title={mp.name} personality={mp.personality} size={46} />
         </span>
 
-        <span className="planilla-quien">
-          <span className="planilla-nombre">
+        <span className="ps-quien">
+          <span className="ps-nombre">
             <span
               className="plink"
               role="button"
@@ -775,59 +953,58 @@ function MarketSection({ state, dispatch }: Props) {
             >
               {mp.name}
             </span>
-            <span className="planilla-pos">
+            <span className="ps-pos">
               {mp.position} · {mp.age} · {mp.height} cm
             </span>
           </span>
           {contacto && (
-            <span className="planilla-relacion">
-              <span className="ps-relacion">{mp.relacion}</span>
-              {mp.viaDe && mp.viaDe !== 'vos' && <span className="chip accent ps-via">Lo trae {mp.viaDe}</span>}
+            <span className="ps-relacion-l">
+              {mp.relacion}
+              {mp.viaDe && mp.viaDe !== 'vos' && <span className="ps-via"> · lo trae {mp.viaDe}</span>}
             </span>
           )}
-          <span className="planilla-dicho" title={dicho}>
+          <span className="ps-dicho" title={dicho}>
             {contacto ? mp.porQue : <>{originNode(state, mp.previousTeam)} {mp.knowledgeSource}</>}
           </span>
         </span>
 
-        <span className="planilla-cifra">
-          <b title="Nivel estimado, según cuánto lo conocés">{estimateLabel(mp.estTechnique, mp.knowledge)}</b>
+        <span className={`ps-cifra${mp.knowledge === 'poco_conocido' ? ' estrellas' : ''}`} title="Nivel estimado, según cuánto lo conocés">
+          {estimateLabel(mp.estTechnique, mp.knowledge)}
         </span>
-        <span className="planilla-cifra">
-          <b title="Físico estimado, según cuánto lo conocés">{estimateLabel(mp.estPhysical, mp.knowledge)}</b>
-        </span>
-
-        <span className="planilla-sabe">
-          {!contacto && <span className={`chip ${know.cls}`}>{know.label}</span>}
-          {!contacto && <span className="chip">{mp.signingCost > 0 ? `Pase: $${mp.signingCost}` : 'Pase libre'}</span>}
-          {contacto && (mp.dudas ?? 0) > 0 && active && <span className="chip warn">Preguntó quién más va</span>}
-          {fit && <span className={`chip ${fit.cls}`}>{fit.text}</span>}
-          {mp.availability === 'escuchando_ofertas' && active && <span className="chip warn">Escucha otras ofertas</span>}
-          {snubs && active && <span className="chip bad">Figura: no atiende a un club de la plaza</span>}
-          {(mp.contacted || mp.knowledge === 'muy_conocido' || mp.knowledge === 'conocido') && (
-            <span className="chip">{feeAttitudeLabel(mp)}</span>
-          )}
-          {mp.contacted ? (
-            <span className={`chip ${mp.demand ? 'accent' : 'good'}`}>
-              {mp.demand ? `Exige: ${DEMAND_LABELS[mp.demand]}` : 'Sin exigencias'}
-            </span>
-          ) : (
-            active && <span className="chip">Exigencias: ? (contactalo)</span>
-          )}
-          {(mp.contacted || mp.knowledge === 'muy_conocido') && (mp.agenda?.notes.length ?? 0) > 0 && (
-            <span className="human-note">
-              <span className="hn-icon">
-                <Icon name="agenda" size={14} />
-              </span>{' '}
-              {mp.agenda!.notes.join(' ')}
-            </span>
-          )}
+        <span className={`ps-cifra${mp.knowledge === 'poco_conocido' ? ' estrellas' : ''}`} title="Físico estimado, según cuánto lo conocés">
+          {estimateLabel(mp.estPhysical, mp.knowledge)}
         </span>
 
-        <span className="planilla-accion">
+        <span className="ps-sabe">
+          {active && (snubs || mp.availability === 'escuchando_ofertas' || (contacto && (mp.dudas ?? 0) > 0)) && (
+            <span className="ps-sabe-marcas">
+              {snubs && <span className="v1-est bad">Figura: no atiende a un club de la plaza</span>}
+              {mp.availability === 'escuchando_ofertas' && <span className="v1-est warn">Escucha otras ofertas</span>}
+              {contacto && (mp.dudas ?? 0) > 0 && <span className="v1-est warn">Preguntó quién más va</span>}
+            </span>
+          )}
+          {partes.length > 0 && (
+            <span className="ps-sabe-l">
+              {partes.map((pt, i) => (
+                <span key={i} className={pt.cls ? `ps-t-${pt.cls}` : undefined}>
+                  {i > 0 && ' · '}
+                  {pt.txt}
+                </span>
+              ))}
+              .
+            </span>
+          )}
+          {fit && <span className={`ps-sabe-l ps-t-${fit.cls}`}>{fit.text.replace(/^✕ /, '')}.</span>}
+          {notas && (
+            <span className="ps-sabe-nota">
+              <Icon name="agenda" size={13} /> {notas}
+            </span>
+          )}
+        </span>
+
+        <span className="ps-accion">
           {active ? (
             <button
-              className="small"
               disabled={noGestiones}
               title={noGestiones ? 'No te quedan gestiones esta semana' : 'Cuesta 1 gestión'}
               onClick={() => dispatch({ type: 'PS_OPEN_NEGOTIATION', id: mp.id, isMarket: true })}
@@ -844,107 +1021,89 @@ function MarketSection({ state, dispatch }: Props) {
               <small> · 1 gestión</small>
             </button>
           ) : mp.status === 'fichado' ? (
-            <span className="chip good">{contacto ? 'Dijo que sí ✔' : 'Fichado ✔'}</span>
+            <span className="v1-est good">{contacto ? 'Dijo que sí' : 'Fichado'}</span>
           ) : mp.status === 'perdido' ? (
-            <span className="chip bad">Arregló con otro club</span>
+            <span className="v1-est bad">Arregló con otro club</span>
           ) : (
-            <span className="chip bad">{contacto ? 'Dijo que no' : 'La negociación se cayó'}</span>
+            <span className="v1-est bad">{contacto ? 'Dijo que no' : 'La negociación se cayó'}</span>
           )}
         </span>
       </div>
     );
   };
 
-  const planilla = (lista: MarketPlayer[]) => (
-    <div className="planilla planilla-mercado">
-      <span className="tornillo tornillo-si" />
-      <span className="tornillo tornillo-sd" />
-      <span className="tornillo tornillo-ii" />
-      <span className="tornillo tornillo-id" />
-      <div className="planilla-cab">
-        <span />
-        <span>{libreta ? 'Contacto' : 'Jugador'}</span>
-        <span className="num">Nivel</span>
-        <span className="num">Físico</span>
-        <span>{libreta ? 'Qué pide y qué se sabe' : 'Lo que se sabe'}</span>
-        <span />
-      </div>
-      {lista.map(renderFila)}
+  const cabecera = (
+    <div className="ps-fila ps-fila-mercado ps-fila-cab" aria-hidden="true">
+      <span />
+      <span>{libreta ? 'Contacto' : 'Jugador'}</span>
+      <span className="num">Nivel</span>
+      <span className="num">Físico</span>
+      <span>{libreta ? 'Qué pide y qué se sabe' : 'Lo que se sabe'}</span>
+      <span />
     </div>
   );
 
-  return (
-    <div className="card" style={{ marginBottom: '1rem' }}>
-      <h3 className="card-band">
-        <Icon name={libreta ? 'agenda' : 'lupa'} size={17} /> {libreta ? 'La libreta' : 'Mercado de fichajes'}
-        <span className="chip band-right">
-          {libreta ? `${available.length} por convencer` : `${available.length} de ${all.length} disponibles`}
-        </span>
-      </h3>
-      <Cabecera art="cab-bar.webp" alt="Convenciendo a un jugador en la mesa de un bar" alto={150} />
-      {libreta && (
-        <p className="hint" style={{ marginTop: 0 }}>
-          No tenés equipo: tenés amigos. Fichar es pedir un favor, y del segundo en adelante te van a preguntar
-          quién más va. Cada uno que diga que sí abre su propia agenda. Necesitás {BALANCE.preseason.minPlayers} en{' '}
-          {ps.totalWeeks} semanas: con menos, no hay temporada.
-        </p>
-      )}
+  const filtro = (on: boolean, label: ReactNode, onClick: () => void, disabled = false, key?: string) => (
+    <button key={key} className={`ps-filtro${on ? ' on' : ''}`} disabled={disabled} onClick={onClick}>
+      {label}
+    </button>
+  );
 
-      <div className="ps-filtros">
-        <span className="ps-filtros-k">Puesto</span>
-        <button className={posFilter === null ? 'small on' : 'small'} onClick={() => setPosFilter(null)}>
-          Todos
-        </button>
-        {POSITION_ORDER.map((pos) => {
-          const n = all.filter((m) => m.position === pos).length;
-          return (
-            <button
-              key={pos}
-              className={posFilter === pos ? 'small on' : 'small'}
-              disabled={n === 0}
-              onClick={() => setPosFilter(posFilter === pos ? null : pos)}
-            >
-              {pos} <small>({n})</small>
-            </button>
-          );
-        })}
-        <span className="ps-filtros-k" style={{ marginLeft: 'auto' }}>
-          Ordenar
-        </span>
+  return (
+    <section className="ps-seccion v1-planilla ps-mercado" aria-label={libreta ? 'La libreta' : 'Mercado de fichajes'}>
+      <PlanCab
+        titulo={libreta ? 'La libreta' : 'Mercado de fichajes'}
+        derecha={libreta ? `${all.length} por convencer` : `${all.length} disponibles de ${ps.market.length}`}
+      >
         {libreta && (
-          <button className={sort === 'libreta' ? 'small on' : 'small'} onClick={() => setSort('libreta')}>
-            Como está en la libreta
-          </button>
+          <p className="v1-frase">
+            No tenés equipo: tenés amigos. Fichar es pedir un favor, y del segundo en adelante te van a preguntar quién
+            más va. Cada uno que diga que sí abre su propia agenda. Necesitás <b>{BALANCE.preseason.minPlayers}</b> en{' '}
+            <b>{ps.totalWeeks}</b> semanas: con menos, no hay temporada.
+          </p>
         )}
-        <button className={sort === 'nivel' ? 'small on' : 'small'} onClick={() => setSort('nivel')}>
-          Por nivel
-        </button>
-        {!libreta && (
-          <button className={sort === 'conocido' ? 'small on' : 'small'} onClick={() => setSort('conocido')}>
-            Por cuánto lo conocés
-          </button>
-        )}
-        <button className={sort === 'posicion' ? 'small on' : 'small'} onClick={() => setSort('posicion')}>
-          Por puesto
-        </button>
-      </div>
+        <div className="ps-filtros-v1">
+          <span className="ps-filtros-k">Puesto</span>
+          {filtro(posFilter === null, 'Todos', () => setPosFilter(null))}
+          {POSITION_ORDER.map((pos) => {
+            const n = all.filter((m) => m.position === pos).length;
+            return filtro(
+              posFilter === pos,
+              <>
+                {pos} <small>{n}</small>
+              </>,
+              () => setPosFilter(posFilter === pos ? null : pos),
+              n === 0,
+              pos
+            );
+          })}
+          <span className="ps-filtros-k ps-filtros-orden">Ordenar</span>
+          {libreta && filtro(sort === 'libreta', 'Como está en la libreta', () => setSort('libreta'))}
+          {filtro(sort === 'nivel', 'Por nivel', () => setSort('nivel'))}
+          {!libreta && filtro(sort === 'conocido', 'Por cuánto lo conocés', () => setSort('conocido'))}
+          {filtro(sort === 'posicion', 'Por puesto', () => setSort('posicion'))}
+        </div>
+      </PlanCab>
 
       {available.length === 0 ? (
-        <p className="muted">
+        <p className="ps-vacio">
           {libreta ? 'La libreta está vacía: no queda nadie a quien pedirle.' : 'No queda nadie disponible con ese filtro.'}
         </p>
       ) : (
-        planilla(available)
+        <>
+          {cabecera}
+          {available.map(renderFila)}
+        </>
       )}
 
       {gone.length > 0 && (
         <>
-          <h4 className="ps-subtitulo">{libreta ? 'Ya contestaron' : 'Ya no disponibles'}</h4>
-          {planilla(gone)}
+          <h3 className="ps-sub">{libreta ? 'Ya contestaron' : 'Ya no disponibles'}</h3>
+          {gone.map(renderFila)}
         </>
       )}
-      {profileMp && <MarketProfile state={state} dispatch={dispatch} mp={profileMp} onClose={() => setProfileId(null)} />}
-    </div>
+      {profileMp && enElCuerpo(<MarketProfile state={state} dispatch={dispatch} mp={profileMp} onClose={() => setProfileId(null)} />)}
+    </section>
   );
 }
 
@@ -1343,8 +1502,16 @@ function PreseasonModals({ state, dispatch }: Props) {
 
 // ---------- Vista principal ----------
 
-type PsTab = 'inscripcion' | 'plantel' | 'mercado';
-
+/**
+ * La pretemporada (UI V1). Pasa en el bar (ESCENA.bar en App.tsx), con el
+ * mismo marco que la temporada: la barra de arriba con las tres partes de la
+ * pretemporada como secciones y la barra de abajo con el botón de seguir.
+ *
+ * Adentro, el idioma del Tablero: arriba y sin caja, la pregunta de la semana
+ * y sus tres respuestas —dónde jugamos, cuántos somos, cuánta plata hay—; a la
+ * derecha, la planilla con cinta de lo que fue pasando; abajo, a todo el
+ * ancho, la parte elegida: la oferta de ligas, el plantel de pie o el mercado.
+ */
 export function PreseasonView({ state, dispatch }: Props) {
   const ps = state.preseason!;
   // Saves de antes de la oferta de ligas: siguen inscriptos en la de siempre y
@@ -1358,75 +1525,57 @@ export function PreseasonView({ state, dispatch }: Props) {
     return st !== 'confirmado' && st !== 'retirado';
   }).length;
   const disponibles = ps.market.filter((m) => m.status === 'disponible').length;
+  const libreta = !!ps.libreta;
 
-  const tabs: { id: PsTab; label: string; badge?: { text: string; cls: string } }[] = [
+  const items: PsNavItem[] = [
     ...(hasInscription
       ? [
           {
             id: 'inscripcion' as PsTab,
             label: 'Inscripción',
+            icon: 'inscripcion' as IconName,
             badge:
               ps.chosenDivisionId === null
-                ? { text: 'sin elegir', cls: 'warn' }
-                : { text: '✓', cls: 'good' },
+                ? { text: '!', cls: 'warn', title: 'Todavía no elegiste liga' }
+                : { text: '✓', cls: 'good', title: 'Ya elegiste dónde jugar' },
           },
         ]
       : []),
     {
       id: 'plantel',
       label: 'Plantel',
-      badge: pending > 0 ? { text: `${pending} a resolver`, cls: 'warn' } : { text: '✓', cls: 'good' },
+      icon: 'plantel',
+      badge:
+        pending > 0
+          ? { text: String(pending), cls: 'warn', title: `${pending} ${pending === 1 ? 'espera' : 'esperan'} una respuesta tuya` }
+          : { text: '✓', cls: 'good', title: 'Nadie espera una respuesta' },
     },
-    { id: 'mercado', label: state.preseason?.libreta ? 'La libreta' : 'Mercado', badge: { text: `${disponibles}`, cls: '' } },
+    {
+      id: 'mercado',
+      label: libreta ? 'La libreta' : 'Mercado',
+      icon: libreta ? 'agenda' : 'lupa',
+      badge: { text: String(disponibles), cls: '', title: `${disponibles} ${libreta ? 'por convencer' : 'disponibles'}` },
+    },
   ];
 
   return (
     <>
-      {/* Mismo marco fijo que la temporada (design/PLAN_MARCO_FIJO.md): la
-          pretemporada tiene la misma anatomía de tres partes. */}
-      <div className="marco">
-      <PreseasonTopbar state={state} dispatch={dispatch} />
+      <div className="marco pretemporada">
+        <PreseasonTopbar state={state} dispatch={dispatch} items={items} tab={tab} onTab={setTab} />
 
-      <div className="app-shell">
-        {/* Tanda E: el estado del club se colapsó a una línea y las tres
-            secciones pasaron a pestañas. El panel de estado se repetía
-            entero en las tres pestañas ocupando 160px cada vez. */}
-        <div className="vista sec-plantel pretemporada-pantalla">
-          <div className="pretemporada-cabecera">
-            <EstadoPanel state={state} dispatch={dispatch} onFixLeague={() => setTab('inscripcion')} />
-
-            <nav className="ps-tabs">
-              {tabs.map((t) => (
-                <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
-                  {t.label}
-                  {t.badge && <span className={`chip ${t.badge.cls}`}>{t.badge.text}</span>}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          <div className="pretemporada-cuerpo">
-            {tab === 'inscripcion' && hasInscription && <InscriptionSection state={state} dispatch={dispatch} />}
-            {tab === 'plantel' && <RosterSection state={state} dispatch={dispatch} />}
-            {tab === 'mercado' && <MarketSection state={state} dispatch={dispatch} />}
-
-            {ps.log.length > 0 && (
-              <div className="card" style={{ marginBottom: '1rem' }}>
-                <h3 className="card-band">
-                  <Icon name="historia" size={17} /> Lo que pasó en la pretemporada
-                </h3>
-                <ul className="log-list">
-                  {ps.log.slice(0, 10).map((l, i) => (
-                    <li key={i}>{l}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+        <div className="app-shell">
+          <div className="vista ps-pantalla">
+            <PsHero state={state} dispatch={dispatch} tab={tab} onTab={setTab} />
+            <PsDiario state={state} />
+            <div className="ps-cuerpo" key={tab}>
+              {tab === 'inscripcion' && hasInscription && <InscriptionSection state={state} dispatch={dispatch} />}
+              {tab === 'plantel' && <RosterSection state={state} dispatch={dispatch} />}
+              {tab === 'mercado' && <MarketSection state={state} dispatch={dispatch} />}
+            </div>
           </div>
         </div>
-      </div>
 
-      <PreseasonRecursos state={state} dispatch={dispatch} />
+        <PreseasonRecursos state={state} dispatch={dispatch} />
       </div>
 
       {/* Fuera del marco, como en App.tsx: los modales no son parte del layout. */}

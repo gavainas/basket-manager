@@ -8,8 +8,6 @@ import { ClubView } from './ui/ClubView';
 import { RosterView } from './ui/RosterView';
 import { FinancesView } from './ui/FinancesView';
 import { LeagueView } from './ui/LeagueView';
-import { CalendarView } from './ui/CalendarView';
-import { RankingsView } from './ui/RankingsView';
 import { WeekView } from './ui/WeekView';
 import { EventModal } from './ui/EventModal';
 import { OpenProfileContext } from './ui/PlayerLink';
@@ -34,6 +32,8 @@ import { ConfirmDialog, type ConfirmRequest } from './ui/ConfirmDialog';
 import { useTeclasSecciones } from './ui/teclas';
 import { Icon, type IconName } from './ui/Icon';
 import { Crest } from './ui/Crest';
+import vestuarioBg from './assets/vestuario-bg.webp';
+import type { GameState } from './game/types';
 
 type Tab = AppTab;
 
@@ -93,12 +93,42 @@ const SECCIONES: { tab: Tab; label: string; icon: IconName; incluye?: Tab[] }[] 
 const PORTADA = `${import.meta.env.BASE_URL}portada.webp`;
 
 /**
- * Fondo de todas las pantallas del juego (no del menú, que tiene su portada).
- * Alternativa lista en `public/arte/`: `fondo-gimnasio.webp`, la cancha vista
- * desde la tribuna — tiene más carácter y también más detalle compitiendo con
- * los paneles. Cambiar de fondo es cambiar este nombre.
+ * La escena de cada pantalla (UI V1, sep 2026 — ver design/ART_BIBLE.md y el
+ * Tablero aprobado en design/propuestas/tablero-rediseno/).
+ *
+ * Antes toda la app apoyaba sobre la misma cancha tapada al 75 %: el mundo era
+ * papel tapiz. En la V1 cada pantalla pasa en un lugar del club y ese lugar se
+ * ve: el gimnasio en el Tablero y la previa, el vestuario en el plantel, la
+ * comisión en las cuentas, el bar en el mercado. `abierta` deja la escena casi
+ * limpia (velo sólo donde va texto); `velada` la baja un poco para las
+ * pantallas de datos. Es arte provisional: los fondos propios de cada pantalla
+ * están registrados como pendientes de V2 en design/arte/ASSET_REGISTRY.md.
  */
-const FONDO = 'fondo-cancha.webp';
+interface Escena {
+  img: string;
+  modo: 'abierta' | 'velada';
+  espejo?: boolean;
+}
+const arte = (f: string) => `${import.meta.env.BASE_URL}arte/${f}`;
+const ESCENA = {
+  gimnasio: { img: arte('fondo-gimnasio.webp'), modo: 'abierta', espejo: true },
+  gimnasioVelado: { img: arte('fondo-gimnasio.webp'), modo: 'velada', espejo: true },
+  vestuario: { img: vestuarioBg, modo: 'velada' },
+  cancha: { img: arte('fondo-cancha.webp'), modo: 'velada' },
+  partido: { img: arte('cab-partido.webp'), modo: 'velada' },
+  derrota: { img: arte('cab-derrota.webp'), modo: 'velada' },
+  comision: { img: arte('cab-comision.webp'), modo: 'velada' },
+  arbitros: { img: arte('cab-arbitros.webp'), modo: 'velada' },
+  bar: { img: arte('cab-bar.webp'), modo: 'velada' },
+} satisfies Record<string, Escena>;
+
+function Fondo({ escena }: { escena: Escena }) {
+  return (
+    <div className={`fondo-app ${escena.modo}${escena.espejo ? ' espejo' : ''}`}>
+      <div className="fondo-img" style={{ backgroundImage: `url(${escena.img})` }} />
+    </div>
+  );
+}
 
 /**
  * Llevar el contenido al principio.
@@ -111,6 +141,37 @@ const FONDO = 'fondo-cancha.webp';
 function scrollContenidoArriba() {
   document.querySelector('.app-shell')?.scrollTo({ top: 0 });
   window.scrollTo({ top: 0 });
+}
+
+/** Qué lugar del club se ve detrás de cada pantalla. */
+function escenaDe(state: GameState, tab: Tab): Escena {
+  if (state.phase === 'preseason' || state.phase === 'preseasonEnd') return ESCENA.bar;
+  if (state.phase === 'seasonEnd' || state.phase === 'gameOver') return ESCENA.comision;
+  switch (tab) {
+    case 'resumen':
+      return ESCENA.gimnasio;
+    case 'semana':
+      if (state.phase === 'callUp') return ESCENA.vestuario;
+      if (state.phase === 'lineup') return ESCENA.cancha;
+      if (state.phase === 'match') return ESCENA.partido;
+      if (state.phase === 'matchResult') {
+        const m = state.lastMatch;
+        return m && m.scoreFor < m.scoreAgainst ? ESCENA.derrota : ESCENA.vestuario;
+      }
+      return ESCENA.gimnasioVelado;
+    case 'plantilla':
+      return ESCENA.vestuario;
+    case 'finanzas':
+    case 'club':
+    case 'historia':
+      return ESCENA.comision;
+    case 'liga':
+    case 'agenda':
+    case 'rankings':
+      return ESCENA.arbitros;
+    default:
+      return ESCENA.gimnasioVelado;
+  }
 }
 
 /* Las pantallas de validación (`/#retratos`, `/#escudos`) vivían acá como dos
@@ -225,14 +286,7 @@ export default function App() {
     <OpenLeagueContext.Provider value={setLeagueProfileId}>
     <OpenClubContext.Provider value={setClubProfileId}>
     <NavigateTabContext.Provider value={navigate}>
-      {/* El lienzo: la cancha del club detrás de todo, con un velo encima para
-          que los paneles claros se despeguen. Antes era gris plano y los
-          paneles quedaban gris sobre gris. Va acá y no en el body porque el
-          proyecto usa base relativa: la ruta se arma con BASE_URL. */}
-      <div
-        className="fondo-app"
-        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}arte/${FONDO})` }}
-      />
+      <Fondo escena={escenaDe(state, tab)} />
       {screen}
       {profileId && <PlayerProfile state={state} playerId={profileId} onClose={() => setProfileId(null)} />}
       {rivalProfileId && (
@@ -416,14 +470,11 @@ export default function App() {
             <LeagueView state={state} dispatch={dispatch} />
           </div>
         )}
-        {tab === 'agenda' && (
-          <div className="vista sec-partidos">
-            <CalendarView state={state} />
-          </div>
-        )}
-        {tab === 'rankings' && (
-          <div className="vista sec-partidos">
-            <RankingsView state={state} />
+        {(tab === 'agenda' || tab === 'rankings') && (
+          /* Calendario y Rankings son pestañas de la Liga (UI V1); la clave
+             remonta la vista para que entrar por un aviso abra la pestaña. */
+          <div className="vista sec-partidos" key={tab}>
+            <LeagueView state={state} dispatch={dispatch} inicial={tab === 'agenda' ? 'calendario' : 'rankings'} />
           </div>
         )}
         {tab === 'historia' && (

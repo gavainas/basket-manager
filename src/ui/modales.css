@@ -1,0 +1,698 @@
+/* Lo que se abre encima (UI V1, bloque E2): fichas, perfiles, eventos,
+   confirmaciones y tips. Nacen junto al Tablero aprobado (design/UI_V1_GUIA.md)
+   y hablan su idioma: el velo azul noche con el mundo apenas visible atrás, el
+   héroe sin caja, UNA planilla por modal con renglones punteados, un solo
+   naranja cuando hay una acción principal.
+
+   Se carga después de styles.css y pisa sus reglas de .modal-backdrop, .modal
+   y .profile (la pretemporada también las usa: un solo lenguaje de modal). */
+
+/* ---------- El velo ---------- */
+.modal-backdrop {
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(8, 29, 45, 0.74), rgba(4, 14, 23, 0.93) 75%);
+  -webkit-backdrop-filter: blur(3px) saturate(0.8);
+  backdrop-filter: blur(3px) saturate(0.8);
+  padding: clamp(1rem, 3vh, 2rem) clamp(1rem, 3vw, 2.5rem);
+}
+
+/* ---------- El diálogo genérico (.modal): una planilla ----------
+   Sin banda de color arriba (regla 3): filete fino, sombra larga. El título
+   es display; las opciones son decisiones en renglones punteados. */
+.modal {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  border-radius: 2px;
+  box-shadow: var(--relieve), 0 30px 80px rgba(0, 0, 0, 0.5);
+  max-width: 560px;
+  padding: 1.6rem 1.8rem 1.5rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+.modal > h2 {
+  font: 700 1.7rem / 1.05 var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+.modal .event-text {
+  margin: 0.9rem 0 1.3rem;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  color: #dfe5e8;
+}
+.modal .event-text strong { color: var(--text); }
+
+/* Las opciones: cada una es una decisión, no una placa. Texto a la izquierda,
+   la bajada abajo en gris, una flecha que aparece al pasar. */
+.modal .options {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-bottom: 1px dashed var(--linea-suave);
+}
+.modal .options button:not(.primary):not(.danger):not(.ghost) {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-top: 1px dashed var(--linea-suave);
+  border-radius: 0;
+  padding: 0.85rem 2.6rem 0.85rem 0.9rem;
+  font: 600 1.02rem / 1.3 var(--font-ui);
+  color: var(--text);
+}
+.modal .options button:not(.primary):not(.danger):not(.ghost)::after {
+  content: '→';
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translate(-4px, -50%);
+  font: 700 1.2rem var(--font-display);
+  color: var(--text-dim);
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.modal .options button:not(.primary):not(.danger):not(.ghost):hover:not(:disabled) {
+  background: rgba(243, 240, 232, 0.06);
+  border-color: var(--linea-suave);
+}
+.modal .options button:not(.primary):not(.danger):not(.ghost):hover:not(:disabled)::after {
+  opacity: 1;
+  transform: translate(0, -50%);
+  color: var(--text);
+}
+.modal .options button:not(.primary):not(.danger):not(.ghost):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.modal .options .opt-hint {
+  display: block;
+  font: 400 0.86rem / 1.35 var(--font-ui);
+  color: var(--text-dim);
+  margin-top: 0.2rem;
+}
+/* El único naranja: «Continuar» después de un desenlace. Va donde termina la
+   lectura, a la derecha, con la voz del CTA del Tablero. */
+.modal .options button.primary {
+  align-self: flex-end;
+  margin: 1.1rem 0 0;
+  font: 700 1.1rem var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.75rem 1.6rem;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(244, 124, 39, 0.28), inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+}
+.modal .options:has(> button.primary:only-child) { border-bottom: 0; }
+
+/* ---------- El evento: un momento del mundo ----------
+   La planilla pegada con cinta y el título escrito a mano, como la hoja de
+   «Esta semana» del Tablero. La gente que está en el lío, de pie a la
+   izquierda; lo que pasó, a la derecha; las opciones, abajo. */
+.modal.evento {
+  max-width: 720px;
+  width: 100%;
+  padding: 1.5rem 1.8rem 1.4rem;
+  overflow: visible;
+  max-height: none;
+}
+.evento-eyebrow { display: flex; align-items: center; gap: 0.45rem; }
+.evento-eyebrow svg { color: var(--tiza); opacity: 0.85; }
+.modal.evento .evento-titulo {
+  font: 700 2.5rem / 1 var(--font-mano);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--tiza);
+  margin: 0.35rem 0 0;
+}
+.evento-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.4rem;
+  align-items: end;
+  margin: 1rem 0 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--linea-suave);
+}
+.evento-cuerpo.con-gente { grid-template-columns: auto minmax(0, 1fr); }
+.modal.evento .event-text { margin: 0; align-self: center; font-size: 1.08rem; }
+.evento-gente {
+  --busto-ancho: 112px;
+  --busto-alto: 124px;
+  position: relative;
+  display: flex;
+  gap: 0.2rem;
+  padding: 0 0.3rem;
+}
+.evento-gente.dos { --busto-ancho: 100px; --busto-alto: 112px; }
+.evento-gente-piso {
+  position: absolute;
+  left: -0.4rem;
+  right: -0.4rem;
+  top: var(--busto-alto);
+  height: 0.5rem;
+  border-top: 3px solid rgba(239, 230, 210, 0.55);
+  background: linear-gradient(180deg, rgba(40, 22, 10, 0.5), transparent);
+}
+.evento-persona {
+  position: relative;
+  width: var(--busto-ancho);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.evento-persona .depie-nom { margin-top: 0.7rem; max-width: 100%; }
+.evento-persona .depie-nom .plink { border-bottom-color: transparent; }
+.evento-persona .depie-nom .plink:hover { border-bottom-color: var(--accent); }
+.modal.evento .options { margin-top: 0; }
+.modal.evento.desenlace .evento-titulo { font-size: 2.2rem; }
+
+/* ---------- La confirmación: sobria ----------
+   Sin cinta ni mano: una pregunta, un botón claro y cancelar como ghost. */
+.modal.confirmar { max-width: 500px; padding: 1.5rem 1.7rem 1.3rem; }
+.confirmar-cabeza { display: flex; align-items: center; gap: 0.75rem; }
+.confirmar-cabeza svg { color: var(--text-dim); flex: none; }
+.confirmar-cabeza.danger svg { color: #ff8a7e; }
+.modal.confirmar h2 { font: 700 1.55rem / 1.05 var(--font-display); text-transform: uppercase; letter-spacing: 0.02em; margin: 0; }
+.modal.confirmar .event-text { margin: 0.85rem 0 1.4rem; }
+.confirmar-botones {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+  gap: 0.6rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--linea-suave);
+}
+.confirmar-botones button {
+  font: 700 1rem var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.3rem;
+  border-radius: 4px;
+}
+.confirmar-botones button.primary { box-shadow: 0 8px 24px rgba(244, 124, 39, 0.26), inset 0 -3px 0 rgba(0, 0, 0, 0.18); }
+.confirmar-botones button.danger {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: #fff;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2);
+}
+.confirmar-botones button.danger:hover:not(:disabled) { background: #ee6a5e; border-color: #ee6a5e; }
+
+/* ---------- El perfil genérico (.profile) ----------
+   Lo usa todavía la ficha del mercado de pretemporada: la misma planilla, sin
+   banda de color, con el nombre en display. */
+.profile {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  border-radius: 2px;
+  box-shadow: var(--relieve), 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+.profile-head { border-bottom: 1px dashed var(--linea-suave); padding: 1.1rem 1.4rem; }
+.profile-name { font: 700 1.6rem / 1.05 var(--font-display); text-transform: uppercase; letter-spacing: 0.02em; }
+.profile-close {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-dim);
+}
+.profile-close:hover:not(:disabled) { border-color: var(--border); color: var(--text); background: rgba(243, 240, 232, 0.06); }
+.profile-body { padding: 1rem 1.4rem 1.4rem; }
+.profile .profile-subtitle {
+  font: 700 1.05rem var(--font-display);
+  letter-spacing: 0.1em;
+  color: var(--text);
+  padding-bottom: 0.45rem;
+  border-bottom: 1px dashed var(--linea-suave);
+  margin: 1.4rem 0 0;
+}
+.profile .profile-subtitle:first-child { margin-top: 0; }
+.profile .data-row { border-bottom: 1px dashed var(--linea-suave); }
+
+/* ---------- La ficha (Ficha.tsx) ----------
+   Dos zonas y ninguna caja de más: el héroe sobre el velo a la izquierda y la
+   planilla a la derecha. La ficha mide la ventana (es un modal, no una
+   página): lo único que scrollea es el cuerpo de la planilla. */
+.ficha {
+  --ficha-alto: min(800px, calc(100vh - 2 * clamp(1rem, 3vh, 2rem)));
+  position: relative;
+  width: min(1180px, 100%);
+  height: var(--ficha-alto);
+  display: grid;
+  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 3rem);
+}
+/* Sin pestañas (rival, club, liga, jugador del mundo) la planilla mide lo
+   que tiene adentro, con el alto de la ventana como techo: una ficha corta no
+   deja media hoja vacía. El jugador del mundo lleva la persona de pie, así
+   que mide la ventana como la ficha del plantel. */
+.ficha.ficha-club,
+.ficha.ficha-liga {
+  height: auto;
+  align-items: start;
+}
+.ficha:not(.ficha-jugador) .ficha-hoja { max-height: var(--ficha-alto); }
+.ficha.ficha-mundo .ficha-hoja { align-self: start; }
+
+/* Un modal abierto desde otro (la liga desde el rival): el de atrás se apaga
+   un poco más, para que no se lean dos héroes a la vez. */
+.modal-backdrop ~ .modal-backdrop { background: rgba(4, 14, 23, 0.9); }
+
+/* El héroe: texto arriba, la persona (o el escudo) abajo, de pie. */
+.ficha-heroe {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  padding: clamp(0.4rem, 2vh, 1.4rem) 0 0;
+}
+.ficha-heroe-texto { flex: none; }
+.ficha-nombre {
+  font: 700 clamp(2.1rem, 3vw, 2.9rem) / 0.95 var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  margin: 0.4rem 0 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.ficha-linea {
+  margin: 0.85rem 0 0;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: #dfe5e8;
+  max-width: 38ch;
+}
+.ficha-clave { margin: 0.9rem 0 0; font-size: 1.02rem; line-height: 1.45; color: #dfe5e8; max-width: 40ch; }
+.ficha-clave > b:first-child {
+  font: 700 1.05rem var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--warn);
+  margin-right: 0.3rem;
+}
+.ficha-clave > b.good:first-child { color: var(--good); }
+.ficha-clave > b.bad:first-child { color: #ff8a7e; }
+.ficha-heroe .v1-frase { margin-top: 0.8rem; max-width: 42ch; }
+.ficha-heroe .v1-frase + .v1-frase { margin-top: 0.4rem; }
+
+/* La cifra: el dato que la ficha existe para mostrar. */
+.ficha-valor { display: flex; align-items: flex-end; gap: 0.9rem; margin-top: 1.1rem; }
+.ficha-cifra {
+  font: 700 clamp(3rem, 4.4vw, 4rem) / 0.82 var(--font-display);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.ficha-cifra small { font-size: 0.5em; font-weight: 500; opacity: 0.75; margin-right: 0.05em; }
+.ficha-cifra.palabra { font-size: clamp(1.7rem, 2.3vw, 2.1rem); line-height: 0.95; text-transform: uppercase; color: var(--text); max-width: 11ch; }
+.ficha-cifra.palabra.dudosa { color: var(--text-dim); font-size: clamp(1.4rem, 1.9vw, 1.7rem); max-width: 14ch; }
+.ficha-cifra-k {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0 0 0.15rem 0.9rem;
+  border-left: 1px solid rgba(174, 188, 196, 0.35);
+  font: 600 var(--fs-sm) var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.ficha-cifra-k > span:last-child { font: 400 0.95rem var(--font-ui); letter-spacing: 0; text-transform: none; color: var(--text); }
+.ficha-cifra-k .tip { border-bottom-color: rgba(174, 188, 196, 0.35); }
+.ficha-estados { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 1rem; }
+.ficha-estados .v1-est { font-size: 0.74rem; padding: 3px 8px; }
+.v1-est.accent { background: rgba(174, 188, 196, 0.1); color: var(--text); border: 1px solid rgba(174, 188, 196, 0.4); }
+
+/* La persona de pie: escala L. Llena lo que queda del alto del héroe y se
+   apoya en la línea del parquet, como la fila del Tablero pero en grande. */
+.ficha-depie {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 150px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  margin-top: 1rem;
+}
+.ficha-depie .busto {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  width: auto;
+  max-height: 470px;
+  aspect-ratio: 0.9 / 1;
+  max-width: 100%;
+  background-size: cover;
+  background-position: center top;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+  -webkit-mask-image: linear-gradient(180deg, #000 93%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 93%, transparent 100%);
+}
+.ficha-depie .busto.gris { filter: grayscale(1) brightness(0.55); }
+.ficha-depie-piso {
+  position: absolute;
+  left: -2rem;
+  right: 0;
+  bottom: -0.2rem;
+  height: 1.1rem;
+  border-top: 3px solid rgba(239, 230, 210, 0.55);
+  background: linear-gradient(180deg, rgba(40, 22, 10, 0.55), transparent);
+  box-shadow: 0 -2px 10px rgba(239, 230, 210, 0.12);
+}
+
+/* El escudo como héroe (rival, club): grande, con la camiseta al lado. */
+.ficha-escudo { display: flex; align-items: flex-end; gap: 1.1rem; margin-bottom: 1.1rem; }
+.ficha-escudo .crest { flex: none; filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.5)); }
+.ficha-escudo .jersey { margin-bottom: 0.4rem; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45)); }
+.ficha-emblema {
+  display: grid;
+  place-items: center;
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  border: 2px solid rgba(239, 230, 210, 0.4);
+  color: var(--tiza);
+  margin-bottom: 1.1rem;
+  background: radial-gradient(circle, rgba(23, 56, 75, 0.7), rgba(10, 30, 45, 0.3));
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Reglas u otras listas cortas en el héroe: frases, sin viñetas de lista. */
+.ficha-lista { list-style: none; margin: 1rem 0 0; padding: 0; max-width: 44ch; }
+.ficha-lista li {
+  position: relative;
+  padding: 0.45rem 0 0.45rem 1.1rem;
+  border-top: 1px dashed var(--linea-suave);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #dfe5e8;
+}
+.ficha-lista li::before { content: '·'; position: absolute; left: 0.2rem; top: 0.35rem; font-weight: 700; color: var(--text-dim); }
+
+/* ---------- La planilla de la ficha ---------- */
+.ficha-hoja {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border-radius: 2px;
+  box-shadow: var(--relieve), 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+.ficha-cerrar {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.6rem;
+  z-index: 2;
+  width: 2.3rem;
+  height: 2.3rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  line-height: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+}
+.ficha-cerrar:hover:not(:disabled) { background: rgba(243, 240, 232, 0.08); border-color: var(--border); color: var(--text); }
+
+/* Las pestañas: la voz de la barra de arriba (display, mayúsculas, el
+   subrayado naranja marca dónde estás). */
+.ficha-pestanas {
+  flex: none;
+  display: flex;
+  gap: 0.2rem;
+  padding: 0 3.4rem 0 1rem;
+  border-bottom: 1px dashed var(--linea-suave);
+}
+.ficha-pestanas button {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  position: relative;
+  padding: 1.05rem 0.9rem 0.9rem;
+  font: 600 0.9rem var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.ficha-pestanas button:hover { color: var(--text); }
+.ficha-pestanas button.on { color: var(--text); font-weight: 700; }
+.ficha-pestanas button.on::after {
+  content: '';
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: -1px;
+  height: 3px;
+  background: var(--accent);
+}
+.ficha-pestanas button:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+
+.ficha-cuerpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.4rem 1.8rem 1.6rem;
+}
+.ficha-hoja > .ficha-cuerpo:nth-child(2) { padding-top: 1rem; }
+
+.ficha-seccion { margin-top: 1.4rem; }
+.ficha-seccion:first-child { margin-top: 0.9rem; }
+.ficha-sub {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  margin: 0;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px dashed var(--linea-suave);
+  font: 700 1.08rem var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.ficha-sub-extra {
+  margin-left: auto;
+  font: 500 0.8rem var(--font-display);
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+}
+.ficha-hoja:not(:has(.ficha-pestanas)) .ficha-cuerpo > .ficha-seccion:first-child .ficha-sub { padding-right: 2.6rem; }
+
+/* Renglones: etiqueta chica en display, dato en UI, línea punteada entre uno
+   y otro. Nada de cajas por fila. */
+.ficha .data-grid { display: flex; flex-direction: column; }
+.ficha .data-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed var(--linea-suave);
+  font-size: 0.98rem;
+  align-items: baseline;
+}
+.ficha .data-row:last-child { border-bottom: 0; }
+.ficha .data-label {
+  font: 600 0.78rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.ficha .data-value .muted { color: var(--text-dim); }
+
+.ficha-frase { margin: 0.7rem 0 0.2rem; font-size: 1rem; line-height: 1.5; color: #dfe5e8; }
+.ficha-nota { margin: 0.45rem 0 0; font-size: 0.93rem; line-height: 1.45; color: var(--text-dim); }
+.ficha-nada { margin: 0.7rem 0 0; color: var(--text-dim); }
+
+/* Las notas humanas de la ficha: frases, con el ícono del tono. */
+.ficha .ficha-notas { margin: 0.6rem 0 0; gap: 0.35rem; }
+.ficha .ficha-notas .human-note { font-size: 0.96rem; }
+
+/* Las barras (Bar.tsx) dentro de la planilla. */
+.ficha .bar-row { grid-template-columns: 170px minmax(0, 1fr) 34px; margin: 0; padding: 0.55rem 0; border-bottom: 1px dashed var(--linea-suave); font-size: 0.95rem; }
+.ficha .bar-row:last-of-type { border-bottom: 0; }
+.ficha .bar-row .bar-label { color: #dfe5e8; }
+.ficha .bar-row .bar-value { font: 700 1.1rem var(--font-display); color: var(--text); }
+.ficha .ficha-sub + .bar-row { margin-top: 0.1rem; }
+
+/* La conducta: el veredicto escrito, no un chip. */
+.ficha .conducta-ficha { padding-top: 0.7rem; }
+.ficha .conducta-ficha .chip {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  white-space: normal;
+  font: 700 1.1rem var(--font-display);
+  letter-spacing: 0.03em;
+  color: var(--text);
+  margin: 0 0 0.25rem;
+}
+.ficha .conducta-ficha .chip.good { color: var(--good); }
+.ficha .conducta-ficha .chip.warn { color: var(--warn); }
+.ficha .conducta-ficha .chip.bad { color: #ff8a7e; }
+.ficha .conducta-ficha .muted { font-size: 0.93rem; margin: 0; }
+
+/* Las cifras de la temporada: una fila de números display, sin cajas. */
+.ficha-datos {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  padding: 0.9rem 0 0.2rem;
+}
+.ficha-dato { display: flex; flex-direction: column; gap: 0.15rem; padding: 0 0.8rem; border-left: 1px dashed var(--linea-suave); }
+.ficha-dato:first-child { padding-left: 0; border-left: 0; }
+.ficha-dato b { font: 700 2rem / 1 var(--font-display); color: var(--text); font-variant-numeric: tabular-nums; }
+.ficha-dato span { font: 600 0.72rem var(--font-display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim); }
+.ficha-dato small { font-size: 0.78rem; color: var(--text-faint); }
+
+/* La tabla de últimos partidos: renglones de planilla. */
+.ficha-tabla { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-top: 0.1rem; }
+.ficha-tabla th {
+  font: 600 0.72rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 0.55rem 0.5rem 0.4rem;
+  border-bottom: 1px dashed var(--linea-suave);
+}
+.ficha-tabla td { padding: 0.5rem; border-bottom: 1px dashed var(--linea-suave); }
+.ficha-tabla tr:last-child td { border-bottom: 0; }
+.ficha-tabla th:first-child,
+.ficha-tabla td:first-child { padding-left: 0; }
+.ficha-tabla td.dim { color: var(--text-dim); font-size: 0.86rem; }
+.ficha-tabla td.fuerte { font: 700 1.05rem var(--font-display); }
+.ficha-tabla td.good { color: var(--good); }
+.ficha-tabla td.bad { color: #ff8a7e; }
+
+/* La afinidad con cada compañero: la cara chica, el nombre y la barra. */
+.ficha-afinidad { padding-top: 0.2rem; }
+.ficha .aff-row {
+  grid-template-columns: minmax(0, 1fr) 150px 34px;
+  padding: 0.35rem 0;
+  border-bottom: 1px dashed var(--linea-suave);
+  font-size: 0.96rem;
+}
+.ficha .aff-row:last-child { border-bottom: 0; }
+.ficha .aff-name { display: flex; align-items: center; gap: 0.6rem; }
+.ficha .aff-value { font: 700 1.05rem var(--font-display); color: var(--text); }
+
+.ficha-carita {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2a4a60;
+  border: 1.5px solid #3a5a70;
+}
+.ficha-carita .busto {
+  --busto-ancho: 100%;
+  --busto-alto: 100%;
+  background-size: 118%;
+  background-position: center 12%;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* La línea de tiempo (Timeline.tsx) en la planilla. */
+.ficha .timeline { padding-top: 0.2rem; }
+.ficha .timeline-row {
+  grid-template-columns: 22px 96px minmax(0, 1fr);
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed var(--linea-suave);
+  font-size: 0.96rem;
+  line-height: 1.4;
+}
+.ficha .timeline-row:last-child { border-bottom: 0; }
+.ficha .timeline-icon { color: var(--text-dim); }
+.ficha .timeline-when { font: 600 0.74rem var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; }
+.ficha > .ficha-hoja .muted { color: var(--text-dim); }
+
+/* El plantel de otro equipo: persona por renglón. */
+.ficha-plantel .data-row { grid-template-columns: 110px minmax(0, 1fr); align-items: center; }
+.ficha-persona { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
+.ficha-persona .muted { font-size: 0.88rem; }
+
+/* Los equipos de una divisional: el récord a la izquierda en display. */
+.ficha-equipos .data-row { grid-template-columns: 60px minmax(0, 1fr); }
+.ficha-equipos .data-label { font: 700 1rem var(--font-display); letter-spacing: 0.04em; color: var(--text); }
+.ficha-equipos .data-row.nuestro .data-value strong { color: var(--text); }
+.ficha-equipos .data-row.nuestro { background: linear-gradient(90deg, rgba(84, 210, 154, 0.08), transparent 70%); }
+
+/* ---------- Tips ----------
+   La explicación al pasar el mouse: una planilla chica y opaca, legible sobre
+   cualquier fondo (antes era translúcida y se leía mal sobre la escena). */
+.tip:hover::after {
+  background: var(--panel-solido);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text);
+  padding: 0.55rem 0.75rem;
+  max-width: 280px;
+  font: 400 0.84rem / 1.45 var(--font-ui);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- La notebook (1366×768, 1280×720) ---------- */
+@media (max-height: 820px) {
+  .ficha { grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); }
+  .ficha-nombre { font-size: clamp(1.8rem, 2.6vw, 2.3rem); }
+  .ficha-linea, .ficha-clave { font-size: 0.95rem; margin-top: 0.6rem; }
+  .ficha-valor { margin-top: 0.8rem; }
+  .ficha-cifra { font-size: 3rem; }
+  .ficha-estados { margin-top: 0.7rem; }
+  .ficha-escudo { margin-bottom: 0.7rem; }
+  .ficha-escudo .crest { width: 104px; height: 104px; }
+  .ficha-emblema { width: 92px; height: 92px; margin-bottom: 0.7rem; }
+  .ficha-pestanas button { padding: 0.85rem 0.8rem 0.7rem; }
+  .ficha-cuerpo { padding: 0.2rem 1.5rem 1.3rem; }
+  .ficha-seccion { margin-top: 1.1rem; }
+  .ficha .data-row { padding: 0.48rem 0; }
+  .ficha .bar-row { padding: 0.45rem 0; }
+  .ficha-dato b { font-size: 1.7rem; }
+  .modal.evento .evento-titulo { font-size: 2.1rem; }
+  .evento-gente { --busto-ancho: 98px; --busto-alto: 108px; }
+  .evento-cuerpo { margin: 0.8rem 0 1rem; padding-top: 0.8rem; }
+  .modal .options button:not(.primary):not(.danger):not(.ghost) { padding-top: 0.7rem; padding-bottom: 0.7rem; }
+}
+
+/* ---------- Ventana angosta (celular): una columna ---------- */
+@media (max-width: 900px) {
+  .ficha {
+    height: auto;
+    max-height: calc(100vh - 2rem);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 1rem;
+  }
+  .ficha-depie { display: none; }
+  .ficha-heroe { padding-top: 0; }
+  .evento-cuerpo.con-gente { grid-template-columns: minmax(0, 1fr); }
+  .ficha-datos { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 0.8rem; }
+}
+
+/* ---------- Piezas chicas ---------- */
+.ficha-iniciales { font: 700 2.6rem var(--font-display); letter-spacing: 0.04em; }
+.ficha-resultado { font: 700 1.1rem var(--font-display); letter-spacing: 0.04em; }
+.ficha-resultado.good { color: var(--good); }
+.ficha-resultado.bad { color: #ff8a7e; }
+.evento-avatar { display: block; width: var(--busto-ancho); height: var(--busto-alto); overflow: hidden; }
+.evento-avatar svg,
+.evento-avatar img { width: 100%; height: auto; display: block; }
+button.ficha-mas {
+  all: unset;
+  cursor: pointer;
+  font: 600 0.78rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+button.ficha-mas:hover { color: var(--text); }
+button.ficha-mas:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

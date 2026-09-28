@@ -1,36 +1,44 @@
 import type { GameState, Player } from '../game/types';
 import { affinity, RIVALRY_THRESHOLD } from '../game/relations';
+import { Busto } from './Busto';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
+import { Planilla } from './bloqueD';
+import './liga.css';
 
 interface Row {
   id: string;
   name: string;
   value: string;
+  /** Algo más al lado del nombre, en gris (el club de un rival). */
+  sub?: string;
   /** Es una persona del mundo (un rival), no uno de los nuestros: abre la otra ficha. */
   rival?: boolean;
 }
 
-function RankingCard({ title, icon, rows, empty }: { title: string; icon: IconName; rows: Row[]; empty?: string }) {
+/**
+ * Un ranking: un bloque de la planilla, no una card. Los bloques se separan
+ * con la línea punteada y el primero de cada uno va en negrita display.
+ */
+function Ranking({ title, icon, rows, empty }: { title: string; icon: IconName; rows: Row[]; empty?: string }) {
   return (
-    <div className="card ranking-card">
-      <h3>
-        <Icon name={icon} size={16} /> {title}
-      </h3>
+    <div className="lg-rk">
+      <h4 className="lg-rk-tit">
+        <Icon name={icon} size={14} /> {title}
+      </h4>
       {rows.length === 0 ? (
-        <p className="muted" style={{ margin: 0 }}>
-          {empty ?? 'Todavía no hay datos: se construye jugando.'}
-        </p>
+        <p className="lg-rk-vacio">{empty ?? 'Todavía no hay datos: se construye jugando.'}</p>
       ) : (
-        <ol className="ranking-list">
+        <ol className="lg-rk-lista">
           {rows.map((r, i) => (
-            <li key={r.id}>
-              <span className="rk-pos">{i + 1}</span>
-              <span className="rk-name">
+            <li key={r.id} className={i === 0 ? 'primero' : ''}>
+              <span className="lg-rk-pos">{i + 1}</span>
+              <span className="lg-rk-nom">
                 {r.rival ? <WorldPlayerLink id={r.id}>{r.name}</WorldPlayerLink> : <PlayerLink id={r.id}>{r.name}</PlayerLink>}
+                {r.sub && <small> · {r.sub}</small>}
               </span>
-              <span className="rk-value">{r.value}</span>
+              <span className="lg-rk-val">{r.value}</span>
             </li>
           ))}
         </ol>
@@ -64,11 +72,17 @@ function verdugos(state: GameState): Row[] {
       id,
       name: x.name,
       rival: true,
-      value: `${x.pts} pts · ${x.club}${x.partidos > 1 ? ` (${x.partidos} PJ)` : ''}`,
+      sub: x.club,
+      value: `${x.pts} pts${x.partidos > 1 ? ` (${x.partidos} PJ)` : ''}`,
     }));
 }
 
-/** Rankings del club: los números deportivos y las historias del vestuario. */
+/**
+ * Rankings del club (pestaña de la Liga, UI V1): los números deportivos y las
+ * historias del vestuario. El héroe es el goleador, de pie, con su número; lo
+ * demás son dos planillas, una por conversación, con los rankings adentro como
+ * bloques y no como catorce cards.
+ */
 export function RankingsView({ state }: { state: GameState }) {
   const players = state.players.filter((p) => !p.leftClub);
 
@@ -128,92 +142,141 @@ export function RankingsView({ state }: { state: GameState }) {
           }))
           .sort((a, b) => a.v - b.v)
           .slice(0, 5)
-          .map((x) => ({ id: x.p.id, name: x.p.name, value: `${x.v}' esta temporada` }));
+          .map((x) => ({ id: x.p.id, name: x.p.name, value: `${x.v}'` }));
+
+  const goleadores = top((p) => sumLog(p, 'points'), (v) => `${v} pts`);
+  const figuras = top(
+    (p) => p.matchLog.filter((m) => m.mvp).length,
+    (v) => `${v} ${v > 1 ? 'veces' : 'vez'} MVP`
+  );
+  const minutos = top((p) => sumLog(p, 'minutes'), (v) => `${v}'`);
+
+  // El héroe: el goleador del club, con su cara.
+  const goleador = goleadores[0] ? players.find((p) => p.id === goleadores[0].id) : undefined;
+  const golPts = goleador ? sumLog(goleador, 'points') : 0;
+  const golPJ = goleador ? goleador.matchLog.length : 0;
 
   return (
-    <div>
-      <h2 className="section-title">
-        <Icon name="pelota" size={17} /> Los números
-      </h2>
-      <div className="grid cols-3">
-        <RankingCard title="Goleadores" icon="tiradores" rows={top((p) => sumLog(p, 'points'), (v) => `${v} pts`)} />
-        <RankingCard title="Reboteros" icon="interior" rows={top((p) => sumLog(p, 'rebounds'), (v) => `${v} reb`)} />
-        <RankingCard title="Asistidores" icon="social" rows={top((p) => sumLog(p, 'assists'), (v) => `${v} ast`)} />
-        <RankingCard title="Nota media" icon="rankings" rows={rated} empty="Se necesitan al menos 2 partidos jugados." />
-        <RankingCard title="Más minutos" icon="reloj" rows={top((p) => sumLog(p, 'minutes'), (v) => `${v}'`)} />
-        <RankingCard
-          title="Menos cancha"
-          icon="cancha"
-          rows={leastMinutes}
-          empty="Todavía no se jugó: nadie quedó relegado."
-        />
-        <RankingCard
-          title="Figuras"
-          icon="estrella"
-          rows={top(
-            (p) => p.matchLog.filter((m) => m.mvp).length,
-            (v) => `${v} ${v > 1 ? 'veces' : 'vez'} MVP`
-          )}
-        />
-        {/* El otro lado de la planilla: los rivales que más nos anotaron.
-            Le da cara a la liga, y al que te clavó 20 lo vas a mirar distinto
-            en la revancha. */}
-        <RankingCard
-          title="Los que más nos lastimaron"
-          icon="rayo"
-          rows={verdugos(state)}
-          empty="Todavía nadie nos anotó: se construye jugando."
-        />
-      </div>
+    <div className="lg-rankings">
+      <section className="lg-hero v1-hero lg-rk-hero" aria-label="El goleador">
+        {goleador ? (
+          <>
+            <div className="lg-rk-busto">
+              <Busto seed={goleador.id} personality={goleador.personality} />
+              <span className="lg-rk-piso" aria-hidden="true" />
+            </div>
+            <div className="lg-rk-hero-txt">
+              <div className="v1-eyebrow">Los números del club · <b>el goleador</b></div>
+              <h2 className="v1-titulo">
+                <PlayerLink id={goleador.id}>{goleador.name}</PlayerLink>
+              </h2>
+              <div className="lg-rk-hero-fila">
+              <div className="lg-rk-hero-cifras">
+                <div className="v1-cifra">
+                  {golPts}
+                  <small>puntos</small>
+                </div>
+                <div className="v1-cifra lg-rk-chica">
+                  {golPJ}
+                  <small>{golPJ === 1 ? 'partido' : 'partidos'}</small>
+                </div>
+              </div>
+              <p className="v1-frase lg-rk-frase">
+                {[
+                  { row: figuras[0], txt: 'la figura más veces' },
+                  { row: minutos[0], txt: 'el que más juega' },
+                  { row: lovedRows[0], txt: 'el más querido del vestuario' },
+                ]
+                  .filter((d) => d.row)
+                  .map((d, i, todos) => (
+                    <span key={i}>
+                      {d.row.id === goleador.id ? (
+                        <>
+                          {todos.slice(0, i).some((x) => x.row.id === goleador.id) ? 'Y es' : 'También es'} {d.txt} ({d.row.value}).{' '}
+                        </>
+                      ) : (
+                        <>
+                          {d.txt.charAt(0).toUpperCase() + d.txt.slice(1)}: <b>{d.row.name}</b> ({d.row.value}).{' '}
+                        </>
+                      )}
+                    </span>
+                  ))}
+              </p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="lg-rk-hero-txt">
+            <div className="v1-eyebrow">Los números del club</div>
+            <h2 className="v1-titulo">Los rankings se construyen jugando</h2>
+            <p className="v1-frase lg-rk-frase">Después del primer partido acá aparecen el goleador, la figura y los que más juegan.</p>
+          </div>
+        )}
+      </section>
 
-      <h2 className="section-title">
-        <Icon name="vestuario" size={17} /> El vestuario
-      </h2>
-      <div className="grid cols-3">
-        <RankingCard title="Más querido" icon="corazon" rows={lovedRows} />
-        <RankingCard
-          title="Más conflictivo"
-          icon="rayo"
-          rows={conflictive}
-          empty="Por ahora el vestuario está en paz."
-        />
-        <RankingCard
-          title="Más entrenamientos"
-          icon="fisico"
-          rows={top((p) => p.seasonTrainings, (v) => `${v} práctica${v > 1 ? 's' : ''}`)}
-          empty="Nadie entrenó todavía esta temporada."
-        />
-        <RankingCard
-          title="Alma de la fiesta"
-          icon="asado"
-          rows={top(
-            (p) => countTimeline(p, (k) => k === 'social'),
-            (v) => `${v} movida${v > 1 ? 's' : ''}`
-          )}
-          empty="Nadie organizó nada todavía. ¿Un asado?"
-        />
-        <RankingCard
-          /* Cuenta las ausencias a fechas, con o sin aviso; la conducta de la
-             ficha cuenta sólo las sin avisar. Decía "faltazos" y con "Faltó
-             una vez" al lado parecía una contradicción. */
-          title="Más ausencias"
-          icon="cruz"
-          rows={top(
-            (p) => countTimeline(p, (k) => k === 'ausencia'),
-            (v) => `${v} ausencia${v > 1 ? 's' : ''}`
-          )}
-          empty="Por ahora vinieron todos, siempre."
-        />
-        <RankingCard
-          title="Enfermería"
-          icon="enfermeria"
-          rows={top(
-            (p) => countTimeline(p, (k, text) => k === 'lesion' && !text.startsWith('Recibió') && !text.startsWith('Se acomodó')),
-            (v) => `${v} lesi${v > 1 ? 'ones' : 'ón'}`
-          )}
-          empty="Sin lesionados: a tocar madera."
-        />
-      </div>
+      <Planilla titulo="Los números" nota="con el club" className="lg-rk-plan">
+        <div className="lg-rk-grilla c4">
+          <Ranking title="Goleadores" icon="tiradores" rows={goleadores} />
+          <Ranking title="Reboteros" icon="interior" rows={top((p) => sumLog(p, 'rebounds'), (v) => `${v} reb`)} />
+          <Ranking title="Asistidores" icon="social" rows={top((p) => sumLog(p, 'assists'), (v) => `${v} ast`)} />
+          <Ranking title="Nota media" icon="rankings" rows={rated} empty="Se necesitan al menos 2 partidos jugados." />
+          <Ranking title="Más minutos" icon="reloj" rows={minutos} />
+          <Ranking title="Menos cancha (temporada)" icon="cancha" rows={leastMinutes} empty="Todavía no se jugó: nadie quedó relegado." />
+          <Ranking title="Figuras" icon="estrella" rows={figuras} />
+          {/* El otro lado de la planilla: los rivales que más nos anotaron.
+              Le da cara a la liga, y al que te clavó 20 lo vas a mirar distinto
+              en la revancha. */}
+          <Ranking
+            title="Los que más nos lastimaron"
+            icon="rayo"
+            rows={verdugos(state)}
+            empty="Todavía nadie nos anotó: se construye jugando."
+          />
+        </div>
+      </Planilla>
+
+      <Planilla titulo="El vestuario" nota="las otras historias" className="lg-rk-plan">
+        <div className="lg-rk-grilla c3">
+          <Ranking title="Más querido" icon="corazon" rows={lovedRows} />
+          <Ranking title="Más conflictivo" icon="rayo" rows={conflictive} empty="Por ahora el vestuario está en paz." />
+          <Ranking
+            title="Más entrenamientos"
+            icon="fisico"
+            rows={top((p) => p.seasonTrainings, (v) => `${v} práctica${v > 1 ? 's' : ''}`)}
+            empty="Nadie entrenó todavía esta temporada."
+          />
+          <Ranking
+            title="Alma de la fiesta"
+            icon="asado"
+            rows={top(
+              (p) => countTimeline(p, (k) => k === 'social'),
+              (v) => `${v} movida${v > 1 ? 's' : ''}`
+            )}
+            empty="Nadie organizó nada todavía. ¿Un asado?"
+          />
+          <Ranking
+            /* Cuenta las ausencias a fechas, con o sin aviso; la conducta de la
+               ficha cuenta sólo las sin avisar. Decía "faltazos" y con "Faltó
+               una vez" al lado parecía una contradicción. */
+            title="Más ausencias"
+            icon="cruz"
+            rows={top(
+              (p) => countTimeline(p, (k) => k === 'ausencia'),
+              (v) => `${v} ausencia${v > 1 ? 's' : ''}`
+            )}
+            empty="Por ahora vinieron todos, siempre."
+          />
+          <Ranking
+            title="Enfermería"
+            icon="enfermeria"
+            rows={top(
+              (p) => countTimeline(p, (k, text) => k === 'lesion' && !text.startsWith('Recibió') && !text.startsWith('Se acomodó')),
+              (v) => `${v} lesi${v > 1 ? 'ones' : 'ón'}`
+            )}
+            empty="Sin lesionados: a tocar madera."
+          />
+        </div>
+      </Planilla>
     </div>
   );
 }

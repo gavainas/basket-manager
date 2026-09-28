@@ -1,0 +1,331 @@
+/* La portada (UI V1). La composición es la aprobada por Gabi
+   (public/arte/portada-menu-central/README.md): la ilustración del asado a
+   sangre, un velo aparte, el título arriba al centro, dos accesos grandes en
+   el medio y uno chico debajo, sin cajas alrededor de los íconos.
+   Lo que cambia es el idioma, el del Tablero: velo azul noche (no marrón),
+   título y etiquetas en tiza, y un solo naranja —el acceso que corresponde,
+   escrito como botón—. El segundo paso es una planilla azul noche.
+   Todo cuelga de `.portada-v1`. Reemplaza al bloque `.portada-*` de
+   styles.css, que queda sin uso. */
+.portada-v1 {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--text);
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* La ilustración es cuadrada y el monitor es ancho: se recorta arriba y abajo,
+   anclada un poco por encima del centro para que queden las caras y la mesa. */
+.portada-v1 .pv1-fondo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: var(--chrome) center 42% / cover no-repeat;
+}
+
+/* El velo, en azul noche: más cerrado arriba (el título) y abajo (la mesa y
+   la versión), abierto en el medio donde está la gente, y una viñeta a los
+   costados. La luz cálida la sigue poniendo la ilustración. */
+.portada-v1 .pv1-velo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(8, 29, 45, 0.78) 0%, rgba(8, 29, 45, 0.25) 30%, rgba(8, 29, 45, 0.2) 58%, rgba(8, 29, 45, 0.82) 100%),
+    radial-gradient(ellipse 75% 70% at 50% 48%, rgba(8, 29, 45, 0) 40%, rgba(8, 29, 45, 0.6) 100%),
+    rgba(8, 29, 45, 0.18);
+}
+.portada-v1.en-paso .pv1-velo {
+  background:
+    linear-gradient(180deg, rgba(8, 29, 45, 0.8) 0%, rgba(8, 29, 45, 0.55) 40%, rgba(8, 29, 45, 0.85) 100%),
+    rgba(8, 29, 45, 0.25);
+}
+
+.portada-v1 .pv1-contenido {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  justify-items: center;
+  align-content: start;
+  gap: var(--sp-3);
+  padding: clamp(1rem, 3.2vh, 2.4rem) var(--sp-5) var(--sp-3);
+  text-align: center;
+}
+
+/* ---------- El título ---------- */
+.portada-v1 .pv1-titulo {
+  display: grid;
+  justify-items: center;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 0.9;
+  text-shadow: 0 3px 0 #04121c, 0 4px 0 #04121c, 0 10px 28px rgba(0, 0, 0, 0.65);
+}
+.portada-v1 .pv1-t1 { color: var(--tiza); font-size: clamp(2.2rem, 5.6vh, 4.4rem); letter-spacing: 0.14em; }
+.portada-v1 .pv1-t2 { color: var(--accent); font-size: clamp(3.4rem, 9.4vh, 7.2rem); letter-spacing: 0.03em; }
+.portada-v1 .pv1-t3 {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  color: var(--tiza);
+  font-size: clamp(1.1rem, 2.6vh, 2rem);
+  letter-spacing: 0.5em;
+  margin-top: 0.35em;
+  padding-left: 0.5em;
+}
+/* Las rayas a los costados de «Amateur», como en una camiseta. */
+.portada-v1 .pv1-t3::before,
+.portada-v1 .pv1-t3::after {
+  content: '';
+  width: 2.2em;
+  height: 2px;
+  background: rgba(239, 230, 210, 0.7);
+  box-shadow: 0 2px 0 #04121c;
+}
+.portada-v1.en-paso .pv1-t1 { font-size: clamp(1.4rem, 3.4vh, 2.4rem); }
+.portada-v1.en-paso .pv1-t2 { font-size: clamp(2.2rem, 5.6vh, 4rem); }
+.portada-v1.en-paso .pv1-t3 { font-size: clamp(0.8rem, 1.7vh, 1.2rem); }
+
+/* ---------- Los accesos ---------- */
+.portada-v1 .pv1-accesos {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: clamp(1.5rem, 7vw, 7rem);
+  align-self: center;
+}
+
+/* El acceso es la imagen y su etiqueta, sin caja: el fondo se ve entre medio. */
+.portada-v1 button.pv1-acceso {
+  all: unset;
+  box-sizing: border-box;
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.8rem 0.6rem;
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.portada-v1 .pv1-acceso img {
+  display: block;
+  height: clamp(140px, 31vh, 320px);
+  width: auto;
+  max-width: 40vw;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.6));
+  transition: transform 0.15s, filter 0.15s;
+}
+.portada-v1 .pv1-acceso-chico { gap: 0.2rem; }
+.portada-v1 .pv1-acceso-chico img { height: clamp(58px, 10.5vh, 108px); }
+
+.portada-v1 .pv1-etiqueta {
+  position: relative;
+  font: 700 clamp(1.25rem, 2.7vh, 1.8rem) / 1 var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tiza);
+  text-shadow: 0 2px 0 #04121c, 0 4px 14px rgba(0, 0, 0, 0.7);
+  padding: 0.55rem 0.2rem 0.5rem;
+}
+/* El subrayado naranja aparece con el foco y el hover (en los que no son el botón). */
+.portada-v1 .pv1-acceso:not(.principal) .pv1-etiqueta::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.18s ease-out;
+}
+.portada-v1 .pv1-acceso:hover:not(:disabled) .pv1-etiqueta::after,
+.portada-v1 .pv1-acceso:focus-visible .pv1-etiqueta::after { transform: scaleX(1); }
+
+/* El principal: su etiqueta es EL botón naranja de la portada. */
+.portada-v1 .pv1-acceso.principal .pv1-etiqueta {
+  background: var(--accent);
+  color: var(--on-accent);
+  text-shadow: none;
+  padding: 0.75rem 1.6rem 0.7rem;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(244, 124, 39, 0.35), inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+  transition: filter 0.15s;
+}
+.portada-v1 .pv1-acceso.principal:hover .pv1-etiqueta { filter: brightness(1.1); }
+
+.portada-v1 .pv1-acceso-chico .pv1-etiqueta { font-size: clamp(0.9rem, 1.8vh, 1.1rem); letter-spacing: 0.14em; padding-top: 0.2rem; }
+
+.portada-v1 .pv1-acceso:hover:not(:disabled) img {
+  transform: translateY(-6px) scale(1.03);
+  filter: drop-shadow(0 22px 26px rgba(0, 0, 0, 0.65));
+}
+.portada-v1 .pv1-acceso:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+.portada-v1 .pv1-acceso:active:not(:disabled) { transform: translateY(1px); }
+
+/* Sin partida guardada, la carpeta queda apagada pero reconocible. */
+.portada-v1 .pv1-acceso:disabled { cursor: default; }
+.portada-v1 .pv1-acceso:disabled img { filter: grayscale(0.7) brightness(0.6) drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5)); }
+.portada-v1 .pv1-acceso:disabled .pv1-etiqueta { color: var(--text-dim); }
+
+.portada-v1 .pv1-nota {
+  max-width: 34ch;
+  font-size: var(--fs-sm);
+  color: #dfe5e8;
+  text-shadow: 0 1px 0 #04121c, 0 2px 10px rgba(0, 0, 0, 0.85);
+}
+.portada-v1 .pv1-acceso:disabled .pv1-nota { color: var(--text-dim); }
+
+.portada-v1 .pv1-version {
+  margin: 0;
+  font: 500 var(--fs-2xs) var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- El segundo paso: una planilla ---------- */
+.portada-v1 .pv1-panel {
+  align-self: center;
+  width: min(100%, 680px);
+  display: grid;
+  gap: 0;
+  text-align: left;
+  padding: 0 0 1rem;
+  margin-top: 0.4rem;
+}
+.portada-v1 .pv1-panel-cab {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1.1rem 1.5rem 0.8rem;
+  border-bottom: 1px dashed var(--linea-suave);
+}
+.portada-v1 .pv1-panel-cab h2 {
+  margin: 0;
+  font: 700 1.6rem / 1 var(--font-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.portada-v1 .pv1-panel-cab span {
+  margin-left: auto;
+  font: 600 var(--fs-2xs) var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.portada-v1 .pv1-panel-p { margin: 0; padding: 1rem 1.5rem; line-height: 1.5; color: var(--text-dim); }
+.portada-v1 .pv1-panel-p b { color: var(--text); font-weight: 600; }
+
+.portada-v1 .pv1-modos { display: grid; }
+.portada-v1 button.pv1-modo {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem 3rem 0.85rem 1.5rem;
+  border-bottom: 1px dashed var(--linea-suave);
+  position: relative;
+  transition: background 0.15s;
+}
+.portada-v1 button.pv1-modo::after {
+  content: '→';
+  position: absolute;
+  right: 1.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font: 700 1.4rem var(--font-display);
+  color: var(--text-faint);
+  transition: color 0.15s, transform 0.15s;
+}
+.portada-v1 button.pv1-modo:hover,
+.portada-v1 button.pv1-modo:focus-visible {
+  background: linear-gradient(90deg, rgba(244, 124, 39, 0.14), rgba(244, 124, 39, 0) 70%);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.portada-v1 button.pv1-modo:hover::after,
+.portada-v1 button.pv1-modo:focus-visible::after { color: var(--accent); transform: translate(4px, -50%); }
+.portada-v1 .pv1-modo-k {
+  font: 600 var(--fs-2xs) var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.portada-v1 .pv1-modo-t {
+  font: 700 1.35rem / 1.05 var(--font-display);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.portada-v1 .pv1-modo-d { font-size: var(--fs-sm); line-height: 1.4; color: var(--text-dim); }
+
+.portada-v1 .pv1-dificultad { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.5rem 1rem; padding: 1rem 1.5rem 0.4rem; }
+.portada-v1 .pv1-dif-k {
+  font: 600 var(--fs-2xs) var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.portada-v1 .pv1-dif-opciones { display: flex; gap: 0.3rem; }
+.portada-v1 .pv1-dif-opciones button {
+  font: 600 0.95rem var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.9rem;
+  background: rgba(243, 240, 232, 0.04);
+  border-color: rgba(174, 188, 196, 0.35);
+  color: var(--text-dim);
+}
+.portada-v1 .pv1-dif-opciones button.on { color: var(--text); border-color: var(--accent); background: rgba(244, 124, 39, 0.14); }
+.portada-v1 .pv1-dif-d { grid-column: 1 / -1; margin: 0; font-size: var(--fs-sm); color: var(--text-dim); min-height: 1.4em; }
+.portada-v1 .pv1-aviso { margin: 0; padding: 0.4rem 1.5rem 0; font-size: var(--fs-sm); color: #ff8a7e; }
+
+.portada-v1 button.pv1-borrar { justify-self: start; margin: 0 1.5rem; background: transparent; }
+.portada-v1 button.pv1-volver {
+  justify-self: start;
+  margin: 0.8rem 1.5rem 0;
+  background: transparent;
+  border-color: rgba(174, 188, 196, 0.35);
+  color: var(--text-dim);
+  font: 600 0.9rem var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.portada-v1 button.pv1-volver:hover { color: var(--text); }
+.portada-v1 button.pv1-volver kbd {
+  margin-left: 0.4rem;
+  font: 500 0.66rem var(--font-display);
+  padding: 1px 4px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  opacity: 0.6;
+}
+
+/* ---------- Ventanas bajas (1366×768, 1280×720) ---------- */
+@media (max-height: 800px) {
+  .portada-v1 .pv1-contenido { gap: 0.4rem; }
+  .portada-v1 .pv1-panel-cab { padding: 0.8rem 1.4rem 0.6rem; }
+  .portada-v1 button.pv1-modo { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+  .portada-v1 .pv1-modo-t { font-size: 1.2rem; }
+  .portada-v1 .pv1-dificultad { padding-top: 0.7rem; }
+  .portada-v1 button.pv1-volver { margin-top: 0.5rem; }
+}
+
+/* En una ventana angosta (o el celular de Gabi) los accesos se apilan y la
+   página scrollea. */
+@media (max-width: 700px) {
+  .portada-v1 .pv1-accesos { flex-direction: column; align-items: center; }
+  .portada-v1 .pv1-acceso img { max-width: 70vw; }
+  .portada-v1 .pv1-dificultad { grid-template-columns: 1fr; }
+}

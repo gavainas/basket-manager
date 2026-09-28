@@ -2,10 +2,10 @@ import { useState } from 'react';
 import type { GameState, Player, Position } from '../game/types';
 import { conductScore } from '../game/conduct';
 import { activePlayers } from '../game/match';
-import { Avatar } from './Avatar';
 import { ConductaCorta } from './Conducta';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
+import { CaraPlantel } from './RosterList';
 import { feeChip, statusChip } from './helpers';
 
 const POSITION_ORDER: Position[] = ['Base', 'Escolta', 'Alero', 'Ala-Pívot', 'Pívot'];
@@ -157,17 +157,7 @@ export function RosterSheet({ state }: { state: GameState }) {
     return (
       <tr key={p.id}>
         <td className="sheet-avatar">
-          <Avatar
-            seed={p.id}
-            age={p.age}
-            size={24}
-            appearance={p.appearance}
-            expressionOverride={
-              p.status === 'molesto' || p.status === 'al_borde' ? 2 : p.status === 'lesionado' ? 3 : undefined
-            }
-            title={p.name}
-            personality={p.personality}
-          />
+          <CaraPlantel p={p} size="chica" />
         </td>
         <td className="sheet-name">
           <PlayerLink id={p.id}>{p.name}</PlayerLink>
@@ -196,7 +186,7 @@ export function RosterSheet({ state }: { state: GameState }) {
           {status ? <span className={`sheet-tag ${status.cls}`}>{status.label}</span> : <span className="sheet-nada">—</span>}
         </td>
         <td>
-          {fee ? <span className={`sheet-tag ${fee.cls}`}>{fee.label}</span> : <span className="sheet-nada">—</span>}
+          {fee ? <span className={`sheet-tag ${fee.cls === 'accent' ? 'beca' : fee.cls}`}>{fee.label}</span> : <span className="sheet-nada">—</span>}
         </td>
       </tr>
     );
@@ -212,9 +202,9 @@ export function RosterSheet({ state }: { state: GameState }) {
     : null;
 
   return (
-    <div className="sheet-layout">
-      <div className="table-wrap">
-        <table className="planilla sheet">
+    <div className="pl-hoja">
+      <div className="pl-stats v1-planilla">
+        <table className="sheet">
           <thead>
             <tr>
               <th></th>
@@ -225,9 +215,9 @@ export function RosterSheet({ state }: { state: GameState }) {
               <Th k="fis" label="Fís" title="Físico" num />
               <Th k="mot" label="Mot" title="Motivación" num />
               <Th k="com" label="Conducta" title="Lo que el club vio de él: fechas, faltas sin avisar, cuota y asados" />
-              {/* Es el atributo social del jugador, el mismo "Social" de la
-                  planilla del Plantel; "Afi" se leía como afinidad con alguien. */}
-              <Th k="afi" label="Social" title="Cuánto suma al grupo: el mismo Social de la planilla del Plantel" num />
+              {/* Es el atributo social del jugador; "Afi" se leía como
+                  afinidad con alguien. */}
+              <Th k="afi" label="Social" title="Cuánto suma al grupo: qué tan integrado está" num />
               <Th k="ult" label="Últ" title="Nota del último partido" num />
               <Th k="min" label="Min" title="Minutos jugados esta temporada" num />
               {/* Se llamaba "Falt": al lado de una conducta que dice "Una falta"
@@ -275,32 +265,34 @@ export function RosterSheet({ state }: { state: GameState }) {
         </table>
       </div>
 
-      <div className="sheet-side">
-        <div className="sheet-media">
-          <div className="sheet-media-num">≈{media}</div>
-          <div className="sheet-media-label">Media del quinteto probable</div>
+      <aside className="pl-margen v1-hero" aria-label="El quinteto probable">
+        <div className="v1-eyebrow">El quinteto probable</div>
+        <div className="v1-cifra pl-media">
+          <span className="pl-media-num"><small>≈</small>{media}</span>
+          <small>de media entre los cinco</small>
         </div>
-        <div className="sheet-court">
+        <div className="sheet-court pl-cancha">
           <svg viewBox="0 0 100 90" aria-hidden="true">
-            <rect x="1" y="1" width="98" height="88" rx="3" fill="var(--bg-soft)" stroke="var(--border)" />
-            <path d="M 6 89 L 6 62 A 44 44 0 0 1 94 62 L 94 89" fill="none" stroke="var(--border)" />
-            <rect x="35" y="58" width="30" height="31" fill="none" stroke="var(--border)" />
-            <circle cx="50" cy="58" r="11" fill="none" stroke="var(--border)" />
+            <rect x="1" y="1" width="98" height="88" rx="2" fill="rgba(8, 24, 36, 0.55)" stroke="rgba(239, 230, 210, 0.35)" />
+            <path d="M 6 89 L 6 62 A 44 44 0 0 1 94 62 L 94 89" fill="none" stroke="rgba(239, 230, 210, 0.35)" />
+            <rect x="35" y="58" width="30" height="31" fill="none" stroke="rgba(239, 230, 210, 0.35)" />
+            <circle cx="50" cy="58" r="11" fill="none" stroke="rgba(239, 230, 210, 0.35)" />
             <line x1="43" y1="85" x2="57" y2="85" stroke="var(--text-dim)" strokeWidth="1.4" />
-            <circle cx="50" cy="81.5" r="2.6" fill="none" stroke="var(--accent)" strokeWidth="1.2" />
+            <circle cx="50" cy="81.5" r="2.6" fill="none" stroke="var(--text-dim)" strokeWidth="1.2" />
           </svg>
           {five.map(({ player: p, spot }) => (
             <div key={p.id} className="court-slot" style={{ left: `${spot.x}%`, top: `${spot.y}%` }}>
-              <Avatar seed={p.id} age={p.age} size={34} appearance={p.appearance} title={p.name} personality={p.personality} />
-              <div className="court-name">{shortName(p.name)}</div>
+              <CaraPlantel p={p} />
+              <div className="court-name"><PlayerLink id={p.id}>{shortName(p.name)}</PlayerLink></div>
               <div className="court-rating">≈{p.visibleRating}</div>
             </div>
           ))}
         </div>
-        <p className="sheet-court-note muted">
-          El quinteto probable sale de la valoración y el rol esperado; el de verdad lo elegís en cada partido.
+        <p className="v1-frase pl-descargo">
+          Sale de la valoración y de lo que cada uno espera; el de verdad lo elegís en cada partido. Tocá un encabezado
+          para ordenar la planilla.
         </p>
-      </div>
+      </aside>
     </div>
   );
 }

@@ -1,0 +1,321 @@
+/* La pretemporada (UI V1). Pasa en el bar (ESCENA.bar en App.tsx) con el
+   mismo marco que la temporada. Todo cuelga de `.pretemporada` (el marco):
+   el héroe sin caja arriba a la izquierda, la planilla con cinta de «Lo que
+   pasó» a la derecha, y abajo, a todo el ancho, la parte elegida en la barra
+   de arriba. Las planillas son `.v1-planilla`; acá sólo lo propio. */
+
+/* El velo del héroe: el bar es una escena clara y con caras grandes en el
+   medio. Como el velo `abierta` del Tablero, oscurece sólo donde va el texto
+   (arriba a la izquierda) y deja ver el resto del bar. Va fijo, entre la
+   escena (.fondo-app, z-index -1) y el contenido. */
+.pretemporada::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 52% 48% at 22% 24%, rgba(8, 29, 45, 0.9) 0%, rgba(8, 29, 45, 0.7) 55%, rgba(8, 29, 45, 0) 100%),
+    linear-gradient(90deg, rgba(8, 29, 45, 0.55) 0%, rgba(8, 29, 45, 0.1) 55%, rgba(8, 29, 45, 0) 70%);
+}
+
+/* ---------- La barra de arriba: las tres partes como secciones ---------- */
+.pretemporada .ps-secciones { margin-left: 0.5rem; }
+.pretemporada .ps-marca {
+  display: inline-block;
+  margin-left: 0.4rem;
+  min-width: 1.15rem;
+  padding: 0 0.3rem;
+  border-radius: 2px;
+  font: 700 0.68rem/1.25 var(--font-display);
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--text-dim);
+  border: 1px solid rgba(174, 188, 196, 0.35);
+  vertical-align: 1px;
+}
+.pretemporada .ps-marca.warn { color: var(--warn); border-color: rgba(228, 185, 75, 0.6); }
+.pretemporada .ps-marca.good { color: var(--good); border-color: rgba(84, 210, 154, 0.5); }
+
+/* ---------- La barra de abajo: el único naranja ---------- */
+.pretemporada .recursos .recurso { flex: 0 0 auto; min-width: 150px; }
+.pretemporada .recursos .recurso.accion { flex: 1 0 auto; justify-content: flex-end; }
+.pretemporada .recursos .recurso.accion .s { max-width: 22ch; }
+.pretemporada .recursos button.avanzar.v1-cta { font-size: 1.15rem; padding: 0.7rem 1.5rem; margin: 0.35rem 0; }
+
+/* ---------- La pantalla ---------- */
+.pretemporada .ps-pantalla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 400px);
+  grid-template-rows: auto auto;
+  gap: 1.4rem 3rem;
+  align-content: start;
+  padding-top: clamp(0.8rem, 3vh, 2rem);
+}
+
+/* ---------- 1. El héroe ---------- */
+.pretemporada .ps-hero { grid-column: 1; grid-row: 1; min-width: 0; padding-left: 1.5rem; }
+.pretemporada .ps-hero .v1-titulo { font-size: clamp(2.1rem, 3.3vw, 3rem); }
+.pretemporada .ps-datos { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; margin-top: 1.3rem; }
+.pretemporada .ps-dato {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0 1.8rem;
+  border-left: 1px solid rgba(174, 188, 196, 0.35);
+}
+.pretemporada .ps-dato:first-child { padding-left: 0; border-left: 0; }
+.pretemporada .ps-dato-k {
+  font: 600 var(--fs-2xs) var(--font-display);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.pretemporada .ps-dato-v {
+  font: 700 clamp(2.2rem, 3.6vw, 3.3rem) / 1 var(--font-display);
+  margin-top: 0.3rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+.pretemporada .ps-dato-liga .ps-dato-v { font-size: clamp(1.6rem, 2.3vw, 2.2rem); line-height: 1.12; max-width: 17ch; white-space: normal; }
+.pretemporada .ps-dato-v.good { color: var(--good); }
+.pretemporada .ps-dato-v.bad { color: var(--bad); }
+.pretemporada .ps-dato-v.warn { color: var(--warn); }
+.pretemporada .ps-dato-s { font-size: 0.92rem; line-height: 1.35; color: var(--text-dim); margin-top: 0.35rem; max-width: 27ch; }
+.pretemporada button.ps-link {
+  all: unset;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 1px solid rgba(243, 240, 232, 0.4);
+}
+.pretemporada button.ps-link:hover { border-bottom-color: var(--accent); }
+.pretemporada button.ps-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pretemporada .ps-veredicto { margin-top: 1.2rem; max-width: 70ch; font-size: 1rem; }
+.pretemporada .ps-veredicto b { cursor: help; }
+
+/* ---------- 2. Lo que pasó (la planilla con cinta) ---------- */
+.pretemporada .ps-diario { grid-column: 2; grid-row: 1; align-self: start; margin-top: 0.6rem; padding: 1.1rem 0 0; }
+.pretemporada .ps-diario > h3 { padding: 0 1.4rem 0.5rem; }
+.pretemporada .ps-diario-vacio { margin: 0; padding: 0.9rem 1.4rem 1.2rem; border-top: 1px dashed var(--linea-suave); color: var(--text-dim); font-size: 0.92rem; line-height: 1.45; }
+.pretemporada .ps-diario-lista { list-style: none; margin: 0; padding: 0; counter-reset: diario; }
+.pretemporada .ps-diario-lista li {
+  counter-increment: diario;
+  position: relative;
+  padding: 0.6rem 1.4rem 0.6rem 3rem;
+  border-top: 1px dashed var(--linea-suave);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+.pretemporada .ps-diario-lista li::before {
+  content: counter(diario);
+  position: absolute;
+  left: 1.1rem;
+  top: 0.35rem;
+  font: 700 1.5rem var(--font-mano);
+  color: var(--text-dim);
+}
+.pretemporada button.ps-diario-mas {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  border-top: 1px dashed var(--linea-suave);
+  padding: 0.6rem 1.4rem 0.75rem;
+  font: 600 0.78rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.pretemporada button.ps-diario-mas:hover { color: var(--text); }
+
+/* ---------- 3. La parte elegida ---------- */
+.pretemporada .ps-cuerpo { grid-column: 1 / -1; grid-row: 2; min-width: 0; display: grid; gap: 1.4rem; }
+
+/* El título de planilla: display, con una línea punteada abajo. */
+.pretemporada .ps-seccion { padding: 0 0 0.4rem; }
+.pretemporada .ps-plan-cab { padding: 1rem 1.4rem 0.8rem; border-bottom: 1px dashed var(--linea-suave); display: grid; gap: 0.45rem; }
+.pretemporada .ps-plan-cab-fila { display: flex; align-items: baseline; gap: 1rem; }
+.pretemporada .ps-plan-t {
+  margin: 0;
+  font: 700 1.45rem / 1.05 var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.pretemporada .ps-plan-der {
+  margin-left: auto;
+  font: 600 var(--fs-xs) var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.pretemporada .ps-plan-cab .v1-frase { font-size: 0.92rem; max-width: 110ch; }
+.pretemporada .ps-sub {
+  margin: 0.4rem 0 0;
+  padding: 0.9rem 1.4rem 0.4rem;
+  font: 600 var(--fs-xs) var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-top: 1px dashed var(--linea-suave);
+}
+.pretemporada .ps-vacio { margin: 0; padding: 1rem 1.4rem; color: var(--text-dim); }
+
+/* --- La oferta de ligas: un renglón por liga --- */
+.pretemporada .ps-liga {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.9fr) minmax(0, 2fr) minmax(0, 1.2fr) 190px;
+  gap: 0 1.6rem;
+  align-items: start;
+  padding: 1rem 1.4rem;
+  border-top: 1px dashed var(--linea-suave);
+}
+.pretemporada .ps-plan-cab + .ps-liga { border-top: 0; }
+.pretemporada .ps-liga.elegida { background: linear-gradient(90deg, rgba(244, 124, 39, 0.12), rgba(244, 124, 39, 0) 60%); box-shadow: inset 3px 0 0 var(--accent); }
+.pretemporada .ps-liga.cerrada .ps-liga-quien,
+.pretemporada .ps-liga.cerrada .ps-liga-que { opacity: 0.6; }
+.pretemporada .ps-liga-nombre { font: 700 1.35rem / 1.05 var(--font-display); text-transform: uppercase; letter-spacing: 0.02em; }
+.pretemporada .ps-liga-div { font-size: 0.88rem; color: var(--text-dim); margin-top: 0.3rem; }
+.pretemporada .ps-liga-que .v1-frase { font-size: 0.95rem; color: var(--text); }
+.pretemporada .ps-liga-nota { margin: 0.35rem 0 0; font-size: 0.86rem; line-height: 1.45; color: var(--text-dim); }
+.pretemporada .ps-liga-marcas { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+.pretemporada .ps-liga-gente p { margin: 0 0 0.35rem; font-size: 0.88rem; line-height: 1.4; }
+.pretemporada .ps-liga-gente .good { color: var(--good); }
+.pretemporada .ps-liga-gente .dim { color: var(--text-dim); }
+.pretemporada .ps-liga-gente .warn { color: var(--warn); }
+.pretemporada .ps-liga-gente .bad { color: #ff8a7e; }
+.pretemporada .ps-liga-accion { display: grid; gap: 0.3rem; justify-items: stretch; text-align: center; }
+.pretemporada button.ps-elegir-liga {
+  font: 600 1rem var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.6rem 0.8rem;
+  background: rgba(243, 240, 232, 0.04);
+  border-color: rgba(174, 188, 196, 0.45);
+}
+.pretemporada button.ps-elegir-liga.on:disabled { opacity: 1; cursor: default; color: var(--accent); border-color: var(--accent); background: rgba(244, 124, 39, 0.1); }
+.pretemporada .ps-liga-pago { font-size: 0.78rem; color: var(--text-dim); }
+
+/* --- El plantel de pie --- */
+.pretemporada .ps-plantel { display: grid; gap: 1rem; }
+.pretemporada .ps-sobre { padding: 0 1.5rem; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
+.pretemporada .ps-sobre .v1-frase { margin-top: 0.4rem; color: #dfe5e8; }
+.pretemporada .ps-fila-depie { padding: 0.4rem 0.5rem 0; }
+
+/* --- Renglones de persona (plantel y mercado) --- */
+.pretemporada .ps-fila {
+  display: grid;
+  gap: 0 1.2rem;
+  align-items: center;
+  padding: 0.7rem 1.4rem;
+  border-top: 1px dashed var(--linea-suave);
+  animation: fila-in 220ms ease-out both;
+  animation-delay: calc(var(--fila, 0) * 28ms);
+}
+.pretemporada .ps-plan-cab + .ps-fila,
+.pretemporada .ps-fila-cab + .ps-fila { border-top: 0; }
+.pretemporada .ps-fila-plantel { grid-template-columns: 46px minmax(0, 1fr) minmax(170px, 0.45fr) auto; }
+.pretemporada .ps-fila-mercado { grid-template-columns: 46px minmax(0, 1.25fr) 58px 58px minmax(0, 1.35fr) 190px; }
+.pretemporada .ps-fila.apagada { opacity: 0.55; }
+.pretemporada .ps-fila-cab {
+  padding-top: 0.55rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px dashed var(--linea-suave);
+  font: 600 var(--fs-2xs) var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  animation: none;
+}
+.pretemporada .ps-fila-cab .num { text-align: center; }
+.pretemporada .ps-foto { width: 46px; height: 46px; border-radius: 50%; overflow: hidden; background: #2a4a60; border: 2px solid #3a5a70; cursor: pointer; }
+.pretemporada .ps-foto img,
+.pretemporada .ps-foto svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pretemporada .ps-quien { min-width: 0; display: grid; gap: 0.15rem; }
+.pretemporada .ps-nombre { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; font-weight: 600; font-size: 1rem; }
+.pretemporada .ps-pos { font-weight: 400; font-size: 0.84rem; color: var(--text-dim); }
+.pretemporada .ps-relacion-l { font: 600 0.8rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: #e8c98c; }
+.pretemporada .ps-via { color: var(--text-dim); }
+.pretemporada .ps-dicho {
+  font-size: 0.86rem;
+  line-height: 1.35;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pretemporada .ps-cifra { font: 700 1.55rem var(--font-display); text-align: center; color: var(--text); white-space: nowrap; }
+.pretemporada .ps-cifra.estrellas { font: 400 0.72rem var(--font-ui); letter-spacing: -0.02em; color: var(--warn); }
+.pretemporada .ps-estado { display: grid; gap: 0.25rem; justify-items: start; }
+.pretemporada .ps-estado-nota { font-size: 0.8rem; color: var(--text-dim); }
+.pretemporada .ps-sabe { display: grid; gap: 0.2rem; font-size: 0.86rem; line-height: 1.35; color: var(--text); min-width: 0; }
+.pretemporada .ps-sabe-marcas { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.1rem; }
+.pretemporada .ps-sabe-nota { color: var(--text-dim); font-style: italic; }
+.pretemporada .ps-sabe-nota .ico { vertical-align: -2px; opacity: 0.7; }
+.pretemporada .ps-t-good { color: var(--good); }
+.pretemporada .ps-t-warn { color: var(--warn); }
+.pretemporada .ps-t-bad { color: #ff8a7e; }
+.pretemporada .ps-t-faint { color: var(--text-faint); }
+.pretemporada .ps-accion { display: flex; flex-direction: column; gap: 0.35rem; align-items: stretch; justify-self: stretch; }
+.pretemporada .ps-fila-plantel .ps-accion { min-width: 170px; }
+.pretemporada .ps-accion .v1-est { align-self: center; white-space: normal; text-align: center; }
+.pretemporada .ps-accion button {
+  font: 600 0.95rem var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.8rem;
+  background: rgba(243, 240, 232, 0.04);
+  border-color: rgba(174, 188, 196, 0.45);
+  white-space: nowrap;
+}
+.pretemporada .ps-accion button small { font: 500 0.72rem var(--font-ui); letter-spacing: 0; text-transform: none; color: var(--text-dim); }
+
+/* --- Filtros del mercado: texto, no botonera --- */
+.pretemporada .ps-filtros-v1 { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.3rem; margin-top: 0.2rem; }
+.pretemporada .ps-filtros-k {
+  font: 600 var(--fs-2xs) var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-right: 0.3rem;
+}
+.pretemporada .ps-filtros-orden { margin-left: auto; }
+.pretemporada button.ps-filtro {
+  all: unset;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  font: 600 0.9rem var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-bottom: 2px solid transparent;
+}
+.pretemporada button.ps-filtro small { font-weight: 500; color: var(--text-faint); margin-left: 0.15rem; }
+.pretemporada button.ps-filtro:hover:not(:disabled) { color: var(--text); }
+.pretemporada button.ps-filtro.on { color: var(--text); border-bottom-color: var(--accent); }
+.pretemporada button.ps-filtro:disabled { opacity: 0.35; cursor: default; }
+.pretemporada button.ps-filtro:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ---------- La notebook (1366×768, 1280×720) ---------- */
+@media (max-height: 820px) {
+  .pretemporada .ps-pantalla { gap: 1rem 2rem; padding-top: 0.7rem; }
+  .pretemporada .ps-hero .v1-titulo { font-size: clamp(1.8rem, 2.8vw, 2.4rem); }
+  .pretemporada .ps-datos { margin-top: 0.8rem; }
+  .pretemporada .ps-dato-v { font-size: 2.3rem; }
+  .pretemporada .ps-dato-liga .ps-dato-v { font-size: 1.7rem; }
+  .pretemporada .ps-veredicto { margin-top: 0.7rem; font-size: 0.92rem; }
+  .pretemporada .ps-diario { padding-top: 0.8rem; }
+  .pretemporada .v1-mano { font-size: 1.75rem; }
+  .pretemporada .ps-diario-lista li { padding-top: 0.45rem; padding-bottom: 0.45rem; font-size: 0.85rem; }
+  .pretemporada .recursos button.avanzar.v1-cta { font-size: 1.05rem; padding: 0.6rem 1.2rem; }
+}
+@media (max-width: 1320px) {
+  .pretemporada .ps-fila-mercado { grid-template-columns: 46px minmax(0, 1.2fr) 52px 52px minmax(0, 1.3fr) 170px; }
+  .pretemporada .ps-liga { grid-template-columns: minmax(160px, 0.9fr) minmax(0, 2fr) minmax(0, 1.2fr) 170px; }
+}

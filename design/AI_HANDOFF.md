@@ -68,12 +68,76 @@ Así evitamos copiar prompts largos entre chats.
 
 # TASK ACTUAL
 
-## Lote de componentes globales (pedido directo de Gabi, 2026-09-25)
+## UI V1 completa en la dirección del Tablero aprobado (Gabi, 2026-09-28) — APROBADA e integrada a `main`
+
+> **Para ChatGPT:** la V1 está hecha (ver RESULTADO CLAUDE). Pedido: revisar el conjunto
+> con Gabi (capturas en `design/capturas/2026-09-28-ui-v1/`, hojas `todas-1440.webp` y
+> `todas-1366.webp`) y priorizar `design/UI_V2_PENDIENTES.md` para la V2, empezando por las
+> fichas de arte de las escenas.
+
+
+> Pedido directo de Gabi a Claude. ChatGPT: al terminar, revisar el resultado global antes de
+> empezar la V2 (polish, arte y personalidad).
+
+### Contexto
+El **Tablero v4 quedó APROBADO** como dirección visual v1
+(`design/propuestas/tablero-rediseno/`, registro en `ART_BIBLE.md`). Gabi no quiere seguir
+refinándolo por ahora: quiere llevar esa dirección a **todo el juego** y tener una UI V1
+completa y coherente.
+
+### Alcance (resumen fiel)
+- **No** se trata de aplicar la paleta, las tipografías y los componentes nuevos sobre los
+  layouts viejos. En cada pantalla se pueden cambiar la composición, la jerarquía, los tamaños,
+  los espacios y la agrupación para llevarla al lenguaje del Tablero.
+- Prioridades:
+  - videojuego antes que dashboard;
+  - jerarquía clara;
+  - menos cards;
+  - la información secundaria, realmente secundaria;
+  - el mundo del básquet amateur visible donde corresponda;
+  - coherencia con el Tablero;
+  - gameplay y legibilidad antes que decoración.
+- Sin polish artístico profundo ni una tanda grande de assets nuevos. Si falta un fondo, se
+  resuelve provisionalmente y el asset queda registrado como pendiente de V2.
+- Sin cambios de mecánicas ni de lógica: sólo presentación, jerarquía y UX.
+- Los componentes compartidos se reutilizan donde sirven, pero el design system no limita una
+  composición mejor.
+- Bloques:
+  1. **Ciclo principal:** Semana/Convocatoria, Previa/Quinteto, Partido, Postpartido/Informe.
+  2. **Equipo:** Plantel, Ficha, Vestuario, Cuerpo técnico.
+  3. **Club y competición:** Liga, Calendario, Finanzas, Club, Historia, Rankings.
+  4. **Flujos secundarios:** Pretemporada, Carrera/Perfiles, Modales, Fin de pretemporada, Fin de
+     temporada, Portada.
+- Para cerrar la fase:
+  - todas las pantallas principales migradas, sin ninguna que parezca de la UI anterior;
+  - verificado a 1440×900 y 1366×768;
+  - build y tests en verde;
+  - `UI_COVERAGE_AUDIT.md` actualizado;
+  - los pendientes de polish y arte para V2 registrados aparte;
+  - un resumen con capturas para una revisión global.
+
+---
+
+## Tareas cerradas
+
+### 2026-09-28 — Rediseño del Tablero desde cero (propuesta → v4 aprobada)
+
+Diagnóstico, cuatro pasadas y decisiones en `design/propuestas/tablero-rediseno/README.md`:
+- **v1:** estructura aprobada.
+- **v2:** identidad.
+- **v3:** menos carga: sin globos ni cartel, plantel alineado.
+- **v4:** sin los grupos del vestuario. Es la **aprobada** como dirección visual v1.
+
+### 2026-09-25 — Lote de componentes globales (pedido directo de Gabi)
+
+<details>
+<summary>Enunciado original</summary>
+
 
 > Gabi se lo pidió a Claude en el chat ("arrancá con los componentes"), siguiendo la
 > recomendación del resultado anterior. ChatGPT: revisar el resultado y definir el lote que sigue.
 
-### Alcance
+#### Alcance
 Unificar los componentes globales que la auditoría (`design/UI_COVERAGE_AUDIT.md`) encontró
 dispersos, **por CSS y sin cambiar lógica, datos ni layout de pantallas**:
 
@@ -91,17 +155,15 @@ dispersos, **por CSS y sin cambiar lógica, datos ni layout de pantallas**:
 Fuera de alcance en este lote: CHIP-01 (la fila de persona está hecha ~10 veces con markup
 distinto: necesita tocar TSX), composición SCENE-C de Tablero/Partido (necesita arte) y Portada.
 
-### Además
+#### Además
 Lista de assets para ChatGPT: `design/arte/ASSET_REGISTRY.md` (lo que hay, lo que falta,
 fichas §16 y prioridades).
 
-### Verificación
+#### Verificación
 1440×900 y 1366×768, recorrido de todas las superficies, sin desbordes nuevos; capturas en
 `design/capturas/`.
 
----
-
-## Tareas cerradas
+</details>
 
 ### 2026-09-25 — Typography migration + full UI coverage audit (dejada por ChatGPT)
 
@@ -240,10 +302,91 @@ No cambiar lógica ni datos.
 
 # RESULTADO CLAUDE
 
+## 2026-09-28 — UI V1 completa
+
+**Rama:** `claude/game-ui-status-cqi387`, **aprobada por Gabi e integrada a `main` el 28/9** (se publica en GitHub Pages).
+Seis tandas en paralelo sobre una base común, integradas y revisadas en conjunto.
+
+### Qué cambió
+- **Base:** Paleta A con planillas azul noche translúcidas, cabezales sin bandas de color,
+  **una escena por pantalla** con el arte existente (`ESCENA`/`escenaDe` en `App.tsx`),
+  piezas compartidas en `src/ui/v1.css` y `src/ui/Busto.tsx` (héroe, planilla con cinta y
+  título a mano en Caveat, frase, CTA, estado escrito, fila de personas de pie).
+- **Pantallas:** las 22 de producción rediseñadas en el idioma del Tablero (tabla completa en
+  `UI_COVERAGE_AUDIT.md`). Calendario y Rankings pasan a ser pestañas de la Liga.
+- **Limpieza:** ~4.700 líneas de CSS sin uso fuera de `styles.css`.
+- **Guía y pendientes:** `design/UI_V1_GUIA.md` (las siete reglas) y
+  `design/UI_V2_PENDIENTES.md` (arte, polish, personalidad, deuda técnica).
+
+### Qué no cambió
+- Lógica de juego (`src/game`, `src/state`): nada. Única adición fuera de la presentación:
+  `WatchItem.who` en `src/ui/watch.ts` (de quién habla el aviso, para mostrar la cara).
+- No se generó arte nuevo: todas las escenas son provisionales.
+
+### Verificación
+Recorrido de 40 estados (32 superficies más playoffs, derrota, quiebra y el Tablero en cada fase) a 1440×900 y 1366×768: 0 errores, 0 scroll horizontal. Build,
+196 tests, fuzz y las tres simulaciones del CI en verde.
+
+### Capturas
+`design/capturas/2026-09-28-ui-v1/1440/`, `/1366/` y las hojas `todas-1440.webp`,
+`todas-1366.webp`.
+
+### Antes del merge
+Barrido de legacy (ninguna pantalla parcial), recorrido de 40 estados a las dos resoluciones
+(incluye playoffs, derrota, quiebra y el Tablero en cada fase), build, 196 tests, fuzz y las
+tres simulaciones. Se corrigió la fila de pie con 14 jugadores (se desbordaba) y se borró
+código sin uso. Detalle en `UI_COVERAGE_AUDIT.md`.
+
+### Para decidir
+- El orden de la V2: arte de escenas primero (P1 del registro) o retratos por capas (T5).
+
+
+## 2026-09-28 — Propuesta de rediseño del Tablero (sin implementar)
+
+**Commit:** `1b27462` (rama `claude/game-ui-status-cqi387`). **El juego no cambió.**
+Todo está en `design/propuestas/tablero-rediseno/`; el razonamiento completo, en su `README.md`.
+
+### Diagnóstico del Tablero actual
+El problema es de composición, no de componentes. La pantalla tiene seis cajas del mismo peso
+y el ojo no sabe dónde empezar. La ilustración está encerrada en una card (es la del
+Vestuario, repetida). La disponibilidad son tres números sin cara, los avisos son texto
+suelto y el plantel son 12 miniaturas con puntos de colores. «Último partido» y los siete
+atajos ocupan espacio sin aportar.
+
+### La propuesta: «Lunes en el club. Faltan 5 días, ¿llegamos bien?»
+Mantiene la decisión del 15/9 («el partido ordena la semana») y la lleva hasta el final:
+- **Escena a pantalla completa** (SCENE-C) detrás de todo, con velos donde va el texto.
+- **Hero sin caja:** los escudos grandes, nombres en display, la cuenta regresiva «5 días» como
+  dato gigante, la clave del rival y **un solo CTA** naranja.
+- **«Esta semana»**, el único panel: hasta 3 avisos (`watchItems`), cada uno con la cara de
+  quien lo tiene, una línea y a dónde ir a resolverlo. Subtítulo manuscrito.
+- **El plantel de pie**, con bustos sin marco y número de camiseta. El problema va escrito
+  debajo («Al borde», «Fundido», «Debe cuota»), y los que no están van aparte y en gris.
+  Un solo número de disponibilidad: «10 de 12 en condiciones».
+- **Contexto en una línea:** último resultado, tabla y objetivo de la comisión.
+- **Se van:** los atajos, el título de pantalla y la card del último partido. El nav y el HUD
+  no cambian.
+- **Por fase:** marcador en vivo durante el partido y resultado final después, sin mover el
+  layout.
+
+### Decisiones abiertas (para Gabi y ChatGPT)
+1. **Escena:** ¿la sede o comisión con ventana a la cancha (`bg-tablero-v01`) o el gimnasio
+   propio a la tarde? La maqueta usa `fondo-gimnasio.webp` espejado sólo como sustituto.
+2. **Caras repetidas:** con bustos grandes se nota que hay 8 caras para 12 jugadores, así que
+   esta dirección empuja a T5 (retratos por capas). Mientras tanto se puede usar el busto S.
+3. **Panel oscuro translúcido sobre la escena** (como el Vestuario) en vez del gris perla. La
+   pantalla queda más oscura: el brillo tiene que venir del arte.
+4. **Fuente manuscrita:** la maqueta usa Caveat, que sería una dependencia nueva.
+5. **Láminas maestras 1 y 2:** no están en el repo, y la propuesta no se contrastó contra ellas.
+
+### Verificación
+Maqueta capturada a 1440×900 y 1366×768, sin desbordes. No hay build ni tests: no hubo
+cambios de código.
+
+
 ## 2026-09-25 — Lote de componentes globales
 
-**Commit:** `80f6ce9` (rama `art/vestuario-vertical-slice`). Todavía **no** está en `main`:
-Gabi pidió ver capturas antes.
+**Commit:** `80f6ce9` (rama `art/vestuario-vertical-slice`). Mergeado en `main` (`ab57d36`).
 
 ### Qué cambió (todo por CSS; en TSX sólo el "Cancelar" de la confirmación pasa a `.ghost`)
 - **SUBNAV-01:** los 9 estilos comparten estados. Segmentos unidos (`.view-toggle`,

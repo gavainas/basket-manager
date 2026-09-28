@@ -1,5 +1,67 @@
 # UI coverage audit — ¿el sistema de UI está en todo el juego?
 
+## Estado al 28/9/2026 — UI V1 completa, aprobada e integrada a `main`
+
+La UI V1 llevó el idioma del **Tablero aprobado** (`design/propuestas/tablero-rediseno/`, v4)
+a todas las pantallas (guía: `UI_V1_GUIA.md`; lo pendiente: `UI_V2_PENDIENTES.md`). Criterio
+nuevo: **V1** = rediseñada en el lenguaje del Tablero (escena visible, héroe sin caja, una
+planilla por zona sin bandas de color, secundario en frases, un solo CTA naranja, personas
+como personas), no sólo con la paleta. Gabi la aprobó para `main` el 28/9.
+
+**Verificación previa al merge** (recorrido automático con partidas sembradas por el reducer):
+40 estados a 1440×900 y 1366×768 —las 32 superficies más el Tablero durante la convocatoria y
+con el partido en vivo, los playoffs (Tablero, La semana y Liga), el informe tras una derrota,
+la quiebra y el menú de nueva partida—: 0 errores de consola y 0 scroll horizontal. Capturas
+en `design/capturas/2026-09-28-ui-v1/` (hojas `todas-1440.webp` y `todas-1366.webp`). Ese
+recorrido encontró un error grave, corregido antes del merge: con 14 jugadores (playoffs) la
+fila de pie del Tablero se desbordaba y los dos últimos quedaban fuera de la pantalla; ahora
+cada persona se angosta y la cara se recorta por los hombros (`v1.css`). También se borró
+código que quedó sin uso (`Cabecera.tsx`, `PlayoffsCard`) y los últimos selectores muertos.
+
+**Barrido de legacy:** todos los componentes de pantalla de `src/ui/` fueron rediseñados en
+la V1. Los que no se tocaron son piezas chicas que viven adentro de pantallas ya migradas y
+toman su estilo de ellas (`Timeline`, `ScoutingCard`, `Bar`, `Conducta`, `HumanNoteRow`,
+`StyleChip`, `Crest`, `Icon`, los links), más las dos galerías de desarrollo
+(`#retratos`, `#escudos`), fuera de producción.
+
+| # | Superficie | Escena (provisional) | Archivos | Estado | Notas |
+|---|---|---|---|---|---|
+| 1 | Portada | su ilustración (asado) | `Portada.tsx`, `portada.css` | **V1** | composición aprobada conservada; azul noche + tiza; un naranja según haya guardado |
+| 2 | Nueva partida / Carrera | escenas de la intro, gimnasio | `CareerSetup.tsx`, `carrera.css` | **V1** | escenas a sangre, acta de fundación en planilla |
+| 3 | Pretemporada | bar | `PreseasonView.tsx`, `pretemporada.css` | **V1** | misma barra que la temporada; plantel de pie; modales por portal |
+| 4 | Tablero | gimnasio (abierta) | `Hub.tsx`, `Hub.css` | **V1** | la maqueta aprobada en el juego |
+| 5 | Plantel / Estadísticas | vestuario | `RosterView/List/Sheet.tsx`, `plantel.css` | **V1** | una planilla, estado sólo si es excepción |
+| 6 | Ficha de jugador | modal | `PlayerProfile.tsx`, `Ficha.tsx`, `modales.css` | **V1** | busto escala L |
+| 7 | Vestuario | vestuario | `VestuarioCard.tsx`, `plantel.css` | **V1** | sin franja interna: la escena es el fondo |
+| 8 | Cuerpo técnico | vestuario | `CoachCard.tsx`, `plantel.css` | **V1** | DT sin retrato ilustrado (V2) |
+| 9 | Finanzas | comisión | `FinancesView.tsx`, `club.css` | **V1** | caja de hoy → cierre de la semana |
+| 10 | Liga (+ Calendario, Rankings, Pirámide, Ligas) | árbitros | `LeagueView.tsx`, `CalendarView.tsx`, `RankingsView.tsx`, `liga.css` | **V1** | Calendario y Rankings son pestañas de la Liga |
+| 11 | Calendario | árbitros | ídem | **V1** | |
+| 12 | Rankings | árbitros | ídem | **V1** | scrollea ~280 px a 1366 |
+| 13 | Club | comisión | `ClubView.tsx`, `club.css` | **V1** | |
+| 14 | Historia | comisión | `HistoryView.tsx`, `club.css` | **V1** | vitrina por temporada |
+| 15 | La semana / Convocatoria | gimnasio / vestuario | `LaSemana.tsx`, `Convocatoria.tsx`, `comun.tsx`, `semana.css` | **V1** | pasos como recorrido; convocatoria de pie |
+| 16 | Quinteto | cancha | `Quinteto.tsx`, `semana.css` | **V1** | lámina 05 cuadro 18 |
+| 17 | Partido en vivo | partido | `PartidoVivo.tsx`, `partido.css` | **V1** | lámina 05 cuadro 19 |
+| 18 | Postpartido / informe | vestuario / derrota | `Informe.tsx`, `informe.css` | **V1** | lámina 05 cuadro 20 |
+| 19 | Perfiles (rival/club/liga/mundo) | modal | `*Profile.tsx`, `Ficha.tsx`, `modales.css` | **V1** | |
+| 20 | Modales / eventos / tips | overlay | `EventModal.tsx`, `ConfirmDialog.tsx`, `Tip.tsx`, `modales.css` | **V1** | evento como planilla con cinta |
+| 21 | Fin de pretemporada | bar | `PreseasonEndScreen.tsx`, `cierre.css` | **V1** | lista de buena fe de pie |
+| 22 | Fin de temporada | comisión | `SeasonEndScreen.tsx`, `cierre.css` | **V1** | |
+| 23 | Galerías dev | — | `AvatarGallery`, `CrestGallery` | fuera de producción | sin tocar |
+
+**Conteo:** V1 22 de 22 superficies de producción · Parcial 0 · Legacy 0.
+
+Lo que la tabla de abajo llamaba «componentes globales que faltan» quedó resuelto por
+composición y no por un componente único: las pestañas pasaron a texto display con subrayado
+naranja en cada pantalla; la fila de persona es `Busto`/`FilaDePie` (y la cara redonda, todavía
+repetida en tres lugares: ver deuda técnica en `UI_V2_PENDIENTES.md`); los paneles son la
+planilla. Se borraron ~4.700 líneas de CSS sin uso de `styles.css`.
+
+---
+
+## Historia: la auditoría del 25/9 (antes de la UI V1)
+
 > Pedido en `design/AI_HANDOFF.md` (TASK ACTUAL, 2026-09-25). Auditoría hecha sobre el código
 > **antes** de la migración tipográfica (commit `1422a21`, rama `art/vestuario-vertical-slice`),
 > recorriendo el juego con Playwright a 1440×900 y leyendo componente por componente.

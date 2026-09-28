@@ -39,14 +39,13 @@ club quiebra la mitad de las veces que antes. Lo que sigue:
    gastar de más (prueba de registro ≈12 créditos, lámina de 12 caras ≈60). *Sale cuando:*
    dos jugadores del mismo arquetipo en la misma pantalla no se ven iguales.
 
-2. **Llevar la dirección D al resto del juego** (1 sesión, empezada). La planilla y el
-   relieve a la pretemporada, el mercado, la convocatoria y la liga, para que no convivan
-   dos anatomías de lista en el mismo juego. *Hecho (sep 2026):* el mercado, la libreta y el
-   plantel de la pretemporada son una planilla, y las tablas de la Liga llevan la hoja de la
-   planilla (ver el changelog). *Falta, y es decisión de Gabi:* la convocatoria. Sus filas
-   son historia y gestiones ("se cayó a última hora: el nene con fiebre", tres botones),
-   no cifras; la placa con tornillos le sumaría materia pero no columnas. Si se quiere
-   igual, es una sesión corta.
+2. **UI V2: arte, polish y personalidad** (depende de arte y de Gabi). La **UI V1** está
+   hecha (sep 2026, ver el changelog): todo el juego habla el idioma del Tablero aprobado, con
+   escenas provisionales. Lo que sigue está ordenado en
+   [`design/UI_V2_PENDIENTES.md`](design/UI_V2_PENDIENTES.md): primero las escenas propias de
+   cada pantalla (fichas en el registro de assets), después los retratos por capas (T5), el
+   polish de composición y el motion. *Sale cuando:* ninguna pantalla usa arte prestado de
+   otra. (La dirección D y la convocatoria en planilla quedaron absorbidas por la V1.)
 
 3. **Programación** (1 sesión). ESLint con `react-hooks` (suma una dependencia de
    desarrollo: decisión de Gabi, como el Playwright de `check:pantallas`). *`WeekView.tsx`
