@@ -4,7 +4,7 @@ import { BALANCE } from '../game/balance';
 import type { AbsenceDifficulty } from '../game/types';
 import { USER_CLUB_ID } from '../game/world';
 import { Crest } from './Crest';
-import { Icon } from './Icon';
+import './carrera.css';
 
 /**
  * La entrada del modo Carrera (T3 del diagnóstico de septiembre): la historia
@@ -13,6 +13,12 @@ import { Icon } from './Icon';
  * nombre y colores al club (el escudo procedural ya sale de eso), y arrancás
  * sin plantel. No se generó ningún asset nuevo: las escenas son las cabeceras
  * y el fondo que el juego ya usa (ver public/arte/LEEME.md).
+ *
+ * UI V1 (sep 2026): las escenas son de videojuego —la imagen a sangre, el
+ * texto abajo a la izquierda sobre un velo azul noche, un solo botón naranja
+ * para seguir— y la fundación pasa en el gimnasio vacío que va a ser del
+ * club: a la izquierda, sin caja, el escudo y el nombre que se van armando;
+ * a la derecha, el acta de fundación como planilla con cinta.
  */
 
 const NOMBRES_SUGERIDOS = [
@@ -62,11 +68,11 @@ interface Props {
   difficulty: AbsenceDifficulty;
   onStart: (clubName: string, colors: [string, string]) => void;
   onBack: () => void;
-  /** La portada del menú, para la pantalla de fundación. */
+  /** La portada del menú (la fundación pasa en el gimnasio; se conserva por la firma). */
   portada: string;
 }
 
-export function CareerSetup({ difficulty, onStart, onBack, portada }: Props) {
+export function CareerSetup({ difficulty, onStart, onBack }: Props) {
   const [paso, setPaso] = useState(0);
   const [name, setName] = useState('');
   const [colorIdx, setColorIdx] = useState(1);
@@ -78,103 +84,131 @@ export function CareerSetup({ difficulty, onStart, onBack, portada }: Props) {
   // Las tres escenas de la historia, a pantalla completa.
   if (paso < ESCENAS.length) {
     const e = ESCENAS[paso];
+    const ultima = paso === ESCENAS.length - 1;
     return (
-      <div
-        className="carrera-escena"
-        style={{ backgroundImage: `url(${base}arte/${e.art})`, backgroundPosition: e.pos }}
-      >
-        <div className="carrera-escena-texto">
-          <div className="carrera-escena-paso">
-            {paso + 1} / {ESCENAS.length}
+      <div className="carrera-v1 cv1-escena">
+        <div className="cv1-img" style={{ backgroundImage: `url(${base}arte/${e.art})`, backgroundPosition: e.pos }} />
+        <div className="cv1-velo" />
+        <div className="cv1-texto v1-hero">
+          <div className="v1-eyebrow">
+            Carrera · el club desde cero · <b>{paso + 1} de {ESCENAS.length}</b>
           </div>
-          <h1>{e.titulo}</h1>
+          <div className="cv1-puntos" aria-hidden="true">
+            {ESCENAS.map((_, i) => (
+              <i key={i} className={i === paso ? 'on' : i < paso ? 'hecho' : ''} />
+            ))}
+          </div>
+          <h1 className="v1-titulo">{e.titulo}</h1>
           {e.texto.map((t, i) => (
             <p key={i}>{t}</p>
           ))}
-          <div className="carrera-escena-botones">
-            <button className="primary" onClick={() => setPaso(paso + 1)}>
-              {paso === ESCENAS.length - 1 ? 'Fundar el club →' : 'Seguir →'}
+          <div className="cv1-botones">
+            <button className="primary v1-cta" onClick={() => setPaso(paso + 1)} autoFocus>
+              {ultima ? 'Fundar el club →' : 'Seguir →'}
             </button>
-            <button onClick={() => setPaso(ESCENAS.length)}>Saltar la historia</button>
-            <button onClick={onBack}>Volver al menú</button>
+            {!ultima && (
+              <button className="cv1-ghost" onClick={() => setPaso(ESCENAS.length)}>
+                Saltar la historia
+              </button>
+            )}
+            <button className="cv1-ghost" onClick={onBack}>
+              Volver al menú
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  // La fundación: la portada a la izquierda, el formulario a la derecha.
+  // La fundación: el club que se va armando a la izquierda, el acta a la derecha.
+  const dificultad = difficulty === 'facil' ? 'Fácil' : difficulty === 'dificil' ? 'Difícil' : 'Medio';
   return (
-    <div className="menu-screen">
-      <div className="menu-portada" style={{ backgroundImage: `url(${portada})` }} role="img" aria-label="Asado en la cantina del club" />
-      <div className="menu-panel menu-panel-carrera">
-        <div className="carrera-setup">
-          <div className="carrera-intro">
-            <h1>
-              Carrera <span>· el club desde cero</span>
-            </h1>
-            <p>
-              Arrancás con <strong>${BALANCE.carrera.startingMoney}</strong> que juntaron entre todos, que no alcanzan
-              para la ficha de la liga: o te la fían, o jugás en la plaza. Necesitás{' '}
-              <strong>{BALANCE.preseason.minPlayers} en {BALANCE.preseason.weeks} semanas</strong>. El mercado de
-              fichajes de verdad llega el año que viene, si el club llega.
-            </p>
+    <div className="carrera-v1 cv1-fundacion">
+      <div className="cv1-img" style={{ backgroundImage: `url(${base}arte/fondo-gimnasio.webp)`, backgroundPosition: 'center 55%' }} />
+      <div className="cv1-velo" />
+
+      <div className="cv1-fund-grid">
+        <section className="cv1-fund-hero v1-hero" aria-label="El club">
+          <div className="v1-eyebrow">
+            Carrera · <b>el club desde cero</b>
           </div>
-
-          <div className="carrera-form card">
-            <h3 className="card-band">
-              <Icon name="inscripcion" size={17} /> Fundá el club
-            </h3>
-            <div className="carrera-escudo">
-              <Crest seed={USER_CLUB_ID} name={nombre} colors={colors} founded={2025} size={132} />
-              <div className="carrera-escudo-nombre">{nombre}</div>
-            </div>
-
-            <label className="carrera-campo">
-              <span className="carrera-k">Nombre del club</span>
-              <input
-                type="text"
-                maxLength={40}
-                placeholder={sugerido}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoFocus
-              />
-              <span className="hint">El escudo saca las iniciales del nombre: dos o tres palabras con carácter.</span>
-            </label>
-
-            <div className="carrera-campo">
-              <span className="carrera-k">Colores</span>
-              <div className="carrera-colores">
-                {CLUB_COLORS.map((c, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    className={`carrera-color${i === colorIdx ? ' on' : ''}`}
-                    title={NOMBRE_COLORES[i] ?? 'Colores'}
-                    onClick={() => setColorIdx(i)}
-                    style={{ background: `linear-gradient(135deg, ${c[0]} 50%, ${c[1]} 50%)` }}
-                  />
-                ))}
+          <h1 className="v1-titulo">Fundá el club</h1>
+          <div className="cv1-club">
+            <Crest seed={USER_CLUB_ID} name={nombre} colors={colors} founded={2025} size={148} />
+            <div>
+              <div className="cv1-club-nombre">{nombre}</div>
+              <div className="cv1-club-sub">
+                {NOMBRE_COLORES[colorIdx] ?? 'Sus colores'} · sin plantel todavía
               </div>
-              <span className="hint">{NOMBRE_COLORES[colorIdx] ?? ''}</span>
-            </div>
-
-            <p className="hint">
-              Faltas y lesiones:{' '}
-              <strong>{difficulty === 'facil' ? 'Fácil' : difficulty === 'dificil' ? 'Difícil' : 'Medio'}</strong> (se
-              elige en el menú).
-            </p>
-
-            <div className="confirm-bar">
-              <button className="primary" onClick={() => onStart(nombre, colors)}>
-                Fundar {nombre} →
-              </button>
-              <button onClick={() => setPaso(0)}>Volver a la historia</button>
-              <button onClick={onBack}>Menú</button>
             </div>
           </div>
-        </div>
+          <p className="v1-frase cv1-frase">
+            Arrancás con <b>${BALANCE.carrera.startingMoney}</b> que juntaron entre todos, que no alcanzan para la ficha de
+            la liga: o te la fían, o jugás en la plaza. Necesitás{' '}
+            <b>
+              {BALANCE.preseason.minPlayers} en {BALANCE.preseason.weeks} semanas
+            </b>
+            . El mercado de fichajes de verdad llega el año que viene, si el club llega.
+          </p>
+        </section>
+
+        <section className="cv1-acta v1-planilla" aria-label="El acta de fundación">
+          <i className="v1-cinta a" />
+          <i className="v1-cinta b" />
+          <h2 className="v1-mano">
+            El acta <span>de fundación</span>
+          </h2>
+
+          <label className="cv1-campo">
+            <span className="cv1-k">Nombre del club</span>
+            <input
+              type="text"
+              maxLength={40}
+              placeholder={sugerido}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+            />
+            <span className="cv1-ayuda">El escudo saca las iniciales del nombre: dos o tres palabras con carácter.</span>
+          </label>
+
+          <div className="cv1-campo">
+            <span className="cv1-k">Colores</span>
+            <div className="cv1-colores">
+              {CLUB_COLORS.map((c, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`cv1-color${i === colorIdx ? ' on' : ''}`}
+                  title={NOMBRE_COLORES[i] ?? 'Colores'}
+                  aria-label={NOMBRE_COLORES[i] ?? 'Colores'}
+                  aria-pressed={i === colorIdx}
+                  onClick={() => setColorIdx(i)}
+                  style={{ background: `linear-gradient(135deg, ${c[0]} 50%, ${c[1]} 50%)` }}
+                />
+              ))}
+            </div>
+            <span className="cv1-ayuda">{NOMBRE_COLORES[colorIdx] ?? ''}</span>
+          </div>
+
+          <p className="cv1-dificultad cv1-ayuda">
+            Faltas y lesiones: <b>{dificultad}</b> (se elige en el menú).
+          </p>
+
+          <div className="cv1-acta-pie">
+            <button className="primary v1-cta" onClick={() => onStart(nombre, colors)}>
+              Fundar {nombre} →
+            </button>
+            <div className="cv1-acta-otros">
+              <button className="cv1-ghost" onClick={() => setPaso(0)}>
+                Volver a la historia
+              </button>
+              <button className="cv1-ghost" onClick={onBack}>
+                Menú
+              </button>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
