@@ -68,74 +68,59 @@ Así evitamos copiar prompts largos entre chats.
 
 # TASK ACTUAL
 
-## Rediseño del Tablero desde cero: revisar la propuesta (Gabi, 2026-09-28)
+## UI V1 completa en la dirección del Tablero aprobado (Gabi, 2026-09-28) — EN CURSO (Claude)
 
-> **Para ChatGPT.** Gabi cambió la dirección del trabajo de UI. **No** sigue la unificación
-> de componentes (CHIP-01 queda en pausa). Quiere validar un **rediseño real de una pantalla**
-> como vertical slice, y eligió el **Tablero**.
+> Pedido directo de Gabi a Claude. ChatGPT: al terminar, revisar el resultado global antes de
+> empezar la V2 (polish, arte y personalidad).
 
-### Lo que pidió Gabi (resumen fiel)
-- La referencia aprobada está muy por encima de lo implementado, y eso no se arregla con
-  colores, paneles más claros u oscuros, botones, tabs o CSS.
-- La pregunta no es «¿cómo adapto el Tablero actual al sistema?», sino «si diseñáramos hoy
-  esta pantalla desde cero, con la calidad y la dirección de las referencias, ¿cómo sería?».
-- No hay que preservar el layout actual. Se puede cambiar la jerarquía, la distribución, los
-  tamaños, los espacios, la agrupación y el protagonismo de cada elemento.
-- Hay que evitar sobre todo que parezca un **dashboard SaaS hecho de cards**.
-- Lo que se valida: composición, jerarquía, sensación de videojuego, identidad, integración
-  entre la UI y el mundo, y el protagonismo de la información importante.
-- **Primero la propuesta; no se implementa nada hasta que Gabi apruebe la dirección.** Las
-  demás pantallas no se tocan.
+### Contexto
+El **Tablero v4 quedó APROBADO** como dirección visual v1
+(`design/propuestas/tablero-rediseno/`, registro en `ART_BIBLE.md`). Gabi no quiere seguir
+refinándolo por ahora: quiere llevar esa dirección a **todo el juego** y tener una UI V1
+completa y coherente.
 
-### Estado
-Claude dejó la propuesta con una maqueta en **`design/propuestas/tablero-rediseno/`**:
-`README.md` (diagnóstico, qué cambia y por qué, estados por fase, decisiones abiertas),
-`propuesta-1440.webp`, `propuesta-1366.webp` y `maqueta.html`. Está en la rama
-`claude/game-ui-status-cqi387`. Ver RESULTADO CLAUDE más abajo.
-
-**Actualización 28/9:** Gabi **aprobó la estructura** como dirección y pidió una segunda
-pasada sólo de identidad y dirección de arte, sobre la misma composición. Claude la dejó
-como **v2** en el mismo README («Segunda pasada»), con `v2-1440.webp`, `v2-1366.webp` y
-`maqueta-v2.html`. Resumen:
-- el gimnasio se ve y su luz cruza la UI;
-- el plantel está parado sobre la línea del parquet, con la altura real, agrupado por mesa
-  del vestuario y con globos de lo que dijeron;
-- «Esta semana» es una planilla con cinta;
-- la información secundaria son frases.
-
-**v4 (la vigente):** Gabi decidió que el Tablero **no muestra las bandas del vestuario**.
-Eso se descubre entrando al Vestuario, y los grupos cambian durante el juego. El plantel es una
-sola fila ordenada por puesto, con los que no están al final y en gris. Archivos:
-`v4-1440.webp`, `v4-1366.webp` y `maqueta-v4.html`.
-
-**v3:** Gabi encontró la v2 «muy cargada». La v3 corrige eso:
-- sin globos ni cartel;
-- bustos del mismo tamaño y alineados sobre la línea, repartidos a todo el ancho;
-- sin la altura variable, sin número de camiseta y sin la C de capitán.
-
-Archivos: `v3-1440.webp`, `v3-1366.webp` y `maqueta-v3.html`. La v4 espera el visto bueno de Gabi.
-
-ChatGPT: mirar sobre todo lo que la v3 le pide al brief de `bg-tablero-v01`: el piso en plano
-bajo, con una línea donde se paren los jugadores.
-
-### Pedido a ChatGPT
-1. Revisar la propuesta contra la Art Bible y las láminas Tier 1, incluidas las que **no están en
-   el repo**: la 1 «Inicio y Club» y la 2 «La Semana».
-2. Opinar sobre la composición y la jerarquía, y marcar lo que no llegue al nivel de la
-   referencia.
-3. Responder las decisiones abiertas del README: la escena (sede/comisión o gimnasio), el
-   panel oscuro sobre la escena, la fuente manuscrita y el tamaño de los bustos mientras no
-   haya retratos por capas.
-4. Si la escena va, ajustar o aprobar la ficha `bg-tablero-v01` en
-   `design/arte/ASSET_REGISTRY.md` según las zonas libres de la maqueta: la izquierda y la
-   franja de abajo tranquilas, con la luz en el centro-derecha.
-
-Cuando Gabi apruebe la dirección, Claude la implementa en `src/ui/Hub.tsx` y `Hub.css`, sin
-cambios de lógica ni de datos.
+### Alcance (resumen fiel)
+- **No** se trata de aplicar la paleta, las tipografías y los componentes nuevos sobre los
+  layouts viejos. En cada pantalla se pueden cambiar la composición, la jerarquía, los tamaños,
+  los espacios y la agrupación para llevarla al lenguaje del Tablero.
+- Prioridades:
+  - videojuego antes que dashboard;
+  - jerarquía clara;
+  - menos cards;
+  - la información secundaria, realmente secundaria;
+  - el mundo del básquet amateur visible donde corresponda;
+  - coherencia con el Tablero;
+  - gameplay y legibilidad antes que decoración.
+- Sin polish artístico profundo ni una tanda grande de assets nuevos. Si falta un fondo, se
+  resuelve provisionalmente y el asset queda registrado como pendiente de V2.
+- Sin cambios de mecánicas ni de lógica: sólo presentación, jerarquía y UX.
+- Los componentes compartidos se reutilizan donde sirven, pero el design system no limita una
+  composición mejor.
+- Bloques:
+  1. **Ciclo principal:** Semana/Convocatoria, Previa/Quinteto, Partido, Postpartido/Informe.
+  2. **Equipo:** Plantel, Ficha, Vestuario, Cuerpo técnico.
+  3. **Club y competición:** Liga, Calendario, Finanzas, Club, Historia, Rankings.
+  4. **Flujos secundarios:** Pretemporada, Carrera/Perfiles, Modales, Fin de pretemporada, Fin de
+     temporada, Portada.
+- Para cerrar la fase:
+  - todas las pantallas principales migradas, sin ninguna que parezca de la UI anterior;
+  - verificado a 1440×900 y 1366×768;
+  - build y tests en verde;
+  - `UI_COVERAGE_AUDIT.md` actualizado;
+  - los pendientes de polish y arte para V2 registrados aparte;
+  - un resumen con capturas para una revisión global.
 
 ---
 
 ## Tareas cerradas
+
+### 2026-09-28 — Rediseño del Tablero desde cero (propuesta → v4 aprobada)
+
+Diagnóstico, cuatro pasadas y decisiones en `design/propuestas/tablero-rediseno/README.md`:
+- **v1:** estructura aprobada.
+- **v2:** identidad.
+- **v3:** menos carga: sin globos ni cartel, plantel alineado.
+- **v4:** sin los grupos del vestuario. Es la **aprobada** como dirección visual v1.
 
 ### 2026-09-25 — Lote de componentes globales (pedido directo de Gabi)
 

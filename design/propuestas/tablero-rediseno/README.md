@@ -1,10 +1,11 @@
 # Tablero — rediseño desde cero (propuesta, 28 de septiembre de 2026)
 
-**Estado:** Gabi aprobó la estructura como dirección (28/9). La segunda pasada, sobre identidad
-y dirección de arte, está abajo y espera su visto bueno. **Todavía no hay nada implementado en
-el juego.**
+**Estado: v4 APROBADA por Gabi (28/9) como dirección visual v1 del juego.** Junto con la Art
+Bible es la referencia principal para llevar la UI V1 al resto de las pantallas. Gabi pidió
+que no se siga refinando el Tablero por ahora: el polish, el arte y la personalidad son una
+segunda pasada (V2).
 
-## Cuarta pasada — sin los grupos del vestuario (v4, la vigente)
+## Cuarta pasada — sin los grupos del vestuario (v4, APROBADA)
 
 ![v4 a 1440×900](v4-1440.webp)
 

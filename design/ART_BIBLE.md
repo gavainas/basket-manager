@@ -367,6 +367,25 @@ Una vez validado ese vertical slice, esta v0.1 pasa a una versión congelada de 
 
 ## Registro
 
+### 2026-09-28 — Tablero v4 aprobado como dirección visual v1
+
+- **Aprobado:** la maqueta v4 del Tablero
+  (`design/propuestas/tablero-rediseno/`, `v4-1440.webp`) es la **referencia principal de UI**
+  junto con esta Art Bible.
+- Rasgos de la dirección:
+  - escena a pantalla completa, con velo local;
+  - el hero sin caja;
+  - un solo CTA;
+  - una sola superficie con panel («Esta semana», una planilla con cinta);
+  - información secundaria en frases;
+  - las personas de pie sobre el parquet.
+- **Se aplica a todo el juego (UI V1)** antes de cualquier polish. El arte, el refinamiento y la
+  personalidad van en una segunda pasada (V2).
+- Decisiones que la acompañan:
+  - el Tablero no muestra los grupos del vestuario, que se descubren en el Vestuario;
+  - nada de globos ni carteles sobre las caras;
+  - sin datos que el juego no tiene (dorsal, capitán).
+
 ### 2026-09-25 — UI: shell nocturno + paneles gris perla
 
 - La Paleta A entera en la UI quedó demasiado oscura; el crema cansaba. Gabi aprobó una
