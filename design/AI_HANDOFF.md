@@ -103,12 +103,17 @@ como **v2** en el mismo README («Segunda pasada»), con `v2-1440.webp`, `v2-136
 - «Esta semana» es una planilla con cinta;
 - la información secundaria son frases.
 
-**v3 (la vigente):** Gabi encontró la v2 «muy cargada». La v3 corrige eso:
+**v4 (la vigente):** Gabi decidió que el Tablero **no muestra las bandas del vestuario**.
+Eso se descubre entrando al Vestuario, y los grupos cambian durante el juego. El plantel es una
+sola fila ordenada por puesto, con los que no están al final y en gris. Archivos:
+`v4-1440.webp`, `v4-1366.webp` y `maqueta-v4.html`.
+
+**v3:** Gabi encontró la v2 «muy cargada». La v3 corrige eso:
 - sin globos ni cartel;
 - bustos del mismo tamaño y alineados sobre la línea, repartidos a todo el ancho;
 - sin la altura variable, sin número de camiseta y sin la C de capitán.
 
-Archivos: `v3-1440.webp`, `v3-1366.webp` y `maqueta-v3.html`. Espera el visto bueno de Gabi.
+Archivos: `v3-1440.webp`, `v3-1366.webp` y `maqueta-v3.html`. La v4 espera el visto bueno de Gabi.
 
 ChatGPT: mirar sobre todo lo que la v3 le pide al brief de `bg-tablero-v01`: el piso en plano
 bajo, con una línea donde se paren los jugadores.

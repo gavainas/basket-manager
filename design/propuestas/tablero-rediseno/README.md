@@ -4,7 +4,30 @@
 y dirección de arte, está abajo y espera su visto bueno. **Todavía no hay nada implementado en
 el juego.**
 
-## Tercera pasada — correcciones de Gabi sobre la v2 (v3, la vigente)
+## Cuarta pasada — sin los grupos del vestuario (v4, la vigente)
+
+![v4 a 1440×900](v4-1440.webp)
+
+Decisión de Gabi (28/9): **el Tablero no muestra quién pertenece a cada banda.**
+- Eso lo descubre el jugador cuando entra al Vestuario, no en el menú principal.
+- Los grupos son dinámicos, y las dinámicas de grupo van a cambiar durante el juego. Fijarlos
+  en la pantalla de inicio iba a dar problemas.
+
+Cambios respecto de la v3:
+- **Sin llaves ni nombres de grupo.** El plantel disponible va en una sola fila, **ordenada por
+  puesto** (BAS → PIV), repartida a todo el ancho.
+- **Los que no están** van al final, separados por una línea vertical fina y en gris.
+- En la implementación **no se usa `buildSocialMap`** en el Tablero.
+
+Lo que sí sigue en el Tablero es un **roce que ya es un problema para resolver** (un aviso de
+`watchItems`, como «Acosta y Cardozo no se bancan» en «Esta semana»). Es una tarea de la
+semana, no una foto de quién anda con quién.
+
+Archivos: `v4-1440.webp`, `v4-1366.webp`, `maqueta-v4.html`.
+
+---
+
+## Tercera pasada — correcciones de Gabi sobre la v2 (v3)
 
 ![v3 a 1440×900](v3-1440.webp)
 
