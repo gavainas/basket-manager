@@ -4,6 +4,35 @@
 y dirección de arte, está abajo y espera su visto bueno. **Todavía no hay nada implementado en
 el juego.**
 
+## Tercera pasada — correcciones de Gabi sobre la v2 (v3, la vigente)
+
+![v3 a 1440×900](v3-1440.webp)
+
+Gabi marcó cuatro cosas de la v2: «está muy cargado», los globos tapan a los jugadores, el
+cartel sobra y los jugadores quedaron desalineados y apretados hacia la izquierda.
+
+- **Sin globos.** Los jugadores se ven enteros. Lo que dijeron en el vestuario queda para el
+  hover o para el Vestuario.
+- **Sin el cartel** «El barrio también juega».
+- **Alineados.** Todos los bustos tienen el mismo tamaño y apoyan sobre la misma línea del
+  parquet. Se saca la altura variable (punto 7 de la v2), que se leía como desalineación, y
+  con ella la altura escrita debajo del nombre.
+- **A todo el ancho.** Los cuatro grupos se reparten entre los márgenes de la pantalla y los
+  bustos crecen (100 px a 1440, 90 px a 1366).
+- **Menos carga.** Se sacan el número de camiseta y la C de capitán, que además no existen en
+  los datos (punto 10 de la v2).
+
+Sigue todo lo demás de la v2:
+- el gimnasio visible y la luz de las ventanas;
+- «Esta semana» como planilla con cinta;
+- la información secundaria en frases;
+- los grupos del vestuario debajo de la fila;
+- «Figura» y los estados escritos.
+
+Archivos: `v3-1440.webp`, `v3-1366.webp`, `maqueta-v3.html`.
+
+---
+
 ## Segunda pasada — identidad y dirección de arte (v2)
 
 ![v2 a 1440×900](v2-1440.webp)
