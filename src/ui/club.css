@@ -1,0 +1,261 @@
+/* UI V1 — las pantallas del club: Finanzas (.finanzas), El club (.elclub) e
+   Historia (.historia). Escena: la comisión (ESCENA.comision en App.tsx).
+   Todo bajo esas tres raíces. Ver design/UI_V1_GUIA.md. */
+
+/* ================= Finanzas ================= */
+.finanzas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.85fr);
+  gap: 1.2rem 2.8rem;
+  align-items: start;
+  padding: clamp(0.6rem, 2vh, 1.6rem) 0 0.5rem;
+}
+.finanzas .fz-hero { padding: 0.4rem 0 0 1.5rem; min-width: 0; }
+.finanzas .fz-cuenta { display: flex; align-items: flex-end; gap: 1.4rem; margin-top: 1rem; flex-wrap: wrap; }
+.finanzas .fz-caja { font-size: clamp(3rem, 5.2vw, 4.6rem); }
+.finanzas .fz-cierre { font-size: clamp(2.2rem, 3.6vw, 3.2rem); color: var(--text); }
+.finanzas .v1-cifra.bad { color: #ff8a7e; }
+.finanzas .fz-flecha { font: 700 2rem var(--font-display); color: var(--text-dim); padding-bottom: 2rem; }
+.finanzas .fz-veredicto { margin: 1.1rem 0 0; font-size: 1.05rem; color: #dfe5e8; max-width: 52ch; }
+.finanzas .fz-veredicto b { font: 700 1.05rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.3rem; }
+.finanzas .fz-veredicto b.good { color: var(--good); }
+.finanzas .fz-veredicto b.warn { color: var(--warn); }
+.finanzas .fz-veredicto b.bad { color: #ff8a7e; }
+.finanzas .fz-veredicto strong { font: 700 1.1rem var(--font-display); color: var(--text); }
+.finanzas .fz-frase { margin-top: 0.9rem; max-width: 62ch; }
+
+.finanzas .fz-semana { margin-top: 0.8rem; }
+.finanzas .fz-semana .bd-sub { padding-top: 0.7rem; }
+.finanzas .fz-linea {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem var(--bd-pad);
+  border-top: 1px dashed var(--linea-suave);
+  font-size: 0.95rem;
+}
+.finanzas .bd-sub + .fz-linea { border-top: 0; }
+.finanzas .fz-linea span { min-width: 0; }
+.finanzas .fz-linea b,
+.finanzas .fz-total b { font: 700 1.1rem var(--font-display); letter-spacing: 0.02em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.finanzas .good { color: var(--good); }
+.finanzas .bad { color: #ff8a7e; }
+.finanzas .fz-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 0.3rem;
+  padding: 0.65rem var(--bd-pad) 0.55rem;
+  border-top: 3px double rgba(174, 188, 196, 0.5);
+  font: 700 0.9rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.finanzas .fz-total b { font-size: 1.7rem; }
+
+.finanzas .fz-cuotas-grilla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0.2rem var(--bd-pad) 0.3rem; column-gap: 1.6rem; }
+.finanzas .fz-cuota {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.36rem 0;
+  border-bottom: 1px dashed var(--linea-suave);
+  min-width: 0;
+}
+.finanzas .fz-cuota-nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.finanzas .fz-cuota.debe .bd-cara { border-color: var(--bad); }
+.finanzas .fz-aldia { font: 600 0.72rem var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+
+.finanzas .fz-sem { width: 2.4rem; font: 600 0.85rem var(--font-display); }
+.finanzas .fz-concepto { white-space: normal !important; }
+.finanzas .fz-libro .bd-tabla td { padding-top: 0.34rem; padding-bottom: 0.34rem; }
+
+@media (max-height: 820px) {
+  .finanzas { gap: 0.9rem 2.2rem; padding-top: 0.5rem; }
+  .finanzas .fz-cuenta { margin-top: 0.6rem; }
+  .finanzas .fz-caja { font-size: 3.4rem; }
+  .finanzas .fz-cierre { font-size: 2.5rem; }
+  .finanzas .fz-veredicto { margin-top: 0.6rem; font-size: 0.98rem; }
+  .finanzas .fz-frase { margin-top: 0.5rem; font-size: 0.9rem; }
+  .finanzas .v1-mano { font-size: 1.75rem; }
+  .finanzas .fz-linea { padding-top: 0.3rem; padding-bottom: 0.3rem; }
+  .finanzas .fz-cuota { padding: 0.26rem 0; }
+  .finanzas .fz-libro .bd-tabla td { padding-top: 0.26rem; padding-bottom: 0.26rem; }
+}
+
+/* ================= El club ================= */
+.elclub {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 0.9fr);
+  gap: 1.2rem 2.8rem;
+  align-items: start;
+  padding: clamp(0.6rem, 2vh, 1.6rem) 0 0.5rem;
+}
+.elclub .ec-hero { padding: 0.4rem 0 0 1.5rem; min-width: 0; }
+.elclub .ec-medidores { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1.2rem; margin-top: 1.2rem; max-width: 720px; }
+.elclub .ec-medidor-cifra { font: 700 clamp(2.2rem, 3.4vw, 3rem) / 0.9 var(--font-display); }
+.elclub .ec-medidor.bad .ec-medidor-cifra { color: #ff8a7e; }
+.elclub .ec-medidor-barra { height: 4px; margin-top: 0.45rem; background: rgba(243, 240, 232, 0.14); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
+.elclub .ec-medidor-barra i { display: block; height: 100%; }
+.elclub .ec-medidor.good .ec-medidor-barra i { background: var(--good); }
+.elclub .ec-medidor.warn .ec-medidor-barra i { background: var(--warn); }
+.elclub .ec-medidor.bad .ec-medidor-barra i { background: var(--bad); }
+.elclub .ec-medidor-lab { margin-top: 0.45rem; font: 600 0.72rem / 1.25 var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+.elclub .ec-frase { margin-top: 1.1rem; max-width: 64ch; }
+
+.elclub .ec-comision { margin-top: 0.8rem; }
+.elclub .ec-encargo {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.75rem var(--bd-pad) 0.75rem 1rem;
+}
+.elclub .bd-mano + .ec-encargo { border-top: 0; }
+.elclub .ec-encargo-nro { font: 700 1.75rem var(--font-mano); color: var(--text-dim); text-align: center; }
+.elclub .ec-encargo.good .ec-encargo-nro { color: var(--good); }
+.elclub .ec-encargo.warn .ec-encargo-nro { color: var(--warn); }
+.elclub .ec-encargo.bad .ec-encargo-nro { color: #ff8a7e; }
+.elclub .ec-encargo-txt { font-size: 1rem; font-weight: 600; line-height: 1.3; }
+.elclub .ec-encargo-va { font: 600 0.72rem var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); white-space: nowrap; }
+.elclub .ec-promesas-tit { border-top: 1px dashed var(--linea-suave) !important; }
+.elclub .ec-promesa {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.5rem var(--bd-pad) 0.5rem 1rem;
+}
+.elclub .ec-promesas-tit + .ec-promesa { border-top: 0; }
+.elclub .ec-promesa-txt { font-size: 0.92rem; line-height: 1.3; }
+.elclub .ec-promesa-txt > span { color: var(--text-dim); }
+
+.elclub .ec-noticias.ancha { grid-column: 1 / -1; }
+.elclub .ec-msj { display: flex; gap: 0.8rem; align-items: flex-start; padding: 0.6rem var(--bd-pad) 0.6rem 1rem; }
+.elclub .bd-tit + .ec-msj { border-top: 0; }
+.elclub .ec-msj-txt { min-width: 0; font-size: 0.92rem; }
+.elclub .ec-msj-txt p { margin: 0.15rem 0 0; line-height: 1.4; color: #dfe5e8; }
+.elclub .bd-tit svg { vertical-align: -2px; color: var(--text-dim); }
+
+/* La lista de noticias: El club y la crónica de la Historia. */
+:is(.elclub, .historia) .ec-lista { list-style: none; margin: 0; padding: 0; }
+:is(.elclub, .historia) .ec-lista li {
+  display: grid;
+  grid-template-columns: 2rem 8px minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: baseline;
+  padding: 0.48rem var(--bd-pad) 0.48rem var(--bd-pad);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+:is(.elclub, .historia) .ec-lista li:first-child { border-top: 0; }
+:is(.elclub, .historia) .ec-sem { font: 600 0.8rem var(--font-display); letter-spacing: 0.06em; color: var(--text-dim); }
+:is(.elclub, .historia) .ec-punto { width: 8px; height: 8px; border-radius: 50%; background: rgba(174, 188, 196, 0.5); align-self: center; }
+:is(.elclub, .historia) .ec-lista li.good .ec-punto { background: var(--good); }
+:is(.elclub, .historia) .ec-lista li.bad .ec-punto { background: var(--bad); }
+
+@media (max-height: 820px) {
+  .elclub { gap: 0.9rem 2.2rem; padding-top: 0.5rem; }
+  .elclub .ec-medidores { margin-top: 0.7rem; }
+  .elclub .ec-medidor-cifra { font-size: 2.2rem; }
+  .elclub .ec-frase { margin-top: 0.7rem; font-size: 0.9rem; }
+  .elclub .v1-mano { font-size: 1.75rem; }
+  .elclub .ec-encargo { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  :is(.elclub, .historia) .ec-lista li { padding-top: 0.36rem; padding-bottom: 0.36rem; }
+}
+
+/* ================= Historia ================= */
+.historia {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.2rem 2.8rem;
+  align-items: start;
+  padding: clamp(0.6rem, 2vh, 1.6rem) 0 0.5rem;
+}
+.historia .hi-hero { padding: 0.4rem 0 0 1.5rem; min-width: 0; }
+.historia .hi-club { display: flex; align-items: center; gap: 1.1rem; margin-top: 0.9rem; }
+.historia .hi-club .crest { flex: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); }
+.historia .hi-club .v1-titulo { margin: 0; max-width: 14ch; }
+.historia .hi-temporada { margin-top: 0.35rem; font: 600 1.15rem var(--font-display); letter-spacing: 0.04em; }
+.historia .hi-temporada span { font: 400 0.95rem var(--font-ui); color: var(--text-dim); letter-spacing: 0; }
+.historia .hi-frase { margin-top: 1rem; max-width: 60ch; }
+
+.historia .hi-figuras { min-width: 0; align-self: end; padding: 0 1rem; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55); }
+.historia .hi-figuras-tit { margin-bottom: 0.6rem; }
+.historia .hi-figuras .fila-depie-gente { justify-content: flex-start; gap: 1.4rem; }
+
+.historia .hi-vitrina { grid-column: 1 / -1; }
+.historia .hi-placas { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.historia .hi-placa { padding: 0.8rem var(--bd-pad) 0.9rem; border-left: 1px dashed var(--linea-suave); min-width: 0; }
+.historia .hi-placa:first-child { border-left: 0; }
+.historia .hi-placa-t { font: 600 0.74rem var(--font-display); letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); }
+.historia .hi-placa-pos { font: 700 2.6rem / 1 var(--font-display); margin-top: 0.2rem; }
+.historia .hi-placa-pos span { font: 600 1.05rem var(--font-display); color: var(--text-dim); margin-left: 0.5rem; letter-spacing: 0.04em; }
+.historia .hi-placa-outcome { margin-top: 0.3rem; font: 700 1rem / 1.2 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); }
+.historia .hi-placa-div { margin-top: 0.2rem; font-size: 0.85rem; color: var(--text-dim); }
+.historia .hi-placa-pie { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; margin-top: 0.55rem; }
+.historia .hi-placa-caja { font-size: 0.82rem; color: var(--text-dim); }
+.historia .hi-placa-caja b { font: 700 0.95rem var(--font-display); color: var(--text); }
+.historia .hi-placa-caja b.bad { color: #ff8a7e; }
+
+.historia .hi-archivo { margin-top: 0.8rem; }
+.historia .hi-cronica { margin-top: 0.8rem; }
+.historia .hi-tramo { padding: 0.5rem var(--bd-pad) 0.4rem; }
+.historia .hi-tramo + .hi-tramo { border-top: 1px dashed var(--linea-suave); }
+.historia .hi-tramo-tit { margin: 0 0 0.3rem; font: 700 0.9rem var(--font-display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--text); }
+.historia .hi-linea { list-style: none; margin: 0; padding: 0; position: relative; }
+.historia .hi-linea::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  background: rgba(174, 188, 196, 0.25);
+}
+.historia .hi-hito {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px 6.8rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: baseline;
+  padding: 0.35rem 0;
+  font-size: 0.93rem;
+  line-height: 1.4;
+}
+.historia .hi-hito-ico {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1c3a4e;
+  border: 2px solid rgba(174, 188, 196, 0.35);
+  color: var(--text-dim);
+  align-self: center;
+}
+.historia .hi-hito.k-hito .hi-hito-ico { border-color: rgba(228, 185, 75, 0.7); color: var(--warn); }
+.historia .hi-hito.k-partido .hi-hito-ico { border-color: rgba(84, 210, 154, 0.55); color: var(--good); }
+.historia .hi-hito.k-salida .hi-hito-ico,
+.historia .hi-hito.k-lesion .hi-hito-ico { border-color: rgba(227, 91, 79, 0.55); color: #ff8a7e; }
+.historia .hi-hito-cuando { font: 600 0.74rem var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+.historia .hi-momentos-tit { border-top: 1px dashed var(--linea-suave) !important; margin-top: 0.3rem; }
+.historia .hi-momentos { list-style: none; margin: 0; padding: 0 0 0.3rem; }
+.historia .hi-momentos li { padding: 0.5rem var(--bd-pad) 0.5rem calc(var(--bd-pad) + 1.2rem); position: relative; font-size: 0.95rem; line-height: 1.4; }
+.historia .hi-momentos li:first-child { border-top: 0; }
+.historia .hi-momentos li::before {
+  content: '“';
+  position: absolute;
+  left: var(--bd-pad);
+  top: 0.2rem;
+  font: 700 1.8rem / 1 var(--font-display);
+  color: var(--warn);
+}
+
+@media (max-height: 820px) {
+  .historia { gap: 0.9rem 2.2rem; padding-top: 0.5rem; }
+  .historia .hi-club .crest { width: 72px; height: 72px; }
+  .historia .hi-frase { margin-top: 0.6rem; font-size: 0.9rem; }
+  .historia .v1-mano { font-size: 1.75rem; }
+  .historia .hi-hito { padding: 0.25rem 0; }
+}

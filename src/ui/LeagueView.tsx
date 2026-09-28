@@ -8,20 +8,23 @@ import {
   secondTeamPosition,
 } from '../game/secondTeam';
 import type { CupTier, GameState, League } from '../game/types';
-import { clubByLegacyId, divisionStandings, rosterDivisionIds, USER_TEAM_ID } from '../game/world';
+import { divisionStandings, rosterDivisionIds, USER_TEAM_ID, userFixtureOfWeek } from '../game/world';
 import { leaguePromotes, MOVE_COUNT } from '../game/pyramid';
 import { WORLD_DIVISION_IDS } from '../data/worldData';
 import type { GameAction } from '../state/gameReducer';
 import { ClubLink } from './ClubLink';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
 import { Crest } from './Crest';
-import { StyleChip } from './StyleChip';
+import { Icon } from './Icon';
 import { LeagueLink } from './LeagueLink';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
 import { CalendarView } from './CalendarView';
 import { RankingsView } from './RankingsView';
+import { EscudoLegacy, Planilla } from './bloqueD';
+import { formatDateLong, rivalStyleInfo, weekLabel } from './helpers';
+import './liga.css';
 
 /** Nombre de un equipo por id clásico: rivales abren su ficha, el club lleva a la plantilla. */
 function LegacyTeamName({ state, id }: { state: GameState; id: string }) {
@@ -37,6 +40,10 @@ function LegacyTeamName({ state, id }: { state: GameState; id: string }) {
   return rival ? <RivalLink id={id}>{rival.name}</RivalLink> : <span>{id}</span>;
 }
 
+/**
+ * La llave de los playoffs como card suelta. La usa el cierre de temporada
+ * (SeasonEndScreen); dentro de la Liga va `LlavePlayoffs`, que es una planilla.
+ */
 export function PlayoffsCard({ state }: { state: GameState }) {
   const P = state.playoffs;
   if (!P) return null;
@@ -80,6 +87,48 @@ export function PlayoffsCard({ state }: { state: GameState }) {
         })}
       </div>
     </div>
+  );
+}
+
+/** Las dos copas de la divisional, dentro de la Liga: una planilla, dos columnas. */
+function LlavePlayoffs({ state }: { state: GameState }) {
+  const P = state.playoffs;
+  if (!P) return null;
+  return (
+    <Planilla titulo="Los playoffs" nota="Copa de Oro y Copa de Plata" className="lg-playoffs">
+      <div className="lg-copas">
+        {(['oro', 'plata'] as CupTier[]).map((cup) => {
+          const ties = P.ties.filter((t) => t.cup === cup);
+          const champ = P.champions[cup];
+          return (
+            <div key={cup} className={`lg-copa ${cup}`}>
+              <h4 className="lg-copa-tit">
+                {cup === 'oro' ? 'Copa de Oro' : 'Copa de Plata'}
+                {champ && (
+                  <span className="lg-campeon">
+                    Campeón: <LegacyTeamName state={state} id={champ} />
+                  </span>
+                )}
+              </h4>
+              {ties.map((t) => (
+                <div className="lg-cruce" key={t.id}>
+                  <span className="lg-cruce-ronda">{t.round === 'semifinal' ? 'Semi' : 'Final'}</span>
+                  <span className="lg-cruce-eq">
+                    <EscudoLegacy state={state} id={t.homeId} size={18} />
+                    <LegacyTeamName state={state} id={t.homeId} />
+                  </span>
+                  <span className="lg-cruce-res">{t.scoreHome !== undefined ? `${t.scoreHome}–${t.scoreAway}` : 'vs'}</span>
+                  <span className="lg-cruce-eq">
+                    <EscudoLegacy state={state} id={t.awayId} size={18} />
+                    <LegacyTeamName state={state} id={t.awayId} />
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </Planilla>
   );
 }
 
@@ -140,41 +189,24 @@ function ExpansionPanel({
   };
 
   return (
-    <div className="card" style={{ marginBottom: '1rem' }}>
-      <h3>Inscribir un equipo en {league.name}</h3>
-      <div className="data-grid">
-        <div className="data-row">
-          <span className="data-label">Inscripción</span>
-          <span className="data-value">${check.fee} por temporada (después, ~${E.weeklyUpkeep - E.canteenIncome} por semana entre cancha, árbitros y cantina)</span>
-        </div>
-        <div className="data-row">
-          <span className="data-label">Requisitos</span>
-          <span className="data-value">
-            Mínimo {E.minPlayers} fichas{league.minAge ? ` · solo jugadores de ${league.minAge}+` : ''}
-            {check.divisionName ? ` · se juega los ${check.gameDay} (${check.divisionName})` : ''}
-          </span>
-        </div>
-        <div className="data-row">
-          <span className="data-label">La regla</span>
-          <span className="data-value muted">
-            La ficha de esta liga es independiente de la Universitaria: los mismos jugadores pueden jugar en las dos.
-          </span>
-        </div>
-      </div>
-
-      {!check.ok && <p style={{ color: 'var(--bad)' }}>{check.reason}</p>}
-      {check.ok && !planning && (
-        <p className="muted">Las inscripciones se confirman en la semana de planificación.</p>
-      )}
+    <Planilla titulo={`Inscribir un equipo en ${league.name}`} nota={`$${check.fee} por temporada`} className="lg-inscribir">
+      <p className="lg-inscribir-txt">
+        La inscripción cuesta <b>${check.fee}</b> y después son <b>~${semanal} por semana</b> entre cancha, árbitros y
+        cantina. Hacen falta <b>{E.minPlayers} fichas</b> como mínimo{league.minAge ? `, todas de jugadores de ${league.minAge}+` : ''}
+        {check.divisionName ? `, y se juega los ${check.gameDay} (${check.divisionName})` : ''}. La ficha de esta liga es
+        independiente de la Universitaria: los mismos jugadores pueden jugar en las dos.
+      </p>
+      {!check.ok && <p className="lg-inscribir-txt lg-no">{check.reason}</p>}
+      {check.ok && !planning && <p className="lg-inscribir-txt">Las inscripciones se confirman en la semana de planificación.</p>}
 
       {eligible.length > 0 && (
         <>
-          <h4 className="profile-subtitle">
-            Fichas ({selected.size} de {eligible.length} elegidos · mínimo {E.minPlayers})
+          <h4 className="bd-sub">
+            Fichas · {selected.size} de {eligible.length} elegidos · mínimo {E.minPlayers}
           </h4>
-          <div className="callup-list">
+          <div className="lg-fichas">
             {eligible.map((p) => (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.15rem 0' }}>
+              <label key={p.id} className={`lg-ficha${selected.has(p.id) ? ' on' : ''}`}>
                 <input
                   type="checkbox"
                   checked={selected.has(p.id)}
@@ -182,29 +214,30 @@ function ExpansionPanel({
                   title={selected.has(p.id) ? 'Sacar la ficha' : 'Darle ficha'}
                 />
                 <PlayerLink id={p.id}>{p.name}</PlayerLink>
-                <span className="muted">
+                <span className="lg-ficha-sub">
                   {p.age} años · ≈{p.visibleRating}
                 </span>
-              </div>
+              </label>
             ))}
           </div>
         </>
       )}
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+      <div className="lg-inscribir-acciones">
         <button
+          className="bd-boton"
           disabled={!canConfirm}
           title={canConfirm ? `Se paga la inscripción de $${check.fee}` : (check.reason ?? 'Elegí al menos las fichas mínimas en semana de planificación')}
           onClick={pedirConfirmacion}
         >
           Inscribir por ${check.fee}…
         </button>
-        <button className="small" onClick={onClose}>
+        <button className="ghost small" onClick={onClose}>
           Cancelar
         </button>
       </div>
       <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
-    </div>
+    </Planilla>
   );
 }
 
@@ -220,55 +253,44 @@ function SecondTeamCard({ state }: { state: GameState }) {
   const totalRounds = st.table.length - 1;
 
   return (
-    <div className="card" style={{ marginBottom: '1rem' }}>
-      <h3>
-        {st.name} · {league?.name}
-        {division ? ` ${division.name}` : ''}
-        {st.finished ? (
-          <span className="chip accent" style={{ marginLeft: '0.5rem' }}>
-            Torneo terminado: {secondTeamPosition(st)}°
-          </span>
-        ) : (
-          <span className="chip" style={{ marginLeft: '0.5rem' }}>
-            Fecha {st.round}/{totalRounds}
-          </span>
-        )}
-      </h3>
-      {st.lastResult && <p className="muted" style={{ marginTop: 0 }}>{st.lastResult}</p>}
-      <div className="grid cols-2">
-        <div className="table-wrap">
-          <table className="planilla">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Equipo</th>
-                <th className="num">G</th>
-                <th className="num">P</th>
+    <Planilla
+      titulo={`${st.name} · ${league?.name ?? ''}${division ? ` ${division.name}` : ''}`}
+      nota={st.finished ? `Torneo terminado: ${secondTeamPosition(st)}°` : `Fecha ${st.round} de ${totalRounds}`}
+      className="lg-segundo"
+    >
+      <div className="lg-segundo-cuerpo">
+        <table className="bd-tabla">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Equipo</th>
+              <th className="num">G</th>
+              <th className="num">P</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((row, i) => (
+              <tr key={row.teamId} className={row.teamId === SECOND_TEAM_ID ? 'bd-nos' : ''}>
+                <td className={`num ${i < 3 ? 'warn' : 'dim'}`}>{i + 1}</td>
+                <td>
+                  {row.teamId === SECOND_TEAM_ID ? (
+                    <span className="plink" role="button" onClick={() => navigate('plantilla')}>
+                      <strong>{row.name}</strong>
+                    </span>
+                  ) : (
+                    <ClubLink id={row.clubId}>{row.name}</ClubLink>
+                  )}
+                </td>
+                <td className="num">{row.wins}</td>
+                <td className="num">{row.losses}</td>
               </tr>
-            </thead>
-            <tbody>
-              {sorted.map((row, i) => (
-                <tr key={row.teamId} className={row.teamId === SECOND_TEAM_ID ? 'highlight' : ''}>
-                  <td style={{ fontWeight: 700, color: i < 3 ? 'var(--warn)' : 'var(--text-dim)' }}>{i + 1}</td>
-                  <td>
-                    {row.teamId === SECOND_TEAM_ID ? (
-                      <span className="plink" role="button" onClick={() => navigate('plantilla')}>
-                        <strong>{row.name}</strong>
-                      </span>
-                    ) : (
-                      <ClubLink id={row.clubId}>{row.name}</ClubLink>
-                    )}
-                  </td>
-                  <td className="num">{row.wins}</td>
-                  <td className="num">{row.losses}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div>
-          <h4 className="profile-subtitle">Fichas del equipo ({roster.length})</h4>
-          <p style={{ marginTop: 0 }}>
+            ))}
+          </tbody>
+        </table>
+        <div className="lg-segundo-txt">
+          {st.lastResult && <p className="v1-frase">{st.lastResult}</p>}
+          <p className="v1-frase">
+            <b>{roster.length} fichas:</b>{' '}
             {roster.map((p, i) => (
               <span key={p.id}>
                 {i > 0 && ' · '}
@@ -276,13 +298,13 @@ function SecondTeamCard({ state }: { state: GameState }) {
               </span>
             ))}
           </p>
-          <p className="muted" style={{ marginBottom: 0 }}>
+          <p className="v1-frase">
             Juegan los {division?.gameDay}: suma ritmo y ánimo a los relegados del primero, pero desgasta — y alguno
             puede volver tocado. Podio al cierre = prestigio para el club.
           </p>
         </div>
       </div>
-    </div>
+    </Planilla>
   );
 }
 
@@ -299,6 +321,26 @@ const LIGA_TABS: { id: LigaTab; label: string; hint: string }[] = [
   { id: 'ligas', label: 'Las ligas', hint: 'El mapa de ligas y el segundo equipo del club' },
 ];
 
+/** El estilo del rival escrito en gris al lado del nombre: dato, no chip. */
+function Estilo({ state, id }: { state: GameState; id: string }) {
+  const rival = state.rivals.find((r) => r.id === id);
+  if (!rival) return null;
+  const info = rivalStyleInfo(rival.style);
+  return (
+    <span className="lg-estilo" title={info.desc}>
+      <Icon name={info.icon} size={12} />
+      {info.label}
+    </span>
+  );
+}
+
+/**
+ * La Liga (UI V1). La pregunta de la pantalla es «¿dónde estamos y contra
+ * quién sigue?»: eso es el héroe, sobre la escena de los árbitros, sin caja.
+ * La tabla es la planilla protagonista (cinta y título a mano) y el fixture es
+ * la segunda hoja, debajo del héroe. Las otras pestañas (calendario, rankings,
+ * pirámide y ligas) son otras preguntas y tienen su propio héroe.
+ */
 export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: GameState; dispatch: (action: GameAction) => void; inicial?: LigaTab }) {
   const [tab, setTab] = useState<LigaTab>(inicial);
   const [expandLeague, setExpandLeague] = useState<string | null>(null);
@@ -308,17 +350,6 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
     (a, b) => b.wins - a.wins || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
   );
   const teamName = (id: string) => <LegacyTeamName state={state} id={id} />;
-  /* A 18px del escudo se lee la silueta y los dos colores, que es justo lo que
-     hace falta para distinguir diez filas de un vistazo. */
-  const crestOf = (id: string) => {
-    const club = clubByLegacyId(state.world, id);
-    if (!club) return null;
-    return <Crest seed={club.id} name={club.name} colors={club.colors} founded={club.founded} size={18} />;
-  };
-  const styleChip = (id: string) => {
-    const rival = state.rivals.find((r) => r.id === id);
-    return rival ? <StyleChip style={rival.style} /> : null;
-  };
 
   const world = state.world;
   const userEntry = world.entries.find((e) => e.teamId === USER_TEAM_ID && e.status === 'activa');
@@ -341,230 +372,237 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
   const shownDivision = otherDivisions.find((d) => d.id === pyramidTab) ?? otherDivisions[0];
   const otherRows = shownDivision ? divisionStandings(world, shownDivision.id, state.week, state.seasonNumber) : [];
 
-  return (
-    /* Tres pestañas y no cuatro cards apiladas (tanda E del marco fijo). La
-       tabla, el fixture, la pirámide y el mapa de ligas son cuatro preguntas
-       distintas: apiladas medían 1556px y ninguna se veía entera. */
-    <div className="liga-pantalla">
-      <div className="view-toggle liga-tabs">
-        {LIGA_TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'active' : ''} title={t.hint} onClick={() => setTab(t.id)}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+  // El héroe: dónde estamos y contra quién sigue (la misma cuenta que el Tablero).
+  const nTeams = sorted.length;
+  const ourIdx = sorted.findIndex((r) => r.teamId === 'club');
+  const ours = ourIdx >= 0 ? sorted[ourIdx] : null;
+  const upcomingWeek = state.phase === 'matchResult' ? state.week + 1 : state.week;
+  const nextId = state.schedule[upcomingWeek - 1];
+  const nextRival = state.rivals.find((r) => r.id === nextId);
+  const nextIdx = sorted.findIndex((r) => r.teamId === nextId);
+  const nextFx = userFixtureOfWeek(world, upcomingWeek);
+  const nextVenue = world.venues.find((v) => v.id === nextFx?.venueId);
+  const bajan = promotes && !!divisionBelow;
+  const zona = (i: number): 'oro' | 'plata' | 'fuera' => (i < 4 ? 'oro' : i < 8 ? 'plata' : 'fuera');
+  const enDescenso = (i: number) => bajan && i >= nTeams - MOVE_COUNT;
+  const fechaLabel =
+    state.week <= state.seasonLength ? `Fecha ${state.week} de ${state.seasonLength}` : weekLabel(state.week, state.seasonLength);
 
-      <div className="liga-cuerpo">
+  const tabs = (
+    <nav className="lg-tabs" aria-label="La liga">
+      {LIGA_TABS.map((t) => (
+        <button key={t.id} className={tab === t.id ? 'on' : ''} title={t.hint} aria-current={tab === t.id ? 'page' : undefined} onClick={() => setTab(t.id)}>
+          {t.label}
+        </button>
+      ))}
+    </nav>
+  );
+
+  return (
+    <div className="liga liga-pantalla">
+      {tabs}
+
       {tab === 'calendario' && <CalendarView state={state} />}
       {tab === 'rankings' && <RankingsView state={state} />}
-      {tab === 'ligas' && userLeague && userDivision && (
-        <div className="card" style={{ marginBottom: '1rem' }}>
-          <h3>Las ligas</h3>
-          <div className="data-grid">
-            {world.leagues.map((l) => {
-              const divisions = world.divisions.filter((d) => d.leagueId === l.id);
-              const isOurs = l.id === userLeague.id;
-              return (
-                <div className="data-row" key={l.id}>
-                  <span className="data-label">
-                    <LeagueLink id={l.id}>{l.name}</LeagueLink>
-                  </span>
-                  <span className="data-value">
-                    {isOurs ? (
-                      <>
-                        <strong>Jugamos en {userDivision.name}</strong>
-                        <span className="muted">
-                          {' '}
-                          · los {userDivision.gameDay} a las {userDivision.gameTimes.join(' o ')}
-                        </span>
-                      </>
-                    ) : state.secondTeam?.leagueId === l.id ? (
-                      <>
-                        <strong>{state.secondTeam.name}</strong>
-                        <span className="muted">
-                          {' '}
-                          · {state.secondTeam.table.find((r) => r.teamId === SECOND_TEAM_ID)?.wins ?? 0}-
-                          {state.secondTeam.table.find((r) => r.teamId === SECOND_TEAM_ID)?.losses ?? 0}
-                          {state.secondTeam.finished ? ' · torneo terminado' : ''}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="muted">
-                          {divisions.length} divisional{divisions.length !== 1 ? 'es' : ''}
-                          {l.minAge ? ` · desde ${l.minAge} años` : ''}
-                          {expansible.includes(l.id)
-                            ? ' · el club todavía no tiene equipo acá'
-                            : ' · el equipo principal se puede anotar acá en la próxima pretemporada'}
-                        </span>{' '}
-                        {/* Segundo equipo: solo en las ligas que abren cupo. En
-                            las demás, la puerta es la inscripción del principal. */}
-                        {expansible.includes(l.id) && (
-                          <button className="small" onClick={() => setExpandLeague(l.id)}>
-                            Inscribir equipo…
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </span>
+
+      {/* En los playoffs, la llave es lo primero que se mira: va arriba, a todo el ancho. */}
+      {tab === 'tabla' && <LlavePlayoffs state={state} />}
+
+      {tab === 'tabla' && (
+        <div className="lg-tabla-pantalla">
+          <section className="lg-hero v1-hero" aria-label="Dónde estamos">
+            <div className="v1-eyebrow">
+              {userLeague?.name ?? 'La liga'}
+              {userDivision && <> · <b>{userDivision.name}</b></>} · {fechaLabel}
+            </div>
+            {ours ? (
+              <div className="lg-puesto">
+                <div className={`v1-cifra lg-puesto-num ${zona(ourIdx)}${enDescenso(ourIdx) ? ' descenso' : ''}`}>
+                  {ourIdx + 1}°<small>de {nTeams} en la tabla</small>
                 </div>
-              );
-            })}
+                <div className="lg-puesto-txt">
+                  <div className="lg-record">
+                    {ours.wins}-{ours.losses}
+                    <span>
+                      {' '}· dif. {ours.pointsFor - ours.pointsAgainst > 0 ? '+' : ''}
+                      {ours.pointsFor - ours.pointsAgainst}
+                    </span>
+                  </div>
+                  <p className="lg-zona">
+                    {enDescenso(ourIdx) ? (
+                      <><b className="bad">En zona de descenso.</b> Hoy bajaríamos a la {divisionBelow?.name}.</>
+                    ) : zona(ourIdx) === 'oro' ? (
+                      <><b className="good">Adentro de la Copa de Oro.</b> Así terminaría hoy la fase regular.</>
+                    ) : zona(ourIdx) === 'plata' ? (
+                      <><b className="warn">En zona de Copa de Plata.</b> A {Math.max(0, ourIdx - 3)} {ourIdx - 3 === 1 ? 'lugar' : 'lugares'} de la de Oro.</>
+                    ) : (
+                      <><b className="bad">Afuera de las copas.</b> Hoy nos iríamos a casa.</>
+                    )}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <h2 className="v1-titulo">La tabla arranca con la primera fecha</h2>
+            )}
+
+            {nextRival && nextId !== 'club' && (
+              <div className="lg-sigue">
+                <div className="lg-sigue-lab">Lo que sigue</div>
+                <div className="lg-sigue-eq">
+                  <EscudoLegacy state={state} id={nextId} size={58} />
+                  <div>
+                    <div className="lg-sigue-nom">
+                      <RivalLink id={nextId}>{nextRival.name}</RivalLink>
+                    </div>
+                    <div className="lg-sigue-sub">
+                      {nextIdx >= 0 && <><b>{nextIdx + 1}°</b> · {sorted[nextIdx].wins}-{sorted[nextIdx].losses} · </>}
+                      {rivalStyleInfo(nextRival.style).label}
+                    </div>
+                  </div>
+                </div>
+                <p className="lg-sigue-cuando">
+                  {nextFx ? `${cap(formatDateLong(nextFx.date))} · ${nextFx.time}` : 'Fecha por confirmar'}
+                  {nextVenue && <span> · {nextVenue.name}{nextFx ? (nextFx.homeTeamId === USER_TEAM_ID ? ', de local' : ', de visitante') : ''}</span>}
+                </p>
+              </div>
+            )}
+          </section>
+
+          <Planilla mano titulo="La tabla" nota={userDivision ? `${userLeague?.name ?? ''} · ${userDivision.name}` : undefined} className="lg-tabla">
+            <table className="bd-tabla">
+              <thead>
+                <tr>
+                  <th className="num">#</th>
+                  <th>Equipo</th>
+                  <th className="num">PJ</th>
+                  <th className="num">G</th>
+                  <th className="num">P</th>
+                  <th className="num">Dif</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((row, i) => (
+                  <tr key={row.teamId} className={`lg-z-${zona(i)}${enDescenso(i) ? ' lg-z-baja' : ''}${row.teamId === 'club' ? ' bd-nos' : ''}`}>
+                    <td className="num lg-pos">{i + 1}</td>
+                    <td>
+                      <span className="bd-equipo">
+                        <EscudoLegacy state={state} id={row.teamId} size={20} />
+                        {teamName(row.teamId)}
+                        <Estilo state={state} id={row.teamId} />
+                      </span>
+                    </td>
+                    <td className="num dim">{row.wins + row.losses}</td>
+                    <td className="num">{row.wins}</td>
+                    <td className="num">{row.losses}</td>
+                    <td className="num">
+                      {row.pointsFor - row.pointsAgainst > 0 ? '+' : ''}
+                      {row.pointsFor - row.pointsAgainst}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="bd-nota lg-reglas">
+              <span className="lg-ley oro">1°–4° Copa de Oro</span>
+              <span className="lg-ley plata">5°–8° Copa de Plata</span>
+              {state.standings.length > 8 && <span className="lg-ley fuera">los últimos dos se van a casa</span>}
+              {/* Con ocho equipos (la Liga del Comercio) juegan todos las copas: nadie se va a casa. */}
+              {state.standings.length <= 8 && ' Juegan todos.'}
+              {promotes && divisionAbove && (
+                <> Los <b>{MOVE_COUNT} finalistas de la Copa de Oro ascienden</b> a la {divisionAbove.name}.</>
+              )}
+              {promotes && divisionBelow && (
+                <> Los <b>{MOVE_COUNT} últimos descienden</b> a la {divisionBelow.name}.</>
+              )}
+              {promotes && !divisionBelow && ' Abajo no hay nada: de acá no se baja.'}
+              {promotes && !divisionAbove && ' Es la categoría más alta de la liga: no hay a dónde subir.'}
+              {!promotes && ' En esta liga no hay ascensos ni descensos.'}
+            </p>
+          </Planilla>
+
+          <div className="lg-col-fixture">
+            <Planilla titulo="El fixture" nota={`${state.schedule.length} fechas`} className="lg-fixture">
+              <table className="bd-tabla">
+                <tbody>
+                  {state.schedule.map((rivalId, i) => {
+                    const week = i + 1;
+                    const match = state.history.find((m) => m.week === week);
+                    const fx = userFixtureOfWeek(world, week);
+                    return (
+                      <tr key={week} className={week === state.week ? 'bd-nos' : ''}>
+                        {/* En una liga de 9 fechas, la fila 10 es la semifinal, no la "semana 10". */}
+                        <td className="num dim lg-fx-fecha">
+                          {week <= state.seasonLength ? week : week === state.seasonLength + 1 ? 'Semis' : 'Final'}
+                        </td>
+                        <td>
+                          <span className="bd-equipo">
+                            <EscudoLegacy state={state} id={rivalId} size={18} />
+                            {teamName(rivalId)}
+                            {fx && <span className="lg-lv">{fx.homeTeamId === USER_TEAM_ID ? 'L' : 'V'}</span>}
+                          </span>
+                        </td>
+                        <td className="num">
+                          {match ? (
+                            <span className={match.won ? 'good' : 'bad'}>
+                              {match.won ? 'G' : 'P'} {match.scoreFor}-{match.scoreAgainst}
+                            </span>
+                          ) : week === state.week ? (
+                            <span className="lg-hoy">Esta semana</span>
+                          ) : (
+                            <span className="dim">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </Planilla>
           </div>
         </div>
       )}
 
-      {tab === 'ligas' && expandLeague &&
-        (() => {
-          const l = world.leagues.find((x) => x.id === expandLeague);
-          return l ? (
-            <ExpansionPanel state={state} league={l} dispatch={dispatch} onClose={() => setExpandLeague(null)} />
-          ) : null;
-        })()}
-
-      {tab === 'ligas' && <SecondTeamCard state={state} />}
-
-      {tab === 'tabla' && <PlayoffsCard state={state} />}
-
-      <div className="grid cols-2" hidden={tab !== 'tabla'}>
-      <div className="card">
-        <h3>
-          Tabla de posiciones
-          {userLeague && userDivision ? ` · ${userLeague.name} ${userDivision.name}` : ''}
-        </h3>
-        <div className="table-wrap">
-          <table className="planilla">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Equipo</th>
-                <th className="num">G</th>
-                <th className="num">P</th>
-                <th className="num">Dif</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((row, i) => (
-                <tr key={row.teamId} className={row.teamId === 'club' ? 'highlight' : ''}>
-                  <td
-                    style={{
-                      color: i < 4 ? 'var(--warn)' : i < 8 ? 'var(--text-dim)' : 'var(--bad)',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {i + 1}
-                  </td>
-                  <td>
-                    <span className="con-escudo">
-                      {crestOf(row.teamId)}
-                      {teamName(row.teamId)}
-                    </span>{' '}
-                    {styleChip(row.teamId)}
-                  </td>
-                  <td className="num">{row.wins}</td>
-                  <td className="num">{row.losses}</td>
-                  <td className="num">{row.pointsFor - row.pointsAgainst}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="muted" style={{ marginBottom: 0 }}>
-          Al cierre de la fase regular: 1°-4° juegan la Copa de Oro, 5°-8° la Copa de Plata.
-          {/* Con ocho equipos (la Liga del Comercio) juegan todos las copas: nadie se va a casa. */}
-          {state.standings.length > 8 ? ' Los últimos dos se van a casa.' : ' Juegan todos.'}
-          {promotes && divisionAbove && (
-            <>
-              {' '}
-              Los <strong>{MOVE_COUNT} finalistas de la Copa de Oro ascienden</strong> a la {divisionAbove.name}.
-            </>
-          )}
-          {promotes && divisionBelow && (
-            <>
-              {' '}
-              Los <strong>{MOVE_COUNT} últimos de esta tabla descienden</strong> a la {divisionBelow.name}.
-            </>
-          )}
-          {promotes && !divisionBelow && ' Abajo no hay nada: de acá no se baja.'}
-          {promotes && !divisionAbove && ' Es la categoría más alta de la liga: no hay a dónde subir.'}
-          {!promotes && ' En esta liga no hay ascensos ni descensos.'}
-        </p>
-      </div>
-
-      <div className="card">
-        <h3>Fixture</h3>
-        <div className="table-wrap">
-          <table className="planilla">
-            <thead>
-              <tr>
-                <th>Sem.</th>
-                <th>Rival</th>
-                <th>Resultado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {state.schedule.map((rivalId, i) => {
-                const week = i + 1;
-                const match = state.history.find((m) => m.week === week);
+      {tab === 'piramide' && shownDivision && otherRows.length > 0 && (
+        <div className="lg-piramide">
+          <section className="lg-hero v1-hero" aria-label="La pirámide">
+            <div className="v1-eyebrow">La pirámide · <b>{userLeague?.name}</b></div>
+            <h2 className="v1-titulo">Jugamos en la {userDivision?.name}</h2>
+            <p className="v1-frase lg-piramide-frase">
+              {promotes
+                ? <>De la {pyramid[0]?.name} a la {pyramid[pyramid.length - 1]?.name}: todos los años <b>{MOVE_COUNT} suben</b> y <b>{MOVE_COUNT} bajan</b> entre categorías vecinas.</>
+                : 'Las divisionales de la liga.'}
+            </p>
+            {/* La escalera: la de arriba es la más angosta. Un escalón por
+                divisional, en orden; se toca para ver su tabla. */}
+            <div className="lg-escalera">
+              {pyramid.map((d, i) => {
+                const nuestra = d.id === userDivision?.id;
+                const activa = !nuestra && d.id === shownDivision.id;
+                const ancho = pyramid.length > 1 ? 52 + (48 * i) / (pyramid.length - 1) : 100;
                 return (
-                  <tr key={week} className={week === state.week ? 'highlight' : ''}>
-                    {/* En una liga de 9 fechas, la fila 10 es la semifinal, no la "semana 10". */}
-                    <td>{week <= state.seasonLength ? week : week === state.seasonLength + 1 ? 'Semis' : 'Final'}</td>
-                    <td>
-                      {teamName(rivalId)} {styleChip(rivalId)}
-                    </td>
-                    <td>
-                      {match ? (
-                        <span style={{ color: match.won ? 'var(--good)' : 'var(--bad)', fontWeight: 700 }}>
-                          {match.won ? 'G' : 'P'} {match.scoreFor}-{match.scoreAgainst}
-                        </span>
-                      ) : week === state.week ? (
-                        <span className="chip accent">Esta semana</span>
-                      ) : (
-                        <span className="muted">—</span>
-                      )}
-                    </td>
-                  </tr>
+                  <button
+                    key={d.id}
+                    className={`lg-escalon${nuestra ? ' nuestra' : ''}${activa ? ' on' : ''}`}
+                    style={{ width: `${ancho}%` }}
+                    disabled={nuestra}
+                    onClick={() => setPyramidTab(d.id)}
+                    title={nuestra ? 'Es nuestra divisional: su tabla está en «Tabla y fixture»' : `Ver la tabla de la ${d.name}`}
+                  >
+                    <span className="lg-escalon-nom">{d.name}</span>
+                    <span className="lg-escalon-sub">
+                      {nuestra ? 'Acá jugamos' : d.level < ourLevel ? 'Arriba nuestro' : 'Abajo nuestro'}
+                    </span>
+                  </button>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      </div>
+            </div>
+          </section>
 
-      {tab === 'piramide' && shownDivision && otherRows.length > 0 && (
-        <div className="card" style={{ marginTop: '1rem' }}>
-          <h3>La pirámide · {userLeague?.name}</h3>
-          <p className="muted" style={{ marginTop: 0 }}>
-            {promotes
-              ? `De la ${pyramid[0]?.name} a la ${pyramid[pyramid.length - 1]?.name}: todos los años ${MOVE_COUNT} suben y ${MOVE_COUNT} bajan entre categorías vecinas.`
-              : 'Las divisionales de la liga.'}{' '}
-            Jugamos en la <strong>{userDivision?.name}</strong>.
-          </p>
-          {/* Un botón por categoría, en orden: la escalera se lee de un vistazo. */}
-          <div className="division-tabs" style={{ marginBottom: '0.6rem' }}>
-            {pyramid.map((d) => {
-              const ours = d.id === userDivision?.id;
-              const active = !ours && d.id === shownDivision.id;
-              return (
-                <button
-                  key={d.id}
-                  className={`small${active ? ' primary' : ''}`}
-                  disabled={ours}
-                  onClick={() => setPyramidTab(d.id)}
-                  title={ours ? 'Es nuestra divisional' : `Ver la tabla de la ${d.name}`}
-                >
-                  {ours ? `▸ ${d.name} (nosotros)` : d.name}
-                </button>
-              );
-            })}
-          </div>
-          <div className="table-wrap">
-            <table className="planilla">
+          <Planilla titulo={`La tabla de la ${shownDivision.name}`} nota={userLeague?.name} className="lg-piramide-tabla">
+            <table className="bd-tabla">
               <thead>
                 <tr>
-                  <th>#</th>
+                  <th className="num">#</th>
                   <th>Equipo</th>
                   <th className="num">G</th>
                   <th className="num">P</th>
@@ -573,39 +611,116 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
               </thead>
               <tbody>
                 {otherRows.map((row, i) => {
-                  const clubId = world.teams.find((t) => t.id === row.teamId)?.clubId;
+                  const team = world.teams.find((t) => t.id === row.teamId);
+                  const club = world.clubs.find((c) => c.id === team?.clubId);
                   const sube = promotes && i < MOVE_COUNT && shownDivision.level > 1;
                   const baja = promotes && i >= otherRows.length - MOVE_COUNT && !!pyramid.find((d) => d.level === shownDivision.level + 1);
                   return (
                     <tr key={row.teamId}>
-                      <td
-                        style={{
-                          color: sube ? 'var(--good)' : baja ? 'var(--bad)' : 'var(--text-dim)',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {i + 1}
+                      <td className={`num ${sube ? 'good' : baja ? 'bad' : 'dim'}`}>{i + 1}</td>
+                      <td>
+                        <span className="bd-equipo">
+                          {club && <Crest seed={club.id} name={club.name} colors={club.colors} founded={club.founded} size={20} />}
+                          {club ? <ClubLink id={club.id}>{row.name}</ClubLink> : row.name}
+                        </span>
                       </td>
-                      <td>{clubId ? <ClubLink id={clubId}>{row.name}</ClubLink> : row.name}</td>
                       <td className="num">{row.wins}</td>
                       <td className="num">{row.losses}</td>
-                      <td className="num">{row.pointsFor - row.pointsAgainst}</td>
+                      <td className="num">
+                        {row.pointsFor - row.pointsAgainst > 0 ? '+' : ''}
+                        {row.pointsFor - row.pointsAgainst}
+                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-          </div>
-          <p className="muted" style={{ marginBottom: 0 }}>
-            {shownDivision.level === ourLevel - 1 && `Los ${MOVE_COUNT} últimos de acá bajan a nuestra divisional; de la nuestra suben los ${MOVE_COUNT} finalistas de la Copa de Oro. `}
-            {shownDivision.level === ourLevel + 1 && `Los ${MOVE_COUNT} finalistas de la Copa de Oro de acá suben a nuestra divisional; nuestros ${MOVE_COUNT} últimos se vienen para acá. `}
-            {scoutable.includes(shownDivision.id)
-              ? 'Tocá un nombre para ver su plantel: a estos los tenemos scouteados.'
-              : 'Está demasiado lejos de nuestra categoría: sabemos quiénes son, no cómo juegan. Sus planteles aparecen cuando el club se les acerca.'}
-          </p>
+            <p className="bd-nota">
+              {shownDivision.level === ourLevel - 1 && `Los ${MOVE_COUNT} últimos de acá bajan a nuestra divisional; de la nuestra suben los ${MOVE_COUNT} finalistas de la Copa de Oro. `}
+              {shownDivision.level === ourLevel + 1 && `Los ${MOVE_COUNT} finalistas de la Copa de Oro de acá suben a nuestra divisional; nuestros ${MOVE_COUNT} últimos se vienen para acá. `}
+              {scoutable.includes(shownDivision.id)
+                ? 'Tocá un nombre para ver su plantel: a estos los tenemos scouteados.'
+                : 'Está demasiado lejos de nuestra categoría: sabemos quiénes son, no cómo juegan. Sus planteles aparecen cuando el club se les acerca.'}
+            </p>
+          </Planilla>
         </div>
       )}
-      </div>
+
+      {tab === 'ligas' && userLeague && userDivision && (
+        <div className="lg-ligas">
+          <section className="lg-hero v1-hero" aria-label="Las ligas">
+            <div className="v1-eyebrow">El mapa de ligas · <b>{world.leagues.length} ligas</b></div>
+            <h2 className="v1-titulo">Jugamos en la {userLeague.name}</h2>
+            <p className="v1-frase lg-ligas-frase">
+              <b>{userDivision.name}</b>, los {userDivision.gameDay} a las {userDivision.gameTimes.join(' o ')}.
+              {state.secondTeam ? (
+                <> Y el club tiene un segundo equipo: <b>{state.secondTeam.name}</b>.</>
+              ) : expansible.length > 0 ? (
+                <> Hay {expansible.length === 1 ? 'una liga que acepta' : `${expansible.length} ligas que aceptan`} un segundo equipo del club.</>
+              ) : null}
+            </p>
+          </section>
+
+          <Planilla titulo="Las ligas" nota="dónde se juega" className="lg-ligas-lista">
+            {world.leagues.map((l) => {
+              const divisions = world.divisions.filter((d) => d.leagueId === l.id);
+              const isOurs = l.id === userLeague.id;
+              const segundo = state.secondTeam?.leagueId === l.id ? state.secondTeam : null;
+              const fila = segundo?.table.find((r) => r.teamId === SECOND_TEAM_ID);
+              return (
+                <div className={`lg-liga v1-renglon${isOurs ? ' nuestra' : ''}`} key={l.id}>
+                  <span className="lg-liga-nom">
+                    <LeagueLink id={l.id}>{l.name}</LeagueLink>
+                  </span>
+                  <span className="lg-liga-txt">
+                    {isOurs ? (
+                      <>
+                        <b>Jugamos en {userDivision.name}</b> · los {userDivision.gameDay} a las {userDivision.gameTimes.join(' o ')}
+                      </>
+                    ) : segundo ? (
+                      <>
+                        <b>{segundo.name}</b> · {fila?.wins ?? 0}-{fila?.losses ?? 0}
+                        {segundo.finished ? ' · torneo terminado' : ''}
+                      </>
+                    ) : (
+                      <>
+                        {divisions.length} divisional{divisions.length !== 1 ? 'es' : ''}
+                        {l.minAge ? ` · desde ${l.minAge} años` : ''}
+                        {expansible.includes(l.id)
+                          ? ' · el club todavía no tiene equipo acá'
+                          : ' · el equipo principal se puede anotar acá en la próxima pretemporada'}
+                      </>
+                    )}
+                  </span>
+                  {/* Segundo equipo: solo en las ligas que abren cupo. En
+                      las demás, la puerta es la inscripción del principal. */}
+                  <span className="lg-liga-accion">
+                    {!isOurs && !segundo && expansible.includes(l.id) && (
+                      <button className="bd-boton" onClick={() => setExpandLeague(l.id)}>
+                        Inscribir equipo…
+                      </button>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </Planilla>
+
+          {expandLeague &&
+            (() => {
+              const l = world.leagues.find((x) => x.id === expandLeague);
+              return l ? (
+                <ExpansionPanel state={state} league={l} dispatch={dispatch} onClose={() => setExpandLeague(null)} />
+              ) : null;
+            })()}
+
+          <SecondTeamCard state={state} />
+        </div>
+      )}
     </div>
   );
+}
+
+function cap(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
