@@ -2,6 +2,7 @@ import type { GameState } from '../game/types';
 import { DEBUG_FULL_SCOUTING, perceivedLevel, scoutingLevel } from '../game/scouting';
 import { divisionOfTeam, teamByLegacyRival, teamRoster, worldPlayerName } from '../game/world';
 import { ClubLink } from './ClubLink';
+import { Carita, Ficha, Renglon, Seccion } from './Ficha';
 import { Jersey } from './ClubProfile';
 import { Crest } from './Crest';
 import { LeagueLink } from './LeagueLink';
@@ -47,185 +48,137 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
         x.id === rival.id && x.week >= state.week && !state.history.some((m) => m.week === x.week)
     );
 
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="profile" onClick={(e) => e.stopPropagation()}>
-        <div className="profile-head">
-          {/* El escudo, no las iniciales: el generador procedural está pensado
-              justo para estos dos tamaños — 18px en la fila de una tabla y
-              grande en la ficha del club (ver design/SISTEMA_VISUAL.md). Si el
-              rival no tiene club en el mundo (partidas viejas), caen las
-              iniciales como antes. */}
-          {worldClub ? (
-            <Crest
-              seed={worldClub.id}
-              name={worldClub.name}
-              colors={worldClub.colors}
-              founded={worldClub.founded}
-              size={64}
-            />
-          ) : (
-            <div className="avatar profile-avatar">{initials(rival.name)}</div>
-          )}
-          <div className="profile-who">
-            <div className="profile-name">{rival.name}</div>
-            <div className="profile-chips">
-              <span className={`chip ${difficulty.cls}`}>{difficulty.label}</span>
-              <span className="chip accent">{style.label}</span>
-              {row && <span className="chip">{position}° en la liga</span>}
-            </div>
+  const knowledge = scoutingLevel(state, rival.id);
+  const knowsWell = knowledge >= 3 || DEBUG_FULL_SCOUTING;
+  const played = row ? row.wins + row.losses : 0;
+  const diff = row ? row.pointsFor - row.pointsAgainst : 0;
+  const h2hLosses = headToHead.length - h2hWins;
+  const proximos = upcoming.length > 0 && state.week <= state.seasonLength
+    ? upcoming.map((x) => (x.week === state.week ? 'esta semana' : `la semana ${x.week}`))
+    : [];
+
+  /* El rival como héroe: el escudo grande, el nombre en display y la clave
+     del partido dicha como en el Tablero («Rival duro. Tiradores: …»). Lo
+     que importa de su temporada y del cara a cara va en frases; la planilla
+     de la derecha tiene la institución, el plantel y los partidos. */
+  const heroe = (
+    <>
+      <div className="ficha-heroe-texto">
+        {worldClub ? (
+          <div className="ficha-escudo">
+            <Crest seed={worldClub.id} name={worldClub.name} colors={worldClub.colors} founded={worldClub.founded} size={140} />
+            <Jersey colors={worldClub.colors} size={48} />
           </div>
-          {worldClub && <Jersey colors={worldClub.colors} size={42} />}
-          <button className="profile-close" onClick={onClose} title="Cerrar">
-            ✕
-          </button>
+        ) : (
+          <div className="ficha-emblema" aria-hidden="true">
+            <span className="ficha-iniciales">{initials(rival.name)}</span>
+          </div>
+        )}
+        <div className="v1-eyebrow">
+          Rival{league ? <> · {league.name}</> : null}{division ? <> · <b>{division.name}</b></> : null}
         </div>
-
-        <div className="profile-body">
-          <h4 className="profile-subtitle">Cómo juegan</h4>
-          <p style={{ margin: '0 0 0.4rem' }}>{style.desc}</p>
-          <p className="muted" style={{ margin: 0 }}>
-            {style.advice}
+        <h2 className="ficha-nombre">{rival.name}</h2>
+        <p className="ficha-clave">
+          <b className={difficulty.cls}>{difficulty.label}.</b> {style.label}: {style.desc}
+        </p>
+        <p className="v1-frase">{style.advice}</p>
+        {row && (
+          <p className="v1-frase">
+            {played === 0 ? (
+              <>Todavía <b>sin fechas jugadas</b> esta temporada.</>
+            ) : (
+              <>
+                Van <b>{position}°</b> de {state.standings.length} con <b>{row.wins}-{row.losses}</b>: {row.pointsFor} a favor y{' '}
+                {row.pointsAgainst} en contra (<b className={diff >= 0 ? 'good' : 'bad'}>{diff >= 0 ? '+' : ''}{diff}</b>).
+              </>
+            )}
           </p>
-
-          {team && (
-            <>
-              <h4 className="profile-subtitle">El club</h4>
-              <div className="data-grid">
-                <div className="data-row">
-                  <span className="data-label">Compite en</span>
-                  <span className="data-value">
-                    {league ? <LeagueLink id={league.id}>{league.name}</LeagueLink> : '—'} · {division?.name}
-                    {division ? ` (${division.gameDay} ${division.gameTimes.join(' / ')})` : ''}
-                  </span>
-                </div>
-                <div className="data-row">
-                  <span className="data-label">Cancha</span>
-                  <span className="data-value">
-                    {venue ? `${venue.name} (${venue.neighborhood})` : '—'}
-                  </span>
-                </div>
-                <div className="data-row">
-                  <span className="data-label">Delegado</span>
-                  <span className="data-value">{team.delegate}</span>
-                </div>
-                {team.coachName && (
-                  <div className="data-row">
-                    <span className="data-label">DT</span>
-                    <span className="data-value">
-                      {team.coachName}{' '}
-                      <span className="muted">
-                        (
-                        {team.coachType === 'pago'
-                          ? 'DT pago'
-                          : team.coachType === 'jugador'
-                            ? 'los dirige un jugador'
-                            : 'honorario'}
-                        )
-                      </span>
-                    </span>
-                  </div>
-                )}
-                {worldClub && (
-                  <div className="data-row">
-                    <span className="data-label">Institución</span>
-                    <span className="data-value">
-                      <ClubLink id={worldClub.id}>Ver la ficha del club →</ClubLink>
-                    </span>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {roster.length > 0 && (
-            <>
-              <h4 className="profile-subtitle">Plantel {state.world.season.id.replace('s', 'temporada ')}</h4>
-              {(() => {
-                const knowledge = scoutingLevel(state, rival.id);
-                const knowsWell = knowledge >= 3 || DEBUG_FULL_SCOUTING;
-                return (
-                  <div className="data-grid">
-                    {roster.map((p) => (
-                      <div className="data-row" key={p.id}>
-                        <span className="data-label">{p.position}</span>
-                        <span className="data-value">
-                          <WorldPlayerLink id={p.id}>{worldPlayerName(p)}</WorldPlayerLink>{' '}
-                          <span className="muted">
-                            {perceivedLevel(state, p, knowledge)}
-                            {' · '}{p.age} años
-                            {p.injuryWeeks > 0 ? ' · lesionado' : ''}
-                            {knowsWell && p.availability.distanceKm > 50 ? ` · ${p.availability.residence}` : ''}
-                          </span>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </>
-          )}
-
-          {row && (
-            <>
-              <h4 className="profile-subtitle">Su temporada</h4>
-              <div className="data-grid">
-                <div className="data-row">
-                  <span className="data-label">Récord</span>
-                  <span className="data-value">
-                    {row.wins}-{row.losses}
-                  </span>
-                </div>
-                <div className="data-row">
-                  <span className="data-label">Puntos</span>
-                  <span className="data-value">
-                    {row.pointsFor} a favor · {row.pointsAgainst} en contra (
-                    {row.pointsFor - row.pointsAgainst >= 0 ? '+' : ''}
-                    {row.pointsFor - row.pointsAgainst})
-                  </span>
-                </div>
-                <div className="data-row">
-                  <span className="data-label">Posición</span>
-                  <span className="data-value">
-                    {row.wins + row.losses === 0 ? 'Sin fechas jugadas' : `${position}° de ${state.standings.length}`}
-                  </span>
-                </div>
-              </div>
-            </>
-          )}
-
-          <h4 className="profile-subtitle">Historial contra nosotros</h4>
+        )}
+        <p className="v1-frase">
           {headToHead.length === 0 ? (
-            <p className="muted">Todavía no nos cruzamos esta temporada.</p>
+            <>Todavía no nos cruzamos esta temporada.</>
           ) : (
             <>
-              <p style={{ margin: '0 0 0.4rem' }}>
-                {h2hWins} victoria{h2hWins !== 1 ? 's' : ''} y {headToHead.length - h2hWins} derrota
-                {headToHead.length - h2hWins !== 1 ? 's' : ''} nuestras.
-              </p>
-              <div className="data-grid">
-                {headToHead.map((m) => (
-                  <div className="data-row" key={m.week}>
-                    <span className="data-label">{weekLabel(m.week, state.seasonLength)}</span>
-                    <span className="data-value" style={{ color: m.won ? 'var(--good)' : 'var(--bad)', fontWeight: 700 }}>
-                      {m.forfeit ? 'Forfeit' : `${m.won ? 'G' : 'P'} ${m.scoreFor}-${m.scoreAgainst}`}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              Contra nosotros: <b className="good">{h2hWins}</b> victoria{h2hWins !== 1 ? 's' : ''} y{' '}
+              <b className="bad">{h2hLosses}</b> derrota{h2hLosses !== 1 ? 's' : ''} nuestras.
             </>
           )}
-
-          {upcoming.length > 0 && state.week <= state.seasonLength && (
-            <>
-              <h4 className="profile-subtitle">Próximos cruces</h4>
-              <p style={{ margin: 0 }}>
-                {upcoming.map((x) => (x.week === state.week ? 'Esta semana' : `Semana ${x.week}`)).join(' · ')}
-              </p>
-            </>
-          )}
-        </div>
+          {proximos.length > 0 && <> Nos toca <b>{proximos.join(' y ')}</b>.</>}
+        </p>
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <Ficha onClose={onClose} label={rival.name} heroe={heroe} clase="ficha-club">
+      {team && (
+        <Seccion titulo="El club">
+          <div className="data-grid">
+            <Renglon label="Compite en">
+              {league ? <span className="liga-link"><LeagueLink id={league.id}>{league.name}</LeagueLink></span> : '—'} · {division?.name}
+              {division ? ` (${division.gameDay} ${division.gameTimes.join(' / ')})` : ''}
+            </Renglon>
+            <Renglon label="Cancha">{venue ? `${venue.name} (${venue.neighborhood})` : '—'}</Renglon>
+            <Renglon label="Delegado">{team.delegate}</Renglon>
+            {team.coachName && (
+              <Renglon label="DT">
+                {team.coachName}{' '}
+                <span className="muted">
+                  (
+                  {team.coachType === 'pago'
+                    ? 'DT pago'
+                    : team.coachType === 'jugador'
+                      ? 'los dirige un jugador'
+                      : 'honorario'}
+                  )
+                </span>
+              </Renglon>
+            )}
+            {worldClub && (
+              <Renglon label="Institución">
+                <span className="club-link"><ClubLink id={worldClub.id}>Ver la ficha del club →</ClubLink></span>
+              </Renglon>
+            )}
+          </div>
+        </Seccion>
+      )}
+
+      {roster.length > 0 && (
+        <Seccion titulo={`Plantel ${state.world.season.id.replace('s', 'temporada ')}`} extra={`${roster.length} jugadores`}>
+          <div className="data-grid ficha-plantel">
+            {roster.map((p) => (
+              <Renglon key={p.id} label={p.position}>
+                <span className="ficha-persona">
+                  <Carita seed={p.id} personality={p.personality} />
+                  <span>
+                    <WorldPlayerLink id={p.id}>{worldPlayerName(p)}</WorldPlayerLink>{' '}
+                    <span className="muted">
+                      {perceivedLevel(state, p, knowledge)}
+                      {' · '}{p.age} años
+                      {p.injuryWeeks > 0 ? ' · lesionado' : ''}
+                      {knowsWell && p.availability.distanceKm > 50 ? ` · ${p.availability.residence}` : ''}
+                    </span>
+                  </span>
+                </span>
+              </Renglon>
+            ))}
+          </div>
+        </Seccion>
+      )}
+
+      {headToHead.length > 0 && (
+        <Seccion titulo="Los cruces de esta temporada">
+          <div className="data-grid">
+            {headToHead.map((m) => (
+              <Renglon key={m.week} label={weekLabel(m.week, state.seasonLength)}>
+                <span className={`ficha-resultado ${m.won ? 'good' : 'bad'}`}>
+                  {m.forfeit ? 'Forfeit' : `${m.won ? 'G' : 'P'} ${m.scoreFor}-${m.scoreAgainst}`}
+                </span>
+              </Renglon>
+            ))}
+          </div>
+        </Seccion>
+      )}
+    </Ficha>
   );
 }

@@ -2,6 +2,9 @@ import type { GameState, Player } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { getEvent } from '../game/events';
 import { Avatar } from './Avatar';
+import { Busto } from './Busto';
+import { weekLabel } from './helpers';
+import './modales.css';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
 
@@ -53,9 +56,8 @@ function wearsCap(p: Player, festive: boolean): boolean {
 
 /**
  * Debajo de la cara entra el apodo si lo tiene, y si no el apellido (la misma
- * regla que la tira del plantel): el nombre entero se recortaba a "Bruno Aco…"
- * en los 76 px de la ficha. El nombre completo queda en el título y en el
- * texto del evento, que siempre lo nombra.
+ * regla que la fila del plantel del Tablero). El nombre completo queda en el
+ * título y en el texto del evento, que siempre lo nombra.
  */
 function nombreCorto(name: string): string {
   const nick = name.match(/"([^"]+)"/);
@@ -64,33 +66,41 @@ function nombreCorto(name: string): string {
   return parts[parts.length - 1];
 }
 
-/** La cara del implicado, con la expresión que pide la situación. */
-function EventPerson({ p, festive }: { p: Player; festive?: boolean }) {
-  const expr = festive
-    ? 1
-    : p.status === 'molesto' || p.status === 'al_borde'
-      ? 2
-      : p.status === 'lesionado'
-        ? 3
-        : undefined;
+/**
+ * La gente del evento, de pie sobre la línea del parquet (el busto de la fila
+ * del Tablero, escala M). El nombre abre su ficha. La gorra de los festejos
+ * era del retrato SVG de respaldo; el busto ilustrado es la foto fija.
+ */
+function Gente({ people, festive }: { people: Player[]; festive?: boolean }) {
+  if (people.length === 0) return null;
   return (
-    <div className="event-person">
-      <div className="avatar">
-        <Avatar
-          personality={p.personality}
-          seed={p.id}
-          age={p.age}
-          appearance={p.appearance}
-          expressionOverride={expr}
-          cap={wearsCap(p, !!festive)}
-          title={p.name}
-        />
-      </div>
-      <span title={p.name}><PlayerLink id={p.id}>{nombreCorto(p.name)}</PlayerLink></span>
+    <div className={`evento-gente${people.length > 1 ? ' dos' : ''}`}>
+      <span className="evento-gente-piso" aria-hidden="true" />
+      {people.map((p) => (
+        <div key={p.id} className="evento-persona" title={p.name}>
+          {p.personality ? (
+            <Busto seed={p.id} personality={p.personality} />
+          ) : (
+            <span className="evento-avatar">
+              <Avatar seed={p.id} age={p.age} appearance={p.appearance} cap={wearsCap(p, !!festive)} title={p.name} size={84} />
+            </span>
+          )}
+          <span className="depie-nom">
+            <PlayerLink id={p.id}>{nombreCorto(p.name)}</PlayerLink>
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
 
+/**
+ * Los eventos de la semana son momentos del mundo, no avisos del sistema: la
+ * planilla pegada con cinta, el título escrito a mano, la gente del lío de pie
+ * y las opciones como decisiones en renglones. Ninguna opción es «la
+ * correcta», así que ninguna va en naranja; el único naranja es «Continuar»
+ * después del desenlace.
+ */
 export function EventModal({ state, dispatch }: Props) {
   if (state.pendingEvent) {
     const ev = state.pendingEvent;
@@ -100,21 +110,18 @@ export function EventModal({ state, dispatch }: Props) {
       .filter((p): p is Player => !!p);
     return (
       <div className="modal-backdrop">
-        <div className="modal">
-          <div className="event-head">
-            <div className="event-icon">
-              <Icon name={EVENT_ICONS[def.id] ?? 'destacado'} size={30} />
-            </div>
-            <h2>{def.title}</h2>
+        <div className="modal evento v1-planilla" role="dialog" aria-modal="true" aria-label={def.title}>
+          <i className="v1-cinta a" />
+          <i className="v1-cinta b" />
+          <div className="v1-eyebrow evento-eyebrow">
+            <Icon name={EVENT_ICONS[def.id] ?? 'destacado'} size={16} />
+            Pasó en el club · <b>{weekLabel(state.week, state.seasonLength)}</b>
           </div>
-          {people.length > 0 && (
-            <div className="event-people">
-              {people.map((p) => (
-                <EventPerson key={p.id} p={p} festive={CAP_EVENTS.has(def.id)} />
-              ))}
-            </div>
-          )}
-          <p className="event-text">{def.text(state, ev)}</p>
+          <h2 className="evento-titulo">{def.title}</h2>
+          <div className={`evento-cuerpo${people.length > 0 ? ' con-gente' : ''}`}>
+            <Gente people={people} festive={CAP_EVENTS.has(def.id)} />
+            <p className="event-text">{def.text(state, ev)}</p>
+          </div>
           <div className="options">
             {def.options(state, ev).map((opt, i) => (
               <button key={i} onClick={() => dispatch({ type: 'RESOLVE_EVENT', optionIndex: i })}>
@@ -134,25 +141,21 @@ export function EventModal({ state, dispatch }: Props) {
       .filter((p): p is Player => !!p);
     return (
       <div className="modal-backdrop">
-        <div className="modal">
-          <div className="event-head">
-            <div className="event-icon">
-              <Icon name="chat" size={30} />
-            </div>
-            <h2>Desenlace</h2>
+        <div className="modal evento desenlace v1-planilla" role="dialog" aria-modal="true" aria-label="Desenlace">
+          <i className="v1-cinta a" />
+          <div className="v1-eyebrow evento-eyebrow">
+            <Icon name="chat" size={16} />
+            Cómo terminó
           </div>
-          {people.length > 0 && (
-            <div className="event-people">
-              {people.map((p) => (
-                <EventPerson key={p.id} p={p} />
-              ))}
-            </div>
-          )}
-          <p className="event-text">{state.eventOutcome}</p>
+          <h2 className="evento-titulo">Desenlace</h2>
+          <div className={`evento-cuerpo${people.length > 0 ? ' con-gente' : ''}`}>
+            <Gente people={people} />
+            <p className="event-text">{state.eventOutcome}</p>
+          </div>
           <div className="options">
             {/* Con el foco puesto, Enter o Espacio siguen: el desenlace se lee y se pasa sin ir al mouse. */}
             <button className="primary" autoFocus onClick={() => dispatch({ type: 'DISMISS_EVENT_OUTCOME' })}>
-              Continuar
+              Continuar →
             </button>
           </div>
         </div>
