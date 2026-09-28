@@ -1,0 +1,223 @@
+/* El informe del partido (UI V1 — design/UI_V1_GUIA.md, lámina 05 cuadro
+   20). Todo cuelga de `.informe-v1`: se carga después de styles.css y no pisa
+   a nadie más. El resultado y la figura arriba, sin caja, sobre la escena; dos
+   planillas en el medio; el vestuario de pie al final; seguir en el pie. */
+
+.informe-v1.informe-pantalla { gap: 1.4rem; }
+
+/* ---------- 1. El resultado y la figura ---------- */
+.informe-v1 .inf-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
+  gap: 2.5rem;
+  align-items: end;
+  padding: 0.6rem 0.5rem 0 1rem;
+}
+.informe-v1 .inf-hero.sin-figura { grid-template-columns: minmax(0, 1fr); }
+.informe-v1 .inf-resultado { min-width: 0; }
+.informe-v1 .inf-veredicto {
+  margin: 0.3rem 0 0;
+  font: 700 clamp(2.6rem, 4.4vw, 4rem) / 0.9 var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.informe-v1 .inf-veredicto.good { color: var(--good); }
+.informe-v1 .inf-veredicto.bad { color: #ff8a7e; }
+.informe-v1 .inf-versus { display: flex; align-items: center; gap: 1.4rem; margin-top: 1rem; flex-wrap: wrap; }
+.informe-v1 .inf-equipo { display: flex; align-items: center; gap: 0.8rem; min-width: 0; }
+.informe-v1 .inf-equipo .crest { flex: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); }
+.informe-v1 .inf-nombre {
+  font: 700 clamp(1.4rem, 2.1vw, 1.9rem) / 0.95 var(--font-display);
+  text-transform: uppercase;
+  max-width: 10ch;
+}
+.informe-v1 .inf-nombre .plink { color: inherit; text-decoration: none; }
+.informe-v1 .inf-nombre .plink:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.informe-v1 .inf-marcador {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font: 700 clamp(3.2rem, 5.2vw, 4.8rem) / 0.9 var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+.informe-v1 .inf-marcador i { font-style: normal; font-size: 0.6em; color: var(--text-dim); }
+.informe-v1 .inf-marcador .abajo { color: rgba(243, 240, 232, 0.62); }
+.informe-v1 .inf-cuartos { display: flex; gap: 1.1rem; margin-top: 0.9rem; font: 500 1rem var(--font-display); letter-spacing: 0.04em; }
+.informe-v1 .inf-cuartos b { color: var(--text-dim); margin-right: 0.2rem; }
+.informe-v1 .inf-resumen { margin-top: 0.6rem; max-width: 72ch; font-size: 1rem; }
+.informe-v1 .inf-resumen b { font: 600 1rem var(--font-ui); letter-spacing: 0; }
+
+/* Sobre la escena de la derrota (gente sentada, luz baja) la letra chica
+   necesita una sombra más dura que la del héroe común. */
+.informe-v1 .inf-cuartos,
+.informe-v1 .inf-resumen,
+.informe-v1 .inf-figura-txt,
+.informe-v1 .inf-vestuario-cab { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 2px 14px rgba(0, 0, 0, 0.65); }
+
+/* La figura: el busto de pie sobre el parquet y sus números al lado. */
+.informe-v1 .inf-figura { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.2rem; align-items: end; min-width: 0; }
+.informe-v1 .inf-figura-persona { position: relative; --busto-ancho: clamp(140px, 11vw, 176px); --busto-alto: clamp(170px, 24vh, 214px); }
+.informe-v1 .inf-figura-persona .busto { position: relative; z-index: 1; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5)); }
+.informe-v1 .inf-figura-piso {
+  display: block;
+  height: 10px;
+  margin: -4px -14px 0;
+  border-top: 3px solid rgba(239, 230, 210, 0.55);
+  background: linear-gradient(180deg, rgba(40, 22, 10, 0.55), transparent);
+}
+.informe-v1 .inf-figura-txt { min-width: 0; padding-bottom: 0.6rem; }
+.informe-v1 .inf-figura-nombre { font: 700 clamp(1.6rem, 2.3vw, 2.1rem) / 1 var(--font-display); text-transform: uppercase; margin-top: 0.35rem; }
+.informe-v1 .inf-figura-nombre .plink { color: inherit; text-decoration: none; }
+.informe-v1 .inf-figura-nombre .plink:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.informe-v1 .inf-figura-puesto { font: 500 0.8rem var(--font-display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim); margin-top: 0.2rem; }
+.informe-v1 .inf-figura-numeros { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; margin-top: 0.6rem; font: 500 0.85rem var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+.informe-v1 .inf-figura-numeros b { font: 700 1.9rem / 1 var(--font-display); letter-spacing: 0; color: var(--text); margin-right: 0.15rem; }
+.informe-v1 .inf-figura-nota { margin: 0.5rem 0 0; font-size: 0.9rem; color: var(--text-dim); line-height: 1.4; }
+.informe-v1 .inf-figura-dijo { margin: 0.45rem 0 0; font-size: 0.95rem; font-style: italic; line-height: 1.4; color: #dfe5e8; }
+
+/* ---------- 2. Las dos planillas ---------- */
+.informe-v1 .inf-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1.4rem;
+  align-items: start;
+}
+.informe-v1 .inf-cuerpo.sin-planilla { grid-template-columns: minmax(0, 1fr); }
+.informe-v1 .inf-tit {
+  margin: 0;
+  font: 700 1.3rem / 1.1 var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.informe-v1 .inf-planilla { padding: 1rem 1.3rem 1.1rem; min-width: 0; }
+.informe-v1 .inf-planilla > .inf-tit { padding-bottom: 0.55rem; border-bottom: 1px dashed var(--linea-suave); }
+.informe-v1 .inf-tabla { width: 100%; border-collapse: collapse; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+.informe-v1 .inf-tabla th {
+  padding: 0.55rem 0.4rem 0.35rem;
+  text-align: left;
+  font: 600 0.7rem var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.informe-v1 .inf-tabla td { padding: 0.36rem 0.4rem; border-top: 1px dashed var(--linea-suave); }
+.informe-v1 .inf-tabla .num { text-align: right; width: 3.6rem; }
+.informe-v1 .inf-tabla td.fuerte { font: 700 1.05rem var(--font-display); }
+.informe-v1 .inf-tabla td .plink { color: var(--text); }
+.informe-v1 .inf-tabla tr.mvp td { background: rgba(84, 210, 154, 0.06); }
+.informe-v1 .inf-tabla tfoot td {
+  border-top: 1px solid rgba(174, 188, 196, 0.45);
+  font: 700 0.95rem var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.informe-v1 .inf-tabla tfoot td.fuerte { color: var(--text); font-size: 1.1rem; letter-spacing: 0; }
+.informe-v1 .inf-est {
+  margin-left: 0.45rem;
+  font: 700 0.62rem var(--font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: var(--good);
+  border: 1px solid rgba(84, 210, 154, 0.45);
+  background: rgba(84, 210, 154, 0.12);
+  vertical-align: 1px;
+}
+.informe-v1 .inf-ellos { margin-top: 0.8rem; padding-top: 0.7rem; border-top: 1px dashed var(--linea-suave); font-size: 0.9rem; }
+.informe-v1 .inf-ellos .plink { color: var(--text); }
+.informe-v1 .inf-pos { font: 600 0.7rem var(--font-display); letter-spacing: 0.08em; color: var(--text-faint); }
+
+/* «Lo que dejó el partido»: la protagonista, con cinta y título a mano. */
+.informe-v1 .inf-dejo { padding: 1.1rem 1.3rem 1rem; min-width: 0; }
+.informe-v1 .inf-dejo > .v1-mano { padding-bottom: 0.35rem; border-bottom: 1px dashed var(--linea-suave); }
+.informe-v1 .inf-bloque + .inf-bloque { border-top: 1px dashed var(--linea-suave); }
+.informe-v1 .inf-bloque { padding: 0.7rem 0 0.6rem; }
+.informe-v1 .inf-k { font: 600 0.72rem var(--font-display); letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.35rem; }
+.informe-v1 .inf-momentos { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+.informe-v1 .inf-momentos li { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr); gap: 0.5rem; align-items: baseline; font-size: 0.93rem; line-height: 1.4; }
+.informe-v1 .inf-nro { font: 700 1.35rem / 1 var(--font-mano); color: var(--warn); text-align: center; }
+.informe-v1 .inf-parrafo { margin: 0; font-size: 0.93rem; line-height: 1.5; color: #dfe5e8; }
+.informe-v1 .inf-lista { margin: 0; padding-left: 1.1rem; font-size: 0.9rem; line-height: 1.45; color: var(--text-dim); }
+.informe-v1 .inf-lista li + li { margin-top: 0.15rem; }
+.informe-v1 .inf-lista li:first-child { color: var(--text); }
+.informe-v1 button.inf-mas {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 0.45rem;
+  font: 600 0.74rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.informe-v1 button.inf-mas:hover { color: var(--text); }
+.informe-v1 button.inf-mas:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- 3. El vestuario ---------- */
+.informe-v1 .inf-vestuario { padding: 0 0.5rem; }
+.informe-v1 .inf-vestuario-cab { display: flex; align-items: baseline; gap: 1.2rem; flex-wrap: wrap; margin: 0 0 0.9rem 0.5rem; }
+.informe-v1 .inf-vestuario-cab .v1-frase { color: #dfe5e8; }
+.informe-v1 .inf-voces {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem 1.6rem;
+  margin-top: 1rem;
+  padding: 0 0.5rem;
+}
+.informe-v1 .inf-voz { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 0.75rem; align-items: start; }
+.informe-v1 .inf-cara {
+  position: relative;
+  display: block;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2a4a60;
+  border: 2px solid #3a5a70;
+}
+.informe-v1 .inf-voz.good .inf-cara { border-color: rgba(84, 210, 154, 0.7); }
+.informe-v1 .inf-voz.warn .inf-cara { border-color: var(--warn); }
+.informe-v1 .inf-voz.bad .inf-cara { border-color: var(--bad); }
+.informe-v1 .inf-cara .busto {
+  --busto-ancho: 100%;
+  --busto-alto: 100%;
+  background-size: 118%;
+  background-position: center 12%;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.informe-v1 .inf-voz-txt { min-width: 0; display: grid; gap: 2px; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8); }
+.informe-v1 .inf-voz-txt b { font-weight: 600; font-size: 0.95rem; }
+.informe-v1 .inf-voz-txt b .plink { color: var(--text); }
+.informe-v1 .inf-voz-txt > span { font-size: 0.9rem; font-style: italic; line-height: 1.4; color: #dfe5e8; }
+.informe-v1 .inf-voz-est { margin-left: 0.35rem; font: 700 0.66rem var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+.informe-v1 .inf-voz-est.good { color: var(--good); }
+.informe-v1 .inf-voz-est.warn { color: var(--warn); }
+.informe-v1 .inf-voz-est.bad { color: #ff8a7e; }
+.informe-v1 .inf-voces-mas { grid-column: 1 / -1; justify-self: start; margin-top: 0; }
+
+/* ---------- El pie ---------- */
+.informe-v1 .inf-pie { margin-top: 0; justify-content: space-between; }
+
+/* ---------- La notebook (1366×768, 1280×720) ---------- */
+@media (max-height: 820px) {
+  .informe-v1.informe-pantalla { gap: 1rem; }
+  .informe-v1 .inf-hero { padding-top: 0.2rem; }
+  .informe-v1 .inf-veredicto { font-size: 2.8rem; }
+  .informe-v1 .inf-equipo .crest { width: 56px; height: 56px; }
+  .informe-v1 .inf-versus { margin-top: 0.6rem; }
+  .informe-v1 .inf-marcador { font-size: 3.4rem; }
+  .informe-v1 .inf-cuartos { margin-top: 0.6rem; }
+  .informe-v1 .inf-pie .v1-cta { padding: 0.75rem 1.4rem; font-size: 1.1rem; }
+}
+
+/* ---------- Pantalla chica: una columna ---------- */
+@media (max-width: 900px) {
+  .informe-v1 .inf-hero,
+  .informe-v1 .inf-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .informe-v1 .inf-voces { grid-template-columns: minmax(0, 1fr); }
+  .informe-v1 .inf-planilla { overflow-x: auto; }
+}

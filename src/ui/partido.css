@@ -1,0 +1,436 @@
+/* El partido en vivo (UI V1 — design/UI_V1_GUIA.md, lámina 05 cuadro 19).
+   Todo cuelga de `.partido-pantalla.vivo`: se carga después de styles.css y
+   no pisa a nadie más. Tres filas: el marcador (héroe sin caja, sobre la
+   tribuna de cab-partido), el cuerpo en tres columnas (nosotros · la cancha y
+   el relato · ellos) y el pie fijo con los mandos del DT. */
+
+.partido-pantalla.vivo { gap: 0.9rem; }
+
+/* ---------- 1. El marcador ---------- */
+.vivo .vivo-marcador { display: grid; justify-items: center; gap: 0.35rem; padding-top: 0.2rem; }
+.vivo .vivo-contexto { text-align: center; }
+.vivo .vivo-dif.good { color: var(--good); }
+.vivo .vivo-dif.warn { color: var(--warn); }
+.vivo .vivo-dif.bad { color: #ff8a7e; }
+.vivo .vivo-versus {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(190px, auto) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1.4rem;
+}
+.vivo .vivo-equipo { display: flex; align-items: center; gap: 0.9rem; min-width: 0; justify-content: flex-end; text-align: right; }
+.vivo .vivo-equipo.rival { justify-content: flex-start; text-align: left; }
+.vivo .vivo-equipo .crest { flex: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); }
+.vivo .vivo-equipo > div { min-width: 0; }
+.vivo .vivo-nombre {
+  font: 700 clamp(1.35rem, 2vw, 1.9rem) / 0.95 var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.vivo .vivo-nombre .plink { color: inherit; text-decoration: none; }
+.vivo .vivo-nombre .plink:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.vivo .vivo-sub { font-size: 0.9rem; color: var(--text-dim); margin-top: 0.25rem; }
+.vivo .vivo-tanto {
+  font: 700 clamp(3.4rem, 5.6vw, 5rem) / 0.9 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  min-width: 2ch;
+  text-align: center;
+}
+.vivo .vivo-tanto .abajo { color: rgba(243, 240, 232, 0.66); }
+.vivo .vivo-reloj { display: grid; justify-items: center; gap: 0.4rem; }
+.vivo .vivo-momento {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font: 700 1.05rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.8rem;
+  background: rgba(4, 16, 26, 0.72);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  white-space: nowrap;
+  text-shadow: none;
+}
+.vivo .vivo-punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bad);
+  animation: rj-late 1.2s ease-in-out infinite;
+}
+.vivo .vivo-cuartos { display: flex; gap: 0.7rem; font: 500 0.85rem var(--font-display); color: var(--text-dim); letter-spacing: 0.04em; white-space: nowrap; }
+.vivo .vivo-cuartos b { font-weight: 700; color: var(--text-faint); margin-right: 0.15rem; }
+.vivo .vivo-cuartos .jugado { color: var(--text); }
+.vivo .vivo-cuartos .on { color: var(--text); }
+.vivo .vivo-cuartos .on b { color: var(--warn); }
+.vivo .vivo-drama { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.2rem 1.2rem; text-align: center; }
+.vivo .vivo-drama-lesion { color: #ff8a7e; }
+
+/* ---------- 2. El cuerpo ---------- */
+.vivo .vivo-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(300px, 24vw) minmax(0, 1fr) minmax(250px, 19vw);
+  gap: 1rem;
+  align-items: stretch;
+  min-height: 0;
+}
+
+/* Una planilla por equipo: renglones, sin cajas por fila. */
+.vivo .vivo-lado { padding: 0.8rem 0.9rem 0.9rem; min-width: 0; align-self: start; }
+.vivo .vivo-lado-tit {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.35rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed var(--linea-suave);
+  font: 700 1.2rem / 1.1 var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  min-width: 0;
+}
+.vivo .vivo-lado-tit > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vivo .vivo-lado-tit .plink { color: inherit; text-decoration: none; }
+.vivo .vivo-lado-tit .plink:hover { text-decoration: underline; }
+.vivo .vivo-lado-tit .crest { flex: none; }
+
+.vivo .vivo-grupo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1.8rem 3.4rem 1.9rem;
+  gap: 0.4rem;
+  margin: 0.55rem 0 0.15rem;
+  font: 600 0.7rem var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.vivo .vivo-grupo > span:first-child { color: var(--text-dim); }
+.vivo .vivo-grupo > span:nth-child(2) { text-align: right; }
+.vivo .vivo-lado.rival .vivo-grupo { grid-template-columns: minmax(0, 1fr) 1.8rem 2.4rem; }
+.vivo .vivo-lado.rival .vivo-grupo > span:nth-child(3) { text-align: right; }
+
+.vivo .vivo-j {
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr) 1.8rem 3.4rem 1.9rem;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 1.85rem;
+  padding: 0 0.25rem;
+  margin: 0 -0.25rem;
+  border-top: 1px dashed var(--linea-suave);
+  border-radius: 2px;
+}
+.vivo .vivo-grupo + .vivo-j { border-top-color: transparent; }
+.vivo .vivo-j.rival { grid-template-columns: 1.4rem minmax(0, 1fr) 1.8rem 2.4rem; }
+.vivo .vivo-j:hover { background: rgba(243, 240, 232, 0.05); }
+.vivo .vivo-j.sale { background: rgba(228, 185, 75, 0.16); box-shadow: inset 3px 0 0 var(--warn); }
+.vivo .vivo-j.entra { background: rgba(84, 210, 154, 0.12); box-shadow: inset 3px 0 0 var(--good); }
+.vivo .vivo-j.banco { opacity: 0.75; }
+.vivo .vivo-j.fuera { opacity: 0.45; }
+.vivo .vivo-j.fuera .vivo-j-nom .plink { text-decoration: line-through; }
+.vivo .vivo-j-pos { font: 700 0.72rem var(--font-display); letter-spacing: 0.08em; color: var(--text-faint); }
+.vivo .vivo-j-nom { display: flex; align-items: center; gap: 0.3rem; min-width: 0; font-size: 0.92rem; font-weight: 500; }
+.vivo .vivo-j-nom > .plink { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.vivo .vivo-j-ref { color: var(--warn); display: inline-flex; flex: none; }
+.vivo .vivo-j-nota { flex: none; font: 600 0.62rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+.vivo .vivo-j-pts { font: 700 1.05rem var(--font-display); text-align: right; font-variant-numeric: tabular-nums; }
+.vivo .vivo-j-piernas { display: grid; grid-template-columns: minmax(0, 1fr) 1.5rem; align-items: center; gap: 0.3rem; }
+.vivo .vivo-j-piernas .mini-medidor { margin: 0; }
+.vivo .vivo-j-piernas b { font: 600 0.8rem var(--font-display); text-align: right; font-variant-numeric: tabular-nums; }
+.vivo b.good { color: var(--good); }
+.vivo b.warn { color: var(--warn); }
+.vivo b.bad { color: #ff8a7e; }
+.vivo .vivo-j-nivel { font: 500 0.82rem var(--font-display); color: var(--text-dim); text-align: right; }
+.vivo button.vivo-j-swap {
+  width: 1.9rem;
+  height: 1.55rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid var(--linea-suave);
+  color: var(--text-dim);
+}
+.vivo button.vivo-j-swap:hover:not(:disabled) { color: var(--text); border-color: var(--tiza); }
+.vivo button.vivo-j-swap.on { background: var(--tiza); border-color: var(--tiza); color: var(--bm-bg-deep); }
+.vivo .vivo-vacio { margin: 0.35rem 0; font-size: 0.85rem; color: var(--text-dim); font-style: italic; }
+
+/* Cómo se cambia: renglones con la etiqueta a la izquierda. */
+.vivo .vivo-mandos { margin-top: 0.7rem; padding-top: 0.55rem; display: grid; gap: 0.4rem; }
+.vivo .vivo-mando-fila { display: grid; grid-template-columns: 4.6rem minmax(0, 1fr); align-items: center; gap: 0.5rem; }
+.vivo .vivo-k { font: 600 0.72rem var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+.vivo .vivo-mando-fila .segmented { width: 100%; }
+.vivo .vivo-mando-fila .segmented button { flex: 1 1 0; padding: 0.3rem 0.4rem; font-size: 0.8rem; white-space: nowrap; }
+.vivo .vivo-unidades { display: flex; gap: 0.25rem; }
+.vivo .vivo-unidades button { flex: 1 1 auto; padding: 0.22rem 0.25rem; font-size: 0.74rem; white-space: nowrap; background: transparent; border-color: var(--linea-suave); color: var(--text-dim); }
+.vivo .vivo-unidades button:hover:not(:disabled) { color: var(--text); border-color: var(--tiza); }
+.vivo .vivo-select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.3rem 0.4rem;
+  font: 500 0.85rem var(--font-ui);
+  color: var(--text);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+/* El rival. */
+.vivo .vivo-defensa { font-size: 0.88rem; line-height: 1.4; margin: 0.2rem 0 0.3rem; }
+.vivo .vivo-defensa b { text-transform: uppercase; }
+.vivo .vivo-piernas-rival {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 1.8rem;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--linea-suave);
+}
+.vivo .vivo-piernas-rival .mini-medidor { margin: 0; }
+.vivo .vivo-piernas-rival b { font: 700 0.95rem var(--font-display); text-align: right; }
+.vivo button.vivo-mas {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.45rem 0 0.1rem;
+  border-top: 1px dashed var(--linea-suave);
+  font: 600 0.74rem var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.vivo button.vivo-mas:hover { color: var(--text); }
+.vivo button.vivo-mas:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- La cancha ---------- */
+.vivo .vivo-centro { display: flex; flex-direction: column; gap: 0.55rem; min-width: 0; min-height: 0; }
+.vivo .vivo-cancha {
+  position: relative;
+  flex: none;
+  height: clamp(190px, 26vh, 320px);
+  border-radius: 4px;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(255, 214, 160, 0.16), transparent 70%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.18), transparent 14%, transparent 86%, rgba(0, 0, 0, 0.18)),
+    repeating-linear-gradient(90deg, #b8834a 0 22px, #ae7a43 22px 44px);
+  border: 3px solid #6d4827;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+.vivo .vivo-cancha .cancha-lineas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.vivo .vivo-cancha .cancha-lineas * { fill: none; stroke: rgba(255, 255, 255, 0.6); stroke-width: 2; }
+.vivo .vivo-cancha-escudo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.55;
+  filter: saturate(0.7);
+}
+.vivo .vivo-ficha {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 84px;
+}
+.vivo .vivo-ficha-cara {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2a4a60;
+  border: 3px solid var(--nuestro, var(--sec-partidos));
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.75), 0 4px 8px rgba(0, 0, 0, 0.45);
+}
+.vivo .vivo-ficha.rival .vivo-ficha-cara { border-color: var(--rival, #9d3b3b); }
+.vivo .vivo-ficha-cara .busto {
+  --busto-ancho: 100%;
+  --busto-alto: 100%;
+  background-size: 118%;
+  background-position: center 12%;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.vivo .vivo-ficha.ref .vivo-ficha-cara { box-shadow: 0 0 0 2px var(--warn), 0 4px 8px rgba(0, 0, 0, 0.45); }
+.vivo .vivo-ficha.fundido .vivo-ficha-cara { border-style: dashed; filter: saturate(0.55); }
+.vivo .vivo-ficha.anoto .vivo-ficha-cara {
+  animation: ficha-anoto 0.9s ease-out;
+  box-shadow: 0 0 0 4px rgba(243, 240, 232, 0.85), 0 4px 8px rgba(0, 0, 0, 0.45);
+}
+.vivo .vivo-ficha-nom {
+  font: 700 0.72rem var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(8, 20, 30, 0.78);
+  padding: 1px 6px;
+  border-radius: 2px;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vivo .vivo-leyenda { font-size: 0.9rem; line-height: 1.4; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7); }
+
+/* ---------- El relato: el único panel que scrollea por dentro ---------- */
+.vivo .vivo-relato {
+  flex: 1 1 auto;
+  min-height: 230px;
+  /* Su contenido no estira la fila: mide lo que le dejan las columnas de al
+     lado (o su mínimo) y adentro scrollea. */
+  contain: size;
+  display: flex;
+  flex-direction: column;
+  padding: 0.55rem 0 0;
+}
+.vivo .vivo-relato-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0 1rem 0.4rem;
+  border-bottom: 1px dashed var(--linea-suave);
+}
+.vivo .vivo-relato-cab .v1-mano { font-size: 1.75rem; }
+.vivo .vivo-filtro button { padding: 0.2rem 0.65rem; font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; }
+.vivo .vivo-relato-cuerpo { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0.3rem 1rem 0.8rem; }
+.vivo .vivo-q + .vivo-q { margin-top: 0.6rem; }
+.vivo .vivo-q-cab {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.6rem;
+  padding: 0.35rem 0 0.25rem;
+  font: 600 0.95rem var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.vivo .vivo-q-parcial { font-variant-numeric: tabular-nums; color: var(--text-dim); }
+.vivo .vivo-q-vivo { color: #ff8a7e; font-size: 0.72rem; letter-spacing: 0.12em; animation: rj-late 1.2s ease-in-out infinite; }
+.vivo .vivo-q-tactica { margin-left: auto; font: 500 0.72rem var(--font-display); letter-spacing: 0.12em; color: var(--text-faint); }
+.vivo .vivo-rj-lista { display: grid; }
+.vivo .vivo-rj {
+  display: grid;
+  grid-template-columns: 2.6ch 5.2ch 10px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.3rem 0.2rem;
+  border-top: 1px dashed rgba(174, 188, 196, 0.12);
+  font-size: 0.9rem;
+}
+.vivo .vivo-rj.nueva { animation: fila-in 260ms ease-out both; }
+.vivo .vivo-rj-min { color: var(--text-faint); text-align: right; font-variant-numeric: tabular-nums; }
+.vivo .vivo-rj-marcador { font: 600 0.95rem var(--font-display); text-align: right; font-variant-numeric: tabular-nums; }
+.vivo .vivo-rj-punto { width: 9px; height: 9px; border-radius: 50%; align-self: center; background: var(--nuestro, var(--sec-partidos)); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5); }
+.vivo .vivo-rj.rival .vivo-rj-punto { background: var(--rival, #9d3b3b); }
+.vivo .vivo-rj-icono { align-self: center; justify-self: center; color: var(--text-faint); line-height: 1; }
+.vivo .vivo-rj-texto { display: grid; gap: 1px; line-height: 1.3; }
+.vivo .vivo-rj-texto b { font-weight: 600; }
+.vivo .vivo-rj-texto > span { font-size: 0.8rem; color: var(--text-dim); }
+.vivo .vivo-rj.cambio,
+.vivo .vivo-rj.nota { color: var(--text-dim); }
+.vivo .vivo-rj.cambio .vivo-rj-texto b,
+.vivo .vivo-rj.nota .vivo-rj-texto b { font-weight: 500; font-style: italic; }
+.vivo .vivo-notas { margin: 0.25rem 0 0; padding-left: 1.1rem; font-size: 0.86rem; color: var(--text-dim); line-height: 1.4; }
+.vivo .vivo-notas li + li { margin-top: 0.15rem; }
+.vivo .vivo-notas li.lesion { color: #ff8a7e; }
+.vivo .vivo-notas li.racha { color: var(--text); }
+.vivo .vivo-previa-txt { margin: 0.6rem 0 0.4rem; font-size: 0.98rem; line-height: 1.5; max-width: 60ch; }
+
+/* La incidencia: la planilla con el filete de alerta; las opciones son
+   botones comunes (el naranja es del pie). */
+.vivo .vivo-incidencia { padding: 0.9rem 1.1rem 1rem; border-left: 3px solid var(--warn); }
+.vivo .vivo-incidencia-k { display: flex; align-items: center; gap: 0.4rem; color: var(--warn); }
+.vivo .vivo-incidencia-txt { margin: 0.5rem 0 0.8rem; font-size: 1.02rem; line-height: 1.45; }
+.vivo .vivo-opciones { display: grid; gap: 0.45rem; }
+.vivo .vivo-opciones button { display: grid; gap: 2px; text-align: left; padding: 0.55rem 0.8rem; }
+.vivo .vivo-opciones button b { font-weight: 600; }
+.vivo .vivo-opciones button span { font-size: 0.82rem; color: var(--text-dim); }
+
+/* Con una incidencia la cancha se achica (caras sin nombre) para que las
+   opciones entren sin scrollear: lo que hay que decidir es eso. */
+.vivo .vivo-centro.con-incidencia .vivo-cancha { height: clamp(120px, 16vh, 170px); }
+.vivo .vivo-centro.con-incidencia .vivo-ficha-nom { display: none; }
+.vivo .vivo-centro.con-incidencia .vivo-ficha-cara { width: 32px; height: 32px; border-width: 2px; }
+
+/* ---------- 3. El pie: la consola del DT ---------- */
+.vivo .vivo-pie { display: grid; gap: 0.5rem; }
+.vivo .vivo-pie-fila { display: flex; align-items: center; gap: 1.2rem 2rem; flex-wrap: wrap; }
+/* Como en las otras etapas de la semana: la pizarra (o el resultado) a la
+   izquierda y el CTA naranja abajo a la derecha, último del pie. */
+.vivo .vivo-botones { display: flex; align-items: center; gap: 0.6rem; margin-left: auto; }
+.vivo .vivo-botones > button:not(.v1-cta) { padding: 0.7rem 1rem; font: 600 0.98rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+.vivo .vivo-pie .v1-cta { padding: 0.8rem 1.5rem; font-size: 1.15rem; }
+.vivo .vivo-pizarra { display: flex; align-items: center; gap: 1.4rem; flex-wrap: wrap; }
+.vivo .vivo-pz { display: flex; align-items: center; gap: 0.6rem; }
+.vivo .vivo-pz .segmented button { padding: 0.5rem 0.8rem; font-size: 0.88rem; white-space: nowrap; }
+
+.vivo .vivo-cambio {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0.7rem;
+  background: rgba(10, 30, 45, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.vivo .vivo-cambio-t { display: inline-flex; align-items: center; gap: 0.35rem; font: 700 0.8rem var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+.vivo .vivo-cambio-caja {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  min-width: 11rem;
+  max-width: 16rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--warn);
+  background: rgba(228, 185, 75, 0.12);
+  border-radius: 2px;
+  font-weight: 600;
+}
+.vivo .vivo-cambio-caja > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vivo .vivo-cambio-caja.entra { border-color: var(--good); background: rgba(84, 210, 154, 0.1); }
+.vivo .vivo-cambio-caja.vacia { border-style: dashed; border-color: var(--linea-suave); background: transparent; color: var(--text-dim); font-weight: 400; }
+.vivo .vivo-cambio-caja small { font: 700 0.66rem var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+.vivo .vivo-cambio-flecha { color: var(--text-faint); }
+.vivo button.vivo-confirmar { background: var(--tiza); border-color: var(--tiza); color: var(--bm-bg-deep); font-weight: 700; }
+.vivo button.vivo-confirmar:disabled { background: transparent; color: var(--text-dim); border-color: var(--linea-suave); }
+
+/* ---------- La notebook (1366×768, 1280×720) ---------- */
+@media (max-height: 820px) {
+  .partido-pantalla.vivo { gap: 0.6rem; }
+  .vivo .vivo-marcador { gap: 0.25rem; padding-top: 0; }
+  .vivo .vivo-equipo .crest { width: 50px; height: 50px; }
+  .vivo .vivo-tanto { font-size: 3.4rem; }
+  .vivo .vivo-momento { font-size: 0.92rem; padding: 0.2rem 0.6rem; }
+  .vivo .vivo-cancha { height: clamp(180px, 27vh, 230px); }
+  .vivo .vivo-j { min-height: 1.8rem; }
+  .vivo .vivo-pie .v1-cta { padding: 0.65rem 1.2rem; font-size: 1.05rem; }
+  .vivo .vivo-botones > button:not(.v1-cta) { padding: 0.55rem 0.8rem; font-size: 0.9rem; }
+  .vivo .vivo-pz .segmented button { padding: 0.4rem 0.65rem; font-size: 0.84rem; }
+}
+@media (max-width: 1400px) {
+  .vivo .vivo-pizarra { gap: 1rem; }
+  .vivo .vivo-pz { gap: 0.4rem; }
+}
+
+/* ---------- Pantalla chica (el celular de Gabi): una columna ---------- */
+@media (max-width: 900px) {
+  .vivo .vivo-versus { grid-template-columns: minmax(0, 1fr) auto auto auto minmax(0, 1fr); gap: 0.5rem; }
+  .vivo .vivo-equipo .crest, .vivo .vivo-cuartos { display: none; }
+  .vivo .vivo-tanto { font-size: 2.4rem; }
+  .vivo .vivo-nombre { font-size: 1rem; }
+  .vivo .vivo-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .vivo .vivo-relato { contain: none; min-height: 0; }
+  .vivo .vivo-relato-cuerpo { overflow: visible; }
+}
