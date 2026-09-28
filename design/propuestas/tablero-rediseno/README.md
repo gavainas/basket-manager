@@ -1,6 +1,89 @@
 # Tablero — rediseño desde cero (propuesta, 28 de septiembre de 2026)
 
-**Estado: propuesta para aprobar. No hay nada implementado en el juego.**
+**Estado:** Gabi aprobó la estructura como dirección (28/9). La segunda pasada, sobre identidad
+y dirección de arte, está abajo y espera su visto bueno. **Todavía no hay nada implementado en
+el juego.**
+
+## Segunda pasada — identidad y dirección de arte (v2)
+
+![v2 a 1440×900](v2-1440.webp)
+
+Gabi dejó una consigna para esta pasada:
+- Misma composición y misma jerarquía: próximo partido, preparar el partido, problemas de la
+  semana y plantel.
+- Más mundo de básquet amateur y menos dashboard.
+- El gimnasio integrado con la interfaz.
+- La información secundaria más simple.
+- Más vida en la fila del plantel.
+- Nada de restyling ni de cambiar colores por cambiarlos.
+
+Los cambios concretos:
+
+### El gimnasio deja de ser un fondo
+1. **Menos velo.** En la v1 una cortina oscura tapaba dos tercios de la escena. Ahora el
+   oscurecimiento es **local**: una sombra detrás del texto del hero. El centro, las ventanas y
+   el piso se ven.
+2. **La luz de las ventanas cruza la pantalla.** Un haz cálido cae sobre «Esta semana» y sobre el
+   piso. Es la regla «UI fría + mundo cálido» (Art Bible §5) aplicada a la UI y no sólo a la
+   ilustración.
+3. **El plantel está parado en la cancha.** La base de la fila es la **línea lateral pintada del
+   parquet**, cada jugador tiene su sombra en el piso y los que no están quedan aparte, en gris.
+4. **La frase del club pasa al mundo.** «El barrio también juega» deja la firma del HUD y es un
+   **cartel colgado** en la pared del gimnasio. En la maqueta está hecho con CSS. En producción
+   debería venir pintado en el arte de la escena, y la UI no lo dibuja.
+
+### Menos dashboard
+5. **«Esta semana» es una planilla pegada con cinta.** Título manuscrito, números 1-2-3
+   manuscritos y coloreados según la gravedad (reemplazan la barra lateral de color),
+   separadores punteados y sin filete naranja. El destino queda dentro de la frase
+   («… Vestuario →») en vez de ser una columna de links.
+6. **La información secundaria son frases, no indicadores.**
+
+   | Hoy (v1) | v2 |
+   |---|---|
+   | Tira de tres indicadores (último, tabla, comisión) | Una línea en la voz del club: «Venimos de ganarle 68–65 a Deportivo Cerro · 3°, a uno del líder · la comisión pide entre los 4» |
+   | Chip «RIVAL PAREJO» | «**Parejo.** Juegan por adentro y pelean cada rebote.» |
+   | «10 de 12 en condiciones», como título del plantel | Junto a la fecha y la cancha, que es donde importa |
+   | Título «El plantel» | Se va: la fila se entiende sola |
+   | «Jugamos de local» | «Acá, en el Gimnasio del Parque» |
+
+### El plantel con vida
+7. **La altura real.** Cada busto se recorta según la altura del jugador (`height`, en cm), así
+   que los pívots asoman por encima de los bases. La fila deja de ser una grilla de fotos
+   iguales y pasa a ser un grupo de gente. Debajo del nombre va la altura (1,78 · 2,04).
+8. **Parados con su grupo.** Los jugadores se agrupan según su mesa del vestuario
+   (`buildSocialMap`: grupos y sueltos), con una llave y el nombre del grupo en manuscrita
+   debajo («la barra de Silva», «los de Núñez», «sin mesa fija»). El Tablero muestra el mapa
+   social que hoy sólo aparece en el Vestuario.
+9. **Globos con lo que dijeron.** Como mucho dos frases de lo que dijo alguien en el vestuario
+   después del último partido. Salen de `lastMatch.moods`, que ya tiene voces por arquetipo.
+   Una es de un problema y la otra buena (la figura), para que la fila no sea sólo alarmas.
+10. **Marcas de rol.** «Figura» del último partido (`mvpName`, ya existe). La **C de capitán y el
+    número de camiseta hoy no existen en los datos**: o se agregan (dato nuevo, con su
+    migración de save) o se sacan de la implementación.
+11. **Hover (no se ve en la captura).** El jugador da un paso adelante: sube unos píxeles, se
+    aclara y muestra su estado en una línea.
+
+### Lo que esta pasada no cambia
+La composición, la jerarquía, los tamaños del hero, el CTA, los colores, el nav y el HUD.
+
+### Riesgos y decisiones
+- **La voz manuscrita llega al límite.** Ahora está en tres lugares: el cartel, la planilla y
+  los grupos. La Art Bible pide moderación. Si hay que sacar uno, sugiero que sea la llave de los
+  grupos.
+- **Las caras repetidas se notan más.** Con la fila más protagonista, Techera y Viera son la
+  misma cara. Esto empuja todavía más a hacer los retratos por capas (T5).
+- **El cartel y la línea del parquet piden arte propio.** Con `fondo-gimnasio` espejado la
+  línea no coincide con la perspectiva del piso. El brief de `bg-tablero-v01` tendría que
+  pedir el piso en plano bajo y una pared libre para el cartel. Eso se inclina por la opción
+  (b), el gimnasio, en vez de la sede.
+- **Datos:** todo sale del estado actual salvo el capitán y el número de camiseta (punto 10).
+
+Archivos: `v2-1440.webp`, `v2-1366.webp`, `maqueta-v2.html`.
+
+---
+
+## Primera pasada — estructura (v1, aprobada como dirección)
 Es una maqueta estática (`maqueta.html`) con datos inventados, capturada a 1440×900 y
 1366×768. La escena es `fondo-gimnasio.webp` espejado, como sustituto del arte que el Tablero
 todavía no tiene (`bg-tablero-v01`, P1 en `design/arte/ASSET_REGISTRY.md`).

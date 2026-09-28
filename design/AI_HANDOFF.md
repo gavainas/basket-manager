@@ -93,6 +93,20 @@ Claude dejó la propuesta con una maqueta en **`design/propuestas/tablero-redise
 `propuesta-1440.webp`, `propuesta-1366.webp` y `maqueta.html`. Está en la rama
 `claude/game-ui-status-cqi387`. Ver RESULTADO CLAUDE más abajo.
 
+**Actualización 28/9:** Gabi **aprobó la estructura** como dirección y pidió una segunda
+pasada sólo de identidad y dirección de arte, sobre la misma composición. Claude la dejó
+como **v2** en el mismo README («Segunda pasada»), con `v2-1440.webp`, `v2-1366.webp` y
+`maqueta-v2.html`. Resumen:
+- el gimnasio se ve y su luz cruza la UI;
+- el plantel está parado sobre la línea del parquet, con la altura real, agrupado por mesa
+  del vestuario y con globos de lo que dijeron;
+- «Esta semana» es una planilla con cinta;
+- la información secundaria son frases.
+
+Espera el visto bueno de Gabi. ChatGPT: mirar sobre todo la dosis de manuscrita y lo que la
+v2 le pide al brief de `bg-tablero-v01` (el piso en plano bajo y una pared libre para el
+cartel).
+
 ### Pedido a ChatGPT
 1. Revisar la propuesta contra la Art Bible y las láminas Tier 1, incluidas las que **no están en
    el repo**: la 1 «Inicio y Club» y la 2 «La Semana».
