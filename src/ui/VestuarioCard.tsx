@@ -1,18 +1,14 @@
 import type { GameState, Player } from '../game/types';
 import { buildSocialMap, type SocialGroup } from '../game/socialMap';
-import { Avatar } from './Avatar';
-import { Bar } from './Bar';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
-import vestuarioBg from '../assets/vestuario-bg.webp';
+import { CaraPlantel } from './RosterList';
 
-function PlayerChip({ p }: { p: Player }) {
-  return (
-    <span className="chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-      <Avatar seed={p.id} age={p.age} appearance={p.appearance} size={22} title={p.name} personality={p.personality} />
-      <PlayerLink id={p.id}>{p.name.replace(/"[^"]*"\s*/g, '').split(/\s+/).pop()}</PlayerLink>
-    </span>
-  );
+/** Apodo si tiene; si no, el apellido (como en la fila de pie del Tablero). */
+function corto(p: Player): string {
+  const nick = p.name.match(/"([^"]+)"/);
+  if (nick) return nick[1];
+  return p.name.replace(/"[^"]*"\s*/g, '').trim().split(/\s+/).pop() ?? p.name;
 }
 
 const PAIR_ICON = { intimos: 'corazon', chocan: 'rayo', roce: 'alerta' } as const;
@@ -30,17 +26,24 @@ function ConNombre({ text, p }: { text: string; p: Player }) {
   );
 }
 
-function Grupo({ g }: { g: SocialGroup }) {
+/** Una mesa: su nombre a la izquierda y la gente sentada a la derecha. */
+function Mesa({ g }: { g: SocialGroup }) {
+  const unidos = g.strength >= 78 ? 'Inseparables' : g.strength >= 70 ? 'Muy unidos' : null;
   return (
-    <div className="vest-grupo">
-      <strong>{g.label}</strong>{' '}
-      <span className="muted">
-        ({g.members.length}
-        {g.strength >= 78 ? ' · inseparables' : g.strength >= 70 ? ' · muy unidos' : ''})
-      </span>
-      <div className="vest-chips">
+    <div className="vs-mesa v1-renglon">
+      <div className="vs-mesa-nom">
+        <b>{g.label}</b>
+        <span>
+          {g.members.length} {g.members.length === 1 ? 'jugador' : 'jugadores'}
+          {unidos && <> · {unidos}</>}
+        </span>
+      </div>
+      <div className="vs-mesa-gente">
         {g.members.map((p) => (
-          <PlayerChip key={p.id} p={p} />
+          <span key={p.id} className="vs-sentado">
+            <CaraPlantel p={p} size="chica" />
+            <PlayerLink id={p.id}>{corto(p)}</PlayerLink>
+          </span>
         ))}
       </div>
     </div>
@@ -48,100 +51,111 @@ function Grupo({ g }: { g: SocialGroup }) {
 }
 
 /**
- * El mapa social del vestuario: los grupos reales del plantel, los que no
- * tienen mesa fija, los puentes, las parejas con historia y los que van por
- * la suya. Todo derivado de las afinidades vivas (asados y sociedades
- * incluidos). Cuenta a todo el plantel: cada jugador está en un grupo, entre
- * los sueltos o entre los aislados; antes la mitad podía no aparecer.
+ * El vestuario por dentro (UI V1 — design/UI_V1_GUIA.md). La escena de fondo
+ * ya es el vestuario, así que la pantalla no dibuja otro: arriba, sin caja, la
+ * unión del grupo como cifra grande; las mesas en una planilla, una por
+ * renglón y con la gente sentada; y lo demás —los puentes, las parejas con
+ * historia, los que no tienen mesa y los que van por la suya— escrito en
+ * frases al costado, como lo contaría alguien del club.
+ *
+ * Todo sale de las afinidades vivas (asados y sociedades incluidos) y cuenta a
+ * todo el plantel: cada jugador está en una mesa, entre los sueltos o entre
+ * los que van por la suya.
  */
 export function VestuarioCard({ state }: { state: GameState }) {
   const map = buildSocialMap(state);
   const enGrupo = map.groups.reduce((t, g) => t + g.members.length, 0);
+  const total = enGrupo + map.sueltos.length + map.loners.length;
+  const union = Math.round(map.cohesion);
+  const tonoUnion = union >= 65 ? 'good' : union >= 40 ? 'warn' : 'bad';
+  const hayFrases = map.bridges.length + map.pairs.length + map.sueltos.length + map.loners.length > 0;
 
   return (
-    /* Su color es el del vestuario en cualquier pantalla donde aparezca, no el
-       del área que la contiene. */
-    <div className="card sec-vestuario vestuario-slice" style={{ marginBottom: '1rem' }}>
-      <div className="vestuario-slice-art" style={{ backgroundImage: `url(${vestuarioBg})` }} aria-hidden="true" />
-      <h3>
-        <Icon name="vestuario" size={17} /> El vestuario por dentro
-      </h3>
-      <div className="vest-cuerpo">
-        <div className="vest-col">
-          <div className="vest-sub">
-            Las mesas
-            <span className="muted"> · {enGrupo} de {enGrupo + map.sueltos.length + map.loners.length} en algún grupo</span>
+    <div className="vs-hoja">
+      <section className="vs-principal">
+        <div className="vs-hero v1-hero">
+          <div className="v1-eyebrow">El vestuario por dentro</div>
+          <div className="vs-hero-fila">
+            <div className={`v1-cifra vs-union ${tonoUnion}`} title="Promedio de las relaciones del plantel">
+              {union}
+              <small>unión del grupo</small>
+            </div>
+            <p className="v1-frase">
+              <b>{enGrupo} de {total}</b> tienen mesa fija
+              {map.groups.length > 0 && (
+                <> en {map.groups.length === 1 ? 'un grupo' : <><b>{map.groups.length}</b> grupos</>}</>
+              )}
+              . La unión sube compartiendo mesa y asados; baja con peleas y broncas.
+            </p>
           </div>
+        </div>
+
+        <div className="vs-mesas v1-planilla">
+          <i className="v1-cinta a" />
+          <i className="v1-cinta b" />
+          <h3 className="v1-mano">
+            Las mesas <span>quién se sienta con quién</span>
+          </h3>
           {map.groups.length > 0 ? (
-            map.groups.map((g, i) => <Grupo key={i} g={g} />)
+            map.groups.map((g, i) => <Mesa key={i} g={g} />)
           ) : (
-            <p className="muted" style={{ margin: '0.3rem 0' }}>
+            <p className="vs-vacio v1-renglon">
               Todavía no se armaron grupos fuertes: el plantel se lleva bien, pero nadie es íntimo de nadie. Un par de
               asados pueden cambiar eso.
             </p>
           )}
+        </div>
+      </section>
+
+      {hayFrases && (
+        <aside className="vs-margen v1-hero" aria-label="Lo que se ve en el vestuario">
+          {map.pairs.length > 0 && (
+            <div className="vs-bloque">
+              <div className="v1-eyebrow">Parejas con historia</div>
+              {map.pairs.map((pair) => (
+                <p key={pair.a.id + pair.b.id} className={`v1-frase vs-pareja ${pair.kind}`}>
+                  <Icon name={PAIR_ICON[pair.kind]} size={14} />{' '}
+                  <b><PlayerLink id={pair.a.id}>{corto(pair.a)}</PlayerLink></b> y{' '}
+                  <b><PlayerLink id={pair.b.id}>{corto(pair.b)}</PlayerLink></b>: {pair.text}
+                </p>
+              ))}
+            </div>
+          )}
+
+          {map.bridges.length > 0 && (
+            <div className="vs-bloque">
+              <div className="v1-eyebrow">Los que hacen de puente</div>
+              {map.bridges.map(({ p, text }) => (
+                <p key={p.id} className="v1-frase">
+                  <b><PlayerLink id={p.id}>{corto(p)}</PlayerLink></b> — {text}
+                </p>
+              ))}
+            </div>
+          )}
 
           {map.sueltos.length > 0 && (
-            <>
-              <div className="vest-sub">Sin mesa fija</div>
+            <div className="vs-bloque">
+              <div className="v1-eyebrow">Sin mesa fija</div>
               {map.sueltos.map((s) => (
-                <div key={s.p.id} className="vest-fila">
-                  <PlayerChip p={s.p} />
-                  <span>
-                    <ConNombre text={s.text} p={s.closest} />
-                  </span>
-                </div>
+                <p key={s.p.id} className="v1-frase">
+                  <b><PlayerLink id={s.p.id}>{corto(s.p)}</PlayerLink></b> — <ConNombre text={s.text} p={s.closest} />
+                </p>
               ))}
-            </>
+            </div>
           )}
 
           {map.loners.length > 0 && (
-            <>
-              <div className="vest-sub">Van por la suya</div>
+            <div className="vs-bloque">
+              <div className="v1-eyebrow">Van por la suya</div>
               {map.loners.map(({ p, text }) => (
-                <div key={p.id} className="vest-fila">
-                  <PlayerChip p={p} />
-                  <span>{text}</span>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-
-        <div className="vest-col">
-          <div style={{ maxWidth: 320, marginBottom: '0.6rem' }}>
-            <Bar
-              label="Unión del grupo"
-              value={map.cohesion}
-              hint="Promedio de las relaciones del plantel: sube compartiendo mesa, baja con peleas y broncas."
-            />
-          </div>
-
-          {map.bridges.length > 0 && (
-            <>
-              <div className="vest-sub">Los que hacen de puente</div>
-              {map.bridges.map(({ p, text }) => (
-                <div key={p.id} className="vest-fila">
-                  <PlayerChip p={p} />
-                  <span>{text}</span>
-                </div>
-              ))}
-            </>
-          )}
-
-          {map.pairs.length > 0 && (
-            <>
-              <div className="vest-sub">Parejas con historia</div>
-              {map.pairs.map((pair) => (
-                <p key={pair.a.id + pair.b.id} className="vest-pareja">
-                  <Icon name={PAIR_ICON[pair.kind]} size={13} /> <PlayerLink id={pair.a.id}>{pair.a.name}</PlayerLink> y{' '}
-                  <PlayerLink id={pair.b.id}>{pair.b.name}</PlayerLink>: {pair.text}
+                <p key={p.id} className="v1-frase">
+                  <b><PlayerLink id={p.id}>{corto(p)}</PlayerLink></b> — {text}
                 </p>
               ))}
-            </>
+            </div>
           )}
-        </div>
-      </div>
+        </aside>
+      )}
     </div>
   );
 }
