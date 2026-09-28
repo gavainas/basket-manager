@@ -827,9 +827,13 @@ button:focus-visible,
   position: absolute;
   z-index: 1;
   inset: 0;
+  /* Más oscuro arriba a la izquierda, que es donde cada pantalla pone su
+     héroe: sin esto, en la comisión o en los árbitros el título quedaba
+     encima de una cara iluminada. */
   background:
-    linear-gradient(180deg, rgba(8, 29, 45, 0.45) 0%, rgba(8, 29, 45, 0.25) 30%, rgba(8, 29, 45, 0.45) 75%, rgba(8, 29, 45, 0.8) 100%),
-    linear-gradient(90deg, rgba(8, 29, 45, 0.5), rgba(8, 29, 45, 0.2) 50%, rgba(8, 29, 45, 0.5));
+    radial-gradient(ellipse 55% 45% at 18% 22%, rgba(8, 29, 45, 0.55), rgba(8, 29, 45, 0) 100%),
+    linear-gradient(180deg, rgba(8, 29, 45, 0.5) 0%, rgba(8, 29, 45, 0.3) 30%, rgba(8, 29, 45, 0.5) 75%, rgba(8, 29, 45, 0.82) 100%),
+    linear-gradient(90deg, rgba(8, 29, 45, 0.6), rgba(8, 29, 45, 0.25) 50%, rgba(8, 29, 45, 0.5));
 }
 .fondo-app.abierta::after {
   background:
