@@ -20,6 +20,8 @@ import { LeagueLink } from './LeagueLink';
 import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { NavigateTabContext } from './nav';
+import { CalendarView } from './CalendarView';
+import { RankingsView } from './RankingsView';
 
 /** Nombre de un equipo por id clásico: rivales abren su ficha, el club lleva a la plantilla. */
 function LegacyTeamName({ state, id }: { state: GameState; id: string }) {
@@ -284,16 +286,21 @@ function SecondTeamCard({ state }: { state: GameState }) {
   );
 }
 
-type LigaTab = 'tabla' | 'piramide' | 'ligas';
+export type LigaTab = 'tabla' | 'calendario' | 'rankings' | 'piramide' | 'ligas';
 
+/* UI V1: Calendario y Rankings pasan a ser pestañas de la Liga. Antes eran
+   pantallas sueltas a las que sólo se llegaba por los atajos del Tablero, y el
+   Tablero aprobado no tiene atajos (repetían la barra de arriba). */
 const LIGA_TABS: { id: LigaTab; label: string; hint: string }[] = [
   { id: 'tabla', label: 'Tabla y fixture', hint: 'Cómo viene la divisional y contra quién jugamos' },
+  { id: 'calendario', label: 'Calendario', hint: 'Las fechas de la temporada, día por día' },
+  { id: 'rankings', label: 'Rankings', hint: 'Los mejores de la liga y del club' },
   { id: 'piramide', label: 'La pirámide', hint: 'Las divisionales de arriba y de abajo' },
   { id: 'ligas', label: 'Las ligas', hint: 'El mapa de ligas y el segundo equipo del club' },
 ];
 
-export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (action: GameAction) => void }) {
-  const [tab, setTab] = useState<LigaTab>('tabla');
+export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: GameState; dispatch: (action: GameAction) => void; inicial?: LigaTab }) {
+  const [tab, setTab] = useState<LigaTab>(inicial);
   const [expandLeague, setExpandLeague] = useState<string | null>(null);
   // Qué otra divisional de la pirámide se está mirando (null = la primera).
   const [pyramidTab, setPyramidTab] = useState<string | null>(null);
@@ -348,6 +355,8 @@ export function LeagueView({ state, dispatch }: { state: GameState; dispatch: (a
       </div>
 
       <div className="liga-cuerpo">
+      {tab === 'calendario' && <CalendarView state={state} />}
+      {tab === 'rankings' && <RankingsView state={state} />}
       {tab === 'ligas' && userLeague && userDivision && (
         <div className="card" style={{ marginBottom: '1rem' }}>
           <h3>Las ligas</h3>

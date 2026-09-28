@@ -8,8 +8,6 @@ import { ClubView } from './ui/ClubView';
 import { RosterView } from './ui/RosterView';
 import { FinancesView } from './ui/FinancesView';
 import { LeagueView } from './ui/LeagueView';
-import { CalendarView } from './ui/CalendarView';
-import { RankingsView } from './ui/RankingsView';
 import { WeekView } from './ui/WeekView';
 import { EventModal } from './ui/EventModal';
 import { OpenProfileContext } from './ui/PlayerLink';
@@ -472,14 +470,11 @@ export default function App() {
             <LeagueView state={state} dispatch={dispatch} />
           </div>
         )}
-        {tab === 'agenda' && (
-          <div className="vista sec-partidos">
-            <CalendarView state={state} />
-          </div>
-        )}
-        {tab === 'rankings' && (
-          <div className="vista sec-partidos">
-            <RankingsView state={state} />
+        {(tab === 'agenda' || tab === 'rankings') && (
+          /* Calendario y Rankings son pestañas de la Liga (UI V1); la clave
+             remonta la vista para que entrar por un aviso abra la pestaña. */
+          <div className="vista sec-partidos" key={tab}>
+            <LeagueView state={state} dispatch={dispatch} inicial={tab === 'agenda' ? 'calendario' : 'rankings'} />
           </div>
         )}
         {tab === 'historia' && (

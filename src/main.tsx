@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
 
 // Tipografía empaquetada, no del sistema: el juego va a Steam y no puede
 // depender de lo que tenga instalada cada PC. Barlow y Barlow Condensed son SIL
@@ -18,8 +17,12 @@ import '@fontsource/barlow-condensed/latin-700.css';
 // La voz manuscrita (Art Bible §6), sólo 700: títulos de planilla y notas.
 import '@fontsource/caveat/latin-700.css';
 
+// Las hojas globales van ANTES que App: así el CSS propio de cada pantalla
+// (importado desde su componente) llega después en la cascada y la pisa sin
+// pelear por especificidad.
 import './styles.css';
 import './ui/v1.css';
+import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 
