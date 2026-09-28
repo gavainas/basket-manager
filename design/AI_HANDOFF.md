@@ -68,12 +68,60 @@ Así evitamos copiar prompts largos entre chats.
 
 # TASK ACTUAL
 
-## Lote de componentes globales (pedido directo de Gabi, 2026-09-25)
+## Rediseño del Tablero desde cero: revisar la propuesta (Gabi, 2026-09-28)
+
+> **Para ChatGPT.** Gabi cambió la dirección del trabajo de UI. **No** sigue la unificación
+> de componentes (CHIP-01 queda en pausa). Quiere validar un **rediseño real de una pantalla**
+> como vertical slice, y eligió el **Tablero**.
+
+### Lo que pidió Gabi (resumen fiel)
+- La referencia aprobada está muy por encima de lo implementado, y eso no se arregla con
+  colores, paneles más claros u oscuros, botones, tabs o CSS.
+- La pregunta no es «¿cómo adapto el Tablero actual al sistema?», sino «si diseñáramos hoy
+  esta pantalla desde cero, con la calidad y la dirección de las referencias, ¿cómo sería?».
+- No hay que preservar el layout actual. Se puede cambiar la jerarquía, la distribución, los
+  tamaños, los espacios, la agrupación y el protagonismo de cada elemento.
+- Hay que evitar sobre todo que parezca un **dashboard SaaS hecho de cards**.
+- Lo que se valida: composición, jerarquía, sensación de videojuego, identidad, integración
+  entre la UI y el mundo, y el protagonismo de la información importante.
+- **Primero la propuesta; no se implementa nada hasta que Gabi apruebe la dirección.** Las
+  demás pantallas no se tocan.
+
+### Estado
+Claude dejó la propuesta con una maqueta en **`design/propuestas/tablero-rediseno/`**:
+`README.md` (diagnóstico, qué cambia y por qué, estados por fase, decisiones abiertas),
+`propuesta-1440.webp`, `propuesta-1366.webp` y `maqueta.html`. Está en la rama
+`claude/game-ui-status-cqi387`. Ver RESULTADO CLAUDE más abajo.
+
+### Pedido a ChatGPT
+1. Revisar la propuesta contra la Art Bible y las láminas Tier 1, incluidas las que **no están en
+   el repo**: la 1 «Inicio y Club» y la 2 «La Semana».
+2. Opinar sobre la composición y la jerarquía, y marcar lo que no llegue al nivel de la
+   referencia.
+3. Responder las decisiones abiertas del README: la escena (sede/comisión o gimnasio), el
+   panel oscuro sobre la escena, la fuente manuscrita y el tamaño de los bustos mientras no
+   haya retratos por capas.
+4. Si la escena va, ajustar o aprobar la ficha `bg-tablero-v01` en
+   `design/arte/ASSET_REGISTRY.md` según las zonas libres de la maqueta: la izquierda y la
+   franja de abajo tranquilas, con la luz en el centro-derecha.
+
+Cuando Gabi apruebe la dirección, Claude la implementa en `src/ui/Hub.tsx` y `Hub.css`, sin
+cambios de lógica ni de datos.
+
+---
+
+## Tareas cerradas
+
+### 2026-09-25 — Lote de componentes globales (pedido directo de Gabi)
+
+<details>
+<summary>Enunciado original</summary>
+
 
 > Gabi se lo pidió a Claude en el chat ("arrancá con los componentes"), siguiendo la
 > recomendación del resultado anterior. ChatGPT: revisar el resultado y definir el lote que sigue.
 
-### Alcance
+#### Alcance
 Unificar los componentes globales que la auditoría (`design/UI_COVERAGE_AUDIT.md`) encontró
 dispersos, **por CSS y sin cambiar lógica, datos ni layout de pantallas**:
 
@@ -91,17 +139,15 @@ dispersos, **por CSS y sin cambiar lógica, datos ni layout de pantallas**:
 Fuera de alcance en este lote: CHIP-01 (la fila de persona está hecha ~10 veces con markup
 distinto: necesita tocar TSX), composición SCENE-C de Tablero/Partido (necesita arte) y Portada.
 
-### Además
+#### Además
 Lista de assets para ChatGPT: `design/arte/ASSET_REGISTRY.md` (lo que hay, lo que falta,
 fichas §16 y prioridades).
 
-### Verificación
+#### Verificación
 1440×900 y 1366×768, recorrido de todas las superficies, sin desbordes nuevos; capturas en
 `design/capturas/`.
 
----
-
-## Tareas cerradas
+</details>
 
 ### 2026-09-25 — Typography migration + full UI coverage audit (dejada por ChatGPT)
 
@@ -240,10 +286,52 @@ No cambiar lógica ni datos.
 
 # RESULTADO CLAUDE
 
+## 2026-09-28 — Propuesta de rediseño del Tablero (sin implementar)
+
+**Commit:** `1b27462` (rama `claude/game-ui-status-cqi387`). **El juego no cambió.**
+Todo está en `design/propuestas/tablero-rediseno/`; el razonamiento completo, en su `README.md`.
+
+### Diagnóstico del Tablero actual
+El problema es de composición, no de componentes. La pantalla tiene seis cajas del mismo peso
+y el ojo no sabe dónde empezar. La ilustración está encerrada en una card (es la del
+Vestuario, repetida). La disponibilidad son tres números sin cara, los avisos son texto
+suelto y el plantel son 12 miniaturas con puntos de colores. «Último partido» y los siete
+atajos ocupan espacio sin aportar.
+
+### La propuesta: «Lunes en el club. Faltan 5 días, ¿llegamos bien?»
+Mantiene la decisión del 15/9 («el partido ordena la semana») y la lleva hasta el final:
+- **Escena a pantalla completa** (SCENE-C) detrás de todo, con velos donde va el texto.
+- **Hero sin caja:** los escudos grandes, nombres en display, la cuenta regresiva «5 días» como
+  dato gigante, la clave del rival y **un solo CTA** naranja.
+- **«Esta semana»**, el único panel: hasta 3 avisos (`watchItems`), cada uno con la cara de
+  quien lo tiene, una línea y a dónde ir a resolverlo. Subtítulo manuscrito.
+- **El plantel de pie**, con bustos sin marco y número de camiseta. El problema va escrito
+  debajo («Al borde», «Fundido», «Debe cuota»), y los que no están van aparte y en gris.
+  Un solo número de disponibilidad: «10 de 12 en condiciones».
+- **Contexto en una línea:** último resultado, tabla y objetivo de la comisión.
+- **Se van:** los atajos, el título de pantalla y la card del último partido. El nav y el HUD
+  no cambian.
+- **Por fase:** marcador en vivo durante el partido y resultado final después, sin mover el
+  layout.
+
+### Decisiones abiertas (para Gabi y ChatGPT)
+1. **Escena:** ¿la sede o comisión con ventana a la cancha (`bg-tablero-v01`) o el gimnasio
+   propio a la tarde? La maqueta usa `fondo-gimnasio.webp` espejado sólo como sustituto.
+2. **Caras repetidas:** con bustos grandes se nota que hay 8 caras para 12 jugadores, así que
+   esta dirección empuja a T5 (retratos por capas). Mientras tanto se puede usar el busto S.
+3. **Panel oscuro translúcido sobre la escena** (como el Vestuario) en vez del gris perla. La
+   pantalla queda más oscura: el brillo tiene que venir del arte.
+4. **Fuente manuscrita:** la maqueta usa Caveat, que sería una dependencia nueva.
+5. **Láminas maestras 1 y 2:** no están en el repo, y la propuesta no se contrastó contra ellas.
+
+### Verificación
+Maqueta capturada a 1440×900 y 1366×768, sin desbordes. No hay build ni tests: no hubo
+cambios de código.
+
+
 ## 2026-09-25 — Lote de componentes globales
 
-**Commit:** `80f6ce9` (rama `art/vestuario-vertical-slice`). Todavía **no** está en `main`:
-Gabi pidió ver capturas antes.
+**Commit:** `80f6ce9` (rama `art/vestuario-vertical-slice`). Mergeado en `main` (`ab57d36`).
 
 ### Qué cambió (todo por CSS; en TSX sólo el "Cancelar" de la confirmación pasa a `.ghost`)
 - **SUBNAV-01:** los 9 estilos comparten estados. Segmentos unidos (`.view-toggle`,
