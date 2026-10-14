@@ -10,6 +10,7 @@
 
 import { cuartoN, rivalLineup, rivalQuarterBox, rivalTramoBox, TRAMOS_POR_CUARTO } from './match';
 import { Rng, seedFromString } from './rng';
+import { apellido } from './nombres';
 import type { GameState, LiveMatchState, LiveQuarter } from './types';
 
 export interface Jugada {
@@ -55,10 +56,6 @@ function canastas(pts: number, rng: Rng): number[] {
   return out;
 }
 
-function apellido(nombre: string): string {
-  const parts = nombre.replace(/"[^"]*"\s*/g, '').trim().split(/\s+/);
-  return parts[parts.length - 1];
-}
 
 // El reparto visual no conoce intentos, tipos de tiro ni asistencias por jugada:
 // cuenta aportes al marcador, y no convierte una reconstrucción en hechos

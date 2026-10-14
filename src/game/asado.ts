@@ -236,7 +236,9 @@ export function resolveAsado(s: GameState, rng: Rng): AsadoReport {
     }
     if (big) {
       for (const p of attended) {
-        logPlayerEvent(p, s.seasonNumber, s.week, 'social', `Estuvo en el asadazo de la semana ${s.week}: mesa llena y sobremesa larga.`);
+        // Sin la semana en el texto: la fila de la ficha ya la etiqueta (y en los
+        // playoffs decía "de la semana 10").
+        logPlayerEvent(p, s.seasonNumber, s.week, 'social', 'Estuvo en el asadazo: mesa llena y sobremesa larga.');
       }
       if (rng.chance(0.35)) {
         s.memorableMoments.push(`${fechaLabel(s)}: el asado con ${attended.length} en la mesa que se va a contar por años.`);

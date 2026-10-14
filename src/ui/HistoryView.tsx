@@ -8,7 +8,9 @@ import { Crest } from './Crest';
 import { FilaDePie, type PersonaDePie } from './Busto';
 import { Icon, type IconName } from './Icon';
 import { OpenProfileContext } from './PlayerLink';
-import { formatMoney } from './helpers';
+import { formatMoney, weekShort } from './helpers';
+import { largoDeTemporada } from './Timeline';
+import { apodoOApellido } from '../game/nombres';
 import { Planilla, plural } from './bloqueD';
 import './club.css';
 
@@ -25,12 +27,20 @@ const KIND_ICONS: Record<TimelineKind, IconName> = {
 
 const POS_ABBR: Record<string, string> = { Base: 'BAS', Escolta: 'ESC', Alero: 'ALE', 'Ala-Pívot': 'ALA', Pívot: 'PIV' };
 
-/** En la fila entra el apodo si lo tiene, y si no el apellido (como en el Tablero). */
-function shortName(name: string): string {
-  const nick = name.match(/"([^"]+)"/);
-  if (nick) return nick[1];
-  const parts = name.split(' ');
-  return parts[parts.length - 1];
+/** En la fila entra el apodo si lo tiene, y si no el apellido (nombres.ts, como en el Tablero). */
+const shortName = apodoOApellido;
+
+/**
+ * Cuándo pasó cada momento de la historia, en largo: la misma regla que
+ * `fechaCorta` (timeline.ts). Las semanas de playoffs y el cierre se leían
+ * "Semana 10" o "Semana 12" como si fueran fechas más de la liga.
+ */
+function cuandoLargo(week: number, seasonLength: number): string {
+  if (week === 0) return 'Pretemporada';
+  if (week <= seasonLength) return `Semana ${week}`;
+  if (week === seasonLength + 1) return 'Semifinales';
+  if (week === seasonLength + 2) return 'Final';
+  return 'Cierre';
 }
 
 /** La historia del club por temporada, de la más nueva a la más vieja. */
@@ -49,6 +59,7 @@ function porTemporada(events: TimelineEvent[]): [number, TimelineEvent[]][] {
  */
 export function HistoryView({ state }: { state: GameState }) {
   const open = useContext(OpenProfileContext);
+  const largo = largoDeTemporada(state);
   const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
 
   // Ranking de MVP de la temporada en curso.
@@ -161,7 +172,7 @@ export function HistoryView({ state }: { state: GameState }) {
                     <span className="hi-hito-ico">
                       <Icon name={KIND_ICONS[e.kind]} size={13} />
                     </span>
-                    <span className="hi-hito-cuando">{e.week === 0 ? 'Pretemporada' : `Semana ${e.week}`}</span>
+                    <span className="hi-hito-cuando">{cuandoLargo(e.week, largo(e.season))}</span>
                     <span className="hi-hito-txt">{e.text}</span>
                   </li>
                 ))}
@@ -192,7 +203,7 @@ export function HistoryView({ state }: { state: GameState }) {
           <ul className="ec-lista">
             {state.news.map((n, i) => (
               <li key={i} className={`v1-renglon ${n.tone}`}>
-                <span className="ec-sem">S{n.week}</span>
+                <span className="ec-sem">{weekShort(n.week, state.seasonLength)}</span>
                 <span className="ec-punto" aria-hidden="true" />
                 <span>{n.text}</span>
               </li>

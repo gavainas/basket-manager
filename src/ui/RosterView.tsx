@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { GameState, Player, Position } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { activePlayers } from '../game/match';
+import { apodoOApellido } from '../game/nombres';
 import { CoachCard } from './CoachCard';
 import { estadoPlantel, RosterList } from './RosterList';
 import { PlayerLink } from './PlayerLink';
@@ -201,9 +202,4 @@ function ResumenPlantel({ players, gone }: { players: Player[]; gone: Player[] }
 }
 
 /** Apodo si tiene; si no, el apellido (como en la fila de pie del Tablero). */
-function corto(name: string): string {
-  const nick = name.match(/"([^"]+)"/);
-  if (nick) return nick[1];
-  const parts = name.trim().split(/\s+/);
-  return parts[parts.length - 1];
-}
+const corto = apodoOApellido;

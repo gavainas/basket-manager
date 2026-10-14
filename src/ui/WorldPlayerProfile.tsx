@@ -144,7 +144,11 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
                 ))
               : 'Ninguna liga'}
           </Renglon>
-          {team && p.joinedSeason !== undefined && (
+          {/* En la temporada 1 el mundo acaba de nacer y todos tienen
+              joinedSeason 1: decir "Llegó este año" de un pívot de 35 en
+              Unión Vecinal era inventarle un pase. La fila aparece recién
+              cuando hay un verano detrás que la haga cierta. */}
+          {team && p.joinedSeason !== undefined && world.season.number > 1 && (
             <Renglon label="En el equipo">
               {p.joinedSeason >= world.season.number ? 'Llegó este año' : `Desde la temporada ${p.joinedSeason}`}
             </Renglon>

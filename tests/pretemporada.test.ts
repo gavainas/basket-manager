@@ -5,8 +5,11 @@ import { computeSeasonEvaluation } from '../src/game/evaluation';
 import { confirmedPlayers, createPreseasonNewGame, inscriptionOffer } from '../src/game/preseason';
 import { PRESEASON_EVENTS } from '../src/game/preseasonEvents';
 import type { GameState } from '../src/game/types';
-import { marketToPlayer } from '../src/data/market';
+import { marketToPlayer, worldToMarket } from '../src/data/market';
 import { Rng } from '../src/game/rng';
+import { fechaCorta, semanaDeCierre } from '../src/game/timeline';
+import { largoDeTemporada } from '../src/ui/Timeline';
+import { weekShort } from '../src/ui/helpers';
 import { jugarTemporada, partidaNueva, paso } from './jugar';
 
 /** Avanza la pretemporada semana a semana sin contactar a nadie y la cierra. */
@@ -173,6 +176,54 @@ describe('de una temporada a la siguiente', () => {
     // El mundo tiene memoria: la mayoría de las personas del año pasado siguen ahí.
     const siguen = ps.world.players.filter((p) => personasAntes.has(p.id)).length;
     expect(siguen / personasAntes.size).toBeGreaterThan(0.6);
+  });
+
+  it('la historia del club anota el cierre después de los playoffs, con su etiqueta, y recuerda cuántas fechas tuvo cada temporada', () => {
+    // Antes: "T1 · Sem 9 · Cierra la temporada 1" encima de "T1 · Sem 10 ·
+    // Quedamos afuera en la semifinal", y la semifinal decía "Sem 10".
+    const arranque = partidaNueva(9);
+    const fin = jugarTemporada({ ...arranque, club: { ...arranque.club, money: 3000 } });
+    const ps = paso(fin, { type: 'NEW_SEASON' });
+    const cierre = ps.clubTimeline.find((e) => /^Cierra la temporada 1/.test(e.text))!;
+    expect(cierre.week).toBe(semanaDeCierre(fin));
+    expect(fechaCorta(cierre.week, fin.seasonLength)).toBe('Cierre');
+    expect(fechaCorta(fin.seasonLength + 1, fin.seasonLength)).toBe('Semis');
+    expect(fechaCorta(fin.seasonLength + 2, fin.seasonLength)).toBe('Final');
+    expect(fechaCorta(fin.seasonLength, fin.seasonLength)).toBe(`Sem ${fin.seasonLength}`);
+    expect(fechaCorta(0, fin.seasonLength)).toBe('Pretemp.');
+    // La columna corta de la crónica, los movimientos y los últimos partidos.
+    expect(weekShort(4, 9)).toBe('S4');
+    expect(weekShort(10, 9)).toBe('Semis');
+    expect(weekShort(11, 9)).toBe('Final');
+    expect(weekShort(8, 7)).toBe('Semis');
+    // Ningún hito de la temporada 1 quedó anotado después del cierre.
+    const idx = ps.clubTimeline.indexOf(cierre);
+    for (const e of ps.clubTimeline.slice(0, idx)) if (e.season === 1) expect(e.week).toBeLessThanOrEqual(cierre.week);
+    // Y el palmarés recuerda las fechas de la temporada, para etiquetar sus semanas.
+    expect(ps.pastSeasons.at(-1)!.seasonLength).toBe(fin.seasonLength);
+    expect(largoDeTemporada({ ...ps, seasonLength: 7 })(1)).toBe(fin.seasonLength);
+    expect(largoDeTemporada({ ...ps, seasonLength: 7 })(2)).toBe(7);
+  });
+
+  it('el dúo que viene junto desde el mundo se muda al club: el pool no los tiene dos veces', () => {
+    // El fuzz lo encontró: firmados por el evento, seguían en el pool como
+    // libres, y al verano siguiente "se acomodaban solos" en otro club con tu
+    // mismo jugador adentro (dos "Alejo Camejo", uno nuestro y uno rival).
+    const arranque = partidaNueva(9);
+    const fin = jugarTemporada({ ...arranque, club: { ...arranque.club, money: 3000 } });
+    let s = paso(fin, { type: 'NEW_SEASON' });
+    const rng = new Rng(3);
+    const [wa, wb] = s.world.players.slice(0, 2);
+    const a = { ...worldToMarket(wa, 'Otro Club', rng), demand: null };
+    const b = { ...worldToMarket(wb, 'Otro Club', rng), demand: null };
+    s = {
+      ...s,
+      club: { ...s.club, money: 5000 },
+      preseason: { ...s.preseason!, market: [...s.preseason!.market, a, b], pendingEvent: { defId: 'ps_duo_amigos', targetIds: [a.id, b.id] } },
+    };
+    s = paso(s, { type: 'PS_RESOLVE_EVENT', optionIndex: 0 });
+    expect(s.players.map((p) => p.name)).toEqual(expect.arrayContaining([a.name, b.name]));
+    expect(s.world.players.some((wp) => wp.id === wa.id || wp.id === wb.id)).toBe(false);
   });
 });
 

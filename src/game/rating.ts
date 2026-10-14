@@ -64,9 +64,15 @@ function buildComment(i: RatingInput, rating: number): string {
   const puntos = `${pts} punto${pts === 1 ? '' : 's'}`;
   const rebotes = `${reb} rebote${reb === 1 ? '' : 's'}`;
   const asistencias = `${ast} asistencia${ast === 1 ? '' : 's'}`;
+  // Con la planilla en cero ("0 puntos, 0 rebotes y 0 asistencias en 2
+  // minutos") no hay balance que hacer: entró y no tocó la pelota.
+  if (rating < 6 && pts + reb + ast === 0)
+    return `Entró ${min} minuto${min === 1 ? '' : 's'} y no tocó la pelota: nada para anotar en la planilla.`;
   if (rating < 6) return `Noche ${rating === 5 ? 'discreta' : 'floja'} en el balance general: ${puntos}, ${rebotes} y ${asistencias} en ${min} minutos.`;
   if (min < 15 && rating >= 6)
-    return `Cumplió en sus minutos: ${pts} punto${pts === 1 ? '' : 's'} y trabajo serio en ${min} minutos.`;
+    return pts === 0
+      ? `Cumplió en sus minutos: sin anotar, pero trabajo serio en ${min} minutos.`
+      : `Cumplió en sus minutos: ${pts} punto${pts === 1 ? '' : 's'} y trabajo serio en ${min} minutos.`;
   if (ast >= 6 && guard)
     return `Manejó el ritmo del equipo y repartió ${ast} asistencias: fue quien rompió la defensa rival.`;
   if (reb >= 9) return `Dueño de los tableros: ${reb} rebotes que valieron oro allá abajo.`;

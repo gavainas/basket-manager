@@ -39,7 +39,10 @@ describe('regresiones de la partida observada', () => {
     s = paso(s, { type: 'PLAY_QUARTER' });
     const jugadas = jugadasDelCuarto(s, s.live!, 0).filter(j => !j.tipo);
     expect(jugadas.length).toBeGreaterThan(0);
-    expect(jugadas.map(j => `${j.texto} ${j.sub ?? ''}`).join(' ')).not.toMatch(/asistencia|rebote|triple|libre|bandeja|esquina|sin marca|de espaldas/i);
+    // "Un libre de X" sí se dice (20/9, relato.ts): un punto suelto no puede
+    // ser otra cosa. Lo que no se inventa son los intentos, las asistencias y
+    // los tipos de tiro que la planilla no registra.
+    expect(jugadas.map(j => `${j.texto} ${j.sub ?? ''}`).join(' ')).not.toMatch(/asistencia|rebote|triple|bandeja|esquina|sin marca|de espaldas/i);
   });
 
   it('el color del relato sale del marcador: lo que dice la segunda línea pasó de verdad', () => {
@@ -83,6 +86,34 @@ describe('regresiones de la partida observada', () => {
     s.live!.stats[p.id].pts = 3;
     const notes = quarterFlavor({ qIndex: 2, ourQ: 15, rivalQ: 15, onCourt: [p], qPts: { [p.id]: 3 }, qReb: {}, starId: p.id, live: s.live! }, new Rng(1));
     expect(notes.join(' ')).not.toMatch(/desaparec|apenas/);
+  });
+
+  it('"le cuesta sumar" se dice una vez por partido, no en el 3er cuarto y otra vez en el 4to', () => {
+    const s = inicio();
+    const p = s.players.find(p => p.id === s.live!.starId)!;
+    s.live!.minutes[p.id] = 20;
+    s.live!.stats[p.id].pts = 2;
+    const ctx = { ourQ: 15, rivalQ: 15, onCourt: [p], qPts: { [p.id]: 1 }, qReb: {}, starId: p.id, live: s.live! };
+    const tercero = quarterFlavor({ ...ctx, qIndex: 2 }, new Rng(1));
+    expect(tercero.join(' ')).toContain(`A ${p.name} le cuesta sumar: 2 puntos en 20 minutos`);
+    // El 3er cuarto cerrado, con su nota; el 4to no la repite.
+    s.live!.quarters.push({ for: 15, against: 15, defense: s.live!.defense, attack: s.live!.attack, notes: tercero });
+    s.live!.minutes[p.id] = 30;
+    s.live!.stats[p.id].pts = 4;
+    const cuarto = quarterFlavor({ ...ctx, qIndex: 3 }, new Rng(1));
+    expect(cuarto.join(' ')).not.toContain('le cuesta sumar');
+  });
+
+  it('la planilla en cero no se cuenta como "0 puntos, 0 rebotes y 0 asistencias"', () => {
+    const base = { position: 'Alero' as const, perf: 40, effective: 60, won: false, margin: -10, mvp: false };
+    const nada = computeRating({ ...base, minutes: 2, points: 0, rebounds: 0, assists: 0 });
+    expect(nada.comment).not.toMatch(/0 puntos/);
+    expect(nada.comment).toMatch(/no tocó la pelota/);
+    const cumplio = computeRating({ ...base, minutes: 10, points: 0, rebounds: 4, assists: 2, perf: 70, effective: 65, won: true, margin: 8 });
+    expect(cumplio.comment).not.toMatch(/0 puntos/);
+    // Con algo en la planilla, la cuenta se sigue diciendo con sus cifras.
+    const algo = computeRating({ ...base, minutes: 20, points: 0, rebounds: 3, assists: 1 });
+    expect(algo.comment).toMatch(/0 puntos, 3 rebotes y 1 asistencia/);
   });
 
   it('19 puntos con nota mediocre no se describen como imparable', () => {

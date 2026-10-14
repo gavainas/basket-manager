@@ -32,8 +32,8 @@ import { clubPosition, suggestRotation, suggestStarters } from './match';
 import { buildCoachMarket } from './coach';
 import { computeSeasonEvaluation } from './evaluation';
 import { rollPreseasonEvent } from './preseasonEvents';
-import { logClubEvent } from './timeline';
-import { buildWorld, dayLabel, emptyWorld, evolveWorldOffseason } from './world';
+import { logClubEvent, semanaDeCierre } from './timeline';
+import { buildWorld, dayLabel, emptyWorld, evolveWorldOffseason, mudarAlClub, worldPlayerName } from './world';
 import { SAVE_VERSION } from './week';
 import { Rng } from './rng';
 import type {
@@ -684,6 +684,7 @@ export function startPreseason(state: GameState): GameState {
     moved: promo.userMoved
       ? { kind: promo.userMoved, to: divisionById(promo.nextDivisionId)?.name ?? 'otra divisional' }
       : undefined,
+    seasonLength: state.seasonLength,
   };
   const titulo: Titulo =
     champions.oro === 'club' || champions.plata === 'club' ? 'titulo' : promo.userMoved === 'ascenso' ? 'ascenso' : false;
@@ -799,7 +800,8 @@ export function startPreseason(state: GameState): GameState {
       ...state.clubTimeline,
       {
         season: state.seasonNumber,
-        week: state.seasonLength,
+        // Después de las finales ("Cierre"), no "Sem 9" debajo de la semifinal.
+        week: semanaDeCierre(state),
         kind: 'hito' as const,
         text: `Cierra la temporada ${state.seasonNumber}: ${finishedSeason.position}° con récord ${finishedSeason.record}.`,
       },
@@ -995,9 +997,7 @@ export function signMarketPlayer(
   mp.status = 'fichado';
   // Si venía del mundo, la persona se muda a tu plantel: sale del pool rival
   // (el mundo no duplica gente).
-  if (mp.worldPlayerId) {
-    s.world.players = s.world.players.filter((wp) => wp.id !== mp.worldPlayerId);
-  }
+  mudarAlClub(s.world, mp);
 
   let extra = '';
   if (terms.demandApplied) {
@@ -1012,7 +1012,9 @@ export function signMarketPlayer(
   }
   // La bola de nieve de la libreta: el que firmó abre su agenda.
   if (p.libreta && (mp.abre ?? 0) > 0) {
-    const taken = [...s.players.map((x) => x.name), ...p.market.map((m) => m.name)];
+    // Ni el nombre de uno de los nuestros, ni el de alguien que ya juega en
+    // otro club del mundo (en la temporada 2 el mundo ya existe).
+    const taken = [...s.players.map((x) => x.name), ...p.market.map((m) => m.name), ...(s.world.players ?? []).map(worldPlayerName)];
     const nuevos = abrirAgenda(mp, rng, taken);
     if (nuevos.length > 0) {
       p.market.push(...nuevos);

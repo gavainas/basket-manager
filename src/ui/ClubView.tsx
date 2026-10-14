@@ -5,7 +5,7 @@ import { promiseHealth, type PromiseHealth } from '../game/promises';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { Tip, TIPS } from './Tip';
-import { avgMotivation } from './helpers';
+import { avgMotivation, weekShort } from './helpers';
 import { Cara, Planilla } from './bloqueD';
 import './club.css';
 
@@ -141,7 +141,7 @@ export function ClubView({ state }: { state: GameState }) {
           <ul className="ec-lista">
             {state.news.slice(0, 12).map((n, i) => (
               <li key={i} className={`v1-renglon ${n.tone}`}>
-                <span className="ec-sem">S{n.week}</span>
+                <span className="ec-sem">{weekShort(n.week, state.seasonLength)}</span>
                 <span className="ec-punto" aria-hidden="true" />
                 <span>{n.text}</span>
               </li>

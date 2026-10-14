@@ -6,6 +6,7 @@ import type { Player } from '../../game/types';
 import { BALANCE } from '../../game/balance';
 import { lineupPromiseWarnings } from '../../game/promises';
 import { evaluateTeam, isSelectable, PLAN_MIN_BENCH, titularesSinRecambio } from '../../game/match';
+import { listaY } from '../../game/nombres';
 import { Icon } from '../Icon';
 import { PlayerLink } from '../PlayerLink';
 import { RivalLink } from '../RivalLink';
@@ -118,6 +119,8 @@ export function LineupPanel({ state, dispatch }: Props) {
   // terminó fundido"); acá se puede arreglar, o aceptarlo sabiendo.
   const sinRecambio = rotationIds.length >= PLAN_MIN_BENCH ? titularesSinRecambio(state.players, state.starters, rotationIds) : [];
   const conRecambioAfuera = sinRecambio.filter((t) => leftOut.some((p) => p.position === t.position));
+  // Con DT contratado, los cambios del partido arrancan en sus manos.
+  const dt = state.coach;
 
   // Drag & drop: el id viaja en el dataTransfer; los guards viven en el reducer.
   const dragStart = (id: string) => (e: React.DragEvent) => {
@@ -409,17 +412,14 @@ export function LineupPanel({ state, dispatch }: Props) {
             {shortStart && (
               <p className="v1-frase">
                 <b className="warn">Sólo {maxStarters} pueden arrancar.</b>{' '}
-                {available
-                  .filter((p) => lateIds.has(p.id))
-                  .map((p) => p.name)
-                  .join(' y ')}{' '}
+                {listaY(available.filter((p) => lateIds.has(p.id)).map((p) => p.name))}{' '}
                 llega{available.filter((p) => lateIds.has(p.id)).length > 1 ? 'n' : ''} para el segundo tiempo: se arranca
                 corto y entra{available.filter((p) => lateIds.has(p.id)).length > 1 ? 'n' : ''} en el 3er cuarto.
               </p>
             )}
             {count === 5 && missing.length > 0 && (
               <p className="v1-frase">
-                <b className="warn">Sin {missing.join(', ').toLowerCase()} natural</b> en el quinteto: alguien juega fuera de puesto.
+                <b className="warn">Sin {listaY(missing.map((m) => m.toLowerCase()))} natural</b> en el quinteto: alguien juega fuera de puesto.
               </p>
             )}
             {count === 5 && missing.length === 0 && (
@@ -436,7 +436,19 @@ export function LineupPanel({ state, dispatch }: Props) {
             )}
             {count === 5 && rotationIds.length > 0 && (
               <p className="v1-frase">
-                {rotationIds.length >= PLAN_MIN_BENCH ? (
+                {/* Con DT contratado los cambios arrancan en sus manos (match.ts,
+                    `autoRotation: !!s.coach`) y el plan "rota solo" no corre: la
+                    pizarra lo decía igual y el informe contaba otra cosa ("Varela
+                    movió el banco"). Se describe lo que va a pasar de verdad. */}
+                {dt ? (
+                  <>
+                    <b>Los cambios los hace {dt.name}</b> con su directiva,{' '}
+                    {dt.directive === 'repartir'
+                      ? '"juegan todos": mete al banco para que todos sumen minutos'
+                      : '"a ganar": descansa a los fundidos y mete a los mejores para cerrar'}
+                    . En el partido los podés tomar vos.
+                  </>
+                ) : rotationIds.length >= PLAN_MIN_BENCH ? (
                   <>
                     <b>Con banco, el partido rota solo:</b> frescos en el 2° cuarto, titulares en el 3°, cerradores al final. En
                     el partido lo podés pasar a mano.
@@ -454,8 +466,8 @@ export function LineupPanel({ state, dispatch }: Props) {
                   Vas con {count + rotationIds.length} de {available.length}:
                 </b>{' '}
                 {leftOutHot.length > 0
-                  ? `${leftOutHot.map((p) => shortName(p.name)).join(', ')} ${leftOutHot.length > 1 ? 'se van' : 'se va'} a calentar mirando desde afuera.`
-                  : `${leftOut.map((p) => shortName(p.name)).join(', ')} ${leftOut.length > 1 ? 'miran' : 'mira'} desde afuera.`}
+                  ? `${listaY(leftOutHot.map((p) => shortName(p.name)))} ${leftOutHot.length > 1 ? 'se van' : 'se va'} a calentar mirando desde afuera.`
+                  : `${listaY(leftOut.map((p) => shortName(p.name)))} ${leftOut.length > 1 ? 'miran' : 'mira'} desde afuera.`}
               </p>
             )}
             {count === 5 && sinRecambio.length > 0 && (
@@ -465,12 +477,28 @@ export function LineupPanel({ state, dispatch }: Props) {
                     ? `Sin ${sinRecambio[0].position.toLowerCase()} de recambio en el banco:`
                     : 'Sin recambio de su puesto en el banco:'}
                 </b>{' '}
-                {sinRecambio.length === 1
-                  ? `el plan no tiene con quién descansar a ${shortName(sinRecambio[0].name)}, que va a jugar casi los 40.`
-                  : `el plan no tiene con quién descansar a ${sinRecambio.map((p) => shortName(p.name)).join(', ')}, que van a jugar casi los 40.`}{' '}
-                {conRecambioAfuera.length > 0
-                  ? `Tenés ${conRecambioAfuera.map((t) => t.position.toLowerCase()).join(' y ')} en la planilla sin lugar en el banco.`
-                  : 'Si querés cuidarlo, poné a alguien fuera de puesto en el banco o hacé los cambios a mano.'}
+                {dt ? (
+                  /* El DT sí lo descansa (mete al más fresco, o al del puesto si
+                     lo hay): lo que queda es el hueco. */
+                  sinRecambio.length === 1
+                    ? `cuando ${shortName(dt.name)} descanse a ${shortName(sinRecambio[0].name)}, el equipo queda sin ${sinRecambio[0].position.toLowerCase()} natural.`
+                    : `cuando ${shortName(dt.name)} descanse a ${listaY(sinRecambio.map((p) => shortName(p.name)))}, el equipo queda sin su puesto.`
+                ) : (
+                  <>
+                    {/* Las dos salidas del plan, porque las dos pasan: "Piernas
+                        frescas" tapa el puesto con el titular si lo alcanza entre
+                        los siguientes del orden, y si no el cuarto va sin ese
+                        puesto (`conCobertura`). Antes prometía "va a jugar casi
+                        los 40" y en la fecha 1 el único base jugó 20' con el
+                        equipo sin base los otros 20. */}
+                    {sinRecambio.length === 1
+                      ? `el plan no tiene con quién descansar a ${shortName(sinRecambio[0].name)}. O juega casi los 40, o el equipo pasa cuartos sin ${sinRecambio[0].position.toLowerCase()} natural.`
+                      : `el plan no tiene con quién descansar a ${listaY(sinRecambio.map((p) => shortName(p.name)))}. O juegan casi los 40, o el equipo pasa cuartos sin su puesto.`}{' '}
+                    {conRecambioAfuera.length > 0
+                      ? `Tenés ${listaY(conRecambioAfuera.map((t) => t.position.toLowerCase()))} en la planilla sin lugar en el banco.`
+                      : `Si querés ${sinRecambio.length === 1 ? 'cuidarlo' : 'cuidarlos'}, poné a alguien fuera de puesto en el banco o hacé los cambios a mano.`}
+                  </>
+                )}
               </p>
             )}
           </div>

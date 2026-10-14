@@ -1,6 +1,7 @@
 import type { GameState, Player } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { getEvent } from '../game/events';
+import { apodoOApellido } from '../game/nombres';
 import { Avatar } from './Avatar';
 import { Busto } from './Busto';
 import { weekLabel } from './helpers';
@@ -59,12 +60,7 @@ function wearsCap(p: Player, festive: boolean): boolean {
  * regla que la fila del plantel del Tablero). El nombre completo queda en el
  * título y en el texto del evento, que siempre lo nombra.
  */
-function nombreCorto(name: string): string {
-  const nick = name.match(/"([^"]+)"/);
-  if (nick) return nick[1];
-  const parts = name.split(' ');
-  return parts[parts.length - 1];
-}
+const nombreCorto = apodoOApellido;
 
 /**
  * La gente del evento, de pie sobre la línea del parquet (el busto de la fila

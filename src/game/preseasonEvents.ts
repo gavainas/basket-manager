@@ -3,6 +3,7 @@ import { createRecruit } from '../data/recruits';
 import { marketToPlayer } from '../data/market';
 import { inscriptionOffer } from './preseason';
 import { Rng } from './rng';
+import { mudarAlClub } from './world';
 import type { GameState, MarketPlayer, Player, PreseasonEventState } from './types';
 
 export interface PreseasonEventDef {
@@ -143,6 +144,8 @@ export const PRESEASON_EVENTS: PreseasonEventDef[] = [
         s.players.push(player);
         s.preseason!.continuity[player.id] = 'confirmado';
         mp.status = 'fichado';
+        // Si venía del mundo, se muda: el pool no lo tiene dos veces.
+        mudarAlClub(s.world, mp);
       }
       // Vienen juntos: se potencian entre ellos.
       s.club.socialClimate = clamp(s.club.socialClimate + 3);

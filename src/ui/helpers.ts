@@ -122,6 +122,16 @@ export function weekLabel(week: number, seasonLength: number): string {
   return week === seasonLength + 1 ? 'Semifinales' : 'Finales';
 }
 
+/**
+ * La misma etiqueta en corto, para la columna de la crónica, los movimientos
+ * y los últimos partidos: 'S4', 'Semis', 'Final'. Las semanas de playoffs se
+ * leían "S10" y "S11" como si fueran fechas más de la liga.
+ */
+export function weekShort(week: number, seasonLength: number): string {
+  if (week <= seasonLength) return `S${week}`;
+  return week === seasonLength + 1 ? 'Semis' : 'Final';
+}
+
 /** '2026-04-06' → 'Abril 2026'. */
 export function monthLabel(iso: string): string {
   const d = new Date(`${iso}T12:00:00Z`);

@@ -510,7 +510,11 @@ export function advanceWeek(state: GameState): GameState {
   // cierre en rojo es un aviso de la comisión —la semana sigue, con la caja en
   // negativo y el radar en rojo diciendo qué hacer— y la quiebra llega recién
   // con el segundo seguido. Una semana en positivo borra el aviso.
-  const semanaCerrada = Math.min(s.week, s.seasonLength);
+  // La noticia y la historia llevan la semana que cerró (la misma que los
+  // movimientos de esa semana en Finanzas), no la que empieza: `s.week` ya
+  // avanzó. Y sin clampear a la fase regular: la quiebra después de las
+  // semis se anotaba en la "Sem 9", antes de "¡A la final!".
+  const semanaCerrada = state.week;
   let quiebra = false;
   if (s.club.money < 0) {
     s.semanasEnRojo = (s.semanasEnRojo ?? 0) + 1;
@@ -540,7 +544,7 @@ export function advanceWeek(state: GameState): GameState {
   } else if (active.length < 5) {
     s.phase = 'gameOver';
     s.gameOverReason = 'Quedaron menos de 5 jugadores en el plantel. No hay equipo para presentar: el club se retira de la liga.';
-    logClubEvent(s, 'salida', 'El plantel quedó con menos de 5 jugadores: el club se retiró de la liga.', Math.min(s.week, s.seasonLength));
+    logClubEvent(s, 'salida', 'El plantel quedó con menos de 5 jugadores: el club se retiró de la liga.', semanaCerrada);
   } else if (s.week > s.seasonLength) {
     // Fase regular terminada: arrancan (o siguen) los playoffs de las copas.
     if (advancePlayoffs(s, rng)) {

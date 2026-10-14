@@ -2,6 +2,7 @@ import { BALANCE } from '../game/balance';
 import { marketReference } from '../game/conduct';
 import { weeklyFee } from '../game/economy';
 import { CAUSE_SHORT } from '../game/mood';
+import { apodoOApellido, listaY } from '../game/nombres';
 import {
   CONTINUITY_LABELS,
   COUNTER_OFFERS,
@@ -134,7 +135,7 @@ function agendaFit(state: GameState, mp: MarketPlayer): { cls: string; text: str
   const missed =
     mp.agenda.onlyTimes.length > 0 ? d.gameTimes.filter((t) => !mp.agenda!.onlyTimes.includes(t)) : [];
   if (missed.length > 0) {
-    return { cls: 'warn', text: `A los partidos de ${missed.join(' y ')} llegaría para el 2do tiempo` };
+    return { cls: 'warn', text: `A los partidos de ${listaY(missed)} llegaría para el 2do tiempo` };
   }
   return { cls: 'good', text: `Puede los ${dayLabel(d.gameDay)}, nuestro día de partido` };
 }
@@ -691,13 +692,8 @@ const POS_ABBR: Record<string, string> = {
   Pívot: 'PIV',
 };
 
-/** En la fila de pie entra el apodo si lo tiene, y si no el apellido. */
-function shortName(name: string): string {
-  const nick = name.match(/"([^"]+)"/);
-  if (nick) return nick[1];
-  const parts = name.split(' ');
-  return parts[parts.length - 1];
-}
+/** En la fila de pie entra el apodo si lo tiene, y si no el apellido (nombres.ts). */
+const shortName = apodoOApellido;
 
 /** El estado de continuidad dicho con las clases del semáforo (sin el acento). */
 function contCls(cls: string): 'good' | 'warn' | 'bad' {

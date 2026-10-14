@@ -417,6 +417,12 @@ export interface QuarterContext {
   rivalTimeoutAt: number;
   /** Notas del cuarto que se van juntando (las de color del arranque y el cierre). */
   notes: string[];
+  /**
+   * Cuántas de las primeras notas son del descanso (los cambios del plan, del
+   * DT o tuyos, los que llegaron tarde): lo que pasa en el cuarto se inserta
+   * después de ellas, no antes. Sin el campo (saves viejos), al principio.
+   */
+  descanso?: number;
 }
 
 /** Estado del partido en curso (fase 'match'). */
@@ -646,6 +652,8 @@ export interface PastSeason {
   division?: string;
   /** Si esa temporada terminó con ascenso o descenso, y a dónde. */
   moved?: { kind: 'ascenso' | 'descenso'; to: string };
+  /** Cuántas fechas tuvo (7 en el Comercio, 9 en el resto): etiqueta sus semanas en la historia. Saves viejos: sin dato. */
+  seasonLength?: number;
 }
 
 export type NewsTone = 'good' | 'bad' | 'neutral';

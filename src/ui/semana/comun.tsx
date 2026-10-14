@@ -9,6 +9,7 @@ import type { GameAction } from '../../state/gameReducer';
 import { weekTimeline } from '../../game/weekTimeline';
 import { userGameDay } from '../../game/moments';
 import { userFixtureOfWeek } from '../../game/world';
+import { apellido } from '../../game/nombres';
 import { Icon, type IconName } from '../Icon';
 import { Busto } from '../Busto';
 import './semana.css';
@@ -52,10 +53,8 @@ export function actionIcon(id: string): IconName {
   return ACTION_ICON[id] ?? 'inscripcion';
 }
 
-export function shortName(name: string): string {
-  const parts = name.replace(/"[^"]*"\s*/g, '').trim().split(/\s+/);
-  return parts[parts.length - 1];
-}
+/** El apellido, sin apodo (nombres.ts): "Da Silva" entero. */
+export const shortName = apellido;
 
 export function absentIds(state: GameState): Set<string> {
   return new Set(state.callUp.filter((c) => c.status === 'ausente').map((c) => c.playerId));

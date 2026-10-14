@@ -7,6 +7,7 @@ import { activePlayers } from '../src/game/match';
 import { createCareerNewGame, createPreseasonNewGame, inscriptionOffer, startPreseason } from '../src/game/preseason';
 import { Rng } from '../src/game/rng';
 import type { GameState } from '../src/game/types';
+import { worldPlayerName } from '../src/game/world';
 import { jugarTemporada, paso } from './jugar';
 
 const C = BALANCE.carrera;
@@ -213,6 +214,10 @@ describe('ocho en cuatro semanas', () => {
     expect(activePlayers(s.players).length).toBeGreaterThanOrEqual(MIN);
     expect(s.club.name).toBe('Club de Prueba');
     expect(s.world.clubs.find((c) => c.isUser)!.colors).toEqual(['#111111', '#eeeeee']);
+    // El mundo nace después de la libreta y no repite ningún nombre de ella:
+    // ni de los que firmaron ni de los que quedaron pendientes.
+    const nuestros = new Set([...s.players.map((p) => p.name), ...(s.libretaPendiente ?? []).map((m) => m.name)]);
+    expect(s.world.players.map(worldPlayerName).filter((n) => nuestros.has(n))).toEqual([]);
   });
 
   it('el club nuevo tiene su propia voz: la liga lo anota como nuevo, los encargos son de fundación y la cancha lleva su nombre', () => {

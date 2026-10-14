@@ -133,6 +133,14 @@ function invariantes(s, donde) {
   // se rearma al pasar a la alineación, y la UI filtra por disponibles.
   const fantasmas = donde === 'cierre' ? [] : [...s.starters, ...s.rotation].filter((id) => !activos.includes(id));
   if (fantasmas.length) nota(`en el quinteto/rotación alguien que no está: ${fantasmas.join(',')} (${donde})`);
+  // Un rival no se llama igual que uno de los nuestros (world.ts, nombresReservados).
+  // El que se fue del club y apareció con otra camiseta es la misma persona
+  // (`exUserClub`), no un homónimo.
+  const nuestros = new Set(s.players.filter((p) => !p.leftClub).map((p) => p.name));
+  for (const wp of s.world?.players ?? []) {
+    const nombre = `${wp.firstName} ${wp.lastName}`;
+    if (nuestros.has(nombre) && !wp.exUserClub) nota(`${nombre} juega en ${wp.clubName ?? 'ningún club'} y también en el club (${donde})`);
+  }
 }
 
 function resolverEventos(s) {
