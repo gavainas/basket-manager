@@ -347,11 +347,37 @@ export interface LeagueOption {
   locked?: string;
 }
 
-function levelLabelFor(avgStrength: number): string {
-  if (avgStrength >= 68) return 'Nivel muy duro';
-  if (avgStrength >= 58) return 'Nivel competitivo';
-  if (avgStrength >= 48) return 'Nivel accesible';
+/**
+ * El nivel de una liga para este plantel, no en abstracto: "Nivel para
+ * pasear" en la Divisional C recién descendidos con 1-8 era cierto para el
+ * mundo y una cargada para el club. Se compara la fuerza de los rivales con
+ * la técnica del quinteto sugerido (la misma escala que el motor usa para el
+ * batacazo). El club rinde unos 10 puntos por debajo de su técnica (química,
+ * cansancio, banco): medido con 12 semillas × 2 temporadas, con los rivales
+ * 10 puntos abajo gana ~60%; parejos en el papel, ~26%; 8 a 13 arriba, ~9%.
+ * Sin quinteto para medir (el club recién fundado), la lectura absoluta.
+ */
+function levelLabelFor(avgStrength: number, clubSkill: number | null): string {
+  if (clubSkill === null) {
+    if (avgStrength >= 68) return 'Nivel muy duro';
+    if (avgStrength >= 58) return 'Nivel competitivo';
+    if (avgStrength >= 48) return 'Nivel accesible';
+    return 'Nivel para pasear';
+  }
+  const d = avgStrength - clubSkill;
+  if (d >= 4) return 'Nivel muy duro';
+  if (d >= -6) return 'Nivel duro';
+  if (d >= -14) return 'Nivel parejo';
+  if (d >= -22) return 'Nivel accesible';
   return 'Nivel para pasear';
+}
+
+/** Técnica media del quinteto sugerido con el plantel de hoy (sin los que se quieren ir); null si no llega a cinco. */
+function clubSkillForLevel(s: GameState): number | null {
+  const plantel = s.players.filter((p) => !p.leftClub && s.preseason?.continuity[p.id] !== 'quiere_irse');
+  const ids = suggestStarters(plantel);
+  if (ids.length < 5) return null;
+  return ids.reduce((sum, id) => sum + plantel.find((p) => p.id === id)!.technique, 0) / ids.length;
 }
 
 /**
@@ -414,7 +440,7 @@ function optionFor(s: GameState, divisionId: string, opts: { held?: boolean } = 
     gameDay: division.gameDay,
     gameTimes: division.gameTimes,
     fee: isPlaza ? 0 : entry?.fee ?? BALANCE.economy.inscriptionFee,
-    levelLabel: levelLabelFor(avg),
+    levelLabel: levelLabelFor(avg, clubSkillForLevel(s)),
     note,
     isCurrent,
     isPlaza,

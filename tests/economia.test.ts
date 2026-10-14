@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getAction } from '../src/game/actions';
 import { BALANCE } from '../src/game/balance';
 import { applyWeeklyEconomy, projectedWeekClose, weeklyEstimate } from '../src/game/economy';
+import { computeSeasonEvaluation } from '../src/game/evaluation';
 import { hireCoach } from '../src/game/coach';
 import { watchItems } from '../src/ui/watch';
 import { Rng } from '../src/game/rng';
@@ -235,6 +236,25 @@ describe('la quiebra en dos pasos (sep 2026, decidido por Gabi): el primer rojo 
     expect(tras2.gameOverReason).toMatch(/dos semanas seguidas en rojo/);
     expect(tras2.gameOverReason).toMatch(/ya había avisado/);
     expect(tras2.clubTimeline.some((e) => e.kind === 'salida' && /después del aviso/.test(e.text))).toBe(true);
+  });
+
+  it('el cierre de una temporada cortada no dice que el resultado deportivo fue excelente', () => {
+    // Antes: quebrar en la fecha 2 ganando las dos leía "Resultado deportivo:
+    // Excelente (2 ganados, 0 perdidos. Posición final: 1° de 10)".
+    const tras1 = jugarFecha(conCaja(partidaNueva(21), 0));
+    const tras2 = jugarFecha(conCaja(tras1, tras1.club.money));
+    expect(tras2.phase).toBe('gameOver');
+    // Lo peor que puede pasar en la tabla no cambia el veredicto: se fuerza el 2-0.
+    const invicto: GameState = {
+      ...tras2,
+      standings: tras2.standings.map((r) => (r.teamId === 'club' ? { ...r, wins: 2, losses: 0 } : r)),
+    };
+    const ev = computeSeasonEvaluation(invicto);
+    const deportivo = ev.dimensions.find((d) => d.key === 'sport')!;
+    expect(deportivo.grade).toBe('Mala');
+    expect(deportivo.detail).toMatch(/^El club se retiró de la liga después de 2 partidos: 2 ganados, 0 perdidos, e iba \d+° de \d+\.$/);
+    expect(deportivo.detail).not.toMatch(/Posición final/);
+    expect(ev.outcomeTitle).toBe('Fracaso financiero');
   });
 
   it('una semana en positivo borra el aviso: hay que cerrar dos seguidas en rojo, no dos en total', () => {

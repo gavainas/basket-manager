@@ -96,6 +96,42 @@ describe('la pretemporada de una partida nueva', () => {
   });
 });
 
+describe('el nivel de cada liga se lee contra el plantel propio (oct 2026)', () => {
+  // Antes era absoluto: la Divisional C decía "Nivel para pasear" a un club
+  // recién descendido con 1-8, que en la C la iba a pelear.
+  const base = paso(null as unknown as GameState, { type: 'LOAD', state: createPreseasonNewGame(5) });
+  const conTecnica = (technique: number): GameState => ({
+    ...base,
+    players: base.players.map((p) => ({ ...p, technique })),
+  });
+  const ORDEN = ['Nivel para pasear', 'Nivel accesible', 'Nivel parejo', 'Nivel duro', 'Nivel muy duro'];
+
+  it('la misma liga se lee más dura para un plantel flojo que para uno fuerte', () => {
+    const flojo = inscriptionOffer(conTecnica(45));
+    const fuerte = inscriptionOffer(conTecnica(90));
+    for (const o of flojo) {
+      const f = fuerte.find((x) => x.divisionId === o.divisionId)!;
+      expect(ORDEN).toContain(o.levelLabel);
+      expect(ORDEN.indexOf(o.levelLabel)).toBeGreaterThanOrEqual(ORDEN.indexOf(f.levelLabel));
+    }
+    // Con 45 de técnica ninguna liga es para pasear; con 90, ninguna es muy dura.
+    expect(flojo.some((o) => o.levelLabel === 'Nivel para pasear')).toBe(false);
+    expect(fuerte.some((o) => o.levelLabel === 'Nivel muy duro')).toBe(false);
+  });
+
+  it('el que se quiere ir no cuenta para medir el plantel', () => {
+    // El mejor jugador con 99 y todos los demás con 40: si se va, el plantel es el de 40.
+    const s: GameState = structuredClone(conTecnica(40));
+    const crack = s.players.find((p) => !p.leftClub)!;
+    crack.technique = 99;
+    const conCrack = inscriptionOffer(s);
+    s.preseason!.continuity[crack.id] = 'quiere_irse';
+    const sinCrack = inscriptionOffer(s);
+    expect(sinCrack.map((o) => o.levelLabel)).toEqual(inscriptionOffer(conTecnica(40)).map((o) => o.levelLabel));
+    expect(sinCrack.some((o, i) => ORDEN.indexOf(o.levelLabel) > ORDEN.indexOf(conCrack[i].levelLabel))).toBe(true);
+  });
+});
+
 describe('la tesorera mira la ficha de verdad', () => {
   const evento = PRESEASON_EVENTS.find((e) => e.id === 'ps_rifa_urgente')!;
   const base = paso(null as unknown as GameState, { type: 'LOAD', state: createPreseasonNewGame(5) });

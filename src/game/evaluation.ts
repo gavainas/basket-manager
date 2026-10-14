@@ -52,7 +52,14 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   // es ser subcampeón: el 7° de 10 leía "Subcampeones: la final se escapó".
   const lostPlataFinal = finalPerdida?.cup === 'plata';
   const cupBonus = oroChamp ? 18 : plataChamp ? 10 : lostFinal ? 5 : 0;
-  const sportScore = Math.min(100, Math.round(winPct * 65 + ((10 - position) / 9) * 35) + cupBonus);
+  // El club que se retira de la liga (quiebra o plantel desintegrado) no
+  // termina la temporada: una quiebra en la fecha 2 leía "Resultado
+  // deportivo: Excelente (2-0, 1° de 10)". Retirarse es el peor resultado
+  // deportivo que hay, venga como venga la tabla.
+  const isGameOver = state.phase === 'gameOver';
+  const sportScore = isGameOver
+    ? Math.min(30, Math.round(winPct * 30))
+    : Math.min(100, Math.round(winPct * 65 + ((10 - position) / 9) * 35) + cupBonus);
   const moneyRatio = state.club.money / Math.max(state.startingMoney, 1);
   const financeScore = state.club.money < 0 ? 0 : Math.round(Math.min(100, moneyRatio * 55 + (state.club.money > 0 ? 25 : 0)));
   const retentionScore = Math.max(0, 100 - state.playersLeftCount * 20);
@@ -68,7 +75,11 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
       label: 'Resultado deportivo',
       score: sportScore,
       grade: grade(sportScore),
-      detail: `${row.wins} ${row.wins === 1 ? 'ganado' : 'ganados'}, ${row.losses} ${row.losses === 1 ? 'perdido' : 'perdidos'}. Posición final: ${position}° de ${state.standings.length}.`,
+      detail: isGameOver
+        ? played === 0
+          ? 'El club se retiró de la liga antes de jugar un partido.'
+          : `El club se retiró de la liga después de ${played === 1 ? 'un partido' : `${played} partidos`}: ${row.wins} ${row.wins === 1 ? 'ganado' : 'ganados'}, ${row.losses} ${row.losses === 1 ? 'perdido' : 'perdidos'}, e iba ${position}° de ${state.standings.length}.`
+        : `${row.wins} ${row.wins === 1 ? 'ganado' : 'ganados'}, ${row.losses} ${row.losses === 1 ? 'perdido' : 'perdidos'}. Posición final: ${position}° de ${state.standings.length}.`,
     },
     {
       key: 'finance',
@@ -129,7 +140,6 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
 
   let outcomeTitle: string;
   let outcomeText: string;
-  const isGameOver = state.phase === 'gameOver';
 
   if (isGameOver && state.club.money < 0) {
     outcomeTitle = 'Fracaso financiero';
