@@ -20,6 +20,7 @@ import { useContext, useState } from 'react';
 import type { PlayerEmotion, Position } from '../../game/types';
 import { clubGamesPlayed, clubPosition, clubRecord } from '../../game/match';
 import { clubByLegacyId, USER_CLUB_ID } from '../../game/world';
+import { apodoOApellido } from '../../game/nombres';
 import { Busto, FilaDePie, type PersonaDePie } from '../Busto';
 import { Crest } from '../Crest';
 import { OpenProfileContext, PlayerLink } from '../PlayerLink';
@@ -52,12 +53,7 @@ const CORTO: Record<PlayerEmotion, string> = {
 };
 
 /** En la fila entra el apodo si lo tiene, y si no el apellido (como en el Tablero). */
-function nombreCorto(name: string): string {
-  const nick = name.match(/"([^"]+)"/);
-  if (nick) return nick[1];
-  const parts = name.split(' ');
-  return parts[parts.length - 1];
-}
+const nombreCorto = apodoOApellido;
 
 /** Cuántos momentos clave se ven antes de "ver todos", y cuántas voces del vestuario. */
 const MOMENTOS_A_LA_VISTA = 5;

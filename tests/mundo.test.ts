@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DIVISION_SEEDS, DIVISIONS, WORLD_DIVISION_IDS } from '../src/data/worldData';
 import { closePreseason, inscriptionOffer, startPreseason, startSeasonFromPreseason } from '../src/game/preseason';
 import type { GameState } from '../src/game/types';
+import { nombresReservados, worldPlayerName } from '../src/game/world';
 import { jugarTemporada, partidaNueva } from './jugar';
 
 /** Total de equipos del mundo (todas las divisionales) + el club del usuario. */
@@ -41,9 +42,15 @@ function auditarMundo(s: GameState, label: string): string[] {
   for (const id of s.schedule) check(rivalIds.has(id), `el fixture juega contra ${id}, que no está en la liga`);
   check(s.standings.length === s.rivals.length + 1, `la tabla tiene ${s.standings.length} filas y la divisional ${s.rivals.length + 1} equipos`);
   const people = new Set<string>();
+  // Un rival no se llama igual que uno de los nuestros (ni que uno del
+  // catálogo, ni que un recluta): el relato nombra sin apellido de club.
+  const reservados = nombresReservados(s);
   for (const p of s.world.players ?? []) {
     if (people.has(p.id)) problems.push(`${label}: la persona ${p.id} está dos veces en el mundo`);
     people.add(p.id);
+    const name = worldPlayerName(p);
+    // El que se fue del club y emigró al mundo es la misma persona, no un homónimo.
+    if (reservados.has(name) && !p.exUserClub) problems.push(`${label}: ${name} (${p.clubName}) se llama igual que alguien del club`);
   }
   return problems;
 }
@@ -58,6 +65,23 @@ describe('el mundo y la pirámide', () => {
     expect(DIVISIONS.find((d) => d.id === s.divisionId)).toBeDefined();
     expect(s.world.clubs.length).toBeGreaterThan(0);
     expect(s.world.players.length).toBeGreaterThan(0);
+  });
+
+  it('ningún rival se llama igual que uno de los nuestros, en ninguna semilla', () => {
+    // Antes pasaba una de cada cuatro partidas: "Facundo Silva · banco" en la
+    // planilla de Bohemios, con nuestro Facundo Silva de figura esa fecha.
+    for (const seed of [1, 7, 11, 21, 4000, 9000]) {
+      const s = partidaNueva(seed);
+      const nuestros = new Set(s.players.map((p) => p.name));
+      const repetidos = s.world.players.map(worldPlayerName).filter((n) => nuestros.has(n));
+      expect(repetidos, `semilla ${seed}`).toEqual([]);
+      // Y tampoco dos personas del mundo con el mismo nombre en clubes
+      // distintos: si una queda libre y firma con vos, la otra sigue jugando
+      // en contra con tu mismo nombre en la planilla.
+      const nombres = s.world.players.map(worldPlayerName);
+      const homonimos = nombres.filter((n, i) => nombres.indexOf(n) !== i);
+      expect(homonimos, `semilla ${seed}`).toEqual([]);
+    }
   });
 
   it('tres temporadas seguidas quedándose en su liga: el mundo cierra en cada arranque', () => {

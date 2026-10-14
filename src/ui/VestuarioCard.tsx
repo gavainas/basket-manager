@@ -1,14 +1,13 @@
 import type { GameState, Player } from '../game/types';
 import { buildSocialMap, type SocialGroup } from '../game/socialMap';
+import { apodoOApellido } from '../game/nombres';
 import { Icon } from './Icon';
 import { PlayerLink } from './PlayerLink';
 import { CaraPlantel } from './RosterList';
 
-/** Apodo si tiene; si no, el apellido (como en la fila de pie del Tablero). */
+/** Apodo si tiene; si no, el apellido (nombres.ts, como en la fila de pie del Tablero). */
 function corto(p: Player): string {
-  const nick = p.name.match(/"([^"]+)"/);
-  if (nick) return nick[1];
-  return p.name.replace(/"[^"]*"\s*/g, '').trim().split(/\s+/).pop() ?? p.name;
+  return apodoOApellido(p.name);
 }
 
 const PAIR_ICON = { intimos: 'corazon', chocan: 'rayo', roce: 'alerta' } as const;

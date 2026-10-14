@@ -6,7 +6,7 @@ import { Crest } from './Crest';
 import { Carita, Ficha, Renglon, Seccion } from './Ficha';
 import { LeagueLink } from './LeagueLink';
 import { RivalLink } from './RivalLink';
-import { Timeline } from './Timeline';
+import { largoDeTemporada, Timeline } from './Timeline';
 import { Tip, TIPS } from './Tip';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { NavigateTabContext } from './nav';
@@ -225,7 +225,11 @@ export function ClubProfile({ state, clubId, onClose }: Props) {
 
       {isUser && (
         <Seccion titulo="La historia reciente">
-          <Timeline events={state.clubTimeline.slice(-8)} emptyText="La historia del club se está escribiendo." />
+          <Timeline
+            events={state.clubTimeline.slice(-8)}
+            seasonLength={largoDeTemporada(state)}
+            emptyText="La historia del club se está escribiendo."
+          />
         </Seccion>
       )}
     </Ficha>

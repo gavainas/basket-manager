@@ -9,6 +9,7 @@ import { bumpGrievance, sootheGrievance } from './mood';
 import { fallbackNote, quarterFlavor, rollRefIncident } from './narrative';
 import { computeRating, type PlayerRating } from './rating';
 import { fechaLabel, logClubEvent, logPlayerEvent } from './timeline';
+import { listaY } from './nombres';
 import { rollRivalMatchday, USER_TEAM_ID } from './world';
 import type {
   AttackTactic,
@@ -632,10 +633,7 @@ export function startLiveMatch(state: GameState, rng: Rng): GameState {
     .filter((p) => s.callUp.some((c) => c.playerId === p.id && c.lateArrival && c.status === 'confirmado'))
     .map((p) => p.id);
   if (starters.length < 5) {
-    const lateNames = s.players
-      .filter((p) => lateIds.includes(p.id))
-      .map((p) => p.name)
-      .join(' y ');
+    const lateNames = listaY(s.players.filter((p) => lateIds.includes(p.id)).map((p) => p.name));
     prematchNotes.push(
       `Arrancamos con ${starters.length}: ${lateNames || 'el resto'} llega${lateIds.length > 1 ? 'n' : ''} para el segundo tiempo.`
     );
@@ -1347,7 +1345,9 @@ function fuerzas(
   }
   if (notes && flavor) notes.push(flavor);
   if (notes && missing > 0) {
-    const pos = ALL_POSITIONS.find((p) => !covered.has(p));
+    // En minúscula, como en el resto de la prosa ("sin base natural"): el
+    // relato decía "falta un Base natural" con el puesto en mayúscula.
+    const pos = ALL_POSITIONS.find((p) => !covered.has(p))!.toLowerCase();
     const n = note([`Con este quinteto falta un ${pos} natural y se nota.`, `Seguimos sin ${pos} de oficio en cancha, y el rival lo huele.`]);
     if (n) notes.push(n);
   }
@@ -1429,11 +1429,9 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
 
   // En el entretiempo caen los que venían del trabajo: ya pueden entrar.
   if (qIndex === 2 && (live.lateIds ?? []).length > 0) {
-    const lateNames = (live.lateIds ?? [])
-      .map((id) => s.players.find((p) => p.id === id)?.name)
-      .filter(Boolean)
-      .join(' y ');
-    if (lateNames) live.pendingSubNotes.unshift(`🕘 Llegó ${lateNames} para el segundo tiempo: ya está para entrar.`);
+    const tarde = (live.lateIds ?? []).map((id) => s.players.find((p) => p.id === id)?.name).filter((n): n is string => !!n);
+    if (tarde.length === 1) live.pendingSubNotes.unshift(`🕘 Llegó ${tarde[0]} para el segundo tiempo: ya está para entrar.`);
+    else if (tarde.length > 1) live.pendingSubNotes.unshift(`🕘 Llegaron ${listaY(tarde)} para el segundo tiempo: ya están para entrar.`);
   }
 
   // Si en cancha hay menos de 5 (arranque corto o lesión sin recambio), se
@@ -1451,8 +1449,13 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
     if (name) live.pendingSubNotes.push(`Entra ${name}: el equipo completa el quinteto.`);
   }
 
-  // Cambios hechos en el descanso: abren el relato del cuarto.
+  // Cambios hechos en el descanso: abren el relato del cuarto. Lo que pasa
+  // después (una lesión, una expulsión, tu pizarra) se inserta detrás de
+  // ellos: el informe decía "Pereyra se lesionó. Entra Batista" y recién
+  // después "el DT movió el banco: entra Pereyra", como si hubiera entrado
+  // lesionado.
   notes.push(...live.pendingSubNotes);
+  const notasDelDescanso = notes.length;
   live.pendingSubNotes = [];
 
   const { f: sumFor, a: sumAgainst } = marcador(live);
@@ -1559,6 +1562,7 @@ function startQuarter(s: GameState, live: LiveMatchState, rival: Rival, rng: Rng
     rivalTimeoutAt: -1,
     lastAtk: 0,
     notes,
+    descanso: notasDelDescanso,
   };
   live.rageBoost = false;
   live.atkModNext = undefined;
@@ -1794,7 +1798,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
         ? `🟥 Segunda técnica para ${p.name}: expulsado. ${sub ? `Entra ${sub.name}.` : 'No queda recambio: seguimos con cuatro.'}`
         : `🟥 ${p.name} hizo la quinta falta: afuera. ${sub ? `Entra ${sub.name}.` : 'No queda recambio: seguimos con cuatro.'}`;
     tramoNotes.push(n);
-    ctx.notes.unshift(n);
+    ctx.notes.splice(ctx.descanso ?? 0, 0, n);
   }
 
   // Tu pizarra: si cambiaste la defensa o el ataque desde el tramo anterior
@@ -1803,10 +1807,13 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
   // nada confirmaba que había entrado.
   const pizarra = notaDePizarra(s, live, qIndex, k);
   if (pizarra) {
-    // Al arrancar el cuarto va primera entre las notas del cuarto (que el
-    // informe recorta a cinco): es tu decisión, no color.
-    if (k === 0) ctx.notes.unshift(pizarra);
-    else tramoNotes.push(pizarra);
+    // Al arrancar el cuarto va con las decisiones del descanso, antes del
+    // color del cuarto: es tu decisión. Y cuenta como del descanso, así una
+    // lesión del cuarto queda detrás de ella.
+    if (k === 0) {
+      ctx.notes.splice(ctx.descanso ?? 0, 0, pizarra);
+      ctx.descanso = (ctx.descanso ?? 0) + 1;
+    } else tramoNotes.push(pizarra);
   }
 
   // El rival decide cómo defender este tramo (sin mirar lo nuestro).
@@ -1928,7 +1935,7 @@ function playTramoInPlace(s: GameState, rng: Rng): void {
       // Sale y entra el recambio con más piernas; sin banco, quedan cuatro.
       const sub = reemplazar(s, live, p.id);
       const n = `🚑 ${p.name} ${how} ${sub ? `Entra ${sub.name} en su lugar.` : 'No queda recambio: seguimos con cuatro.'}`;
-      ctx.notes.unshift(n);
+      ctx.notes.splice(ctx.descanso ?? 0, 0, n);
       tramoNotes.push(n);
       ctx.injured = true;
       break;
@@ -2220,7 +2227,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
           for (const x of played) addPairBonus(s, x.p.id, faltador.id, -1);
           logPlayerEvent(faltador, s.seasonNumber, Math.min(s.week, s.seasonLength), 'ausencia', `Faltó con excusa floja el día que el equipo jugó con ${n}. El grupo tomó nota.`);
         }
-        const names = weakAbsent.map((c) => c.playerName).join(' y ');
+        const names = listaY(weakAbsent.map((c) => c.playerName));
         s.news.unshift({ week: s.week, text: `Quedó picando en el grupo: ${names} ${weakAbsent.length === 1 ? 'faltó' : 'faltaron'} justo cuando el equipo fue con ${n}.`, tone: 'bad' });
       }
     }
@@ -2244,8 +2251,7 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   effects.push(`Motivación del plantel ${baseMorale >= 0 ? '+' : ''}${baseMorale}${moraleTag}`);
   effects.push(`Prestigio deportivo ${prestigeDelta >= 0 ? '+' : ''}${prestigeDelta}${shortHanded && won ? ' (la liga habla de la gesta)' : ''}`);
   const mostUsed = [...played].sort((a, b) => b.mins - a.mins);
-  // "Silva, Fernández y Viera", no "Silva, Fernández, Viera".
-  const listaY = (nombres: string[]) => (nombres.length > 1 ? `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}` : nombres[0]);
+  // "Silva, Fernández y Viera", no "Silva, Fernández, Viera" (listaY, nombres.ts).
   if (mostUsed.length > 0) {
     // Los que vinieron y se quedaron en el banco los 40: el informe los nombra,
     // así la bronca por minutos de abajo tiene su porqué arriba.

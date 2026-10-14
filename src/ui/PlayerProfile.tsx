@@ -12,9 +12,9 @@ import { ConductaFicha } from './Conducta';
 import { Carita, Ficha, FichaDePie, Renglon, Seccion } from './Ficha';
 import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
-import { Timeline } from './Timeline';
+import { largoDeTemporada, Timeline } from './Timeline';
 import { Tip, TIPS } from './Tip';
-import { feeChip, feeChipAlways, roleLabel, statusChip, statusChipAlways } from './helpers';
+import { feeChip, feeChipAlways, roleLabel, statusChip, statusChipAlways, weekShort } from './helpers';
 import { Icon } from './Icon';
 import { useTeclasModal } from './teclas';
 
@@ -99,7 +99,7 @@ function GeneralTab({ state, p, verHistoria }: { state: GameState; p: Player; ve
             ) : undefined
           }
         >
-          <Timeline events={p.timeline.slice(-3)} />
+          <Timeline events={p.timeline.slice(-3)} seasonLength={largoDeTemporada(state)} />
         </Seccion>
       )}
     </>
@@ -117,7 +117,7 @@ function Cifra({ v, k, sub }: { v: ReactNode; k: string; sub?: string }) {
   );
 }
 
-function DeportivaTab({ p }: { p: Player }) {
+function DeportivaTab({ p, largo }: { p: Player; largo: (season: number) => number }) {
   const log = p.matchLog;
   const played = log.length;
   const minutes = log.reduce((t, m) => t + m.minutes, 0);
@@ -197,7 +197,7 @@ function DeportivaTab({ p }: { p: Player }) {
               {last.map((m, i) => (
                 <tr key={i}>
                   <td className="dim">
-                    T{m.season} · S{m.week}
+                    T{m.season} · {weekShort(m.week, largo(m.season))}
                   </td>
                   <td>
                     {m.rivalName} {m.mvp ? <Icon name="estrella" size={11} /> : ''}
@@ -465,11 +465,11 @@ export function PlayerProfile({ state, playerId, onClose }: Props) {
   return (
     <Ficha onClose={onClose} label={p.name} heroe={heroe} pestanas={pestanas} clase="ficha-jugador">
       {tab === 'general' && <GeneralTab state={state} p={p} verHistoria={() => setTab('historia')} />}
-      {tab === 'deportiva' && <DeportivaTab p={p} />}
+      {tab === 'deportiva' && <DeportivaTab p={p} largo={largoDeTemporada(state)} />}
       {tab === 'relaciones' && <RelacionesTab state={state} p={p} />}
       {tab === 'historia' && (
         <Seccion titulo="Su historia en el club">
-          <Timeline events={p.timeline} emptyText="Su historia en el club está por escribirse." />
+          <Timeline events={p.timeline} seasonLength={largoDeTemporada(state)} emptyText="Su historia en el club está por escribirse." />
         </Seccion>
       )}
       {tab === 'social' && <SocialTab state={state} p={p} />}

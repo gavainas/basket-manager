@@ -5,6 +5,7 @@ import { activePlayers } from '../game/match';
 import { CAUSE_SHORT } from '../game/mood';
 import { clubByLegacyId, USER_CLUB_ID, USER_TEAM_ID, userFixtureOfWeek } from '../game/world';
 import { weekTimeline } from '../game/weekTimeline';
+import { apodoOApellido } from '../game/nombres';
 import { Crest } from './Crest';
 import { Busto, FilaDePie, type PersonaDePie } from './Busto';
 import { OpenProfileContext } from './PlayerLink';
@@ -54,13 +55,8 @@ const POS_ABBR: Record<string, string> = {
   Pívot: 'PIV',
 };
 
-/** En la tira entra el apodo si lo tiene, y si no el apellido. */
-function shortName(name: string): string {
-  const nick = name.match(/"([^"]+)"/);
-  if (nick) return nick[1];
-  const parts = name.split(' ');
-  return parts[parts.length - 1];
-}
+/** En la tira entra el apodo si lo tiene, y si no el apellido (nombres.ts). */
+const shortName = apodoOApellido;
 
 /** La próxima fecha organiza el tablero; consultar nunca avanza la simulación. */
 export function hubReadiness(state: GameState) {

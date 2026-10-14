@@ -63,6 +63,26 @@ describe('las incidencias del partido (sep 2026)', () => {
     expect(quintas).toBeGreaterThan(0);
   });
 
+  it('lo que pasa en el cuarto se cuenta después de los cambios del descanso, no antes', () => {
+    // El informe decía "🟥 X expulsado. Entra Y" y recién después "el DT movió
+    // el banco: entra X", como si hubiera entrado expulsado.
+    let s = hastaElPartido(11);
+    s = s.live!.pendingIncident ? paso(s, { type: 'INCIDENT_CHOICE', index: 0 }) : s;
+    s = paso(s, { type: 'PLAY_QUARTER' });
+    s = s.live!.pendingIncident ? paso(s, { type: 'INCIDENT_CHOICE', index: 0 }) : s;
+    // Un cambio armado en el descanso y un riesgo seguro de expulsión para el que entra.
+    const sale = s.live!.onCourt[0];
+    const entra = s.live!.squad.find((id) => !s.live!.onCourt.includes(id))!;
+    s = paso(s, { type: 'SUBSTITUTE', outId: sale, inId: entra });
+    s = { ...s, live: { ...s.live!, plan: 'manual', riesgos: [{ playerId: entra, kind: 'expulsion', chance: 1 }] } };
+    s = paso(s, { type: 'PLAY_QUARTER' });
+    const notas = s.live!.quarters[1].notes;
+    const cambio = notas.findIndex((n) => n.startsWith('Cambio: entra'));
+    const roja = notas.findIndex((n) => n.startsWith('🟥'));
+    expect(cambio).toBeGreaterThanOrEqual(0);
+    expect(roja).toBeGreaterThan(cambio);
+  });
+
   it('el resentido que sacás queda afuera sin lesión; el que sigue, juega con más riesgo', () => {
     let s = hastaElPartido(11);
     const p = s.live!.onCourt[1];

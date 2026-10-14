@@ -3,6 +3,7 @@
 // peleas). No guarda nada: se calcula al mirar, siempre al día.
 
 import { affinity, FRIEND_THRESHOLD, personalityCompat, RIVALRY_THRESHOLD } from './relations';
+import { apodoOApellido } from './nombres';
 import type { GameState, Player } from './types';
 
 /**
@@ -52,9 +53,7 @@ export interface SocialMapData {
 }
 
 function apodo(p: Player): string {
-  const quoted = p.name.match(/"([^"]+)"/);
-  if (quoted) return quoted[1];
-  return p.name.split(/\s+/).pop() ?? p.name;
+  return apodoOApellido(p.name);
 }
 
 /** Etiqueta con carácter para un grupo, según quiénes lo componen. */

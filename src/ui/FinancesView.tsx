@@ -2,7 +2,7 @@ import type { GameState } from '../game/types';
 import { activePlayers } from '../game/match';
 import { projectedWeekClose, weeklyEstimate } from '../game/economy';
 import { condicionTexto } from '../game/sponsors';
-import { feeChipAlways, formatMoney, weekLabel } from './helpers';
+import { feeChipAlways, formatMoney, weekLabel, weekShort } from './helpers';
 import { PlayerLink } from './PlayerLink';
 import { Cara, Planilla, plural } from './bloqueD';
 import './club.css';
@@ -145,7 +145,7 @@ export function FinancesView({ state }: { state: GameState }) {
             <tbody>
               {recentLedger.map((e, i) => (
                 <tr key={i}>
-                  <td className="dim fz-sem">S{e.week}</td>
+                  <td className="dim fz-sem">{weekShort(e.week, state.seasonLength)}</td>
                   <td className="fz-concepto">{e.concept}</td>
                   <td className={`num ${e.amount >= 0 ? 'good' : 'bad'}`}>{conSigno(e.amount)}</td>
                 </tr>

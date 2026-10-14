@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import type { GameState, PreseasonSummaryEntry } from '../game/types';
+import { apodoOApellido } from '../game/nombres';
 import type { GameAction } from '../state/gameReducer';
 import { FilaDePie, type PersonaDePie } from './Busto';
 import { OpenProfileContext, PlayerLink } from './PlayerLink';
@@ -22,13 +23,8 @@ function partir(label: string): [string, string | null] {
   return m ? [m[1], m[2]] : [label, null];
 }
 
-/** En la fila de pie entra el apodo si lo tiene, y si no el apellido. */
-function shortName(name: string): string {
-  const nick = name.match(/"([^"]+)"/);
-  if (nick) return nick[1];
-  const parts = name.split(' ');
-  return parts[parts.length - 1];
-}
+/** En la fila de pie entra el apodo si lo tiene, y si no el apellido (nombres.ts). */
+const shortName = apodoOApellido;
 
 const POS_ABBR: Record<string, string> = {
   Base: 'BAS',

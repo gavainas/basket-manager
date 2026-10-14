@@ -103,7 +103,8 @@ export function settleRivalryAfterMatch(s: GameState): string | null {
 
   if (m.won) {
     s.club.sportPrestige = clamp(s.club.sportPrestige + 2);
-    logClubEvent(s, 'partido', `Revancha cumplida ante ${m.rivalName}: ${m.scoreFor}-${m.scoreAgainst}.`, Math.min(s.week, s.seasonLength));
+    // Sin clampear a la fase regular: una revancha en la final se anota en la final.
+    logClubEvent(s, 'partido', `Revancha cumplida ante ${m.rivalName}: ${m.scoreFor}-${m.scoreAgainst}.`);
     s.news.unshift({ week: s.week, text: `Nos sacamos la espina: le ganamos a ${m.rivalName} y el vestuario lo gritó como un título.`, tone: 'good' });
     if (wasNemesis) s.nemesis = null;
     return `${fechaLabel(s)}: nos sacamos la espina contra ${m.rivalName} (${m.scoreFor}-${m.scoreAgainst}).`;
