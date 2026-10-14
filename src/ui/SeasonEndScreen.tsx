@@ -78,7 +78,10 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
 
             <div className="cierre-cifras">
               <div className="v1-cifra">
-                {ev.position}°<small>de {state.standings.length} en la tabla</small>
+                {ev.position}°
+                <small>
+                  de {state.standings.length} {ev.isGameOver ? 'cuando se retiró' : 'en la tabla'}
+                </small>
               </div>
               <div className="v1-cifra">
                 {ev.record}

@@ -72,8 +72,9 @@ Lo que quedaba de T2 y T3 salió (sep 2026, ver el changelog): la charla y el co
 escriben en la ficha, el inicio avisa al que pasa a "aparece cuando quiere", la libreta
 sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
 
-**Orden:** el punto 4 salió (23/9); lo que sigue es la dirección D (la convocatoria, si
-Gabi la quiere), y el arte cuando Gabi diga.
+**Orden:** el punto 4 salió (23/9) y la UI V1 (28/9) absorbió la dirección D; lo que sigue
+es el arte cuando Gabi diga (la prueba de registro destraba T5 y la UI V2), y mientras
+tanto coherencia, contenido o partir el chunk del juego (701 kB en oct 2026).
 
 ## Decisiones que están en la cancha de Gabi
 
