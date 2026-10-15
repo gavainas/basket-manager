@@ -4,6 +4,11 @@ Una página: **qué sigue y en qué orden**. Lo hecho vive en [`CHANGELOG.md`](C
 el estado del juego medido y el plan de acción completo, en
 [`design/DIAGNOSTICO_2026-09.md`](design/DIAGNOSTICO_2026-09.md).
 
+> **Desde el 15/10/2026 manda [`design/RELEASE_V1_PLAN.md`](design/RELEASE_V1_PLAN.md)**: la
+> auditoría del estado real y el plan de cierre de la V1.0 (alcance, backlog P0–P2, etapas,
+> inventario de assets y decisiones abiertas). Lo de abajo queda como contexto hasta que se
+> reescriba esta página en la Etapa 0 del plan.
+
 ## Dónde estamos (sep 2026)
 
 El juego no está flojo de contenido: tiene liga viva con pirámide de 8 divisionales, mundo

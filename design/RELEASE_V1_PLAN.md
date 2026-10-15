@@ -38,7 +38,7 @@ Para no afirmar que algo funciona cuando sólo se leyó el código:
 | `npm run sim:ligas` | Sin problemas: el mundo cierra en 12 carreras × 8 temporadas |
 | `npm run sim:notas` | Media 6,82 · notas 1–5: 18,7% · 9–10: 6,7% (en objetivo) |
 | `npm audit` | 11 vulnerabilidades (2 críticas) en dependencias de desarrollo (Vite/Vitest/esbuild). No viajan al juego, pero hay que revisarlas antes de un build de Steam |
-| Partida real en navegador | Ver §1.3 |
+| Partida real en navegador | 2 carreras, temporada 1 completa + inicio de la T2, 0 errores de consola. Ver §1.3 |
 
 ---
 
@@ -75,13 +75,52 @@ Leyenda: 🟢 listo para V1 salvo detalles · 🟡 funciona, con huecos que hay 
 | Guardado | 🟡 | [TEST] `guardado.test.ts` (6) · [RUN] migración v23→v24 | Una sola ranura, sin exportar/importar ni respaldo. 16 migraciones viejas sin test. Mensaje "versión vieja" también para saves futuros o rotos. Para Steam: localStorage no sirve (ver §5) |
 | Opciones / plataforma | 🔴 | — | No hay menú de ajustes, pantalla completa, audio ni tutorial (más allá de la intro de la Carrera y los tooltips) |
 
-El detalle con archivo y línea de cada punto está en el §2.
+Además de lo que marca la tabla, la partida en navegador del §1.3 vio funcionar [JUGADO] la
+fundación, la pretemporada de la Carrera, el ciclo semanal completo, el partido en vivo con
+todas sus interacciones, el cierre de temporada, la pretemporada de la T2 y la recarga en
+medio de un partido. El detalle con archivo y línea de cada punto está en el §2.
 
 ### 1.3 Lo que se jugó de verdad en el navegador
 
-*En curso: la partida automatizada en Chromium (fundar, pretemporada, temporada, cierre,
-recarga) se está corriendo y su resultado entra en el próximo commit. Hasta entonces, nada
-de este documento está marcado [JUGADO].*
+Dos carreras jugadas haciendo clic en la interfaz (Playwright sobre Chromium, dev server,
+1440×900 y 1280×720), con decisiones casi siempre por defecto y sin acciones de semana.
+**0 errores, 0 warnings y 0 errores de página en consola en toda la sesión.**
+
+| Paso | Resultado |
+|---|---|
+| Portada vacía → Nueva partida → intro de 3 escenas → acta de fundación (nombre, colores) | ✅ [JUGADO] |
+| Pretemporada de la Carrera: de 7 contactos a 12 confirmados, inscripción en la Liga Universitaria de fiado | ✅ [JUGADO] (Medio y Fácil) |
+| La semana → Convocatoria → Quinteto → Partido en vivo → Informe | ✅ [JUGADO]: reloj, pedir minuto, saltar cuarto, incidencias con elección, cambio de táctica, cambio preparado, simular |
+| Temporada 1 completa (9 fechas) con eventos semanales y playoffs | ✅ [JUGADO] |
+| Todas las pestañas: Tablero, Partidos, Liga (5 subpestañas), Plantel (4), Finanzas, El club, Historia, ficha (5 pestañas), perfil rival | ✅ [JUGADO], sin scroll horizontal a 1440 ni a 1280 |
+| Cierre ("Mala campaña", descenso) → pretemporada T2 (renovaciones, mercado, cambio de liga) → temporada 2 | ✅ [JUGADO] |
+| Recargar en la convocatoria y **en medio de un partido en vivo** y continuar | ✅ [JUGADO]: vuelve a la misma fase y al mismo minuto |
+| Temporada 2 completa | ⛔ No alcanzado: quiebra en la fecha 2 (el bot nunca hizo rifas ni buscó sponsor; final legítimo) |
+| Club en marcha, contratar DT, ascenso, playoffs propios | ⛔ No alcanzado |
+
+**Lo que apareció jugando** (todo confirmado después en el código):
+
+- 🔴 **No se puede fichar a un jugador con pase libre si la caja está en negativo**, y el texto
+  se contradice: "No te alcanza la caja… (necesitás $0)" (`preseason.ts:1016`, `money < cost` con cost 0).
+- Frase rota en el cierre: "Los dan ganar en la hora…" (`evaluation.ts:36`).
+- Nombres en minúscula en textos generados ("primo de rodrigo", "el cuñado de waldemar").
+- **Tres cifras distintas de cuotas al día en la misma semana**: pie "10/13", Finanzas "8 de 13
+  al día · 2 con beca", la cuenta de la semana "9 jugadores al día". Fiado "$80 por semana" en
+  el cierre y "$73" en el Tablero. Formato "$-17" en vez de "-$17"; "arrancaste con $0" cuando fueron $200.
+- **Apellidos repetidos en el plantel** (dos Perdomo, dos García…) en pantallas que muestran
+  sólo el apellido: un aviso de cuota apuntaba a un García y Finanzas mostraba al otro.
+- 4 de los 10 pares de colores de la fundación se llaman "Colores" (`CareerSetup.tsx:34`
+  nombra 6; `CLUB_COLORS` tiene 10).
+- **Choque de colores**: fundado verde y blanco, el primer rival es verde y blanco y en el
+  marcador los escudos casi no se distinguen.
+- **El mundo es idéntico entre carreras**: mismo rival en la fecha 1, mismo árbitro, misma
+  primera incidencia. Hay que confirmar si la semilla del mundo es fija (rejugabilidad).
+- Después de un game over, "Continuar partida" sigue resaltado y lleva otra vez a la pantalla final.
+- La sugerencia del quinteto deja en el banco a quien se le prometió la titularidad (lo avisa, pero no lo respeta).
+- En la negociación, tocar el nombre abre la ficha encima del modal y lo bloquea.
+- A 1280×720: nombres cortados en el partido; en el Quinteto el panel derecho y "Sin lugar" quedan tapados por el pie.
+- Los numeritos de atajo se pisan con las etiquetas del nav ("PARTIDOS²").
+- El guardado crece ~12 KB por semana (311 KB al empezar, 374 KB en la semana 6).
 
 ---
 
@@ -93,9 +132,9 @@ de este documento está marcado [JUGADO].*
   plantel, caja $200 + extra de dificultad, libreta de 6–8 contactos (`carrera.ts:261-274`),
   bola de nieve al firmar (`carrera.ts:281-302`), chance del favor (`carrera.ts:308-318`),
   corte de los ocho sin emergencia (`preseason.ts:1380-1403`). UI: tres escenas + acta de
-  fundación con nombre (40 caracteres) y 6 combinaciones de colores (`CareerSetup.tsx`).
+  fundación con nombre (40 caracteres) y 10 pares de colores, 4 sin nombre (`CareerSetup.tsx:34`).
 - **Verificado**: [TEST] `carrera.test.ts`, 14 casos. [SIM] `sim:carrera`: la Carrera se
-  puede perder y ganar.
+  puede perder y ganar. [JUGADO] fundación e inscripción en Medio y Fácil.
 - **Problemas**:
   - 🔴 **"Empezar de cero" no funda un club**: `SeasonEndScreen.tsx:53` despacha
     `{ type: 'NEW_GAME' }` sin modo ni dificultad, y eso crea Atlético El Parque en partida
@@ -309,8 +348,10 @@ como está hoy.** Si la intención es volver a paneles claros, es una decisión 
 - **Escudos**: procedurales (`crest.ts` + `Crest.tsx`), 5 siluetas × 6 particiones × 5
   figuras, iniciales y estrellas. Funcionan bien en todos los tamaños [CAPTURA]. **No hace
   falta arte**: falta que el jugador pueda elegir o rerolear el suyo (P1-07).
-- **Colores**: el usuario elige 1 de 6 pares sólo en la Carrera; los rivales sacan 1 de 10
-  pares **al azar con reemplazo** (`world.ts:242`): en una liga de 10 se repiten.
+- **Colores**: el usuario elige 1 de 10 pares sólo en la Carrera (todos apagados, sin
+  selector libre); los rivales sacan 1 de los mismos 10 **al azar con reemplazo**
+  (`world.ts:242`): se repiten dentro de una liga y pueden coincidir con los del usuario
+  [JUGADO: verde y blanco contra verde y blanco en la fecha 1].
 - **Dónde se ve el color del club** [CÓDIGO]: el escudo, un aro de 3 px en las fichas de la
   cancha del partido (`partido.css:251-254`), el punto del relato y un ícono de camiseta en
   dos modales. El cromo de la UI nunca lleva colores de club (regla en `styles.css:28`).
@@ -552,6 +593,16 @@ P0 = bloquea la V1.0 · P1 = deseable para V1.0 · P2 = si sobra tiempo.
 | P0-08 | Harness de 10 temporadas con el plantel propio (`sim:carreralarga`) en CI | P0 | — | Reporta por temporada: victorias, técnica media del plantel, caja, divisional; corre en CI en corto | El harness mismo, con umbrales que fallan el CI |
 | P0-09 | Recorrido e2e en navegador (Playwright) en CI: fundar, 1 temporada, cierre, temporada 2 | P0 | D-02 | Corre en <5 min, sin errores de consola, captura cada pantalla a 1440×900 y 1366×768 | El recorrido mismo |
 | P0-10 | Reclutas sin colisión de nombres (pool generado) y búsquedas por id | P1 | — | 20 temporadas de fuzz sin nombres repetidos en el plantel activo | Invariante nuevo en el fuzz |
+| P0-24 | Fichar con pase libre no exige caja positiva | P0 | — | Con caja negativa y costo 0 el fichaje se cierra; el texto nunca dice "necesitás $0" | Test en `pretemporada.test.ts`; patrón "$0)" en el fuzz |
+| P0-25 | Una sola cifra de cuotas al día (pie, Finanzas, cuenta de la semana) y un solo monto de fiado | P0 | — | Las tres pantallas muestran el mismo número en la misma semana, con la misma definición (becados aparte) | Test que compara los tres cálculos |
+| P0-26 | Textos: frase rota del cierre, nombres propios en minúscula, "$-17" → "-$17", "arrancaste con $0" | P0 | — | Ningún caso en 20 partidas de fuzz | Patrones nuevos en `scripts/fuzz.cjs` |
+| P0-27 | Después de un game over la portada no ofrece "Continuar" como acción principal | P0 | — | El CTA de la portada es "Nueva partida" con un save terminado | e2e |
+| P1-15 | Apellidos sin repetir dentro del plantel, o nombre corto desambiguado ("R. García") donde se muestra sólo el apellido | P1 | — | Ningún plantel con dos apellidos iguales mostrados igual | Invariante en el fuzz |
+| P1-16 | Sin choque de colores: ningún rival de la liga del usuario con su mismo par; aro rival legible | P1 | P1-09 | Ningún partido con los dos escudos del mismo par | Test en `mundo.test.ts` |
+| P1-17 | Mundo distinto entre carreras (semilla por partida) | P1 | — | Dos carreras nuevas no comparten rival de la fecha 1, árbitro e incidencia | Test con dos semillas |
+| P1-18 | La sugerencia del quinteto respeta las promesas de titularidad | P1 | — | Con promesa vigente y el jugador disponible, la sugerencia lo pone de titular | Test en `rotacion.test.ts` |
+| P1-19 | 1280×720: nombres del partido y pie del Quinteto sin tapar contenido; modal de negociación no queda bloqueado por la ficha | P1 | — | e2e a 1280×720 sin elementos ocultos | e2e |
+| P1-20 | Los 10 pares de colores con nombre; evaluar selector libre | P1 | — | Ningún tooltip "Colores" | — |
 
 ### Partido y consecuencias
 
@@ -612,12 +663,12 @@ verde y capturas a 1440×900 y 1366×768. Nada va a `main` sin el OK de Gabi.
 | Etapa | Contenido | Cómo se prueba | Arte que necesita |
 |---|---|---|---|
 | **0 · Red de seguridad** | P0-08 (sim de 10 temporadas), P0-09 (e2e, si D-02), P0-07 (migraciones), P0-23 (docs) | Las herramientas nuevas corren en CI y dan la línea de base | Nada |
-| **1 · El ciclo no se rompe** | P0-01, P0-02, P0-03, P0-05, P0-06, P0-10 | e2e: fundar → 3 temporadas → empezar de cero; tests nuevos | Nada |
+| **1 · El ciclo no se rompe** | P0-01, P0-02, P0-03, P0-05, P0-06, P0-10, P0-24 a P0-27 | e2e: fundar → 3 temporadas → empezar de cero; tests nuevos | Nada |
 | **2 · El partido dice la verdad** | P0-11, P0-12, P0-13, P0-14, P0-15 | `sim` antes/después en la misma tabla; tests de tramos | Nada |
-| **3 · La gestión se ve** | P0-04, P0-16, P0-17, P1-07, P1-08, P1-09 | sim de 10 temporadas en banda; e2e de liberar y de fundar con escudo elegido | Nada |
+| **3 · La gestión se ve** | P0-04, P0-16, P0-17, P1-07, P1-08, P1-09, P1-15 a P1-18, P1-20 | sim de 10 temporadas en banda; e2e de liberar y de fundar con escudo elegido | Nada |
 | **4 · Listo para recibir arte** | P0-18, P0-19, P0-20, P0-21, P0-22, P1-10 | Capturas idénticas a las de hoy (no cambia lo que se ve); `arte.test.ts` | Capas de prueba hechas en código |
 | **5 · Arte V1** (en paralelo desde que arranca la Etapa 4) | Integración de P0 de §6.2, después P1 | Capturas a 1440, 1366 y 2560; Gabi aprueba cada lote | Lo de §6.2 |
-| **6 · Profundidad deseable** | P1-01 a P1-06, P1-11 a P1-14 | Tests y sim | Lo P1 restante |
+| **6 · Profundidad deseable** | P1-01 a P1-06, P1-11 a P1-14, P1-19 | Tests y sim | Lo P1 restante |
 | **7 · Release candidate** | Partida completa a mano en los dos modos y tres dificultades, 5 temporadas; corrección de lo que aparezca; `npm audit`; versión 1.0.0 en `package.json` | Checklist de §9 | — |
 
 **Orden recomendado**: 0 → 1 → 2 → 3 → 4, con el arte (Etapa 5) empezando en paralelo en
