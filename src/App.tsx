@@ -2,7 +2,10 @@ import { useEffect, useReducer, useState } from 'react';
 import { gameReducer } from './state/gameReducer';
 import { clearSave, hasSave, loadGame, saveGame } from './persistence/storage';
 import { Hub } from './ui/Hub';
+import { ClubEditor } from './ui/ClubEditor';
 import { ClubView } from './ui/ClubView';
+import { IdentityTheme } from './ui/IdentityTheme';
+import { crestDesignOf, identityOf } from './game/identity';
 import { RosterView } from './ui/RosterView';
 import { FinancesView } from './ui/FinancesView';
 import { LeagueView } from './ui/LeagueView';
@@ -181,6 +184,11 @@ export default function App() {
   if (window.location.hash === '#retratos') return <AvatarGallery />;
   if (window.location.hash === '#escudos') return <CrestGallery />;
   const [tab, setTab] = useState<Tab>('resumen');
+  /** Modo elegido en el menú mientras el manager funda el club en el editor. */
+  const [nueva, setNueva] = useState<{
+    type: 'NEW_GAME' | 'NEW_GAME_PRESEASON';
+    difficulty: AbsenceDifficulty;
+  } | null>(null);
   /* Ancla pedida por el tile del inicio: la vista la marca con `data-focus` y
      el efecto de abajo la trae al centro apenas se monta. */
   const [focus, setFocus] = useState<AppFocus | null>(null);
@@ -224,6 +232,9 @@ export default function App() {
   };
 
   if (!state) {
+    // Elegido el modo, el paso siguiente es fundar el club: el editor se abre
+    // antes de crear la partida, así la identidad entra en el estado desde el
+    // primer momento y no hay que migrar nada después.
     const startNew = (type: 'NEW_GAME' | 'NEW_GAME_PRESEASON', difficulty: AbsenceDifficulty) => {
       if (hasSave()) {
         setConfirmReq({
@@ -232,12 +243,34 @@ export default function App() {
           confirmLabel: 'Empezar de nuevo',
           danger: true,
           icon: '⚠️',
-          onConfirm: () => dispatch({ type, difficulty }),
+          onConfirm: () => setNueva({ type, difficulty }),
         });
         return;
       }
-      dispatch({ type, difficulty });
+      setNueva({ type, difficulty });
     };
+
+    if (nueva) {
+      return (
+        <>
+          <ClubEditor
+            modeLabel={
+              nueva.type === 'NEW_GAME_PRESEASON'
+                ? 'Nueva partida · armás el plantel en la pretemporada'
+                : 'Nueva partida directa · plantel ya armado'
+            }
+            difficultyLabel={DIFFICULTY_INFO[nueva.difficulty].label}
+            onCancel={() => setNueva(null)}
+            onConfirm={(identity) => {
+              dispatch({ type: nueva.type, difficulty: nueva.difficulty, identity });
+              setNueva(null);
+            }}
+          />
+          <ConfirmDialog req={confirmReq} onClose={() => setConfirmReq(null)} />
+        </>
+      );
+    }
+
     return (
       <>
         <MainMenu
@@ -271,7 +304,10 @@ export default function App() {
         className="fondo-app"
         style={{ backgroundImage: `url(${import.meta.env.BASE_URL}arte/${FONDO})` }}
       />
-      {screen}
+      {/* Los colores del club visten todas las pantallas de la partida —no el
+          menú principal, que es del juego y no de ningún club. El contenedor no
+          genera caja (display: contents), así que solo aporta las variables. */}
+      <IdentityTheme identity={identityOf(state)}>{screen}</IdentityTheme>
       {profileId && <PlayerProfile state={state} playerId={profileId} onClose={() => setProfileId(null)} />}
       {rivalProfileId && (
         <RivalProfile state={state} rivalId={rivalProfileId} onClose={() => setRivalProfileId(null)} />
@@ -323,28 +359,31 @@ export default function App() {
     state.week <= state.seasonLength
       ? `${Math.min(state.week, state.seasonLength)}`
       : weekLabel(state.week, state.seasonLength);
+  const identity = identityOf(state);
+  const lugarClub = [identity.neighborhood, identity.city].filter(Boolean).join(' · ');
 
   return withProviders(
     <>
       <header className="topbar">
         <div className="topbar-inner">
           <div className="marca">
-            {userClub && (
-              <Crest
-                seed={userClub.id}
-                name={userClub.name}
-                colors={userClub.colors}
-                founded={userClub.founded}
-                size={38}
-              />
-            )}
+            {/* El escudo del encabezado es el que eligió el manager: mismo
+                componente que el resto del juego, con el diseño de la identidad
+                en vez del derivado del id. */}
+            <Crest
+              seed={USER_CLUB_ID}
+              name={identity.name}
+              colors={[identity.colors.primary, identity.colors.secondary]}
+              design={crestDesignOf(identity)}
+              size={38}
+            />
             <div>
               <div className="club-name">
                 <ClubLink id={USER_CLUB_ID}>{state.club.name}</ClubLink>
               </div>
               <div className="temporada">
                 Temporada {state.seasonNumber}
-                {userClub ? ` · fundado en ${userClub.founded}` : ''}
+                {lugarClub ? ` · ${lugarClub}` : userClub ? ` · fundado en ${userClub.founded}` : ''}
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 // Tipos centrales del juego. Todo el estado es serializable a JSON (LocalStorage).
 
 import type { Appearance } from './appearance';
+import type { ClubIdentity } from './identity';
 
 export type Position = 'Base' | 'Escolta' | 'Alero' | 'Ala-Pívot' | 'Pívot';
 
@@ -186,6 +187,13 @@ export interface Player {
 
 export interface Club {
   name: string;
+  /**
+   * Identidad elegida al fundar el club (ver game/identity.ts). Opcional: las
+   * partidas guardadas antes de que existiera el editor no la traen y usan la
+   * identidad por defecto derivada de su nombre — por eso no hay migración ni
+   * sube `SAVE_VERSION`.
+   */
+  identity?: ClubIdentity;
   money: number;
   socialClimate: number; // ambiente social 0-100
   organization: number; // 0-100

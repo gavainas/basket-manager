@@ -857,14 +857,18 @@ button.danger {
 }
 
 /* Retrato ilustrado (ver ui/Retrato.tsx). El arte viene recortado, sin fondo:
-   el azul lo pone esta caja, plano y siempre el mismo — no es el color del club
-   ni el de una sección, es el fondo de la foto de ficha. */
+   el color lo pone esta caja. Es el del club (`--club-portrait`, ver
+   ui/IdentityTheme.tsx) — la foto de ficha es lo más parecido a la equipación
+   que podemos vestir con la estructura actual. El degradado va en overlay y no
+   en dos hex, así cualquier color del club queda con la misma profundidad.
+   El azul del fallback es para las pantallas que no están dentro del tema. */
 .retrato {
   display: block;
   flex: none;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, #3c6e9e 0%, #2a5075 100%);
+  background-color: var(--club-portrait, #35668f);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.26));
   overflow: hidden;
 }
 
@@ -875,9 +879,11 @@ button.danger {
   object-fit: cover;
 }
 
-/* Variantes para los repetidos del mismo arquetipo (ver ui/Retrato.tsx). */
+/* Variantes para los repetidos del mismo arquetipo (ver ui/Retrato.tsx). Con
+   el color del club encima, la variante cambia la luz, no el tono: así sigue
+   siendo el mismo club en las catorce fichas. */
 .retrato.v1 {
-  background: linear-gradient(180deg, #4a7a94 0%, #2f5a6d 100%);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.14));
 }
 
 .retrato.v1 img {
@@ -885,7 +891,7 @@ button.danger {
 }
 
 .retrato.v2 {
-  background: linear-gradient(180deg, #3a5d92 0%, #27406b 100%);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.4));
 }
 
 .hub-jug-pos {
@@ -1803,6 +1809,401 @@ tr.sheet-group td {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
   background: var(--bg);
+}
+
+/* ---------- Editor del club (ui/ClubEditor.tsx) ---------- */
+
+.editor-screen {
+  min-height: 100vh;
+  padding: 1.2rem 1.4rem 2rem;
+  background: var(--chrome);
+  color: var(--text);
+}
+
+.editor-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.editor-top h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 2rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.editor-sub {
+  margin: 0.2rem 0 0;
+  color: var(--text-faint);
+  font-size: 0.9rem;
+}
+
+.ce-volver {
+  margin-left: auto;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border-color: var(--chrome-linea);
+  color: var(--text-faint);
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  padding: 0.45rem 0.9rem;
+}
+
+.ce-volver:hover {
+  background: var(--sec-ajustes);
+  color: var(--text-light);
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
+  gap: 1rem;
+  align-items: start;
+}
+
+.editor-form,
+.editor-preview .card {
+  --sec: var(--sec-plantel);
+}
+
+/* La vista previa SÍ necesita caja propia: es una columna del grid y en el
+   celular se reordena. Pisa el `display: contents` que trae .club-theme. */
+.club-theme.editor-preview {
+  display: block;
+  position: sticky;
+  top: 1rem;
+}
+
+.editor-preview .card {
+  --sec: var(--sec-tablero);
+}
+
+.ce-campo {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.ce-label {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.25rem;
+}
+
+.ce-campo input[type='text'] {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.ce-campo input[type='text']:focus {
+  outline: 2px solid var(--sec-plantel);
+  outline-offset: -2px;
+}
+
+.ce-iniciales {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-family: var(--display);
+  font-size: 1.1rem;
+}
+
+.ce-hint {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.76rem;
+  color: var(--text-faint);
+}
+
+.ce-error {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  color: var(--bad);
+}
+
+.ce-fila {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 0.6rem;
+}
+
+.ce-sub {
+  margin-top: 1.1rem;
+}
+
+.ce-presets {
+  margin-bottom: 0.9rem;
+}
+
+.ce-preset-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.ce-preset {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.6rem 0.3rem 0.35rem;
+  font: inherit;
+  font-size: 0.85rem;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.ce-preset:hover {
+  background: var(--bg-soft);
+}
+
+.ce-colores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ce-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.ce-swatch {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.ce-swatch.on {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--text);
+}
+
+.ce-color-libre {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ce-color-libre input[type='color'] {
+  width: 46px;
+  height: 30px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.ce-hex {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.ce-segmentado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.ce-segmentado button {
+  padding: 0.35rem 0.7rem;
+  font: inherit;
+  font-size: 0.85rem;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text);
+}
+
+.ce-segmentado button.on {
+  background: var(--sec-plantel);
+  border-color: var(--sec-plantel);
+  color: var(--text-light);
+}
+
+/* ---------- Vista previa ---------- */
+
+.ce-preview-piezas {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 0.6rem 0 1rem;
+}
+
+.ce-pieza {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ce-pieza-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.ce-muestra {
+  border-top: 1px solid var(--border);
+  padding-top: 0.8rem;
+}
+
+.ce-muestra-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 0.4rem;
+}
+
+/* Muestra del shell: misma estructura que el encabezado real, en chico. */
+.ce-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--chrome);
+  border-bottom: 3px solid var(--club-chrome);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.ce-marca {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ce-club {
+  font-family: var(--display);
+  font-size: 1rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--club-chrome);
+}
+
+.ce-lugar {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.ce-pantalla {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--display);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  border-left: 3px solid var(--sec-plantel);
+  padding-left: 0.5rem;
+}
+
+.ce-muestra-tira {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-top: 0;
+}
+
+.ce-jugador {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.ce-retrato {
+  width: 100%;
+  height: 34px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--club-portrait);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.26));
+}
+
+.ce-jug-nombre {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+}
+
+.ce-muestra-chips {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+
+.ce-nota {
+  font-size: 0.76rem;
+  margin: 0.5rem 0 0;
+}
+
+.ce-empezar {
+  width: 100%;
+  margin-top: 0.9rem;
+  font-family: var(--display);
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.7rem;
+}
+
+@media (max-width: 900px) {
+  .editor-screen {
+    padding: 0.9rem 0.8rem 2rem;
+  }
+
+  .editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* En el celular la vista previa va primero: es lo que se está eligiendo. */
+  .club-theme.editor-preview {
+    position: static;
+    order: -1;
+  }
+
+  .editor-top h1 {
+    font-size: 1.5rem;
+  }
+
+  .ce-fila {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* La imagen se pone por style inline desde App.tsx con import.meta.env.BASE_URL:
@@ -3058,4 +3459,108 @@ button.mini.blue.on {
 
 .ps-who .name {
   font-weight: 600;
+}
+
+/* ---------- Identidad del club ----------
+   (ui/IdentityTheme.tsx · game/identity.ts)
+
+   Va al final del archivo a propósito: estas reglas visten de club piezas que
+   ya tienen su color de área más arriba (la barra, el panel del inicio, la tira
+   del plantel) y tienen que ganar por orden, no por especificidad inflada.
+
+   Lo que NO entra acá, nunca: el semáforo (`--good`, `--warn`, `--bad`), el
+   naranja de acción y los colores de sección. Una lesión es roja en todos los
+   clubes y "Partidos" es azul aunque el club juegue de azul. */
+
+/* El contenedor del tema no genera caja: solo aporta las variables. Así
+   envolver media app no mueve un píxel de layout. */
+.club-theme {
+  display: contents;
+}
+
+/* La barra lleva una banda del color del club: la señal más barata de "este es
+   tu club", y no pelea con los colores de área, que viven adentro. */
+.topbar {
+  border-bottom: 3px solid var(--club-chrome, var(--chrome-linea));
+}
+
+.topbar .marca .club-name .plink {
+  color: var(--club-chrome, var(--text-light));
+}
+
+/* El panel central del inicio se apoya en el color del club. */
+.hub-centro {
+  border-top: 4px solid var(--club-panel, var(--sec-tablero));
+}
+
+/* La tira del plantel es lo más parecido a la equipación: su cabezal toma el
+   color del club en lugar del mostaza de Plantel, porque son TUS jugadores. */
+.hub-plantel .hub-block-title {
+  background: var(--club-panel, var(--sec-plantel));
+  color: var(--club-on-panel, var(--text-light));
+}
+
+.hub-jugador:hover {
+  border-color: var(--club-panel, var(--sec-plantel));
+}
+
+.hub-jugador:focus-visible {
+  outline-color: var(--club-panel, var(--sec-plantel));
+}
+
+/* Chip con los colores del club: para datos del club, nunca para estados. */
+.chip.club {
+  background: var(--club-wash, var(--panel-2));
+  border-color: var(--club-panel, var(--border));
+  color: var(--club-panel, var(--text));
+}
+
+/* La barra de recursos cierra la pantalla con el mismo filete de arriba. */
+.recursos {
+  border-top: 3px solid var(--club-chrome, var(--chrome-linea));
+}
+
+/* En el celular la barra tiene que entrar entera: el nombre del club se achica
+   y se recorta con puntos suspensivos, y Inicio y Salir no se van de pantalla.
+   (El `overflow-x: auto` de .topbar-inner los dejaba fuera de vista.) */
+@media (max-width: 620px) {
+  .topbar-inner {
+    padding: 0 0.6rem;
+    overflow-x: visible;
+  }
+
+  .topbar .marca {
+    min-width: 0;
+    flex-shrink: 1;
+    padding-right: 0.6rem;
+    margin-right: 0.3rem;
+  }
+
+  .topbar .marca > div {
+    min-width: 0;
+  }
+
+  .topbar .marca .club-name {
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .topbar .marca .temporada {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Con poco ancho, el nombre de la pantalla actual lo dice el panel: lo que no
+     puede faltar son los dos caminos de salida. */
+  .pantalla-actual {
+    display: none;
+  }
+
+  .topbar .inicio,
+  .topbar .salir {
+    padding: 0.4rem 0.55rem;
+    letter-spacing: 0.04em;
+  }
 }

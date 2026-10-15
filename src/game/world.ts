@@ -6,6 +6,7 @@
 import { CLUB_COLORS, DIVISIONS, LEAGUES, USER_LEAGUE_ID } from '../data/worldData';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
 import { Rng, seedFromString } from './rng';
+import { identityOf } from './identity';
 import type {
   AvailabilityProfile,
   Division,
@@ -276,12 +277,19 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
   // La liga del usuario sale de su divisional (Universitaria o la plaza).
   const leagueId = division.leagueId;
 
-  // Club y equipo del usuario.
-  world.venues.push({ id: 'vn_user', name: 'Gimnasio del Parque', neighborhood: 'Parque Batlle' });
+  // Club y equipo del usuario: su cancha, su nombre y sus colores salen de la
+  // identidad que eligió al fundarlo (game/identity.ts). Una partida vieja, sin
+  // identidad guardada, recibe la de siempre y queda igual que antes.
+  const identity = identityOf(state);
+  world.venues.push({
+    id: 'vn_user',
+    name: identity.venueName,
+    neighborhood: identity.neighborhood || 'Parque Batlle',
+  });
   world.clubs.push({
     id: USER_CLUB_ID,
     name: state.club.name,
-    colors: CLUB_COLORS[0],
+    colors: [identity.colors.primary, identity.colors.secondary],
     founded: 2026 - (state.seasonNumber - 1) - 1,
     // El prestigio real del usuario vive en state.club; esto es un espejo.
     sportPrestige: state.club.sportPrestige,

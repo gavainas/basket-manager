@@ -4,6 +4,7 @@ import { BALANCE } from '../game/balance';
 import { rivalryWith } from '../game/leagueLife';
 import { activePlayers, clubPosition } from '../game/match';
 import { CAUSE_SHORT } from '../game/mood';
+import { crestDesignOf, identityOf } from '../game/identity';
 import { clubByLegacyId, USER_CLUB_ID, userFixtureOfWeek } from '../game/world';
 import { ClubLink } from './ClubLink';
 import { Crest } from './Crest';
@@ -296,7 +297,7 @@ const PHASE_ACTION: Record<string, string> = {
 export function Hub({ state }: { state: GameState }) {
   const navigate = useContext(NavigateTabContext);
   const watch = watchByTile(state);
-  const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
+  const identity = identityOf(state);
   const row = state.standings.find((r) => r.teamId === 'club')!;
 
   // Tras el partido (matchResult) la semana aún no avanzó: el "próximo" es el que sigue.
@@ -323,15 +324,13 @@ export function Hub({ state }: { state: GameState }) {
 
         <div className="hub-centro">
           <div className="hub-escudo">
-            {userClub && (
-              <Crest
-                seed={userClub.id}
-                name={userClub.name}
-                colors={userClub.colors}
-                founded={userClub.founded}
-                size={132}
-              />
-            )}
+            <Crest
+              seed={USER_CLUB_ID}
+              name={identity.name}
+              colors={[identity.colors.primary, identity.colors.secondary]}
+              design={crestDesignOf(identity)}
+              size={132}
+            />
           </div>
           <h2 className="hub-club">
             <ClubLink id={USER_CLUB_ID}>{state.club.name}</ClubLink>

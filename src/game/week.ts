@@ -17,13 +17,19 @@ import { secondTeamWeeklyTick } from './secondTeam';
 import { logClubEvent, logPlayerEvent } from './timeline';
 import { buildWorld, emptyWorld, syncUserRegistrations } from './world';
 import { Rng } from './rng';
+import { DEFAULT_IDENTITY, type ClubIdentity } from './identity';
 import type { AbsenceDifficulty, ActiveEvent, GameState } from './types';
 
 export const SAVE_VERSION = 23;
 
-export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'medio'): GameState {
+export function createNewGame(
+  seed: number,
+  difficulty: AbsenceDifficulty = 'medio',
+  identity: ClubIdentity = DEFAULT_IDENTITY
+): GameState {
   const rng = new Rng(seed);
   const players = createInitialRoster(rng);
+  const club = identity.name;
   const money = BALANCE.economy.startingMoney - BALANCE.economy.inscriptionFee;
   const starters = suggestStarters(players);
 
@@ -37,7 +43,8 @@ export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'med
     seasonLength: BALANCE.season.weeks,
     phase: 'planning',
     club: {
-      name: 'Atlético El Parque',
+      name: club,
+      identity,
       money,
       socialClimate: 62,
       organization: 50,
@@ -64,7 +71,7 @@ export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'med
     history: [],
     news: [
       { week: 1, text: `Pagamos la inscripción a la liga ($${BALANCE.economy.inscriptionFee}). ¡Arranca la temporada!`, tone: 'neutral' },
-      { week: 1, text: 'Sos el nuevo manager de Atlético El Parque. El club es tuyo: que sobreviva.', tone: 'good' },
+      { week: 1, text: `Sos el nuevo manager de ${club}. El club es tuyo: que sobreviva.`, tone: 'good' },
     ],
     ledger: [
       { week: 1, concept: 'Caja inicial del club', amount: BALANCE.economy.startingMoney },
@@ -72,7 +79,7 @@ export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'med
     ],
     memorableMoments: [],
     clubTimeline: [
-      { season: 1, week: 0, kind: 'hito', text: 'Nace la temporada 1 de Atlético El Parque: el club se inscribe en la liga.' },
+      { season: 1, week: 0, kind: 'hito', text: `Nace la temporada 1 de ${club}: el club se inscribe en la liga.` },
     ],
     playersLeftCount: 0,
     sponsorWeeks: 0,

@@ -12,6 +12,7 @@ import {
   USER_DIVISION_ID,
 } from '../data/worldData';
 import { applyPromotionRelegation } from './promotion';
+import { DEFAULT_IDENTITY, type ClubIdentity } from './identity';
 import { weeklyFee } from './economy';
 import { generateObjectives } from './objectives';
 import { clubPosition, suggestRotation, suggestStarters } from './match';
@@ -281,9 +282,14 @@ export function inscriptionOffer(s: GameState): LeagueOption[] {
 // ---------- Arranques ----------
 
 /** Partida nueva que empieza por la pretemporada (la inscripción se paga al cierre). */
-export function createPreseasonNewGame(seed: number, difficulty: AbsenceDifficulty = 'medio'): GameState {
+export function createPreseasonNewGame(
+  seed: number,
+  difficulty: AbsenceDifficulty = 'medio',
+  identity: ClubIdentity = DEFAULT_IDENTITY
+): GameState {
   const rng = new Rng(seed);
   const players = createInitialRoster(rng);
+  const club = identity.name;
 
   const state: GameState = {
     saveVersion: SAVE_VERSION,
@@ -295,7 +301,8 @@ export function createPreseasonNewGame(seed: number, difficulty: AbsenceDifficul
     seasonLength: BALANCE.season.weeks,
     phase: 'preseason',
     club: {
-      name: 'Atlético El Parque',
+      name: club,
+      identity,
       money: BALANCE.economy.startingMoney,
       socialClimate: 62,
       organization: 50,
@@ -322,12 +329,12 @@ export function createPreseasonNewGame(seed: number, difficulty: AbsenceDifficul
     history: [],
     news: [
       { week: 0, text: 'Arranca la pretemporada: hay que confirmar el plantel e inscribir al club antes de la fecha límite.', tone: 'neutral' },
-      { week: 0, text: 'Sos el nuevo manager de Atlético El Parque. Primero, armá el equipo.', tone: 'good' },
+      { week: 0, text: `Sos el nuevo manager de ${club}. Primero, armá el equipo.`, tone: 'good' },
     ],
     ledger: [{ week: 0, concept: 'Caja inicial del club', amount: BALANCE.economy.startingMoney }],
     memorableMoments: [],
     clubTimeline: [
-      { season: 1, week: 0, kind: 'hito', text: 'Nace Atlético El Parque: hay que armar el plantel para la primera temporada.' },
+      { season: 1, week: 0, kind: 'hito', text: `Nace ${club}: hay que armar el plantel para la primera temporada.` },
     ],
     playersLeftCount: 0,
     sponsorWeeks: 0,
