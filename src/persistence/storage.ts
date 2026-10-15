@@ -10,7 +10,17 @@ import { INITIAL_OTHER_DIVISION, USER_DIVISION_ID } from '../data/worldData';
 import { rollBackground } from '../data/backgrounds';
 import type { GameState } from '../game/types';
 
-const KEY = 'basket-manager-save-v1';
+/**
+ * Clave del guardado.
+ *
+ * La preview de prueba vive en `gavainas.github.io/basket-manager-preview/`, el
+ * **mismo origen** que el juego publicado — y `localStorage` es por origen, no
+ * por carpeta. Sin esto, jugar la preview pisaría la partida del juego de
+ * verdad. El build de preview define `VITE_SAVE_KEY` (ver `.env.preview`) y
+ * queda con su propio cajón; el juego normal no define nada y sigue en la clave
+ * de siempre.
+ */
+const KEY = import.meta.env.VITE_SAVE_KEY || 'basket-manager-save-v1';
 
 /** Devuelve false si el guardado falló (storage bloqueado o lleno). */
 export function saveGame(state: GameState): boolean {

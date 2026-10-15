@@ -111,14 +111,46 @@ La versión publicada (`main` → GitHub Pages) **no se toca**. El workflow actu
 (`.github/workflows/deploy.yml`) sube un único artefacto de Pages por repositorio, así que
 una segunda URL no puede salir de ahí sin reemplazar la primera.
 
-La preview de esta rama se publica como **Artifact de claude.ai** con el contenido de
-`dist/`: una URL privada que abre en computadora y celular, sin instalar nada.
+La preview se publica en un **repositorio aparte**,
+[gavainas/basket-manager-preview](https://github.com/gavainas/basket-manager-preview), que
+contiene solo el resultado compilado y sirve de banco de pruebas para cualquier rama:
 
-- **Guardados aislados**: el juego guarda en `localStorage` bajo `basket-manager-save-v1`,
-  y `localStorage` es por origen. La preview corre en un dominio distinto al de
-  `gavainas.github.io`, así que su partida es otra y no pisa la del juego habitual.
-- **Actualizar**: `npm run build` y volver a publicar el mismo artifact (misma URL).
-- **Retirar**: borrar el artifact. No afecta a `main` ni a la versión publicada.
+**<https://gavainas.github.io/basket-manager-preview/>**
+
+### Guardados aislados
+
+`gavainas.github.io` es el **mismo origen** para el juego y para la preview, y
+`localStorage` se comparte entre carpetas del mismo origen: sin tomar medidas, jugar la
+preview pisaría la partida de verdad.
+
+Por eso la preview se compila en modo `preview`, que define `VITE_SAVE_KEY` (ver
+`.env.preview`) y le da su propia clave de guardado. El juego normal no define nada y
+sigue en `basket-manager-save-v1`. Son dos partidas que no se tocan.
+
+### Actualizar
+
+Desde la rama que se quiera probar:
+
+```bash
+npx vite build --mode preview --base=/basket-manager-preview/
+```
+
+y copiar el contenido de `dist/` a la raíz del repo de preview, commit y push. Pages
+republica solo y la URL no cambia, así que la partida de prueba sobrevive.
+
+> En Git Bash, `--base=/basket-manager-preview/` se convierte en una ruta de Windows y el
+> build sale con rutas rotas. Correrlo desde PowerShell.
+
+### Retirar
+
+Borrar el repositorio de preview, o desactivar Pages en su Settings. No afecta a `main` ni
+a la versión publicada.
+
+### Alternativa
+
+También quedó publicada la misma build como artifact privado de claude.ai:
+<https://claude.ai/artifact/4LYJGL5cqTRuPAJHNUSQMm>. Ahí el origen es distinto, así que el
+aislamiento de guardados es automático.
 
 ## Verificación hecha
 
