@@ -242,18 +242,35 @@ export interface ClubPalette {
 export const CHROME = '#32353a';
 export const PANEL = '#f6f4f1';
 
+/**
+ * De los dos colores del club, el que mejor se planta sobre ese fondo.
+ *
+ * Un club negro y amarillo sobre la barra grafito: si insistimos con el
+ * primario, el negro hay que aclararlo tanto que termina gris y el club deja de
+ * reconocerse. El amarillo ya contrasta solo. Así que primero se elige cuál de
+ * los dos poner, y recién después se lo corrige si todavía no alcanza —
+ * corregir es el último recurso, no el primero.
+ */
+function mejorSobre(primary: string, secondary: string, fondo: string): string {
+  const cp = contrast(primary, fondo);
+  const cs = contrast(secondary, fondo);
+  if (cp >= 4.5) return primary; // el principal alcanza: manda él
+  if (cs >= 4.5) return secondary; // el principal no llega y el vivo sí
+  return cp >= cs ? primary : secondary; // ninguno llega: el menos malo, y se corrige
+}
+
 export function paletteOf(identity: ClubIdentity): ClubPalette {
   const { primary, secondary } = identity.colors;
-  // Si el primario es casi blanco, el que pinta los fondos grandes es el vivo:
-  // un club de camiseta blanca igual tiene que verse en la barra.
+  // Para los fondos grandes (fichas del plantel) manda el principal, salvo que
+  // sea casi blanco: un club de camiseta blanca igual tiene que verse.
   const fuerte = luminance(primary) > 0.72 && luminance(secondary) < luminance(primary) ? secondary : primary;
-  const onPanel = readableOn(fuerte, PANEL);
+  const onPanel = readableOn(mejorSobre(primary, secondary, PANEL), PANEL);
   return {
     primary,
     secondary,
     onPrimary: inkOn(primary),
     onSecondary: inkOn(secondary),
-    onChrome: readableOn(fuerte, CHROME),
+    onChrome: readableOn(mejorSobre(primary, secondary, CHROME), CHROME),
     onPanel,
     onPanelInk: inkOn(onPanel),
     portrait: fuerte,
