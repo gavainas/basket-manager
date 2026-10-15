@@ -93,7 +93,17 @@ export function CaraPlantel({ p, size }: { p: Player; size?: 'chica' }) {
 
 function Renglon({ state, p, indice }: { state: GameState; p: Player; indice: number }) {
   const open = useContext(OpenProfileContext);
-  const nota = playerNotes(state, p)[0];
+  /* La nota del renglón es la que pide algo del manager: cuota, lesión, bronca,
+     minutos. Las de color social —"íntimo de", "no se banca a"— se quedan en el
+     Vestuario, que es su pantalla, y en la ficha.
+
+     Antes entraba la primera nota de cualquier tipo y el plantel inicial
+     mostraba "No se banca a X: mejor no dejarlos marcándose en la práctica"
+     SEIS veces, palabra por palabra, en la misma lista: las afinidades son de a
+     pares, así que cada roce se cuenta dos veces. Doce frases de color tapaban
+     la única que pedía acción (la cuota atrasada) y empujaban la lista 300 px
+     abajo del borde de una notebook. */
+  const nota = playerNotes(state, p).find((n) => n.kind !== 'social');
   const est = estadoPlantel(p);
   const [rol, minutos] = ROL[p.expectedRole];
   const beca = p.feeStatus === 'beca_total' ? 'Beca total' : p.feeStatus === 'beca_parcial' ? 'Beca parcial' : null;
@@ -114,6 +124,8 @@ function Renglon({ state, p, indice }: { state: GameState; p: Player; indice: nu
           <span className="pl-pos">{p.position} · {p.age}</span>
           {est && <span className={`v1-est ${est.cls}`}>{est.label}</span>}
         </span>
+        {/* La segunda línea aparece sólo cuando hay algo que resolver: el
+            renglón que la tiene se distingue de los demás a la primera. */}
         {nota && (
           <span className="pl-nota">
             <HumanNoteRow note={nota} />
