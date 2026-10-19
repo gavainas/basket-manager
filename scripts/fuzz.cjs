@@ -40,7 +40,7 @@ const { createNewGame } = require(path.join(OUT, 'game', 'week.js'));
 const { createPreseasonNewGame, createCareerNewGame } = require(path.join(OUT, 'game', 'preseason.js'));
 const { ACTIONS } = require(path.join(OUT, 'game', 'actions.js'));
 const { ABSENCE_ACTIONS } = require(path.join(OUT, 'game', 'absences.js'));
-const { getEvent } = require(path.join(OUT, 'game', 'events.js'));
+const { EVENTS, getEvent } = require(path.join(OUT, 'game', 'events.js'));
 const { inscriptionOffer } = require(path.join(OUT, 'game', 'preseason.js'));
 const { checkExpansion, eligibleForLeague } = require(path.join(OUT, 'game', 'secondTeam.js'));
 const { gameReducer } = require(path.join(OUT, 'state', 'gameReducer.js'));
@@ -143,6 +143,9 @@ function invariantes(s, donde) {
   }
 }
 
+// Cuántas veces salió cada evento: un evento que nunca sale es un evento que nadie probó.
+const eventosVistos = new Map();
+
 function resolverEventos(s) {
   let guard = 0;
   while (s.pendingEvent || s.eventOutcome) {
@@ -152,6 +155,7 @@ function resolverEventos(s) {
       const texto = def.text(s, s.pendingEvent);
       const opts = def.options(s, s.pendingEvent);
       anotar(`evento ${def.id}`, texto);
+      eventosVistos.set(def.id, (eventosVistos.get(def.id) || 0) + 1);
       for (const o of opts) anotar(`evento ${def.id}`, `${o.label} · ${o.hint ?? ''}`);
       s = paso(s, { type: 'RESOLVE_EVENT', optionIndex: Math.floor(rand() * opts.length) });
     }
@@ -347,6 +351,9 @@ for (const [nombre, re] of patrones) {
   for (const [t, origen] of hits.slice(0, 12)) console.log(`  [${origen}] ${t}`);
 }
 
+const sorteables = EVENTS.filter((e) => !e.chained && e.weight > 0);
+const nuncaSalieron = sorteables.filter((e) => !eventosVistos.has(e.id)).map((e) => e.id);
+console.log(`\neventos distintos que salieron: ${eventosVistos.size} de ${sorteables.length} sorteables${nuncaSalieron.length ? ` (nunca: ${nuncaSalieron.join(', ')})` : ''}`);
 console.log(`\nfechas jugadas: ${jugadas} · problemas del motor: ${problemas.length} · textos distintos: ${textos.size} · textos rotos: ${rotos}`);
 for (const p of [...new Set(problemas)].slice(0, 40)) console.log('- ' + p);
 process.exit(problemas.length + rotos > 0 ? 1 : 0);

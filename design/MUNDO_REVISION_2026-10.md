@@ -267,7 +267,7 @@ Propuesta de orden, por relación esfuerzo/efecto:
    nombres de juego de palabras para la Plaza, +35 y Montevideo F. La ficha
    del rival y la del club los muestran. **Esta es la sesión donde más se nota
    el modelo:** 88 blurbs en una voz consistente.
-3. **Sesión 3, los eventos (C):** los doce eventos y los cuatro momentos.
+3. **Sesión 3, los eventos (C). Hecha el 19/10, ver el changelog:** los doce eventos y los cuatro momentos.
    Cada uno con su línea en el fuzz si introduce un patrón de texto nuevo.
 4. **Sesión 4, las voces (D):** previa, noticias, verano, personajes del club.
 5. **Después, más equipos (E)**, cuando lo de arriba haga que valga la pena
