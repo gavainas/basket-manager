@@ -4,10 +4,16 @@ import { contactoQueVuelve, LO_QUE_PIDE, shortName, vueltaDeLaLibreta } from './
 import { affinity } from './relations';
 import { worstPair } from './socialMap';
 import { fechaLabel, logClubEvent, logPlayerEvent } from './timeline';
-import { marketToPlayer } from '../data/market';
+import { marketToPlayer, worldToMarket } from '../data/market';
 import { createRecruit } from '../data/recruits';
+import { loreOf, RASGOS, type ClubLore } from '../data/clubLore';
+import { DIVISIONS } from '../data/worldData';
+import { refereeOfWeek } from './leagueLife';
 import { bumpGrievance, easeGrievance, sootheGrievance } from './mood';
-import type { ActiveEvent, DelayedNote, GameState, MatchResult, Player, ScheduledEvent, TrialCandidate } from './types';
+import { listaY } from './nombres';
+import { PERSONAJES } from './personajes';
+import { dayLabel, mudarAlClub, teamByLegacyRival, teamRoster, worldPlayerName } from './world';
+import type { ActiveEvent, DelayedNote, GameState, MatchResult, Player, Rival, ScheduledEvent, Team, TrialCandidate, WorldPlayer } from './types';
 import type { Rng } from './rng';
 
 export interface EventOptionDef {
@@ -260,7 +266,7 @@ export const EVENTS: EventDef[] = [
     },
     text: (s, ev) => {
       const p = byId(s, ev.playerId);
-      return `${p.name} acumula ${p.weeksUnpaid} semanas sin pagar la cuota. El tesorero te mira fijo: "¿Y con este qué hacemos?"`;
+      return `${p.name} acumula ${p.weeksUnpaid} semanas sin pagar la cuota. ${PERSONAJES.tesoreraLarga}, te mira fijo con el cuaderno abierto: "¿Y con este qué hacemos?"`;
     },
     options: () => [
       { label: 'Exigirle el pago ya', hint: 'Puede pagar… o calentarse' },
@@ -302,7 +308,7 @@ export const EVENTS: EventDef[] = [
     title: 'Oferta del almacén',
     weight: 6,
     canFire: () => true,
-    text: () => 'El almacenero de la esquina ofrece $120 por única vez a cambio de que el equipo se saque fotos con la gorra de su negocio.',
+    text: () => `${PERSONAJES.almaceneroLargo} de la esquina, ofrece $120 por única vez a cambio de que el equipo se saque fotos con la gorra de su negocio.`,
     options: () => [
       { label: 'Aceptar y posar sonrientes', hint: '+$120, algo de prestigio social' },
       { label: 'Rechazar con elegancia', hint: 'Sin plata, sin compromisos' },
@@ -312,9 +318,9 @@ export const EVENTS: EventDef[] = [
         s.club.money += 120;
         s.ledger.push({ week: s.week, concept: 'Foto con la gorra del almacén', amount: 120 });
         s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
-        return 'Fotos con gorra y sonrisa. $120 para la caja y el almacenero feliz.';
+        return `Fotos con gorra y sonrisa. $120 para la caja y ${PERSONAJES.almacenero} feliz.`;
       }
-      return 'Declinaste con respeto. El almacenero prometió volver "cuando sean primera".';
+      return `Declinaste con respeto. ${PERSONAJES.almacenero} prometió volver "cuando sean primera".`;
     },
   },
   {
@@ -1140,7 +1146,7 @@ export const EVENTS: EventDef[] = [
     text: (s) => {
       const ultimas = s.history.filter((m) => !m.forfeit).slice(-3);
       const marcadores = ultimas.map((m) => `${m.scoreFor}-${m.scoreAgainst}`).join(', ');
-      return `Te citan un martes a las nueve en la sede: los tres de la comisión, el mate y una carpeta abierta. "Tres al hilo (${marcadores}). Nosotros ponemos la cara en el barrio, así que preguntamos: ¿qué está pasando?"`;
+      return `Te citan un martes a las nueve en la sede: los tres de la comisión (${PERSONAJES.comisionLarga}), el mate y una carpeta abierta. "Tres al hilo (${marcadores}). Nosotros ponemos la cara en el barrio, así que preguntamos: ¿qué está pasando?"`;
     },
     options: (s) => [
       { label: 'Dar la cara: mostrarles el plan y los números', hint: 'Ordena el club; la comisión te da tiempo' },
@@ -1200,7 +1206,7 @@ export const EVENTS: EventDef[] = [
     text: (s) => {
       const ultimas = s.history.filter((m) => !m.forfeit).slice(-3);
       const marcadores = ultimas.map((m) => `${m.scoreFor}-${m.scoreAgainst}`).join(', ');
-      return `El del almacén te frena en la esquina con el diario del barrio doblado bajo el brazo: "Tres al hilo (${marcadores}), ¿eh? Acá se está hablando. El lunes va medio barrio a la cancha. ¿Qué hacemos?"`;
+      return `${PERSONAJES.almaceneroLargo}, te frena en la esquina con el diario del barrio doblado bajo el brazo: "Tres al hilo (${marcadores}), ¿eh? Acá se está hablando. El lunes va medio barrio a la cancha. ¿Qué hacemos?"`;
     },
     options: (s) => {
       const n = semanasHastaLaFactura(s);
@@ -1227,7 +1233,7 @@ export const EVENTS: EventDef[] = [
         s.club.sportPrestige = clamp(s.club.sportPrestige + 1);
         for (const p of actives(s).filter((x) => x.personality === 'protagonista')) p.motivation = clamp(p.motivation - 3);
         logClubEvent(s, 'hito', 'Tres al hilo y el manager bajó la espuma: "todavía no ganamos nada".');
-        return '"Todavía no ganamos nada", dijiste, y el del almacén asintió despacio. En el vestuario lo repitieron como consigna; a los que ya se veían campeones les cayó como un balde de agua.';
+        return `"Todavía no ganamos nada", dijiste, y ${PERSONAJES.almacenero} asintió despacio. En el vestuario lo repitieron como consigna; a los que ya se veían campeones les cayó como un balde de agua.`;
       }
       for (const p of actives(s)) p.motivation = clamp(p.motivation + 5);
       s.club.socialClimate = clamp(s.club.socialClimate + 3);
@@ -1254,8 +1260,8 @@ export const EVENTS: EventDef[] = [
       const ganados = desde.filter((m) => m.won).length;
       const marcadores = desde.map((m) => `${m.scoreFor}-${m.scoreAgainst}`).join(', ');
       return promesaCumplida(s, ev)
-        ? `El del almacén te espera con el diario abierto en tu nota: "'Peleamos arriba', dijiste. Y mirá (${marcadores}): ${ganados} de ${desde.length}. Acá te hicieron caso, ¿eh?"`
-        : `El del almacén te muestra tu nota pegada al lado de la caja, con los resultados anotados en birome (${marcadores}): "'Peleamos arriba', decía acá. ${ganados === 0 ? 'Ni una.' : `${ganados} de ${desde.length}.`} El barrio se acuerda, ¿sabés?"`;
+        ? `${PERSONAJES.almacenero} te espera con el diario abierto en tu nota: "'Peleamos arriba', dijiste. Y mirá (${marcadores}): ${ganados} de ${desde.length}. Acá te hicieron caso, ¿eh?"`
+        : `${PERSONAJES.almacenero} te muestra tu nota pegada al lado de la caja, con los resultados anotados en birome (${marcadores}): "'Peleamos arriba', decía acá. ${ganados === 0 ? 'Ni una.' : `${ganados} de ${desde.length}.`} El barrio se acuerda, ¿sabés?"`;
     },
     options: (s, ev) =>
       promesaCumplida(s, ev)
@@ -1310,7 +1316,7 @@ export const EVENTS: EventDef[] = [
        por temporada: la noche queda en la historia del club y `canFire` la
        busca ahí. */
     id: 'cena_propuesta',
-    title: 'El tesorero quiere hacer una cena',
+    title: 'La tesorera quiere hacer una cena',
     weight: 7,
     canFire: (s) =>
       s.week >= 2 &&
@@ -1321,17 +1327,17 @@ export const EVENTS: EventDef[] = [
       !s.clubTimeline.some((e) => e.season === s.seasonNumber && /cena show/i.test(e.text)),
     pickTargets: (s) => ({ playerId: organizadorNatural(s).id }),
     text: (s) =>
-      `El tesorero trae la idea a la sede con el cuaderno abierto: una cena show en el club, la parrilla de la cantina, el hijo de Don Aldo cantando tangos y la tarjeta a $${CENA.precio}. "Se junta plata y se junta gente", dice, y mira la caja: $${s.club.money}. Alguien tiene que llevarla.`,
+      `${PERSONAJES.tesoreraLarga}, trae la idea a la sede con el cuaderno abierto: una cena show en el club, la parrilla de la cantina, el hijo de Don Aldo cantando tangos y la tarjeta a $${CENA.precio}. "Se junta plata y se junta gente", dice, y mira la caja: $${s.club.money}. Alguien tiene que llevarla.`,
     options: (s, ev) => [
       { label: 'Llevarla vos: la parrilla, las tarjetas, el sonido', hint: `$${CENA.gasto} de la caja ahora; el club te ve en todo y se ordena` },
       { label: `Que la organice ${byId(s, ev.playerId).name}`, hint: `$${CENA.gasto} de la caja ahora; el grupo se prende, y si la noche sale mal es su papelón` },
-      { label: 'Ahora no: el club no está para fiestas', hint: 'Sin gasto y sin cena; el tesorero guarda el cuaderno' },
+      { label: 'Ahora no: el club no está para fiestas', hint: `Sin gasto y sin cena; ${PERSONAJES.tesorera} guarda el cuaderno` },
     ],
     resolve: (s, ev, opt) => {
       if (opt === 2) {
         s.club.socialPrestige = clamp(s.club.socialPrestige - 1);
-        logClubEvent(s, 'hito', 'El tesorero propuso una cena show y el club la dejó pasar.');
-        return 'El tesorero cerró el cuaderno sin decir nada. "Cuando quieran", dijo, y en el barrio alguno comentó que el club anda con la persiana medio baja.';
+        logClubEvent(s, 'hito', `${PERSONAJES.tesoreraLarga}, propuso una cena show y el club la dejó pasar.`);
+        return `${PERSONAJES.tesorera} cerró el cuaderno sin decir nada. "Cuando quieran", dijo, y en el barrio alguno comentó que el club anda con la persiana medio baja.`;
       }
       s.club.money -= CENA.gasto;
       s.ledger.push({ week: s.week, concept: 'Cena show: parrilla, sonido y tarjetas', amount: -CENA.gasto });
@@ -1341,7 +1347,7 @@ export const EVENTS: EventDef[] = [
         chain(s, 2, { defId: 'cena_tarjetas', fromWeek: s.week, payload: { manager: 1 } });
         s.news.unshift({ week: s.week, text: `Se anunció la cena show del club para dentro de cuatro semanas. La lleva el manager, tarjeta a $${CENA.precio}.`, tone: 'neutral' });
         logClubEvent(s, 'social', 'El club anunció una cena show, con el manager al frente de todo.');
-        return `Te quedaste con el cuaderno. Parrilla, sonido, tarjetas: en dos semanas se ve cómo viene la venta. El tesorero se fue contento; el vestuario, con la tarjeta en la mano.`;
+        return `Te quedaste con el cuaderno. Parrilla, sonido, tarjetas: en dos semanas se ve cómo viene la venta. ${PERSONAJES.tesorera} se fue contenta; el vestuario, con la tarjeta en la mano.`;
       }
       org.motivation = clamp(org.motivation + 6);
       s.club.socialClimate = clamp(s.club.socialClimate + 3);
@@ -1435,7 +1441,7 @@ export const EVENTS: EventDef[] = [
       if (opt === 0) {
         s.club.organization = clamp(s.club.organization + 3);
         s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
-        desenlace = `Brindis, aplauso para la parrilla y el tesorero leyendo las cuentas con el micrófono: $${Math.max(0, neto)} para la caja.`;
+        desenlace = `Brindis, aplauso para la parrilla y ${PERSONAJES.tesorera} leyendo las cuentas con el micrófono: $${Math.max(0, neto)} para la caja.`;
       } else if (opt === 1) {
         neto -= CENA.ultimaRonda;
         s.club.socialClimate = clamp(s.club.socialClimate + 6);
@@ -1766,7 +1772,694 @@ export const EVENTS: EventDef[] = [
       return `${p.name} asintió sin discutir: "vos manejás la caja". Pero el grupo tenía ganas, y eso no se borra con un sticker.`;
     },
   },
+
+  // ======================================================================
+  // Sesión 3 de design/MUNDO_REVISION_2026-10.md: los eventos que miran al
+  // mundo. Hasta acá los eventos eran del vestuario, la caja y el plantel;
+  // estos tienen del otro lado un club con nombre, un delegado, un DT, una
+  // cancha, un árbitro o una figura del mundo, y usan lo que el mundo ya sabe
+  // (clubLore.ts, leagueLife.ts, world.ts). Ninguno agrega campos al save.
+  // ======================================================================
+
+  {
+    id: 'cambio_de_dia',
+    title: 'El delegado rival pide cambiar el día',
+    weight: 6,
+    canFire: (s) => {
+      const r = rivalDeLaSemana(s);
+      return !!r && r.division.altDays.length > 0;
+    },
+    text: (s) => {
+      const r = rivalDeLaSemana(s)!;
+      const alt = r.division.altDays[0];
+      return `${mayus(r.team.delegate)} (delegado de ${r.rival.name}) te llama un martes a la noche: "El ${r.division.gameDay} nos quedamos sin ${r.lore?.cancha ?? 'gimnasio'}. ¿Jugamos el ${alt}? La liga lo acepta si firmamos los dos".`;
+    },
+    options: (s) => {
+      const r = rivalDeLaSemana(s)!;
+      const alt = r.division.altDays[0];
+      const pisados = actives(s).filter((p) => p.status !== 'lesionado' && p.agenda?.blockedDays.includes(alt));
+      return [
+        {
+          label: `Firmar el cambio al ${alt}`,
+          hint: pisados.length === 0 ? 'A nadie del plantel le pisa ese día' : `A ${listaY(pisados.map((p) => apellidoDe(p.name)))} le${pisados.length > 1 ? 's' : ''} pisa ese día`,
+        },
+        { label: '"La fecha es la fecha": que se arreglen', hint: 'El delegado se lo anota, y los delegados hablan entre ellos' },
+      ];
+    },
+    resolve: (s, _ev, opt) => {
+      const r = rivalDeLaSemana(s)!;
+      const alt = r.division.altDays[0];
+      if (opt === 0) {
+        const pisados = actives(s).filter((p) => p.status !== 'lesionado' && p.agenda?.blockedDays.includes(alt));
+        for (const p of pisados) {
+          p.status = 'lesionado';
+          p.injuryWeeks = 1;
+          p.injuryReason = 'laboral';
+          logPlayerEvent(p, s.seasonNumber, s.week, 'ausencia', `La fecha se pasó al ${alt} y ese día no puede: no está esta semana.`);
+        }
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 1);
+        logClubEvent(s, 'social', `El club le firmó a ${r.rival.name} el cambio de la fecha al ${alt}.`);
+        if (pisados.length === 0) {
+          return `Firmaste y ${r.team.delegate} te mandó tres emojis de aplauso. A nadie del plantel le pisaba el ${alt}: sale gratis, y en la liga se acuerdan de quién ayuda.`;
+        }
+        return `Firmaste. ${mayus(r.team.delegate)} te agradeció por audio, y ${listaY(pisados.map((p) => p.name))} ${pisados.length > 1 ? 'avisaron' : 'avisó'} enseguida: los ${dayLabel(alt)} no ${pisados.length > 1 ? 'pueden' : 'puede'}. Esta semana ${pisados.length > 1 ? 'no están' : 'no está'}.`;
+      }
+      s.club.organization = clamp(s.club.organization + 2);
+      later(s, 1, {
+        text: `${mayus(r.team.delegate)} (${r.rival.name}) anduvo diciendo en el grupo de delegados que ${s.club.name} "no ayuda a nadie". Dos delegados le dieron la razón.`,
+        tone: 'neutral',
+      });
+      return `"La fecha es la fecha", le dijiste, y ${r.team.delegate} cortó con un "bueno, está bien" de esos que no están bien. Jugaron el ${r.division.gameDay} con lo que tenían.`;
+    },
+  },
+  {
+    id: 'gimnasio_rival_inundado',
+    title: 'Se les llovió el gimnasio',
+    weight: 5,
+    canFire: (s) => {
+      const r = rivalDeLaSemana(s);
+      if (!r || s.week % 2 === 1) return false; // esta semana somos visitantes
+      const rasgos = r.lore?.rasgos ?? [];
+      return rasgos.includes('cancha_abierta') || rasgos.includes('agua_fria') || s.weekMoment?.id === 'tormenta';
+    },
+    text: (s) => {
+      const r = rivalDeLaSemana(s)!;
+      return `Se les llovió la cancha: en ${r.lore?.cancha ?? 'el gimnasio de ellos'} hay un balde en la línea de tres y el piso levantado. ${mayus(r.team.delegate)} (${r.rival.name}) pide jugar la fecha en nuestra cancha, de local en casa ajena. "Ustedes cobran la cantina, nosotros ponemos la planilla".`;
+    },
+    options: () => [
+      { label: 'Prestar la cancha y abrir la cantina', hint: 'Entra plata del barrio; el club anda a las corridas' },
+      { label: 'Prestarla sin cobrarles nada', hint: 'Un favor que la liga anota' },
+      { label: 'Que lo resuelva la liga', hint: 'Sin trabajo extra, y sin amigos nuevos' },
+    ],
+    resolve: (s, _ev, opt) => {
+      const r = rivalDeLaSemana(s)!;
+      if (opt === 0) {
+        const recaudado = 20 + Math.round(s.club.socialPrestige / 4);
+        s.club.money += recaudado;
+        s.ledger.push({ week: s.week, concept: `Cantina del partido prestado a ${r.rival.name}`, amount: recaudado });
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
+        s.club.organization = clamp(s.club.organization - 2);
+        return `Se jugó en casa con las dos hinchadas y la cantina a full: $${recaudado} para la caja. Eso sí, ${PERSONAJES.cancheroLargo}, pidió que no se repita: "dos planillas, dos delegados y un solo vestuario".`;
+      }
+      if (opt === 1) {
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 3);
+        s.club.socialClimate = clamp(s.club.socialClimate + 2);
+        later(s, 2, {
+          text: `${mayus(r.team.delegate)} (${r.rival.name}) mandó al grupo del club una caja de alfajores "por la cancha". Se terminaron en un entrenamiento.`,
+          tone: 'good',
+          climate: 1,
+        });
+        return `Les prestaste la cancha sin cobrar un peso. ${mayus(r.team.delegate)} no sabía qué decir, y en la liga lo dijeron por él: "así se hace".`;
+      }
+      s.club.socialPrestige = clamp(s.club.socialPrestige - 2);
+      later(s, 1, {
+        text: `La liga les consiguió cancha a ${r.rival.name} a último momento, lejos y sin tribuna. ${mayus(r.team.delegate)} te saludó seco en la planilla.`,
+        tone: 'neutral',
+      });
+      return `Le dijiste ${al(r.team.delegate)} que lo resuelva la liga. Lo resolvieron, pero en la liga quedó la frase: "${s.club.name} no presta ni la cancha".`;
+    },
+  },
+  {
+    id: 'dt_rival_tienta',
+    title: 'El DT de enfrente se quedó mirando',
+    weight: 6,
+    canFire: (s) => {
+      const r = rivalDeLaSemana(s);
+      return !!r && !!r.team.coachName && figuras(s).some((p) => p.technique >= 64 && p.status !== 'lesionado');
+    },
+    pickTargets: (s, rng) => {
+      const cands = figuras(s).filter((p) => p.technique >= 64 && p.status !== 'lesionado');
+      return cands.length ? { playerId: rng.pick(cands).id } : null;
+    },
+    text: (s, ev) => {
+      const r = rivalDeLaSemana(s)!;
+      const p = byId(s, ev.playerId);
+      return `${r.team.coachName}, el DT de ${r.rival.name}, se quedó mirando el entrenamiento desde la puerta. A la noche le escribió a ${p.name}: "Con nosotros jugás los cuarenta minutos y la ficha la pone el club". ${p.name} te mostró el mensaje.`;
+    },
+    options: (s) => {
+      const r = rivalDeLaSemana(s)!;
+      return [
+        { label: 'Pedirle de frente que se quede', hint: 'Funciona con los que tienen amigos acá' },
+        { label: `Ir a hablar con ${r.team.coachName}: "a mis jugadores no"`, hint: 'Marca la cancha en la liga; alguno siente que decidís por él' },
+        { label: 'Dejar que decida solo', hint: 'Los leales se quedan; los demás, depende' },
+      ];
+    },
+    resolve: (s, ev, opt, rng) => {
+      const r = rivalDeLaSemana(s)!;
+      const p = byId(s, ev.playerId);
+      const arraigado = p.personality === 'leal' || p.personality === 'veterano' || p.personality === 'cumplidor';
+      if (opt === 0) {
+        if (rng.chance(0.45 + p.social / 300 + (arraigado ? 0.3 : 0))) {
+          p.motivation = clamp(p.motivation + 8);
+          if (p.personality === 'protagonista') p.expectedRole = 'titular';
+          calm(p);
+          return `${p.name} te escuchó y borró el mensaje delante tuyo: "Acá tengo amigos, me quedo". ${p.personality === 'protagonista' ? 'Ahora espera ser el dueño de la pelota.' : 'No hizo falta prometerle nada.'}`;
+        }
+        p.motivation = clamp(p.motivation - 3);
+        later(s, 2, {
+          playerId: p.id,
+          text: `${p.name} fue a entrenar un martes con ${r.rival.name}, "para ver cómo es". Volvió callado.`,
+          tone: 'bad',
+          motivation: -2,
+        });
+        return `${p.name} dijo "lo pienso" y se fue mirando el celular. No suena bien.`;
+      }
+      if (opt === 1) {
+        s.club.sportPrestige = clamp(s.club.sportPrestige + 1);
+        if (p.personality === 'protagonista' || p.personality === 'mercenario') {
+          p.motivation = clamp(p.motivation - 5);
+          bumpGrievance(s, p, 'trato', { note: 'El manager habló con otro DT por él, sin preguntarle.' });
+          return `${r.team.coachName} se disculpó con las manos en alto: "era un mensaje nomás". ${p.name}, en cambio, se enteró de que hablaste por él y no le gustó: "¿Yo no tengo boca?".`;
+        }
+        p.motivation = clamp(p.motivation + 3);
+        return `${r.team.coachName} se hizo el distraído: "era un mensaje nomás". ${p.name} se enteró de que fuiste a hablar por él y se lo tomó bien: "Gracias por bancarme".`;
+      }
+      if (arraigado || rng.chance(0.65)) {
+        p.motivation = clamp(p.motivation + 2);
+        return `${p.name} le contestó solo: "Gracias, pero acá estoy bien". Lo contó en el grupo con captura y todo.`;
+      }
+      makeLeave(s, p, `Se fue a ${r.rival.name}: el DT de ellos le ofreció la ficha y los cuarenta minutos.`);
+      s.club.sportPrestige = clamp(s.club.sportPrestige - 3);
+      return `${p.name} se fue a ${r.rival.name} y lo vas a tener enfrente. Lo avisó por el grupo, con un "gracias por todo" que nadie contestó.`;
+    },
+  },
+  {
+    id: 'asamblea_liga',
+    title: 'Asamblea de delegados',
+    weight: 7,
+    canFire: (s) =>
+      s.week >= 3 &&
+      s.week < s.seasonLength &&
+      s.rivals.length >= 4 &&
+      !(s.eventLog ?? []).some((e) => e.id === 'asamblea_liga' && e.season === s.seasonNumber),
+    text: (s) =>
+      `La liga cita a asamblea de delegados en la sede, con mate y un orden del día en tres puntos: adelantar el horario de la fecha una hora, una cuota extra de $40 por club para pagar mejores árbitros, y multar al que presente la planilla con seis. Sos uno de los ${s.rivals.length + 1} votos.`,
+    options: () => [
+      { label: 'Votar el horario más temprano', hint: 'Los que solo llegan a los de 22:00 lo van a sufrir si sale' },
+      { label: 'Votar los árbitros pagos', hint: 'Cuesta $40 si sale; la liga se pone seria' },
+      { label: 'Votar la multa al que juega con seis', hint: 'Ordena la liga; a vos te conviene si tenés banco' },
+    ],
+    resolve: (s, _ev, opt) => {
+      const mociones = ['horario', 'arbitros', 'seis'] as const;
+      const total = s.rivals.length + 1;
+      const resultados = mociones.map((m, i) => {
+        const aFavor = s.rivals.filter((r) => hashVoto(`${r.name}|${m}|s${s.seasonNumber}`) < 0.5);
+        const votos = aFavor.length + (i === opt ? 1 : 0);
+        return { m, votos, pasa: votos * 2 > total, aliados: aFavor.map((r) => teamByLegacyRival(s.world, r.id)?.delegate ?? r.name) };
+      });
+      const mia = resultados[opt];
+      const partes: string[] = [];
+      if (mia.pasa) {
+        s.club.sportPrestige = clamp(s.club.sportPrestige + 1);
+        partes.push(`Tu moción salió, ${mia.votos} a ${total - mia.votos}${mia.aliados.length ? `, con ${listaY(mia.aliados.slice(0, 2))} de tu lado` : ''}.`);
+      } else {
+        partes.push(`Tu moción perdió, ${mia.votos} a ${total - mia.votos}${mia.aliados.length ? `; te acompañaron ${listaY(mia.aliados.slice(0, 2))}` : ': votaste solo'}.`);
+      }
+      for (const res of resultados) {
+        if (!res.pasa) continue;
+        if (res.m === 'horario') {
+          const pisados = actives(s).filter((p) => p.agenda?.onlyTimes.length);
+          for (const p of pisados) p.motivation = clamp(p.motivation - 3);
+          partes.push(`Se adelanta el horario de la fecha${pisados.length ? `: ${listaY(pisados.map((p) => apellidoDe(p.name)))} ya ${pisados.length > 1 ? 'preguntaron' : 'preguntó'} cómo hace para salir antes del laburo` : ''}.`);
+        } else if (res.m === 'arbitros') {
+          s.club.money -= 40;
+          s.ledger.push({ week: s.week, concept: 'Cuota extra de la liga: árbitros', amount: -40 });
+          partes.push('Hay cuota extra para los árbitros: $40 que salieron de la caja esa misma noche.');
+        } else {
+          s.club.organization = clamp(s.club.organization + 2);
+          partes.push('Desde la fecha que viene, planilla con seis es multa. Alguien aplaudió; era de Círculo.');
+        }
+      }
+      logClubEvent(s, 'hito', `Asamblea de delegados: ${partes[0]}`);
+      return partes.join(' ');
+    },
+  },
+  {
+    id: 'cantina_rival',
+    title: 'El tercer tiempo de ellos',
+    weight: 6,
+    canFire: (s) => {
+      const m = s.lastMatch;
+      if (!m || m.forfeit || m.week % 2 === 1) return false; // la fecha pasada fuimos visitantes
+      const rasgos = loreOf(m.rivalName)?.rasgos ?? [];
+      return rasgos.includes('cantina') || rasgos.includes('tercer_tiempo');
+    },
+    text: (s) => {
+      const m = s.lastMatch!;
+      const team = teamByLegacyRival(s.world, m.rivalId);
+      const lore = loreOf(m.rivalName);
+      return `Después del partido en ${lore?.cancha ?? 'la cancha de ellos'}, ${team?.delegate ?? 'el delegado de ellos'} abrió la cantina: "Quédense, muchachos, que hay chorizos". Medio plantel ya está sentado y el otro medio mira el reloj.`;
+    },
+    options: () => [
+      { label: 'Quedarse: el club paga una ronda ($25)', hint: 'Junta al grupo, y en la cantina se escuchan cosas' },
+      { label: 'Quedarse un rato, sin gastar', hint: 'Cumple con la vecindad' },
+      { label: 'Levantar al plantel: mañana se labura', hint: 'Los cumplidores lo agradecen; los sociales no' },
+    ],
+    resolve: (s, _ev, opt, rng) => {
+      const m = s.lastMatch!;
+      const team = teamByLegacyRival(s.world, m.rivalId);
+      if (opt === 0) {
+        const cost = Math.min(25, Math.max(0, s.club.money));
+        s.club.money -= cost;
+        if (cost > 0) s.ledger.push({ week: s.week, concept: `Ronda en la cantina de ${m.rivalName}`, amount: -cost });
+        s.club.socialClimate = clamp(s.club.socialClimate + 5);
+        for (const p of rng.shuffle(actives(s)).slice(0, 3)) p.social = clamp(p.social + 1);
+        const roster = team ? teamRoster(s.world, team.id) : [];
+        const roto = roster.find((wp) => wp.injuryWeeks > 0);
+        if (roto) {
+          return `Chorizos, una ronda y la mesa larga. Entre vaso y vaso, uno de ellos soltó que ${worldPlayerName(roto)} está roto y no vuelve por ${roto.injuryWeeks === 1 ? 'una semana' : `${roto.injuryWeeks} semanas`}. Dato guardado.`;
+        }
+        const chismoso = roster.length ? rng.pick(roster) : null;
+        return `Chorizos, una ronda y la mesa larga. ${chismoso ? `${worldPlayerName(chismoso)} terminó contando quién no se banca a quién en su vestuario.` : 'Se habló de todo menos de básquet.'} El grupo volvió a las dos de la mañana, cantando.`;
+      }
+      if (opt === 1) {
+        s.club.socialClimate = clamp(s.club.socialClimate + 2);
+        return 'Un chorizo cada uno, de parado, y a los autos. Quedó bien con los vecinos y nadie se quejó.';
+      }
+      for (const p of actives(s)) {
+        if (p.personality === 'cumplidor') p.motivation = clamp(p.motivation + 1);
+        if (p.personality === 'social') p.motivation = clamp(p.motivation - 2);
+      }
+      return `"Mañana se labura", dijiste, y los sociales se levantaron mirando la parrilla. ${mayus(team?.delegate ?? 'el delegado de ellos')} guardó los chorizos para la semana que viene.`;
+    },
+  },
+  {
+    id: 'clasico_barrio',
+    title: 'El clásico del barrio',
+    weight: 9,
+    canFire: (s) => {
+      const r = rivalDeLaSemana(s);
+      const barrio = s.world.venues.find((v) => v.id === 'vn_user')?.neighborhood;
+      return !!r && !!barrio && r.lore?.barrio === barrio;
+    },
+    text: (s) => {
+      const r = rivalDeLaSemana(s)!;
+      return `${r.rival.name} juega a seis cuadras: es el clásico del barrio. El del almacén ya puso el cartel en la vidriera y ${r.team.delegate} anda diciendo que ellos son "los del barrio de verdad".`;
+    },
+    options: () => [
+      { label: 'Abrir la cancha y pasar la gorra', hint: 'Entra plata; el club anda a las corridas' },
+      { label: 'Jugarlo como uno más', hint: 'Serio; a los que quieren cartel les falta algo' },
+      { label: 'Contestar en la página del barrio', hint: 'El plantel se agranda; el barrio se lo anota' },
+    ],
+    resolve: (s, _ev, opt, rng) => {
+      const r = rivalDeLaSemana(s)!;
+      if (opt === 0) {
+        const recaudado = 30 + Math.round(s.club.socialPrestige / 3);
+        s.club.money += recaudado;
+        s.ledger.push({ week: s.week, concept: `Gorra del clásico contra ${r.rival.name}`, amount: recaudado });
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 3);
+        s.club.organization = clamp(s.club.organization - 3);
+        logClubEvent(s, 'social', `El clásico del barrio contra ${r.rival.name} se jugó a cancha llena: $${recaudado} de gorra.`);
+        return `Se llenó de vecinos, de los dos lados de la calle. La gorra dejó $${recaudado} y una discusión en la puerta sobre de qué lado de la avenida empieza el barrio.`;
+      }
+      if (opt === 1) {
+        s.club.sportPrestige = clamp(s.club.sportPrestige + 1);
+        for (const p of actives(s).filter((x) => x.personality === 'protagonista')) p.motivation = clamp(p.motivation - 2);
+        return 'Lo preparaste como un partido más y el grupo lo entendió, menos los que querían salir en la foto. En la liga lo notaron: "serios, estos".';
+      }
+      for (const p of actives(s)) p.motivation = clamp(p.motivation + 4);
+      if (!s.nemesis) s.nemesis = { rivalId: r.rival.id, reason: `el clásico del barrio contra ${r.rival.name} se puso personal en la página del barrio` };
+      if (rng.chance(0.5)) {
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
+        s.news.unshift({ week: s.week, text: `El manager, en la página del barrio: "El barrio ya sabe quién es quién". ${r.rival.name} contestó con un meme. Se viene caliente.`, tone: 'neutral' });
+        return 'Tu respuesta se compartió más que la de ellos. El plantel llegó al entrenamiento repitiendo tu frase, y el clásico quedó a muerte.';
+      }
+      s.club.socialPrestige = clamp(s.club.socialPrestige - 2);
+      s.news.unshift({ week: s.week, text: `La página del barrio publicó tu respuesta al lado de la tabla. ${r.rival.name} está arriba. Te cargaron hasta los del almacén.`, tone: 'bad' });
+      return 'Contestaste y te lo cobraron: pusieron tu frase al lado de la tabla. El plantel se rió, pero llegó enchufado igual. El clásico quedó a muerte.';
+    },
+  },
+  {
+    id: 'arbitro_de_la_fecha',
+    title: 'El juez que viene',
+    weight: 5,
+    canFire: (s) => {
+      if (s.week > s.seasonLength) return false;
+      const ref = refereeOfWeek(s);
+      return (ref.style === 'protagonista' || ref.style === 'estricto') && actives(s).some(calenton);
+    },
+    pickTargets: (s, rng) => {
+      const cands = actives(s).filter(calenton);
+      return cands.length ? { playerId: rng.pick(cands).id } : null;
+    },
+    text: (s, ev) => {
+      const ref = refereeOfWeek(s);
+      const p = byId(s, ev.playerId);
+      return `Esta fecha dirige ${mayus(ref.name)}: ${ref.blurb}. ${p.name} lo tiene atravesado desde la última técnica y ya avisó en el grupo que "hoy no se calla".`;
+    },
+    options: (s) => [
+      { label: '"Hoy ni una palabra con el juez"', hint: 'Se guarda la bronca; no es gratis' },
+      { label: 'Que juegue como siempre', hint: 'Con este juez, la técnica sale fácil' },
+      { label: `Ir a saludar a ${mayus(refereeOfWeek(s).name)} antes del partido`, hint: 'A veces afloja el clima; a veces se nota demasiado' },
+    ],
+    resolve: (s, ev, opt, rng) => {
+      const ref = refereeOfWeek(s);
+      const p = byId(s, ev.playerId);
+      if (opt === 0) {
+        p.commitment = clamp(p.commitment + 2);
+        p.motivation = clamp(p.motivation - 2);
+        return `${p.name} asintió con la mandíbula apretada. Va a jugar con la boca cerrada, y eso, en él, es trabajo.`;
+      }
+      if (opt === 1) {
+        p.motivation = clamp(p.motivation + 2);
+        return `"Que juegue como siempre". ${p.name} sonrió. ${mayus(ref.name)} también va a dirigir como siempre.`;
+      }
+      if (rng.chance(0.5)) {
+        s.club.socialClimate = clamp(s.club.socialClimate + 2);
+        return `Fuiste a saludar a ${mayus(ref.name)} con un café. Se rió, te preguntó por el plantel y dijo "veremos". El grupo vio la escena y se relajó.`;
+      }
+      s.club.sportPrestige = clamp(s.club.sportPrestige - 2);
+      s.news.unshift({ week: s.week, text: `Vieron al manager charlando con ${mayus(ref.name)} antes del partido. En la liga ya le pusieron nombre a la charla.`, tone: 'bad' });
+      return `Fuiste a saludar a ${mayus(ref.name)} y te vieron. "¿Qué le fuiste a decir?", preguntó el delegado de enfrente, en voz alta, para que lo escuchen todos.`;
+    },
+  },
+  {
+    id: 'figura_rival_libre',
+    title: 'La figura de ellos anda buscando',
+    weight: 5,
+    canFire: (s) => s.week <= s.seasonLength && s.club.money >= 40 && actives(s).length < 15 && !!figuraRivalSuelta(s),
+    pickTargets: (s) => {
+      const f = figuraRivalSuelta(s);
+      return f ? { contactId: f.wp.id } : null;
+    },
+    text: (s, ev) => {
+      const wp = s.world.players.find((x) => x.id === ev.contactId);
+      if (!wp) return 'El dato ya quedó viejo.';
+      const rival = s.rivals.find((r) => r.name === wp.clubName);
+      const team = rival ? teamByLegacyRival(s.world, rival.id) : undefined;
+      return `Te llega por un amigo de otro cuadro: ${worldPlayerName(wp)} (${wp.clubName}) se peleó con ${team?.coachName ?? 'el DT'} y hace dos semanas que no entrena. "Está buscando dónde jugar, y vos sos el primero que lo sabe".`;
+    },
+    options: (s, ev) => {
+      const wp = s.world.players.find((x) => x.id === ev.contactId);
+      const cost = wp ? costoDeIrABuscar(wp) : 40;
+      return [
+        { label: `Ir a buscarlo: $${cost} entre ficha y viáticos`, hint: 'Si viene, la liga habla; si no, se gasta igual una parte' },
+        { label: `Pasarle el dato a ${PERSONAJES.tesorera} y esperar`, hint: 'Capaz aparece solo' },
+        { label: 'No meterse en vestuario ajeno', hint: 'En la liga se nota, para bien' },
+      ];
+    },
+    resolve: (s, ev, opt, rng) => {
+      const wp = s.world.players.find((x) => x.id === ev.contactId);
+      if (!wp) return 'Cuando fuiste a preguntar, ya había arreglado en otro lado.';
+      const club = wp.clubName ?? 'su club';
+      if (opt === 0) {
+        const cost = costoDeIrABuscar(wp);
+        const chance = Math.max(0.2, Math.min(0.85, 0.45 + (s.club.sportPrestige - wp.prestige) / 200 + s.club.socialClimate / 400));
+        if (rng.chance(chance)) {
+          s.club.money -= cost;
+          s.ledger.push({ week: s.week, concept: `Ficha y viáticos de ${worldPlayerName(wp)}`, amount: -cost });
+          const mp = worldToMarket(wp, club, rng);
+          const player = marketToPlayer(mp, wp.personality === 'mercenario' ? 'beca_total' : 'pagada', 'rotación', s.seasonNumber, rng);
+          const week = Math.min(s.week, s.seasonLength);
+          player.timeline = [{ season: s.seasonNumber, week, kind: 'llegada', text: `Llegó a mitad de temporada desde ${club}, después de pelearse con el DT de allá.` }];
+          s.players.push(player);
+          const reg = s.world.registrations.find((r) => r.playerId === wp.id && r.status === 'activa');
+          if (reg) {
+            reg.status = 'baja';
+            reg.endWeek = week;
+          }
+          mudarAlClub(s.world, mp);
+          s.club.sportPrestige = clamp(s.club.sportPrestige + 2);
+          for (const p of actives(s).filter((x) => x.personality === 'protagonista' && x.id !== player.id)) p.motivation = clamp(p.motivation - 2);
+          s.news.unshift({ week: s.week, text: `${player.name} se sumó al plantel a mitad de temporada: venía de ${club}. En la liga se habló toda la semana.`, tone: 'good' });
+          ev.playerId = player.id;
+          return `Fuiste, lo escuchaste despotricar contra su DT una hora, y firmó. ${player.name} ya es nuestro, y en ${club} no lo pueden creer. Algún protagonista ya cuenta minutos.`;
+        }
+        const gastado = Math.min(15, cost);
+        s.club.money -= gastado;
+        s.ledger.push({ week: s.week, concept: `Viáticos para ir a ver a ${worldPlayerName(wp)}`, amount: -gastado });
+        return `Fuiste, tomaste un café con ${worldPlayerName(wp)} y a la semana se amigó con su DT. Quedaron $${gastado} de nafta y una historia para el grupo.`;
+      }
+      if (opt === 1) {
+        return `Le pasaste el dato a ${PERSONAJES.tesorera}, que lo anotó en el cuaderno. "Si viene solo, bienvenido". No vino.`;
+      }
+      s.club.sportPrestige = clamp(s.club.sportPrestige + 1);
+      return `"No nos metemos en vestuario ajeno". El amigo de afuera se lo contó a medio mundo, y en la liga lo tomaron como lo que es: un gesto.`;
+    },
+  },
+  {
+    id: 'sponsor_hijo',
+    title: 'El hijo del sponsor',
+    weight: 5,
+    canFire: (s) => !!s.sponsor && actives(s).length < 15,
+    text: (s) =>
+      `${s.sponsor!.name} manda un mensaje con foto: "Mi hijo tiene veinte años, mide uno noventa y juega más o menos. ¿Lo pueden probar? Es por los pibes, no por la plata". La plata, igual, la pone él.`,
+    options: () => [
+      { label: 'Sumarlo al plantel', hint: 'El sponsor pone más; alguno cuenta minutos' },
+      { label: 'Que entrene con el grupo, sin ficha', hint: 'Queda bien con todos y no compromete nada' },
+      { label: 'Decir que no', hint: 'El sponsor puede tomárselo a mal' },
+    ],
+    resolve: (s, _ev, opt, rng) => {
+      const sp = s.sponsor!;
+      if (opt === 0) {
+        const kid = createRecruit(rng, { minTechnique: 30, maxTechnique: 46, season: s.seasonNumber, taken: s.players.map((p) => p.name) });
+        kid.age = 20;
+        kid.height = 190;
+        kid.description = `El hijo del dueño de ${sp.name}. Juega más o menos, como dijo el padre, y nunca falta.`;
+        kid.commitment = rng.int(70, 90);
+        s.players.push(kid);
+        sp.weekly = Math.min(BALANCE.economy.sponsorMaxWeekly, sp.weekly + 15);
+        for (const p of actives(s).filter((x) => x.personality === 'protagonista' && x.id !== kid.id)) p.motivation = clamp(p.motivation - 2);
+        s.news.unshift({ week: s.week, text: `Se sumó ${kid.name}, el hijo del sponsor. ${sp.name} subió el aporte a $${sp.weekly} por semana.`, tone: 'good' });
+        return `${kid.name} llegó con championes nuevos y el padre en la tribuna. El aporte sube a $${sp.weekly} por semana, y algún protagonista ya preguntó si "el pibe" va a jugar.`;
+      }
+      if (opt === 1) {
+        s.club.socialClimate = clamp(s.club.socialClimate + 1);
+        later(s, 2, {
+          text: `El hijo de ${sp.name} dejó de venir a entrenar: "mucho para mí". El padre lo entendió y sigue poniendo.`,
+          tone: 'neutral',
+        });
+        return 'Entrenó con el grupo el martes y el jueves. Corre, salta y no sabe dónde pararse; el padre mira desde el auto. Todos contentos, por ahora.';
+      }
+      if (rng.chance(0.4)) {
+        s.sponsor = null;
+        s.sponsorWeeks = 0;
+        s.news.unshift({ week: s.week, text: `${sp.name} cortó el aporte: "Si no hay lugar para mi hijo, no hay lugar para mi plata". Se fue el sponsor.`, tone: 'bad' });
+        return `Le dijiste que no con todas las buenas palabras. Al día siguiente ${sp.name} cortó el contrato. Las buenas palabras no alcanzaron.`;
+      }
+      sp.weekly = Math.max(30, sp.weekly - 10);
+      return `Le dijiste que no. ${sp.name} se lo tomó como un padre: con una semana de silencio y el aporte recortado a $${sp.weekly}.`;
+    },
+  },
+  {
+    id: 'ranking_canchas',
+    title: 'El ranking de canchas del barrio',
+    weight: 5,
+    canFire: (s) => s.week <= s.seasonLength && s.club.organization < 60,
+    text: (s) => {
+      const venue = s.world.venues.find((v) => v.id === 'vn_user');
+      return `"Pasión Deportiva Zonal" publicó el ranking de canchas de la liga y ${venue?.name ?? 'nuestra cancha'} salió última: "vestuario con una ducha y olor a humedad". En el grupo ya circula la captura.`;
+    },
+    options: () => [
+      { label: 'Arreglar el vestuario ($80)', hint: 'Caro, pero se nota todo el año' },
+      { label: 'Contestar la nota', hint: 'A veces se da vuelta; a veces vuelven con fotos' },
+      { label: 'Dejarlo pasar', hint: 'El rival de la semana que viene lo va a usar' },
+    ],
+    resolve: (s, _ev, opt, rng) => {
+      if (opt === 0) {
+        if (s.club.money < 80) {
+          s.club.socialClimate = clamp(s.club.socialClimate - 3);
+          return 'Fuiste a pedir presupuesto y volviste con la cara larga: no hay $80. El vestuario sigue oliendo a lo que huele.';
+        }
+        s.club.money -= 80;
+        s.ledger.push({ week: s.week, concept: 'Arreglo del vestuario', amount: -80 });
+        s.club.organization = clamp(s.club.organization + 5);
+        s.club.socialPrestige = clamp(s.club.socialPrestige + 3);
+        later(s, 3, { text: 'El vestuario nuevo ya tiene olor a pintura y dos duchas que andan. El próximo rival lo notó en voz alta.', tone: 'good', climate: 2 });
+        return 'Pintura, una ducha más y un extractor. $80 que se van a notar cada vez que entre un rival al vestuario.';
+      }
+      if (opt === 1) {
+        if (rng.chance(0.5)) {
+          s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
+          return 'Contestaste con humor ("la humedad es parte de la localía") y la página lo compartió. Se rieron con vos, no de vos.';
+        }
+        s.club.socialPrestige = clamp(s.club.socialPrestige - 3);
+        return 'Contestaste y la página volvió con fotos del vestuario, de cerca. Mejor no hubieras contestado.';
+      }
+      s.club.socialPrestige = clamp(s.club.socialPrestige - 2);
+      const r = rivalDeLaSemana(s);
+      later(s, 1, {
+        text: r ? `${mayus(r.team.delegate)} (${r.rival.name}) pidió en la planilla "jugar con el vestuario cerrado, por el olor". Lo dijo para que lo escuchen.` : 'El ranking de canchas siguió circulando en los grupos de la liga.',
+        tone: 'neutral',
+      });
+      return 'Lo dejaste pasar. La captura siguió dando vueltas una semana más, y el delegado de enfrente la tenía guardada.';
+    },
+  },
+  {
+    id: 'cancha_tomada',
+    title: 'Acto escolar en el gimnasio',
+    weight: 5,
+    canFire: (s) => {
+      const r = rivalDeLaSemana(s);
+      return !!r && s.week % 2 === 1 && s.club.organization < 65; // esta semana somos locales
+    },
+    text: (s) => {
+      const r = rivalDeLaSemana(s)!;
+      return `${PERSONAJES.cancheroLargo}, avisa el miércoles: el ${r.division.gameDay} hay acto escolar en el gimnasio y la cancha no está. La liga ofrece jugar en ${r.lore?.cancha ?? 'la cancha de ellos'} (${r.lore?.barrio ?? 'su barrio'}), con su tribuna, o que consigas otra.`;
+    },
+    options: (s) => {
+      const r = rivalDeLaSemana(s)!;
+      const brava = r.lore?.rasgos.includes('tribuna_brava');
+      return [
+        { label: `Jugar en ${r.lore?.cancha ?? 'la cancha de ellos'}`, hint: brava ? `Tribuna brava: ${RASGOS.tribuna_brava.desc}` : 'De local en cancha ajena' },
+        { label: 'Alquilar otra cancha ($60)', hint: 'Se juega en terreno neutral' },
+        { label: 'Jugar en la plaza de deportes del barrio', hint: 'Gratis y con vecinos; imagen de club chico' },
+      ];
+    },
+    resolve: (s, _ev, opt) => {
+      const r = rivalDeLaSemana(s)!;
+      if (opt === 0) {
+        const brava = r.lore?.rasgos.includes('tribuna_brava');
+        for (const p of actives(s)) {
+          if (p.personality === 'protagonista') p.motivation = clamp(p.motivation + 2);
+          else if (brava) p.motivation = clamp(p.motivation - 2);
+        }
+        s.club.socialClimate = clamp(s.club.socialClimate - 2);
+        return `Se juega en ${r.lore?.cancha ?? 'la cancha de ellos'}${brava ? ', con su tribuna encima' : ''}. A los que les gusta el escenario les brillaron los ojos; al resto, no tanto.`;
+      }
+      if (opt === 1) {
+        if (s.club.money < 60) {
+          s.club.socialPrestige = clamp(s.club.socialPrestige - 2);
+          s.club.socialClimate = clamp(s.club.socialClimate + 2);
+          return 'No había $60 para la cancha: terminaron en la plaza de deportes, con perros y vecinos. Se rieron bastante.';
+        }
+        s.club.money -= 60;
+        s.ledger.push({ week: s.week, concept: 'Cancha alquilada para la fecha', amount: -60 });
+        s.club.organization = clamp(s.club.organization + 2);
+        return 'Se consiguió un gimnasio neutral a diez cuadras. Caro, pero sin tribuna ajena ni perros.';
+      }
+      s.club.socialPrestige = clamp(s.club.socialPrestige - 2);
+      s.club.socialClimate = clamp(s.club.socialClimate + 2);
+      return 'La fecha se jugó en la plaza de deportes del barrio, con cemento, viento y vecinos con reposera. El rival protestó la planilla; el grupo lo contó como una anécdota.';
+    },
+  },
+  {
+    id: 'multa_liga',
+    title: 'Mail del secretario de la liga',
+    weight: 6,
+    canFire: (s) => s.club.organization < 50 && !!s.lastMatch && !s.lastMatch.forfeit,
+    text: (s) =>
+      `Llega un mail de ${SECRETARIO_LIGA}, secretario de la liga: multa de $20 por entregar la planilla fuera de hora en el partido con ${s.lastMatch!.rivalName}. "Tercer aviso", dice, aunque es el primero que ves.`,
+    options: () => [
+      { label: 'Pagar y ordenar la planilla', hint: 'Cuesta $20; el club se ordena un poco' },
+      { label: 'Apelar por escrito', hint: 'A veces la liga afloja; a veces quedás de llorón' },
+      { label: 'No pagar', hint: 'La multa no se olvida: crece' },
+    ],
+    resolve: (s, _ev, opt, rng) => {
+      if (opt === 0) {
+        const cost = Math.min(20, Math.max(0, s.club.money));
+        s.club.money -= cost;
+        if (cost > 0) s.ledger.push({ week: s.week, concept: 'Multa de la liga: planilla fuera de hora', amount: -cost });
+        s.club.organization = clamp(s.club.organization + 4);
+        return `Pagaste los $20 y pusiste a alguien a cargo de la planilla. ${SECRETARIO_LIGA} contestó con un "recibido" sin punto final.`;
+      }
+      if (opt === 1) {
+        if (rng.chance(0.5)) {
+          s.club.organization = clamp(s.club.organization + 2);
+          return `Mandaste una carta de dos carillas con el horario del árbitro como prueba. ${SECRETARIO_LIGA} dejó la multa sin efecto "por esta vez".`;
+        }
+        s.club.money -= 20;
+        s.ledger.push({ week: s.week, concept: 'Multa de la liga: planilla fuera de hora', amount: -20 });
+        s.club.sportPrestige = clamp(s.club.sportPrestige - 1);
+        return `La apelación volvió rechazada en un renglón, y en la liga circuló tu carta de dos carillas. Pagaste los $20 y un poco de cartel.`;
+      }
+      s.club.sportPrestige = clamp(s.club.sportPrestige - 1);
+      chain(s, 2, { defId: 'multa_duplicada' });
+      return `No pagaste. ${SECRETARIO_LIGA} no contestó, que es lo que hace antes de volver a escribir.`;
+    },
+  },
+  {
+    id: 'multa_duplicada',
+    title: 'Segundo mail del secretario',
+    weight: 0,
+    chained: true,
+    canFire: () => false,
+    text: () => `Segundo mail de ${SECRETARIO_LIGA}, en mayúsculas en el asunto: la multa impaga se duplicó a $40. "Sin más avisos", y abajo el número de cuenta de la liga.`,
+    options: () => [
+      { label: 'Pagar los $40 ahora', hint: 'Se termina acá' },
+      { label: 'Que lo descuenten de donde quieran', hint: 'Lo descuentan, con recargo, y la liga se acuerda' },
+    ],
+    resolve: (s, _ev, opt) => {
+      if (opt === 0) {
+        s.club.money -= 40;
+        s.ledger.push({ week: s.week, concept: 'Multa duplicada de la liga', amount: -40 });
+        s.club.organization = clamp(s.club.organization + 1);
+        return `Pagaste los $40 con la cara que se paga una multa duplicada. ${SECRETARIO_LIGA} contestó "recibido", esta vez con punto.`;
+      }
+      s.club.money -= 60;
+      s.ledger.push({ week: s.week, concept: 'Multa de la liga descontada con recargo', amount: -60 });
+      s.club.sportPrestige = clamp(s.club.sportPrestige - 2);
+      return `La liga lo descontó de la ficha con $20 de recargo: $60. ${SECRETARIO_LIGA} lo anunció en el grupo de delegados, con nombre del club.`;
+    },
+  },
 ];
+
+// ---------- Lo que necesitan los eventos del mundo ----------
+
+/** El rival de la fecha con todo lo que el mundo sabe de él; null en playoffs o sin fecha. */
+function rivalDeLaSemana(s: GameState): { rival: Rival; team: Team; lore: ClubLore | undefined; division: (typeof DIVISIONS)[number] } | null {
+  if (s.week > s.seasonLength) return null;
+  const rival = s.rivals.find((r) => r.id === s.schedule[s.week - 1]);
+  if (!rival) return null;
+  const team = teamByLegacyRival(s.world, rival.id);
+  const division = DIVISIONS.find((d) => d.id === s.divisionId);
+  if (!team || !division) return null;
+  return { rival, team, lore: loreOf(rival.name), division };
+}
+
+/** El apellido para las pistas cortas ("A Silva y Pereyra les pisa"). */
+function apellidoDe(name: string): string {
+  const parts = name.replace(/"[^"]*"\s*/g, '').trim().split(/\s+/);
+  return parts[parts.length - 1];
+}
+
+/** Los que se calientan con el juez: con ellos la protesta termina en técnica. */
+function calenton(p: Player): boolean {
+  return p.personality === 'competitivo' || p.personality === 'protagonista';
+}
+
+/** Un nombre con artículo arrancando la frase: "El Flaco Medina", "Suárez", "Doña Marta". */
+function mayus(nombre: string): string {
+  return nombre.charAt(0).toUpperCase() + nombre.slice(1);
+}
+
+/** "a" más un nombre con artículo, contraído: "al Flaco Umpiérrez", "a la Colo Fernández", "a Tito Barrios". */
+function al(nombre: string): string {
+  return nombre.startsWith('el ') ? `al ${nombre.slice(3)}` : `a ${nombre}`;
+}
+
+/** Hash estable a [0, 1): los votos de la asamblea no cambian al releer el evento. */
+function hashVoto(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 10000) / 10000;
+}
+
+/** Una figura rival que ya enfrentamos y que podría venir: la mejor que cumpla, determinista por semana. */
+function figuraRivalSuelta(s: GameState): { wp: WorldPlayer } | null {
+  const cands: WorldPlayer[] = [];
+  for (const rival of s.rivals) {
+    const team = teamByLegacyRival(s.world, rival.id);
+    if (!team) continue;
+    for (const wp of teamRoster(s.world, team.id)) {
+      if (wp.level >= 62 && (wp.timesFaced ?? 0) >= 1 && wp.injuryWeeks === 0 && wp.clubName === rival.name) cands.push(wp);
+    }
+  }
+  if (cands.length === 0) return null;
+  cands.sort((a, b) => b.level - a.level || a.id.localeCompare(b.id));
+  return { wp: cands[Math.floor(hashVoto(`figura|${s.seasonNumber}|${s.week}`) * Math.min(3, cands.length))] };
+}
+
+/** Lo que cuesta ir a buscar a una figura del mundo a mitad de temporada. */
+function costoDeIrABuscar(wp: WorldPlayer): number {
+  return 30 + Math.round(wp.level * 0.8);
+}
+
+/** El secretario de la liga: manda mails, no saluda. */
+const SECRETARIO_LIGA = 'Arocena';
 
 /** ¿Siguen en el club los protagonistas que necesita el evento encadenado? */
 function targetsAlive(s: GameState, e: ScheduledEvent): boolean {

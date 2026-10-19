@@ -7,13 +7,13 @@
 // Los partidos en vivo del segundo equipo (y el doble partido el mismo día)
 // son la etapa 7: acá el cruce se resuelve como los demás partidos del mundo.
 
-import { CLUB_COLORS, EXPANSION_DIVISION_TEAMS } from '../data/worldData';
-import { DELEGATE_NAMES, NEIGHBORHOODS } from '../data/names';
+import { EXPANSION_DIVISION_TEAMS } from '../data/worldData';
+import { venueNameFor } from '../data/clubLore';
 import { BALANCE, clamp } from './balance';
 import { fragilityOf, pickByFragility, rollInjuryWeeks } from './injuries';
 import { playerEffective } from './match';
 import { fechaLabel, logClubEvent, logPlayerEvent } from './timeline';
-import { dayLabel, registerPlayer, USER_CLUB_ID } from './world';
+import { clubIdentity, dayLabel, registerPlayer, USER_CLUB_ID } from './world';
 import { Rng, seedFromString } from './rng';
 import type { GameState, League, Player, SecondTeamRow, SecondTeamState } from './types';
 
@@ -134,20 +134,21 @@ export function registerSecondTeam(state: GameState, leagueId: string, playerIds
   const table: SecondTeamRow[] = [
     { teamId: SECOND_TEAM_ID, clubId: USER_CLUB_ID, name: teamName, strength: 0, wins: 0, losses: 0 },
   ];
-  seeds.forEach((seed, i) => {
+  seeds.forEach((seed) => {
     const clubId = `cl_${seed.id}`;
     const teamId = `tm_${seed.id}`;
     if (!s.world.clubs.some((c) => c.id === clubId)) {
+      const identity = clubIdentity(seed.name);
       const venueId = `vn_${seed.id}`;
       s.world.venues.push({
         id: venueId,
-        name: `Gimnasio de ${seed.name.split(' ').slice(-1)[0]}`,
-        neighborhood: NEIGHBORHOODS[(i + 2) % NEIGHBORHOODS.length],
+        name: venueNameFor(seed.name),
+        neighborhood: identity.neighborhood,
       });
       s.world.clubs.push({
         id: clubId,
         name: seed.name,
-        colors: CLUB_COLORS[(i + 5) % CLUB_COLORS.length],
+        colors: identity.colors,
         founded: s.world.season.year - rng.int(3, 50),
         sportPrestige: clamp(seed.strength + rng.int(-8, 8), 15, 90),
         socialPrestige: rng.int(30, 80),
@@ -159,7 +160,7 @@ export function registerSecondTeam(state: GameState, leagueId: string, playerIds
         category: league.minAge ? '+35' : 'mayores',
         status: 'activo',
         venueId,
-        delegate: DELEGATE_NAMES[(i + 2) % DELEGATE_NAMES.length],
+        delegate: identity.delegate,
       });
       s.world.entries.push({
         teamId,

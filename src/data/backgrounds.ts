@@ -17,7 +17,7 @@ export const PROFESSIONS = [
   'Estudiante crónico',
   'Enfermero',
   'Carpintero',
-  'Remisero',
+  'Taxista',
   'Empleado municipal',
   'Abogado',
   'Cocinero',

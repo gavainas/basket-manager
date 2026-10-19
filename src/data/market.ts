@@ -55,7 +55,7 @@ const MARKET_SEEDS: MarketSeed[] = [
     knowledge: 'conocido', source: 'Jugó en esta liga la temporada pasada.',
   },
   {
-    name: 'Iván Correa', age: 22, height: 180, position: 'Base', previousTeam: 'Liga del Oeste',
+    name: 'Iván Correa', age: 22, height: 180, position: 'Base', previousTeam: 'Liga Montevideo',
     technique: 58, physical: 78, commitment: 65, social: 55, personality: 'protagonista',
     sportRep: 40, socialRep: 50, signingCost: 25, feeAttitude: 'completa', demand: 'minutos',
     knowledge: 'referencias', source: 'Un conocido del club dice que rinde, pero nadie lo vio de cerca.',
@@ -92,7 +92,7 @@ const MARKET_SEEDS: MarketSeed[] = [
     knowledge: 'conocido', source: 'Compartió equipo con tu capitán en Los Cardales.',
   },
   {
-    name: 'Facu Ledesma', age: 23, height: 188, position: 'Escolta', previousTeam: 'Liga de Empleados',
+    name: 'Facu Ledesma', age: 23, height: 188, position: 'Escolta', previousTeam: 'Liga del Centro',
     technique: 72, physical: 80, commitment: 45, social: 50, personality: 'talentoso_informal',
     sportRep: 45, socialRep: 35, signingCost: 40, feeAttitude: 'parcial', demand: 'sin_entrenar',
     knowledge: 'referencias', source: 'Lo viste una vez en un amistoso: la rompió, pero llegó tarde.',
@@ -135,13 +135,13 @@ const MARKET_SEEDS: MarketSeed[] = [
     knowledge: 'conocido', source: 'Jugó en esta liga la temporada pasada.',
   },
   {
-    name: '"Mono" Quiroga', age: 30, height: 193, position: 'Alero', previousTeam: 'Liga del Sur',
+    name: '"Mono" Quiroga', age: 30, height: 193, position: 'Alero', previousTeam: 'Liga del Comercio',
     technique: 69, physical: 66, commitment: 50, social: 55, personality: 'mercenario',
     sportRep: 55, socialRep: 42, signingCost: 80, feeAttitude: 'beca', demand: 'beca',
     knowledge: 'referencias', source: 'Llega con fama de resolver partidos… y de discutir con los DT.',
   },
   {
-    name: 'Julián Paz', age: 22, height: 189, position: 'Alero', previousTeam: 'Universitario',
+    name: 'Julián Paz', age: 22, height: 189, position: 'Alero', previousTeam: 'El equipo de la facultad',
     technique: 56, physical: 80, commitment: 76, social: 72, personality: 'social',
     sportRep: 28, socialRep: 60, signingCost: 0, feeAttitude: 'completa', demand: 'ambiente',
     knowledge: 'referencias', source: 'Amigo de un amigo: "buen pibe, mete garra", te dijeron.',
@@ -159,7 +159,7 @@ const MARKET_SEEDS: MarketSeed[] = [
     knowledge: 'poco_conocido', source: 'Cuentan que tiene muñeca, pero falta más de lo que va.',
   },
   {
-    name: 'Leo Benítez', age: 26, height: 188, position: 'Alero', previousTeam: 'Se mudó de otra provincia',
+    name: 'Leo Benítez', age: 26, height: 188, position: 'Alero', previousTeam: 'Se mudó de otro departamento',
     technique: 71, physical: 77, commitment: 66, social: 58, personality: 'competitivo',
     sportRep: 18, socialRep: 40, signingCost: 20, feeAttitude: 'completa', demand: null,
     knowledge: 'desconocido', source: 'No tenés referencias confiables: nadie de la liga lo vio jugar.',
@@ -184,7 +184,7 @@ const MARKET_SEEDS: MarketSeed[] = [
     knowledge: 'poco_conocido', source: 'Dicen que tiene físico de federado, pero le falta oficio.',
   },
   {
-    name: 'Rolando Núñez', age: 29, height: 197, position: 'Ala-Pívot', previousTeam: 'Liga del Oeste',
+    name: 'Rolando Núñez', age: 29, height: 197, position: 'Ala-Pívot', previousTeam: 'Liga Montevideo',
     technique: 73, physical: 72, commitment: 52, social: 44, personality: 'mercenario',
     sportRep: 66, socialRep: 38, signingCost: 120, feeAttitude: 'parcial', demand: 'fichaje_pagado',
     knowledge: 'referencias', source: 'Fama de dominar la pintura… y de irse donde paguen mejor.',
@@ -227,7 +227,7 @@ const MARKET_SEEDS: MarketSeed[] = [
     knowledge: 'muy_conocido', source: 'Leyenda de la liga: todos saben lo que fue y lo que ya no es.',
   },
   {
-    name: 'Jonás Silvera', age: 25, height: 202, position: 'Pívot', previousTeam: 'Liga del Norte',
+    name: 'Jonás Silvera', age: 25, height: 202, position: 'Pívot', previousTeam: 'Liga Montevideo',
     technique: 68, physical: 79, commitment: 58, social: 46, personality: 'mercenario',
     sportRep: 44, socialRep: 36, signingCost: 100, feeAttitude: 'beca', demand: 'beca',
     knowledge: 'referencias', source: 'Números impresionantes en otra liga… que nadie puede confirmar.',
@@ -251,12 +251,17 @@ export const MARKET_SEED_NAMES: readonly string[] = MARKET_SEEDS.map((s) => s.na
 export const ORIGIN_SITUATIONS: Record<string, string> = {
   'Trabaja de noche': 'Trabaja de noche y juega cuando el laburo lo deja.',
   'Se mudó de otra ciudad': 'Recién mudado desde otra ciudad, está buscando equipo.',
-  'Se mudó de otra provincia': 'Se mudó desde otra provincia hace apenas unas semanas.',
+  'Se mudó de otro departamento': 'Se mudó desde el interior hace apenas unas semanas.',
   'Sin club': 'Está sin club: hace rato que solo juega picados.',
   'Sin club este año': 'Este año se quedó sin club, aunque no dejó de entrenar.',
   'Retirado hace un año': 'Se había retirado hace un año y le picó volver.',
   'Volvió de estudiar afuera': 'Volvió de estudiar afuera y quiere cancha otra vez.',
   'Club de su barrio': 'Viene del club de su barrio, de toda la vida.',
+  // Ligas del mundo (antes decían "Liga del Oeste" y otras que no existen).
+  'Liga Montevideo': 'Viene de la Liga Montevideo, la liga libre de los viernes.',
+  'Liga del Centro': 'Viene de la nocturna del Centro: jugaba a las once de la noche entre oficinistas.',
+  'Liga del Comercio': 'Viene del torneo de los comercios, el de los domingos de mañana.',
+  'El equipo de la facultad': 'Viene del equipo de la facultad: torneos entre facultades y poco más.',
 };
 
 /** La frase de origen completa: "Viene de X." si X es un club, o la situación bien contada. */

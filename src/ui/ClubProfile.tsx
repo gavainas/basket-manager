@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import type { GameState, WorldClub } from '../game/types';
 import { divisionOfTeam, teamRoster, USER_TEAM_ID, worldPlayerName } from '../game/world';
+import { loreOf, RASGOS } from '../data/clubLore';
 import { Bar } from './Bar';
 import { Crest } from './Crest';
 import { Carita, Ficha, Renglon, Seccion } from './Ficha';
@@ -64,6 +65,9 @@ export function ClubProfile({ state, clubId, onClose }: Props) {
   const h2hWins = h2h.filter((m) => m.won).length;
 
   const difficulty = rival ? rivalDifficulty(rival) : null;
+  // Lo que se dice del club en la liga (clubLore.ts): el nuestro no tiene
+  // frase hecha, su fama la escribe la temporada.
+  const lore = isUser ? undefined : loreOf(club.name);
 
   /* El club como héroe: el escudo grande con la camiseta, el nombre en
      display y lo que se dice de él en la liga, en una frase. La planilla de
@@ -85,6 +89,19 @@ export function ClubProfile({ state, clubId, onClose }: Props) {
         </p>
       ) : (
         <p className="ficha-linea">{fameLabel(sportPrestige)}</p>
+      )}
+      {lore && <p className="v1-frase">{lore.blurb}</p>}
+      {lore && lore.rasgos.length > 0 && (
+        <p className="v1-frase">
+          Se sabe:{' '}
+          {lore.rasgos.map((r, i) => (
+            <span key={r}>
+              {i > 0 ? ' · ' : ''}
+              <b>{RASGOS[r].label}</b>, {RASGOS[r].desc}
+            </span>
+          ))}
+          .
+        </p>
       )}
       {rival && (
         <p className="v1-frase">

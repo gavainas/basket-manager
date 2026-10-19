@@ -5,6 +5,7 @@
 
 import { BALANCE } from './balance';
 import { CLUB_COLORS, DIVISIONS, LEAGUES, USER_LEAGUE_ID, WORLD_DIVISION_IDS } from '../data/worldData';
+import { loreOf, venueNameFor } from '../data/clubLore';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
 import { RECRUIT_NAMES } from '../data/recruits';
 import { MARKET_SEED_NAMES } from '../data/market';
@@ -234,16 +235,28 @@ export interface ClubIdentity {
  * temporada a temporada ni dependen de en qué divisional cayó. Antes salían
  * del RNG del momento y del índice del slot: el mismo club cambiaba de
  * camiseta y de año de fundación cada año.
+ *
+ * El delegado y el barrio salen de la tabla escrita a mano (`clubLore.ts`):
+ * con diez nombres sorteados para 75 clubes el Ruso Techera era delegado de
+ * tres a la vez, y Deportivo Capurro podía tener la cancha en Pocitos. Las
+ * tiradas del RNG se conservan igual (la primera lista sigue teniendo doce
+ * barrios de largo) para que colores, fundación y DT no cambien de los saves.
  */
 export function clubIdentity(name: string): ClubIdentity {
   const rng = new Rng(seedFromString(`club_${name}`));
   const archetypes: ClubArchetype[] = ['juvenil', 'veterano', 'estrella', 'parejo', 'parejo'];
+  const lore = loreOf(name);
+  const colors = CLUB_COLORS[rng.int(0, CLUB_COLORS.length - 1)];
+  const founded = 2026 - rng.int(4, 60);
+  const socialPrestige = rng.int(30, 80);
+  const delegate = DELEGATE_NAMES[rng.int(0, DELEGATE_NAMES.length - 1)];
+  const neighborhood = NEIGHBORHOODS[rng.int(0, 11)];
   return {
-    colors: CLUB_COLORS[rng.int(0, CLUB_COLORS.length - 1)],
-    founded: 2026 - rng.int(4, 60),
-    socialPrestige: rng.int(30, 80),
-    delegate: DELEGATE_NAMES[rng.int(0, DELEGATE_NAMES.length - 1)],
-    neighborhood: NEIGHBORHOODS[rng.int(0, NEIGHBORHOODS.length - 1)],
+    colors,
+    founded,
+    socialPrestige,
+    delegate: lore?.delegado ?? delegate,
+    neighborhood: lore?.barrio ?? neighborhood,
     coachName: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
     archetype: rng.pick(archetypes),
     modestCoachType: rng.chance(0.25) ? 'jugador' : 'honorario',
@@ -541,7 +554,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
     const identity = clubIdentity(rival.name);
     world.venues.push({
       id: venueId,
-      name: `Gimnasio de ${rival.name.split(' ').slice(-1)[0]}`,
+      name: venueNameFor(rival.name),
       neighborhood: identity.neighborhood,
     });
     world.clubs.push({
@@ -654,7 +667,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
       const identity = clubIdentity(seed.name);
       world.venues.push({
         id: venueId,
-        name: `Gimnasio de ${seed.name.split(' ').slice(-1)[0]}`,
+        name: venueNameFor(seed.name),
         neighborhood: identity.neighborhood,
       });
       world.clubs.push({
@@ -715,6 +728,60 @@ export interface OffseasonWorldResult {
 
 const levelClamp = (v: number) => Math.max(25, Math.min(92, Math.round(v)));
 
+// ---------- Las noticias del verano, con motivo ----------
+// (sesión 4 de design/MUNDO_REVISION_2026-10.md: antes eran tres plantillas
+// sin porqué; un pase o un retiro sin motivo es una línea de tabla.)
+
+function noticiaDeRetiro(p: WorldPlayer): string {
+  // Azar propio: el texto de la noticia no corre el azar del verano.
+  const rng = new Rng(seedFromString(`noticia_${p.id}_${p.age}`));
+  const nombre = `${p.firstName} ${p.lastName}`;
+  const club = p.clubName;
+  const opciones =
+    p.age >= 38
+      ? [
+          `Se retira ${nombre} (${club}), a los ${p.age}. Cuelga los championes después de más temporadas de las que nadie lleva la cuenta.`,
+          `${nombre} (${club}) dijo basta a los ${p.age}. En su club le van a hacer un partido homenaje; él pidió que sea con asado.`,
+        ]
+      : p.level < 48
+        ? [
+            `Se retira ${nombre} (${club}), a los ${p.age}: el cuerpo dijo basta antes que él. La liga pierde un nombre de los que se conocen.`,
+            `${nombre} (${club}) deja el básquet a los ${p.age}, con la rodilla que no da más. Dice que lo van a ver en la tribuna.`,
+          ]
+        : [
+            `Se retira ${nombre} (${club}), a los ${p.age}. La liga pierde un nombre de los que se conocen.`,
+            `${nombre} (${club}) se retira a los ${p.age} para dedicarse al laburo y a los hijos. Lo anunció en el grupo del club, con un audio de tres minutos.`,
+          ];
+  return rng.pick(opciones);
+}
+
+function noticiaDePase(p: WorldPlayer, from: string, dest: string): string {
+  const rng = new Rng(seedFromString(`noticia_${p.id}_${dest}`));
+  const nombre = `${p.firstName} ${p.lastName}`;
+  const base = `Pase del verano: ${nombre} deja ${from} y jugará en ${dest}.`;
+  const motivos: Record<Personality, string[]> = {
+    mercenario: [`${base} Allá le pagan la ficha, y él nunca dijo que no le importara.`, `${base} Se fue adonde ponen la plata: nadie se sorprendió en ${from}.`],
+    protagonista: [`${base} Quiere la pelota en las manos, y en ${from} la tenía otro.`, `${base} "Acá no me veían", dijo. En ${from} dicen que lo veían bien.`],
+    social: [`${base} Lo convenció un amigo con un asado; así se arman los pases acá.`, `${base} Medio grupo de ${dest} es gente del barrio de él.`],
+    competitivo: [`${base} Quiere pelear arriba, y en ${from} este año no se peleó nada.`, `${base} Se cansó de perder; en ${dest} dicen que se va a cansar de otra cosa.`],
+    leal: [`${base} Se mudó y le queda a tres cuadras: fue lo único que lo movió de ${from}.`],
+    cumplidor: [`${base} Cambió de laburo y el horario de ${from} ya no le cerraba.`],
+    veterano: [`${base} Un último año con los amigos de siempre antes de colgar.`, `${base} En ${dest} lo esperaban hace años; ahora que el cuerpo pide calma, fue.`],
+    talentoso_informal: [`${base} Se peleó con el DT por las faltas a entrenar. En ${dest} todavía no lo conocen.`, `${base} Nadie sabe bien por qué; él tampoco.`],
+  };
+  return rng.pick(motivos[p.personality] ?? [base]);
+}
+
+function noticiaDeLibre(p: WorldPlayer, from: string): string {
+  const rng = new Rng(seedFromString(`noticia_${p.id}_libre`));
+  const nombre = `${p.firstName} ${p.lastName}`;
+  return rng.pick([
+    `${nombre} quedó libre: ${from} no le renovó y él tampoco pidió. Anda buscando equipo.`,
+    `${nombre} se fue de ${from} con un portazo: se peleó con el DT en la última fecha y no volvió. Está libre.`,
+    `${nombre} dejó ${from} sin club nuevo. "Donde me quieran", dijo en el grupo de la liga.`,
+  ]);
+}
+
 /** Con nombre en la liga: sus movimientos merecen noticia. */
 function isNotable(p: WorldPlayer): boolean {
   return p.level >= 66 || (p.timesFaced ?? 0) >= 3 || p.prestige >= 70;
@@ -766,11 +833,7 @@ export function evolveWorldOffseason(state: GameState, rng: Rng): OffseasonWorld
     // Retiros: la edad no perdona, y al que ya no rinde se le nota.
     const retireChance = p.age >= 40 ? 1 : p.age >= 36 ? 0.4 : p.age >= 33 && p.level < 48 ? 0.25 : 0;
     if (retireChance > 0 && rng.chance(retireChance)) {
-      if (isNotable(p) && p.clubName) {
-        news.push(
-          `Se retira ${p.firstName} ${p.lastName} (${p.clubName}), a los ${p.age}. La liga pierde un nombre de los que se conocen.`
-        );
-      }
+      if (isNotable(p) && p.clubName) news.push(noticiaDeRetiro(p));
       continue;
     }
 
@@ -788,6 +851,7 @@ export function evolveWorldOffseason(state: GameState, rng: Rng): OffseasonWorld
     const roll = rng.range(0, 1);
     if (roll < 0.04) {
       freeAgents.push({ player: p, fromClub: p.clubName });
+      if (isNotable(p)) news.push(noticiaDeLibre(p, p.clubName));
       p.clubName = undefined;
       survivors.push(p);
       continue;
@@ -797,7 +861,7 @@ export function evolveWorldOffseason(state: GameState, rng: Rng): OffseasonWorld
       const dest = rng.pick(clubNames.filter((n) => n !== from));
       p.clubName = dest;
       p.joinedSeason = finishedSeason + 1;
-      if (isNotable(p)) news.push(`Pase del verano: ${p.firstName} ${p.lastName} deja ${from} y jugará en ${dest}.`);
+      if (isNotable(p)) news.push(noticiaDePase(p, from, dest));
       survivors.push(p);
       continue;
     }

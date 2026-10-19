@@ -1,6 +1,7 @@
 import type { GameState } from '../game/types';
 import { DEBUG_FULL_SCOUTING, perceivedLevel, scoutingLevel } from '../game/scouting';
 import { divisionOfTeam, teamByLegacyRival, teamRoster, worldPlayerName } from '../game/world';
+import { loreOf, RASGOS } from '../data/clubLore';
 import { ClubLink } from './ClubLink';
 import { Carita, Ficha, Renglon, Seccion } from './Ficha';
 import { Jersey } from './ClubProfile';
@@ -48,6 +49,7 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
         x.id === rival.id && x.week >= state.week && !state.history.some((m) => m.week === x.week)
     );
 
+  const lore = loreOf(rival.name);
   const knowledge = scoutingLevel(state, rival.id);
   const knowsWell = knowledge >= 3 || DEBUG_FULL_SCOUTING;
   const played = row ? row.wins + row.losses : 0;
@@ -82,6 +84,7 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
           <b className={difficulty.cls}>{difficulty.label}.</b> {style.label}: {style.desc}
         </p>
         <p className="v1-frase">{style.advice}</p>
+        {lore && <p className="v1-frase">{lore.blurb}</p>}
         {row && (
           <p className="v1-frase">
             {played === 0 ? (
@@ -120,6 +123,16 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
             </Renglon>
             <Renglon label="Cancha">{venue ? `${venue.name} (${venue.neighborhood})` : '—'}</Renglon>
             <Renglon label="Delegado">{team.delegate}</Renglon>
+            {lore && lore.rasgos.length > 0 && (
+              <Renglon label="Se sabe">
+                {lore.rasgos.map((r, i) => (
+                  <span key={r}>
+                    {i > 0 ? ' · ' : ''}
+                    <b>{RASGOS[r].label}</b>: {RASGOS[r].desc}
+                  </span>
+                ))}
+              </Renglon>
+            )}
             {team.coachName && (
               <Renglon label="DT">
                 {team.coachName}{' '}

@@ -150,6 +150,80 @@ export const WEEK_MOMENTS: WeekMomentDef[] = [
         ? 'El temporal también los complicó: uno de ellos quedó aislado.'
         : `El temporal también los complicó: ${n} de ellos no llegaron.`,
   },
+  // --- Sesión 3 de design/MUNDO_REVISION_2026-10.md: cuatro momentos más ---
+  {
+    id: 'parciales',
+    title: 'Semana de parciales',
+    day: (gameDay) => gameDay,
+    announce: () =>
+      'Semana de parciales en la facultad. Los más pibes de todos los planteles están encerrados con los apuntes, y el que viene, viene con cara de no haber dormido.',
+    userChance: (p) => (p.age <= 24 ? 0.24 : 0.02),
+    excuses: [
+      'Rinde un parcial a las ocho de la mañana siguiente y está "en modo biblioteca". Mandó foto del resumen, por si no le creían.',
+      'Tiene dos parciales en la semana y los padres lo amenazaron con el auto. Eligió el auto.',
+      'Juró que venía al segundo tiempo y después mandó: "no doy más, perdón, mañana rindo Anatomía".',
+    ],
+    rivalChance: (p) => (p.age <= 24 ? 0.24 : 0.02),
+    rivalNote: (n) =>
+      n === 1
+        ? 'Los parciales también les sacaron un pibe a ellos.'
+        : `Los parciales también les sacaron ${n} pibes a ellos.`,
+  },
+  {
+    id: 'clasico_futbol',
+    title: 'Clásico del fútbol',
+    day: (gameDay) => gameDay,
+    announce: (gameDay) =>
+      `El clásico del fútbol se juega el ${gameDay} a la tardecita, y la ciudad se parte en dos. En todos los planteles hay alguno que no se lo pierde ni por una final.`,
+    userChance: (p) => (p.social >= 60 ? 0.16 : 0.05),
+    excuses: [
+      'Va al clásico con el padre, como todos los años. "Esto no se negocia", avisó, y nadie discutió.',
+      'Consiguió entrada para el clásico por un cuñado. Dijo que capaz llegaba para el final; llegó al bar.',
+      'Juntada de clásico en lo de un amigo, con parrilla. Mandó foto del fuego y un "perdón" chiquito abajo.',
+    ],
+    rivalChance: () => 0.12,
+    rivalNote: (n) =>
+      n === 1
+        ? 'El clásico del fútbol también les sacó uno.'
+        : `El clásico del fútbol también les sacó ${n}.`,
+    asadoBoost: 0.1,
+  },
+  {
+    id: 'corte_luz',
+    title: 'Corte de luz en la zona',
+    day: (gameDay) => gameDay,
+    announce: (gameDay) =>
+      `La UTE anunció un corte programado para el ${gameDay} a la tarde en media ciudad. Los gimnasios juegan con luz de emergencia, y el que vive en la zona del corte no sabe si sale de la casa.`,
+    userChance: (p) => 0.06 + (p.agenda && p.agenda.distanceKm > 30 ? 0.1 : 0),
+    excuses: [
+      'Se quedó sin luz desde las tres y el portón eléctrico no abre. "Estoy encerrado con el auto adentro", mandó.',
+      'Con el corte se le cortó el ascensor y vive en un noveno. Bajó, pero para la farmacia.',
+      'Se le fue la luz justo cuando iba a planchar la camiseta. Dijo eso, textual.',
+    ],
+    rivalChance: (p) => 0.06 + (p.availability.distanceKm > 30 ? 0.1 : 0),
+    rivalNote: (n) =>
+      n === 1
+        ? 'El corte de luz también les complicó a uno.'
+        : `El corte de luz también los complicó: ${n} de ellos quedaron a oscuras.`,
+  },
+  {
+    id: 'dia_de_la_madre',
+    title: 'Día de la Madre',
+    day: (gameDay) => daysBefore(gameDay, 1),
+    announce: () =>
+      'Cae el Día de la Madre y el almuerzo familiar no mira el fixture. Los de más de treinta llegan con la siesta encima, si llegan: pasa en todos los clubes.',
+    userChance: (p) => (p.age >= 30 ? 0.17 : 0.04),
+    excuses: [
+      'Almuerzo del Día de la Madre con las dos familias. Terminó a las siete y él terminó en el sillón.',
+      '"Es el día de mi vieja", dijo, y colgó. Nadie se animó a volver a llamar.',
+      'Le tocó organizar el almuerzo de la madre y la suegra juntas. Pidió que le avisen el resultado y que no lo juzguen.',
+    ],
+    rivalChance: (p) => (p.age >= 30 ? 0.17 : 0.04),
+    rivalNote: (n) =>
+      n === 1
+        ? 'El Día de la Madre también les sacó a uno de los grandes.'
+        : `El Día de la Madre también les sacó ${n} de los grandes.`,
+  },
 ];
 
 export function momentById(id: string | undefined | null): WeekMomentDef | undefined {
