@@ -35,7 +35,19 @@ encima: sin el velo, los paneles claros flotan sobre un piso del mismo valor.
 | `fondo-cancha.webp` | **En uso.** El parqué gastado visto desde arriba: parejo, sin foco, no compite |
 | `fondo-gimnasio.webp` | Alternativa: la cancha desde la tribuna al atardecer. Más carácter, más detalle |
 
-Cambiar de fondo es cambiar la constante `FONDO` en `src/App.tsx`.
+Cada pantalla elige su escena en `ESCENA` / `escenaDe()` de `src/App.tsx`.
+
+### Tanda oct 2026 (Higgsfield, 1360 px, estilo atardecer cálido)
+
+Subidas por Gabi el 19/10/2026. Reemplazan como escena a `fondo-cancha.webp`,
+`cab-partido.webp` y `cab-arbitros.webp`, que quedan en el repo sin uso de fondo.
+
+| Archivo | Dónde | Qué muestra |
+| --- | --- | --- |
+| `fondo-gimnasio-vacio.webp` | Semana → armar el quinteto | El gimnasio vacío desde arriba, banderines y tribunas de madera |
+| `fondo-hinchada.webp` | Semana → partido en vivo | La hinchada en la tribuna techada, con un jugador en primer plano |
+| `fondo-tribuna-festejo.webp` | Semana → resultado, si se ganó | La tribuna al aire libre al atardecer, festejando |
+| `fondo-arbitro.webp` | Liga, Agenda, Rankings | Un hincha discutiéndole al árbitro desde la tribuna |
 
 ## Retratos de arquetipo (1:1, 512 px, **sin fondo**)
 

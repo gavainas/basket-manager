@@ -114,11 +114,12 @@ const ESCENA = {
   gimnasio: { img: arte('fondo-gimnasio.webp'), modo: 'abierta', espejo: true },
   gimnasioVelado: { img: arte('fondo-gimnasio.webp'), modo: 'velada', espejo: true },
   vestuario: { img: vestuarioBg, modo: 'velada' },
-  cancha: { img: arte('fondo-cancha.webp'), modo: 'velada' },
-  partido: { img: arte('cab-partido.webp'), modo: 'velada' },
+  cancha: { img: arte('fondo-gimnasio-vacio.webp'), modo: 'velada' },
+  partido: { img: arte('fondo-hinchada.webp'), modo: 'velada' },
+  victoria: { img: arte('fondo-tribuna-festejo.webp'), modo: 'velada' },
   derrota: { img: arte('cab-derrota.webp'), modo: 'velada' },
   comision: { img: arte('cab-comision.webp'), modo: 'velada' },
-  arbitros: { img: arte('cab-arbitros.webp'), modo: 'velada' },
+  arbitros: { img: arte('fondo-arbitro.webp'), modo: 'velada' },
   bar: { img: arte('cab-bar.webp'), modo: 'velada' },
 } satisfies Record<string, Escena>;
 
@@ -156,7 +157,7 @@ function escenaDe(state: GameState, tab: Tab): Escena {
       if (state.phase === 'match') return ESCENA.partido;
       if (state.phase === 'matchResult') {
         const m = state.lastMatch;
-        return m && m.scoreFor < m.scoreAgainst ? ESCENA.derrota : ESCENA.vestuario;
+        return m && m.scoreFor < m.scoreAgainst ? ESCENA.derrota : ESCENA.victoria;
       }
       return ESCENA.gimnasioVelado;
     case 'plantilla':
