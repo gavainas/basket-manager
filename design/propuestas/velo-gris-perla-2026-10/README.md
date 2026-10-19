@@ -1,0 +1,14 @@
+# Prueba: escena iluminada, planilla gris perla y menos cosas — 19 de octubre de 2026
+
+Prueba visual, sólo CSS, sin commit, para que Gabi decida con capturas. Abrir `index.html`: antes / paso 1 / paso 2 lado a lado, con la tabla de tokens y la lista de lo que se oculta.
+
+Contexto: Gabi mostró una referencia donde la escena ilustrada ocupa toda la pantalla, iluminada y cálida, y la interfaz es una barra arriba, un título grande y una sola tarjeta clara y opaca con un botón. La referencia es sólo visual (cómo se muestra la información): no se toma nada de su contenido. Su reacción al juego actual: «está todo azul y con cosas superpuestas», «está llena de cosas».
+
+Dos pasos acumulativos, en dos pantallas (Tablero y ficha del rival):
+
+1. **Luz y panel claro.** El velo `abierta` del fondo baja a la mitad y el piso bajo los jugadores deja ver el parquet. El texto del héroe se lee con una banda local (`.tablero-hero::before`, `.ficha-heroe::before`) y una sombra más firme, en vez de oscurecer todo el gimnasio. Detrás de la ficha, el velo del modal baja de 0.74/0.93 a 0.40/0.66 con más desenfoque. La hoja «Esta semana» y la hoja de la ficha pasan al gris perla aprobado el 25/9 (`design/GAME_UI_SYSTEM.md` §22): panel `#DFE5E9`, elevado `#D2D9DF`, pozo `#CCD5DC`, borde `#B6C2CB`, tinta `#13232F`, secundaria `#4D6170`. Tokens nuevos `--perla-*` en `:root`; el semáforo lleva versiones oscuras (`#1e7f55`, `#8a6508`, `#c0392b`) para contrastar sobre claro. El shell (barra de arriba y pie) sigue en azul noche.
+2. **El velo deja de ser azul, y menos cosas a la vista.** Gabi vio el paso 1 en vivo y pidió que la ilustración se note más («está todo muy muy azul»): el velo, la banda del héroe, el piso y el fondo de la ficha pasan de azul noche (#081d2d) a un oscuro cálido (#140c06) mucho más liviano, y la escena del Tablero sube a brightness 1.3 / saturate 1.2. Un título, un panel, un botón. Con el piso liviano los jugadores «flotaban» (Gabi): en el Tablero pasan a estar parados detrás de una baranda de madera opaca, cortados limpio, sin desvanecido. En el Tablero se ocultan la lectura del rival, la frase de contexto, la línea de cancha/disponibles y la posición bajo cada jugador. En la ficha, el héroe se queda con escudo, nombre, lectura del rival y un consejo; lore, racha y cruces se ocultan, y el fondo se desenfoca a 12 px. Todo con `display: none`: los datos siguen en el estado y en sus pantallas.
+
+Archivos: `src/styles.css`, `src/ui/v1.css`, `src/ui/Hub.css`, `src/ui/modales.css`. Cada bloque lleva el comentario «PRUEBA 19/10/2026» (los del paso 2 dicen además «paso 2»), así se puede quedar con el paso 1 solo. Sin cambios en TSX, `src/game` ni `src/state`.
+
+Capturas: 1280×800, dev server, partida directa recién creada con Chrome headless. El plantel rival difiere entre capturas porque cada partida se genera al azar.

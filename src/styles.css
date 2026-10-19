@@ -25,6 +25,20 @@
   /* Tiza: la tinta del mundo (cinta, planilla, notas a mano). */
   --tiza: #efe6d2;
 
+  /* PRUEBA 19/10/2026 — paneles gris perla (aprobados el 25/9, §22 de
+     design/GAME_UI_SYSTEM.md). Los usan sólo las planillas claras (ver «la
+     planilla clara» en v1.css): el shell sigue en azul noche. El semáforo
+     lleva versiones más oscuras para leerse sobre claro. */
+  --perla-panel: #DFE5E9;
+  --perla-elevado: #D2D9DF;
+  --perla-pozo: #CCD5DC;
+  --perla-borde: #B6C2CB;
+  --perla-tinta: #13232F;
+  --perla-secundaria: #4D6170;
+  --perla-good: #1e7f55;
+  --perla-warn: #8a6508;
+  --perla-bad: #c0392b;
+
   /* Chrome — azul noche. Nunca lleva los colores de un club. */
   --chrome: #0a2233;
   --chrome-alto: var(--bm-panel);
@@ -790,18 +804,26 @@ button:focus-visible,
     linear-gradient(90deg, rgba(8, 29, 45, 0.6), rgba(8, 29, 45, 0.25) 50%, rgba(8, 29, 45, 0.5));
 }
 .fondo-app.abierta::after {
+  /* PRUEBA 19/10/2026: la escena se ve iluminada. Antes el velo llegaba a
+     0.86 sobre el héroe y 0.55 en el borde izquierdo; ahora la mitad, y la
+     lectura del texto la pone una banda local detrás del héroe (ver
+     `.tablero-hero::before` en Hub.css), no un velo sobre toda la escena. */
+  /* Vuelta 3 (pedido de Gabi: «está todo muy muy azul»): el velo deja de
+     teñir de azul noche. La ilustración es cálida; lo que se le pone encima
+     es un oscuro cálido, apenas, sólo arriba a la izquierda y en el piso. */
   background:
-    radial-gradient(ellipse 46% 60% at 20% 34%, rgba(8, 29, 45, 0.86) 0%, rgba(8, 29, 45, 0.55) 60%, rgba(8, 29, 45, 0) 100%),
-    linear-gradient(90deg, rgba(8, 29, 45, 0.55) 0%, rgba(8, 29, 45, 0.15) 45%, rgba(8, 29, 45, 0) 60%, rgba(8, 29, 45, 0.25) 100%),
-    linear-gradient(180deg, rgba(8, 29, 45, 0.35) 0%, rgba(8, 29, 45, 0) 18%, rgba(8, 29, 45, 0) 62%, rgba(20, 12, 6, 0.35) 100%);
+    radial-gradient(ellipse 46% 60% at 20% 34%, rgba(20, 12, 6, 0.22) 0%, rgba(20, 12, 6, 0.1) 60%, rgba(20, 12, 6, 0) 100%),
+    linear-gradient(180deg, rgba(20, 12, 6, 0.1) 0%, rgba(20, 12, 6, 0) 18%, rgba(20, 12, 6, 0) 62%, rgba(20, 12, 6, 0.22) 100%);
 }
+/* La escena del Tablero, más luminosa y más cálida que en las otras pantallas. */
+.fondo-app.abierta > .fondo-img { filter: saturate(1.2) brightness(1.3); }
 /* La luz de las ventanas: un haz cálido que cruza la pantalla (Art Bible §5). */
 .fondo-app.abierta::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 2;
-  background: linear-gradient(118deg, rgba(255, 170, 90, 0) 38%, rgba(255, 170, 90, 0.1) 50%, rgba(255, 170, 90, 0) 62%);
+  background: linear-gradient(118deg, rgba(255, 170, 90, 0) 34%, rgba(255, 170, 90, 0.2) 50%, rgba(255, 170, 90, 0) 66%);
   mix-blend-mode: screen;
 }
 
