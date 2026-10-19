@@ -48,6 +48,10 @@ Subidas por Gabi el 19/10/2026. Reemplazan como escena a `fondo-cancha.webp`,
 | `fondo-hinchada.webp` | Semana → partido en vivo | La hinchada en la tribuna techada, con un jugador en primer plano |
 | `fondo-tribuna-festejo.webp` | Semana → resultado, si se ganó | La tribuna al aire libre al atardecer, festejando |
 | `fondo-arbitro.webp` | Liga, Agenda, Rankings | Un hincha discutiéndole al árbitro desde la tribuna |
+| `fondo-oficina.webp` | Finanzas, Historia | La oficina del club: escritorio, pizarra táctica, camisetas y trofeos |
+| `fondo-fachada.webp` | Club | La fachada del club al atardecer, con la puerta abierta al gimnasio |
+
+`cab-comision.webp` sigue de fondo en el cierre de temporada y en el fin de la partida.
 
 ## Retratos de arquetipo (1:1, 512 px, **sin fondo**)
 

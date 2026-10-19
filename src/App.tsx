@@ -119,6 +119,8 @@ const ESCENA = {
   victoria: { img: arte('fondo-tribuna-festejo.webp'), modo: 'velada' },
   derrota: { img: arte('cab-derrota.webp'), modo: 'velada' },
   comision: { img: arte('cab-comision.webp'), modo: 'velada' },
+  oficina: { img: arte('fondo-oficina.webp'), modo: 'velada' },
+  fachada: { img: arte('fondo-fachada.webp'), modo: 'velada' },
   arbitros: { img: arte('fondo-arbitro.webp'), modo: 'velada' },
   bar: { img: arte('cab-bar.webp'), modo: 'velada' },
 } satisfies Record<string, Escena>;
@@ -163,9 +165,10 @@ function escenaDe(state: GameState, tab: Tab): Escena {
     case 'plantilla':
       return ESCENA.vestuario;
     case 'finanzas':
-    case 'club':
     case 'historia':
-      return ESCENA.comision;
+      return ESCENA.oficina;
+    case 'club':
+      return ESCENA.fachada;
     case 'liga':
     case 'agenda':
     case 'rankings':
