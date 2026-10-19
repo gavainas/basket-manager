@@ -16,6 +16,23 @@
 
 /* ---------- 1. El partido ---------- */
 .tablero-hero { grid-column: 1; grid-row: 1; min-width: 0; padding-left: 1.5rem; }
+/* PRUEBA 19/10/2026: con el velo de la escena a la mitad, el héroe se lee
+   con una banda local (un degradé que se apaga hacia la derecha y abajo) y
+   una sombra de texto más firme, en vez de oscurecer todo el gimnasio. */
+.tablero-hero { position: relative; }
+.tablero-hero::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: -2rem -3rem -1.5rem -4rem;
+  pointer-events: none;
+  /* Vuelta 3: la banda es un oscuro cálido, no azul, para no teñir la escena. */
+  background:
+    radial-gradient(ellipse 70% 75% at 22% 38%, rgba(20, 12, 6, 0.5) 0%, rgba(20, 12, 6, 0.26) 50%, rgba(20, 12, 6, 0) 100%);
+}
+.tablero-hero > * { position: relative; z-index: 1; }
+.tablero-hero.v1-hero { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 16px rgba(0, 0, 0, 0.75), 0 0 36px rgba(20, 12, 6, 0.7); }
+.tablero-hero .v1-frase { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 14px rgba(0, 0, 0, 0.7), 0 0 30px rgba(20, 12, 6, 0.7); }
 .tablero-versus { display: flex; align-items: center; gap: 1.4rem; margin-top: 1.1rem; flex-wrap: wrap; }
 .tablero-equipo { display: flex; align-items: center; gap: 0.9rem; min-width: 0; }
 .tablero-equipo .crest { flex: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); }
@@ -115,6 +132,40 @@ button.tablero-mas {
   color: var(--text-dim);
 }
 button.tablero-mas:hover { color: var(--text); }
+
+/* PRUEBA 19/10/2026: «Esta semana» en gris perla (tokens en v1.css). Lo que
+   acá tenía color fijo para el azul noche se vuelve a escribir para claro. */
+.tablero-semana.v1-planilla button.tablero-aviso:hover { background: rgba(19, 35, 47, 0.06); }
+.tablero-semana.v1-planilla .tablero-aviso.bad .tablero-aviso-nro { color: var(--bad); }
+.tablero-semana.v1-planilla .tablero-cara { background: var(--perla-pozo); border-color: var(--perla-borde); }
+.tablero-semana.v1-planilla .tablero-aviso-ico { background: var(--perla-elevado); border-color: var(--perla-borde); }
+.tablero-semana.v1-planilla .tablero-aviso.bad .tablero-aviso-ico { color: var(--bad); border-color: rgba(192, 57, 43, 0.6); }
+.tablero-semana.v1-planilla .tablero-aviso.warn .tablero-aviso-ico { color: var(--warn); border-color: rgba(138, 101, 8, 0.6); }
+
+/* PRUEBA 19/10/2026 (paso 2): menos cosas a la vista. Jerarquía de la
+   referencia de Gabi: un título (el partido), un panel («Esta semana»), un
+   botón. Lo que sigue se oculta, no se borra: los datos siguen en el estado
+   y en sus pantallas (el rival en su ficha, el objetivo en El club). */
+.tablero-clave,
+.tablero-contexto,
+.tablero-cuando span,
+.tablero-plantel .depie-sub { display: none; }
+.tablero-cuando { font-size: 1.1rem; align-self: center; }
+.tablero-meta { align-items: center; }
+
+/* Vuelta 4 (Gabi: «no me gusta que los jugadores queden flotando ahí»): con
+   el piso liviano, los bustos quedaban en el aire. Ahora están parados
+   detrás de una baranda de madera opaca, con el cuerpo cortado limpio por
+   la baranda (sin desvanecido) y sin la sombrita suelta. */
+.tablero-plantel .fila-depie-linea {
+  border-top: 6px solid #c99a62;
+  background: linear-gradient(180deg, #4b2b14 0%, #30190b 55%, #1e1108 100%);
+  box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 220, 170, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+.tablero-plantel .fila-depie .busto { -webkit-mask-image: none; mask-image: none; }
+.tablero-plantel .depie-sombra { display: none; }
+.tablero-plantel button.depie:hover { transform: none; }
+.tablero-plantel .depie-lab { padding-top: 0.5rem; }
 
 /* ---------- 3. El plantel ---------- */
 .tablero-plantel { grid-column: 1 / -1; grid-row: 2; padding: 0 0.5rem; }

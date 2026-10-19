@@ -82,6 +82,45 @@ button.v1-cta {
 /* Renglones de planilla: separados con línea punteada, sin cajas. */
 .v1-renglon { border-top: 1px dashed var(--linea-suave); }
 
+/* ---------- PRUEBA 19/10/2026: la planilla clara ----------
+   La misma planilla, en el gris perla aprobado el 25/9 y OPACA: una sola
+   tarjeta clara sobre la escena iluminada, como en la referencia de Gabi. Por
+   ahora la llevan sólo la hoja «Esta semana» del Tablero y la hoja de la ficha
+   (por selector, sin tocar TSX; ver también Hub.css y modales.css). Redefine
+   los tokens que las reglas de adentro ya usan, así ninguna regla de renglón,
+   etiqueta o barra necesita duplicarse. */
+.v1-planilla:is(.tablero-semana, .ficha-hoja) {
+  --panel: var(--perla-panel);
+  --panel-2: var(--perla-elevado);
+  --panel-solido: var(--perla-elevado);
+  --bg-soft: var(--perla-pozo);
+  --border: var(--perla-borde);
+  --linea-suave: rgba(19, 35, 47, 0.22);
+  --text: var(--perla-tinta);
+  --text-dim: var(--perla-secundaria);
+  --text-faint: #6b7f8c;
+  --text-light: var(--perla-tinta);
+  --good: var(--perla-good);
+  --warn: var(--perla-warn);
+  --bad: var(--perla-bad);
+  /* La mano escribe con marcador azul sobre papel claro, no con tiza. */
+  --tiza: #1b3a4f;
+  --relieve: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 18px 40px rgba(0, 0, 0, 0.35);
+  --hundido: inset 0 1px 3px rgba(19, 35, 47, 0.25);
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--text);
+}
+.v1-planilla:is(.tablero-semana, .ficha-hoja) .v1-mano span { color: #8a5a1c; }
+.v1-planilla:is(.tablero-semana, .ficha-hoja) .v1-cinta { background: rgba(226, 204, 150, 0.9); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); }
+.v1-planilla:is(.tablero-semana, .ficha-hoja) .v1-est.bad { background: rgba(192, 57, 43, 0.1); color: var(--bad); border-color: rgba(192, 57, 43, 0.5); }
+.v1-planilla:is(.tablero-semana, .ficha-hoja) .v1-est.warn { background: rgba(138, 101, 8, 0.1); color: var(--warn); border-color: rgba(138, 101, 8, 0.45); }
+.v1-planilla:is(.tablero-semana, .ficha-hoja) .v1-est.good { background: rgba(30, 127, 85, 0.1); color: var(--good); border-color: rgba(30, 127, 85, 0.45); }
+.v1-planilla:is(.tablero-semana, .ficha-hoja) .v1-est.accent { background: rgba(19, 35, 47, 0.06); border-color: var(--border); }
+.v1-planilla:is(.tablero-semana, .ficha-hoja) .plink:hover { color: #c45a12; border-bottom-color: #c45a12; }
+/* El tooltip también es una planilla chica y clara acá. */
+.v1-planilla:is(.tablero-semana, .ficha-hoja) .tip:hover::after { background: var(--perla-elevado); border-color: var(--perla-borde); color: var(--perla-tinta); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3); }
+
 /* ---------- Estado escrito ---------- */
 .v1-est {
   display: inline-block;
@@ -123,7 +162,9 @@ button.v1-cta {
   top: var(--busto-alto);
   bottom: 0;
   border-top: 3px solid rgba(239, 230, 210, 0.55);
-  background: linear-gradient(180deg, rgba(40, 22, 10, 0.55), rgba(8, 20, 30, 0.9));
+  /* PRUEBA 19/10/2026: el piso deja ver el parquet (antes 0.55 → 0.9 azul
+     noche; ahora un oscuro cálido, 0.3 → 0.62). */
+  background: linear-gradient(180deg, rgba(40, 22, 10, 0.3), rgba(20, 12, 6, 0.62));
   box-shadow: 0 -2px 10px rgba(239, 230, 210, 0.12);
 }
 .fila-depie-gente {

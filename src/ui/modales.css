@@ -15,6 +15,17 @@
   backdrop-filter: blur(3px) saturate(0.8);
   padding: clamp(1rem, 3vh, 2rem) clamp(1rem, 3vw, 2.5rem);
 }
+/* PRUEBA 19/10/2026: detrás de la ficha, el mundo se ve iluminado. El velo
+   baja de 0.74/0.93 a 0.4/0.66 y el desenfoque sube para que lo que hay
+   atrás se lea como escena y no como texto superpuesto. El héroe de la ficha
+   se lee con su banda local (ver .ficha-heroe::before). */
+.modal-backdrop:has(> .ficha) {
+  /* Vuelta 3: oscuro cálido en vez de azul noche, y más liviano. */
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(20, 12, 6, 0.3), rgba(12, 8, 6, 0.58) 75%);
+  -webkit-backdrop-filter: blur(6px) saturate(1);
+  backdrop-filter: blur(6px) saturate(1);
+}
 
 /* ---------- El diálogo genérico (.modal): una planilla ----------
    Sin banda de color arriba (regla 3): filete fino, sombra larga. El título
@@ -273,6 +284,20 @@
   padding: clamp(0.4rem, 2vh, 1.4rem) 0 0;
 }
 .ficha-heroe-texto { flex: none; }
+/* PRUEBA 19/10/2026: la banda local del héroe de la ficha, como la del
+   Tablero, y una sombra de texto más firme. */
+.ficha-heroe { position: relative; }
+.ficha-heroe::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: -2rem -3rem -1rem -3rem;
+  pointer-events: none;
+  background: radial-gradient(ellipse 75% 70% at 30% 35%, rgba(20, 12, 6, 0.5) 0%, rgba(20, 12, 6, 0.26) 50%, rgba(20, 12, 6, 0) 100%);
+}
+.ficha-heroe > * { position: relative; z-index: 1; }
+.ficha-heroe.v1-hero { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 16px rgba(0, 0, 0, 0.75), 0 0 36px rgba(20, 12, 6, 0.7); }
+.ficha-heroe .v1-frase { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 14px rgba(0, 0, 0, 0.7), 0 0 30px rgba(20, 12, 6, 0.7); }
 .ficha-nombre {
   font: 700 clamp(2.1rem, 3vw, 2.9rem) / 0.95 var(--font-display);
   text-transform: uppercase;
@@ -625,6 +650,30 @@
 .ficha-equipos .data-label { font: 700 1rem var(--font-display); letter-spacing: 0.04em; color: var(--text); }
 .ficha-equipos .data-row.nuestro .data-value strong { color: var(--text); }
 .ficha-equipos .data-row.nuestro { background: linear-gradient(90deg, rgba(84, 210, 154, 0.08), transparent 70%); }
+
+/* ---------- PRUEBA 19/10/2026: la hoja de la ficha en gris perla ----------
+   Los tokens los pone v1.css («la planilla clara»); acá sólo lo que en esta
+   hoja tenía color fijo para el azul noche. */
+.ficha-hoja.v1-planilla .ficha-cerrar:hover:not(:disabled) { background: rgba(19, 35, 47, 0.07); }
+.ficha-hoja.v1-planilla .ficha-frase,
+.ficha-hoja.v1-planilla .bar-row .bar-label { color: var(--text); }
+.ficha-hoja.v1-planilla .ficha-tabla td.bad,
+.ficha-hoja.v1-planilla .ficha-resultado.bad,
+.ficha-hoja.v1-planilla .conducta-ficha .chip.bad { color: var(--bad); }
+.ficha-hoja.v1-planilla .ficha-carita { background: var(--perla-pozo); border-color: var(--perla-borde); }
+.ficha-hoja.v1-planilla .ficha-equipos .data-row.nuestro { background: linear-gradient(90deg, rgba(30, 127, 85, 0.12), transparent 70%); }
+
+/* PRUEBA 19/10/2026 (paso 2): menos cosas a la vista en la ficha. El héroe
+   se queda con el escudo, el nombre y la lectura del rival (dificultad +
+   estilo + un consejo); las frases de lore, racha y cruces se ocultan, no se
+   borran. Lo de atrás se desenfoca más para que no se lea como texto
+   superpuesto. */
+.ficha-heroe .v1-frase ~ .v1-frase { display: none; }
+.ficha-hoja .ficha-sub-extra { display: none; }
+.modal-backdrop:has(> .ficha) {
+  -webkit-backdrop-filter: blur(12px) saturate(1);
+  backdrop-filter: blur(12px) saturate(1);
+}
 
 /* ---------- Tips ----------
    La explicación al pasar el mouse: una planilla chica y opaca, legible sobre
