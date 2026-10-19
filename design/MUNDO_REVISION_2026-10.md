@@ -262,7 +262,7 @@ Propuesta de orden, por relación esfuerzo/efecto:
 1. **Sesión 1, los arreglos (una tarde). Hecha el 19/10, ver el changelog:** canchas con nombre, un delegado único por club,
    barrio coherente con el nombre, ligas del mercado, "departamento" y
    "taxista". Es lo que hoy delata al mundo.
-2. **Sesión 2, la cara de los clubes (A + B):** `clubLore.ts` con cancha,
+2. **Sesión 2, la cara de los clubes (A + B). Hecha el 19/10, ver el changelog:** `clubLore.ts` con cancha,
    blurb y rasgos para los 88 clubes, con el registro por liga y la tanda de
    nombres de juego de palabras para la Plaza, +35 y Montevideo F. La ficha
    del rival y la del club los muestran. **Esta es la sesión donde más se nota

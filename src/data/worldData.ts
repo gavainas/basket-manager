@@ -125,23 +125,25 @@ export const COMERCIO_TEAMS: WorldTeamSeed[] = [
  * (Mundo etapa 6). Se materializan en el mundo recién cuando el club se anota.
  */
 export const EXPANSION_DIVISION_TEAMS: Record<string, WorldTeamSeed[]> = {
-  // Liga Montevideo, Divisional F: liga libre de barrio, nivel bajo.
+  // Liga Montevideo, Divisional F: liga libre de barrio, nivel bajo. Equipos
+  // de pibes que se ponen el nombre que quieren (ver clubLore.ts).
   dv_lm_f: [
-    { id: 'lm1', name: 'Deportivo La Comercial', strength: 56, style: 'equilibrado' },
+    { id: 'lm1', name: 'Lobizones de Colón', strength: 56, style: 'equilibrado' },
     { id: 'lm2', name: 'Malvín Chico', strength: 52, style: 'tiradores' },
     { id: 'lm3', name: 'La Teja Basket', strength: 49, style: 'corredores' },
-    { id: 'lm4', name: 'La Blanqueada Basket', strength: 46, style: 'internos' },
-    { id: 'lm5', name: 'Ferro del Oeste', strength: 43, style: 'equilibrado' },
-    { id: 'lm6', name: 'Cordón Norte', strength: 40, style: 'tiradores' },
+    { id: 'lm4', name: 'New York Nicos', strength: 46, style: 'internos' },
+    { id: 'lm5', name: 'Toronto Raptores', strength: 43, style: 'corredores' },
+    { id: 'lm6', name: 'Equipo Sin Nombre (Provisorio)', strength: 40, style: 'tiradores' },
     { id: 'lm7', name: 'Brazo Oriental', strength: 37, style: 'corredores' },
   ],
-  // Liga +35, Divisional C: veteranos con oficio, más duros de lo que parecen.
+  // Liga +35, Divisional C: veteranos con oficio, más duros de lo que parecen,
+  // y con el humor de rodilla que corresponde.
   dv_v35_c: [
     { id: 'v1', name: 'Veteranos de Malvín', strength: 62, style: 'internos' },
-    { id: 'v2', name: 'Old Boys del Prado', strength: 58, style: 'tiradores' },
-    { id: 'v3', name: 'Amigos del Círculo', strength: 54, style: 'equilibrado' },
-    { id: 'v4', name: 'Maracaná Seniors', strength: 50, style: 'internos' },
-    { id: 'v5', name: 'Los Notables', strength: 46, style: 'equilibrado' },
+    { id: 'v2', name: 'Fernet Bahçe', strength: 58, style: 'tiradores' },
+    { id: 'v3', name: 'Maracaná Seniors', strength: 54, style: 'equilibrado' },
+    { id: 'v4', name: 'Los Meniscos', strength: 50, style: 'internos' },
+    { id: 'v5', name: 'Ibuprofeno 600', strength: 46, style: 'equilibrado' },
     { id: 'v6', name: 'Peñarol de la Mesa 5', strength: 43, style: 'tiradores' },
     { id: 'v7', name: 'El Resto del Mundo', strength: 40, style: 'corredores' },
   ],
@@ -323,20 +325,20 @@ export const DIVISIONS: Division[] = [
 ];
 
 /**
- * Los de la plaza: rivales del torneo si el club se anota ahí. Varios son los
- * cuadros de origen que ya se nombran en el mercado ("viene de El Galpón"):
- * el mundo chico cierra solo.
+ * Los de la plaza: rivales del torneo si el club se anota ahí. Es la liga de
+ * los equipos de amigos, y acá el nombre es un chiste con la NBA o una
+ * excusa de WhatsApp (ver el registro por liga en clubLore.ts).
  */
 export const PLAZA_RIVALS: WorldTeamSeed[] = [
   { id: 'plu1', name: 'La Amistad', strength: 48, style: 'equilibrado' },
-  { id: 'plu2', name: 'Los Tablones', strength: 45, style: 'corredores' },
+  { id: 'plu2', name: 'Chucarro Bulls', strength: 45, style: 'corredores' },
   { id: 'plu3', name: 'Los de Siempre', strength: 43, style: 'internos' },
   { id: 'plu4', name: 'El Galpón', strength: 41, style: 'equilibrado' },
-  { id: 'plu5', name: 'Panadería La Ideal', strength: 38, style: 'tiradores' },
-  { id: 'plu6', name: 'La Esquina del Tanque', strength: 36, style: 'internos' },
-  { id: 'plu7', name: 'Barrio Norte', strength: 33, style: 'corredores' },
-  { id: 'plu8', name: 'Los Primos', strength: 31, style: 'tiradores' },
-  { id: 'plu9', name: 'El Túnel', strength: 28, style: 'equilibrado' },
+  { id: 'plu5', name: 'Deben Nuggets', strength: 38, style: 'tiradores' },
+  { id: 'plu6', name: 'Peluquería Clippers', strength: 36, style: 'internos' },
+  { id: 'plu7', name: 'Lakers del Parque Rodó', strength: 33, style: 'corredores' },
+  { id: 'plu8', name: 'Mala Fe Mavericks', strength: 31, style: 'tiradores' },
+  { id: 'plu9', name: 'Mañana Confirmo', strength: 28, style: 'equilibrado' },
 ];
 
 /**
