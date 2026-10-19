@@ -21,6 +21,16 @@ export const ARCHIVO: Record<Personality, string> = {
   mercenario: 'p-mercenario.webp',
 };
 
+/** Índice estable por ID: una cara no cambia al fichar ni entre pantallas. */
+export function hashPortrait(seed: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
 /** Variante estable por persona: la misma seed muestra siempre la misma cara. */
 export function varianteFor(seed: string): number {
   let h = 2166136261;
@@ -97,7 +107,13 @@ export function Avatar({ seed, age, size = 42, jersey = 'var(--sec-partidos)', a
     return (
       <img
         className={`retrato-img v${varianteFor(seed)}`}
-        src={`${import.meta.env.BASE_URL}arte/${ARCHIVO[personality]}`}
+        src={`${import.meta.env.BASE_URL}arte/retratos/player_${String((hashPortrait(seed) % 72) + 1).padStart(3, '0')}.png`}
+        onError={(event) => {
+          // Los PNG se cargan por separado; si faltan, conserva el retrato anterior.
+          const img = event.currentTarget;
+          const fallback = `${import.meta.env.BASE_URL}arte/${ARCHIVO[personality]}`;
+          if (img.src !== new URL(fallback, window.location.href).href) img.src = fallback;
+        }}
         width={size}
         height={size}
         alt=""
