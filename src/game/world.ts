@@ -5,6 +5,7 @@
 
 import { BALANCE } from './balance';
 import { CLUB_COLORS, DIVISIONS, LEAGUES, USER_LEAGUE_ID, WORLD_DIVISION_IDS } from '../data/worldData';
+import { loreOf, venueNameFor } from '../data/clubLore';
 import { DELEGATE_NAMES, FIRST_NAMES, INTERIOR_CITIES, LAST_NAMES, NEIGHBORHOODS } from '../data/names';
 import { RECRUIT_NAMES } from '../data/recruits';
 import { MARKET_SEED_NAMES } from '../data/market';
@@ -234,16 +235,28 @@ export interface ClubIdentity {
  * temporada a temporada ni dependen de en qué divisional cayó. Antes salían
  * del RNG del momento y del índice del slot: el mismo club cambiaba de
  * camiseta y de año de fundación cada año.
+ *
+ * El delegado y el barrio salen de la tabla escrita a mano (`clubLore.ts`):
+ * con diez nombres sorteados para 75 clubes el Ruso Techera era delegado de
+ * tres a la vez, y Deportivo Capurro podía tener la cancha en Pocitos. Las
+ * tiradas del RNG se conservan igual (la primera lista sigue teniendo doce
+ * barrios de largo) para que colores, fundación y DT no cambien de los saves.
  */
 export function clubIdentity(name: string): ClubIdentity {
   const rng = new Rng(seedFromString(`club_${name}`));
   const archetypes: ClubArchetype[] = ['juvenil', 'veterano', 'estrella', 'parejo', 'parejo'];
+  const lore = loreOf(name);
+  const colors = CLUB_COLORS[rng.int(0, CLUB_COLORS.length - 1)];
+  const founded = 2026 - rng.int(4, 60);
+  const socialPrestige = rng.int(30, 80);
+  const delegate = DELEGATE_NAMES[rng.int(0, DELEGATE_NAMES.length - 1)];
+  const neighborhood = NEIGHBORHOODS[rng.int(0, 11)];
   return {
-    colors: CLUB_COLORS[rng.int(0, CLUB_COLORS.length - 1)],
-    founded: 2026 - rng.int(4, 60),
-    socialPrestige: rng.int(30, 80),
-    delegate: DELEGATE_NAMES[rng.int(0, DELEGATE_NAMES.length - 1)],
-    neighborhood: NEIGHBORHOODS[rng.int(0, NEIGHBORHOODS.length - 1)],
+    colors,
+    founded,
+    socialPrestige,
+    delegate: lore?.delegado ?? delegate,
+    neighborhood: lore?.barrio ?? neighborhood,
     coachName: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
     archetype: rng.pick(archetypes),
     modestCoachType: rng.chance(0.25) ? 'jugador' : 'honorario',
@@ -541,7 +554,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
     const identity = clubIdentity(rival.name);
     world.venues.push({
       id: venueId,
-      name: `Gimnasio de ${rival.name.split(' ').slice(-1)[0]}`,
+      name: venueNameFor(rival.name),
       neighborhood: identity.neighborhood,
     });
     world.clubs.push({
@@ -654,7 +667,7 @@ export function buildWorld(state: GameState, rng: Rng): WorldState {
       const identity = clubIdentity(seed.name);
       world.venues.push({
         id: venueId,
-        name: `Gimnasio de ${seed.name.split(' ').slice(-1)[0]}`,
+        name: venueNameFor(seed.name),
         neighborhood: identity.neighborhood,
       });
       world.clubs.push({
