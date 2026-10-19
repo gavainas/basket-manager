@@ -5,10 +5,70 @@
 // feed de la previa (efímero, de la semana) y deja una línea en las noticias.
 
 import { BALANCE, clamp } from './balance';
+import { loreOf, type Rasgo } from '../data/clubLore';
 import { rivalryWith } from './leagueLife';
-import { clubIdentity, teamByLegacyRival, teamRoster, worldPlayerName } from './world';
+import { clubIdentity, teamByLegacyRival, teamRoster, worldPlayerName, type ClubArchetype } from './world';
 import type { BanterMessage, GameState, Player } from './types';
-import type { Rng } from './rng';
+import { Rng, seedFromString } from './rng';
+
+/**
+ * Lo que dice un club según su carácter (clubIdentity): un plantel de pibes
+ * y uno de veteranos no pican igual. Sesión 4 de design/MUNDO_REVISION_2026-10.md.
+ */
+const OPENERS_POR_CARACTER: Record<ClubArchetype, string[]> = {
+  juvenil: [
+    'Nuestro más viejo tiene veintitrés. ¿El de ustedes cuántos nietos tiene?',
+    'Después del partido salimos. Si quieren venir, avisen, aunque capaz no aguantan.',
+    'Avisen qué defensa van a hacer, así la estudiamos en el ómnibus.',
+  ],
+  veterano: [
+    'Hace veinte años que les ganamos a equipos como ustedes. No es amenaza, es estadística.',
+    'Nosotros no corremos: esperamos. Ustedes van a venir solos.',
+    'A la cancha se entra callado. Lo digo por experiencia, no por ustedes.',
+  ],
+  estrella: [
+    'Guarden un cartel para nuestro base. Lo van a necesitar para explicar lo que pasó.',
+    'Dejen de mirar la tabla y empiecen a mirar a nuestro 7. Después no digan que no avisamos.',
+    'Pregunta: ¿tienen a alguien que lo marque? Es por organizar la planilla.',
+  ],
+  parejo: [
+    'Acá no hay figura, son doce. Elijan a quién marcar.',
+    'Nosotros cumplimos: once en la planilla. No pregunto por ustedes para no incomodar.',
+    'Ni mejores ni peores que ustedes. Por eso vamos a ganar: no nos confiamos.',
+  ],
+};
+
+/** Lo que un club dice por sus rasgos; los de la cancha, sólo cuando se juega en la de ellos. */
+const OPENERS_POR_RASGO: Partial<Record<Rasgo, { frase: string; enSuCancha: boolean }>> = {
+  tribuna_brava: { frase: 'Traigan tapones para los oídos. Nuestra gente compró bombo nuevo.', enSuCancha: true },
+  cancha_chica: { frase: 'Ojo con la pared del fondo. Está a un metro y ya conoce a varios.', enSuCancha: true },
+  agua_fria: { frase: 'Hay ducha. Caliente, no. Avisen si quieren que les pongamos la pava.', enSuCancha: true },
+  cantina: { frase: 'Después de perder pueden quedarse a comer. Se cobra igual.', enSuCancha: true },
+  aro_torcido: { frase: 'Nuestro aro tiene su manera. Nosotros la sabemos.', enSuCancha: true },
+  cancha_abierta: { frase: 'Miren el pronóstico antes de venir. Acá el viento también juega, y es de los nuestros.', enSuCancha: true },
+  piso_resbaloso: { frase: 'Traigan championes nuevos. El piso lo enceramos el martes, justo.', enSuCancha: true },
+  tablero_viejo: { frase: 'Los tableros son de madera. Los tiros de tabla no vuelven, ya les aviso.', enSuCancha: true },
+  vestuario_compartido: { frase: 'Vestuario compartido: la charla técnica se escucha. Hagan la de ustedes en el auto.', enSuCancha: true },
+  de_traje: { frase: 'Vayan de saco. Nosotros vamos.', enSuCancha: false },
+  siempre_seis: { frase: 'Esta vez juntamos siete. Así que ya saben: no hay excusa de banco.', enSuCancha: false },
+  nunca_faltan: { frase: 'Nosotros vamos a estar los once, como siempre. ¿Ustedes llegan a diez?', enSuCancha: false },
+  llegan_tarde: { frase: 'Capaz llegamos con cuatro al salto inicial. Esperen tranquilos, que después vamos cayendo.', enSuCancha: false },
+  tercer_tiempo: { frase: 'Ganen o pierdan hay asado. Si pierden, lo pagan ustedes: es la tradición nuestra.', enSuCancha: false },
+  historico: { frase: 'Pasen por la sede antes del partido y miren las vitrinas. Después no digan que no sabían.', enSuCancha: false },
+  pibes: { frase: 'Nuestro más viejo tiene veintitrés. Les llevamos el hielo nosotros, no se gasten.', enSuCancha: false },
+  delegado_pesado: { frase: 'Nuestro delegado ya revisó la planilla de ustedes. Tiene dos preguntas.', enSuCancha: false },
+};
+
+const OPENERS_GENERICOS = [
+  'Che, ¿este año van a traer banco o siguen jugando seis?',
+  'Pregunta seria: ¿el gimnasio de ustedes ya tiene los aros derechos?',
+  'Nos vemos en la cancha. Traigan hielo… para los tobillos, digo.',
+  'Avisen si necesitan que les mandemos la dirección de la cancha. La última vez llegaron tarde.',
+  'Nos dijeron que entrenan los jueves. Nosotros también, pero al básquet.',
+  'Mandamos el video del último partido de ustedes al grupo. Nos reímos mucho, con respeto.',
+  'Ya elegimos el corte para el asado de después. Lo pagan ustedes, ¿no?',
+  'Pregunta para el delegado de ustedes: ¿la planilla la traen o la inventan ahí?',
+];
 
 /** Frases del rival según el contexto (el que pica sabe por qué pica). */
 function rivalOpeners(s: GameState, rivalName: string, rng: Rng): string[] {
@@ -16,6 +76,14 @@ function rivalOpeners(s: GameState, rivalName: string, rng: Rng): string[] {
   const meetings = s.history.filter((m) => m.rivalId === rivalId);
   const last = meetings[meetings.length - 1];
   const openers: string[] = [];
+  // La voz del club: su carácter y sus rasgos pesan más que el chiste genérico.
+  const identity = clubIdentity(rivalName);
+  openers.push(...OPENERS_POR_CARACTER[identity.archetype]);
+  const enSuCancha = s.week % 2 === 0;
+  for (const rasgo of loreOf(rivalName)?.rasgos ?? []) {
+    const o = OPENERS_POR_RASGO[rasgo];
+    if (o && (!o.enSuCancha || enSuCancha)) openers.push(o.frase, o.frase);
+  }
 
   if (last && !last.won) {
     openers.push(
@@ -40,12 +108,11 @@ function rivalOpeners(s: GameState, rivalName: string, rng: Rng): string[] {
   if (s.weekMoment?.id === 'seleccion') {
     openers.push(`Ojo que juega la Selección y después no valen las excusas de "nos faltaron cinco".`);
   }
-  openers.push(
-    `Che, ¿este año van a traer banco o siguen jugando seis?`,
-    `Pregunta seria: ¿el gimnasio de ustedes ya tiene los aros derechos?`,
-    `Nos vemos en la cancha. Traigan hielo… para los tobillos, digo.`
-  );
-  void rivalName;
+  // Azar propio: dos genéricos por semana sin correr el azar de la temporada
+  // (los tests con semilla fija recorren temporadas enteras).
+  const propio = new Rng(seedFromString(`previa_${s.seasonNumber}_${s.week}`));
+  openers.push(propio.pick(OPENERS_GENERICOS), propio.pick(OPENERS_GENERICOS));
+  void rng;
   return openers;
 }
 

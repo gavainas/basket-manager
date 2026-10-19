@@ -11,6 +11,7 @@ import { DIVISIONS } from '../data/worldData';
 import { refereeOfWeek } from './leagueLife';
 import { bumpGrievance, easeGrievance, sootheGrievance } from './mood';
 import { listaY } from './nombres';
+import { PERSONAJES } from './personajes';
 import { dayLabel, mudarAlClub, teamByLegacyRival, teamRoster, worldPlayerName } from './world';
 import type { ActiveEvent, DelayedNote, GameState, MatchResult, Player, Rival, ScheduledEvent, Team, TrialCandidate, WorldPlayer } from './types';
 import type { Rng } from './rng';
@@ -265,7 +266,7 @@ export const EVENTS: EventDef[] = [
     },
     text: (s, ev) => {
       const p = byId(s, ev.playerId);
-      return `${p.name} acumula ${p.weeksUnpaid} semanas sin pagar la cuota. El tesorero te mira fijo: "¿Y con este qué hacemos?"`;
+      return `${p.name} acumula ${p.weeksUnpaid} semanas sin pagar la cuota. ${PERSONAJES.tesoreraLarga}, te mira fijo con el cuaderno abierto: "¿Y con este qué hacemos?"`;
     },
     options: () => [
       { label: 'Exigirle el pago ya', hint: 'Puede pagar… o calentarse' },
@@ -307,7 +308,7 @@ export const EVENTS: EventDef[] = [
     title: 'Oferta del almacén',
     weight: 6,
     canFire: () => true,
-    text: () => 'El almacenero de la esquina ofrece $120 por única vez a cambio de que el equipo se saque fotos con la gorra de su negocio.',
+    text: () => `${PERSONAJES.almaceneroLargo} de la esquina, ofrece $120 por única vez a cambio de que el equipo se saque fotos con la gorra de su negocio.`,
     options: () => [
       { label: 'Aceptar y posar sonrientes', hint: '+$120, algo de prestigio social' },
       { label: 'Rechazar con elegancia', hint: 'Sin plata, sin compromisos' },
@@ -317,9 +318,9 @@ export const EVENTS: EventDef[] = [
         s.club.money += 120;
         s.ledger.push({ week: s.week, concept: 'Foto con la gorra del almacén', amount: 120 });
         s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
-        return 'Fotos con gorra y sonrisa. $120 para la caja y el almacenero feliz.';
+        return `Fotos con gorra y sonrisa. $120 para la caja y ${PERSONAJES.almacenero} feliz.`;
       }
-      return 'Declinaste con respeto. El almacenero prometió volver "cuando sean primera".';
+      return `Declinaste con respeto. ${PERSONAJES.almacenero} prometió volver "cuando sean primera".`;
     },
   },
   {
@@ -1145,7 +1146,7 @@ export const EVENTS: EventDef[] = [
     text: (s) => {
       const ultimas = s.history.filter((m) => !m.forfeit).slice(-3);
       const marcadores = ultimas.map((m) => `${m.scoreFor}-${m.scoreAgainst}`).join(', ');
-      return `Te citan un martes a las nueve en la sede: los tres de la comisión, el mate y una carpeta abierta. "Tres al hilo (${marcadores}). Nosotros ponemos la cara en el barrio, así que preguntamos: ¿qué está pasando?"`;
+      return `Te citan un martes a las nueve en la sede: los tres de la comisión (${PERSONAJES.comisionLarga}), el mate y una carpeta abierta. "Tres al hilo (${marcadores}). Nosotros ponemos la cara en el barrio, así que preguntamos: ¿qué está pasando?"`;
     },
     options: (s) => [
       { label: 'Dar la cara: mostrarles el plan y los números', hint: 'Ordena el club; la comisión te da tiempo' },
@@ -1205,7 +1206,7 @@ export const EVENTS: EventDef[] = [
     text: (s) => {
       const ultimas = s.history.filter((m) => !m.forfeit).slice(-3);
       const marcadores = ultimas.map((m) => `${m.scoreFor}-${m.scoreAgainst}`).join(', ');
-      return `El del almacén te frena en la esquina con el diario del barrio doblado bajo el brazo: "Tres al hilo (${marcadores}), ¿eh? Acá se está hablando. El lunes va medio barrio a la cancha. ¿Qué hacemos?"`;
+      return `${PERSONAJES.almaceneroLargo}, te frena en la esquina con el diario del barrio doblado bajo el brazo: "Tres al hilo (${marcadores}), ¿eh? Acá se está hablando. El lunes va medio barrio a la cancha. ¿Qué hacemos?"`;
     },
     options: (s) => {
       const n = semanasHastaLaFactura(s);
@@ -1232,7 +1233,7 @@ export const EVENTS: EventDef[] = [
         s.club.sportPrestige = clamp(s.club.sportPrestige + 1);
         for (const p of actives(s).filter((x) => x.personality === 'protagonista')) p.motivation = clamp(p.motivation - 3);
         logClubEvent(s, 'hito', 'Tres al hilo y el manager bajó la espuma: "todavía no ganamos nada".');
-        return '"Todavía no ganamos nada", dijiste, y el del almacén asintió despacio. En el vestuario lo repitieron como consigna; a los que ya se veían campeones les cayó como un balde de agua.';
+        return `"Todavía no ganamos nada", dijiste, y ${PERSONAJES.almacenero} asintió despacio. En el vestuario lo repitieron como consigna; a los que ya se veían campeones les cayó como un balde de agua.`;
       }
       for (const p of actives(s)) p.motivation = clamp(p.motivation + 5);
       s.club.socialClimate = clamp(s.club.socialClimate + 3);
@@ -1259,8 +1260,8 @@ export const EVENTS: EventDef[] = [
       const ganados = desde.filter((m) => m.won).length;
       const marcadores = desde.map((m) => `${m.scoreFor}-${m.scoreAgainst}`).join(', ');
       return promesaCumplida(s, ev)
-        ? `El del almacén te espera con el diario abierto en tu nota: "'Peleamos arriba', dijiste. Y mirá (${marcadores}): ${ganados} de ${desde.length}. Acá te hicieron caso, ¿eh?"`
-        : `El del almacén te muestra tu nota pegada al lado de la caja, con los resultados anotados en birome (${marcadores}): "'Peleamos arriba', decía acá. ${ganados === 0 ? 'Ni una.' : `${ganados} de ${desde.length}.`} El barrio se acuerda, ¿sabés?"`;
+        ? `${PERSONAJES.almacenero} te espera con el diario abierto en tu nota: "'Peleamos arriba', dijiste. Y mirá (${marcadores}): ${ganados} de ${desde.length}. Acá te hicieron caso, ¿eh?"`
+        : `${PERSONAJES.almacenero} te muestra tu nota pegada al lado de la caja, con los resultados anotados en birome (${marcadores}): "'Peleamos arriba', decía acá. ${ganados === 0 ? 'Ni una.' : `${ganados} de ${desde.length}.`} El barrio se acuerda, ¿sabés?"`;
     },
     options: (s, ev) =>
       promesaCumplida(s, ev)
@@ -1315,7 +1316,7 @@ export const EVENTS: EventDef[] = [
        por temporada: la noche queda en la historia del club y `canFire` la
        busca ahí. */
     id: 'cena_propuesta',
-    title: 'El tesorero quiere hacer una cena',
+    title: 'La tesorera quiere hacer una cena',
     weight: 7,
     canFire: (s) =>
       s.week >= 2 &&
@@ -1326,17 +1327,17 @@ export const EVENTS: EventDef[] = [
       !s.clubTimeline.some((e) => e.season === s.seasonNumber && /cena show/i.test(e.text)),
     pickTargets: (s) => ({ playerId: organizadorNatural(s).id }),
     text: (s) =>
-      `El tesorero trae la idea a la sede con el cuaderno abierto: una cena show en el club, la parrilla de la cantina, el hijo de Don Aldo cantando tangos y la tarjeta a $${CENA.precio}. "Se junta plata y se junta gente", dice, y mira la caja: $${s.club.money}. Alguien tiene que llevarla.`,
+      `${PERSONAJES.tesoreraLarga}, trae la idea a la sede con el cuaderno abierto: una cena show en el club, la parrilla de la cantina, el hijo de Don Aldo cantando tangos y la tarjeta a $${CENA.precio}. "Se junta plata y se junta gente", dice, y mira la caja: $${s.club.money}. Alguien tiene que llevarla.`,
     options: (s, ev) => [
       { label: 'Llevarla vos: la parrilla, las tarjetas, el sonido', hint: `$${CENA.gasto} de la caja ahora; el club te ve en todo y se ordena` },
       { label: `Que la organice ${byId(s, ev.playerId).name}`, hint: `$${CENA.gasto} de la caja ahora; el grupo se prende, y si la noche sale mal es su papelón` },
-      { label: 'Ahora no: el club no está para fiestas', hint: 'Sin gasto y sin cena; el tesorero guarda el cuaderno' },
+      { label: 'Ahora no: el club no está para fiestas', hint: `Sin gasto y sin cena; ${PERSONAJES.tesorera} guarda el cuaderno` },
     ],
     resolve: (s, ev, opt) => {
       if (opt === 2) {
         s.club.socialPrestige = clamp(s.club.socialPrestige - 1);
-        logClubEvent(s, 'hito', 'El tesorero propuso una cena show y el club la dejó pasar.');
-        return 'El tesorero cerró el cuaderno sin decir nada. "Cuando quieran", dijo, y en el barrio alguno comentó que el club anda con la persiana medio baja.';
+        logClubEvent(s, 'hito', `${PERSONAJES.tesoreraLarga}, propuso una cena show y el club la dejó pasar.`);
+        return `${PERSONAJES.tesorera} cerró el cuaderno sin decir nada. "Cuando quieran", dijo, y en el barrio alguno comentó que el club anda con la persiana medio baja.`;
       }
       s.club.money -= CENA.gasto;
       s.ledger.push({ week: s.week, concept: 'Cena show: parrilla, sonido y tarjetas', amount: -CENA.gasto });
@@ -1346,7 +1347,7 @@ export const EVENTS: EventDef[] = [
         chain(s, 2, { defId: 'cena_tarjetas', fromWeek: s.week, payload: { manager: 1 } });
         s.news.unshift({ week: s.week, text: `Se anunció la cena show del club para dentro de cuatro semanas. La lleva el manager, tarjeta a $${CENA.precio}.`, tone: 'neutral' });
         logClubEvent(s, 'social', 'El club anunció una cena show, con el manager al frente de todo.');
-        return `Te quedaste con el cuaderno. Parrilla, sonido, tarjetas: en dos semanas se ve cómo viene la venta. El tesorero se fue contento; el vestuario, con la tarjeta en la mano.`;
+        return `Te quedaste con el cuaderno. Parrilla, sonido, tarjetas: en dos semanas se ve cómo viene la venta. ${PERSONAJES.tesorera} se fue contenta; el vestuario, con la tarjeta en la mano.`;
       }
       org.motivation = clamp(org.motivation + 6);
       s.club.socialClimate = clamp(s.club.socialClimate + 3);
@@ -1440,7 +1441,7 @@ export const EVENTS: EventDef[] = [
       if (opt === 0) {
         s.club.organization = clamp(s.club.organization + 3);
         s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
-        desenlace = `Brindis, aplauso para la parrilla y el tesorero leyendo las cuentas con el micrófono: $${Math.max(0, neto)} para la caja.`;
+        desenlace = `Brindis, aplauso para la parrilla y ${PERSONAJES.tesorera} leyendo las cuentas con el micrófono: $${Math.max(0, neto)} para la caja.`;
       } else if (opt === 1) {
         neto -= CENA.ultimaRonda;
         s.club.socialClimate = clamp(s.club.socialClimate + 6);
@@ -1858,7 +1859,7 @@ export const EVENTS: EventDef[] = [
         s.ledger.push({ week: s.week, concept: `Cantina del partido prestado a ${r.rival.name}`, amount: recaudado });
         s.club.socialPrestige = clamp(s.club.socialPrestige + 2);
         s.club.organization = clamp(s.club.organization - 2);
-        return `Se jugó en casa con las dos hinchadas y la cantina a full: $${recaudado} para la caja. Eso sí, el canchero pidió que no se repita: "dos planillas, dos delegados y un solo vestuario".`;
+        return `Se jugó en casa con las dos hinchadas y la cantina a full: $${recaudado} para la caja. Eso sí, ${PERSONAJES.cancheroLargo}, pidió que no se repita: "dos planillas, dos delegados y un solo vestuario".`;
       }
       if (opt === 1) {
         s.club.socialPrestige = clamp(s.club.socialPrestige + 3);
@@ -2153,7 +2154,7 @@ export const EVENTS: EventDef[] = [
       const cost = wp ? costoDeIrABuscar(wp) : 40;
       return [
         { label: `Ir a buscarlo: $${cost} entre ficha y viáticos`, hint: 'Si viene, la liga habla; si no, se gasta igual una parte' },
-        { label: 'Pasarle el dato al tesorero y esperar', hint: 'Capaz aparece solo' },
+        { label: `Pasarle el dato a ${PERSONAJES.tesorera} y esperar`, hint: 'Capaz aparece solo' },
         { label: 'No meterse en vestuario ajeno', hint: 'En la liga se nota, para bien' },
       ];
     },
@@ -2190,7 +2191,7 @@ export const EVENTS: EventDef[] = [
         return `Fuiste, tomaste un café con ${worldPlayerName(wp)} y a la semana se amigó con su DT. Quedaron $${gastado} de nafta y una historia para el grupo.`;
       }
       if (opt === 1) {
-        return `Le pasaste el dato al tesorero, que lo anotó en la libreta. "Si viene solo, bienvenido". No vino.`;
+        return `Le pasaste el dato a ${PERSONAJES.tesorera}, que lo anotó en el cuaderno. "Si viene solo, bienvenido". No vino.`;
       }
       s.club.sportPrestige = clamp(s.club.sportPrestige + 1);
       return `"No nos metemos en vestuario ajeno". El amigo de afuera se lo contó a medio mundo, y en la liga lo tomaron como lo que es: un gesto.`;
@@ -2294,7 +2295,7 @@ export const EVENTS: EventDef[] = [
     },
     text: (s) => {
       const r = rivalDeLaSemana(s)!;
-      return `El canchero avisa el miércoles: el ${r.division.gameDay} hay acto escolar en el gimnasio y la cancha no está. La liga ofrece jugar en ${r.lore?.cancha ?? 'la cancha de ellos'} (${r.lore?.barrio ?? 'su barrio'}), con su tribuna, o que consigas otra.`;
+      return `${PERSONAJES.cancheroLargo}, avisa el miércoles: el ${r.division.gameDay} hay acto escolar en el gimnasio y la cancha no está. La liga ofrece jugar en ${r.lore?.cancha ?? 'la cancha de ellos'} (${r.lore?.barrio ?? 'su barrio'}), con su tribuna, o que consigas otra.`;
     },
     options: (s) => {
       const r = rivalDeLaSemana(s)!;

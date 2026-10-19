@@ -3,10 +3,11 @@
 // solo se le pone nombre, memoria y voz.
 
 import { clamp } from './balance';
+import { loreOf } from '../data/clubLore';
 import { fechaLabel, logClubEvent } from './timeline';
 import { teamByLegacyRival, teamRoster, worldPlayerName } from './world';
 import type { GameState } from './types';
-import type { Rng } from './rng';
+import { Rng, seedFromString } from './rng';
 
 /** Hash simple y estable a [0, 1). */
 function hash01(s: string): number {
@@ -174,6 +175,14 @@ export function leagueNewsForWeek(s: GameState, results: OtherResult[], rng: Rng
     }
   }
 
+  // El resto de la liga, con lo que el mundo sabe de cada club (sesión 4 de
+  // design/MUNDO_REVISION_2026-10.md): los rasgos, los delegados y los
+  // planteles rivales dan noticias que antes no existían. Se sortea una.
+  // Con azar propio: no corre el azar de la temporada (los tests con semilla
+  // fija recorren temporadas enteras y esperan lo mismo que antes).
+  const extra = noticiasDelMundo(s, results, new Rng(seedFromString(`noticias_${s.seasonNumber}_${s.week}`)));
+  if (extra) news.push({ prio: 1, tone: 'neutral', text: extra });
+
   news
     .sort((a, b) => b.prio - a.prio)
     .slice(0, 2)
@@ -182,4 +191,71 @@ export function leagueNewsForWeek(s: GameState, results: OtherResult[], rng: Rng
 
 function legacyName(s: GameState, legacyId: string): string {
   return s.rivals.find((r) => r.id === legacyId)?.name ?? legacyId;
+}
+
+/** El delegado de un club rival, por nombre; "el delegado" si el mundo no lo tiene. */
+function delegadoDe(s: GameState, clubName: string): string {
+  const rival = s.rivals.find((r) => r.name === clubName);
+  const team = rival ? teamByLegacyRival(s.world, rival.id) : undefined;
+  return team?.delegate ?? 'el delegado';
+}
+
+function mayus(t: string): string {
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+/**
+ * Una noticia más de la fecha, sacada de lo que el mundo sabe: el que jugó
+ * con seis, el delegado que protestó la planilla, el que estrenó camisetas,
+ * el lesionado de ellos, el partido que se definió sobre la chicharra. Cada
+ * resultado habilita las que le caben; se sortea una entre todas.
+ */
+function noticiasDelMundo(s: GameState, results: OtherResult[], rng: Rng): string | null {
+  const cands: string[] = [];
+  for (const r of results) {
+    const diff = r.winScore - r.loseScore;
+    const loserLore = loreOf(r.loserName);
+    const winnerLore = loreOf(r.winnerName);
+    const lr = loserLore?.rasgos ?? [];
+    const wr = winnerLore?.rasgos ?? [];
+    if (diff <= 2) {
+      cands.push(`📰 ${r.winnerName} le ganó a ${r.loserName} por ${diff === 1 ? 'uno' : 'dos'}, sobre la chicharra (${r.winScore}-${r.loseScore}). Se discutió hasta en el estacionamiento.`);
+    }
+    if (lr.includes('siempre_seis')) {
+      cands.push(`📰 ${r.loserName} jugó con seis otra vez y lo pagó contra ${r.winnerName} (${r.winScore}-${r.loseScore}). ${mayus(delegadoDe(s, r.loserName))} juró que "la semana que viene vienen todos".`);
+    }
+    if (lr.includes('delegado_pesado')) {
+      cands.push(`📰 ${mayus(delegadoDe(s, r.loserName))} (${r.loserName}) protestó la planilla de ${r.winnerName} después del ${r.winScore}-${r.loseScore}. La liga la dio por buena en dos renglones.`);
+    }
+    if (lr.includes('llegan_tarde')) {
+      cands.push(`📰 ${r.loserName} arrancó con cuatro contra ${r.winnerName} y entró al partido cuando ya iba ${Math.round(r.winScore / 4)}-${Math.round(r.loseScore / 5)}. Terminó ${r.winScore}-${r.loseScore}.`);
+    }
+    if (wr.includes('tercer_tiempo') || wr.includes('cantina')) {
+      cands.push(`📰 En ${r.winnerName} festejaron el ${r.winScore}-${r.loseScore} a ${r.loserName} con asado en la cancha. ${mayus(delegadoDe(s, r.winnerName))} invitó a los rivales; fueron dos.`);
+    }
+    if (wr.includes('tribuna_brava') && diff >= 10) {
+      cands.push(`📰 ${r.winnerName} pasó por arriba a ${r.loserName} (${r.winScore}-${r.loseScore}) con la tribuna encima: el bombo de ${winnerLore?.cancha ?? 'su cancha'} se escuchó desde la avenida.`);
+    }
+    if (wr.includes('de_traje') && rng.chance(0.5)) {
+      cands.push(`📰 ${r.winnerName} estrenó camisetas en la victoria contra ${r.loserName}. Las viejas tenían doce años, según ${delegadoDe(s, r.winnerName)}, "y ganaban más".`);
+    }
+    if (lr.includes('dt_nuevo') && diff >= 12) {
+      const rival = s.rivals.find((x) => x.name === r.loserName);
+      const team = rival ? teamByLegacyRival(s.world, rival.id) : undefined;
+      if (team?.coachName) cands.push(`📰 En ${r.loserName} ya se habla del puesto de ${team.coachName} después del ${r.loseScore}-${r.winScore} con ${r.winnerName}. Es el tercer DT en tres años.`);
+    }
+    if (lr.includes('historico') && diff >= 15) {
+      cands.push(`📰 ${r.loserName}, con toda su historia, se comió un ${r.loseScore}-${r.winScore} de ${r.winnerName}. En la sede no se habla de otra cosa.`);
+    }
+  }
+  // El lesionado de la liga: un plantel rival con un jugador parado.
+  for (const rival of rng.shuffle(s.rivals).slice(0, 3)) {
+    const team = teamByLegacyRival(s.world, rival.id);
+    const roto = team ? teamRoster(s.world, team.id).find((wp) => wp.injuryWeeks > 0) : undefined;
+    if (roto) {
+      cands.push(`📰 ${worldPlayerName(roto)} (${rival.name}) salió lesionado: ${roto.injuryWeeks === 1 ? 'una semana' : `${roto.injuryWeeks} semanas`} afuera. Si nos toca enfrentarlos, no lo vamos a ver.`);
+      break;
+    }
+  }
+  return cands.length > 0 ? rng.pick(cands) : null;
 }
