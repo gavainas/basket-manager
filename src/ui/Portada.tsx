@@ -18,9 +18,10 @@
 // las dos del club en marcha) y el selector de faltas y lesiones. La Carrera
 // sigue yendo a sus tres escenas.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AbsenceDifficulty } from '../game/types';
 import { clearSave, loadGame, saveStatus } from '../persistence/storage';
+import { Icon, type IconName } from './Icon';
 import { CareerSetup } from './CareerSetup';
 import type { ConfirmRequest } from './ConfirmDialog';
 import { weekLabel } from './helpers';
@@ -53,6 +54,17 @@ export const DIFFICULTY_INFO: Record<AbsenceDifficulty, { label: string; desc: s
   dificil: { label: 'Difícil', desc: 'Cada semana falta gente, la caja arranca corta y los imprevistos llueven.' },
 };
 
+type Modalidad = 'carrera' | 'pretemporada' | 'directa';
+
+const MODALIDADES: { id: Modalidad; icon: IconName; categoria: string; titulo: string; descripcion: string }[] = [
+  { id: 'carrera', icon: 'gimnasio', categoria: 'Carrera · el club desde cero', titulo: 'Fundar tu club',
+    descripcion: 'Sin plantel, con una libreta de amigos. Ocho en cuatro semanas o no hay temporada.' },
+  { id: 'pretemporada', icon: 'plantel', categoria: 'Club en marcha · Atlético El Parque', titulo: 'Armar el plantel en la pretemporada',
+    descripcion: 'Renovaciones, mercado y elección de liga antes de la primera fecha.' },
+  { id: 'directa', icon: 'pelota', categoria: 'Club en marcha · Atlético El Parque', titulo: 'Partida directa',
+    descripcion: 'Plantel ya armado: a la primera semana.' },
+];
+
 type Paso = 'inicio' | 'nueva' | 'gestionar';
 
 interface Props {
@@ -70,6 +82,18 @@ export function Portada({ portada, onNew, onNewPreseason, onNewCareer, onContinu
   const [difficulty, setDifficulty] = useState<AbsenceDifficulty>('medio');
   const [paso, setPaso] = useState<Paso>('inicio');
   const [carrera, setCarrera] = useState(false);
+  const [modalidad, setModalidad] = useState<Modalidad>('carrera');
+  const nuevaTitulo = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (paso === 'nueva' && !carrera) nuevaTitulo.current?.focus();
+  }, [paso, carrera]);
+
+  const comenzar = () => {
+    if (modalidad === 'carrera') setCarrera(true);
+    else if (modalidad === 'pretemporada') onNewPreseason(difficulty);
+    else onNew(difficulty);
+  };
   const status = saveStatus();
   const saved = status === 'ok';
   const resumen = saved ? resumenGuardado() : null;
@@ -96,7 +120,7 @@ export function Portada({ portada, onNew, onNewPreseason, onNewCareer, onContinu
   }
 
   return (
-    <div className={`portada-v1${paso === 'inicio' ? '' : ' en-paso'}`}>
+    <div className={`portada-v1${paso === 'inicio' ? '' : ' en-paso'}${paso === 'nueva' ? ' nueva-partida' : ''}`}>
       {/* La ilustración original, intacta, a sangre. El velo es una capa aparte
           para ajustar el contraste sin tocar la imagen. */}
       <div className="pv1-fondo" style={{ backgroundImage: `url(${portada})` }} role="img" aria-label="Asado en la cantina del club" />
@@ -150,44 +174,43 @@ export function Portada({ portada, onNew, onNewPreseason, onNewCareer, onContinu
         )}
 
         {paso === 'nueva' && (
-          <section className="pv1-panel v1-planilla" role="dialog" aria-labelledby="pv1-nueva-t">
-            <header className="pv1-panel-cab">
-              <h2 id="pv1-nueva-t">Nueva partida</h2>
-              <span>Elegí cómo empezar</span>
+          <section className="np-panel" aria-labelledby="pv1-nueva-t">
+            <header className="np-cabecera">
+              <h2 id="pv1-nueva-t" ref={nuevaTitulo} tabIndex={-1}>Nueva partida</h2>
+              <p>Elegí cómo empezar la historia de tu club.</p>
             </header>
-            <div className="pv1-modos">
-              <button className="pv1-modo" onClick={() => setCarrera(true)}>
-                <span className="pv1-modo-k">Carrera · el club desde cero</span>
-                <span className="pv1-modo-t">Fundar tu club</span>
-                <span className="pv1-modo-d">Sin plantel, con una libreta de amigos. Ocho en cuatro semanas o no hay temporada.</span>
+            <fieldset className="np-modos">
+              <legend className="np-solo-lector">Modalidad de partida</legend>
+              {MODALIDADES.map((modo) => (
+                <label key={modo.id} className={`np-modo${modalidad === modo.id ? ' seleccionado' : ''}`}>
+                  <input type="radio" name="modalidad" value={modo.id} checked={modalidad === modo.id}
+                    onChange={() => setModalidad(modo.id)} aria-describedby={`np-desc-${modo.id}`} />
+                  <span className="np-marca" aria-hidden="true">{modalidad === modo.id ? '✓' : ''}</span>
+                  <span className="np-icono" aria-hidden="true"><Icon name={modo.icon} size={48} /></span>
+                  <span className="np-categoria">{modo.categoria}</span>
+                  <span className="np-titulo">{modo.titulo}</span>
+                  <span className="np-descripcion" id={`np-desc-${modo.id}`}>{modo.descripcion}</span>
+                </label>
+              ))}
+            </fieldset>
+            <div className="np-ajustes">
+              <fieldset className="np-dificultad" aria-describedby="np-dif-desc">
+                <legend>Dificultad</legend>
+                <span className="np-dificultad-nota">Faltas y lesiones</span>
+                <div className="np-dif-opciones">
+                  {(Object.keys(DIFFICULTY_INFO) as AbsenceDifficulty[]).map((d) => (
+                    <label key={d} className={difficulty === d ? 'on' : ''}>
+                      <input type="radio" name="dificultad" value={d} checked={difficulty === d}
+                        onChange={() => setDifficulty(d)} />
+                      <span>{DIFFICULTY_INFO[d].label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p id="np-dif-desc" aria-live="polite">{DIFFICULTY_INFO[difficulty].desc}</p>
+              </fieldset>
+              <button className="np-comenzar" onClick={comenzar}>
+                Comenzar partida <span aria-hidden="true">→</span>
               </button>
-              <button className="pv1-modo" onClick={() => onNewPreseason(difficulty)}>
-                <span className="pv1-modo-k">Club en marcha · Atlético El Parque</span>
-                <span className="pv1-modo-t">Armá el plantel en la pretemporada</span>
-                <span className="pv1-modo-d">Renovaciones, mercado y elección de liga antes de la primera fecha.</span>
-              </button>
-              <button className="pv1-modo" onClick={() => onNew(difficulty)}>
-                <span className="pv1-modo-k">Club en marcha · Atlético El Parque</span>
-                <span className="pv1-modo-t">Partida directa</span>
-                <span className="pv1-modo-d">Plantel ya armado: a la primera semana.</span>
-              </button>
-            </div>
-            <div className="pv1-dificultad">
-              <span className="pv1-dif-k">Faltas y lesiones</span>
-              <div className="pv1-dif-opciones" role="radiogroup" aria-label="Faltas y lesiones">
-                {(Object.keys(DIFFICULTY_INFO) as AbsenceDifficulty[]).map((d) => (
-                  <button
-                    key={d}
-                    role="radio"
-                    aria-checked={difficulty === d}
-                    className={difficulty === d ? 'on' : ''}
-                    onClick={() => setDifficulty(d)}
-                  >
-                    {DIFFICULTY_INFO[d].label}
-                  </button>
-                ))}
-              </div>
-              <p className="pv1-dif-d">{DIFFICULTY_INFO[difficulty].desc}</p>
             </div>
             {status !== 'none' && (
               <p className="pv1-aviso">
