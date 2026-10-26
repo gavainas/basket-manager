@@ -329,3 +329,167 @@
   .portada-v1 .pv1-acceso img { max-width: 70vw; }
   .portada-v1 .pv1-dificultad { grid-template-columns: 1fr; }
 }
+
+/* Nueva partida: selección local; el CTA conserva los flujos del juego.
+   Reglas acotadas a este paso para no alterar inicio ni gestionar. */
+.portada-v1.nueva-partida .pv1-contenido {
+  grid-template-rows: auto 1fr auto;
+  gap: clamp(1rem, 3vh, 2rem);
+}
+.portada-v1.nueva-partida .np-panel {
+  width: min(1100px, 100%);
+  align-self: center;
+  text-align: left;
+  color: #f3f0e8;
+}
+.nueva-partida .np-cabecera { text-align: center; margin-bottom: 1.6rem; }
+.nueva-partida .np-cabecera h2 {
+  margin: 0;
+  font: 700 clamp(2rem, 4vw, 3rem)/1 var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #f3f0e8;
+  text-shadow: 0 2px 12px #081d2d;
+}
+.nueva-partida .np-cabecera h2:focus { outline: none; }
+.nueva-partida .np-cabecera p { margin: 0.6rem 0 0; color: #aebcc4; }
+.nueva-partida .np-modos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.nueva-partida .np-modo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1.7rem;
+  min-width: 0;
+  border: 1px solid #456477;
+  border-radius: 5px;
+  background: linear-gradient(150deg, rgba(23, 56, 75, 0.92), rgba(8, 29, 45, 0.88));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  cursor: pointer;
+  transition: border-color 150ms, background 150ms, box-shadow 150ms;
+}
+.nueva-partida .np-modo:hover { border-color: #aebcc4; background: rgba(23, 56, 75, 0.96); }
+.nueva-partida .np-modo.seleccionado {
+  border-color: #f47c27;
+  box-shadow: inset 0 3px 0 #f47c27, 0 8px 24px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(150deg, rgba(33, 61, 77, 0.96), rgba(8, 29, 45, 0.92));
+}
+.nueva-partida .np-marca {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1px solid #456477;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 1.3rem;
+  font-weight: 700;
+}
+.nueva-partida .seleccionado .np-marca { color: #081d2d; border-color: #f47c27; background: #f47c27; }
+.nueva-partida .np-icono { color: #aebcc4; margin-bottom: 0.4rem; }
+.nueva-partida .seleccionado .np-icono { color: #f47c27; }
+.nueva-partida .np-categoria {
+  color: #aebcc4;
+  font: 600 0.8rem/1.4 var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.nueva-partida .np-titulo {
+  font: 700 clamp(1.5rem, 2.2vw, 2rem)/1.08 var(--font-display);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.nueva-partida .np-descripcion { color: #aebcc4; font-size: 0.95rem; line-height: 1.5; margin-top: auto; }
+.nueva-partida .np-ajustes {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  justify-content: space-between;
+  padding: 1.5rem 0 0.5rem;
+}
+.nueva-partida .np-dificultad { margin: 0; padding: 0; border: 0; min-width: 0; flex: 1; }
+.nueva-partida .np-dificultad legend {
+  padding: 0;
+  font: 700 1.1rem var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.nueva-partida .np-dificultad-nota { display: block; color: #aebcc4; font-size: 0.8rem; margin: 0.2rem 0 0.6rem; }
+.nueva-partida .np-dif-opciones { display: flex; gap: 0.4rem; }
+.nueva-partida .np-dif-opciones label {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  min-width: 84px;
+  padding: 0.4rem 1rem;
+  color: #aebcc4;
+  background: rgba(8, 29, 45, 0.85);
+  border: 1px solid #456477;
+  border-radius: 3px;
+  font: 600 1rem var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.nueva-partida .np-dif-opciones label:hover { border-color: #aebcc4; }
+.nueva-partida .np-dif-opciones label.on { color: #f3f0e8; border-color: #f47c27; background: rgba(244, 124, 39, 0.16); }
+.nueva-partida .np-dificultad p { margin: 0.6rem 0 0; color: #aebcc4; font-size: 0.85rem; line-height: 1.4; max-width: 38rem; }
+.portada-v1 button.np-comenzar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  min-height: 56px;
+  padding: 0.8rem 1.7rem;
+  border: 1px solid #f47c27;
+  border-radius: 4px;
+  background: #f47c27;
+  color: #081d2d;
+  font: 700 1.3rem var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.portada-v1 button.np-comenzar:hover { background: #ff9347; border-color: #ff9347; }
+.nueva-partida .np-modo input,
+.nueva-partida .np-dif-opciones input,
+.nueva-partida .np-solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.nueva-partida .np-modo:has(input:focus-visible),
+.nueva-partida .np-dif-opciones label:has(input:focus-visible),
+.portada-v1 button.np-comenzar:focus-visible {
+  outline: 3px solid #f3f0e8;
+  outline-offset: 4px;
+}
+.nueva-partida .np-panel .pv1-aviso { padding: 0.6rem 0 0; }
+.nueva-partida .np-panel button.pv1-volver { margin-left: 0; min-height: 44px; }
+@media (max-width: 700px) {
+  .portada-v1.nueva-partida .pv1-contenido { padding: 1.2rem 1rem; }
+  .nueva-partida .np-modos { grid-template-columns: 1fr; gap: 0.8rem; }
+  .nueva-partida .np-modo { padding: 1.2rem; gap: 0.5rem; }
+  .nueva-partida .np-icono { margin: 0; }
+  .nueva-partida .np-icono svg { width: 32px; height: 32px; }
+  .nueva-partida .np-ajustes { flex-direction: column; align-items: stretch; gap: 1.2rem; }
+  .nueva-partida .np-dif-opciones label { min-width: 0; flex: 1; }
+  .nueva-partida .np-titulo { max-width: 24rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nueva-partida .np-modo { transition: none; }
+}
