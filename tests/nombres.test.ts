@@ -41,3 +41,16 @@ describe('cómo se nombra a la gente en corto (sep 2026)', () => {
     expect(apellidoEnEquipo(tomas, [nestorNunez, tomas], ['Silva', 'Núñez'])).toBe('Duarte');
   });
 });
+
+describe('los DT que se ofrecen no se apellidan como el plantel (nov 2026)', () => {
+  it('en ninguna semilla, y sin repetir apellido entre los tres', async () => {
+    const { partidaNueva } = await import('./jugar');
+    for (const seed of [1, 2, 3, 4, 5, 11, 21, 4000]) {
+      const s = partidaNueva(seed);
+      const nuestros = new Set(s.players.map((p) => apellido(p.name)));
+      const dts = s.coachMarket.map((c) => apellido(c.name));
+      expect(dts.filter((a) => nuestros.has(a)), `semilla ${seed}`).toEqual([]);
+      expect(new Set(dts).size, `semilla ${seed}`).toBe(dts.length);
+    }
+  });
+});

@@ -29,10 +29,25 @@ export const COACH_PROFILE_INFO: Record<CoachProfile, { label: string; desc: str
   },
 };
 
-/** Candidatos de la temporada: perfiles distintos, todas las combinaciones. */
-export function buildCoachMarket(seasonNumber: number, seed: number): Coach[] {
+/**
+ * Candidatos de la temporada: perfiles distintos, todas las combinaciones.
+ * `evitar` son los apellidos del plantel (nov 2026): "Lucas Techera" y "Pablo
+ * Cardozo" se ofrecían de DT con nuestros Techera y Cardozo adentro, y las
+ * notas del banco nombran al DT. Tampoco se repite apellido entre los tres.
+ */
+export function buildCoachMarket(seasonNumber: number, seed: number, evitar: string[] = []): Coach[] {
   const rng = new Rng(seedFromString(`coaches_s${seasonNumber}_${seed}`));
-  const name = () => `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`;
+  const usados = new Set(evitar);
+  const name = () => {
+    let first = rng.pick(FIRST_NAMES);
+    let last = rng.pick(LAST_NAMES);
+    for (let guard = 0; usados.has(last) && guard < 40; guard++) {
+      first = rng.pick(FIRST_NAMES);
+      last = rng.pick(LAST_NAMES);
+    }
+    usados.add(last);
+    return `${first} ${last}`;
+  };
   return [
     {
       id: `co_s${seasonNumber}_proyecto`,
