@@ -40,3 +40,24 @@ describe('el informe dice qué se jugaba el partido de playoffs (nov 2026)', () 
     expect(lecturaDelCruce(s, 3, true)).toBeNull();
   });
 });
+
+describe('el vestuario de la final habla de la copa (nov 2026)', () => {
+  it('jugando temporadas enteras, cada final del club deja la copa en la primera línea del vestuario', async () => {
+    const { jugarFecha } = await import('./jugar');
+    let finales = 0;
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      let s = partidaNueva(seed);
+      let guard = 0;
+      while (s.phase !== 'seasonEnd' && s.phase !== 'gameOver' && ++guard < 40) {
+        s = jugarFecha(s);
+        const m = s.lastMatch;
+        if (m && m.week === s.seasonLength + 2 && !m.forfeit && m.lockerRoom.length > 0) {
+          finales++;
+          expect(m.lockerRoom[0]).toMatch(m.won ? /^Campeones de la Copa de (Oro|Plata)/ : /medallas de finalista/);
+        }
+      }
+      if (finales >= 2) break;
+    }
+    expect(finales).toBeGreaterThan(0);
+  });
+});

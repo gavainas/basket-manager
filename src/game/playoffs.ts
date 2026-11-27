@@ -238,6 +238,11 @@ export function advancePlayoffs(s: GameState, rng: Rng): boolean {
   return false;
 }
 
+/** El cruce de playoffs que el club juega esa semana, si hay. */
+export function cruceDelClub(s: GameState, week: number): PlayoffTie | undefined {
+  return s.playoffs?.ties.find((t) => t.isUserMatch && t.week === week);
+}
+
 /**
  * Qué se jugaba el partido de playoffs del club en esa semana, contado para
  * el informe (nov 2026): ganar la final se veía igual que ganar la fecha 3
@@ -249,7 +254,7 @@ export function lecturaDelCruce(
   week: number,
   won: boolean
 ): { etapa: string; veredicto?: string; linea: string } | null {
-  const tie = s.playoffs?.ties.find((t) => t.isUserMatch && t.week === week);
+  const tie = cruceDelClub(s, week);
   if (!tie) return null;
   const copa = CUP_LABELS[tie.cup];
   if (tie.round === 'final') {
