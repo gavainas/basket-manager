@@ -293,7 +293,14 @@ export function rollRefIncident(s: GameState, live: LiveMatchState, onCourt: Pla
   if (kind === 'roce') {
     const rivales = rivalLineup(s, live);
     const rivalCourt = rivales.court;
-    const r = rivalCourt.length > 0 ? apellidoEnEquipo(rng.pick(rivalCourt), [...rivalCourt, ...rivales.bench]) : `el ${rng.int(4, 15)} de ${live.rivalName}`;
+    // Si el rival se apellida como uno de los nuestros, va con nombre: "Lemos
+    // festejó en la cara de Morales" se leía como una pelea entre compañeros.
+    const rival = rivalCourt.length > 0 ? rng.pick(rivalCourt) : undefined;
+    const r = !rival
+      ? `el ${rng.int(4, 15)} de ${live.rivalName}`
+      : s.players.some((p) => apellido(p.name) === rival.lastName)
+        ? `${rival.firstName} ${rival.lastName}`
+        : apellidoEnEquipo(rival, [...rivalCourt, ...rivales.bench]);
     live.pendingIncident = {
       kind: 'roce',
       playerId: hothead.id,

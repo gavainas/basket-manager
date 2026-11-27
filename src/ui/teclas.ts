@@ -165,3 +165,38 @@ export function useEspacio(accion: (() => void) | null) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 }
+
+/**
+ * Los números eligen la opción de una decisión (nov 2026, de
+ * design/UI_V2_PENDIENTES.md, "Atajos: números para elegir opciones de
+ * eventos"): el 1 es la primera opción, el 2 la segunda. Sirve para el evento
+ * de la semana y para la incidencia del partido, que tienen dos o tres
+ * renglones y se contestan sin ir al mouse.
+ *
+ * Escucha en la fase de captura y corta el evento, así que mientras hay una
+ * decisión abierta los números no cambian de sección. Si hay una ficha abierta
+ * encima (el nombre del evento abre la del jugador) no hace nada: el teclado es
+ * de la ficha. Tampoco con el foco en un campo, ni con la tecla sostenida
+ * (que no se elija dos veces). `elegir` en null la apaga.
+ */
+export function useTeclasOpciones(cantidad: number, elegir: ((indice: number) => void) | null) {
+  const ref = useRef({ cantidad, elegir });
+  ref.current = { cantidad, elegir };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      if (!/^[1-9]$/.test(e.key)) return;
+      const { cantidad: n, elegir: fn } = ref.current;
+      if (!fn || pila.length > 0 || focoEnCampo()) return;
+      const i = Number(e.key) - 1;
+      // Un número fuera de las opciones tampoco navega: la decisión sigue abierta.
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (e.repeat || i >= n) return;
+      fn(i);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, []);
+}

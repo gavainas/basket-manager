@@ -8,6 +8,7 @@ import { weekLabel } from './helpers';
 import './modales.css';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
+import { useTeclasOpciones } from './teclas';
 
 interface Props {
   state: GameState;
@@ -98,6 +99,12 @@ function Gente({ people, festive }: { people: Player[]; festive?: boolean }) {
  * después del desenlace.
  */
 export function EventModal({ state, dispatch }: Props) {
+  // Las opciones se calculan antes de los returns: el hook de las teclas va
+  // siempre, y con el número se elige el renglón (1 el primero, 2 el segundo).
+  const pendiente = state.pendingEvent;
+  const opciones = pendiente ? getEvent(pendiente.defId).options(state, pendiente) : [];
+  useTeclasOpciones(opciones.length, pendiente ? (i) => dispatch({ type: 'RESOLVE_EVENT', optionIndex: i }) : null);
+
   if (state.pendingEvent) {
     const ev = state.pendingEvent;
     const def = getEvent(ev.defId);
@@ -119,8 +126,9 @@ export function EventModal({ state, dispatch }: Props) {
             <p className="event-text">{def.text(state, ev)}</p>
           </div>
           <div className="options">
-            {def.options(state, ev).map((opt, i) => (
-              <button key={i} onClick={() => dispatch({ type: 'RESOLVE_EVENT', optionIndex: i })}>
+            {opciones.map((opt, i) => (
+              <button key={i} onClick={() => dispatch({ type: 'RESOLVE_EVENT', optionIndex: i })} aria-keyshortcuts={String(i + 1)}>
+                <kbd className="opt-tecla" aria-hidden="true">{i + 1}</kbd>
                 {opt.label}
                 {opt.hint && <span className="opt-hint">{opt.hint}</span>}
               </button>

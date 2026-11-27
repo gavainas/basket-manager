@@ -47,7 +47,7 @@ import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
-import { useEscape, useEspacio } from './teclas';
+import { useEscape, useEspacio, useTeclasOpciones } from './teclas';
 import './partido.css';
 
 interface Props {
@@ -398,6 +398,11 @@ export function PartidoVivo({ state, dispatch }: Props) {
     cancelar();
     return true;
   });
+  // La incidencia se contesta con el número del renglón, como el evento de la semana.
+  useTeclasOpciones(
+    live.pendingIncident?.options.length ?? 0,
+    live.pendingIncident && !reloj ? (i) => dispatch({ type: 'INCIDENT_CHOICE', index: i }) : null
+  );
   /* El cambio preparado vive en el pie, que es lo único que nunca se mueve
      (design/PLAN_MARCO_FIJO.md): con el scroll único, a 1366×768 un panel de
      cambio debajo del banco caía detrás del pie y tocar ⇄ dos veces no
@@ -526,7 +531,14 @@ export function PartidoVivo({ state, dispatch }: Props) {
       <b>Espacio</b> {reloj.pausa ? 'sigue' : 'pausa'}.
     </>
   ) : live.pendingIncident ? (
-    <>Resolvé la incidencia antes de seguir jugando.</>
+    <>
+      Resolvé la incidencia antes de seguir jugando:{' '}
+      {live.pendingIncident.options.length === 1 ? (
+        <><b>1</b> también elige.</>
+      ) : (
+        <><b>{live.pendingIncident.options.slice(1).map((_o, i) => i + 1).join(', ')} o {live.pendingIncident.options.length}</b> también eligen.</>
+      )}
+    </>
   ) : (
     <>
       {cansado && (
@@ -730,8 +742,8 @@ export function PartidoVivo({ state, dispatch }: Props) {
               <p className="vivo-incidencia-txt">{live.pendingIncident.text}</p>
               <div className="vivo-opciones">
                 {live.pendingIncident.options.map((opt, i) => (
-                  <button key={i} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })}>
-                    <b>{opt.label}</b>
+                  <button key={i} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })} aria-keyshortcuts={String(i + 1)}>
+                    <b><kbd className="opt-tecla" aria-hidden="true">{i + 1}</kbd>{opt.label}</b>
                     <span>{opt.hint}</span>
                   </button>
                 ))}

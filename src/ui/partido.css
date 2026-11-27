@@ -434,3 +434,11 @@
   .vivo .vivo-relato { contain: none; min-height: 0; }
   .vivo .vivo-relato-cuerpo { overflow: visible; }
 }
+
+/* La tecla de cada opción de la incidencia (nov 2026): como en los eventos. */
+.vivo .vivo-opciones button { position: relative; padding-left: 2.5rem; }
+.vivo .vivo-opciones .opt-tecla { left: 0.8rem; top: 0.68rem; }
+.vivo .vivo-opciones button:hover .opt-tecla { color: var(--text); opacity: 1; }
+@media (hover: none) {
+  .vivo .vivo-opciones button { padding-left: 0.8rem; }
+}
