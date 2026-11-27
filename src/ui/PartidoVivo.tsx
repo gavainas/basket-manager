@@ -517,7 +517,15 @@ export function PartidoVivo({ state, dispatch }: Props) {
     const a = parcialDe(i, 'against');
     return f === '–' && a === '–' ? '–' : `${f}-${a}`;
   };
-  const colores = { '--nuestro': nuestrosColores[0], '--rival': rivalColores[0] } as React.CSSProperties;
+  /* Si el rival viste nuestro mismo color (uno de cada diez clubes), su anillo
+     y su punto en el relato pasan al segundo color, con filo oscuro porque
+     es el claro: con los dos iguales no se sabía quién había anotado. */
+  const mismoColor = rivalColores[0].toLowerCase() === nuestrosColores[0].toLowerCase();
+  const colores = {
+    '--nuestro': nuestrosColores[0],
+    '--rival': mismoColor ? rivalColores[1] : rivalColores[0],
+    ...(mismoColor ? { '--rival-filo': 'rgba(10, 18, 26, 0.85)' } : {}),
+  } as React.CSSProperties;
   const hayDrama = hotStreak || coldStreak || comebackMode || holdMode || !!injuryNote;
 
   // La letra chica del partido, dicha una vez, debajo de la cancha.

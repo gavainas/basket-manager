@@ -42,7 +42,7 @@ Las escenas de la V1 son **arte que ya existía, reusado provisionalmente** (`ES
 - Cuerpo técnico con DT y la pestaña General de la ficha dejan aire vacío abajo con pocos datos.
 - La fila de pie con un solo MVP (Historia) se ve rala; con 14+ jugadores (playoffs, lista de
   buena fe) los bustos se angostan y se recortan por los hombros: entra, pero apretado.
-- El anillo del color rival en la cancha del partido casi no se ve con colores claros.
+- El anillo del color rival en la cancha del partido casi no se ve con colores claros. *(27/11/2026: el caso que rompía era el rival con nuestro mismo color; ahora pasa a su segundo color con filo oscuro. Los colores principales de `CLUB_COLORS` no son claros.)*
 - Los nombres dentro de las frases del Vestuario podrían llevar su cara.
 - La barra de secciones de arriba sigue siendo la de antes (con íconos y teclas): la maqueta
   la simplificaba a texto con subrayado naranja.
