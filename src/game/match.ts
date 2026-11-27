@@ -1072,7 +1072,7 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
       cambios.push(`${byId(inId).name} por ${byId(outId).name}`);
     }
     if (cambios.length > 0) {
-      notes.push(`${dtSujeto} movió el banco: ${cambios.length === 1 ? 'entra' : 'entran'} ${cambios.join(', ')}.`);
+      notes.push(`${dtSujeto} movió el banco: ${cambios.length === 1 ? 'entra' : 'entran'} ${listaY(cambios)}.`);
     }
   }
 

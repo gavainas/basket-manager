@@ -1,4 +1,5 @@
 import { BALANCE, clamp } from './balance';
+import { listaY } from './nombres';
 import { buildMarket, marketToPlayer, ORIGIN_SITUATIONS, worldToMarket } from '../data/market';
 import { createInitialRoster } from '../data/players';
 import { createRecruit } from '../data/recruits';
@@ -277,7 +278,7 @@ function buildPreseasonState(
   }
   if (porTitulo.length > 0) {
     // El subcampeón que subió no ganó nada: lo que pesa es el ascenso.
-    log.push(`${titulo === 'ascenso' ? 'El ascenso' : 'El título'} pesa: ${porTitulo.join(', ')} ${porTitulo.length === 1 ? 'confirmó' : 'confirmaron'} antes de que preguntes.`);
+    log.push(`${titulo === 'ascenso' ? 'El ascenso' : 'El título'} pesa: ${listaY(porTitulo)} ${porTitulo.length === 1 ? 'confirmó' : 'confirmaron'} antes de que preguntes.`);
   }
 
   // Red de seguridad: que siempre quede una base de confirmados.
@@ -1044,7 +1045,7 @@ export function signMarketPlayer(
     const nuevos = abrirAgenda(mp, rng, taken);
     if (nuevos.length > 0) {
       p.market.push(...nuevos);
-      const lista = nuevos.map((n) => `${n.name} (${(n.relacion ?? '').toLowerCase()})`).join(', ');
+      const lista = listaY(nuevos.map((n) => `${n.name} (${(n.relacion ?? '').toLowerCase()})`));
       psLog(s, `${mp.name} abrió su agenda: te pasó a ${lista}.`);
       extra += ` Y abrió su agenda: ${nuevos.length === 1 ? 'un contacto nuevo' : `${nuevos.length} contactos nuevos`} en la libreta.`;
     }
