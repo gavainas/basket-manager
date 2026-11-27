@@ -3,6 +3,7 @@ import type { GameState, Player, Position } from '../game/types';
 import { BALANCE } from '../game/balance';
 import { activePlayers } from '../game/match';
 import { CAUSE_SHORT } from '../game/mood';
+import { lecturaDelCruce } from '../game/playoffs';
 import { clubByLegacyId, USER_CLUB_ID, USER_TEAM_ID, userFixtureOfWeek } from '../game/world';
 import { weekTimeline } from '../game/weekTimeline';
 import { apodoOApellido } from '../game/nombres';
@@ -247,6 +248,8 @@ export function Hub({ state }: { state: GameState }) {
     if (f && !f.estado && !f.fuera) f.estado = { cls: 'good', label: 'Figura' };
   }
 
+  const cruce = jugado ? lecturaDelCruce(state, state.week, jugado.scoreFor > jugado.scoreAgainst) : null;
+
   const escudo = (club: typeof userClub, size: number) =>
     club ? <Crest seed={club.id} name={club.name} colors={club.colors} founded={club.founded} size={size} /> : null;
 
@@ -255,9 +258,11 @@ export function Hub({ state }: { state: GameState }) {
       <section className="tablero-hero v1-hero" aria-label="El partido">
         <div className="v1-eyebrow">
           {score ? 'Partido en curso' : jugado ? 'El partido de hoy' : 'La próxima fecha'}
-          {' · '}<b>{weekLabel(jugado ? state.week : upcomingWeek, state.seasonLength).replace('Semana', 'Fecha')}</b>
+          {' · '}<b>{jugado && cruce ? cruce.etapa : weekLabel(jugado ? state.week : upcomingWeek, state.seasonLength).replace('Semana', 'Fecha')}</b>
           {liga && <> · {liga}</>}
         </div>
+        {/* La final ganada se dice antes del marcador (nov 2026): el Tablero mostraba "70 – 66" como cualquier fecha. */}
+        {jugado && cruce?.veredicto && <h2 className="v1-titulo tablero-campeones">{cruce.linea}</h2>}
         {jugado ? (
           <div className="tablero-versus">
             <div className="tablero-equipo">{escudo(userClub, 84)}<div><div className="tablero-nombre">{state.club.name}</div></div></div>
