@@ -332,7 +332,9 @@ export function Hub({ state }: { state: GameState }) {
         <i className="v1-cinta a" /><i className="v1-cinta b" />
         <h3 className="v1-mano">Esta semana <span>{state.phase === 'matchResult' ? 'lo que dejó el partido' : dias === 0 ? 'hoy se juega' : 'antes del partido'}</span></h3>
         {warnings.length === 0 ? (
-          <p className="tablero-tranquila">Semana tranquila: nadie con problemas a la vista. Buen momento para entrenar o hacer un asado.</p>
+          /* "Nada urgente", no "nadie con problemas": el radar avisa desde la segunda
+             semana de deuda y el Plantel ya marca al que debe una (nov 2026). */
+          <p className="tablero-tranquila">Semana tranquila: nada urgente a la vista. Buen momento para entrenar o hacer un asado.</p>
         ) : (
           <div className="tablero-avisos">{visibles.map(aviso)}</div>
         )}
