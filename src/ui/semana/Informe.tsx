@@ -20,6 +20,7 @@ import { useContext, useState } from 'react';
 import type { PlayerEmotion, Position } from '../../game/types';
 import { clubGamesPlayed, clubPosition, clubRecord } from '../../game/match';
 import { clubByLegacyId, USER_CLUB_ID } from '../../game/world';
+import { lecturaDelCruce } from '../../game/playoffs';
 import { apodoOApellido } from '../../game/nombres';
 import { Busto, FilaDePie, type PersonaDePie } from '../Busto';
 import { Crest } from '../Crest';
@@ -94,7 +95,10 @@ export function MatchResultPanel({ state, dispatch }: Props) {
   const rivalClub = clubByLegacyId(state.world, m.rivalId);
   const escudo = (club: typeof userClub, size: number) =>
     club ? <Crest seed={club.id} name={club.name} colors={club.colors} founded={club.founded} size={size} /> : null;
-  const veredicto = m.forfeit ? 'Forfeit' : m.won ? 'Victoria' : 'Derrota';
+  // En playoffs el partido se jugaba algo: la final ganada es "¡Campeones!", y
+  // cada cruce dice qué dejó (a la final, afuera, la copa que se escapó).
+  const cruce = m.forfeit ? null : lecturaDelCruce(state, m.week, m.won);
+  const veredicto = m.forfeit ? 'Forfeit' : (cruce?.veredicto ?? (m.won ? 'Victoria' : 'Derrota'));
   const tono = m.forfeit ? 'bad' : m.won ? 'good' : 'bad';
 
   // La figura: la persona, sus números del partido y lo que dijo al salir.
@@ -137,8 +141,14 @@ export function MatchResultPanel({ state, dispatch }: Props) {
       <section className={`inf-hero${figura ? '' : ' sin-figura'}`} aria-label="El resultado">
         <div className="inf-resultado v1-hero">
           <div className="v1-eyebrow">
-            Final del partido · <b>{weekLabel(m.week, state.seasonLength).replace('Semana', 'Fecha')}</b>
-            {' · '}{m.week <= state.seasonLength ? 'Fase regular' : 'Playoffs'}
+            {cruce ? (
+              <>Final del partido · <b>{cruce.etapa}</b></>
+            ) : (
+              <>
+                Final del partido · <b>{weekLabel(m.week, state.seasonLength).replace('Semana', 'Fecha')}</b>
+                {' · '}{m.week <= state.seasonLength ? 'Fase regular' : 'Playoffs'}
+              </>
+            )}
           </div>
           <h2 className={`inf-veredicto ${tono}`}>{veredicto}</h2>
           <div className="inf-versus">
@@ -166,6 +176,7 @@ export function MatchResultPanel({ state, dispatch }: Props) {
             </div>
           )}
           <p className="v1-frase inf-resumen">
+            {cruce && <b className={`inf-cruce ${tono}`}>{cruce.linea} </b>}
             <b className={tono}>{m.summary}</b>
             {tablaLinea && <> {tablaLinea}</>}
           </p>
