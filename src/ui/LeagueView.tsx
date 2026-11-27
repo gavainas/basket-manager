@@ -403,6 +403,8 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
                       ) : (
                         <><b className="bad">Fase regular cerrada, afuera de las copas.</b></>
                       )
+                    ) : ours.wins + ours.losses === 0 ? (
+                      <>Todavía no se jugó ninguna fecha: la tabla está en cero.</>
                     ) : enDescenso(ourIdx) ? (
                       <><b className="bad">En zona de descenso.</b> Hoy bajaríamos a la {divisionBelow?.name}.</>
                     ) : zona(ourIdx) === 'oro' ? (
