@@ -249,6 +249,8 @@ export function PlanningPanel({ state, dispatch }: Props) {
         <div className="sem-acciones-lista">
           {ACTIONS.map((a) => {
             const check = a.available(state);
+            // A quién le toca, cuando la acción elige sola (la beca, la charla, la mesa, la gorra).
+            const quien = a.objetivo?.(state);
             const selected = state.actionsChosen.includes(a.id);
             const blocked = !check.ok && !selected;
             const full = !selected && state.actionsChosen.length >= max;
@@ -276,6 +278,7 @@ export function PlanningPanel({ state, dispatch }: Props) {
                   <span className="sem-accion-costo">{a.costLabel}</span>
                 )}
                 <span className="sem-accion-desc">{a.description}</span>
+                {!blocked && quien && <span className="sem-accion-quien">{quien}</span>}
               </button>
             );
           })}

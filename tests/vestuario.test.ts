@@ -228,3 +228,29 @@ describe('"Sentar a los dos que no se bancan" (sep 2026, decidido por Gabi): la 
     expect(lista.actionsLog.some((l) => l.startsWith('Sentar a los dos que no se bancan: '))).toBe(true);
   });
 });
+
+describe('la acción que elige sola dice a quién (nov 2026)', () => {
+  it('la mesa nombra a la misma pareja que después sienta', () => {
+    const { s, a, b } = conRoce(1);
+    const nombres = [a, b].map((id) => s.players.find((p) => p.id === id)!.name);
+    const linea = getAction('mediate').objetivo!(s)!;
+    for (const n of nombres) expect(linea).toContain(n);
+  });
+
+  it('la beca nombra al que después queda becado', () => {
+    const s = partidaNueva(5);
+    const linea = getAction('scholarship').objetivo!(s)!;
+    const t: GameState = structuredClone(s);
+    getAction('scholarship').apply(t, new Rng(1));
+    const becado = t.players.find((p) => p.feeStatus === 'beca_total' && s.players.find((q) => q.id === p.id)!.feeStatus !== 'beca_total')!;
+    expect(linea).toBe(`Sería para ${becado.name}`);
+  });
+
+  it('la gorra nombra a los que deben, y sin deudores no dice nada', () => {
+    const s = partidaNueva(6);
+    for (const p of s.players) p.feeStatus = 'pagada';
+    expect(getAction('collect').objetivo!(s)).toBeUndefined();
+    s.players[0].feeStatus = 'pendiente';
+    expect(getAction('collect').objetivo!(s)).toBe(`Deben: ${s.players[0].name}`);
+  });
+});
