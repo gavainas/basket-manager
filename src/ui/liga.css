@@ -306,6 +306,12 @@
   color: var(--text-dim);
 }
 .liga .lg-cal-fixture .bd-tabla td { padding-top: 0.32rem; padding-bottom: 0.32rem; }
+/* La etiqueta de playoffs ("Semifinal · Copa de Plata") baja de renglón si no
+   entra (nov 2026): en la columna de junio ensanchaba la fila y el resultado
+   quedaba afuera del panel. */
+.liga .lg-cal-fixture .bd-tabla .bd-equipo:has(.lg-cal-etiqueta) { flex-wrap: wrap; row-gap: 0.2rem; }
+.liga .lg-cal-fixture .lg-cal-etiqueta.chica { white-space: nowrap; }
+.liga .lg-cal-fixture .bd-tabla td.num { white-space: nowrap; }
 @media (max-height: 820px) {
   .liga .lg-cal { gap: 0.8rem 2rem; }
   .liga .lg-cal-versus { margin-top: 0.6rem; }
