@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DIVISION_SEEDS, DIVISIONS, WORLD_DIVISION_IDS } from '../src/data/worldData';
 import { closePreseason, inscriptionOffer, startPreseason, startSeasonFromPreseason } from '../src/game/preseason';
 import type { GameState } from '../src/game/types';
-import { nombresReservados, worldPlayerName } from '../src/game/world';
+import { nombresReservados, teamRoster, worldPlayerName } from '../src/game/world';
 import { jugarTemporada, partidaNueva } from './jugar';
 
 /** Total de equipos del mundo (todas las divisionales) + el club del usuario. */
@@ -114,5 +114,44 @@ describe('el mundo y la pirámide', () => {
     }
     expect(problems).toEqual([]);
     expect(visitadas.size).toBeGreaterThanOrEqual(2);
+  });
+});
+
+/**
+ * Los planteles del mundo, equipo por equipo: dos del mismo equipo que
+ * comparten apellido (o nombre) se confunden en la cancha y en el relato,
+ * que los nombra en corto (nov 2026: Unión Vecinal salía con "Alejo Barrios",
+ * "Alejo Píriz", "Alejo Pereyra" y "Néstor Píriz" en el quinteto, y la cancha
+ * decía "PÍRIZ" dos veces).
+ */
+function repetidosPorEquipo(s: GameState): string[] {
+  const out: string[] = [];
+  for (const t of s.world.teams) {
+    const roster = teamRoster(s.world, t.id).filter((p) => !p.exUserClub);
+    for (const campo of ['lastName', 'firstName'] as const) {
+      const vistos = new Set<string>();
+      for (const p of roster) {
+        if (vistos.has(p[campo])) out.push(`${t.name}: dos ${p[campo]}`);
+        vistos.add(p[campo]);
+      }
+    }
+  }
+  return out;
+}
+
+describe('nadie se confunde con un compañero (nov 2026)', () => {
+  it('en ningún equipo del mundo se repite un apellido ni un nombre, al arrancar', () => {
+    for (const seed of [1, 7, 11, 21, 4000, 9000]) {
+      expect(repetidosPorEquipo(partidaNueva(seed)), `semilla ${seed}`).toEqual([]);
+    }
+  });
+
+  it('ni después de dos veranos de pases, retiros y juveniles', () => {
+    let s = partidaNueva(4000);
+    for (let n = 0; n < 2; n++) {
+      s = jugarTemporada(financiar(s));
+      s = startSeasonFromPreseason(closePreseason(startPreseason(s)));
+      expect(repetidosPorEquipo(s), `temporada ${s.seasonNumber}`).toEqual([]);
+    }
   });
 });

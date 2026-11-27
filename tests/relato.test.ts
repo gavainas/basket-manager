@@ -59,7 +59,10 @@ describe('el relato jugada a jugada', () => {
     const s = partidoJugado(11);
     const live = s.live!;
     live.quarters.forEach((_q, i) => {
-      const todas = jugadasDelCuarto(s, live, i);
+      // Los momentos son jugadas, no notas de pelota muerta: el cierre es la
+      // última jugada, aunque el cuarto termine con una nota (el cambio de
+      // defensa del rival y la lesión van al final del tramo).
+      const todas = jugadasDelCuarto(s, live, i).filter((j) => !j.tipo);
       const momentos = momentosDelCuarto(s, live, i);
       expect(momentos.length).toBeLessThanOrEqual(5);
       expect(momentos[momentos.length - 1]).toEqual(todas[todas.length - 1]);

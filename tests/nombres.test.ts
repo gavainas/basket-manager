@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { apellido, apodoOApellido, listaY } from '../src/game/nombres';
+import { apellido, apellidoEnEquipo, apodoOApellido, listaY } from '../src/game/nombres';
 
 describe('cómo se nombra a la gente en corto (sep 2026)', () => {
   it('el apellido compuesto va entero: "Da Silva", no "Silva"', () => {
@@ -24,5 +24,16 @@ describe('cómo se nombra a la gente en corto (sep 2026)', () => {
     expect(listaY(['Silva'])).toBe('Silva');
     expect(listaY(['Silva', 'Pereyra'])).toBe('Silva y Pereyra');
     expect(listaY(['Silva', 'Fernández', 'Viera'])).toBe('Silva, Fernández y Viera');
+  });
+
+  it('dos del mismo equipo con el mismo apellido llevan la inicial (nov 2026)', () => {
+    const alejo = { id: 'a', firstName: 'Alejo', lastName: 'Píriz' };
+    const nestor = { id: 'n', firstName: 'Néstor', lastName: 'Píriz' };
+    const tomas = { id: 't', firstName: 'Tomás', lastName: 'Duarte' };
+    expect(apellidoEnEquipo(alejo, [alejo, nestor, tomas])).toBe('A. Píriz');
+    expect(apellidoEnEquipo(nestor, [alejo, nestor, tomas])).toBe('N. Píriz');
+    expect(apellidoEnEquipo(tomas, [alejo, nestor, tomas])).toBe('Duarte');
+    // Solo, o sin compañero que choque, el apellido alcanza.
+    expect(apellidoEnEquipo(alejo, [alejo, tomas])).toBe('Píriz');
   });
 });

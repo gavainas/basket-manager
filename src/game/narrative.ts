@@ -6,7 +6,7 @@ import { clamp } from './balance';
 import { fragilityOf } from './injuries';
 import { refIncidentFactor } from './leagueLife';
 import { fueraDelPartido, reemplazar, rivalLineup } from './match';
-import { apellido } from './nombres';
+import { apellido, apellidoEnEquipo } from './nombres';
 import type { GameState, LiveMatchState, PendingRefIncident, Player, RiesgoPendiente } from './types';
 import type { Rng } from './rng';
 
@@ -291,8 +291,9 @@ export function rollRefIncident(s: GameState, live: LiveMatchState, onCourt: Pla
   }
 
   if (kind === 'roce') {
-    const rivalCourt = rivalLineup(s, live).court;
-    const r = rivalCourt.length > 0 ? rng.pick(rivalCourt).lastName : `el ${rng.int(4, 15)} de ${live.rivalName}`;
+    const rivales = rivalLineup(s, live);
+    const rivalCourt = rivales.court;
+    const r = rivalCourt.length > 0 ? apellidoEnEquipo(rng.pick(rivalCourt), [...rivalCourt, ...rivales.bench]) : `el ${rng.int(4, 15)} de ${live.rivalName}`;
     live.pendingIncident = {
       kind: 'roce',
       playerId: hothead.id,

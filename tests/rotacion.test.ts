@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultMatchPlan, isSelectable, PLAN_MIN_BENCH, posicionesSinCubrir } from '../src/game/match';
+import { defaultMatchPlan, isSelectable, PLAN_MIN_BENCH, posicionesSinCubrir, titularesSinRecambio } from '../src/game/match';
 import { Rng } from '../src/game/rng';
 import { weeklyGrievanceTriggers } from '../src/game/week';
 import type { GameState, Position } from '../src/game/types';
@@ -42,10 +42,15 @@ describe('T4 · jugar con cinco dejó de ser el default', () => {
     expect(s.live!.quarters[1].notes.some((n) => /Plan de cambios/.test(n))).toBe(true);
     expect(banco.some((id) => (s.live!.minutes[id] ?? 0) > 0)).toBe(true);
 
-    // Al final del partido, los cinco del arranque no jugaron los 40 minutos.
+    // Al final del partido, los del arranque con recambio de su puesto en el
+    // banco no jugaron los 40 minutos. El que no tiene recambio puede jugarlos
+    // (es lo que avisa la pizarra: "o juega casi los 40").
     s = jugarPartidoEntero(s);
     const titulares = inicio.live!.onCourt;
-    expect(titulares.every((id) => s.live!.minutes[id] < 40)).toBe(true);
+    const sinRecambio = titularesSinRecambio(inicio.players, titulares, inicio.live!.squad).map((p) => p.id);
+    const conRecambio = titulares.filter((id) => !sinRecambio.includes(id));
+    expect(conRecambio.length).toBeGreaterThan(0);
+    expect(conRecambio.every((id) => s.live!.minutes[id] < 40)).toBe(true);
     expect(banco.reduce((t, id) => t + (s.live!.minutes[id] ?? 0), 0)).toBeGreaterThan(0);
   });
 

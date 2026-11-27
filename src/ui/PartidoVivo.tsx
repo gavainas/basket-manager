@@ -36,7 +36,7 @@ import {
 } from '../game/match';
 import { arranqueDelCuarto, jugadasDelCuarto, largoDelCuarto, largoDelTramo, type Jugada } from '../game/relato';
 import { clubByLegacyId, teamByLegacyRival, userTeam } from '../game/world';
-import { apellido } from '../game/nombres';
+import { apellido, apellidoEnEquipo } from '../game/nombres';
 import type { DefenseTactic, GameState, Player, Position, WorldPlayer } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { MatchClockContext, visibleScore, visibleVitals } from './matchPresentation';
@@ -716,7 +716,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
                   title={`${p.firstName} ${p.lastName} · ${p.position} · nivel ≈${p.level}`}
                 >
                   <span className="vivo-ficha-cara"><Busto seed={p.id} personality={p.personality} /></span>
-                  <span className="vivo-ficha-nom">{p.lastName}</span>
+                  <span className="vivo-ficha-nom">{apellidoEnEquipo(p, [...rivalCinco.court, ...rivalCinco.bench])}</span>
                 </div>
               ) : null
             )}
