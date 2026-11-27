@@ -76,7 +76,19 @@ sigue viva en la temporada y la Carrera tiene su `npm run sim:carrera`.
 es el arte cuando Gabi diga (la prueba de registro destraba T5 y la UI V2), y mientras
 tanto coherencia, contenido o partir el chunk del juego (701 kB en oct 2026).
 
+**Bloque autónomo del 27/11/2026** (PR #42, para revisar): nombres sin confusión entre
+rivales y con el plantel, la final ganada que se celebra, atajos numéricos en todas las
+decisiones, coherencia de Finanzas y de la Liga después de la fase regular (detalle en el
+changelog). Quedó anotado y sin hacer: la pregunta del vestuario campeón (abajo).
+
 ## Decisiones que están en la cancha de Gabi
+
+- **¿Salir campeón tiene que aflojar las broncas por minutos?** (27/11/2026) Después de
+  ganar la Copa de Plata, dos del plantel siguieron "masticando bronca por sus minutos" en
+  el informe de la final. Es coherente con el motor (la bronca es por minutos, no por
+  resultado), pero se lee frío en el mejor momento de la temporada. Si va, es un
+  `easeGrievance` chico para los que tienen bronca por `minutos` al ganar una final; si no,
+  queda así.
 
 - **¿La pretemporada de la Carrera tiene que apretar?** `npm run sim:carrera` mide que
   pidiendo favores al azar se llega a inscribirse el 90% de las veces, y con cabeza (el

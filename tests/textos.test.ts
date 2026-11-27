@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeRating } from '../src/game/rating';
-import { weeklyEstimate } from '../src/game/economy';
+import { cuotaAlDia, weeklyEstimate } from '../src/game/economy';
 import { moodFor, type EmotionContext } from '../src/game/emotions';
 import { hireCoach } from '../src/game/coach';
 import { midSeasonObjectiveCheck } from '../src/game/objectives';
@@ -68,7 +68,19 @@ describe('los plurales con 1 (sep 2026)', () => {
     for (const p of activos.slice(1)) p.feeStatus = 'beca_total';
     activos[0].feeStatus = 'pagada';
     const est = weeklyEstimate(s);
-    expect(est.income[0].concept).toBe('Cuotas (1 jugador al día)');
+    expect(est.income[0].concept).toBe('Cuotas (1 jugador)');
+    // Con media beca se dice aparte: es plata, pero no entera (nov 2026).
+    activos[1].feeStatus = 'beca_parcial';
+    expect(weeklyEstimate(s).income[0].concept).toBe('Cuotas (1 jugador y 1 con media beca)');
+  });
+
+  it('"al día" es lo mismo en la barra y en Finanzas: el que no debe, con beca o sin ella (nov 2026)', () => {
+    const s = partidaNueva(11);
+    const [a, b, c] = s.players.filter((p) => !p.leftClub);
+    a.feeStatus = 'pagada';
+    b.feeStatus = 'beca_parcial';
+    c.feeStatus = 'pendiente';
+    expect([a, b, c].map(cuotaAlDia)).toEqual([true, true, false]);
   });
 
   it('la bronca con memoria concuerda con una sola fecha o semana', () => {

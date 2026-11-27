@@ -26,15 +26,35 @@ export function weeklyFee(p: Player): number {
   }
 }
 
+/**
+ * ¿Está al día con la cuota? El que no debe: paga entera, tiene media beca o
+ * beca total. Es la definición de todo el juego (nov 2026): la barra decía
+ * "11 / 12" al día, Finanzas "10 de 12 al día · 1 debe · 1 con beca" y la
+ * cuenta de la semana "Cuotas (11 jugadores al día)", tres números para la
+ * misma pregunta.
+ */
+export function cuotaAlDia(p: Player): boolean {
+  return p.feeStatus !== 'pendiente';
+}
+
 /** "1 jugador" / "N jugadores": en una Carrera corta se cobra a uno solo. */
 const plantelTxt = (n: number) => `${n} jugador${n === 1 ? '' : 'es'}`;
+
+/** Quiénes ponen plata esta semana: "11 jugadores", o "10 jugadores y 1 con media beca". */
+function cuotasTxt(active: Player[]): string {
+  const entera = active.filter((p) => p.feeStatus === 'pagada').length;
+  const media = active.filter((p) => p.feeStatus === 'beca_parcial').length;
+  if (media === 0) return plantelTxt(entera);
+  if (entera === 0) return `${media} con media beca`;
+  return `${plantelTxt(entera)} y ${media} con media beca`;
+}
 
 /** Estimación de ingresos/gastos semanales para mostrar en Finanzas. */
 export function weeklyEstimate(state: GameState): { income: { concept: string; amount: number }[]; expenses: { concept: string; amount: number }[] } {
   const active = state.players.filter((p) => !p.leftClub);
   const fees = active.reduce((sum, p) => sum + weeklyFee(p), 0);
   const income: { concept: string; amount: number }[] = [
-    { concept: `Cuotas (${plantelTxt(active.filter((p) => weeklyFee(p) > 0).length)} al día)`, amount: fees },
+    { concept: `Cuotas (${cuotasTxt(active)})`, amount: fees },
   ];
   if (state.sponsor) {
     income.push({ concept: `${state.sponsor.name} (${state.sponsor.weeksLeft} sem. · pide ${condicionTexto(state.sponsor)})`, amount: state.sponsor.weekly });

@@ -1006,7 +1006,7 @@ export const EVENTS: EventDef[] = [
           p.motivation = clamp(p.motivation + 4);
         }
         s.club.socialClimate = clamp(s.club.socialClimate + 3);
-        return `La clínica fue un golazo: ${learners.map((p) => p.name).join(', ')} salieron con cositas nuevas para probar. Y el mate voló.`;
+        return `La clínica fue un golazo: ${listaY(learners.map((p) => p.name))} salieron con cositas nuevas para probar. Y el mate voló.`;
       }
       return 'Le agradeciste y quedó para otra. El exjugador entendió: "Cuando quieran, avisen".';
     },

@@ -24,11 +24,25 @@ export interface ActionDef {
   costLabel: string;
   oncePerSeason?: boolean;
   available: (state: GameState) => ActionAvailability;
+  /**
+   * A quién le toca, si la acción elige a alguien sola (nov 2026): la beca,
+   * la charla, la mesa y la gorra deciden el destinatario con una regla fija,
+   * y el manager la elegía sin saber a quién iba a becar o con quién se iba a
+   * sentar. Es la misma regla que usa `apply`.
+   */
+  objetivo?: (state: GameState) => string | undefined;
   /** Muta el estado (ya clonado) y devuelve el texto del resultado. */
   apply: (state: GameState, rng: Rng) => string;
 }
 
 const A = BALANCE.actions;
+
+/** A quién beca "Becar a un jugador importante": la figura, con el mercenario y el que debe un poco adelante. */
+function aBecar(s: GameState): Player | undefined {
+  const candidates = actives(s).filter((p) => p.feeStatus !== 'beca_total');
+  const prio = (p: Player) => p.technique + (p.personality === 'mercenario' ? 15 : 0) + (p.feeStatus === 'pendiente' ? 8 : 0);
+  return [...candidates].sort((a, b) => prio(b) - prio(a))[0];
+}
 
 /** Cómo se nombra el tema en la charla del manager. */
 const CAUSE_TALK: Record<GrievanceCause, string> = {
@@ -202,6 +216,11 @@ export const ACTIONS: ActionDef[] = [
     // quedó caliente el sábado, el lunes está acá.
     available: (s) =>
       upsetPlayers(s).length > 0 ? { ok: true } : { ok: false, reason: 'No hay jugadores molestos' },
+    objetivo: (s) => {
+      const target = upsetPlayers(s)[0];
+      if (!target) return undefined;
+      return target.grievance ? `Con ${target.name}, por ${CAUSE_TALK[target.grievance.cause]}` : `Con ${target.name}`;
+    },
     apply: (s, rng) => {
       const target = upsetPlayers(s)[0];
       const g = target.grievance;
@@ -236,6 +255,10 @@ export const ACTIONS: ActionDef[] = [
     // radar y sobre la que cae "Se fueron a las manos" (sep 2026, decidido por
     // Gabi): hasta ahora el manager sólo podía esperar a que estallara.
     available: (s) => (worstPair(s) ? { ok: true } : { ok: false, reason: 'No hay dos que no se banquen' }),
+    objetivo: (s) => {
+      const par = worstPair(s);
+      return par ? `${par[0].name} y ${par[1].name}` : undefined;
+    },
     apply: (s, rng) => {
       const M = A.mediate;
       const [a, b] = worstPair(s)!;
@@ -295,6 +318,11 @@ export const ACTIONS: ActionDef[] = [
       actives(s).some((p) => p.feeStatus === 'pendiente')
         ? { ok: true }
         : { ok: false, reason: 'No hay cuotas pendientes' },
+    objetivo: (s) => {
+      const deben = actives(s).filter((p) => p.feeStatus === 'pendiente').map((p) => p.name);
+      if (deben.length === 0) return undefined;
+      return deben.length <= 3 ? `Deben: ${listaY(deben)}` : `Deben ${deben.length}: ${deben.slice(0, 2).join(', ')} y ${deben.length - 2} más`;
+    },
     apply: (s, rng) => {
       const debtors = actives(s).filter((p) => p.feeStatus === 'pendiente');
       let collected = 0;
@@ -340,13 +368,12 @@ export const ACTIONS: ActionDef[] = [
       actives(s).some((p) => p.feeStatus !== 'beca_total')
         ? { ok: true }
         : { ok: false, reason: 'Todos ya tienen beca' },
+    objetivo: (s) => {
+      const star = aBecar(s);
+      return star ? `Sería para ${star.name}` : undefined;
+    },
     apply: (s, rng) => {
-      const candidates = actives(s).filter((p) => p.feeStatus !== 'beca_total');
-      candidates.sort((a, b) => {
-        const prio = (p: Player) => p.technique + (p.personality === 'mercenario' ? 15 : 0) + (p.feeStatus === 'pendiente' ? 8 : 0);
-        return prio(b) - prio(a);
-      });
-      const star = candidates[0];
+      const star = aBecar(s)!;
       star.feeStatus = 'beca_total';
       star.weeksUnpaid = 0;
       star.motivation = clamp(star.motivation + A.scholarship.motivationBoost);

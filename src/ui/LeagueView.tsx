@@ -7,7 +7,7 @@ import {
   SECOND_TEAM_ID,
   secondTeamPosition,
 } from '../game/secondTeam';
-import type { CupTier, GameState, League } from '../game/types';
+import type { CupTier, GameState, League, PlayoffTie } from '../game/types';
 import { divisionStandings, rosterDivisionIds, USER_TEAM_ID, userFixtureOfWeek } from '../game/world';
 import { leaguePromotes, MOVE_COUNT } from '../game/pyramid';
 import { WORLD_DIVISION_IDS } from '../data/worldData';
@@ -40,6 +40,19 @@ function LegacyTeamName({ state, id }: { state: GameState; id: string }) {
   return rival ? <RivalLink id={id}>{rival.name}</RivalLink> : <span>{id}</span>;
 }
 
+/**
+ * El resultado de un cruce. El nuestro se anota en el cruce recién al pasar
+ * de semana, pero el partido ya está en el fixture (nov 2026: después de la
+ * final, la llave decía "Atlético El Parque vs Los Cardales" y el calendario
+ * ya mostraba el 70-66).
+ */
+function resultadoDelCruce(state: GameState, t: PlayoffTie): string {
+  if (t.scoreHome !== undefined) return `${t.scoreHome}–${t.scoreAway}`;
+  const fx = state.world.fixtures.find((f) => f.id === `fx_${t.id}`);
+  if (fx?.status === 'jugado' && fx.scoreHome !== undefined) return `${fx.scoreHome}–${fx.scoreAway}`;
+  return 'vs';
+}
+
 /** Las dos copas de la divisional, dentro de la Liga: una planilla, dos columnas. */
 function LlavePlayoffs({ state }: { state: GameState }) {
   const P = state.playoffs;
@@ -67,7 +80,7 @@ function LlavePlayoffs({ state }: { state: GameState }) {
                     <EscudoLegacy state={state} id={t.homeId} size={18} />
                     <LegacyTeamName state={state} id={t.homeId} />
                   </span>
-                  <span className="lg-cruce-res">{t.scoreHome !== undefined ? `${t.scoreHome}–${t.scoreAway}` : 'vs'}</span>
+                  <span className="lg-cruce-res">{resultadoDelCruce(state, t)}</span>
                   <span className="lg-cruce-eq">
                     <EscudoLegacy state={state} id={t.awayId} size={18} />
                     <LegacyTeamName state={state} id={t.awayId} />
@@ -379,7 +392,20 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
                     </span>
                   </div>
                   <p className="lg-zona">
-                    {enDescenso(ourIdx) ? (
+                    {/* Con la fase regular cerrada la tabla ya no dice "hoy": dice qué se jugó. */}
+                    {state.week > state.seasonLength ? (
+                      enDescenso(ourIdx) ? (
+                        <><b className="bad">Fase regular cerrada en zona de descenso.</b> Se juega el año que viene en la {divisionBelow?.name}.</>
+                      ) : zona(ourIdx) === 'oro' ? (
+                        <><b className="good">Fase regular cerrada: jugamos la Copa de Oro.</b></>
+                      ) : zona(ourIdx) === 'plata' ? (
+                        <><b className="warn">Fase regular cerrada: jugamos la Copa de Plata.</b></>
+                      ) : (
+                        <><b className="bad">Fase regular cerrada, afuera de las copas.</b></>
+                      )
+                    ) : ours.wins + ours.losses === 0 ? (
+                      <>Todavía no se jugó ninguna fecha: la tabla está en cero.</>
+                    ) : enDescenso(ourIdx) ? (
                       <><b className="bad">En zona de descenso.</b> Hoy bajaríamos a la {divisionBelow?.name}.</>
                     ) : zona(ourIdx) === 'oro' ? (
                       <><b className="good">Adentro de la Copa de Oro.</b> Así terminaría hoy la fase regular.</>
@@ -540,7 +566,12 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
                   >
                     <span className="lg-escalon-nom">{d.name}</span>
                     <span className="lg-escalon-sub">
-                      {nuestra ? 'Acá jugamos' : d.level < ourLevel ? 'Arriba nuestro' : 'Abajo nuestro'}
+                      {/* "Abajo nuestro" es la de al lado; la que está dos escalones más lejos, no (nov 2026). */}
+                      {nuestra
+                        ? 'Acá jugamos'
+                        : d.level < ourLevel
+                          ? ourLevel - d.level === 1 ? 'Arriba nuestro' : 'Más arriba'
+                          : d.level - ourLevel === 1 ? 'Abajo nuestro' : 'Más abajo'}
                     </span>
                   </button>
                 );

@@ -303,6 +303,10 @@
 .semana-v1 .sem-accion.off .sem-accion-nombre,
 .semana-v1 .sem-accion.off .sem-accion-desc { opacity: 0.5; }
 .semana-v1 .sem-accion.off .sem-accion-tilde { opacity: 0.35; }
+/* A quién le toca (nov 2026): la acción que elige sola dice a quién. */
+.semana-v1 .sem-accion-quien { grid-column: 2 / -1; font: 600 0.8rem / 1.3 var(--font-ui); color: var(--text); }
+.semana-v1 .sem-accion-quien::before { content: '→ '; color: var(--accent); }
+.semana-v1 .sem-accion.off .sem-accion-quien { opacity: 0.5; }
 
 /* ================= 2 · Convocatoria ================= */
 .semana-v1 .sem-convoca-arriba {

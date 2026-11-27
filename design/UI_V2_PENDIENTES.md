@@ -42,7 +42,7 @@ Las escenas de la V1 son **arte que ya existía, reusado provisionalmente** (`ES
 - Cuerpo técnico con DT y la pestaña General de la ficha dejan aire vacío abajo con pocos datos.
 - La fila de pie con un solo MVP (Historia) se ve rala; con 14+ jugadores (playoffs, lista de
   buena fe) los bustos se angostan y se recortan por los hombros: entra, pero apretado.
-- El anillo del color rival en la cancha del partido casi no se ve con colores claros.
+- El anillo del color rival en la cancha del partido casi no se ve con colores claros. *(27/11/2026: el caso que rompía era el rival con nuestro mismo color; ahora pasa a su segundo color con filo oscuro. Los colores principales de `CLUB_COLORS` no son claros.)*
 - Los nombres dentro de las frases del Vestuario podrían llevar su cara.
 - La barra de secciones de arriba sigue siendo la de antes (con íconos y teclas): la maqueta
   la simplificaba a texto con subrayado naranja.
@@ -53,8 +53,8 @@ Las escenas de la V1 son **arte que ya existía, reusado provisionalmente** (`ES
 
 - Animaciones: pasar un jugador a titular/banco, el paso adelante en la fila de pie, el
   marcador en vivo (Art Bible §15).
-- Atajos: números para elegir opciones de eventos; teclas para las secciones de la
-  pretemporada.
+- Atajos: ~~números para elegir opciones de eventos~~ (hecho el 27/11/2026, también en las
+  incidencias del partido); ~~teclas para las secciones de la pretemporada~~ (hecho el 27/11/2026).
 - Más voz del mundo donde el contraste se lee (frases del vestuario en el Tablero ya se
   probaron con globos y se descartaron por carga: buscar otra forma).
 - Fin de temporada: la figura del año o el plantel de pie.

@@ -251,7 +251,10 @@
   border: 3px solid var(--nuestro, var(--sec-partidos));
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.75), 0 4px 8px rgba(0, 0, 0, 0.45);
 }
-.vivo .vivo-ficha.rival .vivo-ficha-cara { border-color: var(--rival, #9d3b3b); }
+.vivo .vivo-ficha.rival .vivo-ficha-cara {
+  border-color: var(--rival, #9d3b3b);
+  box-shadow: 0 0 0 1px var(--rival-filo, rgba(255, 255, 255, 0.75)), 0 4px 8px rgba(0, 0, 0, 0.45);
+}
 .vivo .vivo-ficha-cara .busto {
   --busto-ancho: 100%;
   --busto-alto: 100%;
@@ -332,7 +335,7 @@
 .vivo .vivo-rj-min { color: var(--text-faint); text-align: right; font-variant-numeric: tabular-nums; }
 .vivo .vivo-rj-marcador { font: 600 0.95rem var(--font-display); text-align: right; font-variant-numeric: tabular-nums; }
 .vivo .vivo-rj-punto { width: 9px; height: 9px; border-radius: 50%; align-self: center; background: var(--nuestro, var(--sec-partidos)); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5); }
-.vivo .vivo-rj.rival .vivo-rj-punto { background: var(--rival, #9d3b3b); }
+.vivo .vivo-rj.rival .vivo-rj-punto { background: var(--rival, #9d3b3b); box-shadow: 0 0 0 1px var(--rival-filo, transparent); }
 .vivo .vivo-rj-icono { align-self: center; justify-self: center; color: var(--text-faint); line-height: 1; }
 .vivo .vivo-rj-texto { display: grid; gap: 1px; line-height: 1.3; }
 .vivo .vivo-rj-texto b { font-weight: 600; }
@@ -433,4 +436,12 @@
   .vivo .vivo-cuerpo { grid-template-columns: minmax(0, 1fr); }
   .vivo .vivo-relato { contain: none; min-height: 0; }
   .vivo .vivo-relato-cuerpo { overflow: visible; }
+}
+
+/* La tecla de cada opción de la incidencia (nov 2026): como en los eventos. */
+.vivo .vivo-opciones button { position: relative; padding-left: 2.5rem; }
+.vivo .vivo-opciones .opt-tecla { left: 0.8rem; top: 0.68rem; }
+.vivo .vivo-opciones button:hover .opt-tecla { color: var(--text); opacity: 1; }
+@media (hover: none) {
+  .vivo .vivo-opciones button { padding-left: 0.8rem; }
 }

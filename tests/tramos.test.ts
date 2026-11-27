@@ -149,6 +149,8 @@ describe('la pizarra avisa en el relato (sep 2026)', () => {
   it('cambiar las dos cosas en el descanso da una sola frase, en las notas del cuarto', () => {
     let s = hastaElPartido(11);
     s = paso(s, { type: 'PLAY_QUARTER' });
+    // Si el cuarto dejó una incidencia, se resuelve antes de tocar la pizarra.
+    if (s.live!.pendingIncident) s = paso(s, { type: 'INCIDENT_CHOICE', index: 0 });
     s = paso(s, { type: 'SET_TACTIC', defense: 'zona', attack: 'correr' });
     s = paso(s, { type: 'SET_TACTIC', defense: 'hombre' });
     s = paso(s, { type: 'PLAY_QUARTER' });

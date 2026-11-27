@@ -122,4 +122,12 @@ describe('regresiones de la partida observada', () => {
     expect(result.comment).not.toMatch(/imparable|sin respuestas/i);
     expect(result.comment).toContain('19');
   });
+
+  it('la figura de una derrota con números chicos no es un "partidazo" (nov 2026)', () => {
+    // Facundo Silva, figura de un 66-69: 6 puntos, 1 rebote y 1 asistencia en 20'.
+    const r = computeRating({ position: 'Base', minutes: 20, points: 6, rebounds: 1, assists: 1, perf: 66, effective: 60, won: false, margin: -3, mvp: true });
+    expect(r.rating).toBeGreaterThanOrEqual(7); // el piso de la figura sigue
+    expect(r.comment).not.toMatch(/Partidazo/);
+    expect(r.comment).toMatch(/^Lo mejor de una noche floja del equipo: 6 puntos, 1 rebote y 1 asistencia en 20 minutos\.$/);
+  });
 });

@@ -25,3 +25,26 @@ export function listaY(nombres: string[]): string {
   if (nombres.length <= 1) return nombres[0] ?? '';
   return `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`;
 }
+
+/**
+ * El apellido de alguien del mundo, con la inicial del nombre sólo si otro de
+ * su mismo equipo se apellida igual: "Píriz" o, si hay dos, "A. Píriz" y
+ * "N. Píriz" (nov 2026). El mundo nuevo ya no repite apellidos en un plantel,
+ * pero los saves de antes sí, y el que se fue del club puede caer en uno que
+ * ya tenía su apellido.
+ */
+export function apellidoEnEquipo(
+  p: { id: string; firstName: string; lastName: string },
+  equipo: { id: string; lastName: string }[],
+  /**
+   * Apellidos del otro equipo que también se nombran en corto (los nuestros):
+   * si el rival se apellida igual, lleva la inicial para que "Dos más para
+   * Núñez" no se lea como nuestro Núñez.
+   */
+  ajenos: string[] = []
+): string {
+  const choca = equipo.some((q) => q.id !== p.id && q.lastName === p.lastName) || ajenos.includes(p.lastName);
+  if (!choca) return p.lastName;
+  const inicial = p.firstName.replace(/"/g, '').trim().charAt(0);
+  return inicial ? `${inicial}. ${p.lastName}` : p.lastName;
+}

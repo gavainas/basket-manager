@@ -21,6 +21,10 @@
 
 /* ---------- La barra de arriba: las tres partes como secciones ---------- */
 .pretemporada .ps-secciones { margin-left: 0.5rem; }
+/* La tecla de cada parte va abajo a la derecha (nov 2026): arriba está la
+   marca con lo que hay que mirar ("1", "16"), y dos números juntos se leían
+   como uno solo. */
+.pretemporada .ps-secciones .seccion-tecla { top: auto; bottom: 5px; }
 .pretemporada .ps-marca {
   display: inline-block;
   margin-left: 0.4rem;

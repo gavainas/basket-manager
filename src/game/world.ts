@@ -306,7 +306,8 @@ function newWorldPlayer(
   role: 'estrella' | 'plantel' | 'juvenil',
   seasonNumber: number,
   rng: Rng,
-  takenNames?: Set<string>
+  takenNames?: Set<string>,
+  mates: WorldPlayer[] = []
 ): WorldPlayer {
   const identity = clubIdentity(clubName);
   let first = rng.pick(FIRST_NAMES);
@@ -314,7 +315,16 @@ function newWorldPlayer(
   // Dos "Diego Sosa" en el mismo vestuario confunden: se re-sortea. Con el
   // mundo entero en `takenNames` (unos 800 nombres de 2025 combinaciones),
   // ocho intentos dejaban casi un homónimo por mundo; con cuarenta, ninguno.
-  for (let guard = 0; takenNames?.has(`${first} ${last}`) && guard < 40; guard++) {
+  // Y dentro del mismo plantel tampoco se repite el nombre ni el apellido
+  // (nov 2026): la cancha y el relato nombran en corto, y Unión Vecinal salía
+  // con tres "Alejo" y la cancha decía "PÍRIZ" dos veces. Con 45 de cada uno
+  // y once por plantel siempre hay lugar; si alguna vez no, manda el nombre
+  // completo único, que es el que no se puede romper.
+  const nombresDelPlantel = new Set(mates.map((m) => m.firstName));
+  const apellidosDelPlantel = new Set(mates.map((m) => m.lastName));
+  const libre = (f: string, l: string, conPlantel: boolean) =>
+    !takenNames?.has(`${f} ${l}`) && (!conPlantel || (!nombresDelPlantel.has(f) && !apellidosDelPlantel.has(l)));
+  for (let guard = 0; !libre(first, last, guard < 80) && guard < 120; guard++) {
     first = rng.pick(FIRST_NAMES);
     last = rng.pick(LAST_NAMES);
   }
@@ -385,9 +395,11 @@ export function mudarAlClub(world: WorldState, mp: { worldPlayerId?: string }): 
 /** Plantel entero desde cero (club nuevo en el mundo, o primer arranque). */
 function genRosterFor(world: WorldState, clubName: string, strength: number, seasonNumber: number, rng: Rng, reservados: Set<string>): WorldPlayer[] {
   const taken = new Set(reservados);
-  return ROSTER_TEMPLATE.map((position, i) =>
-    newWorldPlayer(world, clubName, position, strength, i === 0 ? 'estrella' : 'plantel', seasonNumber, rng, taken)
+  const roster: WorldPlayer[] = [];
+  ROSTER_TEMPLATE.forEach((position, i) =>
+    roster.push(newWorldPlayer(world, clubName, position, strength, i === 0 ? 'estrella' : 'plantel', seasonNumber, rng, taken, roster))
   );
+  return roster;
 }
 
 /**
@@ -412,7 +424,7 @@ function refillRoster(
   while (current.length + added.length < target) {
     const position = missing.shift() ?? rng.pick(ROSTER_TEMPLATE);
     const role = rng.chance(0.7) ? 'juvenil' : 'plantel';
-    added.push(newWorldPlayer(world, clubName, position, strength, role, seasonNumber, rng, taken));
+    added.push(newWorldPlayer(world, clubName, position, strength, role, seasonNumber, rng, taken, [...current, ...added]));
   }
   return added;
 }
@@ -819,6 +831,17 @@ export function evolveWorldOffseason(state: GameState, rng: Rng): OffseasonWorld
 
   const clubNames = [...new Set(pool.map((p) => p.clubName).filter((n): n is string => !!n))];
   const survivors: WorldPlayer[] = [];
+  // El que llega a un club no puede llamarse (de nombre o de apellido) como
+  // uno que ya está ahí (nov 2026): la cancha y el relato nombran en corto.
+  // Se mira el pool tal como va quedando; si ningún club le cabe, va a
+  // cualquiera, como antes.
+  const destinoPara = (p: { firstName: string; lastName: string }, opciones: string[]): string => {
+    const caben = opciones.filter(
+      (club) => !pool.some((q) => q !== p && q.clubName === club && (q.firstName === p.firstName || q.lastName === p.lastName)) &&
+        !survivors.some((q) => q !== p && q.clubName === club && (q.firstName === p.firstName || q.lastName === p.lastName))
+    );
+    return rng.pick(caben.length > 0 ? caben : opciones);
+  };
 
   for (const p of pool) {
     p.injuryWeeks = 0;
@@ -840,7 +863,7 @@ export function evolveWorldOffseason(state: GameState, rng: Rng): OffseasonWorld
     // El libre que nadie fichó el verano pasado se acomoda solo, sin ruido.
     if (p.clubName === undefined) {
       if (clubNames.length > 0) {
-        p.clubName = rng.pick(clubNames);
+        p.clubName = destinoPara(p, clubNames);
         p.joinedSeason = finishedSeason + 1;
       }
       survivors.push(p);
@@ -858,7 +881,7 @@ export function evolveWorldOffseason(state: GameState, rng: Rng): OffseasonWorld
     }
     if (roll < 0.13 && clubNames.length > 1) {
       const from = p.clubName;
-      const dest = rng.pick(clubNames.filter((n) => n !== from));
+      const dest = destinoPara(p, clubNames.filter((n) => n !== from));
       p.clubName = dest;
       p.joinedSeason = finishedSeason + 1;
       if (isNotable(p)) news.push(noticiaDePase(p, from, dest));
@@ -874,10 +897,10 @@ export function evolveWorldOffseason(state: GameState, rng: Rng): OffseasonWorld
     const wpId = `wp_x_${ex.id}`;
     if (survivors.some((p) => p.id === wpId)) continue;
     if (ex.age + 1 >= 35 || clubNames.length === 0 || !rng.chance(0.6)) continue;
-    const dest = rng.pick(clubNames);
     const parts = ex.name.trim().split(' ');
     const lastName = parts.pop() ?? ex.name;
     const firstName = parts.join(' ') || lastName;
+    const dest = destinoPara({ firstName, lastName }, clubNames);
     survivors.push({
       id: wpId,
       firstName,

@@ -6,7 +6,7 @@
 // prestigio social y las cuotas.
 
 import { BALANCE, clamp } from './balance';
-import { weeklyFee } from './economy';
+import { cuotaAlDia } from './economy';
 import type { GameState, SponsorCondicion, SponsorContract } from './types';
 import type { Rng } from './rng';
 
@@ -68,7 +68,7 @@ export function condicionCumplida(s: GameState, c: SponsorContract): boolean {
       return true; // si hubo papelón, el contrato ya se cortó
     case 'cuotas': {
       const activos = s.players.filter((p) => !p.leftClub);
-      const alDia = activos.filter((p) => weeklyFee(p) > 0 || p.feeStatus === 'beca_total' || p.feeStatus === 'beca_parcial').length;
+      const alDia = activos.filter(cuotaAlDia).length;
       return activos.length > 0 && (alDia / activos.length) * 100 >= c.meta;
     }
   }

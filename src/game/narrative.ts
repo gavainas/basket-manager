@@ -6,7 +6,7 @@ import { clamp } from './balance';
 import { fragilityOf } from './injuries';
 import { refIncidentFactor } from './leagueLife';
 import { fueraDelPartido, reemplazar, rivalLineup } from './match';
-import { apellido } from './nombres';
+import { apellido, apellidoEnEquipo } from './nombres';
 import type { GameState, LiveMatchState, PendingRefIncident, Player, RiesgoPendiente } from './types';
 import type { Rng } from './rng';
 
@@ -291,8 +291,16 @@ export function rollRefIncident(s: GameState, live: LiveMatchState, onCourt: Pla
   }
 
   if (kind === 'roce') {
-    const rivalCourt = rivalLineup(s, live).court;
-    const r = rivalCourt.length > 0 ? rng.pick(rivalCourt).lastName : `el ${rng.int(4, 15)} de ${live.rivalName}`;
+    const rivales = rivalLineup(s, live);
+    const rivalCourt = rivales.court;
+    // Si el rival se apellida como uno de los nuestros, va con nombre: "Lemos
+    // festejó en la cara de Morales" se leía como una pelea entre compañeros.
+    const rival = rivalCourt.length > 0 ? rng.pick(rivalCourt) : undefined;
+    const r = !rival
+      ? `el ${rng.int(4, 15)} de ${live.rivalName}`
+      : s.players.some((p) => apellido(p.name) === rival.lastName)
+        ? `${rival.firstName} ${rival.lastName}`
+        : apellidoEnEquipo(rival, [...rivalCourt, ...rivales.bench]);
     live.pendingIncident = {
       kind: 'roce',
       playerId: hothead.id,

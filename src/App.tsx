@@ -22,6 +22,7 @@ import { ClubLink, OpenClubContext } from './ui/ClubLink';
 import { ClubProfile } from './ui/ClubProfile';
 import { USER_CLUB_ID } from './game/world';
 import { activePlayers, clubRecord } from './game/match';
+import { cuotaAlDia } from './game/economy';
 import { NavigateTabContext, type AppFocus, type AppTab } from './ui/nav';
 import { SeasonEndScreen } from './ui/SeasonEndScreen';
 import { HistoryView } from './ui/HistoryView';
@@ -356,7 +357,7 @@ export default function App() {
      "12 / 13 jugadores" mientras El club decía "8 activos" y la Plantilla
      listaba 8 renglones. Un solo denominador en todo el juego. */
   const enElPlantel = activePlayers(state.players);
-  const alDia = enElPlantel.filter((p) => p.weeksUnpaid === 0).length;
+  const alDia = enElPlantel.filter(cuotaAlDia).length;
   const semanaLabel =
     state.week <= state.seasonLength
       ? `${Math.min(state.week, state.seasonLength)}`

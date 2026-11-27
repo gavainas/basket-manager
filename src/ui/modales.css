@@ -745,3 +745,53 @@ button.ficha-mas {
 }
 button.ficha-mas:hover { color: var(--text); }
 button.ficha-mas:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* La tecla de cada opción (nov 2026): el número que la elige, a la izquierda
+   del renglón, con la voz de las teclas de la barra de secciones. La bajada
+   queda alineada con el texto, no con la tecla. */
+.modal .options button:not(.primary):not(.danger):not(.ghost):has(.opt-tecla) { padding-left: 2.7rem; }
+.opt-tecla {
+  position: absolute;
+  left: 0.9rem;
+  top: 0.95rem;
+  min-width: 1.15rem;
+  padding: 2px 4px 1px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font: 700 0.72rem / 1 var(--font-display);
+  text-align: center;
+  color: var(--text-dim);
+  opacity: 0.75;
+  transition: opacity 0.15s, color 0.15s;
+}
+.modal .options button:hover .opt-tecla,
+.modal .options button:focus-visible .opt-tecla { color: var(--text); opacity: 1; }
+@media (hover: none) {
+  .opt-tecla { display: none; } /* sin teclado, sin tecla */
+  .modal .options button:not(.primary):not(.danger):not(.ghost):has(.opt-tecla) { padding-left: 0.9rem; }
+}
+
+/* La negociación de la pretemporada: sus renglones cambian según la charla,
+   así que el número de cada uno lo cuenta el CSS (nov 2026). */
+.modal.negociacion .options { counter-reset: opcion; }
+.modal.negociacion .options > button:not(.primary):not(.danger):not(.ghost) { counter-increment: opcion; padding-left: 2.7rem; }
+.modal.negociacion .options > button:not(.primary):not(.danger):not(.ghost)::before {
+  content: counter(opcion);
+  box-sizing: border-box;
+  position: absolute;
+  left: 0.9rem;
+  top: 0.95rem;
+  min-width: 1.15rem;
+  padding: 2px 4px 1px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font: 700 0.72rem / 1 var(--font-display);
+  text-align: center;
+  color: var(--text-dim);
+  opacity: 0.75;
+}
+.modal.negociacion .options > button:hover::before { color: var(--text); opacity: 1; }
+@media (hover: none) {
+  .modal.negociacion .options > button:not(.primary):not(.danger):not(.ghost) { padding-left: 0.9rem; }
+  .modal.negociacion .options > button::before { display: none; }
+}

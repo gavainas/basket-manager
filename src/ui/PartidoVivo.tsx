@@ -36,7 +36,7 @@ import {
 } from '../game/match';
 import { arranqueDelCuarto, jugadasDelCuarto, largoDelCuarto, largoDelTramo, type Jugada } from '../game/relato';
 import { clubByLegacyId, teamByLegacyRival, userTeam } from '../game/world';
-import { apellido } from '../game/nombres';
+import { apellido, apellidoEnEquipo } from '../game/nombres';
 import type { DefenseTactic, GameState, Player, Position, WorldPlayer } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { MatchClockContext, visibleScore, visibleVitals } from './matchPresentation';
@@ -47,7 +47,7 @@ import { PlayerLink } from './PlayerLink';
 import { RivalLink } from './RivalLink';
 import { WorldPlayerLink } from './WorldPlayerLink';
 import { rivalDifficulty, rivalStyleInfo, weekLabel } from './helpers';
-import { useEscape, useEspacio } from './teclas';
+import { useEscape, useEspacio, useTeclasOpciones } from './teclas';
 import './partido.css';
 
 interface Props {
@@ -353,6 +353,8 @@ export function PartidoVivo({ state, dispatch }: Props) {
   const legsCls = (v: number) => (v >= 65 ? 'good' : v >= 40 ? 'warn' : 'bad');
 
   const rivalCinco = rivalLineup(state, live);
+  // En la cancha, el rival que se apellida como uno de los nuestros lleva la inicial.
+  const nuestrosApellidos = state.players.filter((p) => !p.leftClub).map((p) => apellido(p.name));
   // La defensa del rival que VISTE: con el reloj corriendo, la del último
   // tramo que terminó (el cambio se anuncia al final del tramo, no antes).
   const defensaVista: DefenseTactic = (() => {
@@ -398,6 +400,11 @@ export function PartidoVivo({ state, dispatch }: Props) {
     cancelar();
     return true;
   });
+  // La incidencia se contesta con el número del renglón, como el evento de la semana.
+  useTeclasOpciones(
+    live.pendingIncident?.options.length ?? 0,
+    live.pendingIncident && !reloj ? (i) => dispatch({ type: 'INCIDENT_CHOICE', index: i }) : null
+  );
   /* El cambio preparado vive en el pie, que es lo único que nunca se mueve
      (design/PLAN_MARCO_FIJO.md): con el scroll único, a 1366×768 un panel de
      cambio debajo del banco caía detrás del pie y tocar ⇄ dos veces no
@@ -510,7 +517,15 @@ export function PartidoVivo({ state, dispatch }: Props) {
     const a = parcialDe(i, 'against');
     return f === '–' && a === '–' ? '–' : `${f}-${a}`;
   };
-  const colores = { '--nuestro': nuestrosColores[0], '--rival': rivalColores[0] } as React.CSSProperties;
+  /* Si el rival viste nuestro mismo color (uno de cada diez clubes), su anillo
+     y su punto en el relato pasan al segundo color, con filo oscuro porque
+     es el claro: con los dos iguales no se sabía quién había anotado. */
+  const mismoColor = rivalColores[0].toLowerCase() === nuestrosColores[0].toLowerCase();
+  const colores = {
+    '--nuestro': nuestrosColores[0],
+    '--rival': mismoColor ? rivalColores[1] : rivalColores[0],
+    ...(mismoColor ? { '--rival-filo': 'rgba(10, 18, 26, 0.85)' } : {}),
+  } as React.CSSProperties;
   const hayDrama = hotStreak || coldStreak || comebackMode || holdMode || !!injuryNote;
 
   // La letra chica del partido, dicha una vez, debajo de la cancha.
@@ -526,7 +541,14 @@ export function PartidoVivo({ state, dispatch }: Props) {
       <b>Espacio</b> {reloj.pausa ? 'sigue' : 'pausa'}.
     </>
   ) : live.pendingIncident ? (
-    <>Resolvé la incidencia antes de seguir jugando.</>
+    <>
+      Resolvé la incidencia antes de seguir jugando:{' '}
+      {live.pendingIncident.options.length === 1 ? (
+        <><b>1</b> también elige.</>
+      ) : (
+        <><b>{live.pendingIncident.options.slice(1).map((_o, i) => i + 1).join(', ')} o {live.pendingIncident.options.length}</b> también eligen.</>
+      )}
+    </>
   ) : (
     <>
       {cansado && (
@@ -716,7 +738,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
                   title={`${p.firstName} ${p.lastName} · ${p.position} · nivel ≈${p.level}`}
                 >
                   <span className="vivo-ficha-cara"><Busto seed={p.id} personality={p.personality} /></span>
-                  <span className="vivo-ficha-nom">{p.lastName}</span>
+                  <span className="vivo-ficha-nom">{apellidoEnEquipo(p, [...rivalCinco.court, ...rivalCinco.bench], nuestrosApellidos)}</span>
                 </div>
               ) : null
             )}
@@ -730,8 +752,8 @@ export function PartidoVivo({ state, dispatch }: Props) {
               <p className="vivo-incidencia-txt">{live.pendingIncident.text}</p>
               <div className="vivo-opciones">
                 {live.pendingIncident.options.map((opt, i) => (
-                  <button key={i} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })}>
-                    <b>{opt.label}</b>
+                  <button key={i} onClick={() => dispatch({ type: 'INCIDENT_CHOICE', index: i })} aria-keyshortcuts={String(i + 1)}>
+                    <b><kbd className="opt-tecla" aria-hidden="true">{i + 1}</kbd>{opt.label}</b>
                     <span>{opt.hint}</span>
                   </button>
                 ))}

@@ -50,12 +50,16 @@ export function computeRating(input: RatingInput): PlayerRating {
   const sample = Math.min(1, input.minutes / R.sampleMinutes);
   rating = R.cameoAnchor * (1 - sample) + rating * sample;
 
+  // La nota sin el piso de la figura: el comentario cuenta lo que pasó (nov
+  // 2026: "Partidazo completo: 6 puntos, 1 rebote y 1 asistencia" era la
+  // figura de una derrota, subida a 8 por serlo).
+  const sinPiso = Math.max(1, Math.min(10, Math.round(rating)));
   if (input.mvp) rating = Math.max(rating, R.mvpFloor);
   const final = Math.max(1, Math.min(10, Math.round(rating)));
-  return { rating: final, comment: buildComment(input, final) };
+  return { rating: final, comment: buildComment(input, final, sinPiso) };
 }
 
-function buildComment(i: RatingInput, rating: number): string {
+function buildComment(i: RatingInput, rating: number, sinPiso: number = rating): string {
   const { points: pts, rebounds: reb, assists: ast, minutes: min } = i;
   const guard = i.position === 'Base' || i.position === 'Escolta';
 
@@ -77,7 +81,9 @@ function buildComment(i: RatingInput, rating: number): string {
     return `Manejó el ritmo del equipo y repartió ${ast} asistencias: fue quien rompió la defensa rival.`;
   if (reb >= 9) return `Dueño de los tableros: ${reb} rebotes que valieron oro allá abajo.`;
   if (pts >= 18) return `Aporte en ataque: ${pts} puntos en ${min} minutos.`;
-  if (rating >= 8)
+  if (sinPiso >= 8)
     return `Partidazo completo: ${puntos}, ${rebotes} y ${asistencias}.`;
+  if (i.mvp)
+    return `Lo mejor de ${i.won ? 'un partido sin brillos' : 'una noche floja del equipo'}: ${puntos}, ${rebotes} y ${asistencias} en ${min} minutos.`;
   return `Cumplió con su rol: ${puntos}, aporte silencioso y pocas licencias.`;
 }

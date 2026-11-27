@@ -1,4 +1,5 @@
 import { BALANCE, clamp } from './balance';
+import { apellido } from './nombres';
 import { createInitialRoster } from '../data/players';
 import { RIVALS, SCHEDULE_ORDER } from '../data/rivals';
 import { PLAZA_DIVISION_ID, USER_DIVISION_ID } from '../data/worldData';
@@ -88,7 +89,7 @@ export function createNewGame(seed: number, difficulty: AbsenceDifficulty = 'med
     world: emptyWorld(),
     playoffs: null,
     coach: null,
-    coachMarket: buildCoachMarket(1, seed),
+    coachMarket: buildCoachMarket(1, seed, players.map((p) => apellido(p.name))),
     trialCandidate: null,
     divisionId: USER_DIVISION_ID,
     worldDivisions: initialWorldDivisions(USER_DIVISION_ID),

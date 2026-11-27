@@ -1,6 +1,6 @@
 import type { GameState } from '../game/types';
 import { activePlayers } from '../game/match';
-import { projectedWeekClose, weeklyEstimate } from '../game/economy';
+import { cuotaAlDia, projectedWeekClose, weeklyEstimate } from '../game/economy';
 import { condicionTexto } from '../game/sponsors';
 import { feeChipAlways, formatMoney, weekLabel, weekShort } from './helpers';
 import { PlayerLink } from './PlayerLink';
@@ -32,9 +32,10 @@ export function FinancesView({ state }: { state: GameState }) {
   const sumaSemana = [...estimate.income, ...estimate.expenses].reduce((t, e) => t + e.amount, 0);
   const enRojo = state.semanasEnRojo ?? 0;
   const recentLedger = [...state.ledger].reverse().slice(0, 12);
-  const alDia = active.filter((p) => p.feeStatus === 'pagada').length;
-  const deben = active.filter((p) => p.feeStatus === 'pendiente').length;
-  const becados = active.length - alDia - deben;
+  // Al día es el que no debe, con beca o sin ella: la misma cuenta que la barra de abajo.
+  const alDia = active.filter(cuotaAlDia).length;
+  const deben = active.length - alDia;
+  const becados = active.filter((p) => p.feeStatus === 'beca_parcial' || p.feeStatus === 'beca_total').length;
   const semana = state.week <= state.seasonLength ? `Semana ${state.week}` : weekLabel(state.week, state.seasonLength);
 
   return (
@@ -111,7 +112,7 @@ export function FinancesView({ state }: { state: GameState }) {
 
       <Planilla
         titulo="Las cuotas del plantel"
-        nota={`${alDia} de ${active.length} al día${deben > 0 ? ` · ${deben} ${deben === 1 ? 'debe' : 'deben'}` : ''}${becados > 0 ? ` · ${becados} con beca` : ''}`}
+        nota={`${alDia} de ${active.length} al día${becados > 0 ? ` (${becados} con beca)` : ''}${deben > 0 ? ` · ${deben} ${deben === 1 ? 'debe' : 'deben'}` : ''}`}
         className="fz-cuotas"
         focus="cuotas"
       >

@@ -188,3 +188,10 @@ button.tablero-mas:hover { color: var(--text); }
   button.tablero-aviso { padding: 0.5rem 1.1rem 0.5rem 0.8rem; }
   .tablero-aviso-txt > span { font-size: 0.82rem; }
 }
+
+/* La copa ganada, arriba del marcador (nov 2026). */
+.tablero .tablero-campeones {
+  margin: 0.35rem 0 0.2rem;
+  color: var(--good);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+}

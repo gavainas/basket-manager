@@ -10,6 +10,7 @@ import { fallbackNote, quarterFlavor, rollRefIncident } from './narrative';
 import { computeRating, type PlayerRating } from './rating';
 import { fechaLabel, logClubEvent, logPlayerEvent } from './timeline';
 import { listaY } from './nombres';
+import { cruceDelClub } from './playoffs';
 import { rollRivalMatchday, USER_TEAM_ID } from './world';
 import type {
   AttackTactic,
@@ -305,6 +306,19 @@ function lockerRoomNotes(
   rng: Rng
 ): string[] {
   const notes: string[] = [];
+
+  // La final manda sobre todo lo demás (nov 2026): el vestuario de la copa
+  // ganada hablaba del MVP como en cualquier fecha.
+  const final = cruceDelClub(state, state.week);
+  if (final?.round === 'final') {
+    notes.push(
+      result.won
+        ? final.cup === 'oro'
+          ? 'Campeones de la Copa de Oro: vuelta olímpica con la camiseta empapada, y alguien ya llamó a la imprenta por los banderines.'
+          : 'Campeones de la Copa de Plata: no es la grande, pero la vuelta olímpica se dio igual y la copa ya tiene lugar en la cantina.'
+        : 'Las medallas de finalista quedaron colgando en silencio. Alguien dijo "el año que viene" y nadie le contestó.'
+    );
+  }
 
   // La épica manda: si el partido tuvo historia, el vestuario habla de eso.
   const n = result.squadCount ?? 0;
@@ -1072,7 +1086,7 @@ function autoRotate(s: GameState, live: LiveMatchState): void {
       cambios.push(`${byId(inId).name} por ${byId(outId).name}`);
     }
     if (cambios.length > 0) {
-      notes.push(`${dtSujeto} movió el banco: ${cambios.length === 1 ? 'entra' : 'entran'} ${cambios.join(', ')}.`);
+      notes.push(`${dtSujeto} movió el banco: ${cambios.length === 1 ? 'entra' : 'entran'} ${listaY(cambios)}.`);
     }
   }
 
