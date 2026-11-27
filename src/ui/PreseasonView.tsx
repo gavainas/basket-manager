@@ -32,7 +32,7 @@ import { dayLabel } from '../game/world';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
 import { useContext, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useTeclasModal, useTeclasSecciones } from './teclas';
+import { useTeclasModal, useTeclasOpciones, useTeclasSecciones } from './teclas';
 import './pretemporada.css';
 
 /**
@@ -1286,6 +1286,10 @@ const CONTRA_FAVOR: Partial<Record<DemandType, string>> = {
 function NegotiationModal({ state, dispatch }: Props) {
   const ps = state.preseason!;
   const neg = ps.negotiation;
+  // Los números eligen el renglón, como en los eventos (nov 2026). Los
+  // renglones dependen de la charla (contraoferta, agenda, "vení igual"), así
+  // que se cuentan en pantalla; el número de cada uno lo pone el CSS.
+  useTeclasOpciones(9, neg ? (i) => document.querySelectorAll<HTMLButtonElement>('.modal.negociacion .options > button')[i]?.click() : null);
   if (!neg) return null;
 
   if (neg.isMarket) {
@@ -1297,7 +1301,7 @@ function NegotiationModal({ state, dispatch }: Props) {
     const contacto = !!ps.libreta && !!mp.relacion;
     return (
       <div className="modal-backdrop">
-        <div className="modal">
+        <div className="modal negociacion">
           <h2>{contacto ? `Pedirle a ${mp.name} que venga a jugar` : `Negociación con ${mp.name}`}</h2>
           <p className="event-text">
             {contacto && (
@@ -1405,7 +1409,7 @@ function NegotiationModal({ state, dispatch }: Props) {
   const canCounter = counter && counter.result !== 'medio_pase' && !ps.counterUsed[player.id];
   return (
     <div className="modal-backdrop">
-      <div className="modal">
+      <div className="modal negociacion">
         <h2><PlayerLink id={player.id}>{player.name}</PlayerLink> pide una condición</h2>
         <p className="event-text">
           {player.name} ({player.position}, {player.age} años) quiere seguir en el club, pero pide:{' '}
@@ -1447,37 +1451,69 @@ function NegotiationModal({ state, dispatch }: Props) {
   );
 }
 
+/**
+ * Lo que pasa en la pretemporada se cuenta igual que en la temporada (nov
+ * 2026): la planilla con cinta, el rótulo de cuándo pasó y el título a mano,
+ * con las opciones en renglones que se eligen también con el número. Antes
+ * era la caja gris de los diálogos del sistema.
+ */
 function PreseasonModals({ state, dispatch }: Props) {
   const ps = state.preseason!;
+  const evento = !ps.negotiation && !ps.actionOutcome ? ps.pendingEvent : null;
+  const def = evento ? getPreseasonEvent(evento.defId) : null;
+  const opciones = def && evento ? def.options(state, evento.targetIds) : [];
+  useTeclasOpciones(opciones.length, evento ? (i) => dispatch({ type: 'PS_RESOLVE_EVENT', optionIndex: i }) : null);
 
   if (ps.negotiation) return <NegotiationModal state={state} dispatch={dispatch} />;
 
-  if (ps.actionOutcome) {
-    return (
-      <div className="modal-backdrop">
-        <div className="modal">
-          <h2>Desenlace</h2>
-          <p className="event-text">{ps.actionOutcome}</p>
-          <div className="options">
-            <button className="primary" autoFocus onClick={() => dispatch({ type: 'PS_DISMISS_OUTCOME' })}>
-              Continuar
-            </button>
-          </div>
+  const rotulo = (
+    <>
+      Pasó en la pretemporada · <b>Semana {ps.week}</b>
+    </>
+  );
+
+  const desenlace = (texto: string, onContinuar: () => void) => (
+    <div className="modal-backdrop">
+      <div className="modal evento desenlace v1-planilla" role="dialog" aria-modal="true" aria-label="Desenlace">
+        <i className="v1-cinta a" />
+        <div className="v1-eyebrow evento-eyebrow">
+          <Icon name="chat" size={16} />
+          Cómo terminó
+        </div>
+        <h2 className="evento-titulo">Desenlace</h2>
+        <div className="evento-cuerpo">
+          <p className="event-text">{texto}</p>
+        </div>
+        <div className="options">
+          {/* Con el foco puesto, Enter o Espacio siguen, como en la temporada. */}
+          <button className="primary" autoFocus onClick={onContinuar}>
+            Continuar →
+          </button>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (ps.pendingEvent) {
-    const def = getPreseasonEvent(ps.pendingEvent.defId);
+  if (ps.actionOutcome) return desenlace(ps.actionOutcome, () => dispatch({ type: 'PS_DISMISS_OUTCOME' }));
+
+  if (evento && def) {
     return (
       <div className="modal-backdrop">
-        <div className="modal">
-          <h2>{def.title}</h2>
-          <p className="event-text">{def.text(state, ps.pendingEvent.targetIds)}</p>
+        <div className="modal evento v1-planilla" role="dialog" aria-modal="true" aria-label={def.title}>
+          <i className="v1-cinta a" />
+          <i className="v1-cinta b" />
+          <div className="v1-eyebrow evento-eyebrow">
+            <Icon name="destacado" size={16} />
+            {rotulo}
+          </div>
+          <h2 className="evento-titulo">{def.title}</h2>
+          <div className="evento-cuerpo">
+            <p className="event-text">{def.text(state, evento.targetIds)}</p>
+          </div>
           <div className="options">
-            {def.options(state, ps.pendingEvent.targetIds).map((opt, i) => (
-              <button key={i} onClick={() => dispatch({ type: 'PS_RESOLVE_EVENT', optionIndex: i })}>
+            {opciones.map((opt, i) => (
+              <button key={i} onClick={() => dispatch({ type: 'PS_RESOLVE_EVENT', optionIndex: i })} aria-keyshortcuts={String(i + 1)}>
+                <kbd className="opt-tecla" aria-hidden="true">{i + 1}</kbd>
                 {opt.label}
                 {opt.hint && <span className="opt-hint">{opt.hint}</span>}
               </button>
@@ -1488,21 +1524,7 @@ function PreseasonModals({ state, dispatch }: Props) {
     );
   }
 
-  if (ps.eventOutcome) {
-    return (
-      <div className="modal-backdrop">
-        <div className="modal">
-          <h2>Desenlace</h2>
-          <p className="event-text">{ps.eventOutcome}</p>
-          <div className="options">
-            <button className="primary" autoFocus onClick={() => dispatch({ type: 'PS_DISMISS_EVENT_OUTCOME' })}>
-              Continuar
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (ps.eventOutcome) return desenlace(ps.eventOutcome, () => dispatch({ type: 'PS_DISMISS_EVENT_OUTCOME' }));
 
   return null;
 }
