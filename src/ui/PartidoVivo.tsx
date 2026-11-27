@@ -353,6 +353,8 @@ export function PartidoVivo({ state, dispatch }: Props) {
   const legsCls = (v: number) => (v >= 65 ? 'good' : v >= 40 ? 'warn' : 'bad');
 
   const rivalCinco = rivalLineup(state, live);
+  // En la cancha, el rival que se apellida como uno de los nuestros lleva la inicial.
+  const nuestrosApellidos = state.players.filter((p) => !p.leftClub).map((p) => apellido(p.name));
   // La defensa del rival que VISTE: con el reloj corriendo, la del último
   // tramo que terminó (el cambio se anuncia al final del tramo, no antes).
   const defensaVista: DefenseTactic = (() => {
@@ -728,7 +730,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
                   title={`${p.firstName} ${p.lastName} · ${p.position} · nivel ≈${p.level}`}
                 >
                   <span className="vivo-ficha-cara"><Busto seed={p.id} personality={p.personality} /></span>
-                  <span className="vivo-ficha-nom">{apellidoEnEquipo(p, [...rivalCinco.court, ...rivalCinco.bench])}</span>
+                  <span className="vivo-ficha-nom">{apellidoEnEquipo(p, [...rivalCinco.court, ...rivalCinco.bench], nuestrosApellidos)}</span>
                 </div>
               ) : null
             )}

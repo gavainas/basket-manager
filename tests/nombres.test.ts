@@ -35,5 +35,9 @@ describe('cómo se nombra a la gente en corto (sep 2026)', () => {
     expect(apellidoEnEquipo(tomas, [alejo, nestor, tomas])).toBe('Duarte');
     // Solo, o sin compañero que choque, el apellido alcanza.
     expect(apellidoEnEquipo(alejo, [alejo, tomas])).toBe('Píriz');
+    // Si uno de los nuestros se apellida igual, el rival también lleva la inicial.
+    const nestorNunez = { id: 'nn', firstName: 'Néstor', lastName: 'Núñez' };
+    expect(apellidoEnEquipo(nestorNunez, [nestorNunez, tomas], ['Silva', 'Núñez'])).toBe('N. Núñez');
+    expect(apellidoEnEquipo(tomas, [nestorNunez, tomas], ['Silva', 'Núñez'])).toBe('Duarte');
   });
 });

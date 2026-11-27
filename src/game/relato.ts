@@ -165,6 +165,7 @@ function jugadasDelReparto(
   const rivales = rivalLineup(state, live);
   const rivalCourt = rivales.court;
   const equipoRival = [...rivales.court, ...rivales.bench];
+  const nuestrosApellidos = state.players.filter((p) => !p.leftClub).map((p) => apellido(p.name));
 
   type Evento = { lado: 'nosotros' | 'rival'; pts: number; quien: string; quienId: string; orden: number };
   const eventos: Evento[] = [];
@@ -172,7 +173,7 @@ function jugadasDelReparto(
     for (const c of canastas(pts, rng)) eventos.push({ lado: 'nosotros', pts: c, quien: apellido(nombreDe(id)), quienId: id, orden: rng.next() });
   }
   for (const p of rivalCourt) {
-    for (const c of canastas(r.rivalBox[p.id] ?? 0, rng)) eventos.push({ lado: 'rival', pts: c, quien: apellidoEnEquipo(p, equipoRival), quienId: p.id, orden: rng.next() });
+    for (const c of canastas(r.rivalBox[p.id] ?? 0, rng)) eventos.push({ lado: 'rival', pts: c, quien: apellidoEnEquipo(p, equipoRival, nuestrosApellidos), quienId: p.id, orden: rng.next() });
   }
   // Si el rival no tiene plantel conocido, sus puntos igual entran al marcador.
   const rivalSinNombre = r.against - Object.values(r.rivalBox).reduce((t, n) => t + n, 0);

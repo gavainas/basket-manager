@@ -35,9 +35,15 @@ export function listaY(nombres: string[]): string {
  */
 export function apellidoEnEquipo(
   p: { id: string; firstName: string; lastName: string },
-  equipo: { id: string; lastName: string }[]
+  equipo: { id: string; lastName: string }[],
+  /**
+   * Apellidos del otro equipo que también se nombran en corto (los nuestros):
+   * si el rival se apellida igual, lleva la inicial para que "Dos más para
+   * Núñez" no se lea como nuestro Núñez.
+   */
+  ajenos: string[] = []
 ): string {
-  const choca = equipo.some((q) => q.id !== p.id && q.lastName === p.lastName);
+  const choca = equipo.some((q) => q.id !== p.id && q.lastName === p.lastName) || ajenos.includes(p.lastName);
   if (!choca) return p.lastName;
   const inicial = p.firstName.replace(/"/g, '').trim().charAt(0);
   return inicial ? `${inicial}. ${p.lastName}` : p.lastName;
