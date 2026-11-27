@@ -566,7 +566,12 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
                   >
                     <span className="lg-escalon-nom">{d.name}</span>
                     <span className="lg-escalon-sub">
-                      {nuestra ? 'Acá jugamos' : d.level < ourLevel ? 'Arriba nuestro' : 'Abajo nuestro'}
+                      {/* "Abajo nuestro" es la de al lado; la que está dos escalones más lejos, no (nov 2026). */}
+                      {nuestra
+                        ? 'Acá jugamos'
+                        : d.level < ourLevel
+                          ? ourLevel - d.level === 1 ? 'Arriba nuestro' : 'Más arriba'
+                          : d.level - ourLevel === 1 ? 'Abajo nuestro' : 'Más abajo'}
                     </span>
                   </button>
                 );
