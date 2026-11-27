@@ -32,7 +32,7 @@ import { dayLabel } from '../game/world';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
 import { useContext, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useTeclasModal } from './teclas';
+import { useTeclasModal, useTeclasSecciones } from './teclas';
 import './pretemporada.css';
 
 /**
@@ -269,6 +269,16 @@ function PreseasonTopbar({
 }: Props & { items: PsNavItem[]; tab: PsTab; onTab: (t: PsTab) => void }) {
   const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
   const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
+  // Los números eligen la parte de la pretemporada, como las secciones de la
+  // temporada (nov 2026, UI_V2_PENDIENTES §3). Escape no hace nada: acá no
+  // hay Tablero al que volver.
+  useTeclasSecciones({
+    onSeccion: (n) => {
+      const it = items[n - 1];
+      if (it) onTab(it.id);
+    },
+    onEscape: () => {},
+  });
 
   return (
     <header className="topbar">
@@ -291,7 +301,7 @@ function PreseasonTopbar({
         </div>
 
         <nav className="secciones ps-secciones" aria-label="La pretemporada">
-          {items.map((it) => {
+          {items.map((it, i) => {
             const on = tab === it.id;
             return (
               <button
@@ -299,7 +309,7 @@ function PreseasonTopbar({
                 className={`seccion${on ? ' on' : ''}`}
                 aria-current={on ? 'page' : undefined}
                 onClick={() => onTab(it.id)}
-                title={it.badge?.title ?? it.label}
+                title={`${it.badge?.title ?? it.label} · tecla ${i + 1}`}
               >
                 <span className="seccion-punto" />
                 <span className="seccion-label">
@@ -307,6 +317,7 @@ function PreseasonTopbar({
                   {it.badge && <span className={`ps-marca ${it.badge.cls}`}>{it.badge.text}</span>}
                 </span>
                 <Icon name={it.icon} size={22} />
+                <kbd className="seccion-tecla" aria-hidden="true">{i + 1}</kbd>
               </button>
             );
           })}
