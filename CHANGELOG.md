@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **El mercado no repite el club en la misma línea (28/11/2026)**: en la pretemporada de la T2, cada fichable del mundo decía "Viene de Estrella del Sur. Nombre conocido de la liga: hizo su fama en Estrella del Sur." (y "Viene de X. Quedó libre de X."). Como esa frase siempre va después de "Viene de…", ahora dice "hizo su fama ahí", "Quedó libre." y "Lo enfrentaste dos veces con esa camiseta". Visto en el navegador.
+
 - **Antes de jugarlo, el cruce dice qué copa se juega (28/11/2026)**: el Tablero de la semana de la final decía "La próxima fecha · **Finales**" y La semana "**Semifinales** · faltan 3 días", sin decir de qué copa; el informe, después, "Final · Copa de Plata". Ahora el Tablero y La semana dicen "Semifinal · Copa de Plata" / "Final · Copa de Oro" desde el lunes. Visto en el navegador.
 
 - **Los playoffs dicen a dónde van y el que perdió no dice "bien" (28/11/2026)**: jugando una semifinal y la final desde el navegador. El informe de la semi ganada tenía de botón "Después de las semifinales →", que no decía a dónde llevaba: ahora "A la final →" (y "Cerrar la temporada →" si se perdió, que es lo que pasa). Y después de perder la final 61-79, la figura decía "Bien. Sin mucho más para decir: bien.": el ánimo "conforme" con minutos sólo sale en la derrota (ganando es "contento"), pero sus frases eran de victoria ("Contento por el grupo", "Partido cumplido"). Ahora son de derrota ("Hoy no alcanzó. Me voy tranquilo con lo que di, no con el resultado."). Test en `tests/voces.test.ts`.
