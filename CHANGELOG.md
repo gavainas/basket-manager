@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **Dos del plantel con el mismo apellido se distinguen (28/11/2026)**: el mercado de la T2 traía a Julián Ramos y Richard Ramos; fichando a los dos, el Tablero, la convocatoria, el vestuario del informe, la pretemporada y la cancha del partido decían "RAMOS" dos veces (el arreglo de ayer cubría a los rivales, no a los nuestros). Ahora, con choque, va la inicial ("J. Ramos", "R. Ramos"), o el apodo con su apellido si son dos "Chino" (`cortoEnPlantel` en `src/game/nombres.ts`). Sin choque, todo igual. Test en `tests/nombres.test.ts`; visto en el navegador con un guardado con dos Techera.
+
 - **El mercado no repite el club en la misma línea (28/11/2026)**: en la pretemporada de la T2, cada fichable del mundo decía "Viene de Estrella del Sur. Nombre conocido de la liga: hizo su fama en Estrella del Sur." (y "Viene de X. Quedó libre de X."). Como esa frase siempre va después de "Viene de…", ahora dice "hizo su fama ahí", "Quedó libre." y "Lo enfrentaste dos veces con esa camiseta". Visto en el navegador.
 
 - **Antes de jugarlo, el cruce dice qué copa se juega (28/11/2026)**: el Tablero de la semana de la final decía "La próxima fecha · **Finales**" y La semana "**Semifinales** · faltan 3 días", sin decir de qué copa; el informe, después, "Final · Copa de Plata". Ahora el Tablero y La semana dicen "Semifinal · Copa de Plata" / "Final · Copa de Oro" desde el lunes. Visto en el navegador.

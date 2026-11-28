@@ -6,7 +6,7 @@ import { CAUSE_SHORT } from '../game/mood';
 import { lecturaDelCruce } from '../game/playoffs';
 import { clubByLegacyId, USER_CLUB_ID, USER_TEAM_ID, userFixtureOfWeek } from '../game/world';
 import { weekTimeline } from '../game/weekTimeline';
-import { apodoOApellido } from '../game/nombres';
+import { cortoEnPlantel } from '../game/nombres';
 import { Crest } from './Crest';
 import { Busto, FilaDePie, type PersonaDePie } from './Busto';
 import { OpenProfileContext } from './PlayerLink';
@@ -57,7 +57,6 @@ const POS_ABBR: Record<string, string> = {
 };
 
 /** En la tira entra el apodo si lo tiene, y si no el apellido (nombres.ts). */
-const shortName = apodoOApellido;
 
 /** La próxima fecha organiza el tablero; consultar nunca avanza la simulación. */
 export function hubReadiness(state: GameState) {
@@ -230,14 +229,16 @@ export function Hub({ state }: { state: GameState }) {
     );
   };
 
-  // El plantel de pie: por puesto, los que no están al final.
+  // El plantel de pie: por puesto, los que no están al final. Con dos que se
+  // llamarían igual, la inicial ("J. Ramos", "R. Ramos").
+  const nombresDelPlantel = state.players.filter((x) => !x.leftClub).map((x) => x.name);
   const personas: PersonaDePie[] = [...activePlayers(state.players)]
     .sort((a, b) => POS_ORDER.indexOf(a.position) - POS_ORDER.indexOf(b.position))
     .map((p) => {
       const est = estadoDe(p, state);
       return {
         id: p.id,
-        nombre: shortName(p.name),
+        nombre: cortoEnPlantel(p.name, nombresDelPlantel),
         personality: p.personality,
         sub: POS_ABBR[p.position] ?? p.position.slice(0, 3).toUpperCase(),
         estado: est.label ? { cls: est.cls, label: est.label } : null,

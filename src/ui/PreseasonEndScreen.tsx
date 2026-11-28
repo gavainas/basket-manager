@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import type { GameState, PreseasonSummaryEntry } from '../game/types';
-import { apodoOApellido } from '../game/nombres';
+import { apodoOApellido, cortoEnPlantel } from '../game/nombres';
 import type { GameAction } from '../state/gameReducer';
 import { FilaDePie, type PersonaDePie } from './Busto';
 import { OpenProfileContext, PlayerLink } from './PlayerLink';
@@ -58,7 +58,7 @@ export function PreseasonEndScreen({ state, dispatch }: Props) {
     const id = e.id || e.label;
     return {
       id,
-      nombre: shortName(p?.name ?? nombre),
+      nombre: p ? cortoEnPlantel(p.name, state.players.filter((x) => !x.leftClub).map((x) => x.name)) : shortName(nombre),
       personality: p?.personality,
       sub: p ? (POS_ABBR[p.position] ?? p.position.slice(0, 3).toUpperCase()) : undefined,
       estado: fuera

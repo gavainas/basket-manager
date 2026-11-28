@@ -61,6 +61,14 @@ const Q_LABELS = ['1er', '2do', '3er', '4to'];
 
 const shortName = apellido;
 
+/** El apellido en la cancha, con la inicial si otro del plantel se apellida igual ("M. Techera"). */
+function apellidoEnPlantel(p: Player, plantel: Player[]): string {
+  const a = apellido(p.name);
+  if (!plantel.some((q) => q.id !== p.id && !q.leftClub && apellido(q.name) === a)) return a;
+  const inicial = p.name.replace(/"[^"]*"/g, '').trim().charAt(0);
+  return inicial ? `${inicial}. ${a}` : a;
+}
+
 /* Los cinco puestos sobre media cancha horizontal (en % de la mitad): el base
    atrás, los perimetrales en el medio, los grandes cerca del aro. La otra mitad
    se espeja. */
@@ -354,6 +362,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
               : `Fin del ${Q_LABELS[Math.min(regularPlayed, 4) - 1]} cuarto`;
 
   const byId = (id: string) => state.players.find((p) => p.id === id)!;
+  const apellidoNuestro = (p: Player) => apellidoEnPlantel(p, state.players);
   const vitals = visibleVitals(live, reloj);
   const onCourt = vitals.onCourt.map(byId);
   const bench = live.squad.filter((id) => !vitals.onCourt.includes(id)).map(byId);
@@ -420,7 +429,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
      cambio debajo del banco caía detrás del pie y tocar ⇄ dos veces no
      mostraba ningún botón. La tira "Sale → Entra" aparece arriba de los
      mandos, con Confirmar y Cancelar. */
-  const nombreCorto = (id: string) => `${POS_ABBR[byId(id).position]} · ${shortName(byId(id).name)}`;
+  const nombreCorto = (id: string) => `${POS_ABBR[byId(id).position]} · ${apellidoNuestro(byId(id))}`;
   const cambioEnPie = cambioEnCurso ? (
     <div className="vivo-cambio" role="group" aria-label="Cambio preparado">
       <span className="vivo-cambio-t"><Icon name="cambio" size={14} /> Cambio</span>
@@ -735,7 +744,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
                   title={`${p.name} · ${p.position} · ${ptsOf(p.id)} pts · piernas ${freshOf(p.id)}`}
                 >
                   <span className="vivo-ficha-cara"><Busto seed={p.id} personality={p.personality} /></span>
-                  <span className="vivo-ficha-nom">{shortName(p.name)}</span>
+                  <span className="vivo-ficha-nom">{apellidoNuestro(p)}</span>
                 </div>
               ) : null
             )}

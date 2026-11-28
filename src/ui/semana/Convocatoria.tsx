@@ -9,6 +9,7 @@
 // los que vienen adelante, los que no, en gris después del corte.
 
 import { useContext, type CSSProperties } from 'react';
+import { cortoEnPlantel } from '../../game/nombres';
 import type { CallUpEntry, GameState, Player, Position } from '../../game/types';
 import { ABSENCE_ACTIONS, reasonById } from '../../game/absences';
 import { BALANCE } from '../../game/balance';
@@ -28,12 +29,6 @@ const ASADO_TIER_INFO: Record<string, { icon: IconName; title: string; cls: stri
 };
 
 const POS_CORTO: Record<Position, string> = { Base: 'BAS', Escolta: 'ESC', Alero: 'ALE', 'Ala-Pívot': 'ALA', Pívot: 'PIV' };
-
-/** En la fila de pie entra el apodo si lo tiene, y si no el apellido (como en el Tablero). */
-function nombreCorto(name: string): string {
-  const nick = name.match(/"([^"]+)"/);
-  return nick ? nick[1] : shortName(name);
-}
 
 /** Crónica del asado: quiénes estuvieron en la mesa y qué dejó la noche. */
 function AsadoCronica({ state }: { state: GameState }) {
@@ -144,7 +139,7 @@ export function CallUpPanel({ state, dispatch }: Props) {
       }
       return {
         id: p.id,
-        nombre: nombreCorto(p.name),
+        nombre: cortoEnPlantel(p.name, state.players.filter((x) => !x.leftClub).map((x) => x.name)),
         personality: p.personality,
         sub: POS_CORTO[p.position],
         estado,

@@ -20,6 +20,22 @@ export function apodoOApellido(nombre: string): string {
   return apellido(nombre);
 }
 
+/**
+ * El nombre corto de alguien del plantel (apodo o apellido), con la inicial
+ * del nombre si otro del mismo plantel se llamaría igual: con dos Ramos
+ * fichados, la fila de pie decía "RAMOS" dos veces (nov 2026). "J. Ramos",
+ * "R. Ramos"; sin choque, "Ramos" o "Chino" como siempre.
+ */
+export function cortoEnPlantel(nombre: string, plantel: string[]): string {
+  const corto = apodoOApellido(nombre);
+  const choca = plantel.some((otro) => otro !== nombre && apodoOApellido(otro) === corto);
+  if (!choca) return corto;
+  // Dos "Chino": el apodo con su apellido. Dos Ramos: la inicial del nombre.
+  if (/"[^"]+"/.test(nombre)) return `${corto} ${apellido(nombre)}`;
+  const inicial = nombre.trim().charAt(0);
+  return inicial ? `${inicial}. ${corto}` : corto;
+}
+
 /** "Silva", "Silva y Pereyra", "Silva, Fernández y Viera". */
 export function listaY(nombres: string[]): string {
   if (nombres.length <= 1) return nombres[0] ?? '';

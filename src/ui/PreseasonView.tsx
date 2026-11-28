@@ -2,7 +2,7 @@ import { BALANCE } from '../game/balance';
 import { marketReference } from '../game/conduct';
 import { weeklyFee } from '../game/economy';
 import { CAUSE_SHORT } from '../game/mood';
-import { apodoOApellido, listaY } from '../game/nombres';
+import { cortoEnPlantel, listaY } from '../game/nombres';
 import {
   CONTINUITY_LABELS,
   COUNTER_OFFERS,
@@ -704,7 +704,6 @@ const POS_ABBR: Record<string, string> = {
 };
 
 /** En la fila de pie entra el apodo si lo tiene, y si no el apellido (nombres.ts). */
-const shortName = apodoOApellido;
 
 /** El estado de continuidad dicho con las clases del semáforo (sin el acento). */
 function contCls(cls: string): 'good' | 'warn' | 'bad' {
@@ -794,7 +793,7 @@ function RosterSection({ state, dispatch }: Props) {
       const fee = playerFeeLabel(p);
       return {
         id: p.id,
-        nombre: shortName(p.name),
+        nombre: cortoEnPlantel(p.name, roster.map((x) => x.name)),
         personality: p.personality,
         sub: POS_ABBR[p.position] ?? p.position.slice(0, 3).toUpperCase(),
         estado:

@@ -21,7 +21,7 @@ import type { PlayerEmotion, Position } from '../../game/types';
 import { clubGamesPlayed, clubPosition, clubRecord } from '../../game/match';
 import { clubByLegacyId, USER_CLUB_ID } from '../../game/world';
 import { lecturaDelCruce } from '../../game/playoffs';
-import { apodoOApellido } from '../../game/nombres';
+import { cortoEnPlantel } from '../../game/nombres';
 import { Busto, FilaDePie, type PersonaDePie } from '../Busto';
 import { Crest } from '../Crest';
 import { OpenProfileContext, PlayerLink } from '../PlayerLink';
@@ -54,7 +54,6 @@ const CORTO: Record<PlayerEmotion, string> = {
 };
 
 /** En la fila entra el apodo si lo tiene, y si no el apellido (como en el Tablero). */
-const nombreCorto = apodoOApellido;
 
 /** Cuántos momentos clave se ven antes de "ver todos", y cuántas voces del vestuario. */
 const MOMENTOS_A_LA_VISTA = 5;
@@ -119,12 +118,13 @@ export function MatchResultPanel({ state, dispatch }: Props) {
   // El vestuario: de pie, en el orden de la planilla; los que no jugaron, al final.
   const moods = m.moods ?? [];
   const byId = new Map(state.players.map((p) => [p.id, p]));
+  const nombresDelPlantel = state.players.filter((x) => !x.leftClub).map((x) => x.name);
   const personas: PersonaDePie[] = moods.map((mood) => {
     const t = tonoDe(mood.emotion);
     const p = byId.get(mood.playerId);
     return {
       id: mood.playerId,
-      nombre: nombreCorto(mood.name),
+      nombre: cortoEnPlantel(mood.name, nombresDelPlantel),
       personality: p?.personality,
       sub: t ? undefined : CORTO[mood.emotion],
       estado: t ? { cls: t, label: CORTO[mood.emotion] } : null,

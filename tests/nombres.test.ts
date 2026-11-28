@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { apellido, apellidoEnEquipo, apodoOApellido, listaY } from '../src/game/nombres';
+import { apellido, apellidoEnEquipo, apodoOApellido, cortoEnPlantel, listaY } from '../src/game/nombres';
 
 describe('cómo se nombra a la gente en corto (sep 2026)', () => {
   it('el apellido compuesto va entero: "Da Silva", no "Silva"', () => {
@@ -52,5 +52,17 @@ describe('los DT que se ofrecen no se apellidan como el plantel (nov 2026)', () 
       expect(dts.filter((a) => nuestros.has(a)), `semilla ${seed}`).toEqual([]);
       expect(new Set(dts).size, `semilla ${seed}`).toBe(dts.length);
     }
+  });
+});
+
+describe('dos del plantel con el mismo nombre corto (nov 2026)', () => {
+  it('llevan la inicial del nombre; los demás, como siempre', () => {
+    const plantel = ['Julián Ramos', 'Richard Ramos', '"Chino" Rodríguez', 'Facundo Silva'];
+    expect(cortoEnPlantel('Julián Ramos', plantel)).toBe('J. Ramos');
+    expect(cortoEnPlantel('Richard Ramos', plantel)).toBe('R. Ramos');
+    expect(cortoEnPlantel('"Chino" Rodríguez', plantel)).toBe('Chino');
+    expect(cortoEnPlantel('Facundo Silva', plantel)).toBe('Silva');
+    // Dos con el mismo apodo: el apodo con su apellido.
+    expect(cortoEnPlantel('"Chino" Rodríguez', [...plantel, '"Chino" Méndez'])).toBe('Chino Rodríguez');
   });
 });
