@@ -2105,12 +2105,15 @@ export const EVENTS: EventDef[] = [
     text: (s, ev) => {
       const ref = refereeOfWeek(s);
       const p = byId(s, ev.playerId);
-      return `Esta fecha dirige ${mayus(ref.name)}: ${ref.blurb}. ${p.name} lo tiene atravesado desde la última técnica y ya avisó en el grupo que "hoy no se calla".`;
+      // A mitad de frase el juez va tal cual ("dirige la Colo Ramírez", no
+      // "dirige La Colo Ramírez"), y ella "la tiene atravesada".
+      const ella = ref.name.startsWith('la ');
+      return `Esta fecha dirige ${ref.name}: ${ref.blurb}. ${p.name} ${ella ? 'la tiene atravesada' : 'lo tiene atravesado'} desde la última técnica y ya avisó en el grupo que "hoy no se calla".`;
     },
     options: (s) => [
       { label: '"Hoy ni una palabra con el juez"', hint: 'Se guarda la bronca; no es gratis' },
       { label: 'Que juegue como siempre', hint: 'Con este juez, la técnica sale fácil' },
-      { label: `Ir a saludar a ${mayus(refereeOfWeek(s).name)} antes del partido`, hint: 'A veces afloja el clima; a veces se nota demasiado' },
+      { label: `Ir a saludar ${al(refereeOfWeek(s).name)} antes del partido`, hint: 'A veces afloja el clima; a veces se nota demasiado' },
     ],
     resolve: (s, ev, opt, rng) => {
       const ref = refereeOfWeek(s);
@@ -2126,11 +2129,11 @@ export const EVENTS: EventDef[] = [
       }
       if (rng.chance(0.5)) {
         s.club.socialClimate = clamp(s.club.socialClimate + 2);
-        return `Fuiste a saludar a ${mayus(ref.name)} con un café. Se rió, te preguntó por el plantel y dijo "veremos". El grupo vio la escena y se relajó.`;
+        return `Fuiste a saludar ${al(ref.name)} con un café. Se rió, te preguntó por el plantel y dijo "veremos". El grupo vio la escena y se relajó.`;
       }
       s.club.sportPrestige = clamp(s.club.sportPrestige - 2);
-      s.news.unshift({ week: s.week, text: `Vieron al manager charlando con ${mayus(ref.name)} antes del partido. En la liga ya le pusieron nombre a la charla.`, tone: 'bad' });
-      return `Fuiste a saludar a ${mayus(ref.name)} y te vieron. "¿Qué le fuiste a decir?", preguntó el delegado de enfrente, en voz alta, para que lo escuchen todos.`;
+      s.news.unshift({ week: s.week, text: `Vieron al manager charlando con ${ref.name} antes del partido. En la liga ya le pusieron nombre a la charla.`, tone: 'bad' });
+      return `Fuiste a saludar ${al(ref.name)} y te vieron. "¿Qué le fuiste a decir?", preguntó el delegado de enfrente, en voz alta, para que lo escuchen todos.`;
     },
   },
   {

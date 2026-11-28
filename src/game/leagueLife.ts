@@ -26,17 +26,18 @@ export type RefStyle = 'estricto' | 'permisivo' | 'casero' | 'protagonista';
 export interface Referee {
   name: string;
   style: RefStyle;
-  /** Cómo lo describe la liga (para la previa). */
+  /** Cómo lo describe la liga (para la previa). Sin dos puntos: va después
+   *  de "Dirige Barreto: …". */
   blurb: string;
 }
 
 const REFEREES: Referee[] = [
-  { name: 'Suárez', style: 'estricto', blurb: 'cortito con las protestas: la técnica sale fácil' },
+  { name: 'Suárez', style: 'estricto', blurb: 'cortito con las protestas, la técnica le sale fácil' },
   { name: 'la Colo Ramírez', style: 'estricto', blurb: 'reglamento en mano, no negocia nada' },
   { name: 'el Flaco Medina', style: 'permisivo', blurb: 'deja jugar hasta que corre sangre' },
   { name: 'Tito Álvarez', style: 'permisivo', blurb: 'silba lo justo y quiere irse temprano' },
   { name: 'Cacho Ferreira', style: 'casero', blurb: 'dicen que el local nunca pierde con él' },
-  { name: 'Barreto', style: 'protagonista', blurb: 'le encanta ser noticia: partido cortado seguro' },
+  { name: 'Barreto', style: 'protagonista', blurb: 'le encanta ser noticia y corta el partido a cada rato' },
 ];
 
 /** El árbitro de la fecha: determinista, se anuncia en la previa y no cambia. */

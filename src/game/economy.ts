@@ -4,15 +4,16 @@ import { condicionTexto, semanaDelSponsor } from './sponsors';
 import type { GameState, Player } from './types';
 import type { Rng } from './rng';
 
-/** Gastos sorpresa: mantener un club de barrio es una gotera atrás de otra. */
+/** Gastos sorpresa: mantener un club de barrio es una gotera atrás de otra.
+ * Sin dos puntos adentro: la noticia les suma ": se fueron $N de la caja". */
 const MISHAPS = [
   'Se rompió un tablero y hubo que soldarlo de apuro',
   'Multa de la liga por la planilla mal cerrada',
   'Se quemó un reflector del gimnasio',
-  'Desaparecieron las llaves: cerradura nueva en el vestuario',
-  'Canilla rota en los baños: plomero de urgencia',
+  'Desaparecieron las llaves y hubo que cambiar la cerradura del vestuario',
+  'Se rompió una canilla de los baños y hubo que llamar al plomero',
   'Hubo que reponer dos pelotas que quedaron lisas',
-  'El aro quedó flojo tras una volcada ajena: soldadura y bulones',
+  'El aro quedó flojo tras una volcada ajena y hubo que ponerle bulones nuevos',
 ];
 
 export function weeklyFee(p: Player): number {
