@@ -343,6 +343,9 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
   const nextId = state.schedule[upcomingWeek - 1];
   const nextRival = state.rivals.find((r) => r.id === nextId);
   const nextIdx = sorted.findIndex((r) => r.teamId === nextId);
+  // Con la tabla en cero no hay puesto (el orden sale del desempate de una
+  // tabla vacía): el número grande va con guion y el rival sin "3°".
+  const tablaEnCero = !state.standings.some((r) => r.wins + r.losses > 0);
   const nextFx = userFixtureOfWeek(world, upcomingWeek);
   const nextVenue = world.venues.find((v) => v.id === nextFx?.venueId);
   const bajan = promotes && !!divisionBelow;
@@ -380,8 +383,8 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
             </div>
             {ours ? (
               <div className="lg-puesto">
-                <div className={`v1-cifra lg-puesto-num ${zona(ourIdx)}${enDescenso(ourIdx) ? ' descenso' : ''}`}>
-                  {ourIdx + 1}°<small>de {nTeams} en la tabla</small>
+                <div className={`v1-cifra lg-puesto-num ${tablaEnCero ? '' : `${zona(ourIdx)}${enDescenso(ourIdx) ? ' descenso' : ''}`}`}>
+                  {tablaEnCero ? '—' : `${ourIdx + 1}°`}<small>{tablaEnCero ? 'sin fechas jugadas' : `de ${nTeams} en la tabla`}</small>
                 </div>
                 <div className="lg-puesto-txt">
                   <div className="lg-record">
@@ -431,7 +434,7 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
                       <RivalLink id={nextId}>{nextRival.name}</RivalLink>
                     </div>
                     <div className="lg-sigue-sub">
-                      {nextIdx >= 0 && <><b>{nextIdx + 1}°</b> · {sorted[nextIdx].wins}-{sorted[nextIdx].losses} · </>}
+                      {nextIdx >= 0 && <>{!tablaEnCero && <><b>{nextIdx + 1}°</b> · </>}{sorted[nextIdx].wins}-{sorted[nextIdx].losses} · </>}
                       {rivalStyleInfo(nextRival.style).label}
                     </div>
                   </div>

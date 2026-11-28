@@ -153,13 +153,17 @@ function categoria(state: GameState): string {
 }
 
 /** Puesto en la tabla y récord de un equipo (la tabla de la liga, no la del mundo). */
-function enLaTabla(state: GameState, teamId: string): { pos: number; record: string } | null {
+/* Antes de la primera fecha no hay puesto: el Tablero decía "1° · 0-0" para
+   nosotros y "3° · 0-0" para el rival, un orden que salía del desempate de
+   una tabla vacía. Sin partidos jugados, `pos` es null y se muestra sólo 0-0. */
+function enLaTabla(state: GameState, teamId: string): { pos: number | null; record: string } | null {
+  const arranco = state.standings.some((r) => r.wins + r.losses > 0);
   const sorted = [...state.standings].sort(
     (a, b) => b.wins - a.wins || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
   );
   const i = sorted.findIndex((r) => r.teamId === teamId);
   if (i < 0) return null;
-  return { pos: i + 1, record: `${sorted[i].wins}-${sorted[i].losses}` };
+  return { pos: arranco ? i + 1 : null, record: `${sorted[i].wins}-${sorted[i].losses}` };
 }
 
 /**
@@ -275,7 +279,7 @@ export function Hub({ state }: { state: GameState }) {
               {escudo(userClub, 84)}
               <div>
                 <div className="tablero-nombre">{state.club.name}</div>
-                {nuestro && <div className="tablero-sub"><b>{nuestro.pos}°</b> · {nuestro.record}</div>}
+                {nuestro && <div className="tablero-sub">{nuestro.pos !== null && <><b>{nuestro.pos}°</b> · </>}{nuestro.record}</div>}
               </div>
             </div>
             {score ? <div className="tablero-marcador">{score.f} – {score.a}</div> : <div className="tablero-vs">VS</div>}
@@ -283,7 +287,7 @@ export function Hub({ state }: { state: GameState }) {
               {escudo(rivalClub, 84)}
               <div>
                 <div className="tablero-nombre"><RivalLink id={rival.id}>{rival.name}</RivalLink></div>
-                {suyo && <div className="tablero-sub"><b>{suyo.pos}°</b> · {suyo.record}</div>}
+                {suyo && <div className="tablero-sub">{suyo.pos !== null && <><b>{suyo.pos}°</b> · </>}{suyo.record}</div>}
               </div>
             </div>
           </div>
@@ -324,7 +328,7 @@ export function Hub({ state }: { state: GameState }) {
           {jugado ? (
             rival ? <>Lo que sigue: <b>{rival.name}</b>{fixture ? `, ${formatDateLong(fixture.date)}` : ''}.</> : <>Cerrá el informe para conocer el siguiente paso de la temporada.</>
           ) : previous ? (
-            <>Venimos de {previous.scoreFor > previous.scoreAgainst ? 'ganarle' : 'perder'} <b className={previous.scoreFor > previous.scoreAgainst ? 'good' : 'bad'}>{previous.scoreFor}–{previous.scoreAgainst}</b> {previous.scoreFor > previous.scoreAgainst ? 'a' : 'con'} {previous.rivalName}{nuestro && <> · <b>{nuestro.pos}°</b> en la tabla</>}{objetivoFrase(state)}</>
+            <>Venimos de {previous.scoreFor > previous.scoreAgainst ? 'ganarle' : 'perder'} <b className={previous.scoreFor > previous.scoreAgainst ? 'good' : 'bad'}>{previous.scoreFor}–{previous.scoreAgainst}</b> {previous.scoreFor > previous.scoreAgainst ? 'a' : 'con'} {previous.rivalName}{nuestro?.pos != null && <> · <b>{nuestro.pos}°</b> en la tabla</>}{objetivoFrase(state)}</>
           ) : pasada ? (
             <>La temporada pasada (<span>{pasada.sub}</span>): <b>{pasada.titulo}</b> {pasada.detalle}</>
           ) : (
