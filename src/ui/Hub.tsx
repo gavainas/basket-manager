@@ -253,6 +253,9 @@ export function Hub({ state }: { state: GameState }) {
   }
 
   const cruce = jugado ? lecturaDelCruce(state, state.week, jugado.scoreFor > jugado.scoreAgainst) : null;
+  // Antes de jugarlo, el cruce también se nombra con su copa: decía "Finales"
+  // a secas, y el informe después "Final · Copa de Plata".
+  const etapaProxima = !jugado && upcomingWeek > state.seasonLength ? lecturaDelCruce(state, upcomingWeek, false)?.etapa : undefined;
 
   const escudo = (club: typeof userClub, size: number) =>
     club ? <Crest seed={club.id} name={club.name} colors={club.colors} founded={club.founded} size={size} /> : null;
@@ -262,7 +265,7 @@ export function Hub({ state }: { state: GameState }) {
       <section className="tablero-hero v1-hero" aria-label="El partido">
         <div className="v1-eyebrow">
           {score ? 'Partido en curso' : jugado ? 'El partido de hoy' : 'La próxima fecha'}
-          {' · '}<b>{jugado && cruce ? cruce.etapa : weekLabel(jugado ? state.week : upcomingWeek, state.seasonLength).replace('Semana', 'Fecha')}</b>
+          {' · '}<b>{jugado && cruce ? cruce.etapa : etapaProxima ?? weekLabel(jugado ? state.week : upcomingWeek, state.seasonLength).replace('Semana', 'Fecha')}</b>
           {liga && <> · {liga}</>}
         </div>
         {/* La final ganada se dice antes del marcador (nov 2026): el Tablero mostraba "70 – 66" como cualquier fecha. */}

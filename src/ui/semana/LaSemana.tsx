@@ -11,6 +11,7 @@ import type { GameState, Player } from '../../game/types';
 import { ACTIONS } from '../../game/actions';
 import { BALANCE } from '../../game/balance';
 import { refereeOfWeek, rivalryWith } from '../../game/leagueLife';
+import { lecturaDelCruce } from '../../game/playoffs';
 import { clubByLegacyId } from '../../game/world';
 import { Icon } from '../Icon';
 import { PlayerLink } from '../PlayerLink';
@@ -156,7 +157,11 @@ export function PlanningPanel({ state, dispatch }: Props) {
     <div className="sem-semana">
       <section className="sem-semana-hero v1-hero" aria-label="El partido de la semana">
         <div className="v1-eyebrow">
-          <b>{weekLabel(state.week, state.seasonLength).replace('Semana', 'Fecha')}</b>
+          {/* En los playoffs, con su copa: "Semifinal · Copa de Plata", como el informe. */}
+          <b>
+            {(state.week > state.seasonLength ? lecturaDelCruce(state, state.week, false)?.etapa : undefined) ??
+              weekLabel(state.week, state.seasonLength).replace('Semana', 'Fecha')}
+          </b>
           {' · '}
           {dias === 0 ? 'hoy se juega' : dias === 1 ? 'falta 1 día para el partido' : `faltan ${dias} días para el partido`}
         </div>

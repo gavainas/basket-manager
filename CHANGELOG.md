@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **Antes de jugarlo, el cruce dice qué copa se juega (28/11/2026)**: el Tablero de la semana de la final decía "La próxima fecha · **Finales**" y La semana "**Semifinales** · faltan 3 días", sin decir de qué copa; el informe, después, "Final · Copa de Plata". Ahora el Tablero y La semana dicen "Semifinal · Copa de Plata" / "Final · Copa de Oro" desde el lunes. Visto en el navegador.
+
 - **Los playoffs dicen a dónde van y el que perdió no dice "bien" (28/11/2026)**: jugando una semifinal y la final desde el navegador. El informe de la semi ganada tenía de botón "Después de las semifinales →", que no decía a dónde llevaba: ahora "A la final →" (y "Cerrar la temporada →" si se perdió, que es lo que pasa). Y después de perder la final 61-79, la figura decía "Bien. Sin mucho más para decir: bien.": el ánimo "conforme" con minutos sólo sale en la derrota (ganando es "contento"), pero sus frases eran de victoria ("Contento por el grupo", "Partido cumplido"). Ahora son de derrota ("Hoy no alcanzó. Me voy tranquilo con lo que di, no con el resultado."). Test en `tests/voces.test.ts`.
 
 - **La crónica de la Historia muestra las últimas 15 (28/11/2026)**: en los playoffs la crónica de la temporada llegaba a 64 noticias y la Historia scrolleaba 2800 px a 1366×768 para llegar al final. Ahora muestra las 15 más nuevas y un "+ 49 noticias anteriores" que despliega el resto (y vuelve con "Ver sólo las últimas"), como el "+ N avisos más" del Tablero. Medido en el navegador: 414 px de scroll.
