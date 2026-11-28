@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **Finanzas: la cuenta prevista y el libro de caja dicen lo mismo de las cuotas (28/11/2026)**: arriba "Cuotas (9 jugadores y 1 con media beca) +$285" y en el libro, la semana anterior, "Cuotas (10 jugadores) +$285". El libro ahora anota con el mismo texto. Test en `tests/textos.test.ts`.
+
 - **La libreta de la Carrera no arma planteles con tres "Alejo" (28/11/2026)**: jugando la Carrera por la UI, el club se inscribió con Alejo Morales, Alejo Britos, Alejo Suárez, Lucas Britos… y las relaciones de la libreta se escriben por el nombre de pila ("Vecino de Alejo"), así que no se sabía de cuál. Ahora cada contacto nuevo no repite nombre de pila ni apellido de los propios (el plantel y la libreta); los del resto del mundo sólo cuentan para no repetir el nombre completo, como antes. Test en `tests/carrera.test.ts` (falla con el código anterior); `npm run sim:carrera -- 20` sigue en lo documentado (90% pidiendo a todos, 100% con cabeza).
 
 - **"Momentos clave" ya no arranca con el juez (28/11/2026)**: el primer momento clave de cada informe era "1er cuarto: Dirige Cacho Ferreira: dicen que el local nunca pierde con él.", la presentación del árbitro en la previa. Sigue en el relato del partido (es la previa), pero el informe la saca de los momentos clave. Test en `tests/partido.test.ts`.

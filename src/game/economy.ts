@@ -148,7 +148,9 @@ export function applyWeeklyEconomy(s: GameState, rng: Rng): void {
   const feeIncome = payers.reduce((sum, p) => sum + weeklyFee(p), 0);
   if (feeIncome > 0) {
     s.club.money += feeIncome;
-    s.ledger.push({ week: s.week, concept: `Cuotas (${plantelTxt(payers.length)})`, amount: feeIncome });
+    // El mismo texto que la cuenta prevista de Finanzas: decía "Cuotas (9
+    // jugadores y 1 con media beca)" arriba y "Cuotas (10 jugadores)" en el libro.
+    s.ledger.push({ week: s.week, concept: `Cuotas (${cuotasTxt(payers)})`, amount: feeIncome });
   }
 
   if (s.sponsor) {
