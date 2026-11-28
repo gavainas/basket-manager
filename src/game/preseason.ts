@@ -1047,7 +1047,9 @@ export function signMarketPlayer(
     // Ni el nombre de uno de los nuestros, ni el de alguien que ya juega en
     // otro club del mundo (en la temporada 2 el mundo ya existe).
     const taken = [...s.players.map((x) => x.name), ...p.market.map((m) => m.name), ...(s.world.players ?? []).map(worldPlayerName)];
-    const nuevos = abrirAgenda(mp, rng, taken);
+    // Los propios (plantel y libreta) además no repiten nombre de pila ni apellido.
+    const propios = [...s.players.filter((x) => !x.leftClub).map((x) => x.name), ...p.market.map((m) => m.name)];
+    const nuevos = abrirAgenda(mp, rng, taken, propios);
     if (nuevos.length > 0) {
       p.market.push(...nuevos);
       const lista = listaY(nuevos.map((n) => `${n.name} (${(n.relacion ?? '').toLowerCase()})`));

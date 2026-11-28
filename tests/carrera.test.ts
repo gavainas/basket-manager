@@ -324,3 +324,30 @@ describe('ocho en cuatro semanas', () => {
     expect(s.club.colors).toEqual(['#111111', '#eeeeee']);
   });
 });
+
+describe('la libreta no repite nombres de pila ni apellidos (nov 2026)', () => {
+  const pila = (n: string) => n.replace(/"[^"]*"/g, '').trim().split(/\s+/)[0];
+  const ape = (n: string) => n.trim().split(/\s+/).slice(1).join(' ');
+  it('pidiendo favores a todos, el plantel que se inscribe no tiene dos "Alejo" ni dos Britos', () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      let s = createCareerNewGame(seed, 'medio', { clubName: 'Club Prueba', colors: ['#111111', '#eeeeee'] });
+      for (let guard = 0; s.phase === 'preseason' && guard < 80; guard++) {
+        const ps = s.preseason!;
+        if (ps.pendingEvent) {
+          s = paso(s, { type: 'PS_RESOLVE_EVENT', optionIndex: 0 });
+          s = paso(s, { type: 'PS_DISMISS_EVENT_OUTCOME' });
+          continue;
+        }
+        if (ps.actionOutcome) { s = paso(s, { type: 'PS_DISMISS_OUTCOME' }); continue; }
+        if (ps.negotiation) { s = paso(s, { type: 'PS_NEGOTIATE', decision: 'accept' }); continue; }
+        const libre = ps.market.find((m) => m.status === 'disponible');
+        if (ps.gestionesLeft > 0 && libre) { s = paso(s, { type: 'PS_OPEN_NEGOTIATION', id: libre.id, isMarket: true }); continue; }
+        s = paso(s, ps.week >= ps.totalWeeks ? { type: 'PS_CLOSE' } : { type: 'PS_ADVANCE' });
+      }
+      const nombres = s.players.filter((p) => !p.leftClub).map((p) => p.name);
+      expect(nombres.length).toBeGreaterThan(4);
+      expect(new Set(nombres.map(pila)).size).toBe(nombres.length);
+      expect(new Set(nombres.map(ape)).size).toBe(nombres.length);
+    }
+  });
+});

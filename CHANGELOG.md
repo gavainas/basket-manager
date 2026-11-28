@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **La libreta de la Carrera no arma planteles con tres "Alejo" (28/11/2026)**: jugando la Carrera por la UI, el club se inscribió con Alejo Morales, Alejo Britos, Alejo Suárez, Lucas Britos… y las relaciones de la libreta se escriben por el nombre de pila ("Vecino de Alejo"), así que no se sabía de cuál. Ahora cada contacto nuevo no repite nombre de pila ni apellido de los propios (el plantel y la libreta); los del resto del mundo sólo cuentan para no repetir el nombre completo, como antes. Test en `tests/carrera.test.ts` (falla con el código anterior); `npm run sim:carrera -- 20` sigue en lo documentado (90% pidiendo a todos, 100% con cabeza).
+
 - **"Momentos clave" ya no arranca con el juez (28/11/2026)**: el primer momento clave de cada informe era "1er cuarto: Dirige Cacho Ferreira: dicen que el local nunca pierde con él.", la presentación del árbitro en la previa. Sigue en el relato del partido (es la previa), pero el informe la saca de los momentos clave. Test en `tests/partido.test.ts`.
 
 - **"1 va a mirar desde el banco" (28/11/2026)**: la planilla de Estadísticas decía "Se ven titulares (6) · en la cancha entran 5: 1 van a mirar desde el banco"; lo mismo en el resumen del Plantel, y el Vestuario podía decir "1 de 11 tienen mesa fija". Ahora concuerdan. Visto en el navegador.
