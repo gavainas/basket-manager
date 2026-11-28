@@ -2364,8 +2364,11 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   // Sin tope corto: el informe cuenta el partido entero (antes cortaba en el
   // 2do cuarto y se perdía la racha del final, que es justo lo que se relee).
   const seenNotes = new Set<string>();
+  // La presentación del juez ("Dirige Cacho Ferreira: …") es de la previa, no
+  // un momento del partido: salía primera en "Momentos clave".
   const highlights = live.quarters.flatMap((q, i) =>
     q.notes
+      .filter((n) => !n.startsWith('Dirige '))
       .filter((n) => !seenNotes.has(n) && (seenNotes.add(n), true))
       .map((n) => `${q.overtime ? 'Suplementario' : Q_NAMES[i]}: ${n}`)
   );

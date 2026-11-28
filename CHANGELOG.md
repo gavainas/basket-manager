@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **"Momentos clave" ya no arranca con el juez (28/11/2026)**: el primer momento clave de cada informe era "1er cuarto: Dirige Cacho Ferreira: dicen que el local nunca pierde con él.", la presentación del árbitro en la previa. Sigue en el relato del partido (es la previa), pero el informe la saca de los momentos clave. Test en `tests/partido.test.ts`.
+
 - **"1 va a mirar desde el banco" (28/11/2026)**: la planilla de Estadísticas decía "Se ven titulares (6) · en la cancha entran 5: 1 van a mirar desde el banco"; lo mismo en el resumen del Plantel, y el Vestuario podía decir "1 de 11 tienen mesa fija". Ahora concuerdan. Visto en el navegador.
 
 - **Dos del plantel con el mismo apellido se distinguen (28/11/2026)**: el mercado de la T2 traía a Julián Ramos y Richard Ramos; fichando a los dos, el Tablero, la convocatoria, el vestuario del informe, la pretemporada y la cancha del partido decían "RAMOS" dos veces (el arreglo de ayer cubría a los rivales, no a los nuestros). Ahora, con choque, va la inicial ("J. Ramos", "R. Ramos"), o el apodo con su apellido si son dos "Chino" (`cortoEnPlantel` en `src/game/nombres.ts`). Sin choque, todo igual. Test en `tests/nombres.test.ts`; visto en el navegador con un guardado con dos Techera.

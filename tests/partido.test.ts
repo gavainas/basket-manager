@@ -114,3 +114,14 @@ describe('el informe nombra a los que vinieron y no entraron (sep 2026)', () => 
     expect(nombrados).toBeGreaterThan(0);
   });
 });
+
+describe('los momentos clave son del partido (nov 2026)', () => {
+  it('la presentación del juez queda en el relato, no en "Momentos clave"', () => {
+    let s = jugarPartidoEntero(hastaElPartido(11));
+    // El relato sí la tiene: es la previa.
+    expect(s.live!.quarters[0].notes.some((n) => n.startsWith('Dirige '))).toBe(true);
+    s = paso(s, { type: 'FINISH_MATCH' });
+    const m = s.history[s.history.length - 1];
+    expect(m.highlights.some((h) => /: Dirige /.test(h))).toBe(false);
+  });
+});
