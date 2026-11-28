@@ -86,9 +86,11 @@ temporadas enteras en el navegador. El cierre que nombra el descenso y la **figu
 (cierre y vitrina, de `UI_V2_PENDIENTES.md` §3); la incidencia del partido que entra entera
 a 1366×768 y 1280×720; el evento que avisa si la caja no alcanza; el juez casero que no
 perjudica al local; los playoffs que nombran su copa y su destino; dos del plantel con el
-mismo apellido que se distinguen; la crónica de la Historia recortada; y una tanda de
-textos (dos puntos encadenados, plurales, artículos, decimales con coma). El fuzz encontró
-una negociación sin salida en el motor, arreglada. Detalle en el changelog.
+mismo apellido que se distinguen (y la libreta de la Carrera que ya no arma planteles con
+tres "Alejo"); la crónica de la Historia recortada; y una tanda de textos (dos puntos
+encadenados, plurales, artículos, decimales con coma, el "conforme" que decía "bien" tras
+perder una final). El fuzz encontró una negociación sin salida en el motor, arreglada.
+Detalle en el changelog.
 
 ## Decisiones que están en la cancha de Gabi
 
