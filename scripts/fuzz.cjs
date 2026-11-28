@@ -340,6 +340,8 @@ const patrones = [
   ['plantilla sin resolver', /\{[a-z]+\}|\$\{/],
   ['"de el"/"a el"', /(^|[\s(])(de|a) el\b/],
   // "Ir a saludar a La Colo Ramírez": el apodo con artículo a mitad de frase va en minúscula (nov 2026).
+  // "…contra la zona: y la meten": dos puntos seguidos de "y" (nov 2026).
+  ['dos puntos antes de "y"', /: y /],
   ['"a La"/"con El" a mitad de frase', /[a-záéíóúñ] (a|con|de|por) (La|El) (Colo|Flaco|Negro|Tano|Gordo|Ruso|Pato|Chino)\b/],
   ['frase que empieza en minúscula con artículo', /^(el|la|los|las) [A-Z]/],
   ['punto sin espacio antes de mayúscula', /[a-záéíóúñ]\.[A-ZÁÉÍÓÚÑ]/],

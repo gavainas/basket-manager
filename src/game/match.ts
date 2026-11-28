@@ -1406,7 +1406,7 @@ function fuerzas(
   } else {
     if (rival.style === 'tiradores') {
       defMult *= M.tiradoresVsZona;
-      pushDef(['La zona les deja tiros abiertos y sus tiradores no perdonan.', 'Mueven la pelota hasta encontrar al tirador libre contra la zona: y la meten.']);
+      pushDef(['La zona les deja tiros abiertos y sus tiradores no perdonan.', 'Contra la zona mueven la pelota hasta encontrar al tirador libre, y la meten.']);
     }
     if (rival.style === 'internos') defMult *= M.internosVsZona;
   }
