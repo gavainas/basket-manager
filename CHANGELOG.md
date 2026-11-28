@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **La crónica de la Historia muestra las últimas 15 (28/11/2026)**: en los playoffs la crónica de la temporada llegaba a 64 noticias y la Historia scrolleaba 2800 px a 1366×768 para llegar al final. Ahora muestra las 15 más nuevas y un "+ 49 noticias anteriores" que despliega el resto (y vuelve con "Ver sólo las últimas"), como el "+ N avisos más" del Tablero. Medido en el navegador: 414 px de scroll.
+
 - **El fixture en los playoffs no inventa una fecha (28/11/2026)**: en la semana de semifinales, el fixture de la Liga decía "10 fechas" en una liga de 9 (contaba la semi). Ahora dice "9 fechas y playoffs"; las filas ya decían "Semis" y "Final". Visto en el navegador.
 
 - **Rankings: "también es" habla del goleador, no del de al lado (28/11/2026)**: el héroe de Rankings decía "Gonzalo Viera · 48 puntos. La figura más veces: Facundo Silva (1 vez MVP). También es el que más juega (125')": el que más juega era Viera, pero la frase se leía como si fuera Silva. Ahora, si la oración anterior nombró a otro, dice "Viera también es el que más juega". Y con empate arriba (cuatro con una figura cada uno) no nombra "la figura más veces" a uno solo; lo mismo con los minutos y el más querido. Visto en el navegador.

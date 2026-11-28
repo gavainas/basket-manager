@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import type { GameState, TimelineEvent, TimelineKind } from '../game/types';
 import { QUE_LOS_ALIMENTA } from '../game/evaluation';
 import { activePlayers } from '../game/match';
@@ -57,8 +57,12 @@ function porTemporada(events: TimelineEvent[]): [number, TimelineEvent[]][] {
  * historia del club como una línea de tiempo (la planilla protagonista) y la
  * crónica de la temporada al lado.
  */
+/** Cuántas noticias muestra la crónica antes de "ver las anteriores". */
+const CRONICA_VISIBLE = 15;
+
 export function HistoryView({ state }: { state: GameState }) {
   const open = useContext(OpenProfileContext);
+  const [todaLaCronica, setTodaLaCronica] = useState(false);
   const largo = largoDeTemporada(state);
   const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
 
@@ -204,7 +208,7 @@ export function HistoryView({ state }: { state: GameState }) {
           <p className="bd-vacio">Sin novedades todavía.</p>
         ) : (
           <ul className="ec-lista">
-            {state.news.map((n, i) => (
+            {(todaLaCronica ? state.news : state.news.slice(0, CRONICA_VISIBLE)).map((n, i) => (
               <li key={i} className={`v1-renglon ${n.tone}`}>
                 <span className="ec-sem">{weekShort(n.week, state.seasonLength)}</span>
                 <span className="ec-punto" aria-hidden="true" />
@@ -212,6 +216,13 @@ export function HistoryView({ state }: { state: GameState }) {
               </li>
             ))}
           </ul>
+        )}
+        {state.news.length > CRONICA_VISIBLE && (
+          <button className="hi-mas" onClick={() => setTodaLaCronica(!todaLaCronica)}>
+            {todaLaCronica
+              ? 'Ver sólo las últimas'
+              : `+ ${plural(state.news.length - CRONICA_VISIBLE, 'noticia anterior', 'noticias anteriores')}`}
+          </button>
         )}
       </Planilla>
     </div>
