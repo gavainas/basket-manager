@@ -248,7 +248,7 @@ export function RosterSheet({ state }: { state: GameState }) {
                       {g.role === 'titular' && rows.length > 5 && (
                         <span className="sheet-tension">
                           {' '}
-                          · en la cancha entran 5: {rows.length - 5} van a mirar desde el banco
+                          · en la cancha entran 5: {rows.length - 5} {rows.length - 5 === 1 ? 'va' : 'van'} a mirar desde el banco
                         </span>
                       )}
                     </td>

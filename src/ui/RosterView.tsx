@@ -162,7 +162,7 @@ function ResumenPlantel({ players, gone }: { players: Player[]; gone: Player[] }
             {x}
           </span>
         ))}
-        .{tit > 5 && <> En la cancha entran cinco: <b className="warn">{tit - 5}</b> van a mirar desde el banco.</>}
+        .{tit > 5 && <> En la cancha entran cinco: <b className="warn">{tit - 5}</b> {tit - 5 === 1 ? 'va' : 'van'} a mirar desde el banco.</>}
       </p>
       <p className="v1-frase">
         {problemas.length === 0 ? (

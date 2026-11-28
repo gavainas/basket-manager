@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **"1 va a mirar desde el banco" (28/11/2026)**: la planilla de Estadísticas decía "Se ven titulares (6) · en la cancha entran 5: 1 van a mirar desde el banco"; lo mismo en el resumen del Plantel, y el Vestuario podía decir "1 de 11 tienen mesa fija". Ahora concuerdan. Visto en el navegador.
+
 - **Dos del plantel con el mismo apellido se distinguen (28/11/2026)**: el mercado de la T2 traía a Julián Ramos y Richard Ramos; fichando a los dos, el Tablero, la convocatoria, el vestuario del informe, la pretemporada y la cancha del partido decían "RAMOS" dos veces (el arreglo de ayer cubría a los rivales, no a los nuestros). Ahora, con choque, va la inicial ("J. Ramos", "R. Ramos"), o el apodo con su apellido si son dos "Chino" (`cortoEnPlantel` en `src/game/nombres.ts`). Sin choque, todo igual. Test en `tests/nombres.test.ts`; visto en el navegador con un guardado con dos Techera.
 
 - **El mercado no repite el club en la misma línea (28/11/2026)**: en la pretemporada de la T2, cada fichable del mundo decía "Viene de Estrella del Sur. Nombre conocido de la liga: hizo su fama en Estrella del Sur." (y "Viene de X. Quedó libre de X."). Como esa frase siempre va después de "Viene de…", ahora dice "hizo su fama ahí", "Quedó libre." y "Lo enfrentaste dos veces con esa camiseta". Visto en el navegador.
