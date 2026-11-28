@@ -1,5 +1,6 @@
 import { activePlayers, clubPosition } from './match';
 import { objectiveStatus } from './objectives';
+import { userSeasonFate } from './pyramid';
 import type { GameState } from './types';
 
 export type Grade = 'Excelente' | 'Buena' | 'Regular' | 'Mala';
@@ -57,6 +58,10 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   // deportivo: Excelente (2-0, 1° de 10)". Retirarse es el peor resultado
   // deportivo que hay, venga como venga la tabla.
   const isGameOver = state.phase === 'gameOver';
+  // Bajar de categoría manda sobre el resto de la lectura: un 9° de 10 que
+  // desciende leía "Club ordenado y sostenible: el club está mejor que como lo
+  // encontraste" al lado del sello "Descendemos a la Divisional C".
+  const desciende = !isGameOver && userSeasonFate(state)?.kind === 'descenso';
   const sportScore = isGameOver
     ? Math.min(30, Math.round(winPct * 30))
     : Math.min(100, Math.round(winPct * 65 + ((10 - position) / 9) * 35) + cupBonus);
@@ -165,6 +170,12 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   } else if (position === 1) {
     outcomeTitle = 'Los mejores de la fase regular';
     outcomeText = 'Dominaron la temporada… hasta los playoffs. La tabla dice campeones morales; la copa dice otra cosa.';
+  } else if (desciende && financeScore >= 60 && retentionScore >= 70) {
+    outcomeTitle = 'Ordenados, pero un escalón más abajo';
+    outcomeText = 'La caja está sana y el plantel no se desarmó, pero la tabla no perdonó: el año que viene se juega una divisional más abajo. Hay base para volver.';
+  } else if (desciende) {
+    outcomeTitle = 'Temporada de descenso';
+    outcomeText = 'Terminaron en el fondo de la tabla y se baja de categoría. A rearmar en el verano para volver a subir.';
   } else if (state.memorableMoments.length >= 3 && sportScore >= 45 && retentionScore >= 60) {
     outcomeTitle = 'Temporada inolvidable';
     outcomeText = 'Más allá de la tabla, esta temporada dejó historias que el grupo va a contar durante años.';

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/game/balance';
 import { activePlayers } from '../src/game/match';
 import { computeSeasonEvaluation } from '../src/game/evaluation';
+import { userSeasonFate } from '../src/game/pyramid';
 import { confirmedPlayers, createPreseasonNewGame, inscriptionOffer } from '../src/game/preseason';
 import { PRESEASON_EVENTS } from '../src/game/preseasonEvents';
 import type { GameState } from '../src/game/types';
@@ -357,6 +358,21 @@ describe('la memoria entre temporadas: el título y la bronca cruzan el verano',
     expect(quieto.preseason!.movido).toBeUndefined();
     expect(inscriptionOffer(quieto).find((o) => o.isCurrent)!.note).toMatch(/de siempre/);
     expect(quieto.pastSeasons[quieto.pastSeasons.length - 1].moved).toBeUndefined();
+  });
+
+  it('el que desciende no lee "el club está mejor que como lo encontraste" (nov 2026)', () => {
+    // Último de la tabla, sin playoffs, con caja sana y nadie que se fue: antes
+    // titulaba "Club ordenado y sostenible" al lado del sello del descenso.
+    const ultimo: GameState = structuredClone(fin);
+    ultimo.playoffs = null;
+    ultimo.club.money = 3000;
+    ultimo.standings = ultimo.standings.map((r) =>
+      r.teamId === 'club' ? { ...r, wins: 0, losses: r.wins + r.losses, pointsFor: 0 } : r
+    );
+    expect(userSeasonFate(ultimo)?.kind).toBe('descenso');
+    const ev = computeSeasonEvaluation(ultimo);
+    expect(ev.outcomeTitle).toMatch(/descenso|más abajo/);
+    expect(ev.outcomeText).not.toMatch(/mejor que como lo encontraste/);
   });
 });
 
