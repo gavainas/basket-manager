@@ -58,7 +58,8 @@ Las escenas de la V1 son **arte que ya existía, reusado provisionalmente** (`ES
   incidencias del partido); ~~teclas para las secciones de la pretemporada~~ (hecho el 27/11/2026).
 - Más voz del mundo donde el contraste se lee (frases del vestuario en el Tablero ya se
   probaron con globos y se descartaron por carga: buscar otra forma).
-- Fin de temporada: la figura del año o el plantel de pie.
+- ~~Fin de temporada: la figura del año~~ (hecho el 28/11/2026: en el cierre y en la vitrina de
+  la Historia). Queda la otra mitad, el plantel de pie en el cierre, si hace falta.
 
 ## 4. Deuda técnica de la V1
 

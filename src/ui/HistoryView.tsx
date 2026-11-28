@@ -143,6 +143,7 @@ export function HistoryView({ state }: { state: GameState }) {
                 <div className="hi-placa-outcome">{ps.outcome}</div>
                 {/* Los saves de antes no traen la categoría: no se inventa. */}
                 {ps.division && <div className="hi-placa-div">{ps.division}</div>}
+                {ps.figura && <div className="hi-placa-div">Figura del año: <b>{ps.figura}</b></div>}
                 <div className="hi-placa-pie">
                   {ps.moved && (
                     <span className={`v1-est ${ps.moved.kind === 'ascenso' ? 'good' : 'bad'}`}>
@@ -183,7 +184,9 @@ export function HistoryView({ state }: { state: GameState }) {
         <h4 className="bd-sub hi-momentos-tit">Para contar en el asado</h4>
         {state.memorableMoments.length === 0 ? (
           <p className="bd-vacio">
-            Todavía no pasó nada digno de contar en el asado. Las historias salen de {QUE_LOS_ALIMENTA}
+            {/* Los momentos son de la temporada en curso: en la T2 decía "todavía no
+                pasó nada" con un título de la T1 en la línea de tiempo de al lado. */}
+            {state.pastSeasons.length > 0 ? 'Esta temporada todavía' : 'Todavía'} no pasó nada digno de contar en el asado. Las historias salen de {QUE_LOS_ALIMENTA}
           </p>
         ) : (
           <ul className="hi-momentos">

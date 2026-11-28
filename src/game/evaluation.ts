@@ -207,3 +207,55 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
     isGameOver,
   };
 }
+
+/** La figura del año: quién se llevó la temporada, para el cierre. */
+export interface FiguraDeLaTemporada {
+  playerId: string;
+  name: string;
+  /** Veces que fue la figura del partido. */
+  mvps: number;
+  /** Partidos en los que jugó (con minutos, sin forfeits). */
+  partidos: number;
+  /** Promedios por partido jugado. */
+  pts: number;
+  reb: number;
+  ast: number;
+}
+
+/**
+ * La figura de la temporada (UI_V2_PENDIENTES §3, "fin de temporada: la figura
+ * del año"): el que más veces fue figura del partido; si empatan, el de mejor
+ * nota media y después el que más puntos hizo. Cuenta la fase regular y los
+ * playoffs (todo lo que está en `history`), nunca los forfeits. Para que no
+ * gane uno que jugó un partido y la rompió, tiene que haber jugado al menos la
+ * mitad de los partidos del club. Sin partidos jugados, no hay figura.
+ */
+export function figuraDeLaTemporada(state: GameState): FiguraDeLaTemporada | null {
+  const jugados = state.history.filter((m) => !m.forfeit);
+  if (jugados.length === 0) return null;
+  const acc = new Map<string, { name: string; mvps: number; partidos: number; pts: number; reb: number; ast: number; nota: number }>();
+  for (const m of jugados) {
+    for (const l of m.box) {
+      if (l.minutes <= 0) continue;
+      const a = acc.get(l.playerId) ?? { name: l.name, mvps: 0, partidos: 0, pts: 0, reb: 0, ast: 0, nota: 0 };
+      a.partidos += 1;
+      a.pts += l.points;
+      a.reb += l.rebounds;
+      a.ast += l.assists;
+      a.nota += l.rating;
+      if (m.mvpId === l.playerId) a.mvps += 1;
+      acc.set(l.playerId, a);
+    }
+  }
+  const minimo = Math.ceil(jugados.length / 2);
+  const candidatos = [...acc.entries()].filter(([, a]) => a.partidos >= minimo);
+  if (candidatos.length === 0) return null;
+  candidatos.sort(
+    ([, a], [, b]) => b.mvps - a.mvps || b.nota / b.partidos - a.nota / a.partidos || b.pts - a.pts
+  );
+  const [playerId, a] = candidatos[0];
+  // El nombre de hoy (un apodo puede haber cambiado), y el de la planilla si ya no está.
+  const name = state.players.find((p) => p.id === playerId)?.name ?? a.name;
+  const r1 = (n: number) => Math.round((n / a.partidos) * 10) / 10;
+  return { playerId, name, mvps: a.mvps, partidos: a.partidos, pts: r1(a.pts), reb: r1(a.reb), ast: r1(a.ast) };
+}

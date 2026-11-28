@@ -31,7 +31,7 @@ import { CAUSE_SHORT } from './mood';
 import { generateObjectives } from './objectives';
 import { clubPosition, suggestRotation, suggestStarters } from './match';
 import { buildCoachMarket } from './coach';
-import { computeSeasonEvaluation } from './evaluation';
+import { computeSeasonEvaluation, figuraDeLaTemporada } from './evaluation';
 import { rollPreseasonEvent } from './preseasonEvents';
 import { logClubEvent, semanaDeCierre } from './timeline';
 import { buildWorld, dayLabel, emptyWorld, evolveWorldOffseason, mudarAlClub, worldPlayerName } from './world';
@@ -712,6 +712,7 @@ export function startPreseason(state: GameState): GameState {
       ? { kind: promo.userMoved, to: divisionById(promo.nextDivisionId)?.name ?? 'otra divisional' }
       : undefined,
     seasonLength: state.seasonLength,
+    figura: figuraDeLaTemporada(state)?.name,
   };
   const titulo: Titulo =
     champions.oro === 'club' || champions.plata === 'club' ? 'titulo' : promo.userMoved === 'ascenso' ? 'ascenso' : false;
@@ -968,6 +969,10 @@ export function openNegotiation(state: GameState, targetId: string, isMarket: bo
   const s: GameState = structuredClone(state);
   const p = ps(s);
   if (p.gestionesLeft <= 0) return state;
+  // Con alguien del plantel sólo se negocia si pide una condición (es lo único
+  // que la UI ofrece): sin pedido, la negociación quedaba abierta sin nada que
+  // aceptar ni rechazar, con la gestión gastada (lo encontró el fuzz, nov 2026).
+  if (!isMarket && (!p.playerDemands[targetId] || !s.players.some((x) => x.id === targetId))) return state;
   p.gestionesLeft -= 1;
   if (isMarket) {
     const mp = p.market.find((m) => m.id === targetId);
