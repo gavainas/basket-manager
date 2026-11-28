@@ -192,7 +192,7 @@ export function CallUpPanel({ state, dispatch }: Props) {
                 </>
               )}{' '}
               <span title="Dificultad de faltas elegida al crear la partida">
-                Faltas: {BALANCE.absenceDifficulty[state.absenceDifficulty ?? 'medio'].label.toLowerCase()}.
+                Faltas y lesiones: nivel {BALANCE.absenceDifficulty[state.absenceDifficulty ?? 'medio'].label.toLowerCase()}.
               </span>
             </p>
           </div>
