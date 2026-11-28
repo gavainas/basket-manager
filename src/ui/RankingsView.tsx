@@ -1,5 +1,6 @@
 import type { GameState, Player } from '../game/types';
 import { decimal } from './helpers';
+import { apodoOApellido } from '../game/nombres';
 import { affinity, RIVALRY_THRESHOLD } from '../game/relations';
 import { Busto } from './Busto';
 import { Icon, type IconName } from './Icon';
@@ -184,16 +185,23 @@ export function RankingsView({ state }: { state: GameState }) {
               </div>
               <p className="v1-frase lg-rk-frase">
                 {[
-                  { row: figuras[0], txt: 'la figura más veces' },
-                  { row: minutos[0], txt: 'el que más juega' },
-                  { row: lovedRows[0], txt: 'el más querido del vestuario' },
+                  // Con empate arriba no hay "la figura más veces": eran cuatro con una.
+                  { row: figuras[1]?.value === figuras[0]?.value ? undefined : figuras[0], txt: 'la figura más veces' },
+                  { row: minutos[1]?.value === minutos[0]?.value ? undefined : minutos[0], txt: 'el que más juega' },
+                  { row: lovedRows[1]?.value === lovedRows[0]?.value ? undefined : lovedRows[0], txt: 'el más querido del vestuario' },
                 ]
-                  .filter((d) => d.row)
+                  .filter((d): d is { row: NonNullable<typeof d.row>; txt: string } => !!d.row)
                   .map((d, i, todos) => (
                     <span key={i}>
                       {d.row.id === goleador.id ? (
                         <>
-                          {todos.slice(0, i).some((x) => x.row.id === goleador.id) ? 'Y es' : 'También es'} {d.txt} ({d.row.value}).{' '}
+                          {/* "También es" sólo si la frase de antes era del goleador: después
+                              de "La figura más veces: Silva", leía como si Silva fuera el que
+                              más juega. */}
+                          {i === 0 || todos[i - 1].row.id === goleador.id
+                            ? todos.slice(0, i).some((x) => x.row.id === goleador.id) ? 'Y es' : 'También es'
+                            : `${apodoOApellido(goleador.name)} también es`}{' '}
+                          {d.txt} ({d.row.value}).{' '}
                         </>
                       ) : (
                         <>
