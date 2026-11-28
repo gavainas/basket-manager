@@ -269,7 +269,9 @@ function RelacionesTab({ state, p }: { state: GameState; p: Player }) {
         <p className="ficha-frase">
           {mesa ? (
             <>
-              De la mesa de <strong>{mesa.label}</strong>, con{' '}
+              {/* El rótulo ya nombra la mesa ("La mesa del asado", "Los pibes"):
+                  "De la mesa de La mesa del asado" repetía. */}
+              Se sienta con <strong>{mesa.label.charAt(0).toLowerCase() + mesa.label.slice(1)}</strong>:{' '}
               {mesa.members
                 .filter((m) => m.id !== p.id)
                 .map((m, i, arr) => (

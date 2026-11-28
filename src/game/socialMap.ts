@@ -69,7 +69,9 @@ function labelGroup(members: Player[], state: GameState): string {
   const competitivos = members.filter((p) => p.personality === 'competitivo' || p.personality === 'protagonista');
   if (competitivos.length > members.length / 2) return 'Los que vienen a ganar';
   const leader = [...members].sort((a, b) => b.social - a.social)[0];
-  return `La banda de${'aeiou'.includes(apodo(leader)[0]?.toLowerCase() ?? '') ? 'l' : ''} ${apodo(leader)}`;
+  // Con apodo va con artículo ("la banda del Chino"); con apellido, sin él
+  // ("la banda de Acosta"). Antes decidía la vocal: "del Acosta", "de Chino".
+  return `La banda ${/"[^"]+"/.test(leader.name) ? 'del' : 'de'} ${apodo(leader)}`;
 }
 
 /**

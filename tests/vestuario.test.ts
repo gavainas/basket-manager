@@ -254,3 +254,22 @@ describe('la acción que elige sola dice a quién (nov 2026)', () => {
     expect(getAction('collect').objetivo!(s)).toBe(`Deben: ${s.players[0].name}`);
   });
 });
+
+describe('la banda lleva el artículo que corresponde (nov 2026)', () => {
+  it('"del" con apodo ("del Chino") y "de" con apellido ("de Acosta"), nunca al revés', () => {
+    let bandas = 0;
+    for (let seed = 1; seed <= 30; seed++) {
+      let s = partidaNueva(seed);
+      for (let f = 0; f < 3 && s.phase === 'planning'; f++) s = jugarFecha(s);
+      for (const g of buildSocialMap(s).groups) {
+        const m = g.label.match(/^La banda (del|de) (.+)$/);
+        if (!m) continue;
+        bandas += 1;
+        const lider = s.players.find((p) => p.name.includes(`"${m[2]}"`) || p.name.endsWith(` ${m[2]}`));
+        expect(lider).toBeDefined();
+        expect(m[1]).toBe(/"[^"]+"/.test(lider!.name) ? 'del' : 'de');
+      }
+    }
+    expect(bandas).toBeGreaterThan(0);
+  });
+});
