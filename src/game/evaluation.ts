@@ -32,9 +32,11 @@ function grade(score: number): Grade {
 /**
  * Qué alimenta los momentos memorables, dicho para el que los busca (sale de
  * los `memorableMoments.push` del motor: el partido, el asado, los eventos).
+ * Va sin sujeto, para seguir a "Salen de…" o "Las historias salen de…": antes
+ * arrancaba con "Los dan ganar en la hora", que no se entendía.
  */
 export const QUE_LOS_ALIMENTA =
-  'Los dan ganar en la hora o remontar desde 10 abajo, un batacazo o una paliza, sacarse la espina con el rival que te eliminó, un asado con la mesa llena, la charla que hace que alguien se quede, y una despedida como se debe.';
+  'ganar en la hora o remontar desde 10 abajo, de un batacazo o una paliza, de sacarse la espina con el rival que te eliminó, de un asado con la mesa llena, de la charla que hace que alguien se quede y de una despedida como se debe.';
 
 export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   const row = state.standings.find((r) => r.teamId === 'club')!;
@@ -139,7 +141,7 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
       detail:
         state.memorableMoments.length >= 3
           ? `${state.memorableMoments.length} momentos para el recuerdo.`
-          : `${state.memorableMoments.length === 0 ? 'Una temporada sin grandes historias para contar' : state.memorableMoments.length === 1 ? 'Un momento para el recuerdo' : 'Dos momentos para el recuerdo'}. ${QUE_LOS_ALIMENTA}`,
+          : `${state.memorableMoments.length === 0 ? 'Una temporada sin grandes historias para contar' : state.memorableMoments.length === 1 ? 'Un momento para el recuerdo' : 'Dos momentos para el recuerdo'}. ${state.memorableMoments.length === 0 ? 'Las historias salen' : 'Salen'} de ${QUE_LOS_ALIMENTA}`,
     },
   ];
 

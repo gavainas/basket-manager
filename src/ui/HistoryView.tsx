@@ -183,7 +183,7 @@ export function HistoryView({ state }: { state: GameState }) {
         <h4 className="bd-sub hi-momentos-tit">Para contar en el asado</h4>
         {state.memorableMoments.length === 0 ? (
           <p className="bd-vacio">
-            Todavía no pasó nada digno de contar en el asado. Las historias se construyen: {QUE_LOS_ALIMENTA}
+            Todavía no pasó nada digno de contar en el asado. Las historias salen de {QUE_LOS_ALIMENTA}
           </p>
         ) : (
           <ul className="hi-momentos">
