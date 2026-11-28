@@ -133,3 +133,22 @@ describe('el azar con semilla', () => {
     expect(marcador(a)).not.toEqual(marcador(b));
   });
 });
+
+describe('la gesta con lo justo no se repite igual (nov 2026)', () => {
+  it('con plantel corto toda la temporada, cada momento de "lo justo" se lee distinto', () => {
+    let repetidas = 0;
+    let gestas = 0;
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const s = partidaNueva(seed);
+      // Siete en el plantel: cada fecha es "con lo justo".
+      for (const p of s.players.slice(7)) p.leftClub = true;
+      const fin = jugarTemporada(s);
+      const m = fin.memorableMoments;
+      repetidas += m.length - new Set(m.map((t) => t.replace(/^[^:]+: /, ''))).size;
+      gestas += m.filter((t) => /con lo justo|ganamos siendo/.test(t)).length;
+      expect(m.filter((t) => /ganamos siendo \d/.test(t)).length).toBeLessThanOrEqual(1);
+    }
+    expect(gestas).toBeGreaterThan(0);
+    expect(repetidas).toBe(0);
+  });
+});

@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **La gesta con lo justo no se repite igual (28/11/2026)**: en la corrida por la UI, el cierre de la T2 listaba en "Lo que queda" tres veces "Semana N: ganamos siendo 7. Los que estuvieron, estuvieron.". Ahora la primera nombra al rival ("ganamos siendo 7 contra Ferro del Norte") y las siguientes se leen distinto ("otra vez con lo justo, 7 contra La Terminal, y otra vez se ganó."). Test en `tests/temporada.test.ts`.
+
 - **Finanzas: la cuenta prevista y el libro de caja dicen lo mismo de las cuotas (28/11/2026)**: arriba "Cuotas (9 jugadores y 1 con media beca) +$285" y en el libro, la semana anterior, "Cuotas (10 jugadores) +$285". El libro ahora anota con el mismo texto. Test en `tests/textos.test.ts`.
 
 - **La libreta de la Carrera no arma planteles con tres "Alejo" (28/11/2026)**: jugando la Carrera por la UI, el club se inscribió con Alejo Morales, Alejo Britos, Alejo Suárez, Lucas Britos… y las relaciones de la libreta se escriben por el nombre de pila ("Vecino de Alejo"), así que no se sabía de cuál. Ahora cada contacto nuevo no repite nombre de pila ni apellido de los propios (el plantel y la libreta); los del resto del mundo sólo cuentan para no repetir el nombre completo, como antes. Test en `tests/carrera.test.ts` (falla con el código anterior); `npm run sim:carrera -- 20` sigue en lo documentado (90% pidiendo a todos, 100% con cabeza).
