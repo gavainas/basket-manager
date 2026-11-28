@@ -217,6 +217,16 @@ export function PartidoVivo({ state, dispatch }: Props) {
     return () => window.clearTimeout(id);
   }, [simulando, live, dispatch]);
 
+  // La incidencia aparece entera: a 1366x768 la tercera opción quedaba debajo
+  // de la consola del DT, y a 1280x720 sólo se veía la primera. Si no entra,
+  // la página baja lo justo (el `scroll-margin-bottom` del CSS deja lugar
+  // para el pie fijo). Una vez por incidencia, no en cada render.
+  const incidenciaRef = useRef<HTMLDivElement | null>(null);
+  const incidenciaTxt = live?.pendingIncident && !reloj ? live.pendingIncident.text : null;
+  useEffect(() => {
+    if (incidenciaTxt) incidenciaRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [incidenciaTxt]);
+
   // La última canasta que cayó queda a la vista.
   // Se desplaza sólo el panel del relato, nunca la página: en el celular la
   // página es la que scrollea y no tiene que saltar con cada canasta.
@@ -747,7 +757,7 @@ export function PartidoVivo({ state, dispatch }: Props) {
           <p className="v1-frase vivo-leyenda">{leyenda}</p>
 
           {live.pendingIncident && !reloj ? (
-            <div className="vivo-incidencia v1-planilla" role="alert">
+            <div className="vivo-incidencia v1-planilla" role="alert" ref={incidenciaRef}>
               <div className="v1-eyebrow vivo-incidencia-k"><Icon name="alerta" size={15} /> Incidencia en la cancha</div>
               <p className="vivo-incidencia-txt">{live.pendingIncident.text}</p>
               <div className="vivo-opciones">
