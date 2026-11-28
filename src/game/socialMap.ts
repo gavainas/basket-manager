@@ -52,6 +52,11 @@ export interface SocialMapData {
   cohesion: number;
 }
 
+/** El rótulo a mitad de frase: "se arrima a la mesa del asado", no "a La mesa del asado". */
+function enFrase(label: string): string {
+  return label.charAt(0).toLowerCase() + label.slice(1);
+}
+
 function apodo(p: Player): string {
   return apodoOApellido(p.name);
 }
@@ -69,7 +74,9 @@ function labelGroup(members: Player[], state: GameState): string {
   const competitivos = members.filter((p) => p.personality === 'competitivo' || p.personality === 'protagonista');
   if (competitivos.length > members.length / 2) return 'Los que vienen a ganar';
   const leader = [...members].sort((a, b) => b.social - a.social)[0];
-  return `La banda de${'aeiou'.includes(apodo(leader)[0]?.toLowerCase() ?? '') ? 'l' : ''} ${apodo(leader)}`;
+  // Con apodo va con artículo ("la banda del Chino"); con apellido, sin él
+  // ("la banda de Acosta"). Antes decidía la vocal: "del Acosta", "de Chino".
+  return `La banda ${/"[^"]+"/.test(leader.name) ? 'del' : 'de'} ${apodo(leader)}`;
 }
 
 /**
@@ -225,8 +232,8 @@ export function buildSocialMap(state: GameState): SocialMapData {
     const amigo = best >= FRIEND_THRESHOLD;
     const text = mesa
       ? amigo
-        ? `Amigo de ${closest.name}: se arrima a ${mesa.label} sin ser de la mesa.`
-        : `Se sienta cerca de ${mesa.label}: con ${closest.name} se lleva bien, con el resto se saluda.`
+        ? `Amigo de ${closest.name}: se arrima a ${enFrase(mesa.label)} sin sentarse con ellos.`
+        : `Se sienta cerca de ${enFrase(mesa.label)}: con ${closest.name} se lleva bien, con el resto se saluda.`
       : amigo
         ? `Se junta con ${closest.name}, que tampoco tiene mesa fija.`
         : `Saluda a todos y no se queda con nadie: el más cercano es ${closest.name}.`;

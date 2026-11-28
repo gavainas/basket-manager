@@ -81,7 +81,34 @@ rivales y con el plantel, la final ganada que se celebra, atajos numéricos en t
 decisiones, coherencia de Finanzas y de la Liga después de la fase regular (detalle en el
 changelog). Quedó anotado y sin hacer: la pregunta del vestuario campeón (abajo).
 
+**Bloque autónomo del 28/11/2026** (PR #43, apilado sobre #42, para revisar): jugando
+temporadas enteras en el navegador. El cierre que nombra el descenso y la **figura del año**
+(cierre y vitrina, de `UI_V2_PENDIENTES.md` §3); la incidencia del partido que entra entera
+a 1366×768 y 1280×720; el evento que avisa si la caja no alcanza; el juez casero que no
+perjudica al local; los playoffs que nombran su copa y su destino; dos del plantel con el
+mismo apellido que se distinguen (y la libreta de la Carrera que ya no arma planteles con
+tres "Alejo"); la crónica de la Historia recortada; y una tanda de textos (dos puntos
+encadenados, plurales, artículos, decimales con coma, el "conforme" que decía "bien" tras
+perder una final). El fuzz encontró una negociación sin salida en el motor, arreglada.
+Detalle en el changelog.
+
 ## Decisiones que están en la cancha de Gabi
+
+- **¿Tantos "se ven titulares"?** (28/11/2026) Con el plantel de arranque, 6 a 8 de 12 se
+  ven titulares, en cancha entran 5, y en cada temporada jugada en el navegador hubo 2 o 3
+  "masticando bronca por sus minutos" de punta a punta (Pereyra llegó a 6 semanas). Es
+  coherente con el diseño (la bronca regula el plantel largo), pero hace que el aviso sea
+  casi permanente en el Tablero. Si se quiere menos ruido, la perilla es cuántos esperan
+  ser titulares (`expectedRole`), no la bronca; si está bien así, no se toca.
+
+- **La barra de secciones de la maqueta v4** (texto con subrayado naranja, sin íconos ni
+  teclas) sigue pendiente en `UI_V2_PENDIENTES.md` §2. No la hice: cambia el chrome de todo
+  el juego y saca las teclas y los avisos de cada sección. ¿Va como en la maqueta, o se
+  queda la de ahora?
+
+- **La Carrera arranca en "Inscripción"**: la semana 1 abre en "¿Dónde jugamos?" con 0
+  confirmados, y lo que hay que hacer primero es abrir la libreta. ¿Que la Carrera abra en
+  La libreta mientras no haya nadie confirmado? (Es un cambio de una línea.)
 
 - **¿Salir campeón tiene que aflojar las broncas por minutos?** (27/11/2026) Después de
   ganar la Copa de Plata, dos del plantel siguieron "masticando bronca por sus minutos" en

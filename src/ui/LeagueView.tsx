@@ -218,7 +218,7 @@ function SecondTeamCard({ state }: { state: GameState }) {
   return (
     <Planilla
       titulo={`${st.name} · ${league?.name ?? ''}${division ? ` ${division.name}` : ''}`}
-      nota={st.finished ? `Torneo terminado: ${secondTeamPosition(st)}°` : `Fecha ${st.round} de ${totalRounds}`}
+      nota={st.finished ? `Torneo terminado: ${secondTeamPosition(st)}°` : st.round === 0 ? `${totalRounds} fechas por jugar` : `Fecha ${st.round} de ${totalRounds}`}
       className="lg-segundo"
     >
       <div className="lg-segundo-cuerpo">
@@ -343,6 +343,9 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
   const nextId = state.schedule[upcomingWeek - 1];
   const nextRival = state.rivals.find((r) => r.id === nextId);
   const nextIdx = sorted.findIndex((r) => r.teamId === nextId);
+  // Con la tabla en cero no hay puesto (el orden sale del desempate de una
+  // tabla vacía): el número grande va con guion y el rival sin "3°".
+  const tablaEnCero = !state.standings.some((r) => r.wins + r.losses > 0);
   const nextFx = userFixtureOfWeek(world, upcomingWeek);
   const nextVenue = world.venues.find((v) => v.id === nextFx?.venueId);
   const bajan = promotes && !!divisionBelow;
@@ -380,8 +383,8 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
             </div>
             {ours ? (
               <div className="lg-puesto">
-                <div className={`v1-cifra lg-puesto-num ${zona(ourIdx)}${enDescenso(ourIdx) ? ' descenso' : ''}`}>
-                  {ourIdx + 1}°<small>de {nTeams} en la tabla</small>
+                <div className={`v1-cifra lg-puesto-num ${tablaEnCero ? '' : `${zona(ourIdx)}${enDescenso(ourIdx) ? ' descenso' : ''}`}`}>
+                  {tablaEnCero ? '—' : `${ourIdx + 1}°`}<small>{tablaEnCero ? 'sin fechas jugadas' : `de ${nTeams} en la tabla`}</small>
                 </div>
                 <div className="lg-puesto-txt">
                   <div className="lg-record">
@@ -431,7 +434,7 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
                       <RivalLink id={nextId}>{nextRival.name}</RivalLink>
                     </div>
                     <div className="lg-sigue-sub">
-                      {nextIdx >= 0 && <><b>{nextIdx + 1}°</b> · {sorted[nextIdx].wins}-{sorted[nextIdx].losses} · </>}
+                      {nextIdx >= 0 && <>{!tablaEnCero && <><b>{nextIdx + 1}°</b> · </>}{sorted[nextIdx].wins}-{sorted[nextIdx].losses} · </>}
                       {rivalStyleInfo(nextRival.style).label}
                     </div>
                   </div>
@@ -497,7 +500,12 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
           </Planilla>
 
           <div className="lg-col-fixture">
-            <Planilla titulo="El fixture" nota={`${state.schedule.length} fechas`} className="lg-fixture">
+            {/* En los playoffs el fixture suma la semi y la final: decía "10 fechas" en una liga de 9. */}
+            <Planilla
+              titulo="El fixture"
+              nota={`${state.seasonLength} fechas${state.schedule.length > state.seasonLength ? ' y playoffs' : ''}`}
+              className="lg-fixture"
+            >
               <table className="bd-tabla">
                 <tbody>
                   {state.schedule.map((rivalId, i) => {
@@ -668,15 +676,19 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
                         {divisions.length} divisional{divisions.length !== 1 ? 'es' : ''}
                         {l.minAge ? ` · desde ${l.minAge} años` : ''}
                         {expansible.includes(l.id)
-                          ? ' · el club todavía no tiene equipo acá'
+                          ? state.secondTeam
+                            ? ' · abre cupo, pero el club ya banca dos equipos'
+                            : ' · el club todavía no tiene equipo acá'
                           : ' · el equipo principal se puede anotar acá en la próxima pretemporada'}
                       </>
                     )}
                   </span>
-                  {/* Segundo equipo: solo en las ligas que abren cupo. En
-                      las demás, la puerta es la inscripción del principal. */}
+                  {/* Segundo equipo: solo en las ligas que abren cupo, y
+                      mientras no haya uno (no hay tercero: el botón llevaba a
+                      un panel que sólo decía que no). En las demás, la puerta
+                      es la inscripción del principal. */}
                   <span className="lg-liga-accion">
-                    {!isOurs && !segundo && expansible.includes(l.id) && (
+                    {!isOurs && !segundo && !state.secondTeam && expansible.includes(l.id) && (
                       <button className="bd-boton" onClick={() => setExpandLeague(l.id)}>
                         Inscribir equipo…
                       </button>

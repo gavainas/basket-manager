@@ -654,6 +654,8 @@ export interface PastSeason {
   moved?: { kind: 'ascenso' | 'descenso'; to: string };
   /** Cuántas fechas tuvo (7 en el Comercio, 9 en el resto): etiqueta sus semanas en la historia. Saves viejos: sin dato. */
   seasonLength?: number;
+  /** La figura del año (nov 2026): el nombre, para la vitrina. Saves viejos: sin dato. */
+  figura?: string;
 }
 
 export type NewsTone = 'good' | 'bad' | 'neutral';

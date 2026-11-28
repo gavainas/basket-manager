@@ -4,15 +4,16 @@ import { condicionTexto, semanaDelSponsor } from './sponsors';
 import type { GameState, Player } from './types';
 import type { Rng } from './rng';
 
-/** Gastos sorpresa: mantener un club de barrio es una gotera atrás de otra. */
+/** Gastos sorpresa: mantener un club de barrio es una gotera atrás de otra.
+ * Sin dos puntos adentro: la noticia les suma ": se fueron $N de la caja". */
 const MISHAPS = [
   'Se rompió un tablero y hubo que soldarlo de apuro',
   'Multa de la liga por la planilla mal cerrada',
   'Se quemó un reflector del gimnasio',
-  'Desaparecieron las llaves: cerradura nueva en el vestuario',
-  'Canilla rota en los baños: plomero de urgencia',
+  'Desaparecieron las llaves y hubo que cambiar la cerradura del vestuario',
+  'Se rompió una canilla de los baños y hubo que llamar al plomero',
   'Hubo que reponer dos pelotas que quedaron lisas',
-  'El aro quedó flojo tras una volcada ajena: soldadura y bulones',
+  'El aro quedó flojo tras una volcada ajena y hubo que ponerle bulones nuevos',
 ];
 
 export function weeklyFee(p: Player): number {
@@ -147,7 +148,9 @@ export function applyWeeklyEconomy(s: GameState, rng: Rng): void {
   const feeIncome = payers.reduce((sum, p) => sum + weeklyFee(p), 0);
   if (feeIncome > 0) {
     s.club.money += feeIncome;
-    s.ledger.push({ week: s.week, concept: `Cuotas (${plantelTxt(payers.length)})`, amount: feeIncome });
+    // El mismo texto que la cuenta prevista de Finanzas: decía "Cuotas (9
+    // jugadores y 1 con media beca)" arriba y "Cuotas (10 jugadores)" en el libro.
+    s.ledger.push({ week: s.week, concept: `Cuotas (${cuotasTxt(payers)})`, amount: feeIncome });
   }
 
   if (s.sponsor) {

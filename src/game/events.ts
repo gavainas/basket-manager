@@ -19,6 +19,9 @@ import type { Rng } from './rng';
 export interface EventOptionDef {
   label: string;
   hint?: string;
+  /** Lo que sale de la caja si se elige (nov 2026): con menos plata que eso,
+   *  el evento avisa antes de elegir. La resolución decide qué pasa si no alcanza. */
+  cost?: number;
 }
 
 export interface EventDef {
@@ -330,7 +333,7 @@ export const EVENTS: EventDef[] = [
     canFire: () => true,
     text: () => 'Apareció el bolso, pero falta la camiseta número 7. Nadie sabe nada, todos se miran.',
     options: () => [
-      { label: 'Comprar una de repuesto', hint: 'Cuesta $40' },
+      { label: 'Comprar una de repuesto', hint: 'Cuesta $40', cost: 40 },
       { label: 'Que juegue con una vieja desteñida', hint: 'La imagen del club sufre' },
     ],
     resolve: (s, _ev, opt) => {
@@ -560,7 +563,7 @@ export const EVENTS: EventDef[] = [
     canFire: (s) => s.club.organization < 45,
     text: () => 'Varios jugadores se quejan en el grupo: horarios que cambian, planillas que faltan, nadie sabe quién lleva las pelotas. "Esto es un kiosco", escribió uno.',
     options: () => [
-      { label: 'Reconocerlo y ordenar todo', hint: 'Cuesta $30 en gestiones, mejora la organización' },
+      { label: 'Reconocerlo y ordenar todo', hint: 'Cuesta $30 en gestiones, mejora la organización', cost: 30 },
       { label: 'Restarle importancia', hint: 'Los cumplidores se van a enojar' },
     ],
     resolve: (s, _ev, opt) => {
@@ -587,7 +590,7 @@ export const EVENTS: EventDef[] = [
     canFire: (s) => s.lastMatch?.won === true,
     text: () => 'Después de la victoria, el grupo quedó arriba: proponen juntarse el viernes a festejar. Te invitan, obvio.',
     options: () => [
-      { label: 'Sumarse y pagar una ronda', hint: 'Cuesta $30, gran gesto' },
+      { label: 'Sumarse y pagar una ronda', hint: 'Cuesta $30, gran gesto', cost: 30 },
       { label: 'Pasar un rato e irse temprano', hint: 'Cumplís sin gastar' },
     ],
     resolve: (s, _ev, opt, rng) => {
@@ -661,7 +664,7 @@ export const EVENTS: EventDef[] = [
     canFire: (s) => s.club.organization < 55,
     text: () => 'Llegan a entrenar y hay otro equipo en la cancha: el dueño vendió el horario dos veces. Nadie hizo el depósito a tiempo.',
     options: () => [
-      { label: 'Pagar una cancha alternativa', hint: 'Cuesta $60, se entrena igual' },
+      { label: 'Pagar una cancha alternativa', hint: 'Cuesta $60, se entrena igual', cost: 60 },
       { label: 'Entrenar en la plaza', hint: 'Gratis, pero da imagen de club chico' },
     ],
     resolve: (s, _ev, opt) => {
@@ -689,7 +692,7 @@ export const EVENTS: EventDef[] = [
     canFire: (s) => s.lastMatch !== null && !s.lastMatch.won && !s.lastMatch.forfeit,
     text: () => 'El grupo sigue caliente con el árbitro del último partido: dos fallos escandalosos en el cierre. Piden que el club haga un reclamo formal a la liga.',
     options: () => [
-      { label: 'Presentar el reclamo', hint: 'Cuesta $20; la liga puede darte la razón' },
+      { label: 'Presentar el reclamo', hint: 'Cuesta $20; la liga puede darte la razón', cost: 20 },
       { label: 'Dar vuelta la página', hint: 'Los más competitivos no lo van a entender' },
     ],
     resolve: (s, _ev, opt, rng) => {
@@ -719,7 +722,7 @@ export const EVENTS: EventDef[] = [
     pickTargets: (s, rng) => ({ playerId: rng.pick(actives(s)).id }),
     text: (s, ev) => `Esta semana cumple años ${byId(s, ev.playerId).name}. En el grupo ya empezaron con los memes.`,
     options: () => [
-      { label: 'Torta y festejo después de entrenar', hint: 'Cuesta $25, suma al grupo' },
+      { label: 'Torta y festejo después de entrenar', hint: 'Cuesta $25, suma al grupo', cost: 25 },
       { label: 'Saludo en el grupo y a otra cosa', hint: 'Cumple el protocolo' },
     ],
     resolve: (s, ev, opt, rng) => {
@@ -785,7 +788,7 @@ export const EVENTS: EventDef[] = [
     text: (s, ev) =>
       `${byId(s, ev.playerId).name} junta al grupo: consiguió trabajo en otra ciudad y se muda en dos semanas. Esta es su última semana en el club.`,
     options: () => [
-      { label: 'Despedirlo con un asado', hint: 'Cuesta $40; el grupo lo va a recordar' },
+      { label: 'Despedirlo con un asado', hint: 'Cuesta $40; el grupo lo va a recordar', cost: 40 },
       { label: 'Desearle suerte y seguir', hint: 'La vida sigue, el fixture también' },
     ],
     resolve: (s, ev, opt, rng) => {
@@ -988,7 +991,7 @@ export const EVENTS: EventDef[] = [
     text: () =>
       'Un exjugador que llegó a la Liga B se ofrece a dar una clínica gratis: fundamentos, tiro, lectura de juego. Solo pide que le den bola y algo para el mate.',
     options: () => [
-      { label: 'Organizar la clínica para todos', hint: 'Cuesta $20 de logística; varios mejoran' },
+      { label: 'Organizar la clínica para todos', hint: 'Cuesta $20 de logística; varios mejoran', cost: 20 },
       { label: 'Agradecer, pero estamos a full', hint: 'Sin gasto, sin mejora' },
     ],
     resolve: (s, _ev, opt, rng) => {
@@ -1537,7 +1540,7 @@ export const EVENTS: EventDef[] = [
     text: (s, ev) =>
       `${byId(s, ev.playerId).name} te habla aparte, incómodo: se le rompió la moto y la necesita para laburar. Pregunta si el club puede prestarle $70 hasta fin de mes.`,
     options: () => [
-      { label: 'Prestarle la plata del club', hint: '-$70 ahora; en unas semanas se verá si la devuelve' },
+      { label: 'Prestarle la plata del club', hint: '-$70 ahora; en unas semanas se verá si la devuelve', cost: 70 },
       { label: 'Proponer una colecta entre todos', hint: 'No sale de la caja; depende del ambiente' },
       { label: 'El club no puede ahora', hint: 'Se va con las manos vacías' },
     ],
@@ -2011,7 +2014,7 @@ export const EVENTS: EventDef[] = [
       return `Después del partido en ${lore?.cancha ?? 'la cancha de ellos'}, ${team?.delegate ?? 'el delegado de ellos'} abrió la cantina: "Quédense, muchachos, que hay chorizos". Medio plantel ya está sentado y el otro medio mira el reloj.`;
     },
     options: () => [
-      { label: 'Quedarse: el club paga una ronda ($25)', hint: 'Junta al grupo, y en la cantina se escuchan cosas' },
+      { label: 'Quedarse: el club paga una ronda ($25)', hint: 'Junta al grupo, y en la cantina se escuchan cosas', cost: 25 },
       { label: 'Quedarse un rato, sin gastar', hint: 'Cumple con la vecindad' },
       { label: 'Levantar al plantel: mañana se labura', hint: 'Los cumplidores lo agradecen; los sociales no' },
     ],
@@ -2105,12 +2108,15 @@ export const EVENTS: EventDef[] = [
     text: (s, ev) => {
       const ref = refereeOfWeek(s);
       const p = byId(s, ev.playerId);
-      return `Esta fecha dirige ${mayus(ref.name)}: ${ref.blurb}. ${p.name} lo tiene atravesado desde la última técnica y ya avisó en el grupo que "hoy no se calla".`;
+      // A mitad de frase el juez va tal cual ("dirige la Colo Ramírez", no
+      // "dirige La Colo Ramírez"), y ella "la tiene atravesada".
+      const ella = ref.name.startsWith('la ');
+      return `Esta fecha dirige ${ref.name}: ${ref.blurb}. ${p.name} ${ella ? 'la tiene atravesada' : 'lo tiene atravesado'} desde la última técnica y ya avisó en el grupo que "hoy no se calla".`;
     },
     options: (s) => [
       { label: '"Hoy ni una palabra con el juez"', hint: 'Se guarda la bronca; no es gratis' },
       { label: 'Que juegue como siempre', hint: 'Con este juez, la técnica sale fácil' },
-      { label: `Ir a saludar a ${mayus(refereeOfWeek(s).name)} antes del partido`, hint: 'A veces afloja el clima; a veces se nota demasiado' },
+      { label: `Ir a saludar ${al(refereeOfWeek(s).name)} antes del partido`, hint: 'A veces afloja el clima; a veces se nota demasiado' },
     ],
     resolve: (s, ev, opt, rng) => {
       const ref = refereeOfWeek(s);
@@ -2126,11 +2132,11 @@ export const EVENTS: EventDef[] = [
       }
       if (rng.chance(0.5)) {
         s.club.socialClimate = clamp(s.club.socialClimate + 2);
-        return `Fuiste a saludar a ${mayus(ref.name)} con un café. Se rió, te preguntó por el plantel y dijo "veremos". El grupo vio la escena y se relajó.`;
+        return `Fuiste a saludar ${al(ref.name)} con un café. Se rió, te preguntó por el plantel y dijo "veremos". El grupo vio la escena y se relajó.`;
       }
       s.club.sportPrestige = clamp(s.club.sportPrestige - 2);
-      s.news.unshift({ week: s.week, text: `Vieron al manager charlando con ${mayus(ref.name)} antes del partido. En la liga ya le pusieron nombre a la charla.`, tone: 'bad' });
-      return `Fuiste a saludar a ${mayus(ref.name)} y te vieron. "¿Qué le fuiste a decir?", preguntó el delegado de enfrente, en voz alta, para que lo escuchen todos.`;
+      s.news.unshift({ week: s.week, text: `Vieron al manager charlando con ${ref.name} antes del partido. En la liga ya le pusieron nombre a la charla.`, tone: 'bad' });
+      return `Fuiste a saludar ${al(ref.name)} y te vieron. "¿Qué le fuiste a decir?", preguntó el delegado de enfrente, en voz alta, para que lo escuchen todos.`;
     },
   },
   {
@@ -2153,7 +2159,7 @@ export const EVENTS: EventDef[] = [
       const wp = s.world.players.find((x) => x.id === ev.contactId);
       const cost = wp ? costoDeIrABuscar(wp) : 40;
       return [
-        { label: `Ir a buscarlo: $${cost} entre ficha y viáticos`, hint: 'Si viene, la liga habla; si no, se gasta igual una parte' },
+        { label: `Ir a buscarlo: $${cost} entre ficha y viáticos`, hint: 'Si viene, la liga habla; si no, se gasta igual una parte', cost },
         { label: `Pasarle el dato a ${PERSONAJES.tesorera} y esperar`, hint: 'Capaz aparece solo' },
         { label: 'No meterse en vestuario ajeno', hint: 'En la liga se nota, para bien' },
       ];
@@ -2251,7 +2257,7 @@ export const EVENTS: EventDef[] = [
       return `"Pasión Deportiva Zonal" publicó el ranking de canchas de la liga y ${venue?.name ?? 'nuestra cancha'} salió última: "vestuario con una ducha y olor a humedad". En el grupo ya circula la captura.`;
     },
     options: () => [
-      { label: 'Arreglar el vestuario ($80)', hint: 'Caro, pero se nota todo el año' },
+      { label: 'Arreglar el vestuario ($80)', hint: 'Caro, pero se nota todo el año', cost: 80 },
       { label: 'Contestar la nota', hint: 'A veces se da vuelta; a veces vuelven con fotos' },
       { label: 'Dejarlo pasar', hint: 'El rival de la semana que viene lo va a usar' },
     ],
@@ -2302,7 +2308,7 @@ export const EVENTS: EventDef[] = [
       const brava = r.lore?.rasgos.includes('tribuna_brava');
       return [
         { label: `Jugar en ${r.lore?.cancha ?? 'la cancha de ellos'}`, hint: brava ? `Tribuna brava: ${RASGOS.tribuna_brava.desc}` : 'De local en cancha ajena' },
-        { label: 'Alquilar otra cancha ($60)', hint: 'Se juega en terreno neutral' },
+        { label: 'Alquilar otra cancha ($60)', hint: 'Se juega en terreno neutral', cost: 60 },
         { label: 'Jugar en la plaza de deportes del barrio', hint: 'Gratis y con vecinos; imagen de club chico' },
       ];
     },
@@ -2341,7 +2347,7 @@ export const EVENTS: EventDef[] = [
     text: (s) =>
       `Llega un mail de ${SECRETARIO_LIGA}, secretario de la liga: multa de $20 por entregar la planilla fuera de hora en el partido con ${s.lastMatch!.rivalName}. "Tercer aviso", dice, aunque es el primero que ves.`,
     options: () => [
-      { label: 'Pagar y ordenar la planilla', hint: 'Cuesta $20; el club se ordena un poco' },
+      { label: 'Pagar y ordenar la planilla', hint: 'Cuesta $20; el club se ordena un poco', cost: 20 },
       { label: 'Apelar por escrito', hint: 'A veces la liga afloja; a veces quedás de llorón' },
       { label: 'No pagar', hint: 'La multa no se olvida: crece' },
     ],
@@ -2376,7 +2382,7 @@ export const EVENTS: EventDef[] = [
     canFire: () => false,
     text: () => `Segundo mail de ${SECRETARIO_LIGA}, en mayúsculas en el asunto: la multa impaga se duplicó a $40. "Sin más avisos", y abajo el número de cuenta de la liga.`,
     options: () => [
-      { label: 'Pagar los $40 ahora', hint: 'Se termina acá' },
+      { label: 'Pagar los $40 ahora', hint: 'Se termina acá', cost: 40 },
       { label: 'Que lo descuenten de donde quieran', hint: 'Lo descuentan, con recargo, y la liga se acuerda' },
     ],
     resolve: (s, _ev, opt) => {

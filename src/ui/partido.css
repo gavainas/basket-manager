@@ -352,17 +352,26 @@
 
 /* La incidencia: la planilla con el filete de alerta; las opciones son
    botones comunes (el naranja es del pie). */
-.vivo .vivo-incidencia { padding: 0.9rem 1.1rem 1rem; border-left: 3px solid var(--warn); }
+.vivo .vivo-incidencia {
+  padding: 0.8rem 1.1rem 0.9rem;
+  border-left: 3px solid var(--warn);
+  /* Lo que ocupa el pie fijo (la consola del DT): al traerla a la vista con
+     scrollIntoView, la última opción no queda tapada por él. */
+  scroll-margin-bottom: 7rem;
+}
 .vivo .vivo-incidencia-k { display: flex; align-items: center; gap: 0.4rem; color: var(--warn); }
-.vivo .vivo-incidencia-txt { margin: 0.5rem 0 0.8rem; font-size: 1.02rem; line-height: 1.45; }
-.vivo .vivo-opciones { display: grid; gap: 0.45rem; }
-.vivo .vivo-opciones button { display: grid; gap: 2px; text-align: left; padding: 0.55rem 0.8rem; }
+.vivo .vivo-incidencia-txt { margin: 0.4rem 0 0.65rem; font-size: 1.02rem; line-height: 1.42; }
+.vivo .vivo-opciones { display: grid; gap: 0.35rem; }
+.vivo .vivo-opciones button { display: grid; gap: 1px; text-align: left; padding: 0.45rem 0.8rem; }
 .vivo .vivo-opciones button b { font-weight: 600; }
 .vivo .vivo-opciones button span { font-size: 0.82rem; color: var(--text-dim); }
 
 /* Con una incidencia la cancha se achica (caras sin nombre) para que las
-   opciones entren sin scrollear: lo que hay que decidir es eso. */
-.vivo .vivo-centro.con-incidencia .vivo-cancha { height: clamp(120px, 16vh, 170px); }
+   opciones entren sin scrollear: lo que hay que decidir es eso. La leyenda de
+   abajo de la cancha ("Resolvé la incidencia… 1, 2 o 3 también eligen") se
+   va: cada opción ya muestra su tecla y el botón del pie dice lo mismo. */
+.vivo .vivo-centro.con-incidencia .vivo-cancha { height: clamp(100px, 13vh, 170px); }
+.vivo .vivo-centro.con-incidencia .vivo-leyenda { display: none; }
 .vivo .vivo-centro.con-incidencia .vivo-ficha-nom { display: none; }
 .vivo .vivo-centro.con-incidencia .vivo-ficha-cara { width: 32px; height: 32px; border-width: 2px; }
 

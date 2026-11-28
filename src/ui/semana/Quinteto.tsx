@@ -12,7 +12,7 @@ import { PlayerLink } from '../PlayerLink';
 import { RivalLink } from '../RivalLink';
 import { ScoutingCard } from '../ScoutingCard';
 import { Tip, TIPS } from '../Tip';
-import { rivalDifficulty, rivalStyleInfo, weekLabel } from '../helpers';
+import { decimal, rivalDifficulty, rivalStyleInfo, weekLabel } from '../helpers';
 import { useEspacio } from '../teclas';
 import { Crest } from '../Crest';
 import { clubByLegacyId, userFixtureOfWeek } from '../../game/world';
@@ -327,7 +327,7 @@ export function LineupPanel({ state, dispatch }: Props) {
                     <span>
                       {pl ? (
                         <>
-                          {oop ? <em>es {pl.position}</em> : pos} · ≈{pl.visibleRating} · {(pl.height / 100).toFixed(2)} m
+                          {oop ? <em>es {pl.position}</em> : pos} · ≈{pl.visibleRating} · {decimal(pl.height / 100, 2)} m
                         </>
                       ) : (
                         'libre'
@@ -381,7 +381,7 @@ export function LineupPanel({ state, dispatch }: Props) {
             </div>
           </div>
           <p className="v1-frase">
-            <b className={diff.cls}>{diff.label}.</b> <span title={style.desc}>{style.label}: {style.desc.toLowerCase()}</span>
+            <b className={diff.cls}>{diff.label}.</b> <span title={style.desc}>{style.label}. {style.desc}</span>
           </p>
           {vibe && (
             <p className="v1-frase sem-q-vibe">
@@ -398,7 +398,9 @@ export function LineupPanel({ state, dispatch }: Props) {
                 {lastMinute.map((e, i) => (
                   <span key={e.playerId}>
                     {i > 0 && ' '}
-                    <PlayerLink id={e.playerId}>{e.playerName}</PlayerLink>: {e.note}
+                    {/* La nota ya trae sus dos puntos ("Aviso sobre la hora: lo
+                        llamaron del laburo…"): va con raya, no con otros dos puntos. */}
+                    <PlayerLink id={e.playerId}>{e.playerName}</PlayerLink>{e.note ? <> — {e.note.charAt(0).toLowerCase() + e.note.slice(1)}</> : '.'}
                   </span>
                 ))}{' '}
                 La lista se largó hace dos días y la vida siguió: se arma con los que están.

@@ -4,7 +4,7 @@ import { getEvent } from '../game/events';
 import { apodoOApellido } from '../game/nombres';
 import { Avatar } from './Avatar';
 import { Busto } from './Busto';
-import { weekLabel } from './helpers';
+import { formatMoney, weekLabel } from './helpers';
 import './modales.css';
 import { Icon, type IconName } from './Icon';
 import { PlayerLink } from './PlayerLink';
@@ -131,6 +131,13 @@ export function EventModal({ state, dispatch }: Props) {
                 <kbd className="opt-tecla" aria-hidden="true">{i + 1}</kbd>
                 {opt.label}
                 {opt.hint && <span className="opt-hint">{opt.hint}</span>}
+                {/* Elegir lo que no se puede pagar terminaba en "no había plata"
+                    recién en el desenlace: ahora se avisa antes de elegir. */}
+                {opt.cost !== undefined && state.club.money < opt.cost && (
+                  <span className="opt-hint opt-sin-caja">
+                    Hay {formatMoney(state.club.money)} en caja: no alcanza.
+                  </span>
+                )}
               </button>
             ))}
           </div>

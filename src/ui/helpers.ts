@@ -98,6 +98,11 @@ export function formatMoney(amount: number): string {
   return `$${amount.toLocaleString('es-AR')}`;
 }
 
+/** Un número con decimales a la rioplatense: "12,0", "1,81". `toFixed` daba "12.0". */
+export function decimal(n: number, digits = 1): string {
+  return n.toFixed(digits).replace('.', ',');
+}
+
 const WEEKDAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const MONTHS = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',

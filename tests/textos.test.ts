@@ -74,6 +74,24 @@ describe('los plurales con 1 (sep 2026)', () => {
     expect(weeklyEstimate(s).income[0].concept).toBe('Cuotas (1 jugador y 1 con media beca)');
   });
 
+  it('el libro de caja anota las cuotas con el mismo texto que la cuenta prevista (nov 2026)', () => {
+    let s = partidaNueva(11);
+    const activos = s.players.filter((p) => !p.leftClub);
+    activos[1].feeStatus = 'beca_parcial';
+    const previsto = weeklyEstimate(s).income[0].concept;
+    expect(previsto).toMatch(/con media beca/);
+    s = resolverEventos(s);
+    s = paso(s, { type: 'CONFIRM_ACTIONS', timing: 'temprana' });
+    s = paso(s, { type: 'PROCEED_TO_LINEUP' });
+    s = paso(s, { type: 'AUTO_LINEUP' });
+    s = paso(s, { type: 'START_MATCH' });
+    while (s.live && !s.live.finished) s = s.live.pendingIncident ? paso(s, { type: 'INCIDENT_CHOICE', index: 0 }) : paso(s, { type: 'PLAY_QUARTER' });
+    s = paso(s, { type: 'FINISH_MATCH' });
+    s = paso(s, { type: 'NEXT_WEEK' });
+    const anotado = s.ledger.find((l) => l.concept.startsWith('Cuotas ('));
+    expect(anotado?.concept).toMatch(/con media beca/);
+  });
+
   it('"al día" es lo mismo en la barra y en Finanzas: el que no debe, con beca o sin ella (nov 2026)', () => {
     const s = partidaNueva(11);
     const [a, b, c] = s.players.filter((p) => !p.leftClub);

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/game/balance';
 import { activePlayers } from '../src/game/match';
-import { computeSeasonEvaluation } from '../src/game/evaluation';
+import { computeSeasonEvaluation, figuraDeLaTemporada } from '../src/game/evaluation';
+import { userSeasonFate } from '../src/game/pyramid';
 import { confirmedPlayers, createPreseasonNewGame, inscriptionOffer } from '../src/game/preseason';
 import { PRESEASON_EVENTS } from '../src/game/preseasonEvents';
 import type { GameState } from '../src/game/types';
@@ -358,6 +359,21 @@ describe('la memoria entre temporadas: el título y la bronca cruzan el verano',
     expect(inscriptionOffer(quieto).find((o) => o.isCurrent)!.note).toMatch(/de siempre/);
     expect(quieto.pastSeasons[quieto.pastSeasons.length - 1].moved).toBeUndefined();
   });
+
+  it('el que desciende no lee "el club está mejor que como lo encontraste" (nov 2026)', () => {
+    // Último de la tabla, sin playoffs, con caja sana y nadie que se fue: antes
+    // titulaba "Club ordenado y sostenible" al lado del sello del descenso.
+    const ultimo: GameState = structuredClone(fin);
+    ultimo.playoffs = null;
+    ultimo.club.money = 3000;
+    ultimo.standings = ultimo.standings.map((r) =>
+      r.teamId === 'club' ? { ...r, wins: 0, losses: r.wins + r.losses, pointsFor: 0 } : r
+    );
+    expect(userSeasonFate(ultimo)?.kind).toBe('descenso');
+    const ev = computeSeasonEvaluation(ultimo);
+    expect(ev.outcomeTitle).toMatch(/descenso|más abajo/);
+    expect(ev.outcomeText).not.toMatch(/mejor que como lo encontraste/);
+  });
 });
 
 /**
@@ -378,5 +394,53 @@ describe('el id del fichado es único entre temporadas (sep 2026)', () => {
     // Y dos lugares distintos del mismo mercado tampoco se pisan.
     const otro = marketToPlayer(s.preseason!.market[1], 'pagada', 'suplente', 1, new Rng(1));
     expect(otro.id).not.toBe(t1.id);
+  });
+});
+
+describe('la figura del año en el cierre (nov 2026)', () => {
+  it('es el que más veces fue figura del partido, jugó la mitad o más y tiene promedios de verdad', () => {
+    for (const seed of [3, 7, 21]) {
+      const fin = jugarTemporada(partidaNueva(seed));
+      const f = figuraDeLaTemporada(fin);
+      expect(f).not.toBeNull();
+      const jugados = fin.history.filter((m) => !m.forfeit);
+      const mvps = new Map<string, number>();
+      for (const m of jugados) if (m.mvpId) mvps.set(m.mvpId, (mvps.get(m.mvpId) ?? 0) + 1);
+      expect(f!.mvps).toBe(mvps.get(f!.playerId) ?? 0);
+      expect(f!.partidos).toBeGreaterThanOrEqual(Math.ceil(jugados.length / 2));
+      // Nadie que haya jugado la mitad tiene más figuras que él.
+      for (const [id, n] of mvps) {
+        const partidos = jugados.filter((m) => m.box.some((l) => l.playerId === id && l.minutes > 0)).length;
+        if (partidos >= Math.ceil(jugados.length / 2)) expect(n).toBeLessThanOrEqual(f!.mvps);
+      }
+      for (const v of [f!.pts, f!.reb, f!.ast]) expect(Number.isFinite(v) && v >= 0).toBe(true);
+    }
+  });
+
+  it('la vitrina de la Historia la guarda con la temporada', () => {
+    const fin = jugarTemporada(partidaNueva(3));
+    const siguiente = paso({ ...fin, seed: 1 }, { type: 'NEW_SEASON' });
+    expect(siguiente.pastSeasons.at(-1)!.figura).toBe(figuraDeLaTemporada(fin)!.name);
+  });
+
+  it('sin partidos jugados no hay figura', () => {
+    expect(figuraDeLaTemporada({ ...partidaNueva(4), history: [] })).toBeNull();
+  });
+});
+
+describe('negociar con el plantel (nov 2026)', () => {
+  it('con alguien que no pide nada no se abre ni se gasta la gestión', () => {
+    const s = createPreseasonNewGame(5);
+    const ps = s.preseason!;
+    const sinPedido = s.players.find((p) => !ps.playerDemands[p.id])!;
+    const despues = paso(s, { type: 'PS_OPEN_NEGOTIATION', id: sinPedido.id, isMarket: false });
+    expect(despues.preseason!.negotiation).toBeNull();
+    expect(despues.preseason!.gestionesLeft).toBe(ps.gestionesLeft);
+    const conPedido = Object.keys(ps.playerDemands)[0];
+    if (conPedido) {
+      const abierta = paso(s, { type: 'PS_OPEN_NEGOTIATION', id: conPedido, isMarket: false });
+      expect(abierta.preseason!.negotiation?.targetId).toBe(conPedido);
+      expect(abierta.preseason!.gestionesLeft).toBe(ps.gestionesLeft - 1);
+    }
   });
 });

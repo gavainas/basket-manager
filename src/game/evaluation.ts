@@ -1,5 +1,6 @@
 import { activePlayers, clubPosition } from './match';
 import { objectiveStatus } from './objectives';
+import { userSeasonFate } from './pyramid';
 import type { GameState } from './types';
 
 export type Grade = 'Excelente' | 'Buena' | 'Regular' | 'Mala';
@@ -31,9 +32,11 @@ function grade(score: number): Grade {
 /**
  * Qué alimenta los momentos memorables, dicho para el que los busca (sale de
  * los `memorableMoments.push` del motor: el partido, el asado, los eventos).
+ * Va sin sujeto, para seguir a "Salen de…" o "Las historias salen de…": antes
+ * arrancaba con "Los dan ganar en la hora", que no se entendía.
  */
 export const QUE_LOS_ALIMENTA =
-  'Los dan ganar en la hora o remontar desde 10 abajo, un batacazo o una paliza, sacarse la espina con el rival que te eliminó, un asado con la mesa llena, la charla que hace que alguien se quede, y una despedida como se debe.';
+  'ganar en la hora o remontar desde 10 abajo, de un batacazo o una paliza, de sacarse la espina con el rival que te eliminó, de un asado con la mesa llena, de la charla que hace que alguien se quede y de una despedida como se debe.';
 
 export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   const row = state.standings.find((r) => r.teamId === 'club')!;
@@ -57,6 +60,10 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   // deportivo: Excelente (2-0, 1° de 10)". Retirarse es el peor resultado
   // deportivo que hay, venga como venga la tabla.
   const isGameOver = state.phase === 'gameOver';
+  // Bajar de categoría manda sobre el resto de la lectura: un 9° de 10 que
+  // desciende leía "Club ordenado y sostenible: el club está mejor que como lo
+  // encontraste" al lado del sello "Descendemos a la Divisional C".
+  const desciende = !isGameOver && userSeasonFate(state)?.kind === 'descenso';
   const sportScore = isGameOver
     ? Math.min(30, Math.round(winPct * 30))
     : Math.min(100, Math.round(winPct * 65 + ((10 - position) / 9) * 35) + cupBonus);
@@ -134,7 +141,7 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
       detail:
         state.memorableMoments.length >= 3
           ? `${state.memorableMoments.length} momentos para el recuerdo.`
-          : `${state.memorableMoments.length === 0 ? 'Una temporada sin grandes historias para contar' : state.memorableMoments.length === 1 ? 'Un momento para el recuerdo' : 'Dos momentos para el recuerdo'}. ${QUE_LOS_ALIMENTA}`,
+          : `${state.memorableMoments.length === 0 ? 'Una temporada sin grandes historias para contar' : state.memorableMoments.length === 1 ? 'Un momento para el recuerdo' : 'Dos momentos para el recuerdo'}. ${state.memorableMoments.length === 0 ? 'Las historias salen' : 'Salen'} de ${QUE_LOS_ALIMENTA}`,
     },
   ];
 
@@ -165,6 +172,12 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
   } else if (position === 1) {
     outcomeTitle = 'Los mejores de la fase regular';
     outcomeText = 'Dominaron la temporada… hasta los playoffs. La tabla dice campeones morales; la copa dice otra cosa.';
+  } else if (desciende && financeScore >= 60 && retentionScore >= 70) {
+    outcomeTitle = 'Ordenados, pero un escalón más abajo';
+    outcomeText = 'La caja está sana y el plantel no se desarmó, pero la tabla no perdonó: el año que viene se juega una divisional más abajo. Hay base para volver.';
+  } else if (desciende) {
+    outcomeTitle = 'Temporada de descenso';
+    outcomeText = 'Terminaron en el fondo de la tabla y se baja de categoría. A rearmar en el verano para volver a subir.';
   } else if (state.memorableMoments.length >= 3 && sportScore >= 45 && retentionScore >= 60) {
     outcomeTitle = 'Temporada inolvidable';
     outcomeText = 'Más allá de la tabla, esta temporada dejó historias que el grupo va a contar durante años.';
@@ -193,4 +206,56 @@ export function computeSeasonEvaluation(state: GameState): SeasonEvaluation {
     record: `${row.wins}-${row.losses}`,
     isGameOver,
   };
+}
+
+/** La figura del año: quién se llevó la temporada, para el cierre. */
+export interface FiguraDeLaTemporada {
+  playerId: string;
+  name: string;
+  /** Veces que fue la figura del partido. */
+  mvps: number;
+  /** Partidos en los que jugó (con minutos, sin forfeits). */
+  partidos: number;
+  /** Promedios por partido jugado. */
+  pts: number;
+  reb: number;
+  ast: number;
+}
+
+/**
+ * La figura de la temporada (UI_V2_PENDIENTES §3, "fin de temporada: la figura
+ * del año"): el que más veces fue figura del partido; si empatan, el de mejor
+ * nota media y después el que más puntos hizo. Cuenta la fase regular y los
+ * playoffs (todo lo que está en `history`), nunca los forfeits. Para que no
+ * gane uno que jugó un partido y la rompió, tiene que haber jugado al menos la
+ * mitad de los partidos del club. Sin partidos jugados, no hay figura.
+ */
+export function figuraDeLaTemporada(state: GameState): FiguraDeLaTemporada | null {
+  const jugados = state.history.filter((m) => !m.forfeit);
+  if (jugados.length === 0) return null;
+  const acc = new Map<string, { name: string; mvps: number; partidos: number; pts: number; reb: number; ast: number; nota: number }>();
+  for (const m of jugados) {
+    for (const l of m.box) {
+      if (l.minutes <= 0) continue;
+      const a = acc.get(l.playerId) ?? { name: l.name, mvps: 0, partidos: 0, pts: 0, reb: 0, ast: 0, nota: 0 };
+      a.partidos += 1;
+      a.pts += l.points;
+      a.reb += l.rebounds;
+      a.ast += l.assists;
+      a.nota += l.rating;
+      if (m.mvpId === l.playerId) a.mvps += 1;
+      acc.set(l.playerId, a);
+    }
+  }
+  const minimo = Math.ceil(jugados.length / 2);
+  const candidatos = [...acc.entries()].filter(([, a]) => a.partidos >= minimo);
+  if (candidatos.length === 0) return null;
+  candidatos.sort(
+    ([, a], [, b]) => b.mvps - a.mvps || b.nota / b.partidos - a.nota / a.partidos || b.pts - a.pts
+  );
+  const [playerId, a] = candidatos[0];
+  // El nombre de hoy (un apodo puede haber cambiado), y el de la planilla si ya no está.
+  const name = state.players.find((p) => p.id === playerId)?.name ?? a.name;
+  const r1 = (n: number) => Math.round((n / a.partidos) * 10) / 10;
+  return { playerId, name, mvps: a.mvps, partidos: a.partidos, pts: r1(a.pts), reb: r1(a.reb), ast: r1(a.ast) };
 }

@@ -2,7 +2,7 @@ import { BALANCE } from '../game/balance';
 import { marketReference } from '../game/conduct';
 import { weeklyFee } from '../game/economy';
 import { CAUSE_SHORT } from '../game/mood';
-import { apodoOApellido, listaY } from '../game/nombres';
+import { cortoEnPlantel, listaY } from '../game/nombres';
 import {
   CONTINUITY_LABELS,
   COUNTER_OFFERS,
@@ -704,7 +704,6 @@ const POS_ABBR: Record<string, string> = {
 };
 
 /** En la fila de pie entra el apodo si lo tiene, y si no el apellido (nombres.ts). */
-const shortName = apodoOApellido;
 
 /** El estado de continuidad dicho con las clases del semáforo (sin el acento). */
 function contCls(cls: string): 'good' | 'warn' | 'bad' {
@@ -794,7 +793,7 @@ function RosterSection({ state, dispatch }: Props) {
       const fee = playerFeeLabel(p);
       return {
         id: p.id,
-        nombre: shortName(p.name),
+        nombre: cortoEnPlantel(p.name, roster.map((x) => x.name)),
         personality: p.personality,
         sub: POS_ABBR[p.position] ?? p.position.slice(0, 3).toUpperCase(),
         estado:
@@ -1555,6 +1554,7 @@ export function PreseasonView({ state, dispatch }: Props) {
   }).length;
   const disponibles = ps.market.filter((m) => m.status === 'disponible').length;
   const libreta = !!ps.libreta;
+  const faltanParaElMinimo = BALANCE.preseason.minPlayers - confirmedPlayers(state).length;
 
   const items: PsNavItem[] = [
     ...(hasInscription
@@ -1574,10 +1574,14 @@ export function PreseasonView({ state, dispatch }: Props) {
       id: 'plantel',
       label: 'Plantel',
       icon: 'plantel',
+      // El ✓ es "está todo": en la Carrera, con 0 confirmados y nadie que
+      // espere respuesta, el Plantel salía tildado al lado de "faltan 8".
       badge:
         pending > 0
           ? { text: String(pending), cls: 'warn', title: `${pending} ${pending === 1 ? 'espera' : 'esperan'} una respuesta tuya` }
-          : { text: '✓', cls: 'good', title: 'Nadie espera una respuesta' },
+          : faltanParaElMinimo > 0
+            ? { text: '!', cls: 'warn', title: `${faltanParaElMinimo === 1 ? 'Falta 1' : `Faltan ${faltanParaElMinimo}`} para los ${BALANCE.preseason.minPlayers}` }
+            : { text: '✓', cls: 'good', title: 'Nadie espera una respuesta' },
     },
     {
       id: 'mercado',

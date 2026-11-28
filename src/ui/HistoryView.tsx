@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import type { GameState, TimelineEvent, TimelineKind } from '../game/types';
 import { QUE_LOS_ALIMENTA } from '../game/evaluation';
 import { activePlayers } from '../game/match';
@@ -57,8 +57,12 @@ function porTemporada(events: TimelineEvent[]): [number, TimelineEvent[]][] {
  * historia del club como una línea de tiempo (la planilla protagonista) y la
  * crónica de la temporada al lado.
  */
+/** Cuántas noticias muestra la crónica antes de "ver las anteriores". */
+const CRONICA_VISIBLE = 15;
+
 export function HistoryView({ state }: { state: GameState }) {
   const open = useContext(OpenProfileContext);
+  const [todaLaCronica, setTodaLaCronica] = useState(false);
   const largo = largoDeTemporada(state);
   const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);
 
@@ -143,6 +147,7 @@ export function HistoryView({ state }: { state: GameState }) {
                 <div className="hi-placa-outcome">{ps.outcome}</div>
                 {/* Los saves de antes no traen la categoría: no se inventa. */}
                 {ps.division && <div className="hi-placa-div">{ps.division}</div>}
+                {ps.figura && <div className="hi-placa-div">Figura del año: <b>{ps.figura}</b></div>}
                 <div className="hi-placa-pie">
                   {ps.moved && (
                     <span className={`v1-est ${ps.moved.kind === 'ascenso' ? 'good' : 'bad'}`}>
@@ -183,7 +188,9 @@ export function HistoryView({ state }: { state: GameState }) {
         <h4 className="bd-sub hi-momentos-tit">Para contar en el asado</h4>
         {state.memorableMoments.length === 0 ? (
           <p className="bd-vacio">
-            Todavía no pasó nada digno de contar en el asado. Las historias se construyen: {QUE_LOS_ALIMENTA}
+            {/* Los momentos son de la temporada en curso: en la T2 decía "todavía no
+                pasó nada" con un título de la T1 en la línea de tiempo de al lado. */}
+            {state.pastSeasons.length > 0 ? 'Esta temporada todavía' : 'Todavía'} no pasó nada digno de contar en el asado. Las historias salen de {QUE_LOS_ALIMENTA}
           </p>
         ) : (
           <ul className="hi-momentos">
@@ -201,7 +208,7 @@ export function HistoryView({ state }: { state: GameState }) {
           <p className="bd-vacio">Sin novedades todavía.</p>
         ) : (
           <ul className="ec-lista">
-            {state.news.map((n, i) => (
+            {(todaLaCronica ? state.news : state.news.slice(0, CRONICA_VISIBLE)).map((n, i) => (
               <li key={i} className={`v1-renglon ${n.tone}`}>
                 <span className="ec-sem">{weekShort(n.week, state.seasonLength)}</span>
                 <span className="ec-punto" aria-hidden="true" />
@@ -209,6 +216,13 @@ export function HistoryView({ state }: { state: GameState }) {
               </li>
             ))}
           </ul>
+        )}
+        {state.news.length > CRONICA_VISIBLE && (
+          <button className="hi-mas" onClick={() => setTodaLaCronica(!todaLaCronica)}>
+            {todaLaCronica
+              ? 'Ver sólo las últimas'
+              : `+ ${plural(state.news.length - CRONICA_VISIBLE, 'noticia anterior', 'noticias anteriores')}`}
+          </button>
         )}
       </Planilla>
     </div>

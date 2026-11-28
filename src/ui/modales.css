@@ -107,6 +107,9 @@
   color: var(--text-dim);
   margin-top: 0.2rem;
 }
+/* La caja no alcanza para esa opción: se dice en el color de alerta, sin
+   deshabilitarla (elegirla igual tiene su desenlace). */
+.modal .options .opt-hint.opt-sin-caja { color: var(--warn); font-weight: 600; margin-top: 0.15rem; }
 /* El único naranja: «Continuar» después de un desenlace. Va donde termina la
    lectura, a la derecha, con la voz del CTA del Tablero. */
 .modal .options button.primary {

@@ -1406,7 +1406,7 @@ function fuerzas(
   } else {
     if (rival.style === 'tiradores') {
       defMult *= M.tiradoresVsZona;
-      pushDef(['La zona les deja tiros abiertos y sus tiradores no perdonan.', 'Mueven la pelota hasta encontrar al tirador libre contra la zona: y la meten.']);
+      pushDef(['La zona les deja tiros abiertos y sus tiradores no perdonan.', 'Contra la zona mueven la pelota hasta encontrar al tirador libre, y la meten.']);
     }
     if (rival.style === 'internos') defMult *= M.internosVsZona;
   }
@@ -2222,7 +2222,15 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   if (shortHanded) {
     const n = live.squad.length;
     if (won) {
-      momentos.push({ peso: 3, texto: `${fechaLabel(s)}: ganamos siendo ${n}. Los que estuvieron, estuvieron.` });
+      // Con el rival, y distinta si ya pasó: el cierre listaba tres veces
+      // "ganamos siendo 7. Los que estuvieron, estuvieron." (nov 2026).
+      const otraVez = s.memorableMoments.some((t) => /ganamos siendo \d|con lo justo/.test(t));
+      momentos.push({
+        peso: 3,
+        texto: otraVez
+          ? `${fechaLabel(s)}: otra vez con lo justo, ${n} contra ${rival.name}, y otra vez se ganó.`
+          : `${fechaLabel(s)}: ganamos siendo ${n} contra ${rival.name}. Los que estuvieron, estuvieron.`,
+      });
       s.news.unshift({ week: s.week, text: `Gesta con lo justo: le ganamos a ${rival.name} siendo ${n}. El barrio todavía lo comenta.`, tone: 'good' });
       logClubEvent(s, 'partido', `Gesta: victoria ante ${rival.name} con solo ${n} jugadores.`, Math.min(s.week, s.seasonLength));
       for (const x of played) {
@@ -2364,8 +2372,11 @@ export function finishLiveMatch(state: GameState, rng: Rng): GameState {
   // Sin tope corto: el informe cuenta el partido entero (antes cortaba en el
   // 2do cuarto y se perdía la racha del final, que es justo lo que se relee).
   const seenNotes = new Set<string>();
+  // La presentación del juez ("Dirige Cacho Ferreira: …") es de la previa, no
+  // un momento del partido: salía primera en "Momentos clave".
   const highlights = live.quarters.flatMap((q, i) =>
     q.notes
+      .filter((n) => !n.startsWith('Dirige '))
       .filter((n) => !seenNotes.has(n) && (seenNotes.add(n), true))
       .map((n) => `${q.overtime ? 'Suplementario' : Q_NAMES[i]}: ${n}`)
   );

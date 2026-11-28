@@ -6,7 +6,7 @@ import { CAUSE_SHORT } from '../game/mood';
 import { lecturaDelCruce } from '../game/playoffs';
 import { clubByLegacyId, USER_CLUB_ID, USER_TEAM_ID, userFixtureOfWeek } from '../game/world';
 import { weekTimeline } from '../game/weekTimeline';
-import { apodoOApellido } from '../game/nombres';
+import { cortoEnPlantel } from '../game/nombres';
 import { Crest } from './Crest';
 import { Busto, FilaDePie, type PersonaDePie } from './Busto';
 import { OpenProfileContext } from './PlayerLink';
@@ -57,7 +57,6 @@ const POS_ABBR: Record<string, string> = {
 };
 
 /** En la tira entra el apodo si lo tiene, y si no el apellido (nombres.ts). */
-const shortName = apodoOApellido;
 
 /** La próxima fecha organiza el tablero; consultar nunca avanza la simulación. */
 export function hubReadiness(state: GameState) {
@@ -153,13 +152,17 @@ function categoria(state: GameState): string {
 }
 
 /** Puesto en la tabla y récord de un equipo (la tabla de la liga, no la del mundo). */
-function enLaTabla(state: GameState, teamId: string): { pos: number; record: string } | null {
+/* Antes de la primera fecha no hay puesto: el Tablero decía "1° · 0-0" para
+   nosotros y "3° · 0-0" para el rival, un orden que salía del desempate de
+   una tabla vacía. Sin partidos jugados, `pos` es null y se muestra sólo 0-0. */
+function enLaTabla(state: GameState, teamId: string): { pos: number | null; record: string } | null {
+  const arranco = state.standings.some((r) => r.wins + r.losses > 0);
   const sorted = [...state.standings].sort(
     (a, b) => b.wins - a.wins || b.pointsFor - b.pointsAgainst - (a.pointsFor - a.pointsAgainst)
   );
   const i = sorted.findIndex((r) => r.teamId === teamId);
   if (i < 0) return null;
-  return { pos: i + 1, record: `${sorted[i].wins}-${sorted[i].losses}` };
+  return { pos: arranco ? i + 1 : null, record: `${sorted[i].wins}-${sorted[i].losses}` };
 }
 
 /**
@@ -226,14 +229,16 @@ export function Hub({ state }: { state: GameState }) {
     );
   };
 
-  // El plantel de pie: por puesto, los que no están al final.
+  // El plantel de pie: por puesto, los que no están al final. Con dos que se
+  // llamarían igual, la inicial ("J. Ramos", "R. Ramos").
+  const nombresDelPlantel = state.players.filter((x) => !x.leftClub).map((x) => x.name);
   const personas: PersonaDePie[] = [...activePlayers(state.players)]
     .sort((a, b) => POS_ORDER.indexOf(a.position) - POS_ORDER.indexOf(b.position))
     .map((p) => {
       const est = estadoDe(p, state);
       return {
         id: p.id,
-        nombre: shortName(p.name),
+        nombre: cortoEnPlantel(p.name, nombresDelPlantel),
         personality: p.personality,
         sub: POS_ABBR[p.position] ?? p.position.slice(0, 3).toUpperCase(),
         estado: est.label ? { cls: est.cls, label: est.label } : null,
@@ -249,6 +254,9 @@ export function Hub({ state }: { state: GameState }) {
   }
 
   const cruce = jugado ? lecturaDelCruce(state, state.week, jugado.scoreFor > jugado.scoreAgainst) : null;
+  // Antes de jugarlo, el cruce también se nombra con su copa: decía "Finales"
+  // a secas, y el informe después "Final · Copa de Plata".
+  const etapaProxima = !jugado && upcomingWeek > state.seasonLength ? lecturaDelCruce(state, upcomingWeek, false)?.etapa : undefined;
 
   const escudo = (club: typeof userClub, size: number) =>
     club ? <Crest seed={club.id} name={club.name} colors={club.colors} founded={club.founded} size={size} /> : null;
@@ -258,7 +266,7 @@ export function Hub({ state }: { state: GameState }) {
       <section className="tablero-hero v1-hero" aria-label="El partido">
         <div className="v1-eyebrow">
           {score ? 'Partido en curso' : jugado ? 'El partido de hoy' : 'La próxima fecha'}
-          {' · '}<b>{jugado && cruce ? cruce.etapa : weekLabel(jugado ? state.week : upcomingWeek, state.seasonLength).replace('Semana', 'Fecha')}</b>
+          {' · '}<b>{jugado && cruce ? cruce.etapa : etapaProxima ?? weekLabel(jugado ? state.week : upcomingWeek, state.seasonLength).replace('Semana', 'Fecha')}</b>
           {liga && <> · {liga}</>}
         </div>
         {/* La final ganada se dice antes del marcador (nov 2026): el Tablero mostraba "70 – 66" como cualquier fecha. */}
@@ -275,7 +283,7 @@ export function Hub({ state }: { state: GameState }) {
               {escudo(userClub, 84)}
               <div>
                 <div className="tablero-nombre">{state.club.name}</div>
-                {nuestro && <div className="tablero-sub"><b>{nuestro.pos}°</b> · {nuestro.record}</div>}
+                {nuestro && <div className="tablero-sub">{nuestro.pos !== null && <><b>{nuestro.pos}°</b> · </>}{nuestro.record}</div>}
               </div>
             </div>
             {score ? <div className="tablero-marcador">{score.f} – {score.a}</div> : <div className="tablero-vs">VS</div>}
@@ -283,7 +291,7 @@ export function Hub({ state }: { state: GameState }) {
               {escudo(rivalClub, 84)}
               <div>
                 <div className="tablero-nombre"><RivalLink id={rival.id}>{rival.name}</RivalLink></div>
-                {suyo && <div className="tablero-sub"><b>{suyo.pos}°</b> · {suyo.record}</div>}
+                {suyo && <div className="tablero-sub">{suyo.pos !== null && <><b>{suyo.pos}°</b> · </>}{suyo.record}</div>}
               </div>
             </div>
           </div>
@@ -324,7 +332,7 @@ export function Hub({ state }: { state: GameState }) {
           {jugado ? (
             rival ? <>Lo que sigue: <b>{rival.name}</b>{fixture ? `, ${formatDateLong(fixture.date)}` : ''}.</> : <>Cerrá el informe para conocer el siguiente paso de la temporada.</>
           ) : previous ? (
-            <>Venimos de {previous.scoreFor > previous.scoreAgainst ? 'ganarle' : 'perder'} <b className={previous.scoreFor > previous.scoreAgainst ? 'good' : 'bad'}>{previous.scoreFor}–{previous.scoreAgainst}</b> {previous.scoreFor > previous.scoreAgainst ? 'a' : 'con'} {previous.rivalName}{nuestro && <> · <b>{nuestro.pos}°</b> en la tabla</>}{objetivoFrase(state)}</>
+            <>Venimos de {previous.scoreFor > previous.scoreAgainst ? 'ganarle' : 'perder'} <b className={previous.scoreFor > previous.scoreAgainst ? 'good' : 'bad'}>{previous.scoreFor}–{previous.scoreAgainst}</b> {previous.scoreFor > previous.scoreAgainst ? 'a' : 'con'} {previous.rivalName}{nuestro?.pos != null && <> · <b>{nuestro.pos}°</b> en la tabla</>}{objetivoFrase(state)}</>
           ) : pasada ? (
             <>La temporada pasada (<span>{pasada.sub}</span>): <b>{pasada.titulo}</b> {pasada.detalle}</>
           ) : (

@@ -1,5 +1,6 @@
 import { BALANCE } from './balance';
 import { FIRST_NAMES, LAST_NAMES } from '../data/names';
+import { apellido } from './nombres';
 import { rollBackground } from '../data/backgrounds';
 import { genAvailability } from './world';
 import type { DemandType, GameState, MarketPlayer, Personality, Position } from './types';
@@ -180,22 +181,44 @@ export const shortName = (name: string): string => {
   return name.trim().split(/\s+/)[0];
 };
 
-function uniqueName(rng: Rng, taken: Set<string>): string {
+/**
+ * Un nombre que no está tomado. Entre los propios (el plantel y la libreta)
+ * tampoco repite nombre de pila ni apellido: la libreta armaba planteles con
+ * tres "Alejo" y dos Britos, y las relaciones se escriben por el nombre de
+ * pila ("Vecino de Alejo"), así que no se sabía de cuál (nov 2026). Si no
+ * encuentra uno así, se conforma con que el nombre completo sea nuevo.
+ */
+function uniqueName(rng: Rng, taken: Set<string>, propios: Set<string> = taken): string {
+  const pilas = new Set([...propios].map((n) => n.replace(/"[^"]*"/g, '').trim().split(/\s+/)[0]));
+  const apellidos = new Set([...propios].map((n) => apellido(n)));
+  for (let i = 0; i < 60; i++) {
+    const pila = rng.pick(FIRST_NAMES);
+    const ap = rng.pick(LAST_NAMES);
+    const name = `${pila} ${ap}`;
+    if (!taken.has(name) && !pilas.has(pila) && !apellidos.has(apellido(name))) {
+      taken.add(name);
+      propios.add(name);
+      return name;
+    }
+  }
   for (let i = 0; i < 40; i++) {
     const name = `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`;
     if (!taken.has(name)) {
       taken.add(name);
+      propios.add(name);
       return name;
     }
   }
   const name = `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)} ${rng.int(2, 9)}`;
   taken.add(name);
+  propios.add(name);
   return name;
 }
 
 function contactFrom(
   rng: Rng,
   taken: Set<string>,
+  propios: Set<string>,
   opts: {
     relacion: string;
     porQue: string;
@@ -216,7 +239,7 @@ function contactFrom(
   const technique = rng.int(opts.tech[0], opts.tech[1]);
   const commitment = rng.int(opts.commitment[0], opts.commitment[1]);
   const noise = opts.knowledge === 'muy_conocido' ? 3 : opts.knowledge === 'conocido' ? 6 : 11;
-  const name = uniqueName(rng, taken);
+  const name = uniqueName(rng, taken, propios);
   const id = `ct${rng.int(0, 0xffffff).toString(36)}`;
   // La altura sale del puesto, como en el resto del mundo (un base de 1,72 y
   // un pívot de 1,98, no un pívot de 1,72): antes era un sorteo aparte.
@@ -264,7 +287,7 @@ export function buildLibreta(rng: Rng): MarketPlayer[] {
   const intimo = LIBRETA.find((c) => c.intimo)!;
   const resto = rng.shuffle(LIBRETA.filter((c) => !c.intimo)).slice(0, n - 1);
   return [intimo, ...resto].map((c) =>
-    contactFrom(rng, taken, {
+    contactFrom(rng, taken, taken, {
       ...c,
       knowledge: c.intimo ? 'muy_conocido' : 'conocido',
       viaDe: 'vos',
@@ -278,13 +301,14 @@ export function buildLibreta(rng: Rng): MarketPlayer[] {
  * referencia de él (interesada, claro), y cada uno abre menos que el
  * anterior: la red se agota.
  */
-export function abrirAgenda(via: MarketPlayer, rng: Rng, takenNames: string[]): MarketPlayer[] {
+export function abrirAgenda(via: MarketPlayer, rng: Rng, takenNames: string[], propiosNames: string[] = takenNames): MarketPlayer[] {
   const taken = new Set(takenNames);
+  const propios = new Set(propiosNames);
   const n = via.abre ?? 0;
   const v = shortName(via.name);
   const demands: (DemandType | null)[] = [null, null, null, 'minutos', 'beca_parcial', 'ambiente'];
   return rng.shuffle(AGENDA).slice(0, n).map((a) =>
-    contactFrom(rng, taken, {
+    contactFrom(rng, taken, propios, {
       relacion: a.relacion(v),
       porQue: a.porQue(v),
       personality: rng.pick(['social', 'cumplidor', 'competitivo', 'talentoso_informal', 'leal'] as Personality[]),

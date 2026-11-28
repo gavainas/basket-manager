@@ -1,4 +1,5 @@
 import type { GameState } from '../game/types';
+import { decimal } from './helpers';
 import { famaDeCumplidor } from '../game/conduct';
 import { DEBUG_FULL_SCOUTING, perceivedLevel, scoutingLevel } from '../game/scouting';
 import {
@@ -33,7 +34,10 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
   const league = team
     ? world.leagues.find((l) => l.id === world.entries.find((e) => e.teamId === team.id && e.status === 'activa')?.leagueId)
     : undefined;
-  const freeLeagues = world.leagues.filter((l) => !findActiveRegistration(world, p.id, l.id, world.season.id));
+  // "Libre en" sólo donde puede jugar: a uno de 22 le ofrecía la Liga +35.
+  const freeLeagues = world.leagues.filter(
+    (l) => !findActiveRegistration(world, p.id, l.id, world.season.id) && (l.minAge === undefined || p.age >= l.minAge)
+  );
   const interior = p.availability.distanceKm > 50;
   const knowledge = team?.legacyRivalId ? scoutingLevel(state, team.legacyRivalId) : 1;
   // El conocimiento por persona pesa igual que el del equipo: al que
@@ -121,7 +125,7 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
               {contra.pts === 0
                 ? `Jugó ${contra.partidos === 1 ? 'un partido' : `${contra.partidos} partidos`} y no nos anotó.`
                 : `${contra.pts} puntos en ${contra.partidos === 1 ? 'un partido' : `${contra.partidos} partidos`}${
-                    contra.partidos > 1 ? ` (${(contra.pts / contra.partidos).toFixed(1)} por partido)` : ''
+                    contra.partidos > 1 ? ` (${decimal(contra.pts / contra.partidos)} por partido)` : ''
                   } esta temporada.`}
             </Renglon>
           )}

@@ -81,7 +81,7 @@ export function RivalProfile({ state, rivalId, onClose }: Props) {
         </div>
         <h2 className="ficha-nombre">{rival.name}</h2>
         <p className="ficha-clave">
-          <b className={difficulty.cls}>{difficulty.label}.</b> {style.label}: {style.desc}
+          <b className={difficulty.cls}>{difficulty.label}.</b> {style.label}. {style.desc}
         </p>
         <p className="v1-frase">{style.advice}</p>
         {lore && <p className="v1-frase">{lore.blurb}</p>}

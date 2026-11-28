@@ -80,7 +80,7 @@ export function VestuarioCard({ state }: { state: GameState }) {
               <small>unión del grupo</small>
             </div>
             <p className="v1-frase">
-              <b>{enGrupo} de {total}</b> tienen mesa fija
+              <b>{enGrupo} de {total}</b> {enGrupo === 1 ? 'tiene' : 'tienen'} mesa fija
               {map.groups.length > 0 && (
                 <> en {map.groups.length === 1 ? 'un grupo' : <><b>{map.groups.length}</b> grupos</>}</>
               )}

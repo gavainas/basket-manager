@@ -7,6 +7,7 @@ import { fragilityOf } from './injuries';
 import { refIncidentFactor } from './leagueLife';
 import { fueraDelPartido, reemplazar, rivalLineup } from './match';
 import { apellido, apellidoEnEquipo } from './nombres';
+import { USER_TEAM_ID, userFixtureOfWeek } from './world';
 import type { GameState, LiveMatchState, PendingRefIncident, Player, RiesgoPendiente } from './types';
 import type { Rng } from './rng';
 
@@ -201,6 +202,7 @@ export function rollRefIncident(s: GameState, live: LiveMatchState, onCourt: Pla
   const aggressive = live.defense === 'hombre' || live.defense === 'presion';
   const freshOf = (id: string) => live.playerFresh[id] ?? 70;
   const fragil = onCourt.filter((p) => fragilityOf(p) >= 45 || freshOf(p.id) < 40);
+  const deLocal = userFixtureOfWeek(s.world, s.week)?.homeTeamId === USER_TEAM_ID;
 
   // Qué puede pasar hoy, según el partido: con marca agresiva hay faltas, con
   // un casero hay fallos en contra, con alguien fundido o frágil hay tirones.
@@ -210,7 +212,9 @@ export function rollRefIncident(s: GameState, live: LiveMatchState, onCourt: Pla
     { kind: 'roce', w: 2 },
     { kind: 'cuatro_faltas', w: qIndex >= 1 ? (aggressive ? 3 : 1.5) : 0 },
     { kind: 'resentido', w: fragil.length > 0 ? 1.8 : 0.6 },
-    { kind: 'casero', w: live.refStyle === 'casero' ? 3 : tension >= 3 ? 1 : 0 },
+    // "Cobra todo en contra y el gimnasio festeja cada silbato" es de visitante:
+    // de local, con el casero ("el local nunca pierde con él") salía igual.
+    { kind: 'casero', w: deLocal ? 0 : live.refStyle === 'casero' ? 3 : tension >= 3 ? 1 : 0 },
   ];
   const total = opciones.reduce((t, o) => t + o.w, 0);
   let roll = rng.next() * total;

@@ -365,12 +365,14 @@ export function worldToMarket(wp: WorldPlayer, fromClub: string, rng: Rng): Mark
   const faced = wp.timesFaced ?? 0;
   const knowledge: KnowledgeLevel =
     faced >= 3 ? 'muy_conocido' : faced >= 1 ? 'conocido' : wp.prestige >= 65 ? 'referencias' : 'poco_conocido';
+  // Siempre va después de "Viene de <club>." (originSentence): repetir el club
+  // armaba "Viene de Estrella del Sur. … hizo su fama en Estrella del Sur."
   const knowledgeSource =
     faced >= 1
-      ? `Lo enfrentaste ${faced === 1 ? 'una vez' : `${faced} veces`} con la camiseta de ${fromClub}: lo conocés de la cancha.`
+      ? `Lo enfrentaste ${faced === 1 ? 'una vez' : `${faced} veces`} con esa camiseta: lo conocés de la cancha.`
       : wp.prestige >= 65
-        ? `Nombre conocido de la liga: hizo su fama en ${fromClub}.`
-        : `Quedó libre de ${fromClub}. Poco se sabe: habría que verlo.`;
+        ? 'Nombre conocido de la liga: hizo su fama ahí.'
+        : 'Quedó libre. Poco se sabe: habría que verlo.';
   const noise = KNOWLEDGE_NOISE[knowledge];
   const physical = Math.max(30, Math.min(90, 78 - Math.max(0, wp.age - 28) * 2 + idRng.int(-6, 6)));
   const social = Math.max(25, Math.min(90, Math.round(wp.reliability * 0.4 + idRng.int(20, 55))));

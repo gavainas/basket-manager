@@ -2,12 +2,14 @@ import { useState } from 'react';
 import type { CupTier, GameState } from '../game/types';
 import type { GameAction } from '../state/gameReducer';
 import { ConfirmDialog, type ConfirmRequest } from './ConfirmDialog';
-import { computeSeasonEvaluation } from '../game/evaluation';
+import { computeSeasonEvaluation, figuraDeLaTemporada } from '../game/evaluation';
 import { userSeasonFate } from '../game/pyramid';
 import { objectiveStatus } from '../game/objectives';
 import { BALANCE } from '../game/balance';
 import { RivalLink } from './RivalLink';
-import { formatMoney } from './helpers';
+import { PlayerLink } from './PlayerLink';
+import { Busto } from './Busto';
+import { decimal, formatMoney } from './helpers';
 import './cierre.css';
 
 interface Props {
@@ -54,6 +56,9 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
     });
 
   const P = state.playoffs;
+  // La figura del año (UI_V2_PENDIENTES §3): el que más veces fue figura del partido.
+  const figura = figuraDeLaTemporada(state);
+  const figuraP = figura ? state.players.find((p) => p.id === figura.playerId) : undefined;
   const campeon = P?.champions.oro === 'club' || P?.champions.plata === 'club';
 
   return (
@@ -136,14 +141,48 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
           </aside>
 
           <section className="cierre-abajo" aria-label="Lo que dejó la temporada">
-            {state.memorableMoments.length > 0 && (
-              <div className="cierre-momentos">
-                <h2 className="cierre-gente-t">Lo que queda</h2>
-                <ul>
-                  {state.memorableMoments.map((m, i) => (
-                    <li key={i}>{m}</li>
-                  ))}
-                </ul>
+            {(figura || state.memorableMoments.length > 0) && (
+              <div className={`cierre-abajo-fila${figura ? ' con-figura' : ''}`}>
+                {figura && (
+                  <div className="cierre-figura" aria-label="La figura del año">
+                    <div className="cierre-figura-persona">
+                      <Busto seed={figura.playerId} personality={figuraP?.personality} gris={!!figuraP?.leftClub} />
+                      <span className="cierre-figura-piso" />
+                    </div>
+                    <div className="cierre-figura-txt">
+                      <h2 className="cierre-gente-t">La figura del año</h2>
+                      <div className="cierre-figura-nombre">
+                        {figuraP ? <PlayerLink id={figura.playerId}>{figura.name}</PlayerLink> : figura.name}
+                      </div>
+                      <div className="cierre-figura-sub">
+                        {figura.mvps === 0
+                          ? 'La mejor nota del año'
+                          : figura.mvps === 1
+                            ? 'Una vez figura del partido'
+                            : `${figura.mvps} veces figura del partido`}
+                        {' · '}
+                        {figura.partidos === 1 ? '1 partido' : `${figura.partidos} partidos`}
+                        {figuraP?.leftClub ? ' · ya no está en el club' : ''}
+                      </div>
+                      <div className="cierre-figura-numeros">
+                        <span><b>{decimal(figura.pts)}</b> pts</span>
+                        <span><b>{decimal(figura.reb)}</b> reb</span>
+                        <span><b>{decimal(figura.ast)}</b> ast</span>
+                        <small>por partido</small>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {state.memorableMoments.length > 0 && (
+                  <div className="cierre-momentos">
+                    <h2 className="cierre-gente-t">Lo que queda</h2>
+                    <ul>
+                      {state.memorableMoments.map((m, i) => (
+                        <li key={i}>{m}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 
