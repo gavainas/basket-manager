@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **La ficha de un jugador del mundo no lo ofrece en la Liga +35 si tiene 22 (28/11/2026)**: "Libre en" listaba todas las ligas donde no tenía ficha, incluida la +35 para un escolta de 22 años. Ahora sólo las que admiten su edad. Visto en el navegador.
+
 - **La gesta con lo justo no se repite igual (28/11/2026)**: en la corrida por la UI, el cierre de la T2 listaba en "Lo que queda" tres veces "Semana N: ganamos siendo 7. Los que estuvieron, estuvieron.". Ahora la primera nombra al rival ("ganamos siendo 7 contra Ferro del Norte") y las siguientes se leen distinto ("otra vez con lo justo, 7 contra La Terminal, y otra vez se ganó."). Test en `tests/temporada.test.ts`.
 
 - **Finanzas: la cuenta prevista y el libro de caja dicen lo mismo de las cuotas (28/11/2026)**: arriba "Cuotas (9 jugadores y 1 con media beca) +$285" y en el libro, la semana anterior, "Cuotas (10 jugadores) +$285". El libro ahora anota con el mismo texto. Test en `tests/textos.test.ts`.
