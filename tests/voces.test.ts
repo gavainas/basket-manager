@@ -104,3 +104,16 @@ describe('las voces por arquetipo (sep 2026)', () => {
     expect(new Set(dichas.slice(0, 9)).size).toBe(9);
   });
 });
+
+describe('el conforme de la derrota no habla como si se hubiera ganado (nov 2026)', () => {
+  it('jugó, se perdió y le fue normal: nada de "bien", "contento" ni "partido cumplido"', () => {
+    const base = partidaNueva(3).players[0];
+    const p: Player = { ...base, personality: 'social', expectedRole: 'rotación' };
+    const ctx: EmotionContext = { won: false, margin: 18, minutes: 25, rating: 6, mvp: true, inSquad: true, promisedMinutes: false, bigGame: true };
+    for (let salt = 0; salt < 20; salt++) {
+      const [mood] = buildMoods([p], () => ctx, salt);
+      expect(mood.label).toBe('Conforme');
+      expect(mood.text).not.toMatch(/^"Bien\.|Contento|Partido cumplido|Se hizo lo que había que hacer/);
+    }
+  });
+});

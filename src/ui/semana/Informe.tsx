@@ -88,7 +88,11 @@ export function MatchResultPanel({ state, dispatch }: Props) {
       : state.week === state.seasonLength
         ? 'Cerrar la fase regular →'
         : state.week === state.seasonLength + 1
-          ? 'Después de las semifinales →'
+          ? // "Después de las semifinales" no decía a dónde: ganada se va a la
+            // final; perdida, la otra final se simula y se cierra el año.
+            m.won
+            ? 'A la final →'
+            : 'Cerrar la temporada →'
           : 'Cerrar la temporada →';
 
   const userClub = state.world.clubs.find((c) => c.id === USER_CLUB_ID);

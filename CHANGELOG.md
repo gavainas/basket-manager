@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **Los playoffs dicen a dónde van y el que perdió no dice "bien" (28/11/2026)**: jugando una semifinal y la final desde el navegador. El informe de la semi ganada tenía de botón "Después de las semifinales →", que no decía a dónde llevaba: ahora "A la final →" (y "Cerrar la temporada →" si se perdió, que es lo que pasa). Y después de perder la final 61-79, la figura decía "Bien. Sin mucho más para decir: bien.": el ánimo "conforme" con minutos sólo sale en la derrota (ganando es "contento"), pero sus frases eran de victoria ("Contento por el grupo", "Partido cumplido"). Ahora son de derrota ("Hoy no alcanzó. Me voy tranquilo con lo que di, no con el resultado."). Test en `tests/voces.test.ts`.
+
 - **La crónica de la Historia muestra las últimas 15 (28/11/2026)**: en los playoffs la crónica de la temporada llegaba a 64 noticias y la Historia scrolleaba 2800 px a 1366×768 para llegar al final. Ahora muestra las 15 más nuevas y un "+ 49 noticias anteriores" que despliega el resto (y vuelve con "Ver sólo las últimas"), como el "+ N avisos más" del Tablero. Medido en el navegador: 414 px de scroll.
 
 - **El fixture en los playoffs no inventa una fecha (28/11/2026)**: en la semana de semifinales, el fixture de la Liga decía "10 fechas" en una liga de 9 (contaba la semi). Ahora dice "9 fechas y playoffs"; las filas ya decían "Semis" y "Final". Visto en el navegador.

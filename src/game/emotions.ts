@@ -190,14 +190,17 @@ function moodText(
             '"Alentando también se suma. Hoy me tocó eso."',
             '"Tranquilo, ya va a llegar mi partido. Hoy jugaron bien los que jugaron."',
           ])
-        : pick([
-            '"Se hizo lo que había que hacer. Semana que viene, más."',
-            '"Partido cumplido. Ahora a casa, que mañana madrugo."',
-            '"Bien. Sin mucho más para decir: bien."',
-            '"Ni para enmarcar ni para quemar: un partido más."',
-            '"Contento por el grupo. Lo mío, correcto: hice mi trabajo."',
-            '"Ni lo mejor ni lo peor. Se jugó y listo."',
-            '"Lo importante es que no se lesionó nadie."',
+        : // Con minutos, "conforme" sólo sale en la derrota (ganando es
+          // "contento"): decía "Bien. Sin mucho más para decir: bien." o
+          // "Contento por el grupo" después de perder una final por 18.
+          pick([
+            '"Se perdió. Yo hice lo mío; lo demás, a revisarlo el martes."',
+            '"Hoy no alcanzó. Me voy tranquilo con lo que di, no con el resultado."',
+            '"Uno de esos días. Semana que viene, más."',
+            '"Ni para enmarcar ni para quemar. Se perdió y hay que seguir."',
+            '"Lo mío, correcto. Lo del equipo, a mejorar."',
+            '"Ni lo mejor ni lo peor de mí. Y el resultado tampoco ayudó."',
+            '"Lo importante es que no se lesionó nadie. Lo otro se arregla entrenando."',
           ]);
     case 'indiferente':
       return pick([
