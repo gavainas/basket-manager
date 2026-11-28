@@ -172,7 +172,7 @@ export function CoachCard({ state, dispatch }: Props) {
                 </button>
               </div>
               <p className="v1-frase">
-                En los partidos, {coach.name.split(' ')[0]} maneja los cambios con esta directiva. Podés pisar sus
+                En los partidos, {apellido(coach.name)} maneja los cambios con esta directiva. Podés pisar sus
                 decisiones a mano cuando quieras.
               </p>
               <button className="small danger ct-despedir" onClick={despedir}>

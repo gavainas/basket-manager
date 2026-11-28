@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **El DT se nombra por el apellido en el Cuerpo técnico (28/11/2026)**: con Bruno Da Silva de DT y Bruno Acosta en el plantel, la ficha decía "En los partidos, Bruno maneja los cambios". Ahora "Da Silva maneja los cambios", como en la pizarra y el relato. Visto en el navegador.
+
 - **La ficha de un jugador del mundo no lo ofrece en la Liga +35 si tiene 22 (28/11/2026)**: "Libre en" listaba todas las ligas donde no tenía ficha, incluida la +35 para un escolta de 22 años. Ahora sólo las que admiten su edad. Visto en el navegador.
 
 - **La gesta con lo justo no se repite igual (28/11/2026)**: en la corrida por la UI, el cierre de la T2 listaba en "Lo que queda" tres veces "Semana N: ganamos siendo 7. Los que estuvieron, estuvieron.". Ahora la primera nombra al rival ("ganamos siendo 7 contra Ferro del Norte") y las siguientes se leen distinto ("otra vez con lo justo, 7 contra La Terminal, y otra vez se ganó."). Test en `tests/temporada.test.ts`.
