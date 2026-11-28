@@ -1,4 +1,5 @@
 import type { GameState, Player } from '../game/types';
+import { decimal } from './helpers';
 import { affinity, RIVALRY_THRESHOLD } from '../game/relations';
 import { Busto } from './Busto';
 import { Icon, type IconName } from './Icon';
@@ -106,7 +107,7 @@ export function RankingsView({ state }: { state: GameState }) {
     }))
     .sort((a, b) => b.avg - a.avg)
     .slice(0, 5)
-    .map((x) => ({ id: x.p.id, name: x.p.name, value: `${x.avg.toFixed(1)} (${x.p.matchLog.length} PJ)` }));
+    .map((x) => ({ id: x.p.id, name: x.p.name, value: `${decimal(x.avg)} (${x.p.matchLog.length} PJ)` }));
 
   const lovedRows = players
     .map((p) => {

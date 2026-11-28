@@ -14,7 +14,7 @@ import { HumanNoteRow } from './HumanNoteRow';
 import { PlayerLink } from './PlayerLink';
 import { largoDeTemporada, Timeline } from './Timeline';
 import { Tip, TIPS } from './Tip';
-import { feeChip, feeChipAlways, roleLabel, statusChip, statusChipAlways, weekShort } from './helpers';
+import { decimal, feeChip, feeChipAlways, roleLabel, statusChip, statusChipAlways, weekShort } from './helpers';
 import { Icon } from './Icon';
 import { useTeclasModal } from './teclas';
 
@@ -121,13 +121,13 @@ function DeportivaTab({ p, largo }: { p: Player; largo: (season: number) => numb
   const log = p.matchLog;
   const played = log.length;
   const minutes = log.reduce((t, m) => t + m.minutes, 0);
-  const avgRating = played ? (log.reduce((t, m) => t + m.rating, 0) / played).toFixed(1) : '—';
+  const avgRating = played ? decimal(log.reduce((t, m) => t + m.rating, 0) / played) : '—';
   const mvps = log.filter((m) => m.mvp).length;
   const winPct = played ? Math.round((log.filter((m) => m.won).length / played) * 100) : null;
   const points = log.reduce((t, m) => t + (m.points ?? 0), 0);
   const rebounds = log.reduce((t, m) => t + (m.rebounds ?? 0), 0);
   const assists = log.reduce((t, m) => t + (m.assists ?? 0), 0);
-  const perGame = (v: number) => (played ? (v / played).toFixed(1) : '—');
+  const perGame = (v: number) => (played ? decimal(v / played) : '—');
 
   const last = [...log].slice(-5).reverse();
   const recent = log.slice(-3);

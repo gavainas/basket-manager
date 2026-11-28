@@ -1,4 +1,5 @@
 import type { GameState } from '../game/types';
+import { decimal } from './helpers';
 import { famaDeCumplidor } from '../game/conduct';
 import { DEBUG_FULL_SCOUTING, perceivedLevel, scoutingLevel } from '../game/scouting';
 import {
@@ -121,7 +122,7 @@ export function WorldPlayerProfile({ state, playerId, onClose }: Props) {
               {contra.pts === 0
                 ? `Jugó ${contra.partidos === 1 ? 'un partido' : `${contra.partidos} partidos`} y no nos anotó.`
                 : `${contra.pts} puntos en ${contra.partidos === 1 ? 'un partido' : `${contra.partidos} partidos`}${
-                    contra.partidos > 1 ? ` (${(contra.pts / contra.partidos).toFixed(1)} por partido)` : ''
+                    contra.partidos > 1 ? ` (${decimal(contra.pts / contra.partidos)} por partido)` : ''
                   } esta temporada.`}
             </Renglon>
           )}

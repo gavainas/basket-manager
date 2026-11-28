@@ -9,7 +9,7 @@ import { BALANCE } from '../game/balance';
 import { RivalLink } from './RivalLink';
 import { PlayerLink } from './PlayerLink';
 import { Busto } from './Busto';
-import { formatMoney } from './helpers';
+import { decimal, formatMoney } from './helpers';
 import './cierre.css';
 
 interface Props {
@@ -59,7 +59,6 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
   // La figura del año (UI_V2_PENDIENTES §3): el que más veces fue figura del partido.
   const figura = figuraDeLaTemporada(state);
   const figuraP = figura ? state.players.find((p) => p.id === figura.playerId) : undefined;
-  const coma = (n: number) => n.toFixed(1).replace('.', ',');
   const campeon = P?.champions.oro === 'club' || P?.champions.plata === 'club';
 
   return (
@@ -166,9 +165,9 @@ export function SeasonEndScreen({ state, dispatch }: Props) {
                         {figuraP?.leftClub ? ' · ya no está en el club' : ''}
                       </div>
                       <div className="cierre-figura-numeros">
-                        <span><b>{coma(figura.pts)}</b> pts</span>
-                        <span><b>{coma(figura.reb)}</b> reb</span>
-                        <span><b>{coma(figura.ast)}</b> ast</span>
+                        <span><b>{decimal(figura.pts)}</b> pts</span>
+                        <span><b>{decimal(figura.reb)}</b> reb</span>
+                        <span><b>{decimal(figura.ast)}</b> ast</span>
                         <small>por partido</small>
                       </div>
                     </div>

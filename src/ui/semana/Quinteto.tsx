@@ -12,7 +12,7 @@ import { PlayerLink } from '../PlayerLink';
 import { RivalLink } from '../RivalLink';
 import { ScoutingCard } from '../ScoutingCard';
 import { Tip, TIPS } from '../Tip';
-import { rivalDifficulty, rivalStyleInfo, weekLabel } from '../helpers';
+import { decimal, rivalDifficulty, rivalStyleInfo, weekLabel } from '../helpers';
 import { useEspacio } from '../teclas';
 import { Crest } from '../Crest';
 import { clubByLegacyId, userFixtureOfWeek } from '../../game/world';
@@ -327,7 +327,7 @@ export function LineupPanel({ state, dispatch }: Props) {
                     <span>
                       {pl ? (
                         <>
-                          {oop ? <em>es {pl.position}</em> : pos} · ≈{pl.visibleRating} · {(pl.height / 100).toFixed(2)} m
+                          {oop ? <em>es {pl.position}</em> : pos} · ≈{pl.visibleRating} · {decimal(pl.height / 100, 2)} m
                         </>
                       ) : (
                         'libre'
