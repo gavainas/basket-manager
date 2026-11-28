@@ -1555,6 +1555,7 @@ export function PreseasonView({ state, dispatch }: Props) {
   }).length;
   const disponibles = ps.market.filter((m) => m.status === 'disponible').length;
   const libreta = !!ps.libreta;
+  const faltanParaElMinimo = BALANCE.preseason.minPlayers - confirmedPlayers(state).length;
 
   const items: PsNavItem[] = [
     ...(hasInscription
@@ -1574,10 +1575,14 @@ export function PreseasonView({ state, dispatch }: Props) {
       id: 'plantel',
       label: 'Plantel',
       icon: 'plantel',
+      // El ✓ es "está todo": en la Carrera, con 0 confirmados y nadie que
+      // espere respuesta, el Plantel salía tildado al lado de "faltan 8".
       badge:
         pending > 0
           ? { text: String(pending), cls: 'warn', title: `${pending} ${pending === 1 ? 'espera' : 'esperan'} una respuesta tuya` }
-          : { text: '✓', cls: 'good', title: 'Nadie espera una respuesta' },
+          : faltanParaElMinimo > 0
+            ? { text: '!', cls: 'warn', title: `${faltanParaElMinimo === 1 ? 'Falta 1' : `Faltan ${faltanParaElMinimo}`} para los ${BALANCE.preseason.minPlayers}` }
+            : { text: '✓', cls: 'good', title: 'Nadie espera una respuesta' },
     },
     {
       id: 'mercado',
