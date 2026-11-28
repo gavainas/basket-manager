@@ -500,7 +500,12 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
           </Planilla>
 
           <div className="lg-col-fixture">
-            <Planilla titulo="El fixture" nota={`${state.schedule.length} fechas`} className="lg-fixture">
+            {/* En los playoffs el fixture suma la semi y la final: decía "10 fechas" en una liga de 9. */}
+            <Planilla
+              titulo="El fixture"
+              nota={`${state.seasonLength} fechas${state.schedule.length > state.seasonLength ? ' y playoffs' : ''}`}
+              className="lg-fixture"
+            >
               <table className="bd-tabla">
                 <tbody>
                   {state.schedule.map((rivalId, i) => {

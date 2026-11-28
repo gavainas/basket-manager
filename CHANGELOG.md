@@ -9,6 +9,8 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
+- **El fixture en los playoffs no inventa una fecha (28/11/2026)**: en la semana de semifinales, el fixture de la Liga decía "10 fechas" en una liga de 9 (contaba la semi). Ahora dice "9 fechas y playoffs"; las filas ya decían "Semis" y "Final". Visto en el navegador.
+
 - **Rankings: "también es" habla del goleador, no del de al lado (28/11/2026)**: el héroe de Rankings decía "Gonzalo Viera · 48 puntos. La figura más veces: Facundo Silva (1 vez MVP). También es el que más juega (125')": el que más juega era Viera, pero la frase se leía como si fuera Silva. Ahora, si la oración anterior nombró a otro, dice "Viera también es el que más juega". Y con empate arriba (cuatro con una figura cada uno) no nombra "la figura más veces" a uno solo; lo mismo con los minutos y el más querido. Visto en el navegador.
 
 - **Las mesas del vestuario, bien nombradas (28/11/2026)**: la ficha decía "De la mesa de **La mesa del asado**, con …" (dos veces "mesa"); ahora "Se sienta con **la mesa del asado**: …" (o "con los pibes", "con la banda del Chino"). Y el rótulo de la banda elegía el artículo por la vocal del nombre: salía "La banda del Acosta" y "La banda de Chino". Ahora va con artículo el apodo ("la banda del Chino") y sin él el apellido ("la banda de Acosta"). En el Vestuario, el que no tiene mesa "se arrima a **La** mesa del asado sin ser de la mesa": ahora "se arrima a la mesa del asado sin sentarse con ellos". Test en `tests/vestuario.test.ts`; la ficha y el Vestuario, vistos en el navegador.
