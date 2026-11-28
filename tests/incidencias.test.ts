@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { canEnterCourt } from '../src/game/match';
-import { esCalenton } from '../src/game/narrative';
+import { esCalenton, rollRefIncident } from '../src/game/narrative';
+import { Rng } from '../src/game/rng';
+import { USER_TEAM_ID, userFixtureOfWeek } from '../src/game/world';
 import type { GameState, PendingRefIncident } from '../src/game/types';
 import { jugarPartidoEntero, partidaNueva, paso, resolverEventos } from './jugar';
 
@@ -161,5 +163,33 @@ describe('las incidencias del partido (sep 2026)', () => {
     let s = jugarPartidoEntero(hastaElPartido(7));
     s = paso(s, { type: 'FINISH_MATCH' });
     expect(s.phase).toBe('matchResult');
+  });
+});
+
+describe('el juez casero cobra para el local (nov 2026)', () => {
+  it('"cobra todo en contra y el gimnasio festeja" sólo sale de visitante', () => {
+    const base = hastaElPartido(11);
+    const fx = userFixtureOfWeek(base.world, base.week)!;
+    const conLocalia = (local: boolean): GameState => {
+      const s: GameState = structuredClone(base);
+      const f = s.world.fixtures.find((x) => x.id === fx.id)!;
+      const otro = f.homeTeamId === USER_TEAM_ID ? f.awayTeamId : f.homeTeamId;
+      f.homeTeamId = local ? USER_TEAM_ID : otro;
+      f.awayTeamId = local ? otro : USER_TEAM_ID;
+      s.live = { ...s.live!, refStyle: 'casero', refName: 'Cacho Ferreira', refTension: 0, pendingIncident: undefined };
+      return s;
+    };
+    const caseros = (local: boolean) => {
+      let n = 0;
+      for (let seed = 1; seed <= 300; seed++) {
+        const s = conLocalia(local);
+        const enCancha = s.players.filter((p) => s.live!.onCourt.includes(p.id));
+        rollRefIncident(s, s.live!, enCancha, 1, new Rng(seed));
+        if (s.live!.pendingIncident?.kind === 'casero') n += 1;
+      }
+      return n;
+    };
+    expect(caseros(true)).toBe(0);
+    expect(caseros(false)).toBeGreaterThan(0);
   });
 });
