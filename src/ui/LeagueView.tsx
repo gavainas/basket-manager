@@ -218,7 +218,7 @@ function SecondTeamCard({ state }: { state: GameState }) {
   return (
     <Planilla
       titulo={`${st.name} · ${league?.name ?? ''}${division ? ` ${division.name}` : ''}`}
-      nota={st.finished ? `Torneo terminado: ${secondTeamPosition(st)}°` : `Fecha ${st.round} de ${totalRounds}`}
+      nota={st.finished ? `Torneo terminado: ${secondTeamPosition(st)}°` : st.round === 0 ? `${totalRounds} fechas por jugar` : `Fecha ${st.round} de ${totalRounds}`}
       className="lg-segundo"
     >
       <div className="lg-segundo-cuerpo">
@@ -671,15 +671,19 @@ export function LeagueView({ state, dispatch, inicial = 'tabla' }: { state: Game
                         {divisions.length} divisional{divisions.length !== 1 ? 'es' : ''}
                         {l.minAge ? ` · desde ${l.minAge} años` : ''}
                         {expansible.includes(l.id)
-                          ? ' · el club todavía no tiene equipo acá'
+                          ? state.secondTeam
+                            ? ' · abre cupo, pero el club ya banca dos equipos'
+                            : ' · el club todavía no tiene equipo acá'
                           : ' · el equipo principal se puede anotar acá en la próxima pretemporada'}
                       </>
                     )}
                   </span>
-                  {/* Segundo equipo: solo en las ligas que abren cupo. En
-                      las demás, la puerta es la inscripción del principal. */}
+                  {/* Segundo equipo: solo en las ligas que abren cupo, y
+                      mientras no haya uno (no hay tercero: el botón llevaba a
+                      un panel que sólo decía que no). En las demás, la puerta
+                      es la inscripción del principal. */}
                   <span className="lg-liga-accion">
-                    {!isOurs && !segundo && expansible.includes(l.id) && (
+                    {!isOurs && !segundo && !state.secondTeam && expansible.includes(l.id) && (
                       <button className="bd-boton" onClick={() => setExpandLeague(l.id)}>
                         Inscribir equipo…
                       </button>

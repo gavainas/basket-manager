@@ -1470,7 +1470,7 @@ export function closePreseason(state: GameState): GameState {
     if (target.fee > 0) fee += BALANCE.preseason.lateInscriptionFee;
     s.club.socialPrestige = clamp(s.club.socialPrestige - BALANCE.preseason.lateInscriptionPrestigeHit);
     consequences.push(
-      `Nadie eligió liga a tiempo: la comisión te anotó a último momento en ${target.leagueName}${
+      `No elegiste liga a tiempo: la comisión te anotó a último momento en ${target.leagueName}${
         target.fee > 0 ? ` con recargo ($${BALANCE.preseason.lateInscriptionFee})` : ''
       }. El apuro se notó (prestigio social -${BALANCE.preseason.lateInscriptionPrestigeHit}).`
     );

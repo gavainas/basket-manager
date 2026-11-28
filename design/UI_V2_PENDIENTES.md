@@ -46,8 +46,9 @@ Las escenas de la V1 son **arte que ya existía, reusado provisionalmente** (`ES
 - Los nombres dentro de las frases del Vestuario podrían llevar su cara.
 - La barra de secciones de arriba sigue siendo la de antes (con íconos y teclas): la maqueta
   la simplificaba a texto con subrayado naranja.
-- «Inscribir equipo…» aparece también en la otra liga cuando ya hay segundo equipo (al
-  tocarlo explica por qué no: comportamiento previo).
+- ~~«Inscribir equipo…» aparece también en la otra liga cuando ya hay segundo equipo~~
+  (hecho el 28/11/2026: con segundo equipo, la otra liga dice "abre cupo, pero el club ya
+  banca dos equipos" y no muestra el botón).
 
 ## 3. Personalidad y motion
 
