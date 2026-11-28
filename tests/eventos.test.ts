@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getEvent } from '../src/game/events';
+import { EVENTS, getEvent } from '../src/game/events';
 import { refereeOfWeek } from '../src/game/leagueLife';
 import { Rng } from '../src/game/rng';
 import type { GameState, MatchResult } from '../src/game/types';
@@ -428,5 +428,33 @@ describe('el juez que viene se nombra bien (nov 2026)', () => {
       }
     }
     expect(vistos.has('la Colo Ramírez')).toBe(true);
+  });
+});
+
+describe('las opciones que cuestan plata lo dicen antes de elegir (nov 2026)', () => {
+  it('el costo que avisa el modal es el mismo "$N" que lee el jugador', () => {
+    const s = partidaNueva(4);
+    let conCosto = 0;
+    for (const def of EVENTS) {
+      let targets: ReturnType<NonNullable<typeof def.pickTargets>> = {};
+      try {
+        targets = def.pickTargets ? def.pickTargets(s, new Rng(1)) : {};
+      } catch {
+        continue; // necesita un estado que esta partida no tiene
+      }
+      if (targets === null) continue;
+      let opciones: ReturnType<typeof def.options>;
+      try {
+        opciones = def.options(s, { defId: def.id, ...targets });
+      } catch {
+        continue;
+      }
+      for (const o of opciones) {
+        if (o.cost === undefined) continue;
+        conCosto += 1;
+        expect(`${o.label} ${o.hint ?? ''}`).toContain('$' + o.cost);
+      }
+    }
+    expect(conCosto).toBeGreaterThanOrEqual(10);
   });
 });
