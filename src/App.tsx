@@ -347,6 +347,20 @@ export default function App() {
               ? 'Terminó el partido: mirá el informe'
               : 'Dirigí el partido cuarto a cuarto'
             : 'Mirá el resultado del partido';
+  /* El botón de la barra lleva a la etapa en curso: con el partido en juego
+     decía "Ir a la semana" mientras el Tablero decía "Volver al partido". */
+  const irA =
+    state.phase === 'callUp'
+      ? 'Ir a la convocatoria'
+      : state.phase === 'lineup'
+        ? 'Ir al quinteto'
+        : state.phase === 'match'
+          ? matchOver
+            ? 'Ver el informe'
+            : 'Volver al partido'
+          : state.phase === 'matchResult'
+            ? 'Ver el informe'
+            : 'Ir a la semana';
   const recordSub = record.today
     ? `${record.today.finished ? 'hoy' : 'en juego'} ${score?.f ?? record.today.scoreFor}-${score?.a ?? record.today.scoreAgainst}`
     : 'en la liga';
@@ -541,7 +555,7 @@ export default function App() {
               className="avanzar primary"
               onClick={() => navigate('semana')}
             >
-              Ir a la semana →
+              {irA} →
             </button>}
           </div>
         </div>
