@@ -9,7 +9,7 @@ que se puede pedir volver. Los detalles de diseño de cada pieza viven en `desig
 
 ## 2026
 
-- **Las mesas del vestuario, bien nombradas (28/11/2026)**: la ficha decía "De la mesa de **La mesa del asado**, con …" (dos veces "mesa"); ahora "Se sienta con **la mesa del asado**: …" (o "con los pibes", "con la banda del Chino"). Y el rótulo de la banda elegía el artículo por la vocal del nombre: salía "La banda del Acosta" y "La banda de Chino". Ahora va con artículo el apodo ("la banda del Chino") y sin él el apellido ("la banda de Acosta"). Test en `tests/vestuario.test.ts`; la ficha, vista en el navegador.
+- **Las mesas del vestuario, bien nombradas (28/11/2026)**: la ficha decía "De la mesa de **La mesa del asado**, con …" (dos veces "mesa"); ahora "Se sienta con **la mesa del asado**: …" (o "con los pibes", "con la banda del Chino"). Y el rótulo de la banda elegía el artículo por la vocal del nombre: salía "La banda del Acosta" y "La banda de Chino". Ahora va con artículo el apodo ("la banda del Chino") y sin él el apellido ("la banda de Acosta"). En el Vestuario, el que no tiene mesa "se arrima a **La** mesa del asado sin ser de la mesa": ahora "se arrima a la mesa del asado sin sentarse con ellos". Test en `tests/vestuario.test.ts`; la ficha y el Vestuario, vistos en el navegador.
 
 - **Decimales con coma en todo el juego (28/11/2026)**: la ficha del jugador decía "12.0 puntos · 4.0 rebotes · nota media 8.0", los Rankings "7.4 (5 PJ)", la ficha de un rival "(14.5 por partido)" y el Quinteto la altura "1.81 m", con punto, mientras el resto del juego escribe en castellano. Un helper `decimal()` en `src/ui/helpers.ts` los pasa a "12,0", "7,4", "1,81 m". Visto en la ficha en el navegador.
 

@@ -57,7 +57,8 @@ describe('el vestuario por dentro (sep 2026: cuenta a todo el plantel)', () => {
       expect(v).toBeLessThan(77);
       if (e.mesa) {
         expect(e.mesa.members.some((m) => m.id === e.closest.id)).toBe(true);
-        expect(e.text).toContain(e.mesa.label);
+        // A mitad de frase va en minúscula ("se arrima a la banda de Batista").
+        expect(e.text).toContain(e.mesa.label.charAt(0).toLowerCase() + e.mesa.label.slice(1));
       }
       if (v >= FRIEND_THRESHOLD) expect(e.text).toMatch(/Amigo de|Se junta con/);
     }
@@ -261,7 +262,10 @@ describe('la banda lleva el artículo que corresponde (nov 2026)', () => {
     for (let seed = 1; seed <= 30; seed++) {
       let s = partidaNueva(seed);
       for (let f = 0; f < 3 && s.phase === 'planning'; f++) s = jugarFecha(s);
-      for (const g of buildSocialMap(s).groups) {
+      const mapa = buildSocialMap(s);
+      // A mitad de frase el rótulo va en minúscula: "se arrima a la mesa del asado".
+      for (const x of mapa.sueltos) expect(x.text).not.toMatch(/ (a|de|con) (La|Los|Las) /);
+      for (const g of mapa.groups) {
         const m = g.label.match(/^La banda (del|de) (.+)$/);
         if (!m) continue;
         bandas += 1;
